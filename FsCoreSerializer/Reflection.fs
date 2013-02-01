@@ -7,7 +7,7 @@
 
     open FsCoreSerializer.Utils
 
-    // Code largely taken from Kurt Schelftout's FsReflect project: 
+    // Code largely taken from Kurt Schelfthout's FsReflect project: 
     // http://fortysix-and-two.blogspot.gr/2012/05/making-f-reflection-faster.html
     // added support for Union tag readers, tuples and exceptions
 
