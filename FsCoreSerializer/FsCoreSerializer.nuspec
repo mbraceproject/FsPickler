@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>FsCoreSerializer</id>
+    <version>0.3</version>
+    <title>FsCoreSerializer</title>
+    <authors>Eirik Tsarpalis</authors>
+    <owners>Eirik Tsarpalis</owners>
+<!--
+    <licenseUrl>http://LICENSE_URL_HERE_OR_DELETE_THIS_LINE</licenseUrl>
+    <projectUrl>http://PROJECT_URL_HERE_OR_DELETE_THIS_LINE</projectUrl>
+    <iconUrl>http://ICON_URL_HERE_OR_DELETE_THIS_LINE</iconUrl>
+-->
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Fast serializer for F# core types</description>
+    <releaseNotes>Provided "as is" with no express or implied warranty.</releaseNotes>
+<!--    <copyright>Copyright 2013</copyright> -->
+    <tags>F# serialization</tags>
+  </metadata>
+</package>
