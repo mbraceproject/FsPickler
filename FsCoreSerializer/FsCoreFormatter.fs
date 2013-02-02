@@ -777,20 +777,12 @@
 
             YParametric initial (fun (self : Type -> Formatter option cell) cont t ->
                 // cache resolution
-                let cachedResult = globalCache.TryFind t.AssemblyQualifiedName
+                match globalCache.TryFind t.AssemblyQualifiedName with
+                | Some r -> cont r
+                | None ->
 
-                // subtype resolution
-                let cachedResult =
-                    match cachedResult with
-                    | None when t.BaseType <> null ->
-                        match (self t.BaseType).Value with
-                        | Some fmt when fmt.ValidForSubtypes -> Some(Some fmt)
-                        | _ -> None
-                    | r -> r
-
-                if cachedResult.IsSome then cont cachedResult.Value else
-
-                // actual formatter resolution
+                // formatter not in cache, go ahead with resolution
+                // for starters, look for known generic types
 
                 let result =
                     if t.IsGenericType then
@@ -802,6 +794,8 @@
                             | None -> None
                             | Some gfd -> callGenericFormatter self gfd.ImplKind t None |> Some
                     else None
+
+                // if that fails, resolve F# core types
 
                 let result =
                     match result with
@@ -821,7 +815,17 @@
                             mkFuncFormatter memberInfoFormatter t |> Some
                         else None
 
+                // finally, look for formatters in subtypes
 
+                let result =
+                    match result with
+                    | None when t.BaseType <> null ->
+                        match (self t.BaseType).Value with
+                        | Some fmt when fmt.ValidForSubtypes -> Some fmt
+                        | _ -> None
+                    | r -> r
+                
+                // commit result
                 cont result)
 
 
