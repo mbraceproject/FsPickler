@@ -58,16 +58,16 @@ test 10 fsc bigObj
 test 10 ndc bigObj // stack overflow
 test 10 bfs bigObj
 
-let t = "hello world!!!!sdkfhjsdjkl;ghsfjksfjkghdfjhwgeflshrg8iw354tylerjhfgdskjlfghdslgjhdfjkhdfvjbdlds"
+let longstr = "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
 
-let smallArr = Array.init 500 (fun i -> t + string i)
+let smallArr = Array.init 500 (fun i -> longstr + string i)
 
 test 1000 fsc smallArr
 test 1000 ndc smallArr
 test 1000 bfs smallArr
 
 
-let bigArr = Array.init 1000000 (fun i -> t + string i)
+let bigArr = Array.init 1000000 (fun i -> longstr + string i)
 
 test 10 fsc bigArr
 test 10 ndc bigArr
@@ -79,13 +79,13 @@ test 10 fsc bigFlt
 test 10 ndc bigFlt
 test 10 bfs bigFlt
 
-let smallLst = [ for i in 1 .. 1000 -> t + string i ]
+let smallLst = [ for i in 1 .. 1000 -> longstr + string i ]
 
 test 1000 fsc smallLst
 test 1000 ndc smallLst
 test 1000 bfs smallLst
 
-let bigLst = [for i in 1 .. 1000000 -> t + string i ]
+let bigLst = [for i in 1 .. 1000000 -> longstr + string i ]
 
 test 10 fsc bigLst
 test 10 ndc bigLst // stack overflow

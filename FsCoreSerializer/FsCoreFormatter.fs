@@ -15,7 +15,7 @@
     open FsCoreSerializer.Reflection
 
     type Formatter =
-        {
+        private {
             Type : Type
 
             Writer : Writer -> obj -> unit
@@ -32,7 +32,7 @@
         | CacheByRef
         | CacheByEquality
 
-    // used for implementing generic types
+    // used for implementing generic type serializers
     and IFormatterFactory =
         abstract member Create : unit -> Formatter
 
@@ -42,8 +42,7 @@
             ImplKind : Type
         }
 
-
-    and Writer internal (binaryWriter : BinaryWriter, externalWriter : obj -> unit, typeFormatter : Formatter, 
+    and Writer internal (binaryWriter : BinaryWriter, extWriter : obj -> unit, typeFormatter : Formatter, 
                                                 runtimeResolver : Type -> Formatter option, ?context : obj) =
 
         do assert(typeFormatter.Type = typeof<Type>)
@@ -101,14 +100,14 @@
                         let id = refIdx.HasId(o, first)
                         if first.Value then
                             binaryWriter.Write 2uy
-                            externalWriter o
+                            extWriter o
                             refIdx.GetId(o, first) |> ignore
                         else
                             binaryWriter.Write 3uy
                             binaryWriter.Write id
                     | NoCaching -> 
                         binaryWriter.Write 4uy
-                        externalWriter o
+                        extWriter o
                     | CacheByEquality ->
                         let v = ref 0L
                         if valIdx.TryGetValue(o, v) then
@@ -116,13 +115,13 @@
                             binaryWriter.Write v.Value
                         else 
                             binaryWriter.Write 6uy
-                            externalWriter o
+                            extWriter o
 
                             valIdx.Add(o, valCount)
                             valCount <- valCount + 1L
 
 
-    and Reader internal (binaryReader : BinaryReader, externalReader : unit -> obj, 
+    and Reader internal (binaryReader : BinaryReader, extReader : unit -> obj, 
                             typeFormatter : Formatter, runtimeResolver : Type -> Formatter option, ?context : obj) =
         do assert(typeFormatter.Type = typeof<Type>)
         
@@ -167,7 +166,7 @@
                 | Some fmt -> r.Read fmt
             | 2uy ->
                 // deserialize, ref caching
-                let o = externalReader ()
+                let o = extReader ()
                 refIdx.Add(refCount, o)
                 refCount <- refCount + 1L
                 o
@@ -177,14 +176,14 @@
                 refIdx.[id]
             | 4uy ->
                 // serialization without caching
-                externalReader ()
+                extReader ()
             | 5uy ->
                 // fetch eq cached object
                 let id = binaryReader.ReadInt64()
                 valIdx.[id]
             | 6uy ->
                 // deserialize, eq caching
-                let o = externalReader ()
+                let o = extReader ()
                 valIdx.Add(valCount, o)
                 valCount <- valCount + 1L
                 o
@@ -263,7 +262,7 @@
 
 
         /// assuming formatter.Length = objs.Length
-        let inline zipWrite (formatters : Formatter option cell []) (w : Writer) (objs : obj []) : unit =
+        let inline zipWrite (formatters : Lazy<Formatter option> []) (w : Writer) (objs : obj []) : unit =
             for i = 0 to formatters.Length - 1 do
                 match formatters.[i].Value with
                 | Some fmt when fmt.ContainsRecTypes -> 
@@ -271,7 +270,7 @@
                     fmt.Writer w objs.[i]
                 | fmt -> write w fmt objs.[i]
 
-        let inline zipRead (formatters : Formatter option cell []) (r : Reader) : obj [] =
+        let inline zipRead (formatters : Lazy<Formatter option> []) (r : Reader) : obj [] =
             let objs = Array.zeroCreate formatters.Length
             for i = 0 to formatters.Length - 1 do
                 match formatters.[i].Value with
@@ -309,35 +308,42 @@
 
 
         //
-        // F# core types
+        // F# core ML types
         //
 
-        // interpret "None" as external serializer
-        let inline requiresExtern (fmt : Formatter option cell) = 
-            fmt.Value |> Option.forall (fun f -> f.RequiresExternalSerializer)
+        let inline requiresExternal (fmt : Lazy<Formatter option>) =
+            match fmt with
+            | ValueCreated (Some f) -> f.RequiresExternalSerializer
+            | ValueCreated None -> true
+            // non-initialized formatters are initially marked as not requiring external serializer
+            | _ -> false
 
-        let inline containsRectype (fmt : Formatter option cell) =
-            fmt.Value |> Option.exists (fun f -> f.ContainsRecTypes)
+        let inline containsRecursive (fmt : Lazy<Formatter option>) =
+            match fmt with
+            | ValueCreated (Some f) -> f.RequiresExternalSerializer
+            | ValueCreated None -> false
+            // returned formatters are not initialized iff they are recursive
+            | _ -> true
 
-        let mkUnionFormatter (resolver : Type -> Formatter option cell) cache (t : Type) =
+        let mkUnionFormatter (resolver : Type -> Lazy<Formatter option>) cache (t : Type) =
             let union = FsUnion.Create(t, allFlags)
 
             let reqExt = ref false
             let recTyp = ref false
 
-            let getBranchingFormatters (uci : UnionCaseInfo) =
+            let getBranchFormatters (uci : UnionCaseInfo) =
                 let formatters =
                     uci.GetFields() 
                     |> Array.map 
                         (fun f -> 
                             let fmt = resolver f.PropertyType
-                            reqExt := reqExt.Value || requiresExtern fmt
-                            recTyp := recTyp.Value || containsRectype fmt
+                            reqExt := reqExt.Value || requiresExternal fmt
+                            recTyp := recTyp.Value || containsRecursive fmt
                             fmt)
 
                 uci.Tag, formatters
             
-            let fmtMap = union.UCIs |> Seq.map getBranchingFormatters |> Map.ofSeq
+            let fmtMap = union.UCIs |> Seq.map getBranchFormatters |> Map.ofSeq
 
             let writer (w : Writer) (o : obj) =
                 let tag, fields = union.Decompose o
@@ -351,7 +357,7 @@
 
             mkFormatter2 union.DeclaringType cache reqExt.Value true recTyp.Value reader writer
 
-        let mkRecordFormatter (resolver : Type -> Formatter option cell) cache (t : Type) =
+        let mkRecordFormatter (resolver : Type -> Lazy<Formatter option>) cache (t : Type) =
             let record = FsRecord.Create(t, allFlags)
 
             let reqExt = ref false
@@ -360,8 +366,8 @@
             let formatters = 
                 record.Fields |> Array.map (fun f -> 
                                                 let fmt = resolver f.PropertyType
-                                                reqExt := reqExt.Value || requiresExtern fmt
-                                                recTyp := recTyp.Value || containsRectype fmt
+                                                reqExt := reqExt.Value || requiresExternal fmt
+                                                recTyp := recTyp.Value || containsRecursive fmt
                                                 fmt)
 
             let writer (w : Writer) (o : obj) =
@@ -374,7 +380,7 @@
 
             mkFormatter2 record.DeclaringType cache reqExt.Value false recTyp.Value reader writer
 
-        let mkTupleFormatter (resolver : Type -> Formatter option cell) cache (t : Type) =
+        let mkTupleFormatter (resolver : Type -> Lazy<Formatter option>) cache (t : Type) =
             let tuple = FsTuple.Create t
 
             let reqExt = ref false
@@ -382,8 +388,8 @@
             let formatters =
                 tuple.Elements |> Array.map (fun t -> 
                                                 let fmt = resolver t
-                                                reqExt := reqExt.Value || requiresExtern fmt
-                                                recTyp := recTyp.Value || containsRectype fmt
+                                                reqExt := reqExt.Value || requiresExternal fmt
+                                                recTyp := recTyp.Value || containsRecursive fmt
                                                 fmt)
 
             let writer (w : Writer) (o : obj) =
@@ -396,7 +402,7 @@
 
             mkFormatter2 t cache reqExt.Value false recTyp.Value reader writer
 
-        let mkExceptionFormatter (resolver : Type -> Formatter option cell) cache (t : Type) =
+        let mkExceptionFormatter (resolver : Type -> Lazy<Formatter option>) cache (t : Type) =
             let exn = FsException.Create(t, allFlags)
 
             let reqExt = ref false
@@ -404,8 +410,8 @@
             let formatters =
                 exn.Fields |> Array.map (fun f -> 
                                                 let fmt = resolver f.PropertyType
-                                                reqExt := reqExt.Value || requiresExtern fmt
-                                                recTyp := recTyp.Value || containsRectype fmt
+                                                reqExt := reqExt.Value || requiresExternal fmt
+                                                recTyp := recTyp.Value || containsRecursive fmt
                                                 fmt)
 
             let writer (w : Writer) (o : obj) =
@@ -438,7 +444,7 @@
                     | 1uy -> 
                         let ctorInfo = r.Read ctorFormatter :?> ConstructorInfo
                         ctorInfo.Invoke [||]
-                    | _ -> failwith "failed to deserialize lambda."
+                    | _ -> failwith "Invalid serialization stream."
                 
                 mkFormatter2 t CacheByRef true false false reader writer
             | false, Some ctorInfo ->
@@ -457,12 +463,12 @@
                 invalidArg "Invalid implementation kind." implKind.Name
             elif not (implKind.GetInterfaces() |> Seq.exists ((=) typeof<IFormatterFactory>)) then
                 invalidArg "Type does not implement IFormatterFactory." implKind.Name
-            elif implKind.GetConstructor [| typeof<Type -> Formatter option cell> ; typeof<Type> |] = null then
+            elif implKind.GetConstructor [| typeof<Type -> Lazy<Formatter option>> ; typeof<Type> |] = null then
                 invalidArg "Type does contain required constructor signature." implKind.Name
 
             { TargetKind = targetKind; ImplKind = implKind }
 
-        let callGenericFormatter (resolver : Type -> Formatter option cell) (implKind : Type) (t : Type) (tyParams : Type [] option) =
+        let callGenericFormatter (resolver : Type -> Lazy<Formatter option>) (implKind : Type) (t : Type) (tyParams : Type [] option) =
             let tyParams =
                 match tyParams with
                 | None -> t.GetGenericArguments()
@@ -479,7 +485,7 @@
 
         let bf = lazy(new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter())
 
-        type ArrayFormatter<'T>(resolver : Type -> Formatter option cell, t : Type) =
+        type ArrayFormatter<'T>(resolver : Type -> Lazy<Formatter option>, t : Type) =
             do assert(t.IsArray && t.GetElementType() = typeof<'T> )
 
             static let copy (src : Array) (dst : Array) =
@@ -584,9 +590,9 @@
                                 arr :> _
                             | _ -> failwith "impossible array rank"
 
-                    mkFormatter2 t CacheByRef (requiresExtern ef) false (containsRectype ef) reader writer
+                    mkFormatter2 t CacheByRef (requiresExternal ef) false (containsRecursive ef) reader writer
 
-        type KeyValueArrayFormatter<'K, 'V> (resolver : Type -> Formatter option cell, t : Type) =
+        type KeyValueArrayFormatter<'K, 'V> (resolver : Type -> Lazy<Formatter option>, t : Type) =
             do assert(t = typeof<('K * 'V) []>)
 
             interface IFormatterFactory with
@@ -601,9 +607,10 @@
                     let reader (r : Reader) =
                         readKVPair<'K,'V> kf.Value vf.Value r |> Array.ofSeq :> obj
 
-                    mkFormatter2 t CacheByRef (requiresExtern kf || requiresExtern vf) false (containsRectype kf || containsRectype vf) reader writer
+                    mkFormatter2 t CacheByRef (requiresExternal kf || requiresExternal vf) false 
+                                                (containsRecursive kf || containsRecursive vf) reader writer
 
-        let mkArrayFormatter (resolver : Type -> Formatter option cell) (t : Type) =
+        let mkArrayFormatter (resolver : Type -> Lazy<Formatter option>) (t : Type) =
             let et = t.GetElementType()
             let gt = if et.IsGenericType then Some <| et.GetGenericTypeDefinition() else None
 
@@ -616,7 +623,7 @@
 
 
 
-        type ListFormatter<'T> (resolver : Type -> Formatter option cell, t : Type) =
+        type ListFormatter<'T> (resolver : Type -> Lazy<Formatter option>, t : Type) =
             do assert(t = typeof<'T list>)
 
             interface IFormatterFactory with
@@ -641,9 +648,9 @@
                         else
                             readSeq<'T> ef.Value r |> Seq.toList :> obj
 
-                    mkFormatter2 t CacheByRef (requiresExtern ef) false (containsRectype ef) reader writer
+                    mkFormatter2 t CacheByRef (requiresExternal ef) false (containsRecursive ef) reader writer
 
-        type KeyValueListFormatter<'K, 'V> (resolver : Type -> Formatter option cell, t : Type) =
+        type KeyValueListFormatter<'K, 'V> (resolver : Type -> Lazy<Formatter option>, t : Type) =
             do assert(t = typeof<('K * 'V) list>)
 
             interface IFormatterFactory with
@@ -657,9 +664,10 @@
 
                     let reader (r : Reader) = readKVPair<'K, 'V> kf.Value vf.Value r |> Seq.toList :> obj
 
-                    mkFormatter2 t CacheByRef (requiresExtern kf || requiresExtern vf) false (containsRectype kf || containsRectype vf) reader writer
+                    mkFormatter2 t CacheByRef (requiresExternal kf || requiresExternal vf) false 
+                                                (containsRecursive kf || containsRecursive vf) reader writer
 
-        let mkListFormatter (resolver : Type -> Formatter option cell) (t : Type) =
+        let mkListFormatter (resolver : Type -> Lazy<Formatter option>) (t : Type) =
             let et = t.GetGenericArguments().[0]
             let gt = if et.IsGenericType then Some <| et.GetGenericTypeDefinition() else None
 
@@ -674,7 +682,7 @@
         // F# core generic types
         //
 
-        type OptionFormatter<'T> (resolver : Type -> Formatter option cell, t : Type) =
+        type OptionFormatter<'T> (resolver : Type -> Lazy<Formatter option>, t : Type) =
             do assert(t = typeof<'T option>)
 
             interface IFormatterFactory with
@@ -691,11 +699,11 @@
                             Some(read r ef.Value :?> 'T) :> obj
                         else None :> obj
 
-                    mkFormatter2 t NoCaching (requiresExtern ef) false (containsRectype ef) reader writer
+                    mkFormatter2 t NoCaching (requiresExternal ef) false (containsRecursive ef) reader writer
 
         let optionFormatter = mkGenericFormatterDescr typedefof<_ option> typedefof<OptionFormatter<_>>
 
-        type SetFormatter<'T when 'T : comparison> (resolver : Type -> Formatter option cell, t : Type) =
+        type SetFormatter<'T when 'T : comparison> (resolver : Type -> Lazy<Formatter option>, t : Type) =
             do assert(t = typeof<Set<'T>>)
 
             interface IFormatterFactory with
@@ -708,11 +716,11 @@
 
                     let reader (r : Reader) = readSeq<'T> ef.Value r |> Set.ofSeq |> box
 
-                    mkFormatter2 t CacheByRef (requiresExtern ef) false (containsRectype ef) reader writer
+                    mkFormatter2 t CacheByRef (requiresExternal ef) false (containsRecursive ef) reader writer
 
         let setFormatter = mkGenericFormatterDescr typedefof<Set<_>> typedefof<SetFormatter<_>>
 
-        type MapFormatter<'K, 'V when 'K : comparison> (resolver : Type -> Formatter option cell, t : Type) =
+        type MapFormatter<'K, 'V when 'K : comparison> (resolver : Type -> Lazy<Formatter option>, t : Type) =
             do assert(t = typeof<Map<'K,'V>>)
 
             interface IFormatterFactory with
@@ -727,11 +735,11 @@
                     let reader (r : Reader) =
                         readKVPair<'K,'V> kf.Value vf.Value r |> Map.ofSeq :> obj
 
-                    mkFormatter2 t CacheByRef (requiresExtern kf || requiresExtern vf) false (containsRectype kf || containsRectype vf) reader writer
+                    mkFormatter2 t CacheByRef (requiresExternal kf || requiresExternal vf) false (containsRecursive kf || containsRecursive vf) reader writer
 
         let mapFormatter = mkGenericFormatterDescr typedefof<Map<_,_>> typedefof<MapFormatter<_,_>>
 
-        type DictionaryFormatter<'K, 'V when 'K : comparison> (resolver : Type -> Formatter option cell, t : Type) =
+        type DictionaryFormatter<'K, 'V when 'K : comparison> (resolver : Type -> Lazy<Formatter option>, t : Type) =
             do assert(t = typeof<Dictionary<'K,'V>>)
 
             interface IFormatterFactory with
@@ -749,7 +757,8 @@
                         for k,v in kvs do d.Add(k,v)
                         d :> obj
 
-                    mkFormatter2 t CacheByRef (requiresExtern kf || requiresExtern vf) false (containsRectype kf || containsRectype vf) reader writer
+                    mkFormatter2 t CacheByRef (requiresExternal kf || requiresExternal vf) false 
+                                                (containsRecursive kf || containsRecursive vf) reader writer
 
         let dictFormatter = mkGenericFormatterDescr typedefof<Dictionary<_,_>> typedefof<DictionaryFormatter<_,_>>
 
@@ -769,20 +778,22 @@
                                 (genericCache : Map<string, GenericFormatterDescriptor>) 
                                 (globalCache : Map<string, Formatter option>) cacheMode =
 
-            // dummy initial formatter to found recursion upon
-            let initial t =
-                Some <|
-                mkFormatter2 t NoCaching false false true (fun _ -> failwith "Invalid serializer resolution.")
-                                                        (fun _ _ -> failwith "Invalid serializer resolution.")
-
-            YParametric initial (fun (self : Type -> Formatter option cell) cont t ->
+            YParametric (fun (self : Type -> Lazy<Formatter option>) t ->
                 // cache resolution
-                match globalCache.TryFind t.AssemblyQualifiedName with
-                | Some r -> cont r
-                | None ->
+                let cachedResult = globalCache.TryFind t.AssemblyQualifiedName
 
-                // formatter not in cache, go ahead with resolution
-                // for starters, look for known generic types
+                // subtype resolution
+                let cachedResult =
+                    match cachedResult with
+                    | None when t.BaseType <> null ->
+                        match (self t.BaseType).Value with
+                        | Some fmt when fmt.ValidForSubtypes -> Some(Some fmt)
+                        | _ -> None
+                    | r -> r
+
+                if cachedResult.IsSome then cachedResult.Value else
+
+                // actual formatter resolution
 
                 let result =
                     if t.IsGenericType then
@@ -794,8 +805,6 @@
                             | None -> None
                             | Some gfd -> callGenericFormatter self gfd.ImplKind t None |> Some
                     else None
-
-                // if that fails, resolve F# core types
 
                 let result =
                     match result with
@@ -815,25 +824,14 @@
                             mkFuncFormatter memberInfoFormatter t |> Some
                         else None
 
-                // finally, look for formatters in subtypes
-
-                let result =
-                    match result with
-                    | None when t.BaseType <> null ->
-                        match (self t.BaseType).Value with
-                        | Some fmt when fmt.ValidForSubtypes -> Some fmt
-                        | _ -> None
-                    | r -> r
-                
-                // commit result
-                cont result)
+                result)
 
 
     [<AutoOpen>]
     module FormatterExtensions =
         
         type Formatter with
-            static member Create(writer : Writer -> 'T -> unit, reader : Reader -> 'T, 
+            static member Create(reader : Reader -> 'T, writer : Writer -> 'T -> unit,
                                                 ?requiresExternalSerializer, ?useWithSubtypes, ?cacheMode) = 
                 let requiresExternalSerializer = defaultArg requiresExternalSerializer false
                 let cacheMode = defaultArg cacheMode CacheByRef
@@ -861,6 +859,6 @@
             let inline zipRead (r : Reader) (fmts : Formatter []) : obj [] =
                 let n = fmts.Length
                 let arr = Array.zeroCreate n
-                for i = 0 to n - 1 do
+                for i in 0 .. n - 1 do
                     arr.[i] <- r.Read fmts.[i]
                 arr

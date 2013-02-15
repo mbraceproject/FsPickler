@@ -8,8 +8,10 @@
         open System.IO
         open System.Threading
 
-        type Cell<'T>(x : 'T ref) = member __.Value = x.contents
+        type Cell<'T> = abstract Value : 'T
         and 'T cell = Cell<'T>
+        and ReadOnlyCell<'T>(r : 'T ref) =
+            interface Cell<'T> with member __.Value = r.contents
 
         type Atom<'T when 'T : not struct>(value : 'T) =
             let refCell = ref value
@@ -29,7 +31,7 @@
             member __.Swap (f : 'T -> 'T) : unit = swap f
             member __.Set (v : 'T) : unit = swap (fun _ -> v)
             member __.Transact (f : 'T -> 'T * 'S) : 'S = transact f  
-            member __.Cell = Cell refCell
+            member __.Cell = ReadOnlyCell refCell :> 'T cell
 
         [<RequireQualifiedAccess>]
         module Atom =
@@ -46,20 +48,26 @@
 
 
         /// fixpoint combinator for parametric mutual recursion
-        let YParametric (initial : 'a -> 'b) (F : ('a -> 'b cell) -> ('b -> 'b cell) -> 'a -> 'b cell) : 'a -> 'b =
-            let dict = new System.Collections.Generic.Dictionary<'a, 'b cell> ()
+        let YParametric (F : ('a -> Lazy<'b>) -> 'a -> 'b) (x : 'a) =
+            let dict = new System.Collections.Generic.Dictionary<'a, Lazy<'b>> ()
 
             let rec recurse (x : 'a) =
                 match dict.TryFind x with
                 | None ->
-                    let r = ref (initial x)
-                    let c = Cell r
-                    dict.Add(x, c)
-                    F recurse (fun b -> r := b; c) x
-                | Some c -> c
+                    let r = ref None
+                    let l = lazy (
+                        match r.Value with
+                        | None -> failwith "attemping to consume at construction time!"
+                        | Some v -> v)
+                    dict.Add(x, l)
+                    r := Some (F recurse x)
+                    let _ = l.Force() in l
+                | Some l -> l
 
-            fun x -> (recurse x).Value
+            (recurse x).Value
 
+        let (|ValueCreated|_|) (x : Lazy<'T>) =
+            if x.IsValueCreated then Some x.Value else None
 
         let inline writeInt (stream : Stream) (n : int) =
             let buf = Array.zeroCreate sizeof<int>

@@ -2,6 +2,7 @@
 
     open System
     open System.Reflection
+    open System.Collections.Generic
 
     open Microsoft.FSharp.Reflection
     open Microsoft.FSharp.Quotations
@@ -9,9 +10,10 @@
     open Microsoft.FSharp.Quotations.ExprShape
 
     open FsCoreSerializer.Utils
-    open FsCoreSerializer.FsCoreFormatterImpl
     open FsCoreSerializer.Reflection
+    open FsCoreSerializer.FsCoreFormatterImpl
 
+    let internal tyConv = Atom.atom (id,id)
     let typeFormatter =
         let writer (w : Writer) (t : Type) =
             match t.AssemblyQualifiedName with
@@ -24,21 +26,20 @@
                     failwithf "Could not encode type %A" t
             | aqn ->
                 w.BW.Write false
-                w.BW.Write aqn
+                let (tyConv,_) = tyConv.Value
+                w.BW.Write (tyConv aqn)
 
         let reader (r : Reader) : Type =
             if r.BR.ReadBoolean() then
                 // is generic type
                 let reflectedType = r.BR.ReadString()
                 let name = r.BR.ReadString()
-                try
-                    Type.GetType(reflectedType).GetGenericArguments() |> Array.find(fun a -> a.Name = name)
-                with _ -> invalidOp (sprintf "Could not load type \"%s\"" reflectedType)
+                try Type.GetType(reflectedType, true).GetGenericArguments() |> Array.find(fun a -> a.Name = name)
+                with :? KeyNotFoundException -> invalidOp (sprintf "Could not load type \"%s\"" reflectedType)
             else
-                let aqn = r.BR.ReadString()
-                let t = Type.GetType aqn
-                if t = null then invalidOp (sprintf "Could not load type \"%s\"" aqn)
-                else t
+                let (_,tyConvInv) = tyConv.Value
+                let aqn = tyConvInv(r.BR.ReadString())
+                Type.GetType(aqn, true)
 
         mkFormatter CacheByRef false true false reader writer
 
@@ -114,7 +115,7 @@
             new Var(r.BR.ReadString(), r.Read typeFormatter :?> Type, r.BR.ReadBoolean())
 
         // caching of variables is extremely imporant for quotation serialization
-        Formatter.Create(writer, reader, cacheMode = CacheByEquality)
+        Formatter.Create(reader, writer, cacheMode = CacheByEquality)
 
     let reflectionFormatters = [ typeFormatter ; memberInfoFormatter ; varFormatter ; unionCaseInfoFormatter ]
 
@@ -166,7 +167,7 @@
 
         mkFormatter CacheByRef true false false exprReader exprWriter
 
-    type ExprFormatter<'T> (resolver : Type -> Formatter option cell, t : Type) =
+    type ExprFormatter<'T> (resolver : Type -> Lazy<Formatter option>, t : Type) =
         do assert (t = typeof<Expr<'T>>)
 
         interface IFormatterFactory with
@@ -176,6 +177,6 @@
                     let e = exprFormatter.Reader r :?> Expr
                     Expr.Cast<'T> e
 
-                Formatter.Create(writer, reader, requiresExternalSerializer = true)
+                Formatter.Create(reader, writer, requiresExternalSerializer = true)
 
     let gExprFormatter = mkGenericFormatterDescr typedefof<Expr<_>> typedefof<ExprFormatter<_>>
