@@ -440,7 +440,7 @@
                         ctorInfo.Invoke [||]
                     | _ -> failwith "failed to deserialize lambda."
                 
-                mkFormatter2 t CacheByRef false false false reader writer
+                mkFormatter2 t CacheByRef true false false reader writer
             | false, Some ctorInfo ->
                 let dynamic = FSharpValue.PreComputeConstructor ctorInfo
                 
