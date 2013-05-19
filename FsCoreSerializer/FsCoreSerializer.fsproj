@@ -40,8 +40,13 @@
     <Compile Include="Reflection.fs" />
     <Compile Include="ISerializer.fs" />
     <Compile Include="Serializers.fs" />
-    <Compile Include="FsCoreFormatter.fs" />
-    <Compile Include="AdditionalFormatters.fs" />
+    <Compile Include="TypeFormatter.fs" />
+    <Compile Include="Formatter.fs" />
+    <Compile Include="BaseFormatters.fs" />
+    <Compile Include="ArrayFormatter.fs" />
+    <Compile Include="TypeShape.fs" />
+    <Compile Include="FSharpFormatters.fs" />
+    <Compile Include="FormatterResolution.fs" />
     <Compile Include="FsCoreSerializer.fs" />
     <None Include="Samples.fsx" />
   </ItemGroup>

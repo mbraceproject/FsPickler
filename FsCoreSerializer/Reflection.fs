@@ -1,4 +1,4 @@
-﻿namespace FsCoreSerializer
+﻿module internal FsCoreSerializer.Reflection
 
     open System
     open System.Reflection
@@ -16,27 +16,27 @@
     //https://msmvps.com/blogs/jon_skeet/archive/2008/08/09/making-reflection-fly-and-exploring-delegates.aspx
     //The result of all this hackery is that the four exposed reflection operations
     //are 10x to 20x faster.
-    module private ReflectionImpl =
+    module internal ReflectImpl =
+
+        type Marker = class end
 
         let allFlags = (enum<BindingFlags> Int32.MaxValue) &&& (~~~ BindingFlags.IgnoreCase)
 
         let isOptionTy (t : Type) =
             t.IsGenericType && t.GetGenericTypeDefinition() = typedefof<_ option>
 
-        let pushParams offset (generator:ILGenerator) (paramTypes:seq<Type>) =
-            let castFromObject typ =
-                if typ <> typeof<obj> then
-                    if typ.IsValueType then
-                        generator.Emit(OpCodes.Unbox_Any, typ)
-                    else
-                        generator.Emit(OpCodes.Castclass, typ)
+        let pushParam (arg : int) (idx : int) (generator : ILGenerator) (paramType : Type) =
+            generator.Emit(OpCodes.Ldarg, arg)
+            generator.Emit(OpCodes.Ldc_I4, idx)
+            generator.Emit(OpCodes.Ldelem_Ref)
+            if paramType <> typeof<obj> then
+                if paramType.IsValueType then
+                    generator.Emit(OpCodes.Unbox_Any, paramType)
+                else
+                    generator.Emit(OpCodes.Castclass, paramType)
 
-            paramTypes
-            |> Seq.iteri (fun i paramType -> 
-                            generator.Emit(OpCodes.Ldarg, 0)
-                            generator.Emit(OpCodes.Ldc_I4, offset + i)
-                            generator.Emit(OpCodes.Ldelem_Ref)
-                            castFromObject paramType) 
+        let pushParams arg offset gen (paramTypes:seq<Type>) =
+            paramTypes |> Seq.iteri (fun idx ty -> pushParam arg (idx + offset) gen ty)
                             
         let inline preComputeConstructor(ctorInfo : ConstructorInfo) =
             let meth = new DynamicMethod( "ctor", MethodAttributes.Static ||| MethodAttributes.Public,
@@ -46,8 +46,9 @@
             let generator = meth.GetILGenerator()
             let paramTypes = ctorInfo.GetParameters() |> Seq.map (fun pi -> pi.ParameterType)
 
-            pushParams 0 generator paramTypes
+            pushParams 0 0 generator paramTypes
             generator.Emit(OpCodes.Newobj, ctorInfo)
+            if ctorInfo.DeclaringType.IsValueType then generator.Emit(OpCodes.Box, ctorInfo.DeclaringType)
             generator.Emit(OpCodes.Ret)
 
             let dele = meth.CreateDelegate(typeof<Func<obj[],obj>>) :?> Func<obj[],obj>
@@ -80,10 +81,10 @@
                 let paramTypes = ctorInfo.GetParameters() |> Array.map (fun pi -> pi.ParameterType)
 
                 match nested with
-                | None -> pushParams offset generator paramTypes
+                | None -> pushParams 0 offset generator paramTypes
                 | Some nested ->
                     let n = paramTypes.Length
-                    pushParams offset generator (Seq.take (n-1) paramTypes)
+                    pushParams 0 offset generator (Seq.take (n-1) paramTypes)
                     traverse (offset + n - 1) nested
 
                 generator.Emit(OpCodes.Newobj, ctorInfo)
@@ -105,7 +106,7 @@
             let generator = meth.GetILGenerator()
 
             let invoker =
-                pushParams 0 generator paramTypes
+                pushParams 0 0 generator paramTypes
                 generator.Emit(OpCodes.Call, methodInfo)
                 generator.Emit(OpCodes.Ret)
                 meth.CreateDelegate(typeof<Func<obj[],obj>>) :?> Func<obj[],obj>
@@ -114,7 +115,7 @@
 
         // bundle multiple property getter methods in one dynamic method
         let preComputeGetters (declaringType : Type) (methods : MethodInfo []) : obj -> obj [] =
-            assert(methods |> Array.forall (fun m -> declaringType = m.DeclaringType && m.GetParameters().Length = 0))
+            assert(methods |> Array.forall (fun m -> declaringType.IsAssignableFrom(m.DeclaringType) && m.GetParameters().Length = 0))
             if methods.Length = 0 then (fun o -> [||]) else
 
             let meth = new DynamicMethod("fieldEvaluator", MethodAttributes.Static ||| MethodAttributes.Public,
@@ -155,6 +156,101 @@
 
             let dele = meth.CreateDelegate(typeof<Func<obj,obj[]>>) :?> Func<obj,obj[]>
 
+            dele.Invoke
+
+        let preComputeFieldReader (declaringType : Type) (fields : FieldInfo []) : obj -> obj [] =
+            assert(fields |> Array.forall (fun f -> f.DeclaringType.IsAssignableFrom declaringType))
+            if fields.Length = 0 then (fun o -> [||]) else
+
+            let meth = new DynamicMethod("fieldEvaluator", MethodAttributes.Static ||| MethodAttributes.Public,
+                                             CallingConventions.Standard, typeof<obj []>, 
+                                             [|typeof<obj>|], typeof<Marker>, true)
+            let generator = meth.GetILGenerator()
+
+            let unboxed = generator.DeclareLocal(declaringType)
+            let arr = generator.DeclareLocal(typeof<obj []>)
+
+            // init obj array
+            generator.Emit(OpCodes.Ldarg_0)
+            generator.Emit(OpCodes.Unbox_Any, declaringType)
+            generator.Emit(OpCodes.Stloc, unboxed)
+
+            // unbox input
+            generator.Emit(OpCodes.Ldc_I4, fields.Length)
+            generator.Emit(OpCodes.Newarr, typeof<obj>)
+            generator.Emit(OpCodes.Stloc, arr)
+
+            let computeField (idx : int) (f : FieldInfo) =
+                // arr.[idx] <- p.GetValue(o) :> obj
+                generator.Emit(OpCodes.Ldloc, arr)
+                generator.Emit(OpCodes.Ldc_I4, idx)
+
+                // call property getter
+                generator.Emit(OpCodes.Ldloc, unboxed)
+                generator.Emit(OpCodes.Ldfld, f)
+                if f.FieldType.IsValueType then generator.Emit(OpCodes.Box, f.FieldType)
+
+                // store
+                generator.Emit(OpCodes.Stelem_Ref)
+
+            fields |> Seq.iteri computeField
+
+            generator.Emit(OpCodes.Ldloc, arr)
+            generator.Emit(OpCodes.Ret)
+
+            let dele = meth.CreateDelegate(typeof<Func<obj,obj[]>>) :?> Func<obj,obj[]>
+
+            dele.Invoke
+
+        let preComputeObjInit (declaringType : Type) (fields : FieldInfo []) : obj * obj [] -> unit =
+            assert(fields |> Array.forall (fun f -> f.DeclaringType.IsAssignableFrom declaringType))
+
+            if fields.Length = 0 then ignore else
+
+            let meth = new DynamicMethod("populateObj", MethodAttributes.Static ||| MethodAttributes.Public,
+                                            CallingConventions.Standard, typeof<unit>, 
+                                            [|typeof<obj> ; typeof<obj []>|], typeof<Marker>, true)
+
+            let generator = meth.GetILGenerator()
+
+            generator.Emit OpCodes.Ldarg_0
+            if declaringType.IsValueType then
+                generator.Emit (OpCodes.Unbox, declaringType)
+
+            let populateField (idx : int) (f : FieldInfo) =
+                generator.Emit OpCodes.Dup
+                pushParam 1 idx generator f.FieldType
+                generator.Emit (OpCodes.Stfld, f)
+
+
+            fields |> Seq.iteri populateField
+
+//            generator.Emit OpCodes.Ldnull
+            generator.Emit OpCodes.Ret
+
+            let dele = meth.CreateDelegate(typeof<Func<obj, obj[], unit>>) :?> Func<obj, obj[], unit>
+
+            dele.Invoke
+
+        let precomputeMethod (declaringType : Type) (m : MethodInfo) : obj * obj [] -> obj =
+            assert (declaringType.IsAssignableFrom m.DeclaringType)
+
+            let meth = new DynamicMethod("mInvoke", MethodAttributes.Static ||| MethodAttributes.Public,
+                                            CallingConventions.Standard, typeof<obj>, 
+                                            [|typeof<obj> ; typeof<obj []>|], typeof<Marker>, true)
+
+            let generator = meth.GetILGenerator()
+
+            generator.Emit OpCodes.Ldarg_0
+            pushParams 1 0 generator (m.GetParameters() |> Seq.map (fun p -> p.ParameterType))
+            generator.Emit (OpCodes.Call, m)
+            
+            if m.ReturnType = typeof<Void> then generator.Emit OpCodes.Ldnull
+            elif m.ReturnType.IsValueType then generator.Emit(OpCodes.Box, m.ReturnType)
+            
+            generator.Emit OpCodes.Ret
+
+            let dele = meth.CreateDelegate(typeof<Func<obj, obj [], obj>>) :?> Func<obj, obj [], obj>
             dele.Invoke
 
         let wantNonPublic bindingFlags =
@@ -257,133 +353,98 @@
             isRecursiveTy0 t branches
         
 
-    module Reflection =
 
-        type FSharpValue =
-            static member PreComputeRecordConstructor(recordType:Type,?bindingFlags:BindingFlags) =
-                ReflectionImpl.preComputeRecordContructor(recordType,bindingFlags)
-            static member PreComputeUnionConstructor(unionCase:UnionCaseInfo, ?bindingFlags:BindingFlags) =
-                ReflectionImpl.preComputeUnionConstructor(unionCase,bindingFlags)
-            static member PreComputeExceptionConstructor(exnT,?bindingFlags) =
-                ReflectionImpl.preComputeExceptionConstructor(exnT, bindingFlags)
-            static member PreComputeRecordReader(recordType:Type, ?bindingFlags:BindingFlags) : obj -> obj[] =
-                ReflectionImpl.preComputeRecordReader(recordType,bindingFlags)
-            static member PreComputeUnionReader(unionCase:UnionCaseInfo, ?bindingFlags:BindingFlags) : obj -> obj[] =
-                ReflectionImpl.preComputeUnionReader(unionCase, bindingFlags)
-            static member PreComputeExceptionReader(exnT:Type, ?bindingFlags:BindingFlags) : obj -> obj[] =
-                ReflectionImpl.preComputeExceptionReader(exnT, bindingFlags)
-            static member PreComputeConstructor(ctorInfo : ConstructorInfo) = 
-                ReflectionImpl.preComputeConstructor ctorInfo
-            static member PreComputePropertyGetters(t : Type, properties : PropertyInfo [], ?bindingFlags:BindingFlags) : obj -> obj [] =
-                let isValid (p : PropertyInfo) = p.DeclaringType = t
-                if not <| Array.forall isValid properties then invalidArg "invalid property getters" "getters"
-                ReflectionImpl.preComputeFieldsReader bindingFlags t properties
+    type FSharpValue =
+        static member PreComputeRecordConstructor(recordType:Type,?bindingFlags:BindingFlags) =
+            ReflectImpl.preComputeRecordContructor(recordType,bindingFlags)
+        static member PreComputeUnionConstructor(unionCase:UnionCaseInfo, ?bindingFlags:BindingFlags) =
+            ReflectImpl.preComputeUnionConstructor(unionCase,bindingFlags)
+        static member PreComputeExceptionConstructor(exnT,?bindingFlags) =
+            ReflectImpl.preComputeExceptionConstructor(exnT, bindingFlags)
+        static member PreComputeRecordReader(recordType:Type, ?bindingFlags:BindingFlags) : obj -> obj[] =
+            ReflectImpl.preComputeRecordReader(recordType,bindingFlags)
+        static member PreComputeUnionReader(unionCase:UnionCaseInfo, ?bindingFlags:BindingFlags) : obj -> obj[] =
+            ReflectImpl.preComputeUnionReader(unionCase, bindingFlags)
+        static member PreComputeExceptionReader(exnT:Type, ?bindingFlags:BindingFlags) : obj -> obj[] =
+            ReflectImpl.preComputeExceptionReader(exnT, bindingFlags)
+        static member PreComputeConstructor(ctorInfo : ConstructorInfo) = 
+            ReflectImpl.preComputeConstructor ctorInfo
+        static member PreComputeFieldReader(t : Type, fields : FieldInfo []) : obj -> obj [] =
+            ReflectImpl.preComputeFieldReader t fields
+        static member PreComputeObjectInitializer(t : Type, fields : FieldInfo []) =
+            ReflectImpl.preComputeObjInit t fields
+        static member PreComputeMethod(t : Type, m : MethodInfo) : obj * obj [] -> obj =
+            ReflectImpl.precomputeMethod t m
+        static member PreComputePropertyGetters(t : Type, properties : PropertyInfo [], ?bindingFlags:BindingFlags) : obj -> obj [] =
+            let isValid (p : PropertyInfo) = p.DeclaringType = t
+            if not <| Array.forall isValid properties then invalidArg "invalid property getters" "getters"
+            ReflectImpl.preComputeFieldsReader bindingFlags t properties
 
-        type FSharpType =
-            static member IsRecursive(t : Type) = ReflectionImpl.isRecursiveTy t
+    type FSharpType =
+        static member IsRecursive(t : Type) = ReflectImpl.isRecursiveTy t
 
 
-        // a few pretty wrappers for our F# types
-
-        type FsUnion(union : Type, ?bindingFlags) =
-            let ucis = FSharpType.GetUnionCases(union, ?bindingFlags = bindingFlags)
-            let declaringType = if ucis.Length > 0 then ucis.[0].DeclaringType else union
+    type FsUnion(union : Type, ?bindingFlags) =
+        let ucis = FSharpType.GetUnionCases(union, ?bindingFlags = bindingFlags)
+        let declaringType = if ucis.Length > 0 then ucis.[0].DeclaringType else union
         
-            let tagMap =
-                ucis    |> Seq.map(fun uci -> uci.Tag, (uci, ReflectionImpl.preComputeUnionConstructor(uci, bindingFlags),
-                                                                    ReflectionImpl.preComputeUnionReader(uci, bindingFlags)))
-                        |> Map.ofSeq
+        let tagMap =
+            ucis    |> Seq.map(fun uci -> uci.Tag, (uci, ReflectImpl.preComputeUnionConstructor(uci, bindingFlags),
+                                                                ReflectImpl.preComputeUnionReader(uci, bindingFlags)))
+                    |> Map.ofSeq
 
-            let isRecursive = lazy(
-                let ts = ucis |> Seq.collect (fun uci -> uci.GetFields() |> Seq.map (fun f -> f.PropertyType))
-                ReflectionImpl.isRecursiveTy0 declaringType ts)
+        let isRecursive = lazy(
+            let ts = ucis |> Seq.collect (fun uci -> uci.GetFields() |> Seq.map (fun f -> f.PropertyType))
+            ReflectImpl.isRecursiveTy0 declaringType ts)
 
-            let tagReader = ReflectionImpl.preComputeUnionTagReader (declaringType, bindingFlags)
+        let tagReader = ReflectImpl.preComputeUnionTagReader (declaringType, bindingFlags)
 
-            // index for globally memoizing unions
-            static let memoIdx = Atom.atom Map.empty<string * BindingFlags option, FsUnion>
-            static member Create(t : Type, ?bindingFlags : BindingFlags) =
-                let k = t.AssemblyQualifiedName, bindingFlags
-                match memoIdx.Value.TryFind k with
-                | Some u -> u
-                | None ->
-                    let u = new FsUnion(t, ?bindingFlags = bindingFlags)
-                    memoIdx.Swap(fun m -> m.Add(k, u))
-                    u
-
-            member __.GetTag (o : obj) = tagReader o
-            member __.UCIs = ucis
-            member __.GetUCI (o : obj) = let uci,_,_ = tagMap.[tagReader o] in uci
-            member __.Decompose (o : obj) = let tag = tagReader o in let _,_,reader = tagMap.[tag] in tag, reader o
-            member __.Compose (tag : int, parameters : obj []) = let _,cons,_ = tagMap.[tag] in cons parameters
-            member __.DeclaringType = declaringType
-            member __.IsRecursive = isRecursive.Value
+        member __.GetTag (o : obj) = tagReader o
+        member __.UCIs = ucis
+        member __.GetUCI (o : obj) = let uci,_,_ = tagMap.[tagReader o] in uci
+        member __.Decompose (o : obj) = let tag = tagReader o in let _,_,reader = tagMap.[tag] in tag, reader o
+        member __.DecomposeUCI (o : obj) = let uci,_,reader = tagMap.[tagReader o] in uci, reader o
+        member __.Compose (tag : int, parameters : obj []) = let _,cons,_ = tagMap.[tag] in cons parameters
+        member __.Compose (uci : UnionCaseInfo, parameters : obj []) = __.Compose(uci.Tag, parameters)
+        member __.DeclaringType = declaringType
+        member __.IsRecursive = isRecursive.Value
 
 
-        type FsRecord(record : Type, ?bindingFlags) =
-            let fields = FSharpType.GetRecordFields(record, ?bindingFlags = bindingFlags)
-            let constr = ReflectionImpl.preComputeRecordContructor(record, bindingFlags)
-            let reader = ReflectionImpl.preComputeRecordReader(record, bindingFlags)
+    type FsRecord(record : Type, ?bindingFlags) =
+        let fields = FSharpType.GetRecordFields(record, ?bindingFlags = bindingFlags)
+        let constr = ReflectImpl.preComputeRecordContructor(record, bindingFlags)
+        let reader = ReflectImpl.preComputeRecordReader(record, bindingFlags)
 
-            let isRecursive = lazy (
-                    let ts = fields |> Seq.map (fun f -> f.PropertyType)
-                    ReflectionImpl.isRecursiveTy0 record ts)
+        let isRecursive = lazy (
+                let ts = fields |> Seq.map (fun f -> f.PropertyType)
+                ReflectImpl.isRecursiveTy0 record ts)
 
-            // index for globally memoizing records
-            static let memoIdx = Atom.atom Map.empty<string * BindingFlags option, FsRecord>
-            static member Create(t : Type, ?bindingFlags : BindingFlags) =
-                let k = t.AssemblyQualifiedName, bindingFlags
-                match memoIdx.Value.TryFind k with
-                | Some r -> r
-                | None ->
-                    let r = new FsRecord(t, ?bindingFlags = bindingFlags)
-                    memoIdx.Swap(fun m -> m.Add(k, r))
-                    r
+        member __.DeclaringType = record
+        member __.Fields = fields
+        member __.Decompose (o : obj) = reader o
+        member __.Compose (fields : obj []) = constr fields
+        member __.IsRecursive = isRecursive.Value
 
-            member __.DeclaringType = record
-            member __.Fields = fields
-            member __.Decompose (o : obj) = reader o
-            member __.Compose (fields : obj []) = constr fields
-            member __.IsRecursive = isRecursive.Value
+    type FsTuple(tuple : Type) =
+        let elems = FSharpType.GetTupleElements tuple
+        let constr = ReflectImpl.preComputeTupleConstructor tuple
+        let reader = ReflectImpl.preComputeTupleReader tuple
 
-        type FsTuple(tuple : Type) =
-            let elems = FSharpType.GetTupleElements tuple
-            let constr = ReflectionImpl.preComputeTupleConstructor tuple
-            let reader = ReflectionImpl.preComputeTupleReader tuple
+        static member ofTypes(types : Type []) =
+            let tuple = FSharpType.MakeTupleType types
+            new FsTuple(tuple)
 
-            // index for globally memoizing tuples
-            static let memoIdx = Atom.atom Map.empty<string, FsTuple>
-            static member Create(t : Type) =
-                let k = t.AssemblyQualifiedName
-                match memoIdx.Value.TryFind k with
-                | Some t -> t
-                | None ->
-                    let t = new FsTuple(t)
-                    memoIdx.Swap(fun m -> m.Add(k, t))
-                    t
+        member __.Elements = elems
+        member __.Decompose (o : obj) = reader o
+        member __.Compose (fields : obj []) = constr fields
+        member __.DeclaringType = tuple
 
-            member __.Elements = elems
-            member __.Decompose (o : obj) = reader o
-            member __.Compose (fields : obj []) = constr fields
-            member __.DeclaringType = tuple
+    type FsException(exnT : Type, ?bindingFlags) =
+        let fields = FSharpType.GetExceptionFields(exnT, ?bindingFlags = bindingFlags)
+        let constr = ReflectImpl.preComputeExceptionConstructor(exnT, bindingFlags)
+        let reader = ReflectImpl.preComputeExceptionReader(exnT, bindingFlags)
 
-        type FsException(exnT : Type, ?bindingFlags) =
-            let fields = FSharpType.GetExceptionFields(exnT, ?bindingFlags = bindingFlags)
-            let constr = ReflectionImpl.preComputeExceptionConstructor(exnT, bindingFlags)
-            let reader = ReflectionImpl.preComputeExceptionReader(exnT, bindingFlags)
-
-            // index for globally memoizing exceptions
-            static let memoIdx = Atom.atom Map.empty<string * BindingFlags option, FsException>
-            static member Create(t : Type, ?bindingFlags : BindingFlags) =
-                let k = t.AssemblyQualifiedName, bindingFlags
-                match memoIdx.Value.TryFind k with
-                | Some u -> u
-                | None ->
-                    let e = new FsException(t, ?bindingFlags = bindingFlags)
-                    memoIdx.Swap(fun m -> m.Add(k, e))
-                    e
-
-            member __.DeclaringType = exnT
-            member __.Fields = fields
-            member __.Decompose (o : obj) = reader o
-            member __.Compose (fields : obj []) = constr fields
+        member __.DeclaringType = exnT
+        member __.Fields = fields
+        member __.Decompose (o : obj) = reader o
+        member __.Compose (fields : obj []) = constr fields
