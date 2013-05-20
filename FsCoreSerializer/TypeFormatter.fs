@@ -1,23 +1,22 @@
 ﻿namespace FsCoreSerializer
 
     open System
-
-    // TODO : directly access type formatter from Reader/Writer
+    open System.IO
 
     // holds type name conversion rules
-    type ITypeSerializer =
+    type ITypeFormatter =
         abstract Write : Type -> string
         abstract Read : string -> Type
 
-    and TypeSerializer private () =
+    and TypeFormatter private () =
         static let mutable serializer = 
-            new DefaultTypeSerializer () :> ITypeSerializer
+            new DefaultTypeFormatter () :> ITypeFormatter
 
         static member Default
             with get () = serializer
             and set conv = serializer <- conv
 
-    and DefaultTypeSerializer () =
-        interface ITypeSerializer with
+    and DefaultTypeFormatter () =
+        interface ITypeFormatter with
             member __.Write (t : Type) = t.AssemblyQualifiedName
             member __.Read (aqn : string) = Type.GetType(aqn, true)

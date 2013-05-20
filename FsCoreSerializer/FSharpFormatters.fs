@@ -97,10 +97,16 @@
             Write = writer
             Read = reader
 
+#if OPTIMIZE_FSHARP
             FormatterInfo = FormatterInfo.FSharpValue
-            // do not cache and ignore subtype polymorphism for performance
+            // ignore subtype polymorphism checks in System.Tuple types for performance
             UseWithSubtypes = true
-            CacheObj = false
+            CacheObj = formatters.Length > 4
+#else
+            FormatterInfo = FormatterInfo.Custom
+            UseWithSubtypes = false
+            CacheObj = true
+#endif
         }
 
     let mkExceptionFormatter (resolver : Type -> Lazy<Formatter>) (t : Type) =
@@ -143,7 +149,7 @@
                     if ef.TypeInfo = TypeInfo.Primitive then
                         let arr = List.toArray l
                         w.BW.Write arr.Length
-                        do ArrayFormatter.Array.WriteBytes(w.BW.BaseStream, arr)
+                        do Stream.WriteArray(w.BW.BaseStream, arr)
                     else
                         let rec writeL (xs : 'T list) =
                             match xs with
@@ -159,7 +165,7 @@
 
                     if ef.TypeInfo = TypeInfo.Primitive then
                         let array = Array.zeroCreate<'T> length
-                        ArrayFormatter.Array.ReadBytes(r.BR.BaseStream, array)
+                        Stream.CopyToArray(r.BR.BaseStream, array)
                         Array.toList array
                     else
                         let array = Array.zeroCreate<'T> length
@@ -168,7 +174,7 @@
                                     
                         Array.toList array
 
-                mkFormatter FormatterInfo.Custom true true reader writer
+                mkFormatter FormatterInfo.Custom false true reader writer
 
     type PairFormatter () =
         interface IGenericFormatterFactory2 with
@@ -181,8 +187,12 @@
                 let reader (r : Reader) =
                     (read r tf.Value :?> 'T, read r sf.Value :?> 'S)
 
+#if OPTIMIZE_FSHARP
                 // do not cache or apply subtype polymorphism for performance
                 mkFormatter FormatterInfo.FSharpValue true false reader writer
+#else
+                mkFormatter FormatterInfo.Custom false false reader writer
+#endif
 
     type TripleFormatter () =
         interface IGenericFormatterFactory3 with
@@ -194,8 +204,12 @@
                 let inline reader (r : Reader) =
                     (read r t1f.Value :?> 'T1, read r t2f.Value :?> 'T2, read r t3f.Value :?> 'T3)
 
+#if OPTIMIZE_FSHARP
                 // do not cache or apply subtype polymorphism for performance
                 mkFormatter FormatterInfo.FSharpValue true false reader writer
+#else
+                mkFormatter FormatterInfo.Custom false false reader writer
+#endif 
 
     type OptionFormatter () =
         interface IGenericFormatterFactory1 with
@@ -212,8 +226,12 @@
                     else
                         Some(read r ef.Value :?> 'T)
 
+#if OPTIMIZE_FSHARP
                 // do not cache or apply subtype polymorphism for performance
                 mkFormatter FormatterInfo.FSharpValue true false reader writer
+#else
+                mkFormatter FormatterInfo.Custom false false reader writer
+#endif 
 
     type RefFormatter () =
         interface IGenericFormatterFactory1 with

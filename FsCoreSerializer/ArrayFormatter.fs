@@ -5,49 +5,9 @@
     open System.Threading
 
     open FsCoreSerializer
+    open FsCoreSerializer.Utils
     open FsCoreSerializer.BaseFormatters
     open FsCoreSerializer.BaseFormatters.Utils
-
-    module Array =
-
-        let internal bufferSize = 256    
-        let internal buffer = new ThreadLocal<byte []>(fun () -> Array.zeroCreate<byte> bufferSize)
-
-        let WriteBytes (stream : Stream, array : Array) =
-            do stream.Flush()
-
-            let buf = buffer.Value
-            let totalBytes = Buffer.ByteLength array
-
-            let d = totalBytes / bufferSize
-            let r = totalBytes % bufferSize
-
-            for i = 0 to d - 1 do
-                Buffer.BlockCopy(array, i * bufferSize, buf, 0, bufferSize)
-                stream.Write(buf, 0, bufferSize)
-
-            if r > 0 then
-                Buffer.BlockCopy(array, d * bufferSize, buf, 0, r)
-                stream.Write(buf, 0, r)
-
-        let ReadBytes (stream : Stream, array : Array) =
-            let buf = buffer.Value
-            let inline readBytes (n : int) =
-                if stream.Read(buf, 0, n) < n then
-                    raise <| new EndOfStreamException()
-        
-            let totalBytes = Buffer.ByteLength array
-
-            let d = totalBytes / bufferSize
-            let r = totalBytes % bufferSize
-
-            for i = 0 to d - 1 do
-                do readBytes bufferSize
-                Buffer.BlockCopy(buf, 0, array, i * bufferSize, bufferSize)
-
-            if r > 0 then
-                do readBytes r
-                Buffer.BlockCopy(buf, 0, array, d * bufferSize, r)
 
 
     type ArrayFormatter<'T> (t : Type) =
@@ -66,7 +26,7 @@
                     let ef = ef.Value
 
                     if ef.TypeInfo = TypeInfo.Primitive then
-                        Array.WriteBytes(w.BW.BaseStream, array)
+                        Stream.WriteArray(w.BW.BaseStream, array)
                     else        
                         match rank with
                         | 1 ->
@@ -109,7 +69,7 @@
 
                         r.EarlyRegisterObject array
 
-                        Array.ReadBytes(r.BR.BaseStream, array)
+                        Stream.CopyToArray(r.BR.BaseStream, array)
 
                         array :> obj
                     else

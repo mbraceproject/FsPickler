@@ -12,10 +12,10 @@
     open FsCoreSerializer.Reflection
     open FsCoreSerializer.Utils
 
-    module internal Utils =
+    module Utils =
 
         let containsAttr<'T when 'T :> Attribute> (m : MemberInfo) =
-            m.GetCustomAttributes< ^T>() |> Seq.isEmpty |> not
+            m.GetCustomAttributes< 'T>() |> Seq.isEmpty |> not
 
         let fieldBindings = 
             BindingFlags.NonPublic ||| BindingFlags.Public ||| 
@@ -127,7 +127,7 @@
         | 8 -> 
             mkFormatter FormatterInfo.Atomic false false (fun br -> br.BR.ReadInt64() |> nativeint) (fun bw x -> bw.BW.Write(int64 x)),
             mkFormatter FormatterInfo.Atomic false false (fun br -> br.BR.ReadUInt64() |> unativeint) (fun bw x -> bw.BW.Write(uint64 x))
-        | _ -> failwith "w00t!"
+        | _ -> failwith "unexpected sizeof<nativeint>"
 
     let primitiveFormatters =
         [   
@@ -163,22 +163,21 @@
     //  Reflection formatters
     //
 
-
     let typeFormatter =
         let writer (w : Writer) (t : Type) =
             if t.AssemblyQualifiedName = null then
                 if t.IsGenericParameter then
-                    w.BW.Write (TypeSerializer.Default.Write t.ReflectedType)
+                    w.BW.Write (TypeFormatter.Default.Write t.ReflectedType)
                     w.BW.Write true
                     w.BW.Write t.Name
                 else
                     raise <| new SerializationException(sprintf "invalid type '%s'" t.Name)
             else
-                w.BW.Write (TypeSerializer.Default.Write t)
+                w.BW.Write (TypeFormatter.Default.Write t)
                 w.BW.Write false
 
         let reader (r : Reader) : Type =
-            let t = TypeSerializer.Default.Read (r.BR.ReadString())
+            let t = TypeFormatter.Default.Read (r.BR.ReadString())
             if r.BR.ReadBoolean () then
                 let name = r.BR.ReadString()
                 try t.GetGenericArguments() |> Array.find(fun a -> a.Name = name)
@@ -193,9 +192,9 @@
 
         mkFormatter FormatterInfo.ReflectionType true true reader writer
 
-    let memberFormatter =
+    let memberInfoFormatter =
         let writer (w : Writer) (m : MemberInfo) =
-            write w typeFormatter m.DeclaringType
+            write w typeFormatter m.ReflectedType
             match m with
             | :? MethodInfo as m when m.IsGenericMethod && not m.IsGenericMethodDefinition ->
                 let gm = m.GetGenericMethodDefinition()
@@ -212,7 +211,7 @@
         let reader (r : Reader) =
             let t = read r typeFormatter :?> Type
             let mname = r.BR.ReadString()
-            let m = t.GetMembers(allFlags) |> Array.find (fun m -> m.ToString() = mname)
+            let m = t.GetMembers() |> Array.find (fun m -> m.ToString() = mname)
             if r.BR.ReadBoolean() then
                 let n = r.BR.ReadInt32()
                 let ga = Array.zeroCreate<Type> n
@@ -230,13 +229,13 @@
 
     let fieldHandleFormatter =
         mkFormatter FormatterInfo.ReflectionType true true
-                (fun r -> let f = read r memberFormatter :?> FieldInfo in f.FieldHandle)
-                (fun w fh -> write w memberFormatter (FieldInfo.GetFieldFromHandle fh))
+                (fun r -> let f = read r memberInfoFormatter :?> FieldInfo in f.FieldHandle)
+                (fun w fh -> write w memberInfoFormatter (FieldInfo.GetFieldFromHandle fh))
 
     let methodHandleFormatter =
         mkFormatter FormatterInfo.ReflectionType true true
-                (fun r -> let m = read r memberFormatter :?> MethodInfo in m.MethodHandle)
-                (fun w mh -> write w memberFormatter (MethodInfo.GetMethodFromHandle mh))
+                (fun r -> let m = read r memberInfoFormatter :?> MethodInfo in m.MethodHandle)
+                (fun w mh -> write w memberInfoFormatter (MethodInfo.GetMethodFromHandle mh))
 
     let assemblyNameFormatter =
         mkFormatter FormatterInfo.ReflectionType true true
@@ -245,15 +244,17 @@
 
     let reflectionFormatters =
         [ 
-            typeFormatter ; assemblyFormatter ; memberFormatter
+            typeFormatter ; assemblyFormatter ; memberInfoFormatter
             typeHandleFormatter ; fieldHandleFormatter ; methodHandleFormatter
             assemblyNameFormatter
         ]
 
     //
-    //  .NET serialization handlers
+    //  .NET serialization formatters
     //
 
+
+    // dummy formatter placeholder for abstract types
     let mkAbstractFormatter (t : Type) =
         {
             Type = t
@@ -268,23 +269,34 @@
             CacheObj = true
         }
 
+    // formatter builder for ISerializable types
+
     let tryMkISerializableFormatter (t : Type) =
         if typeof<ISerializable>.IsAssignableFrom t then
             match tryGetCtor t [| typeof<SerializationInfo> ; typeof<StreamingContext> |] with
             | None -> None
             | Some ctor ->
-                let ctorEmit = FSharpValue.PreComputeConstructor ctor
 
-                let allMethods = t.GetMethods(methodBindings) 
+#if EMIT_IL
+                let ctorFunc = FSharpValue.PreComputeConstructor ctor
                 let precompute (m : MethodInfo) = FSharpValue.PreComputeMethod(t, m)
+
+                let inline run o (sc : StreamingContext) (fs : (obj * obj [] -> obj) []) =
+                    for f in fs do f (o , [| sc :> obj |]) |> ignore
+#else
+                let inline ctorFunc args = ctor.Invoke args
+                let precompute = id
+
+                let inline run o (sc : StreamingContext) (ms : MethodInfo []) =
+                    for m in ms do m.Invoke(o, [| sc :> obj |]) |> ignore
+#endif
+
+                let allMethods = t.GetMethods(methodBindings)
                 
                 let onSerializing = allMethods |> Array.filter containsAttr<OnSerializingAttribute> |> Array.map precompute
                 let onSerialized = allMethods |> Array.filter containsAttr<OnSerializedAttribute> |> Array.map precompute
                 let onDeserialized = allMethods |> Array.filter containsAttr<OnDeserializedAttribute> |> Array.map precompute
                 let isDeserializationCallback = typeof<IDeserializationCallback>.IsAssignableFrom t
-
-                let inline run o (sc : StreamingContext) (fs : (obj * obj [] -> obj) []) =
-                    for f in fs do f(o , [| sc :> obj |]) |> ignore
 
                 let writer (w : Writer) (o : obj) =
                     run o w.StreamingContext onSerializing
@@ -307,7 +319,7 @@
                         let v = r.ReadObj ()
                         sI.AddValue(name, v)
 
-                    let o = ctorEmit [| sI :> obj ; r.StreamingContext :> obj |]
+                    let o = ctorFunc [| sI :> obj ; r.StreamingContext :> obj |]
                     run o r.StreamingContext onDeserialized
                     if isDeserializationCallback then (o :?> IDeserializationCallback).OnDeserialization null
                     o
@@ -326,12 +338,19 @@
                 }
         else None
 
+    // formatter builder for IFsCoreSerializable types
+
     let tryMkIFsCoreSerializable (t : Type) =
         if typeof<IFsCoreSerializable>.IsAssignableFrom t then
             match tryGetCtor t [| typeof<Reader> |] with
             | None -> None
             | Some ctor ->
-                let emittedCtor = FSharpValue.PreComputeConstructor ctor
+#if EMIT_IL
+                let ctorFunc = FSharpValue.PreComputeConstructor ctor
+#else
+                let inline ctorFunc args = ctor.Invoke args
+#endif
+    
 
                 Some {
                     Type = t
@@ -339,7 +358,7 @@
                     TypeHash = ObjHeader.getTruncatedHash t
 
                     Write = fun (w : Writer) (o : obj) -> (o :?> IFsCoreSerializable).GetObjectData(w)
-                    Read = fun (r : Reader) -> emittedCtor [| r :> obj |]
+                    Read = fun (r : Reader) -> ctorFunc [| r :> obj |]
 
                     FormatterInfo = FormatterInfo.IFsCoreSerializable
                     UseWithSubtypes = false
@@ -347,22 +366,33 @@
                 }
         else None
 
+
+    // reflection-based formatter derivation
+
     let mkReflectionFormatter (resolver : Type -> Lazy<Formatter>) (t : Type) =
         if t.IsPrimitive then raise <| new SerializationException(sprintf "could not derive serialization rules for '%s'." t.Name)
         elif t.IsAbstract then mkAbstractFormatter t
         elif not t.IsSerializable then raise <| new SerializationException(sprintf "type '%s' is marked as nonserializable." t.Name) else
+
+#if EMIT_IL
+        let precompute (m : MethodInfo) = FSharpValue.PreComputeMethod(t, m)
+
+        let inline run o (sc : StreamingContext) (fs : (obj * obj [] -> obj) []) =
+            for f in fs do f (o , [| sc :> obj |]) |> ignore
+#else
+        let precompute = id
+
+        let inline run o (sc : StreamingContext) (ms : MethodInfo []) =
+            for m in ms do m.Invoke(o, [| sc :> obj |]) |> ignore
+#endif
         
         let allMethods = t.GetMethods(methodBindings)
-        let precompute (m : MethodInfo) = FSharpValue.PreComputeMethod(t, m)
 
         let onSerializing = allMethods |> Array.filter containsAttr<OnSerializingAttribute> |> Array.map precompute
         let onSerialized = allMethods |> Array.filter containsAttr<OnSerializedAttribute> |> Array.map precompute
         let onDeserializing = allMethods |> Array.filter containsAttr<OnDeserializingAttribute> |> Array.map precompute
         let onDeserialized = allMethods |> Array.filter containsAttr<OnDeserializedAttribute> |> Array.map precompute
         let isDeserializationCallback = typeof<IDeserializationCallback>.IsAssignableFrom t
-
-        let inline run o (sc : StreamingContext) (fs : (obj * obj[] -> obj) []) =
-            for f in fs do f (o, [|sc :> obj|]) |> ignore
 
         let fields = t.GetFields(fieldBindings) |> Array.filter (not << containsAttr<NonSerializedAttribute>)
         let formatters = fields |> Array.map (fun f -> resolver f.FieldType)
@@ -401,6 +431,9 @@
             UseWithSubtypes = false
             CacheObj = true
         }
+
+
+    // formatter builder for enumerator types
 
     let mkEnumFormatter (resolver : Type -> Lazy<Formatter>) (t : Type) =
         let ut = Enum.GetUnderlyingType t

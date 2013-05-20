@@ -16,7 +16,7 @@
     //https://msmvps.com/blogs/jon_skeet/archive/2008/08/09/making-reflection-fly-and-exploring-delegates.aspx
     //The result of all this hackery is that the four exposed reflection operations
     //are 10x to 20x faster.
-    module internal ReflectImpl =
+    module internal ReflectionImpl =
 
         type Marker = class end
 
@@ -351,53 +351,27 @@
                 else Seq.empty
 
             isRecursiveTy0 t branches
-        
-
-
-    type FSharpValue =
-        static member PreComputeRecordConstructor(recordType:Type,?bindingFlags:BindingFlags) =
-            ReflectImpl.preComputeRecordContructor(recordType,bindingFlags)
-        static member PreComputeUnionConstructor(unionCase:UnionCaseInfo, ?bindingFlags:BindingFlags) =
-            ReflectImpl.preComputeUnionConstructor(unionCase,bindingFlags)
-        static member PreComputeExceptionConstructor(exnT,?bindingFlags) =
-            ReflectImpl.preComputeExceptionConstructor(exnT, bindingFlags)
-        static member PreComputeRecordReader(recordType:Type, ?bindingFlags:BindingFlags) : obj -> obj[] =
-            ReflectImpl.preComputeRecordReader(recordType,bindingFlags)
-        static member PreComputeUnionReader(unionCase:UnionCaseInfo, ?bindingFlags:BindingFlags) : obj -> obj[] =
-            ReflectImpl.preComputeUnionReader(unionCase, bindingFlags)
-        static member PreComputeExceptionReader(exnT:Type, ?bindingFlags:BindingFlags) : obj -> obj[] =
-            ReflectImpl.preComputeExceptionReader(exnT, bindingFlags)
-        static member PreComputeConstructor(ctorInfo : ConstructorInfo) = 
-            ReflectImpl.preComputeConstructor ctorInfo
-        static member PreComputeFieldReader(t : Type, fields : FieldInfo []) : obj -> obj [] =
-            ReflectImpl.preComputeFieldReader t fields
-        static member PreComputeObjectInitializer(t : Type, fields : FieldInfo []) =
-            ReflectImpl.preComputeObjInit t fields
-        static member PreComputeMethod(t : Type, m : MethodInfo) : obj * obj [] -> obj =
-            ReflectImpl.precomputeMethod t m
-        static member PreComputePropertyGetters(t : Type, properties : PropertyInfo [], ?bindingFlags:BindingFlags) : obj -> obj [] =
-            let isValid (p : PropertyInfo) = p.DeclaringType = t
-            if not <| Array.forall isValid properties then invalidArg "invalid property getters" "getters"
-            ReflectImpl.preComputeFieldsReader bindingFlags t properties
-
-    type FSharpType =
-        static member IsRecursive(t : Type) = ReflectImpl.isRecursiveTy t
 
 
     type FsUnion(union : Type, ?bindingFlags) =
         let ucis = FSharpType.GetUnionCases(union, ?bindingFlags = bindingFlags)
         let declaringType = if ucis.Length > 0 then ucis.[0].DeclaringType else union
         
+#if EMIT_IL
         let tagMap =
-            ucis    |> Seq.map(fun uci -> uci.Tag, (uci, ReflectImpl.preComputeUnionConstructor(uci, bindingFlags),
-                                                                ReflectImpl.preComputeUnionReader(uci, bindingFlags)))
+            ucis    |> Seq.map(fun uci -> uci.Tag, (uci, ReflectionImpl.preComputeUnionConstructor(uci, bindingFlags),
+                                                                ReflectionImpl.preComputeUnionReader(uci, bindingFlags)))
                     |> Map.ofSeq
 
-        let isRecursive = lazy(
-            let ts = ucis |> Seq.collect (fun uci -> uci.GetFields() |> Seq.map (fun f -> f.PropertyType))
-            ReflectImpl.isRecursiveTy0 declaringType ts)
+        let tagReader = ReflectionImpl.preComputeUnionTagReader (declaringType, bindingFlags)
+#else
+        let tagMap =
+            ucis    |> Seq.map(fun uci -> uci.Tag, (uci, FSharpValue.PreComputeUnionConstructor(uci, ?bindingFlags = bindingFlags),
+                                                                FSharpValue.PreComputeUnionReader(uci, ?bindingFlags = bindingFlags)))
+                    |> Map.ofSeq
 
-        let tagReader = ReflectImpl.preComputeUnionTagReader (declaringType, bindingFlags)
+        let tagReader = FSharpValue.PreComputeUnionTagReader (declaringType, ?bindingFlags = bindingFlags)
+#endif        
 
         member __.GetTag (o : obj) = tagReader o
         member __.UCIs = ucis
@@ -407,28 +381,36 @@
         member __.Compose (tag : int, parameters : obj []) = let _,cons,_ = tagMap.[tag] in cons parameters
         member __.Compose (uci : UnionCaseInfo, parameters : obj []) = __.Compose(uci.Tag, parameters)
         member __.DeclaringType = declaringType
-        member __.IsRecursive = isRecursive.Value
+        member __.IsRecursive = ReflectionImpl.isRecursiveTy union
 
 
     type FsRecord(record : Type, ?bindingFlags) =
         let fields = FSharpType.GetRecordFields(record, ?bindingFlags = bindingFlags)
-        let constr = ReflectImpl.preComputeRecordContructor(record, bindingFlags)
-        let reader = ReflectImpl.preComputeRecordReader(record, bindingFlags)
 
-        let isRecursive = lazy (
-                let ts = fields |> Seq.map (fun f -> f.PropertyType)
-                ReflectImpl.isRecursiveTy0 record ts)
+#if EMIT_IL
+        let constr = ReflectionImpl.preComputeRecordContructor(record, bindingFlags)
+        let reader = ReflectionImpl.preComputeRecordReader(record, bindingFlags)
+#else
+        let constr = FSharpValue.PreComputeRecordConstructor(record, ?bindingFlags = bindingFlags)
+        let reader = FSharpValue.PreComputeRecordReader(record, ?bindingFlags = bindingFlags)
+#endif
 
         member __.DeclaringType = record
         member __.Fields = fields
         member __.Decompose (o : obj) = reader o
         member __.Compose (fields : obj []) = constr fields
-        member __.IsRecursive = isRecursive.Value
+        member __.IsRecursive = ReflectionImpl.isRecursiveTy record
 
     type FsTuple(tuple : Type) =
         let elems = FSharpType.GetTupleElements tuple
-        let constr = ReflectImpl.preComputeTupleConstructor tuple
-        let reader = ReflectImpl.preComputeTupleReader tuple
+
+#if EMIT_IL
+        let constr = ReflectionImpl.preComputeTupleConstructor tuple
+        let reader = ReflectionImpl.preComputeTupleReader tuple
+#else
+        let constr = FSharpValue.PreComputeTupleConstructor tuple
+        let reader = FSharpValue.PreComputeTupleReader tuple
+#endif
 
         static member ofTypes(types : Type []) =
             let tuple = FSharpType.MakeTupleType types
@@ -439,12 +421,44 @@
         member __.Compose (fields : obj []) = constr fields
         member __.DeclaringType = tuple
 
+
     type FsException(exnT : Type, ?bindingFlags) =
         let fields = FSharpType.GetExceptionFields(exnT, ?bindingFlags = bindingFlags)
-        let constr = ReflectImpl.preComputeExceptionConstructor(exnT, bindingFlags)
-        let reader = ReflectImpl.preComputeExceptionReader(exnT, bindingFlags)
+
+        let constr = ReflectionImpl.preComputeExceptionConstructor(exnT, bindingFlags)
+        let reader = ReflectionImpl.preComputeExceptionReader(exnT, bindingFlags)
 
         member __.DeclaringType = exnT
         member __.Fields = fields
         member __.Decompose (o : obj) = reader o
         member __.Compose (fields : obj []) = constr fields
+
+
+    type FSharpValue =
+        static member PreComputeRecordConstructor(recordType:Type,?bindingFlags:BindingFlags) =
+            ReflectionImpl.preComputeRecordContructor(recordType,bindingFlags)
+        static member PreComputeUnionConstructor(unionCase:UnionCaseInfo, ?bindingFlags:BindingFlags) =
+            ReflectionImpl.preComputeUnionConstructor(unionCase,bindingFlags)
+        static member PreComputeExceptionConstructor(exnT,?bindingFlags) =
+            ReflectionImpl.preComputeExceptionConstructor(exnT, bindingFlags)
+        static member PreComputeRecordReader(recordType:Type, ?bindingFlags:BindingFlags) : obj -> obj[] =
+            ReflectionImpl.preComputeRecordReader(recordType,bindingFlags)
+        static member PreComputeUnionReader(unionCase:UnionCaseInfo, ?bindingFlags:BindingFlags) : obj -> obj[] =
+            ReflectionImpl.preComputeUnionReader(unionCase, bindingFlags)
+        static member PreComputeExceptionReader(exnT:Type, ?bindingFlags:BindingFlags) : obj -> obj[] =
+            ReflectionImpl.preComputeExceptionReader(exnT, bindingFlags)
+        static member PreComputeConstructor(ctorInfo : ConstructorInfo) = 
+            ReflectionImpl.preComputeConstructor ctorInfo
+        static member PreComputeFieldReader(t : Type, fields : FieldInfo []) : obj -> obj [] =
+            ReflectionImpl.preComputeFieldReader t fields
+        static member PreComputeObjectInitializer(t : Type, fields : FieldInfo []) =
+            ReflectionImpl.preComputeObjInit t fields
+        static member PreComputeMethod(t : Type, m : MethodInfo) : obj * obj [] -> obj =
+            ReflectionImpl.precomputeMethod t m
+        static member PreComputePropertyGetters(t : Type, properties : PropertyInfo [], ?bindingFlags:BindingFlags) : obj -> obj [] =
+            let isValid (p : PropertyInfo) = p.DeclaringType = t
+            if not <| Array.forall isValid properties then invalidArg "invalid property getters" "getters"
+            ReflectionImpl.preComputeFieldsReader bindingFlags t properties
+
+    type FSharpType =
+        static member IsRecursive(t : Type) = ReflectionImpl.isRecursiveTy t

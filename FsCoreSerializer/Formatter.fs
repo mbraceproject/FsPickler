@@ -8,47 +8,8 @@
     open System.Runtime.Serialization
 
 
-    // each reference type is serialized with a 32 bit header
-    //   1. the first byte is a fixed identifier
-    //   2. the next two bytes are a truncated hash which identifies the type being serialized
-    //   3. the third byte conveys serialization specific switches
-    //
-    module internal ObjHeader =
-
-        // literals are ridiculously faster than traditional enums
-
-        [<Literal>]
-        let initByte = 130uy
-
-        // control bits
-        [<Literal>]
-        let empty               = 0uy
-        [<Literal>]
-        let isNull              = 0b00000001uy
-        [<Literal>]
-        let isProperSubtype     = 0b00000010uy
-        [<Literal>]
-        let isNewInstance       = 0b00000100uy
-        [<Literal>]
-        let isCachedInstance    = 0b00001000uy
-
-        let getTruncatedHash (t : Type) =
-            let n = (TypeSerializer.Default.Write t).GetHashCode()
-            uint16 n ^^^ uint16 (n >>> 16)
-
-        let inline hasFlag (h : byte) (flag : byte) = h &&& flag = flag
-        
-        let inline create (hash : uint16) (flags : byte) =
-            uint32 initByte ||| (uint32 hash <<< 8) ||| (uint32 flags <<< 24)
-
-        let inline read (hash : uint16) (header : uint32) =
-            if byte header <> initByte || uint16 (header >>> 8) <> hash then 
-                raise <| new SerializationException("stream error")
-            else 
-                byte (header >>> 24)
-
-
-    type TypeInfo =
+    // stores precomputed information for the type being serialized
+    type internal TypeInfo =
         | Primitive = 0
         | Enum = 1
         | Value = 2
@@ -57,7 +18,7 @@
         | NonSealed = 5
         | Abstract = 6
 
-    type FormatterInfo =
+    type internal FormatterInfo =
         | Atomic = 0
         | ReflectionType = 1
         | ReflectionDerived = 2
@@ -79,7 +40,7 @@
 
             CacheObj : bool
             UseWithSubtypes : bool
-        }   
+        }
 
     and [<Sealed>] Writer internal (bw : BinaryWriter, typeFormatter : Formatter,
                                         resolver : Type -> Formatter, sc : StreamingContext) =
@@ -91,6 +52,7 @@
 
         member w.BW = bw
         member w.StreamingContext = sc
+        member w.ResolveFormatter (t : Type) = resolver t
         member w.WriteObj (f : Formatter, o : obj) =
             do RuntimeHelpers.EnsureSufficientExecutionStack()
 
@@ -146,6 +108,7 @@
                         f0.Write w o
                     else
                         writeHeader ObjHeader.empty
+                        f.Write w o
 
         member w.Write<'T>(t : 'T) = let f = resolver typeof<'T> in w.WriteObj(f, t)
         member w.WriteObj(t : Type, o : obj) = let f = resolver t in w.WriteObj(f, o)
@@ -167,6 +130,8 @@
         let mutable counter = 1L
         let mutable currentReflectedObjId = 0L
 
+        // objects deserialized with reflection-based rules are registered to the cache
+        // at the initialization stage to enable bindings in cyclic object graphs.
         member internal r.EarlyRegisterObject (o : obj) =
             if currentReflectedObjId = 0L then
                 raise <| new SerializationException("Unexpected reflected object binding.")
@@ -175,6 +140,7 @@
                 currentReflectedObjId <- 0L
 
         member r.BR = br
+        member r.ResolveFormatter (t : Type) = resolver t
         member r.StreamingContext = sc
 
         member r.ReadObj(f : Formatter) =
@@ -229,31 +195,3 @@
                 let t = r.ReadObj typeFormatter :?> Type
                 let f = resolver t
                 r.ReadObj f
-
-
-    // interface section
-
-    type IFsCoreSerializable =
-        // requires ctor : Reader -> IFsCoreSerializable
-        abstract GetObjectData : Writer -> unit
-
-    and IFormatterFactory =
-        abstract Create : (Type -> Lazy<Formatter>) -> Formatter
-
-    and IGenericFormatterFactory = interface end
-
-    and IGenericFormatterFactory1 =
-        inherit IGenericFormatterFactory
-        abstract Create<'T> : (Type -> Lazy<Formatter>) -> Formatter
-
-    and IGenericFormatterFactory2 =
-        inherit IGenericFormatterFactory
-        abstract Create<'T, 'S> : (Type -> Lazy<Formatter>) -> Formatter
-
-    and IGenericFormatterFactory3 =
-        inherit IGenericFormatterFactory
-        abstract Create<'T, 'S, 'U> : (Type -> Lazy<Formatter>) -> Formatter
-
-    and IGenericFormatterFactory4 =
-        inherit IGenericFormatterFactory
-        abstract Create<'T, 'S, 'U, 'V> : (Type -> Lazy<Formatter>) -> Formatter

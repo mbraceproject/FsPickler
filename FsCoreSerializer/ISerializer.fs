@@ -8,7 +8,3 @@
 
         abstract Serialize : stream : Stream * graph : obj * ?context : obj -> unit
         abstract Deserialize : stream : Stream * ?context : obj -> obj
-
-        // provision for serialization of multiple objects on the same stream
-        abstract WriteObj : stream : Stream * graph : obj * ?context : obj -> unit
-        abstract ReadObj : stream : Stream * ?context : obj -> obj

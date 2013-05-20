@@ -16,8 +16,7 @@
     open FsCoreSerializer.ArrayFormatter
     open FsCoreSerializer.FSharpFormatters
 
-    // Y combinator with parametric recursion
-
+    /// Y combinator with parametric recursion support
     let YParametric (externalCache : ConcurrentDictionary<'a, 'b>) (F : ('a -> Lazy<'b>) -> 'a -> 'b) (x : 'a) =
         // use internal cache to avoid corruption in event of exceptions being raised
         let internalCache = new Dictionary<'a , Lazy<'b>> ()
@@ -35,7 +34,7 @@
 
                     internalCache.Add(x, l)
                     r := Some (F recurse x)
-                    // recursive operation successful, commit to external state
+                    // recursive operation successful, commit to external cache
                     externalCache.TryAdd(x, l.Value) |> ignore
                     l
                 | Some l -> l
@@ -43,6 +42,8 @@
 
         (recurse x).Value
 
+
+    // recursive formatter resolution
 
     let resolveFormatter (genericIdx : GenericFormatterIndex) (self : Type -> Lazy<Formatter>) (t : Type) =
 
@@ -66,12 +67,16 @@
             | None ->
                 if FSharpType.IsTuple t then
                     mkTupleFormatter self t |> Some
+#if OPTIMIZE_FSHARP
                 elif FSharpType.IsUnion(t, allFlags) then
                     mkUnionFormatter self t |> Some
+#endif
                 elif FSharpType.IsRecord(t, allFlags) then
                     mkRecordFormatter self t |> Some
+#if EMIT_IL
                 elif FSharpType.IsExceptionRepresentation(t, allFlags) then
                     mkExceptionFormatter self t |> Some
+#endif
                 else None
 
         // subtype resolution

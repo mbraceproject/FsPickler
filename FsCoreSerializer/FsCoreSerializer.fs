@@ -32,16 +32,20 @@
 
         static let resolver t = YParametric formatterCache (resolveFormatter genericFormatters) t
 
-        static member RegisterTypeSerializer(tySerializer : ITypeSerializer) =
-            TypeSerializer.Default <- tySerializer
+        /// register custom type serialization rules; useful for FSI type serializations
+        static member RegisterTypeSerializer(tyFormatter : ITypeFormatter) : unit =
+            TypeFormatter.Default <- tyFormatter
 
+        /// register custom serialization rules for generic types
         static member RegisterGenericFormatter(gf : IGenericFormatterFactory) =
             genericFormatters.AddGenericFormatter gf
 
+        /// register an individual formatter
         static member RegisterFormatter(f : Formatter) =
             formatterCache.AddOrUpdate(f.Type, f, fun _ _ -> f)
-
-        static member internal ResolveFormatter (t : Type) = resolver t
+        
+        /// recursively resolves formatter for a given type
+        static member ResolveFormatter (t : Type) = resolver t
 
         member __.Serialize(stream : Stream, graph : obj, ?context : obj) =
             let sc = match context with None -> StreamingContext() | Some ctx -> StreamingContext(StreamingContextStates.All, ctx)
@@ -69,8 +73,6 @@
 
             member c.Serialize(stream : Stream, graph, ?context : obj) = c.Serialize(stream, graph, ?context = context)
             member c.Deserialize(stream : Stream, ?context : obj) = c.Deserialize(stream, ?context = context)
-            member c.WriteObj(stream : Stream, graph, ?context : obj) = c.Serialize(stream, graph, ?context = context)
-            member c.ReadObj(stream : Stream, ?context : obj) = c.Deserialize(stream, ?context = context)
 
 
     and FixedTypeSerializer(ty : Type) =
@@ -86,3 +88,29 @@
             let sc = match context with None -> StreamingContext() | Some ctx -> StreamingContext(StreamingContextStates.All, ctx)
             let r = new Reader(br, typeFormatter, FsCoreSerializer.ResolveFormatter, sc)
             r.ReadObj formatter
+
+
+
+    [<AutoOpen>]
+    module ExtensionMethods =
+
+        open FsCoreSerializer.ObjHeader
+        open FsCoreSerializer.BaseFormatters
+        open FsCoreSerializer.BaseFormatters.Utils
+        
+        type Formatter with
+            static member Create(reader : Reader -> 'T, writer : Writer -> 'T -> unit, ?cache, ?useWithSubtypes) =
+                let cache = defaultArg cache true
+                let useWithSubtypes = defaultArg useWithSubtypes false
+                mkFormatter FormatterInfo.Custom useWithSubtypes cache reader writer
+
+        type Writer with
+            member w.WriteSeq (xs : 'T seq) =
+                let fmt = w.ResolveFormatter typeof<'T>
+                let xs = Array.ofSeq xs
+                writeSeq w fmt xs.Length xs
+
+        type Reader with
+            member r.ReadSeq<'T> () =
+                let fmt = r.ResolveFormatter typeof<'T>
+                readSeq<'T> r fmt
