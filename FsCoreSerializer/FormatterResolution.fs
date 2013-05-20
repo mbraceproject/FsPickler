@@ -68,13 +68,13 @@
                 if FSharpType.IsTuple t then
                     mkTupleFormatter self t |> Some
 #if OPTIMIZE_FSHARP
-                elif FSharpType.IsUnion(t, allFlags) then
+                elif FSharpType.IsUnion(t, allMembers) then
                     mkUnionFormatter self t |> Some
 #endif
-                elif FSharpType.IsRecord(t, allFlags) then
+                elif FSharpType.IsRecord(t, allMembers) then
                     mkRecordFormatter self t |> Some
 #if EMIT_IL
-                elif FSharpType.IsExceptionRepresentation(t, allFlags) then
+                elif FSharpType.IsExceptionRepresentation(t, allMembers) then
                     mkExceptionFormatter self t |> Some
 #endif
                 else None

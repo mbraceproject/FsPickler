@@ -21,7 +21,7 @@
     //
 
     let mkUnionFormatter (resolver : Type -> Lazy<Formatter>) (t : Type) =
-        let union = new FsUnion(t, allFlags)
+        let union = new FsUnion(t, allMembers)
 
         let branchFormatters = 
             union.UCIs 
@@ -51,7 +51,7 @@
         }
 
     let mkRecordFormatter (resolver : Type -> Lazy<Formatter>) (t : Type) =
-        let record = new FsRecord(t, allFlags)
+        let record = new FsRecord(t, allMembers)
 
         let formatters = record.Fields |> Array.map (fun f -> resolver f.PropertyType)
 
@@ -110,7 +110,7 @@
         }
 
     let mkExceptionFormatter (resolver : Type -> Lazy<Formatter>) (t : Type) =
-        let exn = new FsException(t, allFlags)
+        let exn = new FsException(t, allMembers)
         let formatters = exn.Fields |> Array.map (fun f -> resolver f.PropertyType)
 
         let writer (w : Writer) (o : obj) =

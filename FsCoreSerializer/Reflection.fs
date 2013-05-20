@@ -20,7 +20,9 @@
 
         type Marker = class end
 
-        let allFlags = (enum<BindingFlags> Int32.MaxValue) &&& (~~~ BindingFlags.IgnoreCase)
+        let allMembers = 
+            BindingFlags.Public ||| BindingFlags.NonPublic ||| BindingFlags.Instance 
+                ||| BindingFlags.Static ||| BindingFlags.FlattenHierarchy
 
         let isOptionTy (t : Type) =
             t.IsGenericType && t.GetGenericTypeDefinition() = typedefof<_ option>
@@ -298,9 +300,9 @@
             if isOptionTy union then 
                 (fun (obj:obj) -> match obj with null -> 0 | _ -> 1)
             else
-                match union.GetProperty("Tag", allFlags) with
+                match union.GetProperty("Tag", allMembers) with
                 | null ->
-                    match union.GetMethod("GetTag", allFlags, null, [| union |], null) with
+                    match union.GetMethod("GetTag", allMembers, null, [| union |], null) with
                     | null -> fun _ -> 0 // unary DU
                     | meth -> 
                         let d = preComputeGetter meth

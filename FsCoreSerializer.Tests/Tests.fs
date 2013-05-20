@@ -3,6 +3,7 @@
     #nowarn "346"
 
     open System
+    open System.Reflection
     open System.Runtime.Serialization
 
     open FsUnit
@@ -22,6 +23,10 @@
 
         let testReflectedType (o : obj) =
             (test o).GetType() |> should equal (o.GetType())
+
+        let testMembers (t : Type) =
+            let members = t.GetMembers(BindingFlags.Public ||| BindingFlags.NonPublic ||| BindingFlags.Instance ||| BindingFlags.Static)
+            for m in members do test m |> should equal m
 
 
         // Test typedefs
@@ -109,7 +114,7 @@
         [<Test>] member __.``DateTime`` () = testEquals DateTime.Now
 
         [<Test>] member __.``System.Type`` () = testEquals typeof<int>
-        [<Test>] member __.``System.Reflection.MethodInfo`` () = testEquals <| typeof<int>.GetMethod("GetType")
+        [<Test>] member __.``System.Reflection.MethodInfo`` () = testMembers typeof<int> ; testMembers typedefof<GenericClass<_>>
         [<Test>] member __.``Option types`` () = testEquals (Some 42) ; testEquals (None : obj option) ; testEquals (Some (Some "test"))
         [<Test>] member __.``Tuples`` () = testEquals (2,3) ; testEquals (2, "test", Some (3, Some 2)) ; testEquals (1,2,3,4,5,(1,"test"),6,7,8,9,10)
         [<Test>] member __.``Simple DU`` () = testEquals A ; testEquals E ; testEquals (D(42, "42"))

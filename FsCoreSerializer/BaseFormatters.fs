@@ -21,15 +21,13 @@
             BindingFlags.NonPublic ||| BindingFlags.Public ||| 
                 BindingFlags.Instance ||| BindingFlags.FlattenHierarchy 
 
-        let methodBindings =
+        let allMembers =
             BindingFlags.NonPublic ||| BindingFlags.Public |||
                 BindingFlags.Instance ||| BindingFlags.Static ||| BindingFlags.FlattenHierarchy
 
         let ctorBindings = BindingFlags.Instance ||| BindingFlags.NonPublic ||| BindingFlags.Public
 
         let tryGetCtor (t : Type) (args : Type []) = denull <| t.GetConstructor(ctorBindings,null,args, [||]) 
-
-        let allFlags = enum<BindingFlags> Int32.MaxValue &&& ~~~ BindingFlags.IgnoreCase
 
         let getTypeInfo (t : Type) =
             if t.IsPrimitive then TypeInfo.Primitive
@@ -211,7 +209,7 @@
         let reader (r : Reader) =
             let t = read r typeFormatter :?> Type
             let mname = r.BR.ReadString()
-            let m = t.GetMembers() |> Array.find (fun m -> m.ToString() = mname)
+            let m = t.GetMembers(allMembers) |> Array.find (fun m -> m.ToString() = mname)
             if r.BR.ReadBoolean() then
                 let n = r.BR.ReadInt32()
                 let ga = Array.zeroCreate<Type> n
@@ -291,7 +289,7 @@
                     for m in ms do m.Invoke(o, [| sc :> obj |]) |> ignore
 #endif
 
-                let allMethods = t.GetMethods(methodBindings)
+                let allMethods = t.GetMethods(allMembers)
                 
                 let onSerializing = allMethods |> Array.filter containsAttr<OnSerializingAttribute> |> Array.map precompute
                 let onSerialized = allMethods |> Array.filter containsAttr<OnSerializedAttribute> |> Array.map precompute
@@ -386,7 +384,7 @@
             for m in ms do m.Invoke(o, [| sc :> obj |]) |> ignore
 #endif
         
-        let allMethods = t.GetMethods(methodBindings)
+        let allMethods = t.GetMethods(allMembers)
 
         let onSerializing = allMethods |> Array.filter containsAttr<OnSerializingAttribute> |> Array.map precompute
         let onSerialized = allMethods |> Array.filter containsAttr<OnSerializedAttribute> |> Array.map precompute
