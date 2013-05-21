@@ -1,8 +1,12 @@
-FsCoreSerializer
+FsCoreSerializer (v0.5)
 ================
 
-A general purpose serializer for F# core types.
-Based on Kurt Schelfthout's FsReflect (https://bitbucket.org/kurt/fsreflect)
-and the serializer implementation of Anton Tayanovskyy (http://fssnip.net/6u).
-Observed performance is up to 10-20x faster than that of .NET serializers for
-recursive algebraic datatypes.
+A general purpose binary serializer for .NET objects written in F#.
+* Serializers are precomputed in a compositional manner.
+* Uses dynamic methods over reflection for performance.
+* Supports most serializable .NET types, including classes implementing 
+  the ISerializable interface.
+* Highly optimized for the ML types used in F#.
+* Observed performance about 5-20x faster than most serializers bundled with .NET.
+
+For more information, see http://egtsrp.blogspot.com
