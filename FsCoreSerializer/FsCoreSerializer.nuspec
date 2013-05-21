@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>FsCoreSerializer</id>
-    <version>0.3</version>
+    <version>0.5</version>
     <title>FsCoreSerializer</title>
     <authors>Eirik Tsarpalis</authors>
     <owners>Eirik Tsarpalis</owners>
