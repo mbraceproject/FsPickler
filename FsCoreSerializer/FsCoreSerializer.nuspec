@@ -1,20 +1,23 @@
-<?xml version="1.0"?>
-<package >
-  <metadata>
-    <id>FsCoreSerializer</id>
-    <version>0.5</version>
-    <title>FsCoreSerializer</title>
-    <authors>Eirik Tsarpalis</authors>
-    <owners>Eirik Tsarpalis</owners>
-<!--
-    <licenseUrl>http://LICENSE_URL_HERE_OR_DELETE_THIS_LINE</licenseUrl>
-    <projectUrl>http://PROJECT_URL_HERE_OR_DELETE_THIS_LINE</projectUrl>
-    <iconUrl>http://ICON_URL_HERE_OR_DELETE_THIS_LINE</iconUrl>
--->
-    <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>Fast serializer for F# core types</description>
-    <releaseNotes>Provided "as is" with no express or implied warranty.</releaseNotes>
-<!--    <copyright>Copyright 2013</copyright> -->
-    <tags>F# serialization</tags>
-  </metadata>
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+    <metadata>
+        <id>FsCoreSerializer</id>
+        <version>0.5</version>
+        <title>FsCoreSerializer</title>
+        <authors>Eirik Tsarpalis</authors>
+        <owners>Eirik Tsarpalis</owners>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>* Serializers are precomputed in a compositional manner.
+* Uses dynamic methods over reflection for performance.
+* Supports most serializable .NET types, including classes implementing the ISerializable interface.
+* Highly optimized for the ML types used in F#.
+* Observed performance about 5-20x faster than most serializers bundled with .NET.
+
+Provided "as is" with no express or implied warranty.
+
+For more information, see http://egtsrp.blogspot.com/</description>
+        <summary>A general purpose binary serializer for .NET objects written in F#.</summary>
+        <releaseNotes>version 0.5 is a complete rewrite featuring serialization of arbitrary .NET types.</releaseNotes>
+        <tags>F#, serializer</tags>
+    </metadata>
 </package>
