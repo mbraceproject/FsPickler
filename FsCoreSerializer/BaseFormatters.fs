@@ -163,24 +163,22 @@
 
     let typeFormatter =
         let writer (w : Writer) (t : Type) =
-            if t.AssemblyQualifiedName = null then
-                if t.IsGenericParameter then
-                    w.BW.Write (TypeFormatter.Default.Write t.ReflectedType)
-                    w.BW.Write true
-                    w.BW.Write t.Name
-                else
-                    raise <| new SerializationException(sprintf "invalid type '%s'" t.Name)
+            if t.IsGenericParameter then
+                w.BW.Write (TypeFormatter.Default.Write t.ReflectedType)
+                w.BW.Write true
+                w.BW.Write t.Name
             else
                 w.BW.Write (TypeFormatter.Default.Write t)
                 w.BW.Write false
 
         let reader (r : Reader) : Type =
             let t = TypeFormatter.Default.Read (r.BR.ReadString())
-            if r.BR.ReadBoolean () then
+            if r.BR.ReadBoolean() then
                 let name = r.BR.ReadString()
                 try t.GetGenericArguments() |> Array.find(fun a -> a.Name = name)
-                with :? KeyNotFoundException -> raise <| new SerializationException(sprintf "cannot deserialize type '%s'" t.Name)
-            else t
+                with :? KeyNotFoundException -> raise <| new SerializationException(sprintf "cannot deserialize type '%s'" name)
+            else
+                t
 
         mkFormatter FormatterInfo.ReflectionType true true reader writer
 

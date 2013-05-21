@@ -32,6 +32,16 @@
 
         static let resolver t = YParametric formatterCache (resolveFormatter genericFormatters) t
 
+        /// initializes a writer object for given stream
+        static member GetObjWriter(stream : Stream, ?context : obj, ?leaveOpen) =
+            let sc = match context with None -> StreamingContext() | Some ctx -> StreamingContext(StreamingContextStates.All, ctx)
+            new Writer(stream, typeFormatter, resolver, sc, ?leaveOpen = leaveOpen)
+
+        /// initializes a reader object for given stream
+        static member GetObjReader(stream : Stream, ?context : obj, ?leaveOpen) =
+            let sc = match context with None -> StreamingContext() | Some ctx -> StreamingContext(StreamingContextStates.All, ctx)
+            new Reader(stream, typeFormatter, resolver, sc, ?leaveOpen = leaveOpen)
+
         /// register custom type serialization rules; useful for FSI type serializations
         static member RegisterTypeSerializer(tyFormatter : ITypeFormatter) : unit =
             TypeFormatter.Default <- tyFormatter
@@ -47,64 +57,26 @@
         /// recursively resolves formatter for a given type
         static member ResolveFormatter (t : Type) = resolver t
 
-        member __.Serialize(stream : Stream, graph : obj, ?context : obj) =
-            let sc = match context with None -> StreamingContext() | Some ctx -> StreamingContext(StreamingContextStates.All, ctx)
-            use bw = new BinaryWriter(stream, Encoding.UTF8, true)
-            let writer = new Writer(bw, typeFormatter, resolver, sc)
+        static member Serialize(stream : Stream, graph : obj, ?context : obj) =
+            use writer = FsCoreSerializer.GetObjWriter(stream, ?context = context, leaveOpen = true)
             writer.WriteObj graph
-            bw.Flush()
 
-        member __.Deserialize(stream : Stream, ?context : obj) =
-            let sc = match context with None -> StreamingContext() | Some ctx -> StreamingContext(StreamingContextStates.All, ctx)
-            use br = new BinaryReader(stream, Encoding.UTF8, true)
-            let reader = new Reader(br, typeFormatter, resolver, sc)
+        static member Deserialize(stream : Stream, ?context : obj) =
+            use reader = FsCoreSerializer.GetObjReader(stream, ?context = context, leaveOpen = true)
             reader.ReadObj ()
-
 
         interface ISerializer with
             member c.Serialize(graph : obj, ?context : obj) =
                 use mem = new MemoryStream()
-                c.Serialize(mem, graph, ?context = context)
+                FsCoreSerializer.Serialize(mem, graph, ?context = context)
                 mem.ToArray()
 
             member c.Deserialize(bytes : byte [], ?context : obj) =
                 use mem = new MemoryStream(bytes)
-                c.Deserialize(mem, ?context = context)
+                FsCoreSerializer.Deserialize(mem, ?context = context)
 
-            member c.Serialize(stream : Stream, graph, ?context : obj) = c.Serialize(stream, graph, ?context = context)
-            member c.Deserialize(stream : Stream, ?context : obj) = c.Deserialize(stream, ?context = context)
-
-
-    and FixedStreamSerializer(stream : Stream, ?fixedType, ?leaveOpen) =
-        let bw = new BinaryWriter(stream, Encoding.UTF8, defaultArg leaveOpen true)
-        let formatter = fixedType |> Option.map FsCoreSerializer.ResolveFormatter
-
-        member __.Serialize(o : obj, ?context : obj) =
-            let sc = match context with None -> StreamingContext() | Some ctx -> StreamingContext(StreamingContextStates.All, ctx)
-            let w = new Writer(bw, typeFormatter, FsCoreSerializer.ResolveFormatter, sc)
-            
-            match formatter with
-            | None -> w.WriteObj o
-            | Some fmt -> w.WriteObj(fmt, o)
-
-        interface IDisposable with
-            member __.Dispose () = bw.Flush () ; bw.Dispose()
-
-    and FixedStreamDeserializer(stream : Stream, ?fixedType, ?leaveOpen) =
-        let br = new BinaryReader(stream, Encoding.UTF8, defaultArg leaveOpen true)
-        let formatter = fixedType |> Option.map FsCoreSerializer.ResolveFormatter
-
-        member __.Deserialize(?context : obj) =
-            let sc = match context with None -> StreamingContext() | Some ctx -> StreamingContext(StreamingContextStates.All, ctx)
-            let r = new Reader(br, typeFormatter, FsCoreSerializer.ResolveFormatter, sc)
-
-            match formatter with
-            | None -> r.ReadObj ()
-            | Some fmt -> r.ReadObj fmt
-
-        interface IDisposable with
-            member __.Dispose () = br.Dispose ()
-
+            member c.Serialize(stream : Stream, graph, ?context : obj) = FsCoreSerializer.Serialize(stream, graph, ?context = context)
+            member c.Deserialize(stream : Stream, ?context : obj) = FsCoreSerializer.Deserialize(stream, ?context = context)
 
 
     [<AutoOpen>]

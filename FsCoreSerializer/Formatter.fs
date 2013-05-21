@@ -42,11 +42,12 @@
             UseWithSubtypes : bool
         }
 
-    and [<Sealed>] Writer internal (bw : BinaryWriter, typeFormatter : Formatter,
-                                        resolver : Type -> Formatter, sc : StreamingContext) =
+    and [<Sealed>] Writer internal (stream : Stream, typeFormatter : Formatter,
+                                        resolver : Type -> Formatter, sc : StreamingContext, ?leaveOpen) =
         
         do assert(typeFormatter.Type = typeof<Type>)
 
+        let bw = new BinaryWriter(stream, Encoding.UTF8, defaultArg leaveOpen true)
         let idGen = new ObjectIDGenerator()
         let objStack = new Stack<int64> ()
 
@@ -121,11 +122,16 @@
                 w.WriteObj(typeFormatter, t)
                 w.WriteObj(f, o)
 
-    and [<Sealed>] Reader internal (br : BinaryReader, typeFormatter : Formatter, 
-                                        resolver : Type -> Formatter, sc : StreamingContext) =
+
+        interface IDisposable with
+            member __.Dispose () = bw.Dispose ()
+
+    and [<Sealed>] Reader internal (stream : Stream, typeFormatter : Formatter, 
+                                        resolver : Type -> Formatter, sc : StreamingContext, ?leaveOpen) =
 
         do assert(typeFormatter.Type = typeof<Type>)
 
+        let br = new BinaryReader(stream, Encoding.UTF8, defaultArg leaveOpen true)
         let objCache = new Dictionary<int64, obj> ()
         let mutable counter = 1L
         let mutable currentReflectedObjId = 0L
@@ -195,3 +201,6 @@
                 let t = r.ReadObj typeFormatter :?> Type
                 let f = resolver t
                 r.ReadObj f
+
+        interface IDisposable with
+            member __.Dispose () = br.Dispose ()
