@@ -75,19 +75,35 @@
             member c.Deserialize(stream : Stream, ?context : obj) = c.Deserialize(stream, ?context = context)
 
 
-    and FixedTypeSerializer(ty : Type) =
+    and FixedStreamSerializer(stream : Stream, ?fixedType, ?leaveOpen) =
+        let bw = new BinaryWriter(stream, Encoding.UTF8, defaultArg leaveOpen true)
+        let formatter = fixedType |> Option.map FsCoreSerializer.ResolveFormatter
 
-        let formatter = FsCoreSerializer.ResolveFormatter ty
-
-        member __.Serialize(bw : BinaryWriter, o : obj, ?context : obj) =
+        member __.Serialize(o : obj, ?context : obj) =
             let sc = match context with None -> StreamingContext() | Some ctx -> StreamingContext(StreamingContextStates.All, ctx)
             let w = new Writer(bw, typeFormatter, FsCoreSerializer.ResolveFormatter, sc)
-            w.WriteObj(formatter, o)
+            
+            match formatter with
+            | None -> w.WriteObj o
+            | Some fmt -> w.WriteObj(fmt, o)
 
-        member __.Deserialize(br : BinaryReader, ?context : obj) : obj =
+        interface IDisposable with
+            member __.Dispose () = bw.Flush () ; bw.Dispose()
+
+    and FixedStreamDeserializer(stream : Stream, ?fixedType, ?leaveOpen) =
+        let br = new BinaryReader(stream, Encoding.UTF8, defaultArg leaveOpen true)
+        let formatter = fixedType |> Option.map FsCoreSerializer.ResolveFormatter
+
+        member __.Deserialize(?context : obj) =
             let sc = match context with None -> StreamingContext() | Some ctx -> StreamingContext(StreamingContextStates.All, ctx)
             let r = new Reader(br, typeFormatter, FsCoreSerializer.ResolveFormatter, sc)
-            r.ReadObj formatter
+
+            match formatter with
+            | None -> r.ReadObj ()
+            | Some fmt -> r.ReadObj fmt
+
+        interface IDisposable with
+            member __.Dispose () = br.Dispose ()
 
 
 

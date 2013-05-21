@@ -123,8 +123,13 @@
         [<Test>] member __.``Generic Class`` () = testEquals <| new GenericClass<string * int>("fortyTwo", 42)
         [<Test>] member __.``Recursive Class`` () = testEquals <| RecursiveClass(Some (RecursiveClass(None)))
         [<Test>] member __.``Cyclic Object`` () = testReflectedType <| CyclicClass()
-        [<Test>] member __.``Serializable Class`` () = testEquals <| SerializableClass(42, "fortyTwo")
-        [<Test>] member __.``FsCoreSerializable Class`` () = testEquals <| FsCoreSerializableClass(42, "fortyTwo")
+        [<Test>] member __.``ISerializable Class`` () = testEquals <| SerializableClass(42, "fortyTwo")
+        [<Test>] member __.``IFsCoreSerializable Class`` () = testEquals <| FsCoreSerializableClass(42, "fortyTwo")
+
+        [<Test>]
+        member __.``NonSerializable Type`` () =
+            let o = new System.IO.FileStream(System.IO.Path.GetTempFileName(), System.IO.FileMode.Open)
+            shouldFailWith<SerializationException>(fun () -> test o |> ignore)
         
         [<Test>] 
         member __.``Cyclic Array`` () = 

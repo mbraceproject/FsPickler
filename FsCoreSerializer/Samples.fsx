@@ -1,4 +1,4 @@
-﻿#r "bin/Release/FsCoreSerializer.dll"
+﻿#r "bin/Debug/FsCoreSerializer.dll"
 
 open FsCoreSerializer
 

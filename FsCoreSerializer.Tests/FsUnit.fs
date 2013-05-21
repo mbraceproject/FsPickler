@@ -47,7 +47,7 @@
 
     let throw = Throws.TypeOf
 
-    let expectExc<'Exn when 'Exn :> exn> (f : unit -> unit) =
+    let shouldFailWith<'Exn when 'Exn :> exn> (f : unit -> unit) =
         try
             f() ; raise <| new AssertionException(sprintf "Expected exception of type %s" (typeof<'Exn>.ToString()))
         with :? 'Exn -> ()
