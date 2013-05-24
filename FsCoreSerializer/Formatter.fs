@@ -163,7 +163,7 @@
                         if currentReflectedObjId <> 0L then
                             raise <| new SerializationException("Internal error: reader state is corrupt.")
                         
-                    if f.FormatterInfo = FormatterInfo.ReflectionDerived then
+                    if f.FormatterInfo = FormatterInfo.ReflectionDerived && f.TypeInfo > TypeInfo.Value then
                         do checkState ()
 
                         currentReflectedObjId <- id
