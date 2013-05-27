@@ -53,6 +53,10 @@
         /// register an individual formatter
         static member RegisterFormatter(f : Formatter) =
             formatterCache.AddOrUpdate(f.Type, f, fun _ _ -> f)
+            
+        /// register a formatter factory
+        static member RegisterFormatterFactory(ff : IFormatterFactory) =
+            FsCoreSerializer.RegisterFormatter(ff.Create resolver)
         
         /// recursively resolves formatter for a given type
         static member ResolveFormatter (t : Type) = resolver t
