@@ -13,6 +13,9 @@
     type ArrayFormatter<'T> (t : Type) =
 
         interface IFormatterFactory with
+
+            member __.Type = raise <| new NotSupportedException()
+
             member __.Create (resolver : Type -> Lazy<Formatter>) =
                 assert(typeof<'T> = t.GetElementType())
                 let ef = resolver typeof<'T>

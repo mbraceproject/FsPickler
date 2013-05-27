@@ -16,7 +16,9 @@
 
 
     type FsCoreSerializer () =
-        static let genericFormatters = 
+        static let formatterFactories = new ConcurrentDictionary<Type,IFormatterFactory> ()
+
+        static let genericFactories = 
             let gI = new GenericFormatterIndex()
             gI.AddGenericFormatters(genericFormatters) ; gI
 
@@ -30,7 +32,7 @@
             |> Seq.map (fun f -> KeyValuePair(f.Type, f)) 
             |> fun x -> new ConcurrentDictionary<_,_>(x)
 
-        static let resolver t = YParametric formatterCache (resolveFormatter genericFormatters) t
+        static let resolver t = YParametric formatterCache (resolveFormatter formatterFactories genericFactories) t
 
         /// initializes a writer object for given stream
         static member GetObjWriter(stream : Stream, ?context : obj, ?leaveOpen) =
@@ -48,15 +50,17 @@
 
         /// register custom serialization rules for generic types
         static member RegisterGenericFormatter(gf : IGenericFormatterFactory) =
-            genericFormatters.AddGenericFormatter gf
+            genericFactories.AddGenericFormatter gf
 
         /// register an individual formatter
         static member RegisterFormatter(f : Formatter) =
-            formatterCache.AddOrUpdate(f.Type, f, fun _ _ -> f)
+            formatterCache.AddOrUpdate(f.Type, f, fun _ _ -> f) |> ignore
             
         /// register a formatter factory
         static member RegisterFormatterFactory(ff : IFormatterFactory) =
-            FsCoreSerializer.RegisterFormatter(ff.Create resolver)
+            formatterFactories.AddOrUpdate(ff.Type, ff, fun _ _ -> ff) |> ignore
+            // force precomputation
+            resolver ff.Type |> ignore
         
         /// recursively resolves formatter for a given type
         static member ResolveFormatter (t : Type) = resolver t

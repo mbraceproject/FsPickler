@@ -45,7 +45,21 @@
 
     // recursive formatter resolution
 
-    let resolveFormatter (genericIdx : GenericFormatterIndex) (self : Type -> Lazy<Formatter>) (t : Type) =
+    let resolveFormatter (factoryIdx : ConcurrentDictionary<Type, IFormatterFactory>) 
+                            (genericIdx : GenericFormatterIndex) 
+                            (self : Type -> Lazy<Formatter>) (t : Type) =
+
+        // lookup factory index
+        let result =
+            match factoryIdx.TryFind t with
+            | Some ff -> 
+                let f = ff.Create self
+                if f.Type <> t then
+                    new SerializationException(sprintf "Invalid formatter factory: expected type '%s' but got '%s'." t.Name f.Type.Name)
+                    |> raise
+                else
+                    Some f
+            | None -> None
 
         // lookup generic shapes
         let result =

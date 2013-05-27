@@ -10,8 +10,9 @@
     type IFsCoreSerializable =
         abstract GetObjectData : Writer -> unit
 
-    /// A factory pattern for generating formatters for generic types
-    and internal IFormatterFactory =
+    /// A factory pattern for precomputing formatters
+    and IFormatterFactory =
+        abstract Type : Type
         abstract Create : (Type -> Lazy<Formatter>) -> Formatter
 
     /// A factory pattern for generating formatters for generic types
