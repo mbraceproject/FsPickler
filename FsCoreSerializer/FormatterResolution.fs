@@ -63,16 +63,19 @@
 
         // lookup generic shapes
         let result =
-            if t.IsArray then Some <| mkArrayFormatter self t
-            elif t.IsGenericType || t.IsArray then
-                genericIdx.TryResolveGenericFormatter(t, self)
-            elif t.IsPointer then
-                raise <| new SerializationException("Serializing pointers not supported.")
-            elif t.IsByRef then
-                raise <| new SerializationException("Serializing ref types not supported.")
-            elif t.IsEnum then
-                Some <| mkEnumFormatter self t
-            else None
+            match result with
+            | Some _ -> result
+            | None ->
+                if t.IsArray then Some <| mkArrayFormatter self t
+                elif t.IsGenericType || t.IsArray then
+                    genericIdx.TryResolveGenericFormatter(t, self)
+                elif t.IsPointer then
+                    raise <| new SerializationException("Serializing pointers not supported.")
+                elif t.IsByRef then
+                    raise <| new SerializationException("Serializing ref types not supported.")
+                elif t.IsEnum then
+                    Some <| mkEnumFormatter self t
+                else None
 
         // lookup F# types
         let result =

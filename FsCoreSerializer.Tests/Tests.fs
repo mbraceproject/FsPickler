@@ -98,6 +98,14 @@
 
         type Rec = Rec of (Rec -> Rec)
 
+        type FormatterFactoryTest() =
+            interface IFormatterFactory with
+                member __.Type = typeof<int * string * unit>
+                member __.Create (resolver : Type -> Lazy<Formatter>) =
+                    let writer (w : Writer) ((x,y,_) : int * string * unit) = w.BW.Write x ; w.BW.Write y
+                    let reader (r : Reader) = (42, "42", ())
+                    Formatter.Create(reader, writer, cache = false)
+
 
     [<TestFixture>]
     type FsCoreSerializerTests() =
@@ -263,3 +271,8 @@
                 @>
 
             testReflectedType quot
+
+        [<Test>]
+        member __.``IFormatterFactory test`` () =
+            do FsCoreSerializer.RegisterFormatterFactory(new FormatterFactoryTest())
+            (0,"0",()) |> test |> should equal (42,"42",()) 
