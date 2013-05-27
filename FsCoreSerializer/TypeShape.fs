@@ -20,6 +20,7 @@
 
     open System
     open System.Reflection
+    open System.Runtime.Serialization
 
     open FsCoreSerializer
     open FsCoreSerializer.Utils
@@ -219,12 +220,21 @@
                     |> Seq.tryPick tryGetCreateMethod
 
             match createMethod with
-            | None -> failwithf "IGenericFormatter: instance '%s' does not implement a factory method 'Create<..> : (Type -> Lazy<Formatter>) -> Formatter'" t.Name
+            | None -> 
+                SerializationException(sprintf "IGenericFormatter: instance '%s' does not implement a factory method 'Create<..> : (Type -> Lazy<Formatter>) -> Formatter'" t.Name)
+                |> raise
             | Some m ->
                 // apply Peano type variables to formatter in order to extrapolate the type shape
                 let tyVars = getPeanoVars (m.GetGenericArguments().Length)
                 let dummyResolver (t : Type) = lazy mkAbstractFormatter t
-                let fmt = m.MakeGenericMethod(tyVars).Invoke(gf, [| dummyResolver :> obj|]) :?> Formatter
+
+                let m0 =
+                    try m.MakeGenericMethod tyVars
+                    with :? System.ArgumentException & InnerExn (:? System.Security.VerificationException) ->
+                        SerializationException(sprintf "IGenericFormatter: instance '%s' contains unsupported type constraint." t.Name)
+                        |> raise
+
+                let fmt = m0.Invoke(gf, [| dummyResolver :> obj|]) :?> Formatter
                 let shape = TypeShape.OfType fmt.Type
                 let fvs = shape.FreeVars
                 if fvs.Length < tyVars.Length then
@@ -233,10 +243,13 @@
                         | None -> fvs.Length
                         | Some i -> i
 
-                    failwithf "IGenericFormatter: type variable #%d in instance '%s' is not used in pattern." missingVar t.Name
+                    SerializationException(sprintf "IGenericFormatter: type variable #%d in instance '%s' is not used in pattern." missingVar t.Name)
+                    |> raise
 
                 match shape with
-                | Var _ -> failwith "IGenericFormatter: pattern in instance '%s' has type variable at top level position." t.Name
+                | Var _ -> 
+                    SerializationException(sprintf "IGenericFormatter: pattern in instance '%s' has type variable at top level position." t.Name)
+                    |> raise
                 | _ -> ()
 
                 index.Swap(fun map -> map.Add(shape, (gf,m)))

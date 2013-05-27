@@ -107,13 +107,13 @@
                     Formatter.Create(reader, writer, cache = false)
 
 
-        type GenericType<'T when 'T : struct>(x : 'T) =
+        type GenericType<'T when 'T : comparison>(x : 'T) =
             member __.Value = x
 
         type GenericTypeFormatter () =
             interface IGenericFormatterFactory
 
-            member __.Create<'T when 'T : struct> (resolver : Type -> Lazy<Formatter>) =
+            member __.Create<'T when 'T : comparison> (resolver : Type -> Lazy<Formatter>) =
                 let valueFmt = resolver typeof<'T>
 
                 let writer (w : Writer) (g : GenericType<'T>) = 

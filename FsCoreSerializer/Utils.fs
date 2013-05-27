@@ -43,8 +43,7 @@
 
         let inline denull x = if x = null then None else Some x
 
-
-
+        let (|InnerExn|_|) (e : #exn) = denull e.InnerException
 
         [<RequireQualifiedAccess>]
         module Stream =
