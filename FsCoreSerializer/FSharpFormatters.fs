@@ -40,7 +40,7 @@
         {
             Type = t
             TypeInfo = getTypeInfo t
-            TypeHash = ObjHeader.getTruncatedHash t
+            TypeHash = getTypeHash t
 
             Write = writer
             Read = reader
@@ -66,7 +66,7 @@
         {
             Type = t
             TypeInfo = getTypeInfo t
-            TypeHash = ObjHeader.getTruncatedHash t
+            TypeHash = getTypeHash t
 
             Write = writer
             Read = reader
@@ -92,7 +92,7 @@
         {
             Type = t
             TypeInfo = getTypeInfo t
-            TypeHash = ObjHeader.getTruncatedHash t
+            TypeHash = getTypeHash t
 
             Write = writer
             Read = reader
@@ -124,7 +124,7 @@
         {
             Type = t
             TypeInfo = getTypeInfo t
-            TypeHash = ObjHeader.getTruncatedHash t
+            TypeHash = getTypeHash t
 
             Write = writer
             Read = reader

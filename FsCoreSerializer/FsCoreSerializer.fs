@@ -37,12 +37,12 @@
         /// initializes a writer object for given stream
         static member GetObjWriter(stream : Stream, ?context : obj, ?leaveOpen) =
             let sc = match context with None -> StreamingContext() | Some ctx -> StreamingContext(StreamingContextStates.All, ctx)
-            new Writer(stream, typeFormatter, resolver, sc, ?leaveOpen = leaveOpen)
+            new Writer(stream, resolver, sc, ?leaveOpen = leaveOpen)
 
         /// initializes a reader object for given stream
         static member GetObjReader(stream : Stream, ?context : obj, ?leaveOpen) =
             let sc = match context with None -> StreamingContext() | Some ctx -> StreamingContext(StreamingContextStates.All, ctx)
-            new Reader(stream, typeFormatter, resolver, sc, ?leaveOpen = leaveOpen)
+            new Reader(stream, resolver, sc, ?leaveOpen = leaveOpen)
 
         /// register custom type serialization rules; useful for FSI type serializations
         static member RegisterTypeSerializer(tyFormatter : ITypeFormatter) : unit =
@@ -62,26 +62,26 @@
             // force precomputation
             resolver ff.Type |> ignore
         
-        /// recursively resolves formatter for a given type
+        /// resolve formatter for a given type
         static member ResolveFormatter (t : Type) = resolver t
 
-        static member Serialize(stream : Stream, graph : obj, ?context : obj) =
-            use writer = FsCoreSerializer.GetObjWriter(stream, ?context = context, leaveOpen = true)
+        static member Serialize(stream : Stream, graph : obj, ?context : obj, ?leaveOpen) =
+            use writer = FsCoreSerializer.GetObjWriter(stream, ?context = context, ?leaveOpen = leaveOpen)
             writer.WriteObj graph
 
-        static member Deserialize(stream : Stream, ?context : obj) =
-            use reader = FsCoreSerializer.GetObjReader(stream, ?context = context, leaveOpen = true)
+        static member Deserialize(stream : Stream, ?context : obj, ?leaveOpen) =
+            use reader = FsCoreSerializer.GetObjReader(stream, ?context = context, ?leaveOpen = leaveOpen)
             reader.ReadObj ()
 
         interface ISerializer with
             member c.Serialize(graph : obj, ?context : obj) =
                 use mem = new MemoryStream()
-                FsCoreSerializer.Serialize(mem, graph, ?context = context)
+                FsCoreSerializer.Serialize(mem, graph, ?context = context, leaveOpen = true)
                 mem.ToArray()
 
             member c.Deserialize(bytes : byte [], ?context : obj) =
                 use mem = new MemoryStream(bytes)
-                FsCoreSerializer.Deserialize(mem, ?context = context)
+                FsCoreSerializer.Deserialize(mem, ?context = context, leaveOpen = true)
 
             member c.Serialize(stream : Stream, graph, ?context : obj) = FsCoreSerializer.Serialize(stream, graph, ?context = context)
             member c.Deserialize(stream : Stream, ?context : obj) = FsCoreSerializer.Deserialize(stream, ?context = context)

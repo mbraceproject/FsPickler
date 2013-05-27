@@ -40,8 +40,8 @@
     <Compile Include="Reflection.fs" />
     <Compile Include="ISerializer.fs" />
     <Compile Include="Serializers.fs" />
-    <Compile Include="TypeFormatter.fs" />
     <Compile Include="ObjHeader.fs" />
+    <Compile Include="TypeFormatter.fs" />
     <Compile Include="Formatter.fs" />
     <Compile Include="Interfaces.fs" />
     <Compile Include="BaseFormatters.fs" />

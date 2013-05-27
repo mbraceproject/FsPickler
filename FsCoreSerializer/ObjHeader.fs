@@ -6,7 +6,7 @@
     // each reference type is serialized with a 32 bit header
     //   1. the first byte is a fixed identifier
     //   2. the next two bytes are a truncated hash which identifies the type being serialized
-    //   3. the third byte conveys serialization specific switches
+    //   3. the third byte conveys object-specific switches
     //
     module internal ObjHeader =
 
@@ -19,18 +19,13 @@
         [<Literal>]
         let empty               = 0uy
         [<Literal>]
-        let isNull              = 0b00000001uy
+        let isNull              = 1uy
         [<Literal>]
-        let isProperSubtype     = 0b00000010uy
+        let isProperSubtype     = 2uy
         [<Literal>]
-        let isNewInstance       = 0b00000100uy
+        let isNewInstance       = 4uy
         [<Literal>]
-        let isCachedInstance    = 0b00001000uy
-
-        // build a 16-bit hash out of a given type
-        let getTruncatedHash (t : Type) =
-            let n = (TypeFormatter.Default.Write t).GetHashCode()
-            uint16 n ^^^ uint16 (n >>> 16)
+        let isCachedInstance    = 8uy
 
         let inline hasFlag (h : byte) (flag : byte) = h &&& flag = flag
         

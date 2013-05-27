@@ -38,6 +38,16 @@
             elif t.IsAbstract then TypeInfo.Abstract
             else TypeInfo.NonSealed
 
+        // build a 16-bit hash out of a given type
+        let getTypeHash (t : Type) =
+            use mem = new MemoryStream()
+            use bw = new BinaryWriter(mem)
+            do TypeFormatter.Default.Write bw t
+            do bw.Flush ()
+            let hash = mem.ToArray().GetHashCode()
+            // truncate hash to 16 bits
+            uint16 hash ^^^ uint16 (hash >>> 16)
+
         let inline mkFormatter<'T> info useWithSubtypes cache (reader : Reader -> 'T) (writer : Writer -> 'T -> unit) =
             {
                 Type = typeof<'T>
@@ -45,7 +55,7 @@
                 Read = fun br -> reader br :> obj
 
                 TypeInfo = getTypeInfo typeof<'T>
-                TypeHash = ObjHeader.getTruncatedHash typeof<'T>
+                TypeHash = getTypeHash typeof<'T>
                 FormatterInfo = info
 
                 CacheObj = cache
@@ -164,25 +174,9 @@
     //
 
     let typeFormatter =
-        let writer (w : Writer) (t : Type) =
-            if t.IsGenericParameter then
-                w.BW.Write (TypeFormatter.Default.Write t.ReflectedType)
-                w.BW.Write true
-                w.BW.Write t.Name
-            else
-                w.BW.Write (TypeFormatter.Default.Write t)
-                w.BW.Write false
-
-        let reader (r : Reader) : Type =
-            let t = TypeFormatter.Default.Read (r.BR.ReadString())
-            if r.BR.ReadBoolean() then
-                let name = r.BR.ReadString()
-                try t.GetGenericArguments() |> Array.find(fun a -> a.Name = name)
-                with :? KeyNotFoundException -> raise <| new SerializationException(sprintf "cannot deserialize type '%s'" name)
-            else
-                t
-
-        mkFormatter FormatterInfo.ReflectionType true true reader writer
+        mkFormatter FormatterInfo.ReflectionType true true
+                        (fun r -> TypeFormatter.Default.Read r.BR)
+                        (fun w t -> TypeFormatter.Default.Write w.BW t)
 
     let assemblyFormatter =
         let writer (w : Writer) (a : Assembly) = w.BW.Write(a.FullName)
@@ -209,7 +203,11 @@
         let reader (r : Reader) =
             let t = read r typeFormatter :?> Type
             let mname = r.BR.ReadString()
-            let m = t.GetMembers(allMembers) |> Array.find (fun m -> m.ToString() = mname)
+            let m = 
+                try t.GetMembers(allMembers) |> Array.find (fun m -> m.ToString() = mname)
+                with :? KeyNotFoundException ->
+                    raise <| new SerializationException(sprintf "Could not deserialize member '%O.%s'" t.Name mname)
+
             if r.BR.ReadBoolean() then
                 let n = r.BR.ReadInt32()
                 let ga = Array.zeroCreate<Type> n
@@ -257,7 +255,7 @@
         {
             Type = t
             TypeInfo = getTypeInfo t
-            TypeHash = ObjHeader.getTruncatedHash t
+            TypeHash = getTypeHash t
 
             Write = fun _ _ -> raise <| new NotSupportedException("cannot serialize an abstract type")
             Read = fun _ -> raise <| new NotSupportedException("cannot serialize an abstract type")
@@ -325,7 +323,7 @@
                 Some {
                     Type = t
                     TypeInfo = getTypeInfo t
-                    TypeHash = ObjHeader.getTruncatedHash t
+                    TypeHash = getTypeHash t
 
                     Write = writer
                     Read = reader
@@ -353,7 +351,7 @@
                 Some {
                     Type = t
                     TypeInfo = getTypeInfo t
-                    TypeHash = ObjHeader.getTruncatedHash t
+                    TypeHash = getTypeHash t
 
                     Write = fun (w : Writer) (o : obj) -> (o :?> IFsCoreSerializable).GetObjectData(w)
                     Read = fun (r : Reader) -> ctorFunc [| r :> obj |]
@@ -420,7 +418,7 @@
         {
             Type = t
             TypeInfo = tyInfo
-            TypeHash = ObjHeader.getTruncatedHash t
+            TypeHash = getTypeHash t
 
             Write = writer
             Read = reader
@@ -440,7 +438,7 @@
         {
             Type = t
             TypeInfo = getTypeInfo t
-            TypeHash = ObjHeader.getTruncatedHash t
+            TypeHash = getTypeHash t
 
             Write = uf.Write
             Read = uf.Read

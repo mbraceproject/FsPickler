@@ -2,11 +2,14 @@
 
     open System
     open System.IO
+    open System.Collections.Generic
+    open System.Runtime.Serialization
 
-    // holds type name conversion rules
+    // pluggable type serialization
+
     type ITypeFormatter =
-        abstract Write : Type -> string
-        abstract Read : string -> Type
+        abstract Write : BinaryWriter -> Type -> unit
+        abstract Read : BinaryReader -> Type
 
     and TypeFormatter private () =
         static let mutable serializer = 
@@ -18,5 +21,22 @@
 
     and DefaultTypeFormatter () =
         interface ITypeFormatter with
-            member __.Write (t : Type) = t.AssemblyQualifiedName
-            member __.Read (aqn : string) = Type.GetType(aqn, true)
+            member __.Write (bw : BinaryWriter) (t : Type) =
+                if t.IsGenericParameter then
+                    bw.Write t.ReflectedType.AssemblyQualifiedName
+                    bw.Write true
+                    bw.Write t.Name
+                else
+                    bw.Write t.AssemblyQualifiedName
+                    bw.Write false
+
+            member __.Read (br : BinaryReader) =
+                let aqn = br.ReadString()
+                let t = Type.GetType(aqn, true)
+                if br.ReadBoolean() then
+                    // is generic parameter
+                    let pname = br.ReadString()
+                    try t.GetGenericArguments() |> Array.find(fun a -> a.Name = pname)
+                    with :? KeyNotFoundException -> raise <| new SerializationException(sprintf "cannot deserialize type '%s'" pname)
+                else
+                    t

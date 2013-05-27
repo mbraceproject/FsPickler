@@ -107,6 +107,25 @@
                     Formatter.Create(reader, writer, cache = false)
 
 
+        type GenericType<'T when 'T : struct>(x : 'T) =
+            member __.Value = x
+
+        type GenericTypeFormatter () =
+            interface IGenericFormatterFactory
+
+            member __.Create<'T when 'T : struct> (resolver : Type -> Lazy<Formatter>) =
+                let valueFmt = resolver typeof<'T>
+
+                let writer (w : Writer) (g : GenericType<'T>) = 
+                    w.WriteObj(valueFmt.Value, g.Value)
+
+                let reader (r : Reader) = 
+                    let value = r.ReadObj(valueFmt.Value) :?> 'T
+                    new GenericType<'T>(Unchecked.defaultof<'T>)
+
+                Formatter.Create(reader, writer)
+
+
     [<TestFixture>]
     type FsCoreSerializerTests() =
 
@@ -276,3 +295,10 @@
         member __.``IFormatterFactory test`` () =
             do FsCoreSerializer.RegisterFormatterFactory(new FormatterFactoryTest())
             (0,"0",()) |> test |> should equal (42,"42",()) 
+
+
+        [<Test>]
+        member __.``GenericFormatterFactory test`` () =
+            do FsCoreSerializer.RegisterGenericFormatter (new GenericTypeFormatter())
+            let x = test (GenericType<int>(42))
+            x.Value |> should equal 0

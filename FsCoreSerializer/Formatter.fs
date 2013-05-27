@@ -42,18 +42,30 @@
             UseWithSubtypes : bool
         }
 
-    and [<Sealed>] Writer internal (stream : Stream, typeFormatter : Formatter,
-                                        resolver : Type -> Formatter, sc : StreamingContext, ?leaveOpen) =
-        
-        do assert(typeFormatter.Type = typeof<Type>)
+
+    // TODO : signature file
+
+    and [<Sealed>] Writer internal (stream : Stream, resolver : Type -> Formatter, sc : StreamingContext, ?leaveOpen) =
 
         let bw = new BinaryWriter(stream, Encoding.UTF8, defaultArg leaveOpen true)
         let idGen = new ObjectIDGenerator()
         let objStack = new Stack<int64> ()
 
+        let writeType (t : Type) =
+            let mutable firstOccurence = false
+            let id = idGen.GetId(t, &firstOccurence)
+            bw.Write firstOccurence
+            if firstOccurence then TypeFormatter.Default.Write bw t
+            else
+                bw.Write id
+
+        /// BinaryWriter to the underlying stream.
         member w.BW = bw
+        /// Access the current streaming context.
         member w.StreamingContext = sc
+        /// Resolves a formatter for the given type.
         member w.ResolveFormatter (t : Type) = resolver t
+        /// Write object to stream using given formatter. Unsafe!
         member w.WriteObj (f : Formatter, o : obj) =
             do RuntimeHelpers.EnsureSufficientExecutionStack()
 
@@ -85,7 +97,7 @@
                         if t0 <> f.Type then
                             let f0 = resolver t0
                             writeHeader (ObjHeader.isNewInstance ||| ObjHeader.isProperSubtype)
-                            w.WriteObj(typeFormatter, t0)
+                            writeType t0
                             writeObj f0
                         else
                             writeHeader ObjHeader.isNewInstance
@@ -111,33 +123,44 @@
                         writeHeader ObjHeader.empty
                         f.Write w o
 
+        /// Writes given object to the stream
         member w.Write<'T>(t : 'T) = let f = resolver typeof<'T> in w.WriteObj(f, t)
+        /// Writes given object of type 't' to the stream. Unsafe!
         member w.WriteObj(t : Type, o : obj) = let f = resolver t in w.WriteObj(f, o)
+        /// Writes given object to the stream.
+        /// Formatter type is resolved through reflection and recorded to the stream.
         member w.WriteObj(o : obj) =
             if obj.ReferenceEquals(o, null) then bw.Write (ObjHeader.create 0us ObjHeader.isNull)
             else
                 let t = o.GetType()
                 let f = resolver t
                 bw.Write (ObjHeader.create 0us ObjHeader.empty)
-                w.WriteObj(typeFormatter, t)
+                writeType t
                 w.WriteObj(f, o)
 
 
         interface IDisposable with
             member __.Dispose () = bw.Dispose ()
 
-    and [<Sealed>] Reader internal (stream : Stream, typeFormatter : Formatter, 
-                                        resolver : Type -> Formatter, sc : StreamingContext, ?leaveOpen) =
-
-        do assert(typeFormatter.Type = typeof<Type>)
+    and [<Sealed>] Reader internal (stream : Stream, resolver : Type -> Formatter, sc : StreamingContext, ?leaveOpen) =
 
         let br = new BinaryReader(stream, Encoding.UTF8, defaultArg leaveOpen true)
         let objCache = new Dictionary<int64, obj> ()
         let mutable counter = 1L
         let mutable currentReflectedObjId = 0L
 
+        let readType () =
+            if br.ReadBoolean () then
+                let t = TypeFormatter.Default.Read br
+                objCache.Add(counter, t)
+                counter <- counter + 1L
+                t
+            else
+                let id = br.ReadInt64()
+                objCache.[id] :?> Type
+
         // objects deserialized with reflection-based rules are registered to the cache
-        // at the initialization stage to enable bindings in cyclic object graphs.
+        // at the initialization stage to support cyclic object graphs.
         member internal r.EarlyRegisterObject (o : obj) =
             if currentReflectedObjId = 0L then
                 raise <| new SerializationException("Unexpected reflected object binding.")
@@ -145,10 +168,13 @@
                 objCache.Add(currentReflectedObjId, o)
                 currentReflectedObjId <- 0L
 
+        /// BinaryReader to the underlying stream.
         member r.BR = br
-        member r.ResolveFormatter (t : Type) = resolver t
+        /// Access the current streaming context.
         member r.StreamingContext = sc
-
+        /// Resolves a formatter for the given type.
+        member r.ResolveFormatter (t : Type) = resolver t
+        /// Read object from stream using given formatter. Unsafe!
         member r.ReadObj(f : Formatter) =
             let flags = ObjHeader.read f.TypeHash (br.ReadUInt32())
 
@@ -176,7 +202,7 @@
                         objCache.Add(id, o) ; o
                 
                 if ObjHeader.hasFlag flags ObjHeader.isProperSubtype then
-                    let t0 = r.ReadObj typeFormatter :?> Type
+                    let t0 = readType ()
                     let f0 = resolver t0
                     readObj f0
                 else
@@ -186,19 +212,23 @@
                 let id = br.ReadInt64() in objCache.[id]
 
             elif ObjHeader.hasFlag flags ObjHeader.isProperSubtype then
-                let t0 = r.ReadObj typeFormatter :?> Type
+                let t0 = readType ()
                 let f0 = resolver t0
                 f0.Read r
             else
                 f.Read r
         
-        member r.ReadObj (t : Type) = let f = resolver t in r.ReadObj f
+        /// Reads object of given type from the stream.
         member r.Read<'T> () = let f = resolver typeof<'T> in r.ReadObj f :?> 'T
+        /// Reads object of given type from the stream.
+        member r.ReadObj (t : Type) = let f = resolver t in r.ReadObj f
+        /// Reads next object from the stream.
+        /// Object type is read from the stream and formatter resolved on the fly.
         member r.ReadObj () =
             let flags = ObjHeader.read 0us (br.ReadUInt32())
             if ObjHeader.hasFlag flags ObjHeader.isNull then null
             else
-                let t = r.ReadObj typeFormatter :?> Type
+                let t = readType ()
                 let f = resolver t
                 r.ReadObj f
 
