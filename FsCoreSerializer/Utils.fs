@@ -38,8 +38,8 @@
 
         type IDictionary<'K,'V> with
             member d.TryFind (k : 'K) =
-                let mutable v = Unchecked.defaultof<'V>
-                if d.TryGetValue(k,&v) then Some v else None
+                let found, v = d.TryGetValue k
+                if found then Some v else None
 
         let inline denull x = if x = null then None else Some x
 

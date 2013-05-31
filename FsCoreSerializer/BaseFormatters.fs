@@ -73,7 +73,11 @@
                 if obj.ReferenceEquals(x, null) then w.BW.Write true
                 else
                     w.BW.Write false
+#if MONO
+                    // RuntimeHelpers.EnsureSufficientExecutionStack does not work as expected in mono
+#else
                     do RuntimeHelpers.EnsureSufficientExecutionStack()
+#endif
                     f.Write w x
             else
                 w.WriteObj(f, x)
@@ -370,30 +374,43 @@
         elif t.IsAbstract then mkAbstractFormatter t
         elif not t.IsSerializable then raise <| new SerializationException(sprintf "type '%s' is marked as nonserializable." t.Name) else
 
+
+        let allMethods = t.GetMethods(allMembers)
+        let fields = t.GetFields(fieldBindings) |> Array.filter (not << containsAttr<NonSerializedAttribute>)
+        let isDeserializationCallback = typeof<IDeserializationCallback>.IsAssignableFrom t
+        let formatters = fields |> Array.map (fun f -> resolver f.FieldType)
+
 #if EMIT_IL
         let precompute (m : MethodInfo) = FSharpValue.PreComputeMethod(t, m)
 
         let inline run o (sc : StreamingContext) (fs : (obj * obj [] -> obj) []) =
             for f in fs do f (o , [| sc :> obj |]) |> ignore
+
+        let decomposer = FSharpValue.PreComputeFieldReader(t, fields)
+        let composer = FSharpValue.PreComputeObjectInitializer(t, fields)
 #else
         let precompute = id
 
         let inline run o (sc : StreamingContext) (ms : MethodInfo []) =
             for m in ms do m.Invoke(o, [| sc :> obj |]) |> ignore
+
+        let decomposer (o : obj) = 
+            let fieldVals = Array.zeroCreate<obj> fields.Length
+            for i = 0 to fields.Length - 1 do
+                fieldVals.[i] <- fields.[i].GetValue o
+
+            fieldVals
+
+        let composer (o : obj, fieldVals : obj []) =
+            for i = 0 to fields.Length - 1 do
+                fields.[i].SetValue(o, fieldVals.[i])
 #endif
         
-        let allMethods = t.GetMethods(allMembers)
-
         let onSerializing = allMethods |> Array.filter containsAttr<OnSerializingAttribute> |> Array.map precompute
         let onSerialized = allMethods |> Array.filter containsAttr<OnSerializedAttribute> |> Array.map precompute
         let onDeserializing = allMethods |> Array.filter containsAttr<OnDeserializingAttribute> |> Array.map precompute
         let onDeserialized = allMethods |> Array.filter containsAttr<OnDeserializedAttribute> |> Array.map precompute
-        let isDeserializationCallback = typeof<IDeserializationCallback>.IsAssignableFrom t
-
-        let fields = t.GetFields(fieldBindings) |> Array.filter (not << containsAttr<NonSerializedAttribute>)
-        let formatters = fields |> Array.map (fun f -> resolver f.FieldType)
-        let decomposer = FSharpValue.PreComputeFieldReader(t, fields)
-        let composer = FSharpValue.PreComputeObjectInitializer(t, fields)
+        
 
         let tyInfo = getTypeInfo t
 

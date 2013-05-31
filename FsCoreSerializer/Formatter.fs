@@ -67,7 +67,12 @@
         member w.ResolveFormatter (t : Type) = resolver t
         /// Write object to stream using given formatter. Unsafe!
         member w.WriteObj (f : Formatter, o : obj) =
+#if MONO
+            // RuntimeHelpers.EnsureSufficientExecutionStack does not work as expected in mono
+#else
             do RuntimeHelpers.EnsureSufficientExecutionStack()
+#endif
+
 
             let inline writeHeader (flags : byte) =
                 bw.Write(ObjHeader.create f.TypeHash flags)
