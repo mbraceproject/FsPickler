@@ -33,7 +33,9 @@
             uint32 initByte ||| (uint32 hash <<< 8) ||| (uint32 flags <<< 24)
 
         let inline read (hash : uint16) (header : uint32) =
-            if byte header <> initByte || uint16 (header >>> 8) <> hash then 
-                raise <| new SerializationException("stream error")
+            if byte header <> initByte then
+                raise <| new SerializationException ("Stream error: expected object header")
+            elif uint16 (header >>> 8) <> hash then 
+                raise <| new SerializationException("Stream error: invalid object header")
             else 
                 byte (header >>> 24)

@@ -344,7 +344,7 @@
                 let arr = Array.zeroCreate<Expr> n
                 for i = 0 to n - 1 do arr.[i] <- reader r
                 RebuildShapeCombination(o, Array.toList arr)
-            | _ -> raise <| new SerializationException("stream error")
+            | _ -> raise <| new SerializationException("Stream error: cannot deserialize quotation.")
 
         mkFormatter FormatterInfo.Custom false true reader writer
 

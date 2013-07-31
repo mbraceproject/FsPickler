@@ -44,7 +44,8 @@
             use bw = new BinaryWriter(mem)
             do TypeFormatter.Default.Write bw t
             do bw.Flush ()
-            let hash = mem.ToArray().GetHashCode()
+            // convert to list to obtain structural hashcode generation
+            let hash = (mem.ToArray() |> Array.toList).GetHashCode()
             // truncate hash to 16 bits
             uint16 hash ^^^ uint16 (hash >>> 16)
 

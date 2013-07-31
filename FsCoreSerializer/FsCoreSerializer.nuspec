@@ -15,7 +15,7 @@
 
 Provided "as is" with no express or implied warranty.
 
-For more information, see http://egtsrp.blogspot.com/</description>
+For more information, see http://egtsrp.wordpress.com/</description>
         <summary>A general purpose binary serializer for .NET objects written in F#.</summary>
         <releaseNotes>version 0.5 is a complete rewrite featuring serialization of arbitrary .NET types.</releaseNotes>
         <tags>F#, serializer</tags>
