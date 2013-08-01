@@ -41,11 +41,10 @@
         // build a 16-bit hash out of a given type
         let getTypeHash (t : Type) =
             use mem = new MemoryStream()
-            use bw = new BinaryWriter(mem)
+            use bw = new BinaryWriter(mem, System.Text.Encoding.UTF8, true)
             do TypeFormatter.Default.Write bw t
             do bw.Flush ()
-            // convert to list to obtain structural hashcode generation
-            let hash = (mem.ToArray() |> Array.toList).GetHashCode()
+            let hash = mem.ToArray() |> getByteHashCode
             // truncate hash to 16 bits
             uint16 hash ^^^ uint16 (hash >>> 16)
 

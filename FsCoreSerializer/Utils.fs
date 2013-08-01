@@ -45,6 +45,27 @@
 
         let (|InnerExn|_|) (e : #exn) = denull e.InnerException
 
+        // produces a structural hashcode out of a byte array
+        let getByteHashCode (bs : byte []) =
+            let n = bs.Length
+            let mutable i = 0
+            let mutable acc = 0
+
+            let inline bytes2Int x y z w = 
+                int x + (int y <<< 8) + (int z <<< 16) + (int w <<< 24)
+
+            while i + 4 <= n do
+                acc <- acc ^^^ bytes2Int bs.[i] bs.[i + 1] bs.[i + 2] bs.[i + 3]
+                i <- i + 4
+
+            match n - i with
+            | 0 -> ()
+            | 1 -> acc <- acc ^^^ bytes2Int bs.[i] 0uy 0uy 0uy
+            | 2 -> acc <- acc ^^^ bytes2Int bs.[i] bs.[i+1] 0uy 0uy
+            | _ -> acc <- acc ^^^ bytes2Int bs.[i] bs.[i+1] bs.[i+2] 0uy
+
+            acc
+
         [<RequireQualifiedAccess>]
         module Stream =
 
