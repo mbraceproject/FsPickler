@@ -39,3 +39,17 @@
                 raise <| new SerializationException("Stream error: invalid object header")
             else 
                 byte (header >>> 24)
+
+        // build a rudimentary 16-bit hash out of a given type
+        // this should be persistable and runtime-independent
+        let getTruncatedHash (t : Type) =
+            let aqn = TypeFormatter.TypeNameConverter.ToQualifiedName t
+            let mutable hash = 0us
+            for i = 0 to aqn.Length / 2 - 1 do
+                let pairEnc = uint16 aqn.[i] + (uint16 aqn.[i+1] <<< 8)
+                hash <- hash ^^^ pairEnc
+
+            if aqn.Length % 2 <> 0 then
+                hash <- hash ^^^ uint16 aqn.[aqn.Length-1]
+
+            hash

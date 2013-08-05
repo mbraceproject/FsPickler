@@ -6,9 +6,8 @@
 
     open FsCoreSerializer
     open FsCoreSerializer.Utils
+    open FsCoreSerializer.FormatterUtils
     open FsCoreSerializer.BaseFormatters
-    open FsCoreSerializer.BaseFormatters.Utils
-
 
     type ArrayFormatter<'T> (t : Type) =
 
@@ -112,7 +111,7 @@
                 {
                     Type = t
                     TypeInfo = getTypeInfo t
-                    TypeHash = getTypeHash t
+                    TypeHash = ObjHeader.getTruncatedHash t
 
                     Write = writer
                     Read = reader

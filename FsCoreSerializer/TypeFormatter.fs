@@ -7,36 +7,39 @@
 
     // pluggable type serialization
 
-    type ITypeFormatter =
-        abstract Write : BinaryWriter -> Type -> unit
-        abstract Read : BinaryReader -> Type
+    type ITypeNameConverter =
+        abstract ToQualifiedName : Type -> string
+        abstract OfQualifiedName : string -> Type
 
-    and TypeFormatter private () =
-        static let mutable serializer = 
-            new DefaultTypeFormatter () :> ITypeFormatter
+    and internal TypeFormatter private () =
+        static let mutable conv = DefaultTypeNameConverter () :> ITypeNameConverter
 
-        static member Default
-            with get () = serializer
-            and set conv = serializer <- conv
+        static member TypeNameConverter 
+            with get () = conv
+            and set converter = conv <- converter
 
-    and DefaultTypeFormatter () =
-        interface ITypeFormatter with
-            member __.Write (bw : BinaryWriter) (t : Type) =
-                if t.IsGenericParameter then
-                    bw.Write t.ReflectedType.AssemblyQualifiedName
-                    bw.Write true
-                    bw.Write t.Name
-                else
-                    bw.Write t.AssemblyQualifiedName
-                    bw.Write false
+        static member Write (bw : BinaryWriter) (t : Type) =
+            if t.IsGenericParameter then
+                bw.Write (conv.ToQualifiedName t.ReflectedType)
+                bw.Write true
+                bw.Write t.Name
+            else
+                bw.Write (conv.ToQualifiedName t)
+                bw.Write false
 
-            member __.Read (br : BinaryReader) =
-                let aqn = br.ReadString()
-                let t = Type.GetType(aqn, true)
-                if br.ReadBoolean() then
-                    // is generic parameter
-                    let pname = br.ReadString()
-                    try t.GetGenericArguments() |> Array.find(fun a -> a.Name = pname)
-                    with :? KeyNotFoundException -> raise <| new SerializationException(sprintf "cannot deserialize type '%s'" pname)
-                else
-                    t
+        static member Read (br : BinaryReader) =
+            let aqn = br.ReadString()
+            let t = conv.OfQualifiedName aqn
+            if br.ReadBoolean() then
+                // is generic parameter
+                let pname = br.ReadString()
+                try t.GetGenericArguments() |> Array.find(fun a -> a.Name = pname)
+                with :? KeyNotFoundException -> 
+                    raise <| new SerializationException(sprintf "cannot deserialize type '%s'" pname)
+            else
+                t
+
+    and DefaultTypeNameConverter () =
+        interface ITypeNameConverter with
+            member __.ToQualifiedName (t : Type) = t.AssemblyQualifiedName
+            member __.OfQualifiedName (aqn : string) = Type.GetType(aqn, true)

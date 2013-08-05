@@ -12,9 +12,9 @@
     open FsCoreSerializer.Utils
     open FsCoreSerializer.TypeShape
     open FsCoreSerializer.BaseFormatters
-    open FsCoreSerializer.BaseFormatters.Utils
+    open FsCoreSerializer.FormatterUtils
     open FsCoreSerializer.ArrayFormatter
-    open FsCoreSerializer.FSharpFormatters
+    open FsCoreSerializer.FSharpTypeFormatters
 
     /// Y combinator with parametric recursion support
     let YParametric (externalCache : ConcurrentDictionary<'a, 'b>) (F : ('a -> Lazy<'b>) -> 'a -> 'b) (x : 'a) =

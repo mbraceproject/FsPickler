@@ -1,4 +1,4 @@
-﻿module internal FsCoreSerializer.FSharpFormatters
+﻿module internal FsCoreSerializer.FSharpTypeFormatters
 
     open System
     open System.Collections.Generic
@@ -12,9 +12,8 @@
     open FsCoreSerializer
     open FsCoreSerializer.Utils
     open FsCoreSerializer.Reflection
+    open FsCoreSerializer.FormatterUtils
     open FsCoreSerializer.BaseFormatters
-    open FsCoreSerializer.BaseFormatters.Utils
-    open FsCoreSerializer
 
     //
     //  ML core type serializers
@@ -40,7 +39,7 @@
         {
             Type = t
             TypeInfo = getTypeInfo t
-            TypeHash = getTypeHash t
+            TypeHash = ObjHeader.getTruncatedHash t
 
             Write = writer
             Read = reader
@@ -66,7 +65,7 @@
         {
             Type = t
             TypeInfo = getTypeInfo t
-            TypeHash = getTypeHash t
+            TypeHash = ObjHeader.getTruncatedHash t
 
             Write = writer
             Read = reader
@@ -92,7 +91,7 @@
         {
             Type = t
             TypeInfo = getTypeInfo t
-            TypeHash = getTypeHash t
+            TypeHash = ObjHeader.getTruncatedHash t
 
             Write = writer
             Read = reader
@@ -124,7 +123,7 @@
         {
             Type = t
             TypeInfo = getTypeInfo t
-            TypeHash = getTypeHash t
+            TypeHash = ObjHeader.getTruncatedHash t
 
             Write = writer
             Read = reader

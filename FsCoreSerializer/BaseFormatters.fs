@@ -10,126 +10,8 @@
 
     open FsCoreSerializer
     open FsCoreSerializer.Reflection
-    open FsCoreSerializer.Utils
+    open FsCoreSerializer.FormatterUtils
 
-    module Utils =
-
-        let containsAttr<'T when 'T :> Attribute> (m : MemberInfo) =
-            m.GetCustomAttributes< 'T>() |> Seq.isEmpty |> not
-
-        let fieldBindings = 
-            BindingFlags.NonPublic ||| BindingFlags.Public ||| 
-                BindingFlags.Instance ||| BindingFlags.FlattenHierarchy 
-
-        let allMembers =
-            BindingFlags.NonPublic ||| BindingFlags.Public |||
-                BindingFlags.Instance ||| BindingFlags.Static ||| BindingFlags.FlattenHierarchy
-
-        let ctorBindings = BindingFlags.Instance ||| BindingFlags.NonPublic ||| BindingFlags.Public
-
-        let tryGetCtor (t : Type) (args : Type []) = denull <| t.GetConstructor(ctorBindings,null,args, [||]) 
-
-        let getTypeInfo (t : Type) =
-            if t.IsPrimitive then TypeInfo.Primitive
-            elif t.IsEnum then TypeInfo.Enum
-            elif t.IsValueType then TypeInfo.Value
-            elif t.IsArray then TypeInfo.Array
-            elif t.IsSealed then TypeInfo.Sealed
-            elif t.IsAbstract then TypeInfo.Abstract
-            else TypeInfo.NonSealed
-
-        // build a 16-bit hash out of a given type
-        let getTypeHash (t : Type) =
-            use mem = new MemoryStream()
-            use bw = new BinaryWriter(mem, System.Text.Encoding.UTF8, true)
-            do TypeFormatter.Default.Write bw t
-            do bw.Flush ()
-            let hash = mem.ToArray() |> getByteHashCode
-            // truncate hash to 16 bits
-            uint16 hash ^^^ uint16 (hash >>> 16)
-
-        let inline mkFormatter<'T> info useWithSubtypes cache (reader : Reader -> 'T) (writer : Writer -> 'T -> unit) =
-            {
-                Type = typeof<'T>
-                Write = fun bw o -> writer bw (o :?> 'T)
-                Read = fun br -> reader br :> obj
-
-                TypeInfo = getTypeInfo typeof<'T>
-                TypeHash = getTypeHash typeof<'T>
-                FormatterInfo = info
-
-                CacheObj = cache
-                UseWithSubtypes = useWithSubtypes
-            }
-
-
-        let inline write (w : Writer) (f : Formatter) (x : obj) =
-            if f.TypeInfo <= TypeInfo.Value then f.Write w x
-            elif not f.CacheObj then
-                if obj.ReferenceEquals(x, null) then w.BW.Write true
-                else
-                    w.BW.Write false ; f.Write w x
-            elif f.FormatterInfo = FormatterInfo.FSharpValue then
-                if obj.ReferenceEquals(x, null) then w.BW.Write true
-                else
-                    w.BW.Write false
-#if MONO
-                    // RuntimeHelpers.EnsureSufficientExecutionStack does not work as expected in mono
-#else
-                    do RuntimeHelpers.EnsureSufficientExecutionStack()
-#endif
-                    f.Write w x
-            else
-                w.WriteObj(f, x)
-
-        let inline read (r : Reader) (f : Formatter) =
-            if f.TypeInfo <= TypeInfo.Value then f.Read r
-            elif not f.CacheObj || f.FormatterInfo = FormatterInfo.FSharpValue then
-                if r.BR.ReadBoolean() then null
-                else f.Read r
-            else
-                r.ReadObj f
-
-        let inline writeSeq (w : Writer) (ef : Formatter) (length : int) (xs : seq<'T>) =
-            w.BW.Write length
-            for x in xs do write w ef x
-
-        let inline readSeq<'T> (r : Reader) (f : Formatter)  =
-            let n = r.BR.ReadInt32()
-            let a = Array.zeroCreate<'T> n
-            for i = 0 to n - 1 do
-                a.[i] <- read r f :?> 'T
-            a
-
-        /// length is fed as external argument to prevent unintented double evaluation of sequence
-        let inline writeKVPair (w : Writer) (kf : Formatter) (vf : Formatter) (length : int) (xs : ('K * 'V) seq) =
-            w.BW.Write length
-            for k,v in xs do
-                write w kf k
-                write w vf v
-
-        let inline readKVPair<'K,'V> (r : Reader) (kf : Formatter) (vf : Formatter) =
-            let n = r.BR.ReadInt32()
-            let a = Array.zeroCreate<'K * 'V> n
-            for i = 0 to n - 1 do
-                let k = read r kf :?> 'K
-                let v = read r vf :?> 'V
-                a.[i] <- (k,v)
-            a
-
-        let inline zipWrite (w : Writer) (formatters : Lazy<Formatter> []) (objs : obj []) : unit =
-            for i = 0 to formatters.Length - 1 do
-                write w formatters.[i].Value objs.[i]
-
-        let inline zipRead (r : Reader) (formatters : Lazy<Formatter> []) : obj [] =
-            let objs = Array.zeroCreate formatters.Length
-            for i = 0 to formatters.Length - 1 do
-                objs.[i] <- read r formatters.[i].Value
-
-            objs
-
-
-    open Utils
 
     let intPtrFmt, uIntPtrFmt =
         match sizeof<nativeint> with
@@ -178,9 +60,9 @@
     //
 
     let typeFormatter =
-        mkFormatter FormatterInfo.ReflectionType true true
-                        (fun r -> TypeFormatter.Default.Read r.BR)
-                        (fun w t -> TypeFormatter.Default.Write w.BW t)
+        mkFormatter FormatterInfo.ReflectionType true true 
+                    (fun r -> TypeFormatter.Read r.BR) 
+                    (fun w t -> TypeFormatter.Write w.BW t)
 
     let assemblyFormatter =
         let writer (w : Writer) (a : Assembly) = w.BW.Write(a.FullName)
@@ -259,7 +141,7 @@
         {
             Type = t
             TypeInfo = getTypeInfo t
-            TypeHash = getTypeHash t
+            TypeHash = ObjHeader.getTruncatedHash t
 
             Write = fun _ _ -> raise <| new NotSupportedException("cannot serialize an abstract type")
             Read = fun _ -> raise <| new NotSupportedException("cannot serialize an abstract type")
@@ -327,7 +209,7 @@
                 Some {
                     Type = t
                     TypeInfo = getTypeInfo t
-                    TypeHash = getTypeHash t
+                    TypeHash = ObjHeader.getTruncatedHash t
 
                     Write = writer
                     Read = reader
@@ -355,7 +237,7 @@
                 Some {
                     Type = t
                     TypeInfo = getTypeInfo t
-                    TypeHash = getTypeHash t
+                    TypeHash = ObjHeader.getTruncatedHash t
 
                     Write = fun (w : Writer) (o : obj) -> (o :?> IFsCoreSerializable).GetObjectData(w)
                     Read = fun (r : Reader) -> ctorFunc [| r :> obj |]
@@ -435,7 +317,7 @@
         {
             Type = t
             TypeInfo = tyInfo
-            TypeHash = getTypeHash t
+            TypeHash = ObjHeader.getTruncatedHash t
 
             Write = writer
             Read = reader
@@ -455,7 +337,7 @@
         {
             Type = t
             TypeInfo = getTypeInfo t
-            TypeHash = getTypeHash t
+            TypeHash = ObjHeader.getTruncatedHash t
 
             Write = uf.Write
             Read = uf.Read

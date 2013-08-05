@@ -42,12 +42,11 @@
             UseWithSubtypes : bool
         }
 
+    and [<Sealed>] Writer internal (stream : Stream, resolver : Type -> Formatter, sc : StreamingContext, ?leaveOpen, ?encoding) =
+        // using UTF8 gives an observed performance improvement ~200%
+        let encoding = defaultArg encoding Encoding.UTF8
 
-    // TODO : signature file
-
-    and [<Sealed>] Writer internal (stream : Stream, resolver : Type -> Formatter, sc : StreamingContext, ?leaveOpen) =
-
-        let bw = new BinaryWriter(stream, Encoding.UTF8, defaultArg leaveOpen true)
+        let bw = new BinaryWriter(stream, encoding, defaultArg leaveOpen true)
         let idGen = new ObjectIDGenerator()
         let objStack = new Stack<int64> ()
 
@@ -55,7 +54,7 @@
             let mutable firstOccurence = false
             let id = idGen.GetId(t, &firstOccurence)
             bw.Write firstOccurence
-            if firstOccurence then TypeFormatter.Default.Write bw t
+            if firstOccurence then TypeFormatter.Write bw t
             else
                 bw.Write id
 
@@ -147,16 +146,18 @@
         interface IDisposable with
             member __.Dispose () = bw.Dispose ()
 
-    and [<Sealed>] Reader internal (stream : Stream, resolver : Type -> Formatter, sc : StreamingContext, ?leaveOpen) =
+    and [<Sealed>] Reader internal (stream : Stream, resolver : Type -> Formatter, sc : StreamingContext, ?leaveOpen, ?encoding) =
+        // using UTF8 gives an observed performance improvement ~200%
+        let encoding = defaultArg encoding Encoding.UTF8
 
-        let br = new BinaryReader(stream, Encoding.UTF8, defaultArg leaveOpen true)
+        let br = new BinaryReader(stream, encoding, defaultArg leaveOpen true)
         let objCache = new Dictionary<int64, obj> ()
         let mutable counter = 1L
         let mutable currentReflectedObjId = 0L
 
         let readType () =
             if br.ReadBoolean () then
-                let t = TypeFormatter.Default.Read br
+                let t = TypeFormatter.Read br
                 objCache.Add(counter, t)
                 counter <- counter + 1L
                 t

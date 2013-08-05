@@ -24,7 +24,6 @@
 
     open FsCoreSerializer
     open FsCoreSerializer.Utils
-    open FsCoreSerializer.BaseFormatters
 
     // embed peano arithmetic in System.Type
     type Peano =
@@ -226,7 +225,19 @@
             | Some m ->
                 // apply Peano type variables to formatter in order to extrapolate the type shape
                 let tyVars = getPeanoVars (m.GetGenericArguments().Length)
-                let dummyResolver (t : Type) = lazy mkAbstractFormatter t
+                let dummyResolver (t : Type) = lazy(
+                    {
+                        Type = t
+                        TypeInfo = TypeInfo.Abstract
+                        TypeHash = 0us
+
+                        Write = fun _ _ -> failwith "attemping to consume at construction time!"
+                        Read = fun _ -> failwith "attemping to consume at construction time!"
+                        
+                        FormatterInfo = FormatterInfo.Custom
+                        CacheObj = false
+                        UseWithSubtypes = false
+                    })
 
                 let m0 =
                     try m.MakeGenericMethod tyVars

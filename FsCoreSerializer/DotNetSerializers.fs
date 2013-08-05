@@ -38,6 +38,8 @@
             | e -> raise <| new SerializationException("BinaryFormatter error.", e)
 
         interface ISerializer with
+            member __.Name = "BinaryFormatter"
+
             member __.Serialize (graph : obj, ?context : obj) : byte[] =
                 use mem = new MemoryStream()
                 serialize mem graph context
@@ -49,7 +51,6 @@
 
             member __.Serialize (stream : Stream, graph : obj, ?context : obj) : unit = serialize stream graph context
             member __.Deserialize (stream : Stream, ?context : obj) : obj = deserialize stream context
-
 
 
     type NDCSerializer() =
@@ -81,6 +82,8 @@
             | e -> raise <| new SerializationException("NetDataContractSerializer error.", e)
 
         interface ISerializer with
+            member __.Name = "NetDataContractSerializer"
+
             member __.Serialize (graph : obj, ?context : obj) : byte[] =
                 use mem = new MemoryStream()
                 do serialize mem graph context

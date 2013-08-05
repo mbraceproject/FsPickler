@@ -293,12 +293,12 @@
 
         [<Test>]
         member __.``IFormatterFactory test`` () =
-            do FsCoreSerializer.RegisterFormatterFactory(new FormatterFactoryTest())
+            do FsCoreSerializerRegistry.RegisterFormatterFactory(new FormatterFactoryTest())
             (0,"0",()) |> test |> should equal (42,"42",()) 
 
 
         [<Test>]
         member __.``GenericFormatterFactory test`` () =
-            do FsCoreSerializer.RegisterGenericFormatter (new GenericTypeFormatter())
+            do FsCoreSerializerRegistry.RegisterGenericFormatter (new GenericTypeFormatter())
             let x = test (GenericType<int>(42))
             x.Value |> should equal 0

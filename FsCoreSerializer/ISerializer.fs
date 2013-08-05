@@ -3,6 +3,8 @@
     open System.IO
 
     type ISerializer =
+        abstract Name : string
+
         abstract Serialize : obj * ?context : obj -> byte [] 
         abstract Deserialize : byte [] * ?context : obj -> obj
 
