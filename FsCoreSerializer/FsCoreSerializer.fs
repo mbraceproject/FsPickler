@@ -51,12 +51,7 @@
             do checkRegistration ()
             TypeFormatter.TypeNameConverter <- tyConverter
 
-        /// register custom serialization rules for generic types
-        static member RegisterGenericFormatter(gf : IGenericFormatterFactory) =
-            do checkRegistration ()
-            genericFactories.AddGenericFormatter gf
-
-        /// register an individual formatter
+        /// register formatter for a specific type
         static member RegisterFormatter(f : Formatter) =
             do checkRegistration ()
             formatterCache.AddOrUpdate(f.Type, f, fun _ _ -> f)
@@ -66,23 +61,43 @@
             do checkRegistration ()
             formatterFactories.AddOrUpdate(ff.Type, ff, fun _ _ -> ff) |> ignore
 
+        /// register generic formatter rules
+        static member RegisterGenericFormatter(gf : IGenericFormatterFactory) =
+            do checkRegistration ()
+            genericFactories.AddGenericFormatter gf
+
 
 
     type FsCoreSerializer (?encoding : Encoding) =
         // observed up to 2x performance improvement when using UTF8 encoding in BinaryWriter/Reader
         let encoding = defaultArg encoding Encoding.UTF8
 
-        /// initializes a writer object for given stream
+        /// <summary>Initializes an object writer for the given stream.</summary>
+        /// <param name="stream">The target stream.</param>
+        /// <param name="context">The optional streaming context object.</param>
+        /// <param name="leaveOpen">Leave the stream open when finished. Defaults to true.</param>
+        /// <param name="encoding">The encoding used to in the binary writer. Defaults to UTF8.</param>
         static member GetObjectWriter(stream : Stream, ?context : obj, ?leaveOpen, ?encoding) =
+            if not stream.CanWrite then invalidOp "Cannot write to stream."
             let sc = match context with None -> StreamingContext() | Some ctx -> StreamingContext(StreamingContextStates.All, ctx)
             new Writer(stream, FsCoreSerializerRegistry.ResolveFormatter, sc, ?leaveOpen = leaveOpen, ?encoding = encoding)
 
-        /// initializes a reader object for given stream
+        /// <summary>Initializes an object reader for given the stream.</summary>
+        /// <param name="stream">The source stream.</param>
+        /// <param name="context">The optional streaming context object.</param>
+        /// <param name="leaveOpen">Leave the stream open when finished. Defaults to true.</param>
+        /// <param name="encoding">The encoding used to in the binary writer. Defaults to UTF8.</param>
         static member GetObjectReader(stream : Stream, ?context : obj, ?leaveOpen, ?encoding) =
+            if not stream.CanRead then invalidOp "Cannot read from stream."
             let sc = match context with None -> StreamingContext() | Some ctx -> StreamingContext(StreamingContextStates.All, ctx)
             new Reader(stream, FsCoreSerializerRegistry.ResolveFormatter, sc, ?leaveOpen = leaveOpen, ?encoding = encoding)
 
-        /// serialize a given object graph to underlying stream
+        /// <summary>Serialize a given object graph to underlying stream.</summary>
+        /// <param name="stream">The target stream.</param>
+        /// <param name="context">The untyped parameter passed to the streaming context.</param>
+        /// <param name="encoding">The encoding passed to the binary writer.</param>
+        /// <param name="writeType">Specifies whether the type parameter should be recorded in the serialization header.
+        ///     Useful when serializing sequences of small objects.</param>
         static member Serialize(stream : Stream, graph : 'T, ?context : obj, ?encoding, ?writeType) : unit =
             let writeType = defaultArg writeType true
             use writer = FsCoreSerializer.GetObjectWriter(stream, ?context = context, leaveOpen = true, ?encoding = encoding)
@@ -91,7 +106,12 @@
             else
                 writer.Write<'T> graph
 
-        /// deserialize from underlying stream
+        /// <summary>Deserialize a given object graph from and underlying stream.</summary>
+        /// <param name="stream">The source stream.</param>
+        /// <param name="context">The untyped parameter passed to the streaming context.</param>
+        /// <param name="encoding">The encoding passed to the binary reader.</param>
+        /// <param name="readType">Specifies whether the type parameter should be read from the serialization header.
+        ///     Useful when serializing sequences of small objects.</param>
         static member Deserialize<'T> (stream : Stream, ?context : obj, ?encoding, ?readType) : 'T =
             let readType = defaultArg readType true
             use reader = FsCoreSerializer.GetObjectReader(stream, ?context = context, leaveOpen = true, ?encoding = encoding)
@@ -125,7 +145,9 @@
     module ExtensionMethods =
         
         type Formatter with
-            /// creates a new custom formatter
+            /// <summary>Initializes a formatter out of a pair of read/write lambdas.</summary>
+            /// <param name="cache">Specifies whether the serializer should cache by reference when serializing.</param>
+            /// <param name="useWithSubtypes">Specifies whether this specific formatter should apply to all of its subtypes.</param>
             static member Create(reader : Reader -> 'T, writer : Writer -> 'T -> unit, ?cache, ?useWithSubtypes) =
                 let cache = defaultArg cache (not typeof<'T>.IsValueType)
                 let useWithSubtypes = defaultArg useWithSubtypes false

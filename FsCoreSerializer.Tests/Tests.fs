@@ -128,6 +128,11 @@
 
     [<TestFixture>]
     type FsCoreSerializerTests() =
+            
+        // place custom serialization rules at beginning
+        static do 
+            FsCoreSerializerRegistry.RegisterFormatterFactory(new FormatterFactoryTest())
+            FsCoreSerializerRegistry.RegisterGenericFormatter (new GenericTypeFormatter())
 
         [<Test>] member __.``Unit`` () = testEquals ()
         [<Test>] member __.``Boolean`` () = testEquals false
@@ -293,12 +298,10 @@
 
         [<Test>]
         member __.``IFormatterFactory test`` () =
-            do FsCoreSerializerRegistry.RegisterFormatterFactory(new FormatterFactoryTest())
             (0,"0",()) |> test |> should equal (42,"42",()) 
 
 
         [<Test>]
         member __.``GenericFormatterFactory test`` () =
-            do FsCoreSerializerRegistry.RegisterGenericFormatter (new GenericTypeFormatter())
             let x = test (GenericType<int>(42))
             x.Value |> should equal 0

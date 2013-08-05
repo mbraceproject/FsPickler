@@ -7,6 +7,9 @@
 
     // pluggable type serialization
 
+    /// <summary>Provides facility for implementing a custom type serialization scheme.
+    /// This is particularly useful in cases where bridging mono/.NET runtimes or
+    /// dynamic/static assemblies is required.</summary>
     type ITypeNameConverter =
         abstract ToQualifiedName : Type -> string
         abstract OfQualifiedName : string -> Type
@@ -39,6 +42,7 @@
             else
                 t
 
+    /// provides standard type serialization
     and DefaultTypeNameConverter () =
         interface ITypeNameConverter with
             member __.ToQualifiedName (t : Type) = t.AssemblyQualifiedName
