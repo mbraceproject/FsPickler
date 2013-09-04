@@ -12,7 +12,6 @@ let test n (s : ISerializer) (inp : 'T) =
     for _ in 1 .. n do
         s.Serialize inp |> s.Deserialize :?> 'T |> ignore
 
-
 let quot =
     <@
         async {

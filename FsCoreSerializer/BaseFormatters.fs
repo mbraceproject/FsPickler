@@ -12,17 +12,6 @@
     open FsCoreSerializer.Reflection
     open FsCoreSerializer.FormatterUtils
 
-
-    let intPtrFmt, uIntPtrFmt =
-        match sizeof<nativeint> with
-        | 4 -> 
-            mkFormatter FormatterInfo.Atomic false false (fun br -> br.BR.ReadInt32() |> nativeint) (fun bw x -> bw.BW.Write(int32 x)),
-            mkFormatter FormatterInfo.Atomic false false (fun br -> br.BR.ReadUInt32() |> unativeint) (fun bw x -> bw.BW.Write(uint32 x))
-        | 8 -> 
-            mkFormatter FormatterInfo.Atomic false false (fun br -> br.BR.ReadInt64() |> nativeint) (fun bw x -> bw.BW.Write(int64 x)),
-            mkFormatter FormatterInfo.Atomic false false (fun br -> br.BR.ReadUInt64() |> unativeint) (fun bw x -> bw.BW.Write(uint64 x))
-        | _ -> failwith "unexpected sizeof<nativeint>"
-
     let primitiveFormatters =
         [   
             mkFormatter FormatterInfo.Atomic false false ignore (fun _ _ -> ())
@@ -39,7 +28,6 @@
             mkFormatter FormatterInfo.Atomic false false (fun br -> br.BR.ReadUInt16()) (fun bw x -> bw.BW.Write x) 
             mkFormatter FormatterInfo.Atomic false false (fun br -> br.BR.ReadUInt32()) (fun bw x -> bw.BW.Write x) 
             mkFormatter FormatterInfo.Atomic false false (fun br -> br.BR.ReadUInt64()) (fun bw x -> bw.BW.Write x) 
-            intPtrFmt ; uIntPtrFmt
         ]
 
 
