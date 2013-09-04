@@ -6,7 +6,6 @@ let bfs = new BinaryFormatterSerializer() :> ISerializer
 let ndc = new NDCSerializer() :> ISerializer
 let fsc = new FsCoreSerializer() :> ISerializer
 
-
 #time
 let test n (s : ISerializer) (inp : 'T) =
     for _ in 1 .. n do

@@ -123,6 +123,10 @@
         let test x = self.TestLoop x |> ignore
         let testLoop x = self.TestLoop x
         let testEquals x = self.TestLoop x = x |> should equal true
+        let testReflected x =
+            let y = self.TestLoop x
+            (y.GetType()) |> should equal (x.GetType())
+
         let testMembers (t : Type) =
             let members = t.GetMembers(BindingFlags.Public ||| BindingFlags.NonPublic ||| BindingFlags.Instance ||| BindingFlags.Static)
             for m in members do test m 
@@ -141,7 +145,6 @@
         [<Test>] member __.``Float`` () = testEquals 3.1415926
         [<Test>] member __.``Guid`` () = testEquals <| Guid.NewGuid()
         [<Test>] member __.``Decimal`` () = testEquals Decimal.MaxValue
-        [<Test>] member __.``NativePtr`` () = testEquals 42n
         [<Test>] member __.``Byte []`` () = testEquals [|0uy .. 100uy|]
         [<Test>] member __.``DateTime`` () = testEquals DateTime.Now
 
@@ -226,6 +229,11 @@
             (testLoop d).Invoke 41 |> should equal 42
 
         [<Test>]
+        member __.``Lazy Values`` () =
+            let v = lazy(if true then 42 else 0)
+            (testLoop v).Value |> should equal 42
+
+        [<Test>]
         member __.``FSharp Function`` () =
             let f x = x + 1
 
@@ -305,6 +313,32 @@
         member __.``GenericFormatterFactory test`` () =
             let x = testLoop (GenericType<int>(42))
             x.Value |> should equal 0
+
+        [<Test>]
+        member __.``Test Auto-Generated Objects`` () =
+            // generate serializable objects that reside in mscorlib and FSharp.Core
+            let inputData = 
+                Array.concat
+                    [
+                        Utils.generateSerializableObjects typeof<int>.Assembly
+                        Utils.generateSerializableObjects typeof<_ option>.Assembly
+                        Utils.generateSerializableObjects <| Assembly.GetExecutingAssembly()
+                    ]
+
+            let test (t : Type, x : obj) =
+                try test x ; None
+                with e -> Some(e,t)
+
+            let failedResults = inputData |> Array.choose test
+
+            if failedResults.Length > 0 then
+                let errors = 
+                    failedResults
+                    |> Array.map (fun (e,t) -> sprintf "%s failed with error: %s" t.FullName e.Message) 
+                    |> String.concat "\r\n"
+
+                failwithf "The following types failed to serialize: %s" errors
+            
 
 
     [<TestFixture>]

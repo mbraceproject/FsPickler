@@ -4,9 +4,13 @@
 
         open System
         open System.IO
+        open System.Reflection
         open System.Net
         open System.Net.Sockets
+        open System.Runtime.Serialization
         open System.Threading.Tasks
+
+        open FsCoreSerializer
 
         let runsOnMono = System.Type.GetType("Mono.Runtime") <> null
 
@@ -48,3 +52,27 @@
                     let length = BitConverter.ToInt32(lengthArr, 0)
                     return! s.AsyncReadBytes length
                 }
+
+
+        // automated object generation
+
+        let generateSerializableObjects (assembly : Assembly) =
+            let ndc = new NDCSerializer() :> ISerializer
+
+            let activate (t : Type) =
+                try Some <| (t, Activator.CreateInstance t)
+                with _ ->
+                    try
+                        let ctor = t.GetConstructor(BindingFlags.NonPublic ||| BindingFlags.Instance, null, [||], [||])
+                        Some <| (t, ctor.Invoke [||])
+                    with _ -> None
+
+            let testSerializer (s : ISerializer) (o : obj) = 
+                try s.Serialize o |> s.Deserialize |> ignore ; true
+                with _ -> false
+            
+            assembly.GetTypes()
+            |> Seq.filter (fun t -> typeof<ISerializable>.IsAssignableFrom t || t.IsSerializable)
+            |> Seq.choose activate
+            |> Seq.filter (fun (t,o) -> testSerializer ndc o)
+            |> Seq.toArray

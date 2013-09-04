@@ -112,11 +112,32 @@
                 (fun r -> AssemblyName(r.BR.ReadString()))
                 (fun w a -> w.BW.Write a.FullName)
 
+    let delegateFormatter =
+        let writer (w : Writer) (dele : System.Delegate) =
+            w.WriteObj(typeFormatter, dele.GetType())
+            w.WriteObj(memberInfoFormatter, dele.Method)
+            if not dele.Method.IsStatic then w.WriteObj dele.Target
+
+        let reader (r : Reader) =
+            let ty = r.ReadObj typeFormatter :?> Type
+            let meth = r.ReadObj memberInfoFormatter :?> MethodInfo
+
+            if not meth.IsStatic then
+                let target = r.ReadObj()
+                Delegate.CreateDelegate(ty, target, meth, throwOnBindFailure = true)
+            else
+                Delegate.CreateDelegate(ty, meth, throwOnBindFailure = true)
+
+
+        mkFormatter FormatterInfo.Custom true true reader writer
+
+    let dbNullFormatter = mkFormatter FormatterInfo.Custom false true (fun _ -> DBNull.Value) (fun _ _ -> ())
+
     let reflectionFormatters =
         [ 
             typeFormatter ; assemblyFormatter ; memberInfoFormatter
             typeHandleFormatter ; fieldHandleFormatter ; methodHandleFormatter
-            assemblyNameFormatter
+            assemblyNameFormatter ; delegateFormatter ; dbNullFormatter
         ]
 
     //
@@ -146,6 +167,9 @@
             match tryGetCtor t [| typeof<SerializationInfo> ; typeof<StreamingContext> |] with
             | None -> None
             | Some ctor ->
+                
+                if t = typeof<IntPtr> || t = typeof<UIntPtr> then
+                    raise <| new SerializationException("Serialization of pointers not supported.")
 
 #if EMIT_IL
                 let ctorFunc = FSharpValue.PreComputeConstructor ctor
@@ -314,7 +338,6 @@
             UseWithSubtypes = false
             CacheObj = true
         }
-
 
     // formatter builder for enumerator types
 
