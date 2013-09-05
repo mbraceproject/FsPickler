@@ -67,6 +67,8 @@
             | Some _ -> result
             | None ->
                 if t.IsArray then Some <| mkArrayFormatter self t
+                elif typeof<System.Delegate>.IsAssignableFrom t then
+                    Some <| mkDelegateFormatter t
                 elif t.IsGenericType || t.IsArray then
                     genericIdx.TryResolveGenericFormatter(t, self)
                 elif t.IsPointer then

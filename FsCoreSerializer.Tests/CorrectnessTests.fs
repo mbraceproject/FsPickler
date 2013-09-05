@@ -114,6 +114,15 @@
                 FsCoreSerializerRegistry.RegisterGenericFormatter (new GenericTypeFormatter()))
 
 
+        type TestDelegate = delegate of unit -> unit
+
+        and DeleCounter () =
+            static let mutable cnt = 0
+            static member Value 
+                with get () = cnt
+                and set i = cnt <- i
+
+
     [<TestFixture>]
     [<AbstractClass>]
     type ``Serializer Correctness Tests`` () as self =
@@ -223,10 +232,19 @@
             x = y |> should equal true
 
         [<Test>]
-        member __.``Delegates`` () =
+        member __.``Simple Delegate`` () =
             let d = System.Func<int, int>(fun x -> x + 1)
             
             (testLoop d).Invoke 41 |> should equal 42
+
+        [<Test>]
+        member __.``Multicast Delegate`` () =
+            DeleCounter.Value <- 0
+            let f n = new TestDelegate(fun () -> DeleCounter.Value <- DeleCounter.Value + n) :> Delegate
+            let g = Delegate.Combine [| f 1 ; f 2 |]
+            let h = Delegate.Combine [| g ; f 3 |]
+            (testLoop h).DynamicInvoke [| |] |> ignore
+            DeleCounter.Value |> should equal 6
 
         [<Test>]
         member __.``Lazy Values`` () =
@@ -315,7 +333,7 @@
             x.Value |> should equal 0
 
         [<Test>]
-        member __.``Test Auto-Generated Objects`` () =
+        member __.``Test Massively Auto-Generated Objects`` () =
             // generate serializable objects that reside in mscorlib and FSharp.Core
             let inputData = 
                 Array.concat

@@ -27,7 +27,7 @@
             mkFormatter FormatterInfo.Atomic false false (fun br -> br.BR.ReadInt64()) (fun bw x -> bw.BW.Write x) 
             mkFormatter FormatterInfo.Atomic false false (fun br -> br.BR.ReadUInt16()) (fun bw x -> bw.BW.Write x) 
             mkFormatter FormatterInfo.Atomic false false (fun br -> br.BR.ReadUInt32()) (fun bw x -> bw.BW.Write x) 
-            mkFormatter FormatterInfo.Atomic false false (fun br -> br.BR.ReadUInt64()) (fun bw x -> bw.BW.Write x) 
+            mkFormatter FormatterInfo.Atomic false false (fun br -> br.BR.ReadUInt64()) (fun bw x -> bw.BW.Write x)
         ]
 
 
@@ -38,6 +38,7 @@
             mkFormatter FormatterInfo.Atomic false false (fun br -> TimeSpan(br.BR.ReadInt64())) (fun bw x -> bw.BW.Write(x.Ticks))
             mkFormatter FormatterInfo.Atomic false false (fun br -> DateTime(br.BR.ReadInt64())) (fun bw x -> bw.BW.Write(x.Ticks)) 
             mkFormatter FormatterInfo.Atomic false true (fun br -> br.BR.ReadBytes(br.BR.ReadInt32())) (fun bw x -> bw.BW.Write x.Length ; bw.BW.Write x) 
+            mkFormatter FormatterInfo.Atomic false false (fun _ -> DBNull.Value) (fun _ _ -> ())
             mkFormatter FormatterInfo.Atomic false false (fun r -> System.Numerics.BigInteger(r.BR.ReadBytes(r.BR.ReadInt32())))
                                                          (fun w x -> let bs = x.ToByteArray() in w.BW.Write bs.Length ; w.BW.Write bs)
         ]
@@ -112,32 +113,11 @@
                 (fun r -> AssemblyName(r.BR.ReadString()))
                 (fun w a -> w.BW.Write a.FullName)
 
-    let delegateFormatter =
-        let writer (w : Writer) (dele : System.Delegate) =
-            w.WriteObj(typeFormatter, dele.GetType())
-            w.WriteObj(memberInfoFormatter, dele.Method)
-            if not dele.Method.IsStatic then w.WriteObj dele.Target
-
-        let reader (r : Reader) =
-            let ty = r.ReadObj typeFormatter :?> Type
-            let meth = r.ReadObj memberInfoFormatter :?> MethodInfo
-
-            if not meth.IsStatic then
-                let target = r.ReadObj()
-                Delegate.CreateDelegate(ty, target, meth, throwOnBindFailure = true)
-            else
-                Delegate.CreateDelegate(ty, meth, throwOnBindFailure = true)
-
-
-        mkFormatter FormatterInfo.Custom true true reader writer
-
-    let dbNullFormatter = mkFormatter FormatterInfo.Custom false true (fun _ -> DBNull.Value) (fun _ _ -> ())
-
     let reflectionFormatters =
         [ 
             typeFormatter ; assemblyFormatter ; memberInfoFormatter
             typeHandleFormatter ; fieldHandleFormatter ; methodHandleFormatter
-            assemblyNameFormatter ; delegateFormatter ; dbNullFormatter
+            assemblyNameFormatter
         ]
 
     //
@@ -356,4 +336,46 @@
             FormatterInfo = FormatterInfo.ReflectionDerived
             UseWithSubtypes = false
             CacheObj = false
+        }
+
+
+    let mkDelegateFormatter (t : Type) =
+        let writer (w : Writer) (o : obj) =
+            let dele = o :?> System.Delegate
+            match dele.GetInvocationList() with
+            | [| one |] when obj.ReferenceEquals(one, dele) ->
+                w.BW.Write true
+                w.WriteObj(memberInfoFormatter, dele.Method)
+                if not dele.Method.IsStatic then w.WriteObj dele.Target
+            | deleList ->
+                w.BW.Write false
+                w.BW.Write deleList.Length
+                for i = 0 to deleList.Length - 1 do
+                    w.WriteObj(deleList.[i])
+
+        let reader (r : Reader) =
+            if r.BR.ReadBoolean() then
+                let meth = r.ReadObj memberInfoFormatter :?> MethodInfo
+                if not meth.IsStatic then
+                    let target = r.ReadObj()
+                    Delegate.CreateDelegate(t, target, meth, throwOnBindFailure = true) :> obj
+                else
+                    Delegate.CreateDelegate(t, meth, throwOnBindFailure = true) :> obj
+            else
+                let n = r.BR.ReadInt32()
+                let deleList = Array.zeroCreate<System.Delegate> n
+                for i = 0 to n - 1 do deleList.[i] <- r.ReadObj() :?> System.Delegate
+                Delegate.Combine deleList :> obj
+
+        {
+            Type = t
+            TypeInfo = getTypeInfo t
+            TypeHash = ObjHeader.getTruncatedHash t
+
+            Write = writer
+            Read = reader
+
+            FormatterInfo = FormatterInfo.Custom
+            UseWithSubtypes = false
+            CacheObj = true
         }
