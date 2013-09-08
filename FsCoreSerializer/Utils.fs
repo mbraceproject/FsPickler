@@ -114,6 +114,7 @@
                 let buf = buffer.Value
                 let inline readBytes (n : int) =
                     if stream.Read(buf, 0, n) < n then
+                        // TODO: this is wrong
                         raise <| new EndOfStreamException()
         
                 let totalBytes = Buffer.ByteLength array

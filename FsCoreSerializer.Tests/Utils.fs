@@ -76,3 +76,41 @@
             |> Seq.choose activate
             |> Seq.filter (fun (t,o) -> testSerializer ndc o)
             |> Seq.toArray
+
+
+        // stolen from FSI time reporter
+
+        type BenchmarkResults<'T> =
+            {
+                Result : 'T
+                Elapsed : TimeSpan
+                CpuTime : TimeSpan
+                GcDelta : int list
+            }
+
+        let benchmark (f : unit -> 'T) =
+            let proc = System.Diagnostics.Process.GetCurrentProcess()
+            let numGC = System.GC.MaxGeneration
+            let stopwatch = new System.Diagnostics.Stopwatch()
+
+            do 
+                GC.Collect(3)
+                GC.WaitForPendingFinalizers()
+                GC.Collect(3)
+
+            let startGC = [| for i in 0 .. numGC -> System.GC.CollectionCount(i) |]
+            let startTotal = proc.TotalProcessorTime
+            stopwatch.Start()
+
+            let res = f ()
+
+            stopwatch.Stop()
+            let total = proc.TotalProcessorTime - startTotal
+            let spanGC = [ for i in 0 .. numGC -> System.GC.CollectionCount(i) - startGC.[i] ]
+
+            {
+                Result = res
+                Elapsed = stopwatch.Elapsed
+                CpuTime = total
+                GcDelta = spanGC
+            }

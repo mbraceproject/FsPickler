@@ -8,7 +8,7 @@
 
         [<EntryPoint>]
         let main (args : string []) =
-            do registerCustomSerializers ()
+            do TestTypes.registerCustomSerializers ()
             
             let port = if args.Length = 0 then None else Some (Int32.Parse args.[0])
             let server = new SerializationServer(?port = port, logF = Console.WriteLine)

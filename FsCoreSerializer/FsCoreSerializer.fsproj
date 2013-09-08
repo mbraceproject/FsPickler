@@ -53,7 +53,6 @@
     <Compile Include="FsTypeFormatters.fs" />
     <Compile Include="FormatterResolution.fs" />
     <Compile Include="FsCoreSerializer.fs" />
-    <None Include="Samples.fsx" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />

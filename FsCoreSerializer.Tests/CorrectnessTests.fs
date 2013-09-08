@@ -11,7 +11,6 @@
 
     open NUnit.Framework
 
-    [<AutoOpen>]
     module TestTypes =
 
         type SimpleDU =
@@ -122,6 +121,7 @@
                 with get () = cnt
                 and set i = cnt <- i
 
+    open TestTypes
 
     [<TestFixture>]
     [<AbstractClass>]
