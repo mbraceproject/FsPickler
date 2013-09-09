@@ -77,9 +77,8 @@
         /// <param name="fmt">Formatter used in serialization. Needs to be compatible with input object.</param>
         /// <param name="o">The input object.</param>
         member w.WriteObj (fmt : Formatter, o : obj) =
-            if not <| Utils.runsOnMono then
-                // does not work as expected in mono
-                RuntimeHelpers.EnsureSufficientExecutionStack()
+            
+            do RuntimeHelpers.EnsureSufficientExecutionStack()
 
             let inline writeHeader (flags : byte) =
                 bw.Write(ObjHeader.create fmt.TypeHash flags)
