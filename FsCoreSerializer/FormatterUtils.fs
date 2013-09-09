@@ -9,7 +9,7 @@
     module internal FormatterUtils =
 
         let containsAttr<'T when 'T :> Attribute> (m : MemberInfo) =
-            m.GetCustomAttributes< 'T>() |> Seq.isEmpty |> not
+            m.GetCustomAttributes(typeof<'T>, true) |> Seq.isEmpty |> not
 
         let fieldBindings = 
             BindingFlags.NonPublic ||| BindingFlags.Public ||| 

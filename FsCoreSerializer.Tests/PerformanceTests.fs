@@ -18,7 +18,7 @@
         let leastAcceptableImprovementFactor = 1.
 
         // new printf that avoids issues with NUnit GUI.
-        let printfn fmt = Printf.ksprintf(fun msg -> Console.WriteLine msg) fmt
+        let printfn fmt = Printf.ksprintf Console.WriteLine fmt
 
         let testPerf iterations (input : 'T) =
             let runBenchmark (s : ISerializer) =
@@ -44,7 +44,15 @@
                 function
                 | Choice1Of2 otherResult ->
                     let time = getTimeMetric otherResult / getTimeMetric fscResult |> float
-                    let space = getSpaceMetric otherResult / getSpaceMetric fscResult
+                    let space = 
+                        let otherM = getSpaceMetric otherResult 
+                        let fscM = getSpaceMetric fscResult
+                        // avoid NaN and Infinity results
+                        if fscM = 0. then
+                            if otherM = 0. then 1.
+                            else otherM
+                        else otherM / fscM
+
                     printfn "%s is %.2fx faster and %.2fx more memory efficient than %s." fsc.Name time space other.Name
                     // measure combined performance benefit with an 80% bias to time results
                     (4. * time + space) / 5.
@@ -113,6 +121,9 @@
         let stringValue = 
             "Lorem ipsum dolor sit amet, consectetur adipisicing elit, 
                 sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+
+
+        do TestTypes.registerCustomSerializers ()
 
 
         [<Test>]
@@ -194,6 +205,24 @@
             testPerf 100 dict
 
         [<Test>]
+        let ``.NET Stack`` () =
+            let stack = new System.Collections.Generic.Stack<string> ()
+            for i = 0 to 1000 do stack.Push <| string i
+            testPerf 100 stack
+
+        [<Test>]
+        let ``.NET List`` () =
+            let list = new System.Collections.Generic.List<string * int>()
+            for i = 0 to 1000 do list.Add (string i, i)
+            testPerf 100 list
+
+        [<Test>]
+        let ``.NET Set`` () =
+            let set = new System.Collections.Generic.SortedSet<string> ()
+            for i = 0 to 1000 do set.Add (string i) |> ignore
+            testPerf 100 set
+
+        [<Test>]
         let ``FSharp: Tuple Small`` () = testPerf 10000 (1, DateTime.Now,"hello")
 
         [<Test>]
@@ -241,7 +270,7 @@
             testPerf 100 <| int2Peano 500
 
         [<Test>]
-        let ``FSharp: Closure`` () =
+        let ``FSharp: Curried Function`` () =
             let clo = (@) [ Some([1..100], Set.ofList [1..100]) ]
             testPerf 1000 clo
 

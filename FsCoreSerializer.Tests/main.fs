@@ -14,7 +14,7 @@
             let server = new SerializationServer(?port = port, logF = Console.WriteLine)
             server.Start()
             do System.Console.Title <- "FsCoreSerializer Unit tester"
-            printfn "Deserialization server now running at %O" server.IPEndPoint
+            printfn "Serialization server now running at %O" server.IPEndPoint
 
             let rec mainLoop () =
                 do System.Threading.Thread.Sleep 1000
