@@ -61,12 +61,11 @@
             elif f.FormatterInfo = FormatterInfo.FSharpValue then
                 if obj.ReferenceEquals(x, null) then w.BW.Write true
                 else
+                    if not <| Utils.runsOnMono then
+                        // does not work as expected in mono
+                        RuntimeHelpers.EnsureSufficientExecutionStack()
+
                     w.BW.Write false
-#if MONO
-                    // RuntimeHelpers.EnsureSufficientExecutionStack does not work as expected in mono
-#else
-                    do RuntimeHelpers.EnsureSufficientExecutionStack()
-#endif
                     f.Write w x
             else
                 w.WriteObj(f, x)

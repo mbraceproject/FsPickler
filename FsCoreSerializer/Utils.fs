@@ -9,6 +9,8 @@
         open System.Threading
         open System.Runtime.Serialization
 
+        let runsOnMono = System.Type.GetType("Mono.Runtime") <> null
+
         type Atom<'T when 'T : not struct>(value : 'T) =
             let refCell = ref value
     
