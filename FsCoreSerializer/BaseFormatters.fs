@@ -343,7 +343,7 @@
         let writer (w : Writer) (o : obj) =
             let dele = o :?> System.Delegate
             match dele.GetInvocationList() with
-            | [| one |] when obj.ReferenceEquals(one, dele) ->
+            | [| _ |] ->
                 w.BW.Write true
                 w.WriteObj(memberInfoFormatter, dele.Method)
                 if not dele.Method.IsStatic then w.WriteObj dele.Target
