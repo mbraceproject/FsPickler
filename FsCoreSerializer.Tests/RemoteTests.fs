@@ -18,7 +18,10 @@
         let ipAddr = "127.0.0.1"
         let port = 2323
 
-        let defaultProtocolSerializer () = new NDCSerializer() :> ISerializer
+        let defaultProtocolSerializer () =
+            // NetDataContractSerializer not supported in mono
+            if runsOnMono then new BinaryFormatterSerializer() :> ISerializer
+            else new NDCSerializer() :> ISerializer
         let defaultTestedSerializer () = new FsCoreSerializer () :> ISerializer
 
         
@@ -139,10 +142,17 @@
 
             let thisExe = System.Reflection.Assembly.GetExecutingAssembly().Location
 
-            let psi = new ProcessStartInfo(thisExe, string port)
+            let psi = new ProcessStartInfo()
+
+            if runsOnMono && System.IO.File.Exists "/usr/bin/env" then
+                // http://www.youtube.com/watch?v=dFUlAQZB9Ng
+                psi.FileName <- "/usr/bin/env"
+                psi.Arguments <- sprintf "xterm -e /usr/bin/env mono \"%s\"" thisExe
+            else
+                psi.FileName <- thisExe
+                
             psi.WorkingDirectory <- Path.GetDirectoryName thisExe
 
-            // TODO: mono
             let p = Process.Start psi
             let c = new SerializationClient(port = port)
 
@@ -188,6 +198,7 @@
             | None ->
                 let mgr = new ServerManager()
                 do mgr.Start()
+                do System.Threading.Thread.Sleep 2000
                 let client = mgr.GetClient()
                 state <- Some(mgr, client)
 
