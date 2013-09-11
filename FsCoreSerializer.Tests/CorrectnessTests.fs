@@ -121,6 +121,12 @@
                 with get () = cnt
                 and set i = cnt <- i
 
+
+        [<Struct>]
+        type StructType(x : int, y : string) =
+            member __.X = x
+            member __.Y = y
+
     open TestTypes
 
     [<TestFixture>]
@@ -245,6 +251,12 @@
             let h = Delegate.Combine [| g ; f 3 |]
             (testLoop h).DynamicInvoke [| |] |> ignore
             DeleCounter.Value |> should equal 6
+
+        [<Test>]
+        member __.``Struct Test`` () =
+            let s = new StructType(42, "foobar")
+            (testLoop s).X |> should equal 42
+            (testLoop s).Y |> should equal "foobar"
 
         [<Test>]
         member __.``Lazy Values`` () =
