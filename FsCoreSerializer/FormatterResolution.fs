@@ -98,12 +98,12 @@
             | None ->
                 if FSharpType.IsTuple t then
                     mkTupleFormatter self t |> Some
-                elif FSharpType.IsUnion(t, allMembers) then
+                elif FSharpType.IsUnion(t, memberBindings) then
                     mkUnionFormatter self t |> Some
-                elif FSharpType.IsRecord(t, allMembers) then
+                elif FSharpType.IsRecord(t, memberBindings) then
                     mkRecordFormatter self t |> Some
 #if EMIT_IL
-                elif FSharpType.IsExceptionRepresentation(t, allMembers) then
+                elif FSharpType.IsExceptionRepresentation(t, memberBindings) then
                     mkExceptionFormatter self t |> Some
 #endif
                 else None

@@ -18,7 +18,7 @@
     <Optimize>false</Optimize>
     <Tailcalls>false</Tailcalls>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;EMIT_IL ; OPTIMIZE_FSHARP</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;EMIT_IL; OPTIMIZE_FSHARP</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\Debug\FsCoreSerializer.XML</DocumentationFile>
     <OtherFlags>

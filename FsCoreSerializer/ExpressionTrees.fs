@@ -3,6 +3,7 @@
     open System
     open System.Reflection
     open System.Linq.Expressions
+    open System.Runtime.Serialization
 
     open Microsoft.FSharp.Quotations
     open Microsoft.FSharp.Linq.RuntimeHelpers
@@ -46,11 +47,13 @@
             let exn = Expression.New(ctor, Expression.Constant message)
             Expression.Throw(exn, typeof<'T>) 
 
-        let unbox (t : Type) (e : Expression) = Expression.Convert(e, t) :> Expression
-
-        let constant (t : 'T) = Expression.Constant(t, typeof<'T>) :> Expression
+        let unbox (t : Type) (e : Expression) =
+            if t.IsValueType then Expression.Unbox(e, t) :> Expression
+            else Expression.Convert(e, t) :> Expression
 
         let box (e : Expression) = Expression.TypeAs(e, typeof<obj>) :> Expression
+
+        let constant (t : 'T) = Expression.Constant(t, typeof<'T>) :> Expression
 
         let unboxElement (objArray : Expression) (idx : int) (t : Type) =
             unbox t <| Expression.ArrayIndex(objArray, Expression.Constant idx)
@@ -109,7 +112,6 @@
 
                 Expression.Block assignExprs :> Expression
 
-
     // Specific types
 
     //
@@ -164,14 +166,22 @@
             Expression.compile1<obj [], obj>(fun boxedParams -> 
                 composeTuple boxedParams tupleType 0 |> Expression.box)
 
-
         let elements = FSharpType.GetTupleElements tupleType
+
+#if EMIT_IL
         let reader = preComputeTupleReader tupleType
         let ctor = preComputeTupleConstructor tupleType
 
-        member __.Elements = elements
         member __.Compose(values : obj []) = ctor.Invoke values
         member __.Decompose(tuple : obj) = reader.Invoke tuple
+#else
+        let reader = FSharpValue.PreComputeTupleReader tupleType
+        let ctor = FSharpValue.PreComputeTupleConstructor tupleType
+
+        member __.Compose(values : obj []) = ctor values
+        member __.Decompose(tuple : obj) = reader tuple
+#endif
+        member __.Elements = elements
 
     //
     //  F# Discriminated Unions
@@ -220,11 +230,26 @@
         let ucis = FSharpType.GetUnionCases(unionType, ?bindingFlags = bindingFlags)
         // resolve the actual union type, not a subtype
         let unionType = ucis.[0].DeclaringType
+
+#if EMIT_IL
         let reader = preComputeUnionReader unionType ucis bindingFlags
         let ctor = preComputeUnionConstructor unionType ucis bindingFlags
 
         member __.Decompose(union : obj) = reader.Invoke union
         member __.Compose(tag : int, values : obj []) = ctor.Invoke(tag, values)
+#else
+        let tagReader = FSharpValue.PreComputeUnionTagReader(unionType, ?bindingFlags = bindingFlags)
+        let tagMap = 
+            ucis    |> Seq.map (fun u -> 
+                            let reader = FSharpValue.PreComputeUnionReader(u, ?bindingFlags = bindingFlags)
+                            let ctor = FSharpValue.PreComputeUnionConstructor(u, ?bindingFlags = bindingFlags)
+                            u.Tag, (u, reader, ctor))
+
+                    |> Map.ofSeq
+
+        member __.Decompose(union : obj) = let tag = tagReader union in let (_,reader,_) = tagMap.[tag] in tag, reader union
+        member __.Compose(tag : int, values : obj []) = let (_,_,ctor) = tagMap.[tag] in ctor values
+#endif
         member __.Type = unionType
         member __.UCIs = ucis
 
@@ -246,13 +271,23 @@
 
         
         let fields = FSharpType.GetRecordFields(recordType, ?bindingFlags = bindingFlags)
+        
+#if EMIT_IL
         let reader = preComputeRecordReader recordType fields
         let ctor = preComputeRecordConstructor recordType bindingFlags
 
-        member __.Fields = fields
         member __.Decompose(record : obj) = reader.Invoke record
         member __.Compose(fields : obj []) = ctor.Invoke fields
+#else
+        let reader = FSharpValue.PreComputeRecordReader(recordType, ?bindingFlags = bindingFlags)
+        let ctor = FSharpValue.PreComputeRecordConstructor(recordType, ?bindingFlags = bindingFlags)
 
+        member __.Decompose(record : obj) = reader record
+        member __.Compose(fields : obj []) = ctor fields
+#endif
+        member __.Fields = fields
+
+#if EMIT_IL
 
     //
     //  F# exceptions
@@ -296,3 +331,4 @@
         member __.Decompose(exn : obj) = reader.Invoke exn
         member __.Compose(fields : obj []) = ctor.Invoke fields
         member __.Fields = fields
+#endif
