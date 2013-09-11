@@ -11,7 +11,7 @@
 
     open FsCoreSerializer
     open FsCoreSerializer.Utils
-    open FsCoreSerializer.Reflection
+    open FsCoreSerializer.ExpressionTrees
     open FsCoreSerializer.FormatterUtils
     open FsCoreSerializer.BaseFormatters
 
@@ -37,9 +37,9 @@
             union.Compose(tag, fields)
 
         {
-            Type = t
-            TypeInfo = getTypeInfo t
-            TypeHash = ObjHeader.getTruncatedHash t
+            Type = union.Type
+            TypeInfo = getTypeInfo union.Type
+            TypeHash = ObjHeader.getTruncatedHash union.Type
 
             Write = writer
             Read = reader

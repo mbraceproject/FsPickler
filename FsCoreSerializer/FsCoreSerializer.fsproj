@@ -39,7 +39,7 @@
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets')" />
   <ItemGroup>
     <Compile Include="Utils.fs" />
-    <Compile Include="Reflection.fs" />
+    <Compile Include="ExpressionTrees.fs" />
     <Compile Include="ISerializer.fs" />
     <Compile Include="DotNetSerializers.fs" />
     <Compile Include="TypeFormatter.fs" />

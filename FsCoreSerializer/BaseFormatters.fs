@@ -2,6 +2,7 @@
 
     open System
     open System.Reflection
+    open System.Linq.Expressions
     open System.IO
     open System.Collections.Generic
     open System.Collections.Concurrent
@@ -9,7 +10,7 @@
     open System.Runtime.CompilerServices
 
     open FsCoreSerializer
-    open FsCoreSerializer.Reflection
+    open FsCoreSerializer.ExpressionTrees
     open FsCoreSerializer.FormatterUtils
 
     let primitiveFormatters =
@@ -143,27 +144,88 @@
     // formatter builder for ISerializable types
 
     let tryMkISerializableFormatter (t : Type) =
-        if typeof<ISerializable>.IsAssignableFrom t then
+        if not <| typeof<ISerializable>.IsAssignableFrom t then None
+        else
             match tryGetCtor t [| typeof<SerializationInfo> ; typeof<StreamingContext> |] with
             | None -> None
-            | Some ctor ->
+            | Some ctorInfo ->
                 
                 if t = typeof<IntPtr> || t = typeof<UIntPtr> then
                     raise <| new SerializationException("Serialization of pointers not supported.")
 
 #if EMIT_IL
-                let ctorFunc = FSharpValue.PreComputeConstructor ctor
-                let precompute (m : MethodInfo) = FSharpValue.PreComputeMethod(t, m)
+                let allMethods = t.GetMethods(BindingFlags.Instance ||| BindingFlags.NonPublic ||| BindingFlags.Public)
 
-                let inline run o (sc : StreamingContext) (fs : (obj * obj [] -> obj) []) =
-                    for f in fs do f (o , [| sc :> obj |]) |> ignore
+                let tryMkDelegate (ms : MethodInfo []) =
+                    match ms with
+                    | [||] -> None
+                    | methods ->
+                        let dele = 
+                            Expression.compile2<obj, StreamingContext, unit>(fun boxed sc ->
+                                let unboxed = Expression.unbox t boxed
+                                let actions = methods |> Array.map (fun m -> Expression.Call(unboxed, m, sc) :> Expression)
+                                Expression.Block [| yield! actions ; yield Expression.constant () |] :> _)
+                        Some dele
+
+                let onSerializing = allMethods |> Array.filter containsAttr<OnSerializingAttribute> |> tryMkDelegate
+                let onSerialized = allMethods |> Array.filter containsAttr<OnSerializedAttribute> |> tryMkDelegate
+
+                let inline run (dele : Func<obj, StreamingContext, unit> option) o sC =
+                    match dele with
+                    | None -> ()
+                    | Some d -> d.Invoke(o, sC)
+
+                let ctor =
+                    Expression.compile2<SerializationInfo, StreamingContext, obj>(fun sI sC ->
+                        let newInstance = Expression.New(ctorInfo, sI, sC)
+                        let actions = 
+                            allMethods 
+                            |> Array.filter containsAttr<OnDeserializedAttribute> 
+                            |> Array.map (fun m -> Expression.Call(newInstance, m, sC) :> Expression)
+                        let result = Expression.box newInstance
+                        if actions.Length = 0 then result
+                        else
+                            Expression.Block([| yield! actions ; yield result |]) :> _)
+
+
+                let isDeserializationCallback = typeof<IDeserializationCallback>.IsAssignableFrom t
+//                let ctorFunc = FSharpValue.PreComputeConstructor ctor
+//                let precompute (m : MethodInfo) = FSharpValue.PreComputeMethod(t, m)
+//
+//                let inline run o (sc : StreamingContext) (fs : (obj * obj [] -> obj) []) =
+//                    for f in fs do f (o , [| sc :> obj |]) |> ignore
+                let writer (w : Writer) (o : obj) =
+                    run onSerializing o w.StreamingContext
+                    let s = o :?> ISerializable
+                    let sI = new SerializationInfo(t, new FormatterConverter())
+                    s.GetObjectData(sI, w.StreamingContext)
+                    w.BW.Write sI.MemberCount
+                    let enum = sI.GetEnumerator()
+                    while enum.MoveNext() do
+                        w.BW.Write enum.Current.Name
+                        w.WriteObj enum.Current.Value
+
+                    run onSerialized o w.StreamingContext
+
+                let reader (r : Reader) =
+                    let sI = new SerializationInfo(t, new FormatterConverter())
+                    let memberCount = r.BR.ReadInt32()
+                    for i = 1 to memberCount do
+                        let name = r.BR.ReadString()
+                        let v = r.ReadObj ()
+                        sI.AddValue(name, v)
+
+
+                    let o = ctor.Invoke(sI, r.StreamingContext)
+                    if isDeserializationCallback then (o :?> IDeserializationCallback).OnDeserialization null
+                    o
 #else
                 let inline ctorFunc args = ctor.Invoke args
                 let precompute = id
 
                 let inline run o (sc : StreamingContext) (ms : MethodInfo []) =
                     for m in ms do m.Invoke(o, [| sc :> obj |]) |> ignore
-#endif
+
 
                 let allMethods = t.GetMethods(allMembers)
                 
@@ -197,6 +259,7 @@
                     run o r.StreamingContext onDeserialized
                     if isDeserializationCallback then (o :?> IDeserializationCallback).OnDeserialization null
                     o
+#endif
 
                 Some {
                     Type = t
@@ -210,21 +273,22 @@
                     CacheObj = true
                     UseWithSubtypes = false
                 }
-        else None
+
 
     // formatter builder for IFsCoreSerializable types
 
     let tryMkIFsCoreSerializable (t : Type) =
-        if typeof<IFsCoreSerializable>.IsAssignableFrom t then
+        if not <| typeof<IFsCoreSerializable>.IsAssignableFrom t then None
+        else
             match tryGetCtor t [| typeof<Reader> |] with
             | None -> None
-            | Some ctor ->
+            | Some ctorInfo ->
 #if EMIT_IL
-                let ctorFunc = FSharpValue.PreComputeConstructor ctor
+                let ctor = Expression.compile1<Reader, obj>(fun reader -> Expression.New(ctorInfo, reader) |> Expression.box)
+//                let ctorFunc = FSharpValue.PreComputeConstructor ctor
 #else
                 let inline ctorFunc args = ctor.Invoke args
 #endif
-    
 
                 Some {
                     Type = t
@@ -232,13 +296,12 @@
                     TypeHash = ObjHeader.getTruncatedHash t
 
                     Write = fun (w : Writer) (o : obj) -> (o :?> IFsCoreSerializable).GetObjectData(w)
-                    Read = fun (r : Reader) -> ctorFunc [| r :> obj |]
+                    Read = ctor.Invoke
 
                     FormatterInfo = FormatterInfo.IFsCoreSerializable
                     UseWithSubtypes = false
                     CacheObj = true
                 }
-        else None
 
 
     // reflection-based formatter derivation
@@ -254,14 +317,76 @@
         let isDeserializationCallback = typeof<IDeserializationCallback>.IsAssignableFrom t
         let formatters = fields |> Array.map (fun f -> resolver f.FieldType)
 
+        let tyInfo = getTypeInfo t
+
 #if EMIT_IL
-        let precompute (m : MethodInfo) = FSharpValue.PreComputeMethod(t, m)
 
-        let inline run o (sc : StreamingContext) (fs : (obj * obj [] -> obj) []) =
-            for f in fs do f (o , [| sc :> obj |]) |> ignore
+        let tryMkDelegate (ms : MethodInfo []) =
+            match ms with
+            | [||] -> None
+            | methods ->
+                let dele = 
+                    Expression.compile2<obj, StreamingContext, unit>(fun boxed sc ->
+                        let unboxed = Expression.unbox t boxed
+                        let actions = methods |> Array.map (fun m -> Expression.Call(unboxed, m, sc) :> Expression)
+                        Expression.Block [| yield! actions ; yield Expression.constant () |] :> _)
+                Some dele
 
-        let decomposer = FSharpValue.PreComputeFieldReader(t, fields)
-        let composer = FSharpValue.PreComputeObjectInitializer(t, fields)
+        let onSerialized = allMethods |> Array.filter containsAttr<OnSerializedAttribute> |> tryMkDelegate
+        let onDeserializing = allMethods |> Array.filter containsAttr<OnDeserializingAttribute> |> tryMkDelegate
+
+        let inline run (f : Func<obj, StreamingContext, unit> option) o sC =
+            match f with
+            | None -> ()
+            | Some f -> f.Invoke(o, sC)
+
+        let fieldGetter =
+            Expression.compile2<obj, StreamingContext, obj []>(fun instance sC ->
+                let unboxed = Expression.unbox t instance
+                let actions = 
+                    allMethods 
+                    |> Array.filter containsAttr<OnSerializingAttribute> 
+                    |> Array.map(fun m -> Expression.Call(unboxed, m, sC) :> Expression)
+                let boxedValues = Expression.readFieldsBoxed t fields unboxed :> Expression
+                if actions.Length = 0 then boxedValues
+                else
+                    Expression.Block [| yield! actions ; yield boxedValues |] :> _)
+
+        let fieldSetter =
+            Expression.compile3<obj, StreamingContext, obj [], obj>(fun instance sC fieldValues ->
+                let unboxed = Expression.unbox t instance
+                let actions = 
+                    allMethods
+                    |> Array.filter containsAttr<OnDeserializingAttribute> 
+                    |> Array.map(fun m -> Expression.Call(unboxed, m, sC) :> Expression)
+                let setter = Expression.writeFieldsBoxed t fields unboxed fieldValues
+                Expression.Block [| yield! actions ; yield setter ; yield Expression.box unboxed |] :> _)
+
+
+        let writer (w : Writer) (o : obj) =
+            let values = fieldGetter.Invoke(o, w.StreamingContext)
+            zipWrite w formatters values
+
+            run onSerialized o w.StreamingContext
+
+        let reader (r : Reader) =
+            let o = FormatterServices.GetUninitializedObject(t)
+            if tyInfo > TypeInfo.Value then r.EarlyRegisterObject o
+            run onDeserializing o r.StreamingContext
+            let values = zipRead r formatters
+
+            let o = fieldSetter.Invoke(o, r.StreamingContext, values)
+            if isDeserializationCallback then (o :?> IDeserializationCallback).OnDeserialization null
+            o
+        
+                    
+//        let precompute (m : MethodInfo) = FSharpValue.PreComputeMethod(t, m)
+//
+//        let inline run o (sc : StreamingContext) (fs : (obj * obj [] -> obj) []) =
+//            for f in fs do f (o , [| sc :> obj |]) |> ignore
+//
+//        let decomposer = FSharpValue.PreComputeFieldReader(t, fields)
+//        let composer = FSharpValue.PreComputeObjectInitializer(t, fields)
 #else
         let precompute = id
 
@@ -278,7 +403,7 @@
         let composer (o : obj, fieldVals : obj []) =
             for i = 0 to fields.Length - 1 do
                 fields.[i].SetValue(o, fieldVals.[i])
-#endif
+
         
         let onSerializing = allMethods |> Array.filter containsAttr<OnSerializingAttribute> |> Array.map precompute
         let onSerialized = allMethods |> Array.filter containsAttr<OnSerializedAttribute> |> Array.map precompute
@@ -306,6 +431,7 @@
             run o r.StreamingContext onDeserialized
             if isDeserializationCallback then (o :?> IDeserializationCallback).OnDeserialization null
             o
+#endif
         {
             Type = t
             TypeInfo = tyInfo
