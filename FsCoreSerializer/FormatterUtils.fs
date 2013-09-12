@@ -8,7 +8,6 @@
     
     open FsCoreSerializer
     open FsCoreSerializer.Utils
-    open FsCoreSerializer.ExpressionTree
 
     module internal FormatterUtils =
 

@@ -1,5 +1,6 @@
 ﻿namespace FsCoreSerializer.Tests
 
+    [<AutoOpen>]
     module Utils =
 
         open System
@@ -54,27 +55,34 @@
                 }
 
 
-        // automated object generation
+        // new printf def that avoids issues with NUnit GUI.
+        let printfn fmt = Printf.ksprintf Console.WriteLine fmt
 
+
+        // automated large-scale object generation
         let generateSerializableObjects (assembly : Assembly) =
-            let ndc = new NDCSerializer() :> ISerializer
 
-            let activate (t : Type) =
-                try Some <| (t, Activator.CreateInstance t)
-                with _ ->
-                    try
-                        let ctor = t.GetConstructor(BindingFlags.NonPublic ||| BindingFlags.Instance, null, [||], [||])
-                        Some <| (t, ctor.Invoke [||])
-                    with _ -> None
+            let filterType (t : Type) =
+                not t.IsAbstract
+                    && (t.IsValueType || typeof<ISerializable>.IsAssignableFrom t || t.IsSerializable)
 
-            let testSerializer (s : ISerializer) (o : obj) = 
-                try s.Serialize o |> s.Deserialize |> ignore ; true
+            let tryActivate (t : Type) =
+                try
+                    let ctorFlags = BindingFlags.Public ||| BindingFlags.NonPublic ||| BindingFlags.Instance
+                    match t.GetConstructor(ctorFlags, null, [||], [||]) with
+                    | null -> Some (t, Activator.CreateInstance t)
+                    | ctorInfo -> Some (t, ctorInfo.Invoke [||])
+                with _ -> None
+
+            let ndc = new TestNetDataContractSerializer()
+            let filterObject (t : Type, o : obj) =
+                try Serializer.writeRead ndc o |> ignore ; true
                 with _ -> false
             
             assembly.GetTypes()
-            |> Seq.filter (fun t -> typeof<ISerializable>.IsAssignableFrom t || t.IsSerializable)
-            |> Seq.choose activate
-            |> Seq.filter (fun (t,o) -> testSerializer ndc o)
+            |> Seq.filter filterType
+            |> Seq.choose tryActivate
+            |> Seq.filter filterObject
             |> Seq.toArray
 
 

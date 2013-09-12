@@ -68,9 +68,7 @@
 
 
 
-    type FsCoreSerializer (?encoding : Encoding) =
-        // observed up to 2x performance improvement when using UTF8 encoding in BinaryWriter/Reader
-        let encoding = defaultArg encoding Encoding.UTF8
+    type FsCoreSerializer =
 
         /// <summary>Initializes an object writer for the given stream.</summary>
         /// <param name="stream">The target stream.</param>
@@ -119,26 +117,6 @@
             if readType then reader.ReadObj() :?> 'T
             else
                 reader.Read<'T> ()
-
-
-        // interface implementation
-        interface ISerializer with
-            member c.Name = "FsCoreSerializer"
-
-            member c.Serialize(stream : Stream, graph : obj, ?context) : unit =
-                FsCoreSerializer.Serialize(stream, graph, ?context = context, encoding = encoding, writeType = true)
-
-            member c.Serialize(graph : obj, ?context) : byte [] =
-                use m = new MemoryStream()
-                FsCoreSerializer.Serialize(m, graph, ?context = context, encoding = encoding, writeType = true)
-                m.ToArray()
-
-            member c.Deserialize(stream : Stream, ?context) : obj =
-                FsCoreSerializer.Deserialize(stream, ?context = context, encoding = encoding, readType = true)
-
-            member c.Deserialize(bytes : byte [], ?context) : obj =
-                use m = new MemoryStream(bytes)
-                FsCoreSerializer.Deserialize(m, ?context = context, encoding = encoding, readType = true)
 
 
     [<AutoOpen>]

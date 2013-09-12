@@ -9,29 +9,16 @@
 
         open NUnit.Framework
         open FsCoreSerializer
-        open FsCoreSerializer.Tests.Utils
 
-        let fsc = new FsCoreSerializer () :> ISerializer
-        let bfs = new BinaryFormatterSerializer () :> ISerializer
-        let ndc = new NDCSerializer () :> ISerializer
+        let fsc = new TestFsCoreSerializer () :> ISerializer
+        let bfs = new TestBinaryFormatter () :> ISerializer
+        let ndc = new TestNetDataContractSerializer () :> ISerializer
 
         let leastAcceptableImprovementFactor = 1.
 
-        // new printf that avoids issues with NUnit GUI.
-        let printfn fmt = Printf.ksprintf Console.WriteLine fmt
-
         let testPerf iterations (input : 'T) =
             let runBenchmark (s : ISerializer) =
-                let loop () =
-                    use m = new MemoryStream()
-
-                    for i = 1 to iterations do
-                        m.Position <- 0L
-                        s.Serialize(m :> Stream, input :> obj)
-                        m.Position <- 0L
-                        s.Deserialize m |> ignore
-
-                try Choice1Of2 (benchmark loop)
+                try Choice1Of2 (benchmark (fun () -> Serializer.loop s iterations input))
                 with e -> Choice2Of2 e
 
             // returns a floating point improvement factor

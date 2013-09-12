@@ -9,7 +9,6 @@
     open System.Threading.Tasks
 
     open FsCoreSerializer
-    open FsCoreSerializer.Tests.Utils
 
     open NUnit.Framework
 
@@ -20,9 +19,10 @@
 
         let defaultProtocolSerializer () =
             // NetDataContractSerializer not supported in mono
-            if runsOnMono then new BinaryFormatterSerializer() :> ISerializer
-            else new NDCSerializer() :> ISerializer
-        let defaultTestedSerializer () = new FsCoreSerializer () :> ISerializer
+            if runsOnMono then new TestBinaryFormatter() :> ISerializer
+            else new TestNetDataContractSerializer() :> ISerializer
+
+        let defaultTestedSerializer () = new TestFsCoreSerializer () :> ISerializer
 
         
 
@@ -42,7 +42,7 @@
         let listener = new TcpListener(ipAddr, port)
 
         let testSerializer (Serialize (_,o)) =
-            try Success (testedSerializer.Serialize o)
+            try Success <| Serializer.write testedSerializer o
             with e -> Error e
 
         let report (Serialize (t,o)) =
@@ -61,13 +61,13 @@
                         try
                             let! (bytes : byte []) = stream.AsyncReadBytes()
 
-                            let msg = protocolSerializer.Deserialize bytes :?> Request
+                            let msg = Serializer.read protocolSerializer bytes :?> Request
                             let result = testSerializer msg
                             do report msg result
 
-                            do! stream.AsyncWriteBytes (protocolSerializer.Serialize result)
+                            do! stream.AsyncWriteBytes <| Serializer.write protocolSerializer result
                         with e ->
-                            do! stream.AsyncWriteBytes (protocolSerializer.Serialize (Error e))
+                            do! stream.AsyncWriteBytes <| Serializer.write protocolSerializer (Error e)
                     with e ->
                         logF <| sprintf "Protocol error: %O" e
             }
@@ -110,12 +110,12 @@
                 use client = new TcpClient(ipAddr, port)
                 use stream = client.GetStream()
 
-                let bytes = protocolSerializer.Serialize msg
+                let bytes = Serializer.write protocolSerializer msg
                 do! stream.AsyncWriteBytes bytes
                 let! (reply : byte []) = stream.AsyncReadBytes()
 
                 return
-                    match protocolSerializer.Deserialize reply :?> Reply with
+                    match Serializer.read protocolSerializer reply :?> Reply with
                     | Success bytes -> bytes
                     | Error e -> raise e
             } |> Async.RunSynchronously
@@ -123,7 +123,7 @@
 
         member __.Test(x : 'T) =
             let bytes = sendSerializationRequest(Serialize(typeof<'T>, x))
-            testedSerializer.Deserialize bytes :?> 'T
+            Serializer.read testedSerializer bytes :?> 'T
 
         member __.EndPoint = new IPEndPoint(IPAddress.Parse ipAddr, port)
         member __.Serializer = testedSerializer
@@ -179,12 +179,12 @@
 
         override __.TestSerializer(x : 'T) = 
             match state with
-            | Some (_,client) -> client.Serializer.Serialize x
+            | Some (_,client) -> Serializer.write client.Serializer x
             | None -> failwith "remote server has not been set up."
             
         override __.TestDeserializer(bytes : byte []) =
             match state with
-            | Some (_,client) -> client.Serializer.Deserialize bytes
+            | Some (_,client) -> Serializer.read client.Serializer bytes
             | None -> failwith "remote server has not been set up."
 
         override __.TestLoop(x : 'T) =

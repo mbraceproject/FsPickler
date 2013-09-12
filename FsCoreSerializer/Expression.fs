@@ -1,14 +1,12 @@
-﻿module internal FsCoreSerializer.ExpressionTree
+﻿namespace FsCoreSerializer
 
-    open System
-    open System.Reflection
-    open System.Linq.Expressions
-    open System.Runtime.Serialization
+    module internal Expression =
 
-    open Microsoft.FSharp.Quotations
-    open Microsoft.FSharp.Reflection
+        // LINQ expression utilities
 
-    module Expression =
+        open System
+        open System.Reflection
+        open System.Linq.Expressions
 
         let inline compile1<'U, 'V>(f : Expression -> Expression) =
             let parameter = Expression.Parameter(typeof<'U>)

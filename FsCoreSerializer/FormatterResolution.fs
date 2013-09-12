@@ -127,7 +127,7 @@
                 if t.IsValueType then mkStructFormatter self t
                 elif t.IsAbstract then mkAbstractFormatter t
                 elif not t.IsSerializable then 
-                    raise <| new SerializationException(sprintf "type '%s' is marked as nonserializable." t.Name)
+                    raise <| new SerializationException(sprintf "type '%s' is not serializable." t.Name)
                 else
                     mkClassFormatter self t
             | Some r -> r
