@@ -49,17 +49,29 @@
                             (genericIdx : GenericFormatterIndex) 
                             (self : Type -> Lazy<Formatter>) (t : Type) =
 
+        // subtype resolution, must happen before everything else
+        let result =
+            if t.BaseType <> null then
+                match (self t.BaseType).Value with
+                | fmt when fmt.UseWithSubtypes -> Some fmt
+                | _ -> None
+            else
+                None
+
         // lookup factory index
         let result =
-            match factoryIdx.TryFind t with
-            | Some ff -> 
-                let f = ff.Create self
-                if f.Type <> t then
-                    new SerializationException(sprintf "Invalid formatter factory: expected type '%s' but got '%s'." t.Name f.Type.Name)
-                    |> raise
-                else
-                    Some f
-            | None -> None
+            match result with
+            | Some _ -> result
+            | None ->
+                match factoryIdx.TryFind t with
+                | Some ff -> 
+                    let f = ff.Create self
+                    if f.Type <> t then
+                        new SerializationException(sprintf "Invalid formatter factory: expected type '%s' but got '%s'." t.Name f.Type.Name)
+                        |> raise
+                    else
+                        Some f
+                | None -> None
 
         // lookup generic shapes
         let result =
@@ -74,7 +86,7 @@
                 elif t.IsPointer then
                     raise <| new SerializationException("Serializing pointers not supported.")
                 elif t.IsByRef then
-                    raise <| new SerializationException("Serializing ref types not supported.")
+                    raise <| new SerializationException("Serializing refs not supported.")
                 elif t.IsEnum then
                     Some <| mkEnumFormatter self t
                 else None
@@ -86,24 +98,15 @@
             | None ->
                 if FSharpType.IsTuple t then
                     mkTupleFormatter self t |> Some
-                elif FSharpType.IsUnion(t, allMembers) then
+                elif FSharpType.IsUnion(t, memberBindings) then
                     mkUnionFormatter self t |> Some
-                elif FSharpType.IsRecord(t, allMembers) then
+                elif FSharpType.IsRecord(t, memberBindings) then
                     mkRecordFormatter self t |> Some
 #if EMIT_IL
-                elif FSharpType.IsExceptionRepresentation(t, allMembers) then
+                elif FSharpType.IsExceptionRepresentation(t, memberBindings) then
                     mkExceptionFormatter self t |> Some
 #endif
                 else None
-
-        // subtype resolution
-        let result =
-            match result with
-            | None when t.BaseType <> null ->
-                match (self t.BaseType).Value with
-                | fmt when fmt.UseWithSubtypes -> Some fmt
-                | _ -> None
-            | r -> r
 
         // IFsCoreSerializable resolution
         let result =
@@ -120,7 +123,13 @@
         // .NET reflection serialization
         let result =
             match result with
-            | None -> mkReflectionFormatter self t
+            | None ->
+                if t.IsValueType then mkStructFormatter self t
+                elif t.IsAbstract then mkAbstractFormatter t
+                elif not t.IsSerializable then 
+                    raise <| new SerializationException(sprintf "type '%s' is marked as nonserializable." t.Name)
+                else
+                    mkClassFormatter self t
             | Some r -> r
 
         result

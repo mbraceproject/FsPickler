@@ -2,9 +2,13 @@
 
     open System
     open System.Reflection
+    open System.Linq.Expressions
     open System.Runtime.CompilerServices
+    open System.Runtime.Serialization
     
+    open FsCoreSerializer
     open FsCoreSerializer.Utils
+    open FsCoreSerializer.ExpressionTrees
 
     module internal FormatterUtils =
 
@@ -15,7 +19,7 @@
             BindingFlags.NonPublic ||| BindingFlags.Public ||| 
                 BindingFlags.Instance ||| BindingFlags.FlattenHierarchy 
 
-        let allMembers =
+        let memberBindings =
             BindingFlags.NonPublic ||| BindingFlags.Public |||
                 BindingFlags.Instance ||| BindingFlags.Static ||| BindingFlags.FlattenHierarchy
 
@@ -47,6 +51,24 @@
                 CacheObj = cache
                 UseWithSubtypes = useWithSubtypes
             }
+
+        // compilation provision for methods that carry the OnSerializing, OnSerialized, etc attributes
+        let preComputeSerializationMethods (declaringType : Type) (ms : MethodInfo []) =
+            match ms with
+            | [||] -> None
+            | methods ->
+                let dele = Expression.compile2<obj, StreamingContext, unit>(fun boxed sc ->
+                    let unboxed = Expression.unbox declaringType boxed
+                    let actions = methods |> Array.map (fun m -> Expression.Call(unboxed, m, sc) :> Expression)
+                    Expression.Block actions |> Expression.returnUnit)
+
+                Some dele
+
+        let isSerializationMethod (m : MethodInfo) =
+            not m.IsStatic &&
+                match m.GetParameters() with
+                | [| p |] when p.ParameterType = typeof<StreamingContext> -> true
+                | _ -> false
 
         //
         //  internal read/write combinators

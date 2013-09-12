@@ -11,7 +11,7 @@
 
     open FsCoreSerializer
     open FsCoreSerializer.Utils
-    open FsCoreSerializer.Reflection
+    open FsCoreSerializer.ExpressionTrees
     open FsCoreSerializer.FormatterUtils
     open FsCoreSerializer.BaseFormatters
 
@@ -20,7 +20,7 @@
     //
 
     let mkUnionFormatter (resolver : Type -> Lazy<Formatter>) (t : Type) =
-        let union = new FsUnion(t, allMembers)
+        let union = new FsUnion(t, memberBindings)
 
         let branchFormatters = 
             union.UCIs 
@@ -37,9 +37,9 @@
             union.Compose(tag, fields)
 
         {
-            Type = t
-            TypeInfo = getTypeInfo t
-            TypeHash = ObjHeader.getTruncatedHash t
+            Type = union.Type
+            TypeInfo = getTypeInfo union.Type
+            TypeHash = ObjHeader.getTruncatedHash union.Type
 
             Write = writer
             Read = reader
@@ -50,7 +50,7 @@
         }
 
     let mkRecordFormatter (resolver : Type -> Lazy<Formatter>) (t : Type) =
-        let record = new FsRecord(t, allMembers)
+        let record = new FsRecord(t, memberBindings)
 
         let formatters = record.Fields |> Array.map (fun f -> resolver f.PropertyType)
 
@@ -108,8 +108,9 @@
 #endif
         }
 
+#if EMIT_IL
     let mkExceptionFormatter (resolver : Type -> Lazy<Formatter>) (t : Type) =
-        let exn = new FsException(t, allMembers)
+        let exn = new FsException(t, memberBindings)
         let formatters = exn.Fields |> Array.map (fun f -> resolver f.PropertyType)
 
         let writer (w : Writer) (o : obj) =
@@ -132,6 +133,7 @@
             UseWithSubtypes = false
             CacheObj = true
         }
+#endif
 
     //
     //  F# generic types
