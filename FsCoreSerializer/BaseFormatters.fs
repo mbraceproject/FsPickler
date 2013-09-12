@@ -10,7 +10,7 @@
     open System.Runtime.CompilerServices
 
     open FsCoreSerializer
-    open FsCoreSerializer.ExpressionTrees
+    open FsCoreSerializer.ExpressionTree
     open FsCoreSerializer.FormatterUtils
 
     let primitiveFormatters =

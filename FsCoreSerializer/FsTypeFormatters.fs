@@ -11,7 +11,7 @@
 
     open FsCoreSerializer
     open FsCoreSerializer.Utils
-    open FsCoreSerializer.ExpressionTrees
+    open FsCoreSerializer.Reflection
     open FsCoreSerializer.FormatterUtils
     open FsCoreSerializer.BaseFormatters
 
