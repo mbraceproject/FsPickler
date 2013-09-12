@@ -86,7 +86,7 @@
                 elif t.IsPointer then
                     raise <| new SerializationException("Serializing pointers not supported.")
                 elif t.IsByRef then
-                    raise <| new SerializationException("Serializing ref types not supported.")
+                    raise <| new SerializationException("Serializing refs not supported.")
                 elif t.IsEnum then
                     Some <| mkEnumFormatter self t
                 else None
@@ -123,7 +123,13 @@
         // .NET reflection serialization
         let result =
             match result with
-            | None -> mkReflectionFormatter self t
+            | None ->
+                if t.IsValueType then mkStructFormatter self t
+                elif t.IsAbstract then mkAbstractFormatter t
+                elif not t.IsSerializable then 
+                    raise <| new SerializationException(sprintf "type '%s' is marked as nonserializable." t.Name)
+                else
+                    mkClassFormatter self t
             | Some r -> r
 
         result

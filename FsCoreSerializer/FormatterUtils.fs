@@ -60,7 +60,7 @@
                 let dele = Expression.compile2<obj, StreamingContext, unit>(fun boxed sc ->
                     let unboxed = Expression.unbox declaringType boxed
                     let actions = methods |> Array.map (fun m -> Expression.Call(unboxed, m, sc) :> Expression)
-                    Expression.Block [| yield! actions ; yield Expression.constant () |] :> _)
+                    Expression.Block actions |> Expression.returnUnit)
 
                 Some dele
 
@@ -69,11 +69,6 @@
                 match m.GetParameters() with
                 | [| p |] when p.ParameterType = typeof<StreamingContext> -> true
                 | _ -> false
-
-        let inline runSerializationMethods (dele : Func<obj, StreamingContext, unit> option) (o:obj) sc =
-            match dele with
-            | None -> ()
-            | Some d -> d.Invoke(o, sc)
 
         //
         //  internal read/write combinators

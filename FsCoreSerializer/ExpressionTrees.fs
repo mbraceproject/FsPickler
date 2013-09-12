@@ -112,6 +112,9 @@
 
                 Expression.Block assignExprs :> Expression
 
+        let returnUnit (block : Expression) =
+            Expression.Block(block, constant ()) :> Expression
+
     // Specific types
 
     //
