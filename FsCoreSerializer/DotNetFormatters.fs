@@ -299,7 +299,7 @@
 
     // formatter builder for delegate types
     let mkDelegateFormatter (self : Type -> Lazy<Formatter>) (t : Type) =
-        let memberInfoFormatter = (self t).Value
+        let memberInfoFormatter = (self typeof<MemberInfo>).Value
         let writer (w : Writer) (o : obj) =
             let dele = o :?> System.Delegate
             match dele.GetInvocationList() with
