@@ -26,7 +26,7 @@
         {
             Type = t
             TypeInfo = getTypeInfo t
-            TypeHash = 0us
+            TypeHash = ObjHeader.computeHash t
 
             Write = fun _ _ -> invalidOp <| sprintf "Attempting to use formatter for abstract type '%O'." t
             Read = fun _ -> invalidOp <| sprintf "Attempting to use formatter for abstract type '%O'." t
@@ -103,7 +103,7 @@
                 Some {
                     Type = t
                     TypeInfo = getTypeInfo t
-                    TypeHash = 0us
+                    TypeHash = ObjHeader.computeHash t
 
                     Write = writer
                     Read = reader
@@ -129,7 +129,7 @@
                 Some {
                     Type = t
                     TypeInfo = getTypeInfo t
-                    TypeHash = 0us
+                    TypeHash = ObjHeader.computeHash t
 
                     Write = fun (w : Writer) (o : obj) -> (o :?> IFsCoreSerializable).GetObjectData(w)
                     Read = reader
@@ -185,7 +185,7 @@
         {
             Type = t
             TypeInfo = getTypeInfo t
-            TypeHash = 0us
+            TypeHash = ObjHeader.computeHash t
 
             Write = writer
             Read = reader
@@ -269,7 +269,7 @@
         {
             Type = t
             TypeInfo = getTypeInfo t
-            TypeHash = 0us
+            TypeHash = ObjHeader.computeHash t
 
             Write = writer
             Read = reader
@@ -287,7 +287,7 @@
         {
             Type = t
             TypeInfo = getTypeInfo t
-            TypeHash = 0us
+            TypeHash = ObjHeader.computeHash t
 
             Write = uf.Write
             Read = uf.Read
@@ -330,7 +330,7 @@
         {
             Type = t
             TypeInfo = getTypeInfo t
-            TypeHash = 0us
+            TypeHash = ObjHeader.computeHash t
 
             Write = writer
             Read = reader

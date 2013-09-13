@@ -39,7 +39,7 @@
         {
             Type = union.Type
             TypeInfo = getTypeInfo union.Type
-            TypeHash = 0us
+            TypeHash = ObjHeader.computeHash t
 
             Write = writer
             Read = reader
@@ -65,7 +65,7 @@
         {
             Type = t
             TypeInfo = getTypeInfo t
-            TypeHash = 0us
+            TypeHash = ObjHeader.computeHash t
 
             Write = writer
             Read = reader
@@ -91,7 +91,7 @@
         {
             Type = t
             TypeInfo = getTypeInfo t
-            TypeHash = 0us
+            TypeHash = ObjHeader.computeHash t
 
             Write = writer
             Read = reader
@@ -124,7 +124,7 @@
         {
             Type = t
             TypeInfo = getTypeInfo t
-            TypeHash = 0us
+            TypeHash = ObjHeader.computeHash t
 
             Write = writer
             Read = reader

@@ -111,7 +111,7 @@
                 {
                     Type = t
                     TypeInfo = getTypeInfo t
-                    TypeHash = 0us
+                    TypeHash = ObjHeader.computeHash t
 
                     Write = writer
                     Read = reader

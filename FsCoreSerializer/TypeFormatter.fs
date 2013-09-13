@@ -39,6 +39,6 @@
                 let pname = br.ReadString()
                 try t.GetGenericArguments() |> Array.find(fun a -> a.Name = pname)
                 with :? KeyNotFoundException -> 
-                    raise <| new SerializationException(sprintf "cannot deserialize type '%s'" pname)
+                    raise <| new SerializationException(sprintf "cannot deserialize type '%s'." pname)
             else
                 t

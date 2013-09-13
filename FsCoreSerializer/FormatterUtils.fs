@@ -41,7 +41,7 @@
             {
                 Type = typeof<'T>
                 TypeInfo = getTypeInfo typeof<'T>
-                TypeHash = 0us
+                TypeHash = ObjHeader.computeHash typeof<'T>
 
                 Write = fun bw o -> writer bw (o :?> 'T)
                 Read = fun br -> reader br :> obj
@@ -50,9 +50,6 @@
                 CacheObj = cache
                 UseWithSubtypes = useWithSubtypes
             }
-
-        let updateHash tyConv (fmt : Formatter) = 
-            { fmt with TypeHash = ObjHeader.getTruncatedHash tyConv fmt.Type }
 
         // compilation provision for methods that carry the OnSerializing, OnSerialized, etc attributes
         let preComputeSerializationMethods (declaringType : Type) (ms : MethodInfo []) =

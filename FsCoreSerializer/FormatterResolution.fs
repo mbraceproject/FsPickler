@@ -133,5 +133,4 @@
                     mkClassFormatter self t
             | Some r -> r
 
-        // update typehash w.r.t. local typenameconverter
-        updateHash typeNameConverter result
+        result

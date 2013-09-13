@@ -59,7 +59,7 @@
                 yield! mkValueFormatters ()
                 yield! mkReflectionFormatters tyConv
             }
-            |> Seq.map (fun f -> KeyValuePair(f.Type, updateHash tyConv f)) 
+            |> Seq.map (fun f -> KeyValuePair(f.Type, f)) 
             |> fun x -> new ConcurrentDictionary<_,_>(x)
 
         let gfi =
@@ -68,7 +68,7 @@
 
         do 
             for f in formatters do 
-                cache.AddOrUpdate(f.Type, f, fun _ _ -> updateHash tyConv f) |> ignore
+                cache.AddOrUpdate(f.Type, f, fun _ _ -> f) |> ignore
 
         member __.TypeNameConverter = tyConv
         member __.ResolveFormatter (t : Type) = YParametric cache (resolveFormatter tyConv ffs gfi) t

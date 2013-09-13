@@ -5,12 +5,10 @@
 
     // each reference type is serialized with a 32 bit header
     //   1. the first byte is a fixed identifier
-    //   2. the next two bytes are a truncated hash which identifies the type being serialized
+    //   2. the next two bytes are a truncated hash which describe the type being used.
     //   3. the third byte conveys object-specific switches
     //
     module internal ObjHeader =
-
-        // literals are much faster than enums
 
         [<Literal>]
         let initByte = 130uy
@@ -42,14 +40,26 @@
 
         // build a rudimentary 16-bit hash out of a given type
         // this should be persistable and runtime-independent
-        let getTruncatedHash (tyConv : ITypeNameConverter) (t : Type) =
-            let aqn = tyConv.ToQualifiedName t
+        let computeHash (t : Type) =
             let mutable hash = 0us
-            for i = 0 to aqn.Length / 2 - 1 do
-                let pairEnc = uint16 aqn.[i] + (uint16 aqn.[i+1] <<< 8)
-                hash <- hash ^^^ pairEnc
+            
+            if t.IsPrimitive then hash <- hash ||| 1us
+            if t.IsEnum then hash <- hash ||| 4us
+            if t.IsValueType then hash <- hash ||| 2us
+            if t.IsArray then hash <- hash ||| 8us
+            if t.IsClass then hash <- hash ||| 16us
+            if t.IsSealed then hash <- hash ||| 32us
+            if t.IsAbstract then hash <- hash ||| 64us
+            if t.IsGenericType then hash <- hash ||| 128us
 
-            if aqn.Length % 2 <> 0 then
-                hash <- hash ^^^ uint16 aqn.[aqn.Length-1]
+            match t.Namespace with
+            | null -> hash <- hash ||| 256us
+            | ns -> 
+                if ns.StartsWith("System") then hash <- hash ||| 512us
+                if ns.StartsWith("System.Reflection") then hash <- hash ||| 1024us
+                if ns.StartsWith("Microsoft.FSharp") then hash <- hash ||| 2048us
+
+            if typeof<ISerializable>.IsAssignableFrom t then hash <- hash ||| 4096us
+//            if typeof<IFsCoreSerializable>.IsAssignableFrom t then hash <- hash ||| 8192us
 
             hash

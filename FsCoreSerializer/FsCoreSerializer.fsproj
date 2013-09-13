@@ -41,8 +41,8 @@
     <Compile Include="Utils.fs" />
     <Compile Include="Expression.fs" />
     <Compile Include="Reflection.fs" />
-    <Compile Include="TypeFormatter.fs" />
     <Compile Include="ObjHeader.fs" />
+    <Compile Include="TypeFormatter.fs" />
     <Compile Include="Formatter.fs" />
     <Compile Include="Types.fs" />
     <Compile Include="TypeShape.fs" />
