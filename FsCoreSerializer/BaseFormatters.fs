@@ -12,6 +12,14 @@
     open FsCoreSerializer
     open FsCoreSerializer.FormatterUtils
 
+    let isUnSupportedType (t : Type) =
+        t.IsPointer
+        || t.IsByRef
+        || t.IsCOMObject
+        || t.IsImport
+        || t.IsMarshalByRef
+        || t.IsPrimitive // supported primitives are already stored in the formatter cache
+
     let primitiveFormatters =
         [   
             mkFormatter FormatterInfo.Atomic false false ignore (fun _ _ -> ())
@@ -124,7 +132,6 @@
     //  .NET serialization formatters
     //
 
-
     // dummy formatter placeholder for abstract types
     let mkAbstractFormatter (t : Type) =
         {
@@ -132,8 +139,8 @@
             TypeInfo = getTypeInfo t
             TypeHash = ObjHeader.getTruncatedHash t
 
-            Write = fun _ _ -> raise <| new NotSupportedException("cannot serialize an abstract type")
-            Read = fun _ -> raise <| new NotSupportedException("cannot serialize an abstract type")
+            Write = fun _ _ -> invalidOp <| sprintf "Attempting to use formatter for abstract type '%O'." t
+            Read = fun _ -> invalidOp <| sprintf "Attempting to use formatter for abstract type '%O'." t
 
             FormatterInfo = FormatterInfo.ReflectionDerived
             UseWithSubtypes = false
@@ -147,9 +154,6 @@
             match tryGetCtor t [| typeof<SerializationInfo> ; typeof<StreamingContext> |] with
             | None -> None
             | Some ctorInfo ->
-
-                if t = typeof<IntPtr> || t = typeof<UIntPtr> then
-                    raise <| new SerializationException("Serialization of pointers not supported.")
 
                 let allMethods = t.GetMethods(memberBindings) |> Array.filter isSerializationMethod
                 let onSerializing = allMethods |> Array.filter containsAttr<OnSerializingAttribute>
@@ -248,8 +252,6 @@
 
     // serialization rules for struct types
     let mkStructFormatter (resolver : Type -> Lazy<Formatter>) (t : Type) =
-        if t.IsPrimitive then 
-            raise <| new SerializationException(sprintf "could not derive serialization rules for '%s'." t.Name)
 
         let fields = t.GetFields(fieldBindings)
         let formatters = fields |> Array.map (fun f -> resolver f.FieldType)

@@ -17,14 +17,11 @@
         let ipAddr = "127.0.0.1"
         let port = 2323
 
-        let defaultProtocolSerializer () =
-            // NetDataContractSerializer not supported in mono
-            if runsOnMono then new TestBinaryFormatter() :> ISerializer
-            else new TestNetDataContractSerializer() :> ISerializer
-
+        let defaultProtocolSerializer () = new TestBinaryFormatter() :> ISerializer
         let defaultTestedSerializer () = new TestFsCoreSerializer () :> ISerializer
-
-        
+    
+    exception SerializationError of exn
+    exception ProtocolError of exn    
 
     type Request = Serialize of Type * obj
     type Reply = Success of byte [] | Error of exn
@@ -41,14 +38,14 @@
         let logF = defaultArg logF ignore
         let listener = new TcpListener(ipAddr, port)
 
-        let testSerializer (Serialize (_,o)) =
-            try Success <| Serializer.write testedSerializer o
-            with e -> Error e
-
-        let report (Serialize (t,o)) =
-            function
-            | Success _ -> sprintf "Successfully serialized %A : %s" o t.Name |> logF
-            | Error e -> sprintf "Failed to serialize %A : %s with error:\n %O" o t.Name e |> logF
+        let testSerializer (Serialize (t,o)) =
+            try 
+                let result = Success <| Serializer.write testedSerializer o
+                sprintf "Successfully serialized %A : %s" o t.Name |> logF
+                result
+            with e -> 
+                sprintf "Failed to serialize %A : %s with error:\n %O" o t.Name e |> logF
+                Error (SerializationError e)
 
         let loop () =
             async {
@@ -63,11 +60,11 @@
 
                             let msg = Serializer.read protocolSerializer bytes :?> Request
                             let result = testSerializer msg
-                            do report msg result
 
                             do! stream.AsyncWriteBytes <| Serializer.write protocolSerializer result
                         with e ->
-                            do! stream.AsyncWriteBytes <| Serializer.write protocolSerializer (Error e)
+                            logF <| sprintf "Protocol error: %O" e
+                            do! stream.AsyncWriteBytes <| Serializer.write protocolSerializer (Error (ProtocolError e))
                     with e ->
                         logF <| sprintf "Protocol error: %O" e
             }
@@ -107,23 +104,25 @@
 
         let sendSerializationRequest (msg : Request) =
             async {
-                use client = new TcpClient(ipAddr, port)
-                use stream = client.GetStream()
+                try
+                    use client = new TcpClient(ipAddr, port)
+                    use stream = client.GetStream()
 
-                let bytes = Serializer.write protocolSerializer msg
-                do! stream.AsyncWriteBytes bytes
-                let! (reply : byte []) = stream.AsyncReadBytes()
+                    let bytes = Serializer.write protocolSerializer msg
+                    do! stream.AsyncWriteBytes bytes
+                    let! (reply : byte []) = stream.AsyncReadBytes()
 
-                return
-                    match Serializer.read protocolSerializer reply :?> Reply with
-                    | Success bytes -> bytes
-                    | Error e -> raise e
+                    return Serializer.read protocolSerializer reply :?> Reply
+                with e ->
+                    return Error (ProtocolError e)
             } |> Async.RunSynchronously
 
 
         member __.Test(x : 'T) =
-            let bytes = sendSerializationRequest(Serialize(typeof<'T>, x))
-            Serializer.read testedSerializer bytes :?> 'T
+            match sendSerializationRequest(Serialize(typeof<'T>, x)) with
+            | Success bytes -> Serializer.read testedSerializer bytes :?> 'T
+            | Error(SerializationError e) -> raise e
+            | Error e -> raise e
 
         member __.EndPoint = new IPEndPoint(IPAddress.Parse ipAddr, port)
         member __.Serializer = testedSerializer
@@ -169,40 +168,3 @@
                 proc <- None
             else
                 failwith "server is not running"
-
-
-    [<TestFixture>]
-    type ``Remoted Corectness Tests`` () =
-        inherit ``Serializer Correctness Tests`` ()
-
-        let mutable state = None : (ServerManager * SerializationClient) option
-
-        override __.TestSerializer(x : 'T) = 
-            match state with
-            | Some (_,client) -> Serializer.write client.Serializer x
-            | None -> failwith "remote server has not been set up."
-            
-        override __.TestDeserializer(bytes : byte []) =
-            match state with
-            | Some (_,client) -> Serializer.read client.Serializer bytes
-            | None -> failwith "remote server has not been set up."
-
-        override __.TestLoop(x : 'T) =
-            match state with
-            | Some (_,client) -> client.Test x
-            | None -> failwith "remote server has not been set up."
-
-        override __.Init () =
-            match state with
-            | Some _ -> failwith "remote server appears to be running."
-            | None ->
-                let mgr = new ServerManager()
-                do mgr.Start()
-                do System.Threading.Thread.Sleep 2000
-                let client = mgr.GetClient()
-                state <- Some(mgr, client)
-
-        override __.Fini () =
-            match state with
-            | None -> failwith "no remote server appears to be running."
-            | Some (mgr,_) -> mgr.Stop() ; state <- None

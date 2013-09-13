@@ -49,7 +49,10 @@
                             (genericIdx : GenericFormatterIndex) 
                             (self : Type -> Lazy<Formatter>) (t : Type) =
 
-        // subtype resolution, must happen before everything else
+        // check if type is supported
+        if isUnSupportedType t then raise <| new NonSerializableTypeException(t)
+
+        // subtype resolution
         let result =
             if t.BaseType <> null then
                 match (self t.BaseType).Value with
@@ -83,10 +86,6 @@
                     Some <| mkDelegateFormatter t
                 elif t.IsGenericType || t.IsArray then
                     genericIdx.TryResolveGenericFormatter(t, self)
-                elif t.IsPointer then
-                    raise <| new SerializationException("Serializing pointers not supported.")
-                elif t.IsByRef then
-                    raise <| new SerializationException("Serializing refs not supported.")
                 elif t.IsEnum then
                     Some <| mkEnumFormatter self t
                 else None
@@ -127,7 +126,7 @@
                 if t.IsValueType then mkStructFormatter self t
                 elif t.IsAbstract then mkAbstractFormatter t
                 elif not t.IsSerializable then 
-                    raise <| new SerializationException(sprintf "type '%s' is not serializable." t.Name)
+                    raise <| new NonSerializableTypeException(t)
                 else
                     mkClassFormatter self t
             | Some r -> r

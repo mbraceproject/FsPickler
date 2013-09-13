@@ -45,8 +45,8 @@
     <Compile Include="FsUnit.fs" />
     <Compile Include="Serializers.fs" />
     <Compile Include="Utils.fs" />
+    <Compile Include="Remoting.fs" />
     <Compile Include="CorrectnessTests.fs" />
-    <Compile Include="RemoteTests.fs" />
     <Compile Include="PerformanceTests.fs" />
     <Compile Include="main.fs" />
     <None Include="packages.config" />

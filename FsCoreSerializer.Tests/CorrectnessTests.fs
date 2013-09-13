@@ -348,23 +348,30 @@
         member __.``Test Massively Auto-Generated Objects`` () =
             // generate serializable objects that reside in mscorlib and FSharp.Core
             let inputData = 
-                Array.concat
+                Seq.concat
                     [
-                        Utils.generateSerializableObjects typeof<int>.Assembly
-                        Utils.generateSerializableObjects typeof<_ option>.Assembly
-                        Utils.generateSerializableObjects <| Assembly.GetExecutingAssembly()
+                        generateSerializableObjects typeof<int>.Assembly
+                        generateSerializableObjects typeof<_ option>.Assembly
+                        generateSerializableObjects <| Assembly.GetExecutingAssembly()
                     ]
 
             let test (t : Type, x : obj) =
-                try __.TestLoop x |> ignore ; None
-                with e ->
-                    printfn "--- Serializing '%O' failed with error: %O" t e
-                    Some(e,t)
+                try testLoop x |> ignore ; None
+                with 
+                | ProtocolError _ -> None
+                | e ->
+                    printfn "ERROR: Serializing '%O' failed with error: %O" t e
+                    Some e
 
-            let failedResults = inputData |> Array.choose test
+            let results = inputData |> Seq.map test |> Seq.toArray
+            let failedResults = results |> Seq.choose id |> Seq.length
 
-            if failedResults.Length > 10 then
-                raise <| new AssertionException(sprintf "Too many random object serialization failures (%d)." failedResults.Length)          
+            if failedResults > 10 then
+                let msg = sprintf "Too many random object serialization failures (%d out of %d)." failedResults results.Length
+                raise <| new AssertionException(msg)
+            else
+                printfn "Failed Serializations: %d out of %d." failedResults results.Length
+
 
 
     [<TestFixture>]
@@ -379,3 +386,40 @@
 
         override __.Init () = ()
         override __.Fini () = ()
+
+
+    [<TestFixture>]
+    type ``Remoted Corectness Tests`` () =
+        inherit ``Serializer Correctness Tests`` ()
+
+        let mutable state = None : (ServerManager * SerializationClient) option
+
+        override __.TestSerializer(x : 'T) = 
+            match state with
+            | Some (_,client) -> Serializer.write client.Serializer x
+            | None -> failwith "remote server has not been set up."
+            
+        override __.TestDeserializer(bytes : byte []) =
+            match state with
+            | Some (_,client) -> Serializer.read client.Serializer bytes
+            | None -> failwith "remote server has not been set up."
+
+        override __.TestLoop(x : 'T) =
+            match state with
+            | Some (_,client) -> client.Test x
+            | None -> failwith "remote server has not been set up."
+
+        override __.Init () =
+            match state with
+            | Some _ -> failwith "remote server appears to be running."
+            | None ->
+                let mgr = new ServerManager()
+                do mgr.Start()
+                do System.Threading.Thread.Sleep 2000
+                let client = mgr.GetClient()
+                state <- Some(mgr, client)
+
+        override __.Fini () =
+            match state with
+            | None -> failwith "no remote server appears to be running."
+            | Some (mgr,_) -> mgr.Stop() ; state <- None

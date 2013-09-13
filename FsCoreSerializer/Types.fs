@@ -40,3 +40,11 @@
     and IGenericFormatterFactory4 =
         inherit IGenericFormatterFactory
         abstract Create<'T, 'S, 'U, 'V> : (Type -> Lazy<Formatter>) -> Formatter
+
+
+    open System.Runtime.Serialization
+
+    /// Raised by FsCoreSerializer whenever an unsupported type is encountered in the object graph.
+    type NonSerializableTypeException(unsupportedType : Type) =
+        inherit SerializationException(sprintf "Serialization of type '%O' is not supported." unsupportedType)
+        member __.UnsupportedType = unsupportedType

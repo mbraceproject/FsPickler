@@ -44,7 +44,7 @@
     <Compile Include="TypeFormatter.fs" />
     <Compile Include="ObjHeader.fs" />
     <Compile Include="Formatter.fs" />
-    <Compile Include="Interfaces.fs" />
+    <Compile Include="Types.fs" />
     <Compile Include="TypeShape.fs" />
     <Compile Include="FormatterUtils.fs" />
     <Compile Include="BaseFormatters.fs" />

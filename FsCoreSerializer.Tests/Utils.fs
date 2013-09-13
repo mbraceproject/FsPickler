@@ -63,27 +63,27 @@
         let generateSerializableObjects (assembly : Assembly) =
 
             let filterType (t : Type) =
-                not t.IsAbstract
-                    && (t.IsValueType || typeof<ISerializable>.IsAssignableFrom t || t.IsSerializable)
+                try FsCoreSerializerRegistry.ResolveFormatter t |> ignore ; true
+                with :? NonSerializableTypeException -> false
+                    | _ -> true
 
             let tryActivate (t : Type) =
                 try
                     let ctorFlags = BindingFlags.Public ||| BindingFlags.NonPublic ||| BindingFlags.Instance
                     match t.GetConstructor(ctorFlags, null, [||], [||]) with
-                    | null -> Some (t, Activator.CreateInstance t)
+                    | null -> None
                     | ctorInfo -> Some (t, ctorInfo.Invoke [||])
                 with _ -> None
 
-            let ndc = new TestNetDataContractSerializer()
+            let bfs = new TestBinaryFormatter()
             let filterObject (t : Type, o : obj) =
-                try Serializer.writeRead ndc o |> ignore ; true
+                try Serializer.writeRead bfs o |> ignore ; true
                 with _ -> false
             
             assembly.GetTypes()
             |> Seq.filter filterType
             |> Seq.choose tryActivate
             |> Seq.filter filterObject
-            |> Seq.toArray
 
 
         // stolen from FSI time reporter
