@@ -14,14 +14,15 @@
         abstract ToQualifiedName : Type -> string
         abstract OfQualifiedName : string -> Type
 
-    and internal TypeFormatter private () =
-        static let mutable conv = DefaultTypeNameConverter () :> ITypeNameConverter
+    /// provides standard type serialization
+    and DefaultTypeNameConverter () =
+        interface ITypeNameConverter with
+            member __.ToQualifiedName (t : Type) = t.AssemblyQualifiedName
+            member __.OfQualifiedName (aqn : string) = Type.GetType(aqn, true)
 
-        static member TypeNameConverter 
-            with get () = conv
-            and set converter = conv <- converter
+    module internal TypeFormatter =
 
-        static member Write (bw : BinaryWriter) (t : Type) =
+        let inline write (conv : ITypeNameConverter) (bw : BinaryWriter) (t : Type) =
             if t.IsGenericParameter then
                 bw.Write (conv.ToQualifiedName t.ReflectedType)
                 bw.Write true
@@ -30,7 +31,7 @@
                 bw.Write (conv.ToQualifiedName t)
                 bw.Write false
 
-        static member Read (br : BinaryReader) =
+        let inline read (conv : ITypeNameConverter) (br : BinaryReader) =
             let aqn = br.ReadString()
             let t = conv.OfQualifiedName aqn
             if br.ReadBoolean() then
@@ -41,9 +42,3 @@
                     raise <| new SerializationException(sprintf "cannot deserialize type '%s'" pname)
             else
                 t
-
-    /// provides standard type serialization
-    and DefaultTypeNameConverter () =
-        interface ITypeNameConverter with
-            member __.ToQualifiedName (t : Type) = t.AssemblyQualifiedName
-            member __.OfQualifiedName (aqn : string) = Type.GetType(aqn, true)

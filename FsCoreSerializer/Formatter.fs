@@ -44,7 +44,9 @@
     with
         member __.SerializingType = __.Type
 
-    and [<Sealed>] Writer internal (stream : Stream, resolver : Type -> Formatter, sc : StreamingContext, ?leaveOpen, ?encoding) =
+    and Writer internal (stream : Stream, tyConv : ITypeNameConverter, 
+                            resolver : Type -> Formatter, sc : StreamingContext, ?leaveOpen, ?encoding) =
+
         // using UTF8 gives an observed performance improvement ~200%
         let encoding = defaultArg encoding Encoding.UTF8
 
@@ -56,7 +58,7 @@
             let mutable firstOccurence = false
             let id = idGen.GetId(t, &firstOccurence)
             bw.Write firstOccurence
-            if firstOccurence then TypeFormatter.Write bw t
+            if firstOccurence then TypeFormatter.write tyConv bw t
             else
                 bw.Write id
 
@@ -170,7 +172,9 @@
         interface IDisposable with
             member __.Dispose () = bw.Dispose ()
 
-    and [<Sealed>] Reader internal (stream : Stream, resolver : Type -> Formatter, sc : StreamingContext, ?leaveOpen, ?encoding) =
+    and Reader internal (stream : Stream, tyConv : ITypeNameConverter, 
+                            resolver : Type -> Formatter, sc : StreamingContext, ?leaveOpen, ?encoding) =
+
         // using UTF8 gives an observed performance improvement ~200%
         let encoding = defaultArg encoding Encoding.UTF8
 
@@ -181,7 +185,7 @@
 
         let readType () =
             if br.ReadBoolean () then
-                let t = TypeFormatter.Read br
+                let t = TypeFormatter.read tyConv br
                 objCache.Add(counter, t)
                 counter <- counter + 1L
                 t

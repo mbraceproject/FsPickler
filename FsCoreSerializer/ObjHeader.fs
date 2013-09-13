@@ -42,8 +42,8 @@
 
         // build a rudimentary 16-bit hash out of a given type
         // this should be persistable and runtime-independent
-        let getTruncatedHash (t : Type) =
-            let aqn = TypeFormatter.TypeNameConverter.ToQualifiedName t
+        let getTruncatedHash (tyConv : ITypeNameConverter) (t : Type) =
+            let aqn = tyConv.ToQualifiedName t
             let mutable hash = 0us
             for i = 0 to aqn.Length / 2 - 1 do
                 let pairEnc = uint16 aqn.[i] + (uint16 aqn.[i+1] <<< 8)

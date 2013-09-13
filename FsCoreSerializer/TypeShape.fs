@@ -64,6 +64,28 @@
         | Ref of (* byRef *) bool * TypeShape * Type
         | Generic of Type * TypeShape list * Type
     with
+        override s.ToString () =
+            let rec print s =
+                match s with
+                | Var i -> sprintf "'T%d" i
+                | Named t -> t.Name
+                | Array (rank, nested, _) -> 
+                    let name = print nested
+                    match rank with
+                    | 1 -> name + " []"
+                    | 2 -> name + " [,]"
+                    | 3 -> name + " [,,]"
+                    | 4 -> name + " [,,,]"
+                    | _ -> name + " array"
+                | Ref (true, nested, _) -> print nested + "&"
+                | Ref (false, nested, _) -> print nested + "*"
+                | Generic (t, tyArgs, _) ->
+                    let name = t.Name.Split('`').[0]
+                    let args = Seq.map print tyArgs |> String.concat ", "
+                    name + "<" + args + ">"
+
+            print s
+
         member s.Type =
             match s with
             | Var _ -> invalidOp "cannot reify variables."
@@ -141,7 +163,10 @@
                 map |> Map.toSeq |> Seq.sortBy fst |> Seq.map snd |> Seq.toArray |> Some
 
 
-    // a dictionary implementation that returns the best matching shape entry given a type
+
+    type OverwriteBehavior = Overwrite | Discard | Fail
+
+    // an immutable dictionary implementation that returns the best matching shape entry given a type
     // a best match is determined by minimizing the distance w.r.t. a naturally occuring 1-norm
     // over shape trees.
     type ShapeMap<'T> private (map : Map<string, (TypeShape * 'T) list>) =
@@ -176,14 +201,20 @@
                     // select by minimizing wrt to 1-distance
                     matches |> List.minBy (fun (m,_) -> m |> Array.sumBy (fun s -> s.Size)) |> Some
 
-        member __.Add (shape : TypeShape, value : 'T) =
+        member m.Add (shape : TypeShape, value : 'T, overwrite) =
             let shapeId = topLevelId shape
             let content = defaultArg (map.TryFind shapeId) []
             let updated = (shape, value) :: (content |> List.filter (fun (s,_) -> s <> shape))
+            let isRegisteredShape = updated.Length = content.Length
+            
+            match overwrite with
+            | Discard when isRegisteredShape -> m
+            | Fail when isRegisteredShape ->
+                invalidOp "A generic formatter of equivalent shape already exists."
+            | _ ->
+                ShapeMap<_>(map.Add(shapeId, updated))
 
-            ShapeMap<_>(map.Add(shapeId, updated))
-
-        member __.Add (t : Type, value : 'T) = __.Add(TypeShape.OfType t, value)
+        member __.Add (t : Type, value : 'T, overwrite) = __.Add(TypeShape.OfType t, value, overwrite)
         member __.Remove (shape : TypeShape) =
             let shapeId = topLevelId shape
             let content = defaultArg (map.TryFind shapeId) []
@@ -191,13 +222,16 @@
 
             ShapeMap<_>(map.Add(shapeId, updated))
 
+        member __.ToList () = map |> Map.toSeq |> Seq.map snd |> Seq.concat |> Seq.toList
+
         static member Empty = ShapeMap<'T>(Map.empty)
 
+    /// an immutable index for generic formatters
+    type GenericFormatterIndex internal (shapeMap : ShapeMap<IGenericFormatterFactory * MethodInfo>) =
 
-    type GenericFormatterIndex () =
-        let index = Atom.atom ShapeMap<IGenericFormatterFactory * MethodInfo>.Empty
+        static member Empty = new GenericFormatterIndex(ShapeMap.Empty)
 
-        member __.AddGenericFormatter(gf : IGenericFormatterFactory) =
+        member i.AddGenericFormatter(gf : IGenericFormatterFactory, overwrite) =
             let t = gf.GetType()
             let tryGetCreateMethod (t : Type) =
                 t.GetMethods(BindingFlags.Instance ||| BindingFlags.Public ||| BindingFlags.NonPublic)
@@ -263,15 +297,19 @@
                     |> raise
                 | _ -> ()
 
-                index.Swap(fun map -> map.Add(shape, (gf,m)))
+                new GenericFormatterIndex(shapeMap.Add(shape, (gf,m), overwrite))
 
-        member i.AddGenericFormatters(gfs : seq<IGenericFormatterFactory>) =
-            for gf in gfs do i.AddGenericFormatter(gf)
+        member i.AddGenericFormatters(gfs : seq<IGenericFormatterFactory>, overwrite) =
+            (i,gfs) ||> Seq.fold (fun i gf -> i.AddGenericFormatter(gf,overwrite))
 
-        member __.TryResolveGenericFormatter(t : Type, resolver : Type -> Lazy<Formatter>) : Formatter option =
-            match index.Value.TryFind t with
+        member i.TryResolveGenericFormatter(t : Type, resolver : Type -> Lazy<Formatter>) : Formatter option =
+            match shapeMap.TryFind t with
             | None -> None
             | Some (shapes, (gf,m)) ->
                 // get hole instances that match given pattern
                 let types = shapes |> Array.map (fun s -> s.Type)
                 Some(m.MakeGenericMethod(types).Invoke(gf, [| resolver :> obj |]) :?> Formatter)
+
+        member __.GetEntries() =
+            shapeMap.ToList()
+            |> List.map (fun (shape,(gf,_)) -> gf.GetType(), shape.ToString())

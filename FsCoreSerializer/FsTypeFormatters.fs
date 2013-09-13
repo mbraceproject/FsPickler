@@ -39,7 +39,7 @@
         {
             Type = union.Type
             TypeInfo = getTypeInfo union.Type
-            TypeHash = ObjHeader.getTruncatedHash union.Type
+            TypeHash = 0us
 
             Write = writer
             Read = reader
@@ -65,7 +65,7 @@
         {
             Type = t
             TypeInfo = getTypeInfo t
-            TypeHash = ObjHeader.getTruncatedHash t
+            TypeHash = 0us
 
             Write = writer
             Read = reader
@@ -91,7 +91,7 @@
         {
             Type = t
             TypeInfo = getTypeInfo t
-            TypeHash = ObjHeader.getTruncatedHash t
+            TypeHash = 0us
 
             Write = writer
             Read = reader
@@ -124,7 +124,7 @@
         {
             Type = t
             TypeInfo = getTypeInfo t
-            TypeHash = ObjHeader.getTruncatedHash t
+            TypeHash = 0us
 
             Write = writer
             Read = reader
@@ -295,70 +295,16 @@
             mkFormatter FormatterInfo.Custom false true reader writer
 
 
-    let varFormatter =
-        let writer (w : Writer) (v : Var) =
-            w.BW.Write v.Name
-            write w typeFormatter v.Type
-            w.BW.Write v.IsMutable
-
-        let reader (r : Reader) =
-            let name = r.BR.ReadString()
-            let t = read r typeFormatter :?> Type
-            let isMutable = r.BR.ReadBoolean()
-            Var(name, t, isMutable)
-
-        // caching vars by reference is essential for quotation deserialization!
-        mkFormatter FormatterInfo.Custom false true reader writer
-
-    
-    let exprFormatter =
-        let combType =
-            match Expr.Value 2 with
-            | ShapeCombination(o,_) -> o.GetType()
-            | _ -> failwith "impossible"
-
-        let rec writer (w : Writer) (e : Expr) =
-            match e with
-            | ShapeVar v -> 
-                w.BW.Write 0uy
-                write w varFormatter v
-            | ShapeLambda(v, e) ->
-                w.BW.Write 1uy
-                write w varFormatter v
-                writer w e
-            | ShapeCombination(o, exprs) ->
-                w.BW.Write 2uy
-                w.WriteObj(combType, o)
-                w.BW.Write exprs.Length
-                for e in exprs do writer w e
-
-        let rec reader (r : Reader) =
-            match r.BR.ReadByte() with
-            | 0uy -> let v = read r varFormatter :?> Var in Expr.Var v
-            | 1uy -> 
-                let v = read r varFormatter :?> Var
-                let e = reader r
-                Expr.Lambda(v, e)
-            | 2uy ->
-                let o = r.ReadObj combType
-                let n = r.BR.ReadInt32()
-                let arr = Array.zeroCreate<Expr> n
-                for i = 0 to n - 1 do arr.[i] <- reader r
-                RebuildShapeCombination(o, Array.toList arr)
-            | _ -> raise <| new SerializationException("Stream error: cannot deserialize quotation.")
-
-        mkFormatter FormatterInfo.Custom false true reader writer
-
-
     type ExprFormatter () =
         interface IGenericFormatterFactory1 with
             member __.Create<'T> (resolver : Type -> Lazy<Formatter>) =
+                let exprFormatter = (resolver typeof<Expr<'T>>).Value
                 mkFormatter FormatterInfo.Custom false true 
                                 (fun r -> Expr.Cast<'T>(exprFormatter.Read r :?> Expr))
                                 (fun w e -> exprFormatter.Write w (e :> obj))
 
 
-    let genericFormatters =
+    let mkFSharpGenericFormatters () =
         [
             new ListFormatter() :> IGenericFormatterFactory
             new PairFormatter() :> _
@@ -370,5 +316,3 @@
             new MapFormatter() :> _
             new DictionaryFormatter() :> _
         ]
-
-    let fsFormatters = [ varFormatter ; exprFormatter ]

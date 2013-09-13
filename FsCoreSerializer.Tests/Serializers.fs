@@ -12,11 +12,13 @@
         abstract Serialize : Stream * obj -> unit
         abstract Deserialize : Stream -> obj
 
-    type TestFsCoreSerializer () =
+    type TestFsCoreSerializer (?registry : FormatterRegistry) =
+        let fsc = match registry with None -> new FsCoreSerializer() | Some r -> new FsCoreSerializer(r)
+
         interface ISerializer with
             member __.Name = "FsCoreSerializer"
-            member __.Serialize(stream : Stream, o : obj) = FsCoreSerializer.Serialize(stream, o)
-            member __.Deserialize(stream : Stream) = FsCoreSerializer.Deserialize stream
+            member __.Serialize(stream : Stream, o : obj) = fsc.Serialize(stream, o)
+            member __.Deserialize(stream : Stream) = fsc.Deserialize stream
 
     type TestBinaryFormatter () =
         let bfs = new BinaryFormatter()

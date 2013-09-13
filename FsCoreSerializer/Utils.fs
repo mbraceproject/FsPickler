@@ -7,6 +7,7 @@
         open System.Collections.Generic
         open System.IO
         open System.Threading
+        open System.Text
         open System.Runtime.Serialization
 
         let runsOnMono = System.Type.GetType("Mono.Runtime") <> null
@@ -43,9 +44,16 @@
                 let found, v = d.TryGetValue k
                 if found then Some v else None
 
+        type Map<'K,'V when 'K : comparison> with
+            member m.AddNoOverwrite(key : 'K, value : 'V) =
+                if m.ContainsKey key then invalidArg "key" "An item with the same key has already been added."
+                else
+                    m.Add(key, value)
+
         let inline denull x = if x = null then None else Some x
 
         let (|InnerExn|_|) (e : #exn) = denull e.InnerException
+
 
         // produces a structural hashcode out of a byte array
         let getByteHashCode (bs : byte []) =

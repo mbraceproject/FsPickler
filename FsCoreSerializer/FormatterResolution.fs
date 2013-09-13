@@ -11,8 +11,9 @@
     open FsCoreSerializer
     open FsCoreSerializer.Utils
     open FsCoreSerializer.TypeShape
-    open FsCoreSerializer.BaseFormatters
     open FsCoreSerializer.FormatterUtils
+    open FsCoreSerializer.BaseFormatters
+    open FsCoreSerializer.DotNetFormatters
     open FsCoreSerializer.ArrayFormatter
     open FsCoreSerializer.FSharpTypeFormatters
 
@@ -45,7 +46,8 @@
 
     // recursive formatter resolution
 
-    let resolveFormatter (factoryIdx : ConcurrentDictionary<Type, IFormatterFactory>) 
+    let resolveFormatter (typeNameConverter : ITypeNameConverter) 
+                            (factoryIdx : Map<string, IFormatterFactory>) 
                             (genericIdx : GenericFormatterIndex) 
                             (self : Type -> Lazy<Formatter>) (t : Type) =
 
@@ -66,7 +68,7 @@
             match result with
             | Some _ -> result
             | None ->
-                match factoryIdx.TryFind t with
+                match factoryIdx.TryFind t.AssemblyQualifiedName with
                 | Some ff -> 
                     let f = ff.Create self
                     if f.Type <> t then
@@ -83,7 +85,7 @@
             | None ->
                 if t.IsArray then Some <| mkArrayFormatter self t
                 elif typeof<System.Delegate>.IsAssignableFrom t then
-                    Some <| mkDelegateFormatter t
+                    Some <| mkDelegateFormatter self t
                 elif t.IsGenericType || t.IsArray then
                     genericIdx.TryResolveGenericFormatter(t, self)
                 elif t.IsEnum then
@@ -131,4 +133,5 @@
                     mkClassFormatter self t
             | Some r -> r
 
-        result
+        // update typehash w.r.t. local typenameconverter
+        updateHash typeNameConverter result

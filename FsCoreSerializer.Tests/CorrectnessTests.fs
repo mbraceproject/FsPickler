@@ -107,12 +107,6 @@
 
                 Formatter.Create(reader, writer)
 
-        let registerCustomSerializers =
-            Utils.runOnce (fun () ->
-                FsCoreSerializerRegistry.RegisterFormatterFactory(new FormatterFactoryTest())
-                FsCoreSerializerRegistry.RegisterGenericFormatter (new GenericTypeFormatter()))
-
-
         type TestDelegate = delegate of unit -> unit
 
         and DeleCounter () =
@@ -121,19 +115,28 @@
                 with get () = cnt
                 and set i = cnt <- i
 
-
         [<Struct>]
         type StructType(x : int, y : string) =
             member __.X = x
             member __.Y = y
+
+
+        // create serializer
+        let testSerializer =
+            let registry = new FormatterRegistry()
+            do
+                registry.RegisterFormatterFactory(new FormatterFactoryTest())
+                registry.RegisterGenericFormatter(new GenericTypeFormatter())
+
+            new TestFsCoreSerializer(registry) :> ISerializer
+
+
 
     open TestTypes
 
     [<TestFixture>]
     [<AbstractClass>]
     type ``Serializer Correctness Tests`` () as self =
-
-        do registerCustomSerializers ()
 
         let test x = self.TestLoop x |> ignore
         let testLoop x = self.TestLoop x
@@ -378,11 +381,9 @@
     type ``In-memory Correctness Tests`` () =
         inherit ``Serializer Correctness Tests`` ()
 
-        let fsc = new TestFsCoreSerializer() :> ISerializer
-
-        override __.TestSerializer (x : 'T) = Serializer.write fsc x
-        override __.TestDeserializer (bytes : byte []) = Serializer.read fsc bytes
-        override __.TestLoop(x : 'T) = Serializer.writeRead fsc x
+        override __.TestSerializer (x : 'T) = Serializer.write testSerializer x
+        override __.TestDeserializer (bytes : byte []) = Serializer.read testSerializer bytes
+        override __.TestLoop(x : 'T) = Serializer.writeRead testSerializer x
 
         override __.Init () = ()
         override __.Fini () = ()

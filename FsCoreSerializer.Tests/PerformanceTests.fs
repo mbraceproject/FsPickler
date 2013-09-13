@@ -10,7 +10,7 @@
         open NUnit.Framework
         open FsCoreSerializer
 
-        let fsc = new TestFsCoreSerializer () :> ISerializer
+//        let fsc = new TestFsCoreSerializer () :> ISerializer
         let bfs = new TestBinaryFormatter () :> ISerializer
         let ndc = new TestNetDataContractSerializer () :> ISerializer
 
