@@ -43,9 +43,10 @@
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets')" />
   <ItemGroup>
     <Compile Include="FsUnit.fs" />
-    <Compile Include="Serializers.fs" />
     <Compile Include="Utils.fs" />
+    <Compile Include="Serializers.fs" />
     <Compile Include="Remoting.fs" />
+    <Compile Include="TestTypes.fs" />
     <Compile Include="CorrectnessTests.fs" />
     <Compile Include="PerformanceTests.fs" />
     <Compile Include="main.fs" />

@@ -8,10 +8,8 @@
 
         [<EntryPoint>]
         let main (args : string []) =
-            do TestTypes.registerCustomSerializers ()
-            
             let port = if args.Length = 0 then None else Some (Int32.Parse args.[0])
-            let server = new SerializationServer(?port = port, logF = Console.WriteLine)
+            let server = new SerializationServer(TestTypes.testSerializer, ?port = port, logF = Console.WriteLine)
             server.Start()
             do System.Console.Title <- "FsCoreSerializer Unit tester"
             printfn "Serialization server now running at %O" server.IPEndPoint

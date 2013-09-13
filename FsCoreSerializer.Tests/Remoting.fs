@@ -18,7 +18,6 @@
         let port = 2323
 
         let defaultProtocolSerializer () = new TestBinaryFormatter() :> ISerializer
-        let defaultTestedSerializer () = new TestFsCoreSerializer () :> ISerializer
     
     exception SerializationError of exn
     exception ProtocolError of exn    
@@ -28,12 +27,11 @@
 
     type State = Init | Started | Stopped
         
-    type SerializationServer(?ipAddr : string, ?port : int, ?testedSerializer : ISerializer, 
+    type SerializationServer(testedSerializer : ISerializer, ?ipAddr : string, ?port : int,
                                             ?protocolSerializer : ISerializer, ?logF : string -> unit) =
 
         let ipAddr = defaultArg ipAddr ServerDefaults.ipAddr |> IPAddress.Parse
         let port = defaultArg port ServerDefaults.port
-        let testedSerializer = defaultArg' testedSerializer ServerDefaults.defaultTestedSerializer
         let protocolSerializer = defaultArg' protocolSerializer ServerDefaults.defaultProtocolSerializer
         let logF = defaultArg logF ignore
         let listener = new TcpListener(ipAddr, port)
@@ -96,11 +94,10 @@
                 lock state (fun () -> cts.Cancel() ; listener.Stop() ; state <- Stopped)
 
 
-    type SerializationClient(?ipAddr : string, ?port : int, ?testedSerializer : ISerializer, ?protocolSerializer : ISerializer) =
+    type SerializationClient(testedSerializer : ISerializer, ?ipAddr : string, ?port : int, ?protocolSerializer : ISerializer) =
         let ipAddr = defaultArg ipAddr ServerDefaults.ipAddr
         let port = defaultArg port ServerDefaults.port
         let protocolSerializer = defaultArg' protocolSerializer ServerDefaults.defaultProtocolSerializer
-        let testedSerializer = defaultArg' testedSerializer ServerDefaults.defaultTestedSerializer
 
         let sendSerializationRequest (msg : Request) =
             async {
@@ -127,7 +124,7 @@
         member __.EndPoint = new IPEndPoint(IPAddress.Parse ipAddr, port)
         member __.Serializer = testedSerializer
 
-    type ServerManager(?port : int) =
+    type ServerManager(testedSerializer : ISerializer, ?port : int) =
         let port = defaultArg port ServerDefaults.port
         let mutable proc = None : Process option
 
@@ -153,12 +150,11 @@
             psi.WorkingDirectory <- Path.GetDirectoryName thisExe
 
             let p = Process.Start psi
-            let c = new SerializationClient(port = port)
 
             proc <- Some p
 
         member __.GetClient() =
-            if isActive() then new SerializationClient(port = port)
+            if isActive() then new SerializationClient(testedSerializer, port = port)
             else
                 failwith "server is not running"
 

@@ -133,6 +133,9 @@
             else
                 reader.Read<'T> ()
 
+        member __.IsSerializableType (t : Type) =
+            try cache.ResolveFormatter t |> ignore ; true
+            with :? NonSerializableTypeException -> false
 
     [<AutoOpen>]
     module ExtensionMethods =

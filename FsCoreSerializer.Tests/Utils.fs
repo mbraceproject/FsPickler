@@ -11,7 +11,7 @@
         open System.Runtime.Serialization
         open System.Threading.Tasks
 
-        open FsCoreSerializer
+//        open FsCoreSerializer
 
         let runsOnMono = System.Type.GetType("Mono.Runtime") <> null
 
@@ -57,34 +57,6 @@
 
         // new printf def that avoids issues with NUnit GUI.
         let printfn fmt = Printf.ksprintf Console.WriteLine fmt
-
-
-        // automated large-scale object generation
-        let generateSerializableObjects (assembly : Assembly) =
-
-            let filterType (t : Type) =
-                try FsCoreSerializerRegistry.ResolveFormatter t |> ignore ; true
-                with :? NonSerializableTypeException -> false
-                    | _ -> true
-
-            let tryActivate (t : Type) =
-                try
-                    let ctorFlags = BindingFlags.Public ||| BindingFlags.NonPublic ||| BindingFlags.Instance
-                    match t.GetConstructor(ctorFlags, null, [||], [||]) with
-                    | null -> None
-                    | ctorInfo -> Some (t, ctorInfo.Invoke [||])
-                with _ -> None
-
-            let bfs = new TestBinaryFormatter()
-            let filterObject (t : Type, o : obj) =
-                try Serializer.writeRead bfs o |> ignore ; true
-                with _ -> false
-            
-            assembly.GetTypes()
-            |> Seq.filter filterType
-            |> Seq.choose tryActivate
-            |> Seq.filter filterObject
-
 
         // stolen from FSI time reporter
 

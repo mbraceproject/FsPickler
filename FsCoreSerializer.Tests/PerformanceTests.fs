@@ -10,7 +10,8 @@
         open NUnit.Framework
         open FsCoreSerializer
 
-//        let fsc = new TestFsCoreSerializer () :> ISerializer
+        open TestTypes
+
         let bfs = new TestBinaryFormatter () :> ISerializer
         let ndc = new TestNetDataContractSerializer () :> ISerializer
 
@@ -40,7 +41,7 @@
                             else otherM
                         else otherM / fscM
 
-                    printfn "%s is %.2fx faster and %.2fx more memory efficient than %s." fsc.Name time space other.Name
+                    printfn "%s is %.2fx faster and %.2fx more memory efficient than %s." testSerializer.Name time space other.Name
                     // measure combined performance benefit with an 80% bias to time results
                     (4. * time + space) / 5.
                 | Choice2Of2 e ->
@@ -49,7 +50,7 @@
 
             printfn "Running %d iterations on type %O:" iterations typeof<'T>
 
-            let fscResults = runBenchmark fsc
+            let fscResults = runBenchmark TestTypes.testSerializer
             let ndcResults = runBenchmark ndc
             let bfsResults = runBenchmark bfs
                 
@@ -64,53 +65,8 @@
                         let msg = sprintf "%s scored a subpar %.1f%% improvement factor against %s." tested.Name (metric * 100.) comparedTo.Name
                         raise <| new AssertionException(msg)
 
-                checkMetric fsc bfs bfsMetric
-                checkMetric fsc ndc ndcMetric
-
-
-        // some test type defs
-
-        type DU = 
-            | Nothing 
-            | Something of string * int
-            | SomethingElse of string * int * obj
-
-        type Peano = Zero | Succ of Peano
-
-        type BinTree =
-            | Leaf
-            | Node of string * BinTree * BinTree
-
-        type Record =
-            { Int : int ; String : string ; Tuple : int * string }
-
-
-        type Class(x : int, y : string) =
-            member __.X = x
-            member __.Y = y
-
-        type SerializableClass<'T>(x : int, y : string, z : 'T) =
-            member __.X = x
-            member __.Y = y
-            member __.Z = z
-
-            new (sI : SerializationInfo, _ : StreamingContext) =
-                new SerializableClass<'T>(sI.GetInt32("x"), sI.GetString("y"), sI.GetValue("z", typeof<'T>) :?> 'T)
-
-
-            interface ISerializable with
-                member __.GetObjectData (sI : SerializationInfo, _ : StreamingContext) =
-                    sI.AddValue("x", x)
-                    sI.AddValue("y", y)
-                    sI.AddValue("z", z)
-
-
-        let stringValue = 
-            "Lorem ipsum dolor sit amet, consectetur adipisicing elit, 
-                sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
-
-
-        do TestTypes.registerCustomSerializers ()
+                checkMetric testSerializer bfs bfsMetric
+                checkMetric testSerializer ndc ndcMetric
 
 
         [<Test>]

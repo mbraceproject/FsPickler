@@ -298,10 +298,10 @@
     type ExprFormatter () =
         interface IGenericFormatterFactory1 with
             member __.Create<'T> (resolver : Type -> Lazy<Formatter>) =
-                let exprFormatter = (resolver typeof<Expr<'T>>).Value
+                let exprFormatter = resolver typeof<Expr<'T>>
                 mkFormatter FormatterInfo.Custom false true 
-                                (fun r -> Expr.Cast<'T>(exprFormatter.Read r :?> Expr))
-                                (fun w e -> exprFormatter.Write w (e :> obj))
+                                (fun r -> Expr.Cast<'T>(exprFormatter.Value.Read r :?> Expr))
+                                (fun w e -> exprFormatter.Value.Write w (e :> obj))
 
 
     let mkFSharpGenericFormatters () =

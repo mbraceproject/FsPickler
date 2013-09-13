@@ -15,6 +15,8 @@
     type TestFsCoreSerializer (?registry : FormatterRegistry) =
         let fsc = match registry with None -> new FsCoreSerializer() | Some r -> new FsCoreSerializer(r)
 
+        member __.FSCS = fsc
+
         interface ISerializer with
             member __.Name = "FsCoreSerializer"
             member __.Serialize(stream : Stream, o : obj) = fsc.Serialize(stream, o)
