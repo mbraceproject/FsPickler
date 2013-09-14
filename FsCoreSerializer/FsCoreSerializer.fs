@@ -151,17 +151,20 @@
             try cache.ResolveFormatter t |> ignore ; true
             with :? NonSerializableTypeException -> false
 
+        member __.ResolveFormatter<'T> () : Formatter<'T> = Typed(cache.ResolveFormatter typeof<'T>)
+
     [<AutoOpen>]
     module ExtensionMethods =
         
         type Formatter with
             /// <summary>Initializes a formatter out of a pair of read/write lambdas.</summary>
             /// <param name="cache">Specifies whether the serializer should cache by reference when serializing.</param>
-            /// <param name="useWithSubtypes">Specifies whether this specific formatter should apply to all of its subtypes.</param>
-            static member Create(reader : Reader -> 'T, writer : Writer -> 'T -> unit, ?cache, ?useWithSubtypes) =
+            /// <param name="useWithSubtypes">Specifies whether this specific formatter should apply to all subtypes.</param>
+            static member Create(reader : Reader -> 'T, writer : Writer -> 'T -> unit, ?cache, ?useWithSubtypes) : Formatter<'T> =
                 let cache = defaultArg cache (not typeof<'T>.IsValueType)
                 let useWithSubtypes = defaultArg useWithSubtypes false
-                mkFormatter FormatterInfo.Custom useWithSubtypes cache reader writer
+                let fmt = mkFormatter FormatterInfo.Custom useWithSubtypes cache reader writer
+                Typed fmt
 
         type Writer with
 
