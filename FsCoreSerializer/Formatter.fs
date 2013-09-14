@@ -7,8 +7,6 @@
     open System.Collections.Generic
     open System.Runtime.Serialization
 
-
-    // stores precomputed information for the type being serialized
     type internal TypeInfo =
         | Primitive = 0
         | Enum = 1
@@ -18,7 +16,7 @@
         | NonSealed = 5
         | Abstract = 6
 
-    type internal FormatterInfo =
+    type FormatterInfo =
         | Atomic = 0
         | ReflectionType = 1
         | ReflectionDerived = 2
@@ -44,6 +42,13 @@
     with
         member __.SerializingType = __.Type
 
+    and Formatter<'T> = internal Typed of Formatter
+    with
+        member f.Type = let (Typed fmt) = f in fmt.Type
+        member f.CacheObj = let (Typed fmt) = f in fmt.CacheObj
+        member f.UseWithSubtypes = let (Typed fmt) = f in fmt.UseWithSubtypes
+        member f.FormatterInfo = let (Typed fmt) = f in fmt.FormatterInfo
+
     and Writer internal (stream : Stream, tyConv : ITypeNameConverter, 
                             resolver : Type -> Formatter, sc : StreamingContext, ?leaveOpen, ?encoding) =
 
@@ -63,14 +68,13 @@
                 bw.Write id
 
         /// BinaryWriter to the underlying stream.
-        member w.BW = bw
+        member internal w.BW = bw
 
         /// Access the current streaming context.
         member w.StreamingContext = sc
 
         /// <summary>Precomputes formatter for the given type at runtime.</summary>
-        /// <param name="t">The input type.</param>
-        member w.ResolveFormatter (t : Type) : Formatter = resolver t
+        member w.ResolveFormatter<'T> () = Formatter<'T>.Typed(resolver typeof<'T>)
 
         /// <summary>
         ///     Write object to stream using given formatter rules. Unsafe method.
@@ -78,17 +82,17 @@
         /// </summary>
         /// <param name="fmt">Formatter used in serialization. Needs to be compatible with input object.</param>
         /// <param name="o">The input object.</param>
-        member w.WriteObj (fmt : Formatter, o : obj) =
+        member internal w.WriteObj (fmt : Formatter, o : obj) =
             
             do RuntimeHelpers.EnsureSufficientExecutionStack()
 
             let inline writeHeader (flags : byte) =
                 bw.Write(ObjHeader.create fmt.TypeHash flags)
 
-            if obj.ReferenceEquals(o, null) then writeHeader ObjHeader.isNull
-            elif fmt.TypeInfo <= TypeInfo.Value then 
+            if fmt.TypeInfo <= TypeInfo.Value then 
                 writeHeader ObjHeader.empty
                 fmt.Write w o
+            elif obj.ReferenceEquals(o, null) then writeHeader ObjHeader.isNull
             elif fmt.CacheObj then
                 let mutable firstOccurence = false
                 let id = idGen.GetId(o, &firstOccurence)
@@ -143,7 +147,7 @@
         /// </summary>
         /// <param name="t">The reflected type of the serialized object.</param>
         /// <param name="o">The object to be serialized.</param>
-        member w.WriteObj(t : Type, o : obj) = let f = resolver t in w.WriteObj(f, o)
+        member internal w.WriteObj(t : Type, o : obj) = let f = resolver t in w.WriteObj(f, o)
 
         /// <summary>
         ///     Writes given object to the underlying stream.
@@ -153,20 +157,22 @@
         /// <param name="t">The input value.</param>
         member w.Write<'T>(t : 'T) = let f = resolver typeof<'T> in w.WriteObj(f, t)
 
-        /// <summary>
-        ///     Writes given object to the stream.
-        ///     Serialization rules are resolved at runtime based on 
-        ///     the reflected type and recorded to the stream.
-        /// </summary>
-        /// <param name="o">The input object.</param>
-        member w.WriteObj(o : obj) =
-            if obj.ReferenceEquals(o, null) then bw.Write (ObjHeader.create 0us ObjHeader.isNull)
-            else
-                let t = o.GetType()
-                let f = resolver t
-                bw.Write (ObjHeader.create 0us ObjHeader.empty)
-                writeType t
-                w.WriteObj(f, o)
+        member w.Write<'T>(fmt : Formatter<'T>, value : 'T) = let (Typed fmt) = fmt in w.WriteObj(fmt, value)
+
+//        /// <summary>
+//        ///     Writes given object to the stream.
+//        ///     Serialization rules are resolved at runtime based on 
+//        ///     the reflected type and recorded to the stream.
+//        /// </summary>
+//        /// <param name="o">The input object.</param>
+//        member internal w.WriteObj(o : obj) =
+//            if obj.ReferenceEquals(o, null) then bw.Write (ObjHeader.create 0us ObjHeader.isNull)
+//            else
+//                let t = o.GetType()
+//                let f = resolver t
+//                bw.Write (ObjHeader.create 0us ObjHeader.empty)
+//                writeType t
+//                w.WriteObj(f, o)
 
 
         interface IDisposable with
@@ -203,14 +209,13 @@
                 currentReflectedObjId <- 0L
 
         /// BinaryReader to the underlying stream.
-        member r.BR = br
+        member internal r.BR = br
 
         /// Access the current streaming context.
         member r.StreamingContext = sc
 
         /// <summary>Precomputes formatter for the given type at runtime.</summary>
-        /// <param name="t">The input type.</param>
-        member r.ResolveFormatter (t : Type) = resolver t
+        member w.ResolveFormatter<'T> () = Formatter<'T>.Typed(resolver typeof<'T>)
 
 
         /// <summary>
@@ -219,7 +224,7 @@
         /// </summary>
         /// <param name="fmt">Formatter used in deserialization. Needs to be compatible with input object.</param>
         /// <param name="o">The input object.</param>
-        member r.ReadObj(fmt : Formatter) =
+        member internal r.ReadObj(fmt : Formatter) =
             let flags = ObjHeader.read fmt.TypeHash (br.ReadUInt32())
 
             if ObjHeader.hasFlag flags ObjHeader.isNull then null
@@ -268,7 +273,7 @@
         ///     Needs to have been serialized with the dual Write.WriteObj : Type * obj -> unit    
         /// </summary>
         /// <param name="t">The reflected type of the deserialized object.</param>
-        member r.ReadObj (t : Type) : obj = let f = resolver t in r.ReadObj f
+        member internal r.ReadObj (t : Type) : obj = let f = resolver t in r.ReadObj f
 
         /// <summary>
         ///     Reads object of given type from the underlying stream.
@@ -276,19 +281,21 @@
         ///     Needs to have been serialized with the dual Writer.Write&lt;'T&gt; method.
         /// </summary>
         member r.Read<'T> () : 'T = let f = resolver typeof<'T> in r.ReadObj f :?> 'T
+
+        member r.Read<'T> (fmt : Formatter<'T>) : 'T = let (Typed fmt) = fmt in r.ReadObj fmt :?> 'T
         
-        /// <summary>
-        ///     Reads object from the underlying stream.
-        ///     Serialization rules are resolved at runtime based on the object header.
-        ///     Needs to have been serialized with the dual Writer.WriteObj : obj -> unit
-        /// </summary>
-        member r.ReadObj () =
-            let flags = ObjHeader.read 0us (br.ReadUInt32())
-            if ObjHeader.hasFlag flags ObjHeader.isNull then null
-            else
-                let t = readType ()
-                let f = resolver t
-                r.ReadObj f
+//        /// <summary>
+//        ///     Reads object from the underlying stream.
+//        ///     Serialization rules are resolved at runtime based on the object header.
+//        ///     Needs to have been serialized with the dual Writer.WriteObj : obj -> unit
+//        /// </summary>
+//        member r.ReadObj () =
+//            let flags = ObjHeader.read 0us (br.ReadUInt32())
+//            if ObjHeader.hasFlag flags ObjHeader.isNull then null
+//            else
+//                let t = readType ()
+//                let f = resolver t
+//                r.ReadObj f
 
         interface IDisposable with
             member __.Dispose () = br.Dispose ()

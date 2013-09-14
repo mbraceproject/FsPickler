@@ -105,33 +105,47 @@
             let sc = match context with None -> StreamingContext() | Some ctx -> StreamingContext(StreamingContextStates.All, ctx)
             new Reader(stream, cache.TypeNameConverter, cache.ResolveFormatter, sc, ?leaveOpen = leaveOpen, ?encoding = encoding)
 
-        /// <summary>Serialize a given object graph to underlying stream.</summary>
+        /// <summary>Serialize an object of given type to the underlying stream.</summary>
         /// <param name="stream">The target stream.</param>
         /// <param name="context">The untyped parameter passed to the streaming context.</param>
         /// <param name="encoding">The encoding passed to the binary writer.</param>
-        /// <param name="writeType">Specifies whether the type parameter should be recorded in the serialization header.
         ///     Useful when serializing sequences of small objects.</param>
-        member __.Serialize(stream : Stream, graph : 'T, ?context : obj, ?encoding, ?writeType) : unit =
-            let writeType = defaultArg writeType true
+        member __.Serialize<'T>(stream : Stream, graph : 'T, ?context : obj, ?encoding) : unit =
             use writer = __.GetObjectWriter(stream, ?context = context, leaveOpen = true, ?encoding = encoding)
 
-            if writeType then writer.WriteObj graph
-            else
-                writer.Write<'T> graph
+            writer.Write<'T> graph
 
-        /// <summary>Deserialize a given object graph from and underlying stream.</summary>
+        /// <summary>Deserialize object of given type from the underlying stream.</summary>
         /// <param name="stream">The source stream.</param>
         /// <param name="context">The untyped parameter passed to the streaming context.</param>
         /// <param name="encoding">The encoding passed to the binary reader.</param>
-        /// <param name="readType">Specifies whether the type parameter should be read from the serialization header.
         ///     Useful when serializing sequences of small objects.</param>
-        member __.Deserialize<'T> (stream : Stream, ?context : obj, ?encoding, ?readType) : 'T =
-            let readType = defaultArg readType true
+        member __.Deserialize<'T> (stream : Stream, ?context : obj, ?encoding) : 'T =
             use reader = __.GetObjectReader(stream, ?context = context, leaveOpen = true, ?encoding = encoding)
             
-            if readType then reader.ReadObj() :?> 'T
-            else
-                reader.Read<'T> ()
+            reader.Read<'T> ()
+
+        /// <summary>Deserialize object of given type from the underlying stream.</summary>
+        /// <param name="stream">The source stream.</param>
+        /// <param name="graphType">The given graph type.</param>
+        /// <param name="context">The untyped parameter passed to the streaming context.</param>
+        /// <param name="encoding">The encoding passed to the binary reader.</param>
+        ///     Useful when serializing sequences of small objects.</param>
+        member __.SerializeUntyped (stream : Stream, graphType : Type, graph : obj, ?context : obj, ?encoding) : unit =
+            use writer = __.GetObjectWriter(stream, ?context = context, leaveOpen = true, ?encoding = encoding)
+
+            writer.WriteObj(graphType, graph)
+
+        /// <summary>Deserialize object of given type from the underlying stream.</summary>
+        /// <param name="stream">The source stream.</param>
+        /// <param name="graphType">The given graph type.</param>
+        /// <param name="context">The untyped parameter passed to the streaming context.</param>
+        /// <param name="encoding">The encoding passed to the binary reader.</param>
+        ///     Useful when serializing sequences of small objects.</param>
+        member __.DeserializeUntyped (stream : Stream, graphType : Type, ?context : obj, ?encoding) : obj =
+            use reader = __.GetObjectReader(stream, ?context = context, leaveOpen = true, ?encoding = encoding)
+
+            reader.ReadObj graphType
 
         member __.IsSerializableType (t : Type) =
             try cache.ResolveFormatter t |> ignore ; true
@@ -150,48 +164,107 @@
                 mkFormatter FormatterInfo.Custom useWithSubtypes cache reader writer
 
         type Writer with
+
             /// Serializes a sequence of values to the underlying stream
             member w.WriteSeq<'T> (xs : 'T seq) : unit =
-                let fmt = w.ResolveFormatter typeof<'T>
-                use e = xs.GetEnumerator()
-                while e.MoveNext() do
+                let (Typed fmt) = w.ResolveFormatter<'T> ()
+                match xs with
+                | :? ('T []) as arr ->
                     w.BW.Write true
-                    write w fmt e.Current
+                    w.BW.Write arr.Length
+                    for i = 0 to arr.Length - 1 do
+                        write w fmt <| arr.[i]
+                | :? ('T list) as list ->
+                    w.BW.Write true
+                    w.BW.Write list.Length
+                    let rec iter rest =
+                        match rest with
+                        | [] -> ()
+                        | hd :: tl ->
+                            write w fmt hd
+                            iter tl
 
-                w.BW.Write false
+                    iter list
+                | _ ->
+                    w.BW.Write false
+                    use e = xs.GetEnumerator()
+                    while e.MoveNext() do
+                        w.BW.Write true
+                        write w fmt e.Current
+
+                    w.BW.Write false
 
             /// Serializes a sequence of key/value pairs to the underlying stream
             member w.WriteKeyValueSeq<'K,'V> (xs : ('K * 'V) seq) : unit =
-                let kf = w.ResolveFormatter typeof<'K>
-                let vf = w.ResolveFormatter typeof<'V>
-                let e = xs.GetEnumerator()
-                while e.MoveNext() do
+                let (Typed kf) = w.ResolveFormatter<'K> ()
+                let (Typed vf) = w.ResolveFormatter<'V> ()
+                match xs with
+                | :? (('K * 'V) []) as arr ->
                     w.BW.Write true
-                    let k,v = e.Current
-                    write w kf k
-                    write w vf v
+                    w.BW.Write arr.Length
+                    for i = 0 to arr.Length - 1 do
+                        let k,v = arr.[i]
+                        write w kf k
+                        write w vf v
+                | :? (('K * 'V) list) as list ->
+                    w.BW.Write true
+                    w.BW.Write list.Length
+                    let rec iter rest =
+                        match rest with
+                        | [] -> ()
+                        | (k,v) :: tl ->
+                            write w kf k
+                            write w vf v
+                            iter tl
 
-                w.BW.Write false
+                    iter list
+                | _ ->
+                    w.BW.Write false
+                    let e = xs.GetEnumerator()
+                    while e.MoveNext() do
+                        w.BW.Write true
+                        let k,v = e.Current
+                        write w kf k
+                        write w vf v
+
+                    w.BW.Write false
 
         type Reader with
             /// Deserializes a sequence of objects from the underlying stream
             member r.ReadSeq<'T> () : 'T seq =
-                let fmt = r.ResolveFormatter typeof<'T>
-                let ra = new ResizeArray<'T> ()
-                while r.BR.ReadBoolean() do
-                    let next = read r fmt :?> 'T
-                    ra.Add next
+                let (Typed fmt) = r.ResolveFormatter<'T> ()
 
-                ra :> _
+                if r.BR.ReadBoolean() then
+                    let length = r.BR.ReadInt32()
+                    let arr = Array.zeroCreate<'T> length
+                    for i = 0 to length - 1 do
+                        arr.[i] <- read r fmt :?> 'T
+                    arr :> _
+                else
+                    let ra = new ResizeArray<'T> ()
+                    while r.BR.ReadBoolean() do
+                        let next = read r fmt :?> 'T
+                        ra.Add next
+
+                    ra :> _
 
             /// Deserializes a sequence of key/value pairs from the underlying stream
             member r.ReadKeyValueSeq<'K,'V> () : seq<'K * 'V> =
-                let kf = r.ResolveFormatter typeof<'K>
-                let vf = r.ResolveFormatter typeof<'V>
-                let ra = new ResizeArray<'K * 'V> ()
-                while r.BR.ReadBoolean() do
-                    let k = read r kf :?> 'K
-                    let v = read r vf :?> 'V
-                    ra.Add (k,v)
+                let (Typed kf) = r.ResolveFormatter<'K> ()
+                let (Typed vf) = r.ResolveFormatter<'V> ()
+                if r.BR.ReadBoolean() then
+                    let length = r.BR.ReadInt32()
+                    let arr = Array.zeroCreate<'K * 'V> length
+                    for i = 0 to length - 1 do
+                        let k = read r kf :?> 'K
+                        let v = read r vf :?> 'V
+                        arr.[i] <- k,v
+                    arr :> _
+                else
+                    let ra = new ResizeArray<'K * 'V> ()
+                    while r.BR.ReadBoolean() do
+                        let k = read r kf :?> 'K
+                        let v = read r vf :?> 'V
+                        ra.Add (k,v)
 
-                ra :> _
+                    ra :> _

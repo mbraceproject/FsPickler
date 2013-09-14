@@ -19,8 +19,8 @@
 
         interface ISerializer with
             member __.Name = "FsCoreSerializer"
-            member __.Serialize(stream : Stream, o : obj) = fsc.Serialize(stream, o)
-            member __.Deserialize(stream : Stream) = fsc.Deserialize stream
+            member __.Serialize(stream : Stream, o : obj) = fsc.Serialize<obj>(stream, o)
+            member __.Deserialize(stream : Stream) = fsc.Deserialize<obj> stream
 
     type TestBinaryFormatter () =
         let bfs = new BinaryFormatter()

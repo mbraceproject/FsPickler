@@ -81,7 +81,7 @@
             interface IFormatterFactory with
                 member __.Type = typeof<int * string * unit>
                 member __.Create (resolver : Type -> Lazy<Formatter>) =
-                    let writer (w : Writer) ((x,y,_) : int * string * unit) = w.BW.Write x ; w.BW.Write y
+                    let writer (w : Writer) ((x,y,_) : int * string * unit) = ()
                     let reader (r : Reader) = (42, "42", ())
                     Formatter.Create(reader, writer, cache = false)
 
@@ -95,11 +95,11 @@
             member __.Create<'T when 'T : comparison> (resolver : Type -> Lazy<Formatter>) =
                 let valueFmt = resolver typeof<'T>
 
-                let writer (w : Writer) (g : GenericType<'T>) = 
-                    w.WriteObj(valueFmt.Value, g.Value)
+                let writer (w : Writer) (g : GenericType<'T>) = ()
+//                    w.WriteObj(valueFmt.Value, g.Value)
 
-                let reader (r : Reader) = 
-                    let value = r.ReadObj(valueFmt.Value) :?> 'T
+                let reader (r : Reader) =
+//                    let value = r.ReadObj(valueFmt.Value) :?> 'T
                     new GenericType<'T>(Unchecked.defaultof<'T>)
 
                 Formatter.Create(reader, writer)

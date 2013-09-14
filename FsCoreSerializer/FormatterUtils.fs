@@ -41,7 +41,7 @@
             {
                 Type = typeof<'T>
                 TypeInfo = getTypeInfo typeof<'T>
-                TypeHash = ObjHeader.computeHash typeof<'T>
+                TypeHash = 0us
 
                 Write = fun bw o -> writer bw (o :?> 'T)
                 Read = fun br -> reader br :> obj

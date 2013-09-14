@@ -82,7 +82,7 @@
                     let enum = sI.GetEnumerator()
                     while enum.MoveNext() do
                         w.BW.Write enum.Current.Name
-                        w.WriteObj enum.Current.Value
+                        w.Write<obj> enum.Current.Value
 
                     run onSerialized o w.StreamingContext
 
@@ -91,7 +91,7 @@
                     let memberCount = r.BR.ReadInt32()
                     for i = 1 to memberCount do
                         let name = r.BR.ReadString()
-                        let v = r.ReadObj ()
+                        let v = r.Read<obj> ()
                         sI.AddValue(name, v)
 
                     let o = create sI r.StreamingContext
@@ -306,25 +306,25 @@
             | [| _ |] ->
                 w.BW.Write true
                 w.WriteObj(memberInfoFormatter, dele.Method)
-                if not dele.Method.IsStatic then w.WriteObj dele.Target
+                if not dele.Method.IsStatic then w.Write<obj> dele.Target
             | deleList ->
                 w.BW.Write false
                 w.BW.Write deleList.Length
                 for i = 0 to deleList.Length - 1 do
-                    w.WriteObj(deleList.[i])
+                    w.Write<System.Delegate> (deleList.[i])
 
         let reader (r : Reader) =
             if r.BR.ReadBoolean() then
                 let meth = r.ReadObj memberInfoFormatter :?> MethodInfo
                 if not meth.IsStatic then
-                    let target = r.ReadObj()
+                    let target = r.Read<obj> ()
                     Delegate.CreateDelegate(t, target, meth, throwOnBindFailure = true) :> obj
                 else
                     Delegate.CreateDelegate(t, meth, throwOnBindFailure = true) :> obj
             else
                 let n = r.BR.ReadInt32()
                 let deleList = Array.zeroCreate<System.Delegate> n
-                for i = 0 to n - 1 do deleList.[i] <- r.ReadObj() :?> System.Delegate
+                for i = 0 to n - 1 do deleList.[i] <- r.Read<System.Delegate> ()
                 Delegate.Combine deleList :> obj
 
         {
