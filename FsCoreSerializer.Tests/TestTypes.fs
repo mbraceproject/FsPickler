@@ -80,7 +80,7 @@
         type FormatterFactoryTest() =
             interface IFormatterFactory with
                 member __.Type = typeof<int * string * unit>
-                member __.Create (resolver : Type -> Lazy<Formatter>) =
+                member __.Create (resolver : IFormatterResolver) =
                     let writer (w : Writer) ((x,y,_) : int * string * unit) = ()
                     let reader (r : Reader) = (42, "42", ())
                     Formatter.Create(reader, writer, cache = false)

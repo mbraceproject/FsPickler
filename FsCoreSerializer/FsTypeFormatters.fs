@@ -141,11 +141,11 @@
 
     type ListFormatter () =
         interface IGenericFormatterFactory1 with
-            member __.Create<'T> (resolver : Type -> Lazy<Formatter>) =
-                let ef = resolver typeof<'T>
+            member __.Create<'T> (resolver : IFormatterResolver) =
+                let ef = resolver.Resolve<'T> ()
 
                 let writer (w : Writer) (l : 'T list) =
-                    let ef = ef.Value
+                    let ef = unpack ef
 
                     if ef.TypeInfo = TypeInfo.Primitive then
                         let arr = List.toArray l
@@ -162,7 +162,7 @@
 
                 let reader (r : Reader) =
                     let length = r.BR.ReadInt32 ()
-                    let ef = ef.Value
+                    let ef = unpack ef
 
                     if ef.TypeInfo = TypeInfo.Primitive then
                         let array = Array.zeroCreate<'T> length
@@ -179,14 +179,14 @@
 
     type PairFormatter () =
         interface IGenericFormatterFactory2 with
-            member __.Create<'T,'S> (resolver : Type -> Lazy<Formatter>) =
-                let tf, sf = resolver typeof<'T>, resolver typeof<'S>
+            member __.Create<'T,'S> (resolver : IFormatterResolver) =
+                let tf, sf = resolver.Resolve<'T> (), resolver.Resolve<'S> ()
                 
                 let writer (w : Writer) ((t,s) : 'T * 'S) =
-                    write w tf.Value t ; write w sf.Value s
+                    write w (unpack tf) t ; write w (unpack sf) s
 
                 let reader (r : Reader) =
-                    (read r tf.Value :?> 'T, read r sf.Value :?> 'S)
+                    (read r (unpack tf) :?> 'T, read r (unpack sf) :?> 'S)
 
 #if OPTIMIZE_FSHARP
                 // do not cache or apply subtype polymorphism for performance
@@ -197,13 +197,13 @@
 
     type TripleFormatter () =
         interface IGenericFormatterFactory3 with
-            member __.Create<'T1, 'T2, 'T3> (resolver : Type -> Lazy<Formatter>) =
-                let t1f, t2f, t3f = resolver typeof<'T1>, resolver typeof<'T2>, resolver typeof<'T3>
+            member __.Create<'T1, 'T2, 'T3> (resolver : IFormatterResolver) =
+                let f1, f2, f3 = resolver.Resolve<'T1>(), resolver.Resolve<'T2>(), resolver.Resolve<'T3>()
                 let inline writer (w : Writer) ((t1,t2,t3) : 'T1 * 'T2 * 'T3) =
-                    write w t1f.Value t1 ; write w t2f.Value t2 ; write w t3f.Value t3
+                    write w (unpack f1) t1 ; write w (unpack f2) t2 ; write w (unpack f3) t3
 
                 let inline reader (r : Reader) =
-                    (read r t1f.Value :?> 'T1, read r t2f.Value :?> 'T2, read r t3f.Value :?> 'T3)
+                    (read r (unpack f1) :?> 'T1, read r (unpack f2) :?> 'T2, read r (unpack f3) :?> 'T3)
 
 #if OPTIMIZE_FSHARP
                 // do not cache or apply subtype polymorphism for performance
@@ -214,18 +214,18 @@
 
     type OptionFormatter () =
         interface IGenericFormatterFactory1 with
-            member __.Create<'T> (resolver : Type -> Lazy<Formatter>) =
-                let ef = resolver typeof<'T>
+            member __.Create<'T> (resolver : IFormatterResolver) =
+                let ef = resolver.Resolve<'T> ()
 
                 let writer (w : Writer) (x : 'T option) =
                     match x with
                     | None -> w.BW.Write true
-                    | Some v -> w.BW.Write false ; write w ef.Value v
+                    | Some v -> w.BW.Write false ; write w (unpack ef) v
 
                 let reader (r : Reader) =
                     if r.BR.ReadBoolean() then None
                     else
-                        Some(read r ef.Value :?> 'T)
+                        Some(read r (unpack ef) :?> 'T)
 
 #if OPTIMIZE_FSHARP
                 // do not cache or apply subtype polymorphism for performance
@@ -236,14 +236,14 @@
 
     type RefFormatter () =
         interface IGenericFormatterFactory1 with
-            member __.Create<'T> (resolver : Type -> Lazy<Formatter>) =
-                let ef = resolver typeof<'T>
+            member __.Create<'T> (resolver : IFormatterResolver) =
+                let ef = resolver.Resolve<'T> ()
 
                 let writer (w : Writer) (r : 'T ref) =
-                    write w ef.Value r.Value
+                    write w (unpack ef) r.Value
 
                 let reader (r : Reader) =
-                    read r ef.Value :?> 'T |> ref
+                    read r (unpack ef) :?> 'T |> ref
 
                 // do not cache for performance
                 mkFormatter FormatterInfo.FSharpValue false false reader writer
@@ -251,41 +251,41 @@
 
     type SetFormatter () =
         interface IGenericFormatterFactory
-        member __.Create<'T when 'T : comparison> (resolver : Type -> Lazy<Formatter>) =
-            let ef = resolver typeof<'T>
+        member __.Create<'T when 'T : comparison> (resolver : IFormatterResolver) =
+            let ef = resolver.Resolve<'T>()
 
             let writer (w : Writer) (s : Set<'T>) = 
-                writeSeq w ef.Value s.Count s
+                writeSeq w (unpack ef) s.Count s
 
             let reader (r : Reader) =
-                readSeq<'T> r ef.Value |> Set.ofArray
+                readSeq<'T> r (unpack ef) |> Set.ofArray
 
             mkFormatter FormatterInfo.Custom false true reader writer 
 
     type MapFormatter () =
         interface IGenericFormatterFactory
-        member __.Create<'K, 'V when 'K : comparison> (resolver : Type -> Lazy<Formatter>) =
-            let kf, vf = resolver typeof<'K>, resolver typeof<'V>
+        member __.Create<'K, 'V when 'K : comparison> (resolver : IFormatterResolver) =
+            let kf, vf = resolver.Resolve<'K> (), resolver.Resolve<'V> ()
                 
             let writer (w : Writer) (m : Map<'K,'V>) =
-                writeKVPair w kf.Value vf.Value m.Count (Map.toSeq m)
+                writeKVPair w (unpack kf) (unpack vf) m.Count (Map.toSeq m)
 
             let reader (r : Reader) =
-                readKVPair<'K,'V> r kf.Value vf.Value |> Map.ofArray
+                readKVPair<'K,'V> r (unpack kf) (unpack vf) |> Map.ofArray
 
             mkFormatter FormatterInfo.Custom false true reader writer
 
 
     type DictionaryFormatter () =
         interface IGenericFormatterFactory
-        member __.Create<'K, 'V when 'K : comparison> (resolver : Type -> Lazy<Formatter>) =
-            let kf, vf = resolver typeof<'K>, resolver typeof<'V>
+        member __.Create<'K, 'V when 'K : comparison> (resolver : IFormatterResolver) =
+            let kf, vf = resolver.Resolve<'K>(), resolver.Resolve<'V>()
                 
             let writer (w : Writer) (d : Dictionary<'K,'V>) =
                 let kvs = Seq.map (fun (KeyValue (k,v)) -> k,v) d
-                writeKVPair w kf.Value vf.Value d.Count kvs
+                writeKVPair w (unpack kf) (unpack vf) d.Count kvs
             let reader (r : Reader) =
-                let kvs = readKVPair<'K,'V> r kf.Value vf.Value
+                let kvs = readKVPair<'K,'V> r (unpack kf) (unpack vf)
                 let d = new Dictionary<'K,'V>()
                 for i = 0 to kvs.Length - 1 do
                     let k,v = kvs.[i]
@@ -297,11 +297,11 @@
 
     type ExprFormatter () =
         interface IGenericFormatterFactory1 with
-            member __.Create<'T> (resolver : Type -> Lazy<Formatter>) =
-                let exprFormatter = resolver typeof<Expr>
+            member __.Create<'T> (resolver : IFormatterResolver) =
+                let exprFormatter = resolver.Resolve<Expr> ()
                 mkFormatter FormatterInfo.Custom false true 
-                                (fun r -> Expr.Cast<'T>(exprFormatter.Value.Read r :?> Expr))
-                                (fun w e -> exprFormatter.Value.Write w (e :> obj))
+                                (fun r -> Expr.Cast<'T>(r.Read exprFormatter))
+                                (fun w e -> w.Write(exprFormatter, e :> _))
 
 
     let mkFSharpGenericFormatters () =

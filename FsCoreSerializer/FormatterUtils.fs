@@ -69,6 +69,9 @@
                 | [| p |] when p.ParameterType = typeof<StreamingContext> -> true
                 | _ -> false
 
+        let inline unpack (f : Formatter<'T>) = 
+            match f with Finalized fmt -> fmt | Delayed fmt -> fmt.Value
+
         //
         //  internal read/write combinators
         //

@@ -42,12 +42,10 @@
     with
         member __.SerializingType = __.Type
 
-    and Formatter<'T> = internal Typed of Formatter
-    with
-        member f.Type = let (Typed fmt) = f in fmt.Type
-        member f.CacheObj = let (Typed fmt) = f in fmt.CacheObj
-        member f.UseWithSubtypes = let (Typed fmt) = f in fmt.UseWithSubtypes
-        member f.FormatterInfo = let (Typed fmt) = f in fmt.FormatterInfo
+    and Formatter<'T> = 
+        internal
+        | Finalized of Formatter
+        | Delayed of Lazy<Formatter>
 
     and Writer internal (stream : Stream, tyConv : ITypeNameConverter, 
                             resolver : Type -> Formatter, sc : StreamingContext, ?leaveOpen, ?encoding) =
@@ -74,7 +72,7 @@
         member w.StreamingContext = sc
 
         /// <summary>Precomputes formatter for the given type at runtime.</summary>
-        member w.ResolveFormatter<'T> () = Formatter<'T>.Typed(resolver typeof<'T>)
+        member w.ResolveFormatter<'T> () = Formatter<'T>.Finalized(resolver typeof<'T>)
 
         /// <summary>
         ///     Write object to stream using given formatter rules. Unsafe method.
@@ -157,7 +155,9 @@
         /// <param name="t">The input value.</param>
         member w.Write<'T>(t : 'T) = let f = resolver typeof<'T> in w.WriteObj(f, t)
 
-        member w.Write<'T>(fmt : Formatter<'T>, value : 'T) = let (Typed fmt) = fmt in w.WriteObj(fmt, value)
+        member w.Write<'T>(fmt : Formatter<'T>, value : 'T) =
+            let untyped = match fmt with Finalized f -> f | Delayed f -> f.Value
+            w.WriteObj(untyped, value)
 
 //        /// <summary>
 //        ///     Writes given object to the stream.
@@ -215,7 +215,7 @@
         member r.StreamingContext = sc
 
         /// <summary>Precomputes formatter for the given type at runtime.</summary>
-        member w.ResolveFormatter<'T> () = Formatter<'T>.Typed(resolver typeof<'T>)
+        member w.ResolveFormatter<'T> () = Formatter<'T>.Finalized(resolver typeof<'T>)
 
 
         /// <summary>
@@ -282,7 +282,9 @@
         /// </summary>
         member r.Read<'T> () : 'T = let f = resolver typeof<'T> in r.ReadObj f :?> 'T
 
-        member r.Read<'T> (fmt : Formatter<'T>) : 'T = let (Typed fmt) = fmt in r.ReadObj fmt :?> 'T
+        member r.Read<'T> (fmt : Formatter<'T>) : 'T = 
+            let untyped = match fmt with Finalized f -> f | Delayed f -> f.Value
+            r.ReadObj untyped :?> 'T
         
 //        /// <summary>
 //        ///     Reads object from the underlying stream.

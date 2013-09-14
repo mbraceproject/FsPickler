@@ -13,11 +13,10 @@
 
         interface IFormatterFactory with
 
-            member __.Type = raise <| new NotSupportedException()
-
-            member __.Create (resolver : Type -> Lazy<Formatter>) =
+            member __.Type = t
+            member __.Create (resolver : IFormatterResolver) =
                 assert(typeof<'T> = t.GetElementType())
-                let ef = resolver typeof<'T>
+                let ef = resolver.Resolve<'T> ()
                 let rank = t.GetArrayRank()
 
                 let writer (w : Writer) (o : obj) =
@@ -25,7 +24,7 @@
                     for d = 0 to rank - 1 do
                         w.BW.Write(array.GetLength d)
 
-                    let ef = ef.Value
+                    let ef = unpack ef
 
                     if ef.TypeInfo = TypeInfo.Primitive then
                         Stream.WriteArray(w.BW.BaseStream, array)
@@ -58,7 +57,7 @@
                 let reader (r : Reader) =
                     let l = Array.zeroCreate<int> rank
                     for i = 0 to rank - 1 do l.[i] <- r.BR.ReadInt32()
-                    let ef = ef.Value
+                    let ef = unpack ef
 
                     if ef.TypeInfo = TypeInfo.Primitive then
                         let array =
@@ -121,7 +120,7 @@
                     CacheObj = true
                 }
 
-    let mkArrayFormatter (resolver : Type -> Lazy<Formatter>) (t : Type) =
+    let mkArrayFormatter (resolver : IFormatterResolver) (t : Type) =
         let formatterType = typedefof<ArrayFormatter<_>>.MakeGenericType [| t.GetElementType () |]
         let factory = Activator.CreateInstance(formatterType, [| t :> obj |]) :?> IFormatterFactory
         factory.Create resolver

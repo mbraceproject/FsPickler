@@ -44,6 +44,15 @@
         (recurse x).Value
 
 
+
+    let wrapResolver (resolver : Type -> Lazy<Formatter>) =
+        {
+            new IFormatterResolver with
+                member __.Resolve<'T> () =
+                    let fmt = resolver typeof<'T>
+                    Formatter<'T>.Delayed fmt
+        }
+
     // recursive formatter resolution
 
     let resolveFormatter (typeNameConverter : ITypeNameConverter) 
@@ -70,7 +79,7 @@
             | None ->
                 match factoryIdx.TryFind t.AssemblyQualifiedName with
                 | Some ff -> 
-                    let f = ff.Create self
+                    let f = ff.Create <| wrapResolver self
                     if f.Type <> t then
                         new SerializationException(sprintf "Invalid formatter factory: expected type '%s' but got '%s'." t.Name f.Type.Name)
                         |> raise
@@ -83,7 +92,7 @@
             match result with
             | Some _ -> result
             | None ->
-                if t.IsArray then Some <| mkArrayFormatter self t
+                if t.IsArray then Some <| mkArrayFormatter (wrapResolver self) t
                 elif typeof<System.Delegate>.IsAssignableFrom t then
                     Some <| mkDelegateFormatter self t
                 elif t.IsGenericType || t.IsArray then

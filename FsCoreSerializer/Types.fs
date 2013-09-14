@@ -1,6 +1,9 @@
 ﻿namespace FsCoreSerializer
 
     open System
+
+    type IFormatterResolver =
+        abstract Resolve<'T> : unit -> Formatter<'T>
     
     /// an ISerializable-like pattern for describing serialization rules in new types
     /// serialization is performed by providing direct access to the underlying stream
@@ -13,12 +16,12 @@
     /// A factory pattern for precomputing formatters
     and IFormatterFactory =
         abstract Type : Type
-        abstract Create : (Type -> Lazy<Formatter>) -> Formatter
+        abstract Create : IFormatterResolver -> Formatter
 
     /// A factory pattern for generating formatters for generic types
     /// any type implementing this interface must declare a method
     ///
-    ///     Create<'T1, ... , 'Tn | constraints> : (Type -> Lazy<Formatter>) -> Formatter
+    ///     Create<'T1, ... , 'Tn | constraints> : IFormatterResolver -> Formatter
     ///
     /// Generic formatters are registered and resolved at runtime. 
     and IGenericFormatterFactory = interface end
@@ -27,19 +30,19 @@
 
     and IGenericFormatterFactory1 =
         inherit IGenericFormatterFactory
-        abstract Create<'T> : (Type -> Lazy<Formatter>) -> Formatter
+        abstract Create<'T> : IFormatterResolver -> Formatter
 
     and IGenericFormatterFactory2 =
         inherit IGenericFormatterFactory
-        abstract Create<'T, 'S> : (Type -> Lazy<Formatter>) -> Formatter
+        abstract Create<'T, 'S> : IFormatterResolver -> Formatter
 
     and IGenericFormatterFactory3 =
         inherit IGenericFormatterFactory
-        abstract Create<'T, 'S, 'U> : (Type -> Lazy<Formatter>) -> Formatter
+        abstract Create<'T, 'S, 'U> : IFormatterResolver -> Formatter
 
     and IGenericFormatterFactory4 =
         inherit IGenericFormatterFactory
-        abstract Create<'T, 'S, 'U, 'V> : (Type -> Lazy<Formatter>) -> Formatter
+        abstract Create<'T, 'S, 'U, 'V> : IFormatterResolver -> Formatter
 
 
     open System.Runtime.Serialization

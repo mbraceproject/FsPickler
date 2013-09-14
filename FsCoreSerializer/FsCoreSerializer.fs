@@ -79,6 +79,9 @@
         static member Default() = 
             new FormatterCache(new DefaultTypeNameConverter(), [], GenericFormatterIndex.Empty, Map.empty)
 
+//        interface IFormatterResolver with
+//            member __.Resolve<'T> () = Formatter<'T>.Typed(__.ResolveFormatter typeof<'T>)
+
 
     and FsCoreSerializer private (cache : FormatterCache) =
 
@@ -151,7 +154,8 @@
             try cache.ResolveFormatter t |> ignore ; true
             with :? NonSerializableTypeException -> false
 
-        member __.ResolveFormatter<'T> () : Formatter<'T> = Typed(cache.ResolveFormatter typeof<'T>)
+        member __.ResolveFormatter<'T> () : Formatter<'T> = 
+            Formatter<'T>.Finalized(cache.ResolveFormatter typeof<'T>)
 
     [<AutoOpen>]
     module ExtensionMethods =
@@ -160,17 +164,17 @@
             /// <summary>Initializes a formatter out of a pair of read/write lambdas.</summary>
             /// <param name="cache">Specifies whether the serializer should cache by reference when serializing.</param>
             /// <param name="useWithSubtypes">Specifies whether this specific formatter should apply to all subtypes.</param>
-            static member Create(reader : Reader -> 'T, writer : Writer -> 'T -> unit, ?cache, ?useWithSubtypes) : Formatter<'T> =
+            static member Create(reader : Reader -> 'T, writer : Writer -> 'T -> unit, ?cache, ?useWithSubtypes) =
                 let cache = defaultArg cache (not typeof<'T>.IsValueType)
                 let useWithSubtypes = defaultArg useWithSubtypes false
                 let fmt = mkFormatter FormatterInfo.Custom useWithSubtypes cache reader writer
-                Typed fmt
+                Formatter<'T>.Finalized fmt
 
         type Writer with
 
             /// Serializes a sequence of values to the underlying stream
             member w.WriteSeq<'T> (xs : 'T seq) : unit =
-                let (Typed fmt) = w.ResolveFormatter<'T> ()
+                let fmt = unpack <| w.ResolveFormatter<'T> ()
                 match xs with
                 | :? ('T []) as arr ->
                     w.BW.Write true
@@ -199,8 +203,8 @@
 
             /// Serializes a sequence of key/value pairs to the underlying stream
             member w.WriteKeyValueSeq<'K,'V> (xs : ('K * 'V) seq) : unit =
-                let (Typed kf) = w.ResolveFormatter<'K> ()
-                let (Typed vf) = w.ResolveFormatter<'V> ()
+                let kf = unpack <| w.ResolveFormatter<'K> ()
+                let vf = unpack <| w.ResolveFormatter<'V> ()
                 match xs with
                 | :? (('K * 'V) []) as arr ->
                     w.BW.Write true
@@ -235,7 +239,7 @@
         type Reader with
             /// Deserializes a sequence of objects from the underlying stream
             member r.ReadSeq<'T> () : 'T seq =
-                let (Typed fmt) = r.ResolveFormatter<'T> ()
+                let fmt = unpack <| r.ResolveFormatter<'T> ()
 
                 if r.BR.ReadBoolean() then
                     let length = r.BR.ReadInt32()
@@ -253,8 +257,8 @@
 
             /// Deserializes a sequence of key/value pairs from the underlying stream
             member r.ReadKeyValueSeq<'K,'V> () : seq<'K * 'V> =
-                let (Typed kf) = r.ResolveFormatter<'K> ()
-                let (Typed vf) = r.ResolveFormatter<'V> ()
+                let kf = unpack <| r.ResolveFormatter<'K> ()
+                let vf = unpack <| r.ResolveFormatter<'V> ()
                 if r.BR.ReadBoolean() then
                     let length = r.BR.ReadInt32()
                     let arr = Array.zeroCreate<'K * 'V> length
