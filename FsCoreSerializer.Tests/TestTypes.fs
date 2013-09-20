@@ -81,9 +81,12 @@
             interface IFormatterFactory with
                 member __.Type = typeof<int * string * unit>
                 member __.Create (resolver : IFormatterResolver) =
-                    let writer (w : Writer) ((x,y,_) : int * string * unit) = ()
-                    let reader (r : Reader) = (42, "42", ())
-                    Formatter.Create(reader, writer, cache = false)
+                    let writer (w : Writer) ((x,y,_) : int * string * unit) = w.Write x
+                    let reader (r : Reader) =
+                        let x = r.Read<int> ()
+                        (x + 1, "42", ())
+
+                    Formatter.Create(reader, writer, cache = false) :> Formatter
 
 
         type GenericType<'T when 'T : comparison>(x : 'T) =
@@ -92,17 +95,17 @@
         type GenericTypeFormatter () =
             interface IGenericFormatterFactory
 
-            member __.Create<'T when 'T : comparison> (resolver : Type -> Lazy<Formatter>) =
-                let valueFmt = resolver typeof<'T>
+            member __.Create<'T when 'T : comparison> (resolver : IFormatterResolver) =
+                let valueFmt = resolver.Resolve<'T> ()
 
-                let writer (w : Writer) (g : GenericType<'T>) = ()
-//                    w.WriteObj(valueFmt.Value, g.Value)
+                let writer (w : Writer) (g : GenericType<'T>) =
+                    w.Write(valueFmt, g.Value)
 
                 let reader (r : Reader) =
-//                    let value = r.ReadObj(valueFmt.Value) :?> 'T
+                    let value = r.Read valueFmt
                     new GenericType<'T>(Unchecked.defaultof<'T>)
 
-                Formatter.Create(reader, writer)
+                Formatter.Create(reader, writer) :> Formatter
 
         type TestDelegate = delegate of unit -> unit
 

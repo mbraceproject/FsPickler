@@ -239,9 +239,9 @@
                         m.Name = "Create" &&  m.IsGenericMethod 
                         &&
                             (let ts = m.GetParameters() |> Array.map (fun p -> p.ParameterType)
-                                in ts = [| typeof<Type -> Lazy<Formatter>> |])
+                                in ts = [| typeof<IFormatterResolver> |])
                         &&
-                            m.ReturnType = typeof<Formatter>)
+                            typeof<Formatter>.IsAssignableFrom m.ReturnType)
 
             let createMethod =
                 match tryGetCreateMethod t with
@@ -259,19 +259,12 @@
             | Some m ->
                 // apply Peano type variables to formatter in order to extrapolate the type shape
                 let tyVars = getPeanoVars (m.GetGenericArguments().Length)
-                let dummyResolver (t : Type) = lazy(
+                let resolver =
                     {
-                        Type = t
-                        TypeInfo = TypeInfo.Abstract
-                        TypeHash = 0us
-
-                        Write = fun _ _ -> failwith "attemping to consume at construction time!"
-                        Read = fun _ -> failwith "attemping to consume at construction time!"
-                        
-                        FormatterInfo = FormatterInfo.Custom
-                        CacheObj = false
-                        UseWithSubtypes = false
-                    })
+                        new IFormatterResolver with
+                            member __.Resolve (t : Type) = DotNetFormatters.AbstractFormatter.CreateUntyped t
+                            member __.Resolve<'T> () = DotNetFormatters.AbstractFormatter.Create<'T> ()
+                    }
 
                 let m0 =
                     try m.MakeGenericMethod tyVars
@@ -279,7 +272,7 @@
                         SerializationException(sprintf "IGenericFormatter: instance '%s' contains unsupported type constraint." t.Name)
                         |> raise
 
-                let fmt = m0.Invoke(gf, [| dummyResolver :> obj|]) :?> Formatter
+                let fmt = m0.Invoke(gf, [| resolver :> obj|]) :?> Formatter
                 let shape = TypeShape.OfType fmt.Type
                 let fvs = shape.FreeVars
                 if fvs.Length < tyVars.Length then
@@ -302,7 +295,7 @@
         member i.AddGenericFormatters(gfs : seq<IGenericFormatterFactory>, overwrite) =
             (i,gfs) ||> Seq.fold (fun i gf -> i.AddGenericFormatter(gf,overwrite))
 
-        member i.TryResolveGenericFormatter(t : Type, resolver : Type -> Lazy<Formatter>) : Formatter option =
+        member i.TryResolveGenericFormatter(t : Type, resolver : IFormatterResolver) : Formatter option =
             match shapeMap.TryFind t with
             | None -> None
             | Some (shapes, (gf,m)) ->

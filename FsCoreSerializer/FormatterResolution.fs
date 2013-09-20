@@ -18,47 +18,43 @@
     open FsCoreSerializer.FSharpTypeFormatters
 
     /// Y combinator with parametric recursion support
-    let YParametric (externalCache : ConcurrentDictionary<'a, 'b>) (F : ('a -> Lazy<'b>) -> 'a -> 'b) (x : 'a) =
+    let YParametric (externalCache : ConcurrentDictionary<Type, Formatter>)
+                    (resolverF : IFormatterResolver -> Type -> Formatter) 
+                    (t : Type) =
+
         // use internal cache to avoid corruption in event of exceptions being raised
-        let internalCache = new Dictionary<'a , Lazy<'b>> ()
+        let internalCache = new Dictionary<Type, Formatter> ()
 
-        let rec recurse (x : 'a) =
-            match externalCache.TryFind x with
+        let rec recurse (t : Type) =
+            match externalCache.TryFind t with
             | None ->
-                match internalCache.TryFind x with
+                match internalCache.TryFind t with
                 | None ->
-                    let r = ref None
-                    let l = lazy (
-                        match r.Value with
-                        | None -> failwith "attemping to consume at construction time!"
-                        | Some v -> v)
-
-                    internalCache.Add(x, l)
-                    r := Some (F recurse x)
+                    let fmt = UninitializedFormatter.CreateUntyped t
+                    internalCache.Add(t, fmt)
+                    let fmt' = resolverF resolver t
+                    do fmt.InitializeFrom(fmt')
                     // recursive operation successful, commit to external cache
-                    externalCache.TryAdd(x, l.Value) |> ignore
-                    l
+                    externalCache.TryAdd(t, fmt) |> ignore
+                    fmt
                 | Some l -> l
-            | Some b -> lazy b
+            | Some f -> f
 
-        (recurse x).Value
+        and resolver =
+            {
+                new IFormatterResolver with
+                    member __.Resolve<'T> () = recurse typeof<'T> :?> Formatter<'T>
+                    member __.Resolve (t : Type) = recurse t
+            }
 
-
-
-    let wrapResolver (resolver : Type -> Lazy<Formatter>) =
-        {
-            new IFormatterResolver with
-                member __.Resolve<'T> () =
-                    let fmt = resolver typeof<'T>
-                    Formatter<'T>.Delayed fmt
-        }
+        recurse t
 
     // recursive formatter resolution
 
     let resolveFormatter (typeNameConverter : ITypeNameConverter) 
                             (factoryIdx : Map<string, IFormatterFactory>) 
                             (genericIdx : GenericFormatterIndex) 
-                            (self : Type -> Lazy<Formatter>) (t : Type) =
+                            (resolver : IFormatterResolver) (t : Type) =
 
         // check if type is supported
         if isUnSupportedType t then raise <| new NonSerializableTypeException(t)
@@ -66,7 +62,7 @@
         // subtype resolution
         let result =
             if t.BaseType <> null then
-                match (self t.BaseType).Value with
+                match resolver.Resolve t.BaseType with
                 | fmt when fmt.UseWithSubtypes -> Some fmt
                 | _ -> None
             else
@@ -79,7 +75,7 @@
             | None ->
                 match factoryIdx.TryFind t.AssemblyQualifiedName with
                 | Some ff -> 
-                    let f = ff.Create <| wrapResolver self
+                    let f = ff.Create resolver
                     if f.Type <> t then
                         new SerializationException(sprintf "Invalid formatter factory: expected type '%s' but got '%s'." t.Name f.Type.Name)
                         |> raise
@@ -92,54 +88,48 @@
             match result with
             | Some _ -> result
             | None ->
-                if t.IsArray then Some <| mkArrayFormatter (wrapResolver self) t
-                elif typeof<System.Delegate>.IsAssignableFrom t then
-                    Some <| mkDelegateFormatter self t
-                elif t.IsGenericType || t.IsArray then
-                    genericIdx.TryResolveGenericFormatter(t, self)
-                elif t.IsEnum then
-                    Some <| mkEnumFormatter self t
-                else None
-
-        // lookup F# types
-        let result =
-            match result with
-            | Some _ -> result
-            | None ->
-                if FSharpType.IsTuple t then
-                    mkTupleFormatter self t |> Some
+                if t.IsGenericType || t.IsArray then
+                    genericIdx.TryResolveGenericFormatter(t, resolver)
                 elif FSharpType.IsUnion(t, memberBindings) then
-                    mkUnionFormatter self t |> Some
-                elif FSharpType.IsRecord(t, memberBindings) then
-                    mkRecordFormatter self t |> Some
-#if EMIT_IL
-                elif FSharpType.IsExceptionRepresentation(t, memberBindings) then
-                    mkExceptionFormatter self t |> Some
-#endif
+                    Some <| FsUnionFormatter.CreateUntyped(t, resolver)
+                elif typeof<IFsCoreSerializable>.IsAssignableFrom t then
+                    Some <| FsCoreSerialibleFormatter.CreateUntyped(t, resolver)
+                elif typeof<ISerializable>.IsAssignableFrom t then
+                    SerializableFormatter.TryCreateUntyped(t, resolver)
                 else None
 
-        // IFsCoreSerializable resolution
-        let result =
-            match result with
-            | None -> tryMkIFsCoreSerializable t
-            | Some _ -> result
-
-        // .NET ISerializable resolution
-        let result =
-            match result with
-            | None -> tryMkISerializableFormatter t
-            | Some _ -> result
+//        // lookup F# types
+//        let result =
+//            match result with
+//            | Some _ -> result
+//            | None ->
+//                if FSharpType.IsTuple t then
+//                    mkTupleFormatter self t |> Some
+//                elif FSharpType.IsUnion(t, memberBindings) then
+//                    mkUnionFormatter self t |> Some
+//                elif FSharpType.IsRecord(t, memberBindings) then
+//                    mkRecordFormatter self t |> Some
+//#if EMIT_IL
+//                elif FSharpType.IsExceptionRepresentation(t, memberBindings) then
+//                    mkExceptionFormatter self t |> Some
+//#endif
+//                else None
 
         // .NET reflection serialization
-        let result =
-            match result with
-            | None ->
-                if t.IsValueType then mkStructFormatter self t
-                elif t.IsAbstract then mkAbstractFormatter t
-                elif not t.IsSerializable then 
-                    raise <| new NonSerializableTypeException(t)
-                else
-                    mkClassFormatter self t
-            | Some r -> r
-
-        result
+        match result with
+        | None ->
+            if t.IsEnum then 
+                EnumFormatter.CreateUntyped(t, resolver)
+            elif t.IsValueType then 
+                StructFormatter.CreateUntyped(t, resolver)
+            elif t.IsAbstract then 
+                AbstractFormatter.CreateUntyped t
+            elif t.IsArray then 
+                ArrayFormatter.CreateUntyped(t, resolver)
+            elif typeof<System.Delegate>.IsAssignableFrom t then
+                DelegateFormatter.CreateUntyped(t, resolver)
+            elif not t.IsSerializable then 
+                raise <| new NonSerializableTypeException(t)
+            else
+                ClassFormatter.CreateUntyped(t, resolver)
+        | Some r -> r

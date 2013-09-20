@@ -21,7 +21,7 @@
         [<Literal>]
         let isProperSubtype     = 2uy
         [<Literal>]
-        let isNewInstance       = 4uy
+        let isNewInstance = 4uy
         [<Literal>]
         let isCachedInstance    = 8uy
 

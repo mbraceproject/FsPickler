@@ -1,5 +1,8 @@
 ﻿namespace FsCoreSerializer
 
+    /// F# does not allow using Void in type arguments
+    type internal SynVoid = class end
+
     module internal Expression =
 
         // LINQ expression utilities
@@ -8,32 +11,40 @@
         open System.Reflection
         open System.Linq.Expressions
 
-        let inline compile1<'U, 'V>(f : Expression -> Expression) =
+        let inline insert (t : Type) =
+            if t = typeof<SynVoid> then typeof<Void>
+            else t
+
+        let inline compileFunc1<'U, 'V>(f : Expression -> Expression) =
             let parameter = Expression.Parameter(typeof<'U>)
             let lambda = Expression.Lambda<Func<'U,'V>>(f parameter, parameter)
             lambda.Compile()
 
-        let inline compile2<'U1, 'U2, 'V>(f : Expression -> Expression -> Expression) =
+        let inline compileFunc2<'U1, 'U2, 'V>(f : Expression -> Expression -> Expression) =
             let p1 = Expression.Parameter typeof<'U1>
             let p2 = Expression.Parameter typeof<'U2>
             let lambda = Expression.Lambda<Func<'U1,'U2,'V>>(f p1 p2, p1, p2)
             lambda.Compile()
 
-        let inline compile3<'U1, 'U2, 'U3, 'V>(f : Expression -> Expression -> Expression -> Expression) =
+        let inline compileAction1<'U1>(f : Expression -> Expression) =
+            let p1 = Expression.Parameter typeof<'U1>
+            let lambda = Expression.Lambda<Action<'U1>>(f p1, p1)
+            lambda.Compile()
+
+        let inline compileAction2<'U1, 'U2>(f : Expression -> Expression -> Expression) =
             let p1 = Expression.Parameter typeof<'U1>
             let p2 = Expression.Parameter typeof<'U2>
-            let p3 = Expression.Parameter typeof<'U3>
-            let lambda = Expression.Lambda<Func<'U1,'U2,'U3,'V>>(f p1 p2 p3, p1, p2, p3)
+            let lambda = Expression.Lambda<Action<'U1, 'U2>>(f p1 p2, p1, p2)
             lambda.Compile()
 
         let pair<'T, 'U>(e1 : Expression, e2 : Expression) =
-            let ctor = typeof<System.Tuple<'T,'U>>.GetConstructor([| typeof<'T> ; typeof<'U> |])
+            let ctor = typeof<System.Tuple<'T,'U>>.GetConstructor([| insert typeof<'T> ; insert typeof<'U> |])
             Expression.New(ctor , [| e1 ; e2 |])
 
         let failwith<'exn, 'T when 'exn :> exn> (message : string) =
             let ctor = typeof<'exn>.GetConstructor [| typeof<string> |]
             let exn = Expression.New(ctor, Expression.Constant message)
-            Expression.Throw(exn, typeof<'T>) 
+            Expression.Throw(exn, insert typeof<'T>)
 
         let unbox (t : Type) (e : Expression) =
             if t.IsValueType then Expression.Unbox(e, t) :> Expression

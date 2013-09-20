@@ -2,8 +2,8 @@
 
     open System
 
-    type IFormatterResolver =
-        abstract Resolve<'T> : unit -> Formatter<'T>
+//    type IFormatterResolver =
+//        abstract Resolve<'T> : unit -> Formatter<'T>
     
     /// an ISerializable-like pattern for describing serialization rules in new types
     /// serialization is performed by providing direct access to the underlying stream
@@ -48,6 +48,10 @@
     open System.Runtime.Serialization
 
     /// Raised by FsCoreSerializer whenever an unsupported type is encountered in the object graph.
-    type NonSerializableTypeException(unsupportedType : Type) =
-        inherit SerializationException(sprintf "Serialization of type '%O' is not supported." unsupportedType)
+    type NonSerializableTypeException(unsupportedType : Type, ?message : string) =
+        inherit SerializationException(
+            match message with
+            | None -> sprintf "Serialization of type '%O' is not supported." unsupportedType
+            | Some msg -> sprintf "Serialization of type '%O' is not supported: %s" unsupportedType msg)
+
         member __.UnsupportedType = unsupportedType

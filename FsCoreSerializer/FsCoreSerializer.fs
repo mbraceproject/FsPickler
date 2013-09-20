@@ -50,13 +50,13 @@
 
 
 
-    and private FormatterCache (tyConv : ITypeNameConverter, formatters : seq<Formatter>, 
+    and FormatterCache internal (tyConv : ITypeNameConverter, formatters : seq<Formatter>, 
                                     gfi : GenericFormatterIndex, ffs : Map<string, IFormatterFactory>) =
         
         let cache =
             seq {
                 yield! mkPrimitiveFormatters ()
-                yield! mkValueFormatters ()
+                yield! mkAtomicFormatters ()
                 yield! mkReflectionFormatters tyConv
             }
             |> Seq.map (fun f -> KeyValuePair(f.Type, f)) 
@@ -70,20 +70,20 @@
             for f in formatters do 
                 cache.AddOrUpdate(f.Type, f, fun _ _ -> f) |> ignore
 
-        member __.TypeNameConverter = tyConv
-        member __.ResolveFormatter (t : Type) = YParametric cache (resolveFormatter tyConv ffs gfi) t
+        member internal __.TypeNameConverter = tyConv
+
+        interface IFormatterResolver with
+            member s.Resolve<'T> () = YParametric cache (resolveFormatter tyConv ffs gfi) typeof<'T> :?> Formatter<'T>
+            member s.Resolve (t : Type) = YParametric cache (resolveFormatter tyConv ffs gfi) t
         
-        static member FromFormatterRegistry(fr : FormatterRegistry) =
+        static member internal FromFormatterRegistry(fr : FormatterRegistry) =
             new FormatterCache(fr.TypeNameConverter, fr.RegisteredFormatters, fr.GenericFactories, fr.FormatterFactories)
 
-        static member Default() = 
+        static member internal Default() = 
             new FormatterCache(new DefaultTypeNameConverter(), [], GenericFormatterIndex.Empty, Map.empty)
 
-//        interface IFormatterResolver with
-//            member __.Resolve<'T> () = Formatter<'T>.Typed(__.ResolveFormatter typeof<'T>)
 
-
-    and FsCoreSerializer private (cache : FormatterCache) =
+    and FsCoreSerializer private (cache : IFormatterResolver) =
 
         new () = new FsCoreSerializer(FormatterCache.Default())
         new (registry : FormatterRegistry) = new FsCoreSerializer(FormatterCache.FromFormatterRegistry registry)
@@ -96,7 +96,7 @@
         member s.GetObjectWriter(stream : Stream, ?context : obj, ?leaveOpen, ?encoding) =
             if not stream.CanWrite then invalidOp "Cannot write to stream."
             let sc = match context with None -> StreamingContext() | Some ctx -> StreamingContext(StreamingContextStates.All, ctx)
-            new Writer(stream, cache.TypeNameConverter, cache.ResolveFormatter, sc, ?leaveOpen = leaveOpen, ?encoding = encoding)
+            new Writer(stream, cache, sc, ?leaveOpen = leaveOpen, ?encoding = encoding)
 
         /// <summary>Initializes an object reader for given the stream.</summary>
         /// <param name="stream">The source stream.</param>
@@ -106,7 +106,7 @@
         member __.GetObjectReader(stream : Stream, ?context : obj, ?leaveOpen, ?encoding) =
             if not stream.CanRead then invalidOp "Cannot read from stream."
             let sc = match context with None -> StreamingContext() | Some ctx -> StreamingContext(StreamingContextStates.All, ctx)
-            new Reader(stream, cache.TypeNameConverter, cache.ResolveFormatter, sc, ?leaveOpen = leaveOpen, ?encoding = encoding)
+            new Reader(stream, cache, sc, ?leaveOpen = leaveOpen, ?encoding = encoding)
 
         /// <summary>Serialize an object of given type to the underlying stream.</summary>
         /// <param name="stream">The target stream.</param>
@@ -147,15 +147,18 @@
         ///     Useful when serializing sequences of small objects.</param>
         member __.DeserializeUntyped (stream : Stream, graphType : Type, ?context : obj, ?encoding) : obj =
             use reader = __.GetObjectReader(stream, ?context = context, leaveOpen = true, ?encoding = encoding)
-
+            
             reader.ReadObj graphType
 
         member __.IsSerializableType (t : Type) =
-            try cache.ResolveFormatter t |> ignore ; true
+            try cache.Resolve t |> ignore ; true
             with :? NonSerializableTypeException -> false
 
-        member __.ResolveFormatter<'T> () : Formatter<'T> = 
-            Formatter<'T>.Finalized(cache.ResolveFormatter typeof<'T>)
+        member __.IsSerializableType<'T> () =
+            try cache.Resolve<'T> () |> ignore ; true
+            with :? NonSerializableTypeException -> false
+
+        member __.ResolveFormatter<'T> () = cache.Resolve<'T> ()
 
     [<AutoOpen>]
     module ExtensionMethods =
@@ -167,20 +170,20 @@
             static member Create(reader : Reader -> 'T, writer : Writer -> 'T -> unit, ?cache, ?useWithSubtypes) =
                 let cache = defaultArg cache (not typeof<'T>.IsValueType)
                 let useWithSubtypes = defaultArg useWithSubtypes false
-                let fmt = mkFormatter FormatterInfo.Custom useWithSubtypes cache reader writer
-                Formatter<'T>.Finalized fmt
+                mkFormatter FormatterInfo.Custom useWithSubtypes cache reader writer
 
         type Writer with
 
             /// Serializes a sequence of values to the underlying stream
             member w.WriteSeq<'T> (xs : 'T seq) : unit =
-                let fmt = unpack <| w.ResolveFormatter<'T> ()
+                let fmt = w.ResolveFormatter<'T> ()
+                let isValue = fmt.TypeInfo <= TypeInfo.Value
                 match xs with
                 | :? ('T []) as arr ->
                     w.BW.Write true
                     w.BW.Write arr.Length
                     for i = 0 to arr.Length - 1 do
-                        write w fmt <| arr.[i]
+                        write isValue w fmt <| arr.[i]
                 | :? ('T list) as list ->
                     w.BW.Write true
                     w.BW.Write list.Length
@@ -188,7 +191,7 @@
                         match rest with
                         | [] -> ()
                         | hd :: tl ->
-                            write w fmt hd
+                            write isValue w fmt hd
                             iter tl
 
                     iter list
@@ -197,22 +200,24 @@
                     use e = xs.GetEnumerator()
                     while e.MoveNext() do
                         w.BW.Write true
-                        write w fmt e.Current
+                        write isValue w fmt e.Current
 
                     w.BW.Write false
 
             /// Serializes a sequence of key/value pairs to the underlying stream
             member w.WriteKeyValueSeq<'K,'V> (xs : ('K * 'V) seq) : unit =
-                let kf = unpack <| w.ResolveFormatter<'K> ()
-                let vf = unpack <| w.ResolveFormatter<'V> ()
+                let kf = w.ResolveFormatter<'K> ()
+                let vf = w.ResolveFormatter<'V> ()
+                let kIsValue = kf.TypeInfo <= TypeInfo.Value
+                let vIsValue = vf.TypeInfo <= TypeInfo.Value
                 match xs with
                 | :? (('K * 'V) []) as arr ->
                     w.BW.Write true
                     w.BW.Write arr.Length
                     for i = 0 to arr.Length - 1 do
                         let k,v = arr.[i]
-                        write w kf k
-                        write w vf v
+                        write kIsValue w kf k
+                        write vIsValue w vf v
                 | :? (('K * 'V) list) as list ->
                     w.BW.Write true
                     w.BW.Write list.Length
@@ -220,8 +225,8 @@
                         match rest with
                         | [] -> ()
                         | (k,v) :: tl ->
-                            write w kf k
-                            write w vf v
+                            write kIsValue w kf k
+                            write vIsValue w vf v
                             iter tl
 
                     iter list
@@ -231,47 +236,51 @@
                     while e.MoveNext() do
                         w.BW.Write true
                         let k,v = e.Current
-                        write w kf k
-                        write w vf v
+                        write kIsValue w kf k
+                        write vIsValue w vf v
 
                     w.BW.Write false
 
         type Reader with
             /// Deserializes a sequence of objects from the underlying stream
             member r.ReadSeq<'T> () : 'T seq =
-                let fmt = unpack <| r.ResolveFormatter<'T> ()
+                let fmt = r.ResolveFormatter<'T> ()
+                let isValue = fmt.TypeInfo <= TypeInfo.Value
 
                 if r.BR.ReadBoolean() then
                     let length = r.BR.ReadInt32()
                     let arr = Array.zeroCreate<'T> length
                     for i = 0 to length - 1 do
-                        arr.[i] <- read r fmt :?> 'T
+                        arr.[i] <- read isValue r fmt
                     arr :> _
                 else
                     let ra = new ResizeArray<'T> ()
                     while r.BR.ReadBoolean() do
-                        let next = read r fmt :?> 'T
+                        let next = read isValue r fmt
                         ra.Add next
 
                     ra :> _
 
             /// Deserializes a sequence of key/value pairs from the underlying stream
             member r.ReadKeyValueSeq<'K,'V> () : seq<'K * 'V> =
-                let kf = unpack <| r.ResolveFormatter<'K> ()
-                let vf = unpack <| r.ResolveFormatter<'V> ()
+                let kf = r.ResolveFormatter<'K> ()
+                let vf = r.ResolveFormatter<'V> ()
+                let kIsValue = kf.TypeInfo <= TypeInfo.Value
+                let vIsValue = vf.TypeInfo <= TypeInfo.Value
+
                 if r.BR.ReadBoolean() then
                     let length = r.BR.ReadInt32()
                     let arr = Array.zeroCreate<'K * 'V> length
                     for i = 0 to length - 1 do
-                        let k = read r kf :?> 'K
-                        let v = read r vf :?> 'V
+                        let k = read kIsValue r kf
+                        let v = read vIsValue r vf
                         arr.[i] <- k,v
                     arr :> _
                 else
                     let ra = new ResizeArray<'K * 'V> ()
                     while r.BR.ReadBoolean() do
-                        let k = read r kf :?> 'K
-                        let v = read r vf :?> 'V
+                        let k = read kIsValue r kf
+                        let v = read vIsValue r vf
                         ra.Add (k,v)
 
                     ra :> _

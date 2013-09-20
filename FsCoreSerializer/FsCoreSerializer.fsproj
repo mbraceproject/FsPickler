@@ -45,11 +45,11 @@
     <Compile Include="TypeFormatter.fs" />
     <Compile Include="Formatter.fs" />
     <Compile Include="Types.fs" />
-    <Compile Include="TypeShape.fs" />
     <Compile Include="FormatterUtils.fs" />
     <Compile Include="BaseFormatters.fs" />
-    <Compile Include="ArrayFormatter.fs" />
     <Compile Include="DotNetFormatters.fs" />
+    <Compile Include="ArrayFormatter.fs" />
+    <Compile Include="TypeShape.fs" />
     <Compile Include="FsTypeFormatters.fs" />
     <Compile Include="FormatterResolution.fs" />
     <Compile Include="FsCoreSerializer.fs" />

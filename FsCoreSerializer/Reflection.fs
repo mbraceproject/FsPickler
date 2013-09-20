@@ -35,7 +35,7 @@
                     invalidArg "tupleType" <| sprintf "Type '%s' is not a tuple type." tupleType.Name
 
 
-                Expression.compile1<obj, obj []>(fun param ->
+                Expression.compileFunc1<obj, obj []>(fun param ->
                     let fieldExprs = traverseTuple tupleType (param |> Expression.unbox tupleType)
                     Expression.NewArrayInit(typeof<obj>, fieldExprs) :> _)
 
@@ -57,7 +57,7 @@
                         let restExprs = composeTuple objArray restType (offset + n - 1)
                         Expression.New(ctorInfo, Seq.append fieldExprs [| restExprs |])
 
-                Expression.compile1<obj [], obj>(fun boxedParams -> 
+                Expression.compileFunc1<obj [], obj>(fun boxedParams -> 
                     composeTuple boxedParams tupleType 0 |> Expression.box)
 
             let elements = FSharpType.GetTupleElements tupleType
@@ -103,7 +103,7 @@
                     let result = Expression.pair<int, obj []>(Expression.Constant uci.Tag, values)
                     Expression.SwitchCase(result, Expression.Constant uci.Tag)
 
-                Expression.compile1<obj, int * obj []>(fun boxedInstance ->
+                Expression.compileFunc1<obj, int * obj []>(fun boxedInstance ->
                     let unboxedInstance = Expression.unbox unionType boxedInstance
                     let tag = callUnionTagReader unionType bindingFlags unboxedInstance
                     let cases = ucis |> Array.map (getBranchCase unboxedInstance)
@@ -116,7 +116,7 @@
                     let result = Expression.callMethodBoxed ctor None boxedArgs |> Expression.box
                     Expression.SwitchCase(result, Expression.Constant uci.Tag)
 
-                Expression.compile2<int, obj [], obj>(fun tag args ->
+                Expression.compileFunc2<int, obj [], obj>(fun tag args ->
                     let branchCtors = ucis |> Array.map (getBranchCtor args)
                     Expression.Switch(tag, defaultBody, branchCtors) :> _)
 
@@ -156,10 +156,10 @@
             static let preComputeRecordConstructor (record : Type) bindingFlags =
                 let ctor = FSharpValue.PreComputeRecordConstructorInfo(record, ?bindingFlags = bindingFlags)
 
-                Expression.compile1<obj [], obj>(fun e -> Expression.callConstructorBoxed ctor e |> Expression.box)
+                Expression.compileFunc1<obj [], obj>(fun e -> Expression.callConstructorBoxed ctor e |> Expression.box)
 
             static let preComputeRecordReader (record : Type) (fields : PropertyInfo []) =
-                Expression.compile1<obj, obj []>(fun e -> 
+                Expression.compileFunc1<obj, obj []>(fun e -> 
                     let ue = Expression.unbox record e
                     Expression.callPropertyGettersBoxed record fields ue :> _)
 
@@ -210,10 +210,10 @@
             static let preComputeExceptionConstructor (exceptionType : Type) bindingFlags =
                 let ctor = preComputeExceptionConstructorInfo exceptionType bindingFlags
 
-                Expression.compile1<obj [], obj>(fun e -> Expression.callConstructorBoxed ctor e |> Expression.box)
+                Expression.compileFunc1<obj [], obj>(fun e -> Expression.callConstructorBoxed ctor e |> Expression.box)
 
             static let preComputeExceptionReader (exceptionType : Type) (fields : PropertyInfo []) bindingFlags =
-                Expression.compile1<obj, obj []>(fun e -> 
+                Expression.compileFunc1<obj, obj []>(fun e -> 
                     let ue = Expression.unbox exceptionType e
                     Expression.callPropertyGettersBoxed exceptionType fields ue :> _)
 
