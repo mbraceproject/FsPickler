@@ -418,7 +418,7 @@
 
                 let writeField instance (field : PropertyInfo) (formatter : Formatter) =
                     let value = Expression.Property(instance, field)
-                    serializeValue field.PropertyType writer formatter value
+                    serializeValue writer formatter value
 
                 let body =
                     if fields.Length = 0 then Expression.Empty() :> Expression
@@ -435,11 +435,8 @@
 
             let callCaseReader (uci : UnionCaseInfo) (fields : PropertyInfo []) (formatters : Formatter []) 
                                             (ctor : MethodInfo) (reader : Expression) =
-
-                let readParam (field : PropertyInfo) (formatter : Formatter) =
-                    deserializeValue field.PropertyType reader formatter
                     
-                let cParams = Seq.map2 readParam fields formatters
+                let cParams = Seq.map (deserializeValue reader) formatters
                 let unionCase = Expression.Call(ctor, cParams) :> Expression
                 // upcast to union type
                 let unionCase =
@@ -483,45 +480,5 @@
 
 
             new Formatter<'Union>(reader.Invoke, (fun w t -> writer.Invoke(w,t)), FormatterInfo.FSharpValue, true, true)
-
-
-
-
-//                    let body =
-//                        seq {
-//                            yield Expression.Assign(tag, callUnionTagReader union) :> Expression
-//
-//                            yield 
-                    
-                    
-
-//                let fields = 
-//                    uci.GetFields()
-//                    |> Seq.map(fun f -> 
-//                        let value = Expression.Property(instance, f)
-//                        let writeOp = Expression.Call(writer, writerM.MakeGenericMethod [| f.FieldType |], 
-
-
-
-
-
 #else
 #endif
-//
-//                let defaultBody = 
-//                    Expression.failwith<InvalidOperationException, int * obj []> "Invalid F# union tag."
-//
-//                let getBranchCase (instance : Expression) (uci : UnionCaseInfo) =
-//                    let fields = uci.GetFields()
-//                    let branchType = if fields.Length = 0 then uci.DeclaringType else fields.[0].DeclaringType
-//                    let unboxedInstance = Expression.unbox branchType instance
-//                    let values = Expression.callPropertyGettersBoxed branchType fields unboxedInstance :> Expression
-//                    let result = Expression.pair<int, obj []>(Expression.Constant uci.Tag, values)
-//                    Expression.SwitchCase(result, Expression.Constant uci.Tag)
-//
-//                Expression.compileFunc1<obj, int * obj []>(fun boxedInstance ->
-//                    let unboxedInstance = Expression.unbox unionType boxedInstance
-//                    let tag = callUnionTagReader unionType bindingFlags unboxedInstance
-//                    let cases = ucis |> Array.map (getBranchCase unboxedInstance)
-//                    Expression.Switch(tag, defaultBody, cases) :> _)
-

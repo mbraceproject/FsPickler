@@ -177,31 +177,27 @@
         let writerM = typeof<Writer>.GetGenericMethod(false, "Write", 1, 2)
         let readerM = typeof<Reader>.GetGenericMethod(false, "Read", 1, 1)
 
-//        let inline unboxFormatter (formatter : Formatter) (t : Type) =
-//            let ft = typedefof<Formatter<_>>.MakeGenericType [| t |]
-//            Expression.Constant(formatter, ft)
-
-        let inline serializeValue (t : Type) (writer : Expression) (formatter : Formatter) (value : Expression) =
-            let ft = typedefof<Formatter<_>>.MakeGenericType [| t |]
+        let inline serializeValue (writer : Expression) (formatter : Formatter) (value : Expression) =
+            let ft = typedefof<Formatter<_>>.MakeGenericType [| formatter.Type |]
             let fExpr = Expression.Constant(formatter, ft)
-            Expression.Call(writer, writerM.MakeGenericMethod [| t |], fExpr, value) :> Expression
+            Expression.Call(writer, writerM.MakeGenericMethod [| formatter.Type |], fExpr, value) :> Expression
 
-        let inline deserializeValue (t : Type) (reader : Expression) (formatter : Formatter) =
-            let ft = typedefof<Formatter<_>>.MakeGenericType [| t |]
+        let inline deserializeValue (reader : Expression) (formatter : Formatter) =
+            let ft = typedefof<Formatter<_>>.MakeGenericType [| formatter.Type |]
             let fExpr = Expression.Constant(formatter, ft)
-            Expression.Call(reader, readerM.MakeGenericMethod [| t |], fExpr) :> Expression
+            Expression.Call(reader, readerM.MakeGenericMethod [| formatter.Type |], fExpr) :> Expression
 
         let zipWriter (fields : FieldInfo []) (formatters : Formatter []) (writer : Expression) (instance : Expression) =
             let writeValue (formatter : Formatter, field : FieldInfo) =
                 let value = Expression.Field(instance, field)
-                serializeValue field.FieldType writer formatter value
+                serializeValue writer formatter value
 
             Seq.zip formatters fields |> Seq.map writeValue
 
 
         let zipReader (fields : FieldInfo []) (formatters : Formatter []) (reader : Expression) (instance : Expression) =
             let readValue (formatter : Formatter, field : FieldInfo) =
-                let value = deserializeValue field.FieldType reader formatter
+                let value = deserializeValue reader formatter
                 let field = Expression.Field(instance, field)
                 Expression.Assign(field, value) :> Expression
 

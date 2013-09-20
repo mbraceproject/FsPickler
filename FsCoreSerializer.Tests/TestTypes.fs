@@ -77,6 +77,8 @@
 
         type Rec = Rec of (Rec -> Rec)
 
+        type Rec2 = { Rec2 : Rec2 }
+
         type FormatterFactoryTest() =
             interface IFormatterFactory with
                 member __.Type = typeof<int * string * unit>

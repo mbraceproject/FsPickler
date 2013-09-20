@@ -49,12 +49,10 @@
     [<AbstractClass>]
     type Formatter =
 
-        val mutable private m_type : Type
+        val private declared_type : Type
+        val mutable private m_reflected_type : Type
         val mutable private m_typeInfo : TypeInfo
         val mutable private m_typeHash : uint16
-
-        val mutable private m_writer_untyped : Writer -> obj -> unit
-        val mutable private m_reader_untyped : Reader -> obj
         
         val mutable private m_isInitialized : bool
 
@@ -63,34 +61,34 @@
         val mutable private m_useWithSubtypes : bool
 
         internal new (t : Type) =
-            { 
+            {
+                declared_type = t ;
+
                 m_isInitialized = false ;
 
-                m_type = t ; m_typeInfo = FooTools.getTypeInfo t ; m_typeHash = ObjHeader.computeHash t ;
-                
-                m_writer_untyped = fun _ _ -> invalidOp "Attempting to consume formatter at construction time."
-                m_reader_untyped = fun _ -> invalidOp "Attempting to consume formatter at construction time."
-
+                m_reflected_type = null ; 
+                m_typeInfo = Unchecked.defaultof<_> ; 
+                m_typeHash = Unchecked.defaultof<_> ;
                 m_formatterInfo = Unchecked.defaultof<_> ; 
                 m_cacheObj = false ; 
                 m_useWithSubtypes = false ;
             }
 
-        internal new (t : Type, reader, writer, formatterInfo, cacheObj, useWithSubtypes) =
+        internal new (t : Type, formatterInfo, cacheObj, useWithSubtypes) =
             {
+                declared_type = t ;
+
                 m_isInitialized = true ;
 
-                m_type = t ; m_typeInfo = FooTools.getTypeInfo t ; m_typeHash = ObjHeader.computeHash t ;
-                
-                m_writer_untyped = writer ;
-                m_reader_untyped = reader ;
+                m_reflected_type = t ; m_typeInfo = FooTools.getTypeInfo t ; m_typeHash = ObjHeader.computeHash t ;
                 
                 m_formatterInfo = formatterInfo ;
                 m_cacheObj = cacheObj ;
                 m_useWithSubtypes = useWithSubtypes ;
             }
 
-        member f.Type = f.m_type
+        member f.Type = f.declared_type
+        member f.FormatterType = f.m_reflected_type
         member internal f.TypeInfo = f.m_typeInfo
         member internal f.TypeHash = f.m_typeHash
 
@@ -110,8 +108,10 @@
             else
                 invalidOp "Attempting to consume formatter at construction time."
 
-        member f.UntypedWrite = f.m_writer_untyped
-        member f.UntypedRead = f.m_reader_untyped
+        member f.IsInitialized = f.m_isInitialized
+
+        abstract member UntypedWrite : Writer -> obj -> unit
+        abstract member UntypedRead : Reader -> obj
 
         abstract member ManagedWrite : Writer -> obj -> unit
         abstract member ManagedRead : Reader -> obj
@@ -122,17 +122,15 @@
                 invalidOp "Formatter has already been initialized."
             elif not f'.m_isInitialized then 
                 invalidOp "Attempting to consume formatter at construction time."
-            elif f.Type <> f'.Type && not (f'.m_type.IsAssignableFrom(f.m_type) && f'.UseWithSubtypes) then
+            elif f.Type <> f'.Type && not (f'.Type.IsAssignableFrom(f.Type) && f'.UseWithSubtypes) then
                 raise <| new InvalidCastException(sprintf "Cannot cast formatter from %O to %O." f'.Type f.Type)
             else
-                f.m_type <- f'.m_type
+                f.m_reflected_type <- f'.m_reflected_type
                 f.m_typeHash <- f'.m_typeHash
                 f.m_typeInfo <- f'.m_typeInfo
                 f.m_formatterInfo <- f'.m_formatterInfo
                 f.m_cacheObj <- f'.m_cacheObj
                 f.m_useWithSubtypes <- f'.m_useWithSubtypes
-                f.m_reader_untyped <- f'.m_reader_untyped
-                f.m_writer_untyped <- f'.m_writer_untyped
                 f.m_isInitialized <- true
 
     and [<Sealed>] Formatter<'T> =
@@ -143,36 +141,10 @@
 
         internal new (reader, writer, formatterInfo, cacheObj, useWithSubtypes) = 
             { 
-                inherit Formatter(typeof<'T>, mkUntypedReader reader, mkUntypedWriter writer, formatterInfo, cacheObj, useWithSubtypes) ;
+                inherit Formatter(typeof<'T>, formatterInfo, cacheObj, useWithSubtypes) ;
                 m_writer = writer ;
                 m_reader = reader ;
             }
-
-//        internal new (reader, writer, ureader, uwriter, formatterInfo, cacheObj, useWithSubtypes, isTyped) =
-//            {
-//                inherit Formatter(typeof<'T>, ureader, uwriter, formatterInfo, cacheObj, useWithSubtypes)
-////                m_isTyped = isTyped ;
-//                m_writer = writer ;
-//                m_reader = reader ;
-//            }
-
-//        internal new (reader : System.Delegate, writer : System.Delegate, formatterInfo, cacheObj, useWithSubtypes) =
-//            let reader = reader :?> Func<Reader, 'T>
-//            let writer = writer :?> Func<Writer, 'T, unit>
-//            let ru = (fun r -> reader.Invoke r :> obj)
-//            let wu = (fun w (o:obj) -> writer.Invoke(w, o :?> 'T))
-//            { 
-//                inherit Formatter(typeof<'T>, ru, wu, formatterInfo, cacheObj, useWithSubtypes) 
-//                m_writer = (fun w t -> writer.Invoke(w,t)) ; 
-//                m_reader = reader.Invoke 
-//            }
-
-//        internal new (t : Type, reader, writer, formatterInfo, cacheObj, useWithSubtypes) =
-//            { 
-//                inherit Formatter(t, reader, writer, formatterInfo, cacheObj, useWithSubtypes) ;
-//                m_writer = mkTypedWriter writer ;
-//                m_reader = mkTypedReader reader ;
-//            }
 
         internal new () = 
             {
@@ -181,17 +153,10 @@
                 m_reader = fun _ -> invalidOp "Attempting to consume formatter at construction time." ;
             }
 
+        override f.UntypedWrite (w : Writer) (o : obj) = f.m_writer w (o :?> 'T)
+        override f.UntypedRead (r : Reader) = f.m_reader r :> obj
         override f.ManagedWrite (w : Writer) (o : obj) = w.Write(f, o :?> 'T)
         override f.ManagedRead (r : Reader) = r.Read f :> obj
-
-//        override f.Cast<'S> () =
-//            if typeof<'T> = typeof<'S> then f :> obj :?> Formatter<'S>
-//            elif not <| typeof<'T>.IsAssignableFrom typeof<'S> then
-//                raise <| new InvalidCastException(sprintf "Cannot cast formatter from %O to %O." typeof<'T> typeof<'S>)
-//            elif not f.UseWithSubtypes then
-//                raise <| new InvalidCastException(sprintf "Cannot cast formatter from %O to %O." typeof<'T> typeof<'S>)
-//            else
-//                new Formatter<'S>(f.Type, f.UntypedRead, f.UntypedWrite, f.FormatterInfo, f.CacheObj, f.UseWithSubtypes)
 
         override f.InitializeFrom(f' : Formatter) : unit =
             base.InitializeFrom f'
@@ -199,13 +164,6 @@
             let reader = f'.UntypedRead
             f.m_writer <- fun w t -> writer w t
             f.m_reader <- fun r -> reader r :?> 'T
-//            match f' with
-//            | :? Formatter<'T> as f' ->
-//                base.InitializeFrom f'
-//                f.m_writer <- f'.m_writer
-//                f.m_reader <- f'.m_reader
-//            | _ -> 
-//                invalidOp "Invalid formatter initialization operation"
 
         member f.Write = f.m_writer
         member f.Read = f.m_reader
@@ -269,7 +227,7 @@
 
                     let inline write isProperSubtype (fmt' : Formatter) =
                         let inline write () = 
-                            if isProperSubtype then fmt'.UntypedWrite w (x :> _)
+                            if isProperSubtype then fmt'.UntypedWrite w x
                             else fmt.Write w x
 
                         if fmt'.FormatterInfo = FormatterInfo.ReflectionDerived then
@@ -315,16 +273,6 @@
                         fmt.Write w x
 
         /// <summary>
-//        ///     Writes object of given type to the underlying stream. Unsafe method.
-//        ///     Serialization rules are resolved at runtime based on the type argument.
-//        ///     Has to be read with the dual Reader.ReadObj : Type -> obj    
-//        /// </summary>
-//        /// <param name="t">The reflected type of the serialized object.</param>
-//        /// <param name="o">The object to be serialized.</param>
-//        member internal w.WriteObj(t : Type, o : obj) =
-//            let f = resolver.Resolve t in w.WriteObj(f, o)
-
-        /// <summary>
         ///     Writes given object to the underlying stream.
         ///     Serialization rules are resolved at runtime based on the type argument.
         ///     Object has to be read with the dual Reader.Read&lt;'T&gt; method.
@@ -334,24 +282,6 @@
 
         member internal w.WriteObj(t : Type, o : obj) =
             let f = resolver.Resolve t in f.ManagedWrite w o
-
-//        member w.Write<'T>(fmt : Formatter<'T>, value : 'T) = w.WriteObj(fmt.Value, value)
-
-//        /// <summary>
-//        ///     Writes given object to the stream.
-//        ///     Serialization rules are resolved at runtime based on 
-//        ///     the reflected type and recorded to the stream.
-//        /// </summary>
-//        /// <param name="o">The input object.</param>
-//        member internal w.WriteObj(o : obj) =
-//            if obj.ReferenceEquals(o, null) then bw.Write (ObjHeader.create 0us ObjHeader.isNull)
-//            else
-//                let t = o.GetType()
-//                let f = resolver t
-//                bw.Write (ObjHeader.create 0us ObjHeader.empty)
-//                writeType t
-//                w.WriteObj(f, o)
-
 
         interface IDisposable with
             member __.Dispose () = bw.Dispose ()
@@ -452,33 +382,12 @@
 
         /// <summary>
         ///     Reads object of given type from the underlying stream.
-        ///     Serialization rules are resolved at runtime based on the type argument.
-        ///     Needs to have been serialized with the dual Write.WriteObj : Type * obj -> unit    
-        /// </summary>
-        /// <param name="t">The reflected type of the deserialized object.</param>
-//        member internal r.ReadObj (t : Type) : obj = let f = resolver t in r.ReadObj f
-
-        /// <summary>
-        ///     Reads object of given type from the underlying stream.
         ///     Serialization rules are resolved at runtime based on the object header.
         ///     Needs to have been serialized with the dual Writer.Write&lt;'T&gt; method.
         /// </summary>
         member r.Read<'T> () : 'T = let f = resolver.Resolve<'T> () in r.Read f
 
         member internal r.ReadObj(t : Type) = let f = resolver.Resolve t in f.ManagedRead r
-        
-//        /// <summary>
-//        ///     Reads object from the underlying stream.
-//        ///     Serialization rules are resolved at runtime based on the object header.
-//        ///     Needs to have been serialized with the dual Writer.WriteObj : obj -> unit
-//        /// </summary>
-//        member r.ReadObj () =
-//            let flags = ObjHeader.read 0us (br.ReadUInt32())
-//            if ObjHeader.hasFlag flags ObjHeader.isNull then null
-//            else
-//                let t = readType ()
-//                let f = resolver t
-//                r.ReadObj f
 
         interface IDisposable with
             member __.Dispose () = br.Dispose ()

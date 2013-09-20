@@ -55,7 +55,9 @@
             let bfsResults = runBenchmark bfs
                 
             match fscResults with
-            | Choice2Of2 e -> raise e
+            | Choice2Of2 e -> 
+                printfn "%s failed during test." TestTypes.testSerializer.Name
+                raise e
             | Choice1Of2 r ->
                 let bfsMetric = compareResults r bfs bfsResults
                 let ndcMetric = compareResults r ndc ndcResults
