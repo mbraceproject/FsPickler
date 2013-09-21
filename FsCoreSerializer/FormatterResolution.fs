@@ -90,7 +90,14 @@
             | None ->
                 if t.IsGenericType || t.IsArray then
                     genericIdx.TryResolveGenericFormatter(t, resolver)
-                elif FSharpType.IsUnion(t, memberBindings) then
+                else
+                    None
+
+        let result =
+            match result with
+            | Some _ -> result
+            | None ->
+                if FSharpType.IsUnion(t, memberBindings) then
                     Some <| FsUnionFormatter.CreateUntyped(t, resolver)
                 elif typeof<IFsCoreSerializable>.IsAssignableFrom t then
                     Some <| FsCoreSerialibleFormatter.CreateUntyped(t, resolver)
