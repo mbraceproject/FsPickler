@@ -112,6 +112,7 @@
 
         abstract member UntypedWrite : Writer -> obj -> unit
         abstract member UntypedRead : Reader -> obj
+        abstract member Cast<'S> : unit -> Formatter<'S>
 
         abstract member ManagedWrite : Writer -> obj -> unit
         abstract member ManagedRead : Reader -> obj
@@ -146,6 +147,13 @@
                 m_reader = reader ;
             }
 
+        private new (t, reader, writer, formatterInfo, cacheObj, useWithSubtypes) = 
+            { 
+                inherit Formatter(t, formatterInfo, cacheObj, useWithSubtypes) ;
+                m_writer = writer ;
+                m_reader = reader ;
+            }
+
         internal new () = 
             {
                 inherit Formatter(typeof<'T>) ;
@@ -158,12 +166,22 @@
         override f.ManagedWrite (w : Writer) (o : obj) = w.Write(f, o :?> 'T)
         override f.ManagedRead (r : Reader) = r.Read f :> obj
 
+        override f.Cast<'S> () =
+            if typeof<'T> = typeof<'S> then f :> obj :?> Formatter<'S>
+            elif typeof<'T>.IsAssignableFrom typeof<'S> && f.UseWithSubtypes then
+                let writer = let wf = f.m_writer in fun w x -> wf w (x :> obj :?> 'T)
+                let reader = let rf = f.m_reader in fun r -> rf r :> obj :?> 'S
+                new Formatter<'S>(typeof<'T>, reader, writer, f.FormatterInfo, f.CacheObj, f.UseWithSubtypes)
+            else
+                failwith "wtf"
+                
+
         override f.InitializeFrom(f' : Formatter) : unit =
+            let f' = f'.Cast<'T> ()
             base.InitializeFrom f'
-            let writer = f'.UntypedWrite
-            let reader = f'.UntypedRead
-            f.m_writer <- fun w t -> writer w t
-            f.m_reader <- fun r -> reader r :?> 'T
+            f.m_writer <- f'.m_writer
+            f.m_reader <- f'.m_reader
+            
 
         member f.Write = f.m_writer
         member f.Read = f.m_reader
@@ -225,21 +243,17 @@
                 let id = idGen.GetId(x, &firstOccurence)
                 if firstOccurence then
 
-                    let inline write isProperSubtype (fmt' : Formatter) =
-                        let inline write () = 
-                            if isProperSubtype then fmt'.UntypedWrite w x
-                            else fmt.Write w x
-
-                        if fmt'.FormatterInfo = FormatterInfo.ReflectionDerived then
-                            write ()
+                    let inline write (fmt : Formatter) (writeOp : unit -> unit) =
+                        if fmt.FormatterInfo = FormatterInfo.ReflectionDerived then
+                            writeOp ()
                         else
                             objStack.Push id
-                            write ()
+                            writeOp ()
                             objStack.Pop () |> ignore
                     
                     if fmt.TypeInfo <= TypeInfo.Sealed || fmt.UseWithSubtypes then
                         writeHeader ObjHeader.isNewInstance
-                        write false fmt
+                        write fmt (fun () -> fmt.Write w x)
                     else
                         // type is not sealed, do subtype resolution
                         let t0 = x.GetType()
@@ -247,10 +261,10 @@
                             let fmt' = resolver.Resolve t0
                             writeHeader (ObjHeader.isNewInstance ||| ObjHeader.isProperSubtype)
                             writeType t0
-                            write true fmt'
+                            write fmt' (fun () -> fmt'.UntypedWrite w x)
                         else
                             writeHeader ObjHeader.isNewInstance
-                            write false fmt
+                            write fmt (fun () -> fmt.Write w x)
 
                 elif objStack.Contains id then
                     raise <| new SerializationException(sprintf "Unexpected cyclic object graph '%s'." fmt.Type.FullName)
@@ -342,33 +356,29 @@
                 let id = counter
                 counter <- counter + 1L
 
-                let read isSubtypeResolved (fmt' : Formatter) =
-                    let inline read () = 
-                        if isSubtypeResolved then fmt'.UntypedRead r :?> 'T
-                        else fmt.Read r
-
+                let inline read (fmt : Formatter) (readOp : unit -> 'T) =
                     let inline checkState () =
                         if currentReflectedObjId <> 0L then
                             raise <| new SerializationException("Internal error: reader state is corrupt.")
-                        
-                    if fmt'.FormatterInfo = FormatterInfo.ReflectionDerived && fmt'.TypeInfo > TypeInfo.Value then
+
+                    if fmt.FormatterInfo = FormatterInfo.ReflectionDerived && fmt.TypeInfo > TypeInfo.Value then
                         do checkState ()
 
                         currentReflectedObjId <- id
-                        let x = read ()
+                        let x = readOp ()
 
                         do checkState ()
                         x
                     else
-                        let x = read ()
+                        let x = readOp ()
                         objCache.Add(id, x) ; x
                 
                 if ObjHeader.hasFlag flags ObjHeader.isProperSubtype then
                     let t0 = readType ()
                     let fmt' = resolver.Resolve t0
-                    read true fmt'
+                    read fmt' (fun () -> fmt'.UntypedRead r :?> 'T)
                 else
-                    read false fmt
+                    read fmt (fun () -> fmt.Read r)
 
             elif ObjHeader.hasFlag flags ObjHeader.isCachedInstance then
                 let id = br.ReadInt64() in objCache.[id] :?> 'T

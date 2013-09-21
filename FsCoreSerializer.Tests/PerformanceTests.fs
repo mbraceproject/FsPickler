@@ -212,7 +212,7 @@
 
                 aux Zero n
 
-            testPerf 100 <| int2Peano 500
+            testPerf 100 <| int2Peano 100
 
         [<Test>]
         let ``FSharp: Curried Function`` () =
