@@ -93,12 +93,22 @@
                 else
                     None
 
+        // FSharp Values
         let result =
             match result with
             | Some _ -> result
             | None ->
                 if FSharpType.IsUnion(t, memberBindings) then
                     Some <| FsUnionFormatter.CreateUntyped(t, resolver)
+                else None
+
+        // .NET serialization interfaces
+        let result =
+            match result with
+            | Some _ -> result
+            | None ->
+                if t.IsAbstract then 
+                    Some <| AbstractFormatter.CreateUntyped t
                 elif typeof<IFsCoreSerializable>.IsAssignableFrom t then
                     Some <| FsCoreSerialibleFormatter.CreateUntyped(t, resolver)
                 elif typeof<ISerializable>.IsAssignableFrom t then
@@ -129,8 +139,6 @@
                 EnumFormatter.CreateUntyped(t, resolver)
             elif t.IsValueType then 
                 StructFormatter.CreateUntyped(t, resolver)
-            elif t.IsAbstract then 
-                AbstractFormatter.CreateUntyped t
             elif t.IsArray then 
                 ArrayFormatter.CreateUntyped(t, resolver)
             elif typeof<System.Delegate>.IsAssignableFrom t then

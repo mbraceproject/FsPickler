@@ -34,7 +34,8 @@
                     .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
                     .MakeGenericMethod [| t |]
 
-            m.Invoke(null, null) :?> Formatter
+            try m.Invoke(null, null) :?> Formatter
+            with :? TargetInvocationException as e -> raise e.InnerException
 
     type AbstractFormatter =
         static member Create<'T> () =
@@ -49,7 +50,8 @@
                     .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
                     .MakeGenericMethod [| t |]
 
-            m.Invoke(null, null) :?> Formatter
+            try m.Invoke(null, null) :?> Formatter
+            with :? TargetInvocationException as e -> raise e.InnerException
 
     // formatter builder for ISerializable types
     type SerializableFormatter =
@@ -126,7 +128,8 @@
                     .GetMethod("TryCreate", BindingFlags.NonPublic ||| BindingFlags.Static)
                     .MakeGenericMethod [| t |]
 
-            m.Invoke(null, [| resolver :> obj |]) :?> Formatter option
+            try m.Invoke(null, [| resolver :> obj |]) :?> Formatter option
+            with :? TargetInvocationException as e -> raise e.InnerException
 
 
     // formatter builder for IFsCoreSerializable types
@@ -152,7 +155,8 @@
                     .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
                     .MakeGenericMethod [| t |]
 
-            m.Invoke(null, [| resolver :> obj |]) :?> Formatter
+            try m.Invoke(null, [| resolver :> obj |]) :?> Formatter
+            with :? TargetInvocationException as e -> raise e.InnerException
 
 
     type StructFormatter =
@@ -204,7 +208,8 @@
                     .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
                     .MakeGenericMethod [| t |]
 
-            m.Invoke(null, [| resolver :> obj |]) :?> Formatter
+            try m.Invoke(null, [| resolver :> obj |]) :?> Formatter
+            with :? TargetInvocationException as e -> raise e.InnerException
                     
                     
 
@@ -265,7 +270,7 @@
                             yield! runDeserializationActions onDeserialized reader instance
 
                             if isDeserializationCallback then
-                                yield runDeserializationCallback reader instance :> _
+                                yield runDeserializationCallback instance :> _
 
                             yield instance :> _
                         } 
@@ -299,7 +304,8 @@
                     .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
                     .MakeGenericMethod [| t |]
 
-            m.Invoke(null, [| resolver :> obj |]) :?> Formatter
+            try m.Invoke(null, [| resolver :> obj |]) :?> Formatter
+            with :? TargetInvocationException as e -> raise e.InnerException
 
 
     type EnumFormatter =
@@ -366,7 +372,8 @@
                     .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
                     .MakeGenericMethod [| t |]
 
-            m.Invoke(null, [| resolver :> obj |]) :?> Formatter
+            try m.Invoke(null, [| resolver :> obj |]) :?> Formatter
+            with :? TargetInvocationException as e -> raise e.InnerException
 
 
     // special treatment of F# unions
@@ -378,7 +385,8 @@
                     .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
                     .MakeGenericMethod [| unionType |]
 
-            m.Invoke(null, [| resolver :> obj |]) :?> Formatter
+            try m.Invoke(null, [| resolver :> obj |]) :?> Formatter
+            with :? TargetInvocationException as e -> raise e.InnerException
 
         static member Create<'Union> (resolver : IFormatterResolver) =
 

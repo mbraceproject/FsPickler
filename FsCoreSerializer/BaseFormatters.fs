@@ -103,16 +103,16 @@
                 (fun r -> let m = read false r memberInfoFormatter :?> MethodInfo in m.MethodHandle)
                 (fun w mh -> w.Write(memberInfoFormatter, MethodInfo.GetMethodFromHandle mh :> _))
 
-    let mkAssemblyNameFormatter () =
-        mkFormatter FormatterInfo.ReflectionType true true
-                (fun r -> AssemblyName(r.BR.ReadString()))
-                (fun w a -> w.BW.Write a.FullName)
-
-    let mkAssemblyFormatter () =
-        let writer (w : Writer) (a : Assembly) = w.BW.Write(a.FullName)
-        let reader (r : Reader) = Assembly.Load(r.BR.ReadString())
-
-        mkFormatter FormatterInfo.ReflectionType true true reader writer
+//    let mkAssemblyNameFormatter () =
+//        mkFormatter FormatterInfo.ReflectionType true true
+//                (fun r -> AssemblyName(r.BR.ReadString()))
+//                (fun w a -> w.BW.Write a.FullName)
+//
+//    let mkAssemblyFormatter () =
+//        let writer (w : Writer) (a : Assembly) = w.BW.Write(a.FullName)
+//        let reader (r : Reader) = Assembly.Load(r.BR.ReadString())
+//
+//        mkFormatter FormatterInfo.ReflectionType true true reader writer
 
     // Quotations serialization code
 
@@ -177,7 +177,7 @@
         let miFmt = mkMemberInfoFormatter typeFormatter
 //        let varFormatter = mkVarFormatter typeFormatter
         [
-            typeFormatter :> Formatter ; miFmt :> _ ; mkAssemblyFormatter () :> _ ; mkAssemblyNameFormatter () :> _
+            typeFormatter :> Formatter ; miFmt :> _ ; //mkAssemblyFormatter () :> _ ; mkAssemblyNameFormatter () :> _
             mkTypeHandleFormatter typeFormatter :> _; mkFieldHandleFormatter miFmt :> _; mkMethodHandleFormatter miFmt :> _
 //            varFormatter; mkExprFormatter varFormatter
         ]

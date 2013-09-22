@@ -56,7 +56,7 @@
                         try
                             let! (bytes : byte []) = stream.AsyncReadBytes()
 
-                            let msg = Serializer.read protocolSerializer bytes :?> Request
+                            let msg = Serializer.read protocolSerializer bytes
                             let result = testSerializer msg
 
                             do! stream.AsyncWriteBytes <| Serializer.write protocolSerializer result
@@ -109,7 +109,7 @@
                     do! stream.AsyncWriteBytes bytes
                     let! (reply : byte []) = stream.AsyncReadBytes()
 
-                    return Serializer.read protocolSerializer reply :?> Reply
+                    return Serializer.read protocolSerializer reply
                 with e ->
                     return Error (ProtocolError e)
             } |> Async.RunSynchronously
@@ -117,7 +117,7 @@
 
         member __.Test(x : 'T) =
             match sendSerializationRequest(Serialize(typeof<'T>, x)) with
-            | Success bytes -> Serializer.read testedSerializer bytes :?> 'T
+            | Success bytes -> Serializer.read testedSerializer bytes
             | Error(SerializationError e) -> raise e
             | Error e -> raise e
 

@@ -115,4 +115,5 @@
                     .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
                     .MakeGenericMethod [| et ; t |]
 
-            m.Invoke(null, [| resolver :> obj |]) :?> Formatter
+            try m.Invoke(null, [| resolver :> obj |]) :?> Formatter
+            with :? TargetInvocationException as e -> raise e.InnerException

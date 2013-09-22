@@ -60,7 +60,7 @@
         let readerCtx = typeof<Reader>.GetProperty("StreamingContext")
         let readerInitializer = typeof<Reader>.GetMethod("EarlyRegisterObject", BindingFlags.NonPublic ||| BindingFlags.Instance)
         let objInitializer = typeof<FormatterServices>.GetMethod("GetUninitializedObject")
-        let deserializationCallBack = typeof<IDeserializationCallback>.GetMethod("OnDeserialized")
+        let deserializationCallBack = typeof<IDeserializationCallback>.GetMethod("OnDeserialization")
 
         let runSerializationActions (ms : MethodInfo []) (writerInstance : Expression) (instance : Expression) =
             let sctx = Expression.Property(writerInstance, writerCtx)
@@ -70,9 +70,9 @@
             let sctx = Expression.Property(readerInstance, readerCtx)
             ms |> Seq.map (fun m -> Expression.Call(instance, m, sctx) :> Expression)
 
-        let runDeserializationCallback (readerInstance : Expression) (instance : Expression) =
+        let runDeserializationCallback (instance : Expression) =
             let dc = Expression.TypeAs(instance, typeof<IDeserializationCallback>)
-            Expression.Call(dc, deserializationCallBack, Expression.Constant(null))
+            Expression.Call(dc, deserializationCallBack, Expression.constant null)
 
         let getSerializationMethods<'T, 'Attr when 'Attr :> Attribute> (ms : MethodInfo []) =
             let isSerializationMethod(m : MethodInfo) =
