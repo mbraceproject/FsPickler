@@ -41,14 +41,14 @@
 
     module Serializer =
         
-        let write (s : ISerializer) (o : obj) =
+        let write (s : ISerializer) (x : 'T) =
             use m = new MemoryStream()
-            s.Serialize(m, o)
+            s.Serialize(m, x)
             m.ToArray()
 
         let read (s : ISerializer) (bytes : byte []) =
             use m = new MemoryStream(bytes)
-            s.Deserialize m
+            s.Deserialize m : 'T
 
         let writeRead (s : ISerializer) (x : 'T) =
             use m = new MemoryStream()

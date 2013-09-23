@@ -79,16 +79,16 @@
 
         type Rec2 = { Rec2 : Rec2 }
 
-        type FormatterFactoryTest() =
-            interface IFormatterFactory with
-                member __.Type = typeof<int * string * unit>
-                member __.Create (resolver : IFormatterResolver) =
-                    let writer (w : Writer) ((x,y,_) : int * string * unit) = w.Write x
-                    let reader (r : Reader) =
-                        let x = r.Read<int> ()
-                        (x + 1, "42", ())
-
-                    Formatter.Create(reader, writer, cache = false) :> Formatter
+//        type FormatterFactoryTest() =
+//            interface IFormatterFactory with
+//                member __.Type = typeof<int * string * unit>
+//                member __.Create (resolver : IFormatterResolver) =
+//                    let writer (w : Writer) ((x,y,_) : int * string * unit) = w.Write x
+//                    let reader (r : Reader) =
+//                        let x = r.Read<int> ()
+//                        (x + 1, "42", ())
+//
+//                    Formatter.Create(reader, writer, cache = false) :> Formatter
 
 
         type GenericType<'T when 'T : comparison>(x : 'T) =
@@ -164,7 +164,7 @@
         let testSerializer =
             let registry = new FormatterRegistry()
             do
-                registry.RegisterFormatterFactory(new FormatterFactoryTest())
+//                registry.RegisterFormatterFactory(new FormatterFactoryTest())
                 registry.RegisterGenericFormatter(new GenericTypeFormatter())
 
             new TestFsCoreSerializer(registry) :> ISerializer

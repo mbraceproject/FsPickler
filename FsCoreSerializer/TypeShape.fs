@@ -262,8 +262,8 @@
                 let resolver =
                     {
                         new IFormatterResolver with
-                            member __.Resolve (t : Type) = DotNetFormatters.AbstractFormatter.CreateUntyped t
-                            member __.Resolve<'T> () = DotNetFormatters.AbstractFormatter.Create<'T> ()
+                            member __.Resolve (t : Type) = ReflectionFormatters.AbstractFormatter.CreateUntyped t
+                            member __.Resolve<'T> () = ReflectionFormatters.AbstractFormatter.Create<'T> ()
                     }
 
                 let m0 =

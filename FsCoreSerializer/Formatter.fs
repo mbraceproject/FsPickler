@@ -7,14 +7,7 @@
     open System.Collections.Generic
     open System.Runtime.Serialization
 
-    type internal TypeInfo =
-        | Primitive = 0
-        | Enum = 1
-        | Value = 2
-        | Array = 3
-        | Sealed = 4
-        | NonSealed = 5
-        | Abstract = 6
+    open FsCoreSerializer.FormatterHeader
 
     type FormatterInfo =
         | Atomic = 0
@@ -25,26 +18,6 @@
         | IFsCoreSerializable = 5
         | Custom = 6
 
-    module internal FooTools =
-
-        // builds type info enumeration out of reflection info
-        let internal getTypeInfo (t : Type) =
-            if t.IsPrimitive then TypeInfo.Primitive
-            elif t.IsEnum then TypeInfo.Enum
-            elif t.IsValueType then TypeInfo.Value
-            elif t.IsArray then TypeInfo.Array
-            elif t.IsSealed then TypeInfo.Sealed
-            elif t.IsAbstract then TypeInfo.Abstract
-            else TypeInfo.NonSealed
-
-        let inline mkUntypedWriter (f : 'a -> 'b -> 'c) = fun x (y:obj) -> f x (y :?> _)
-        let inline mkUntypedReader (f : 'a -> 'b) = fun x -> f x :> obj
-        let inline mkTypedWriter (f : 'a -> obj -> 'c) = fun x (y : 'b) -> f x (y :> obj)
-        let inline mkTypedReader (f : 'a -> obj) = fun x -> f x :?> 'b
-
-
-    open FooTools
-
     [<AutoSerializable(false)>]
     [<AbstractClass>]
     type Formatter =
@@ -52,7 +25,7 @@
         val private declared_type : Type
         val mutable private m_reflected_type : Type
         val mutable private m_typeInfo : TypeInfo
-        val mutable private m_typeHash : uint16
+        val mutable private m_typeHash : TypeHash
         
         val mutable private m_isInitialized : bool
 
@@ -80,7 +53,7 @@
 
                 m_isInitialized = true ;
 
-                m_reflected_type = t ; m_typeInfo = FooTools.getTypeInfo t ; m_typeHash = ObjHeader.computeHash t ;
+                m_reflected_type = t ; m_typeInfo = getTypeInfo t ; m_typeHash = ObjHeader.computeHash t ;
                 
                 m_formatterInfo = formatterInfo ;
                 m_cacheObj = cacheObj ;
@@ -191,7 +164,8 @@
         abstract Resolve<'T> : unit -> Formatter<'T>
         abstract Resolve : Type -> Formatter
 
-    and Writer internal (stream : Stream, resolver : IFormatterResolver, sc : StreamingContext, ?leaveOpen, ?encoding) as self =
+    and [<AutoSerializable(false)>] 
+        Writer internal (stream : Stream, resolver : IFormatterResolver, sc : StreamingContext, ?leaveOpen, ?encoding) as self =
 
         // using UTF8 gives an observed performance improvement ~200%
         let encoding = defaultArg encoding Encoding.UTF8
@@ -300,7 +274,8 @@
         interface IDisposable with
             member __.Dispose () = bw.Dispose ()
 
-    and Reader internal (stream : Stream, resolver : IFormatterResolver, sc : StreamingContext, ?leaveOpen, ?encoding) as self =
+    and [<AutoSerializable(false)>] 
+        Reader internal (stream : Stream, resolver : IFormatterResolver, sc : StreamingContext, ?leaveOpen, ?encoding) as self =
 
         // using UTF8 gives an observed performance improvement ~200%
         let encoding = defaultArg encoding Encoding.UTF8
@@ -401,3 +376,48 @@
 
         interface IDisposable with
             member __.Dispose () = br.Dispose ()
+
+
+
+    /// an ISerializable-like pattern for describing serialization rules in new types
+    /// serialization is performed by providing direct access to the underlying stream
+    /// through the Reader/Writer types.
+    ///
+    /// Types implementing this interface require a constructor 'new (reader : Reader)'
+    type IFsCoreSerializable =
+        abstract GetObjectData : Writer -> unit
+
+    /// A factory pattern for generating formatters for generic types
+    /// any type implementing this interface must declare a method
+    ///
+    ///     Create<'T1, ... , 'Tn | constraints> : IFormatterResolver -> Formatter
+    ///
+    /// Generic formatters are registered and resolved at runtime. 
+    and IGenericFormatterFactory = interface end
+
+    // a few guideline templates that inherit the above interface
+
+    and IGenericFormatterFactory1 =
+        inherit IGenericFormatterFactory
+        abstract Create<'T> : IFormatterResolver -> Formatter
+
+    and IGenericFormatterFactory2 =
+        inherit IGenericFormatterFactory
+        abstract Create<'T, 'S> : IFormatterResolver -> Formatter
+
+    and IGenericFormatterFactory3 =
+        inherit IGenericFormatterFactory
+        abstract Create<'T, 'S, 'U> : IFormatterResolver -> Formatter
+
+    and IGenericFormatterFactory4 =
+        inherit IGenericFormatterFactory
+        abstract Create<'T, 'S, 'U, 'V> : IFormatterResolver -> Formatter
+
+    /// Raised by FsCoreSerializer whenever an unsupported type is encountered in the object graph.
+    type NonSerializableTypeException(unsupportedType : Type, ?message : string) =
+        inherit SerializationException(
+            match message with
+            | None -> sprintf "Serialization of type '%O' is not supported." unsupportedType
+            | Some msg -> sprintf "Serialization of type '%O' is not supported: %s" unsupportedType msg)
+
+        member __.UnsupportedType = unsupportedType

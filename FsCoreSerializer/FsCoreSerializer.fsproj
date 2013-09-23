@@ -39,20 +39,20 @@
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets')" />
   <ItemGroup>
     <Compile Include="Utils.fs" />
-    <Compile Include="Expression.fs" />
-    <Compile Include="Reflection.fs" />
-    <Compile Include="ObjHeader.fs" />
-    <Compile Include="TypeFormatter.fs" />
+    <Compile Include="FormatterHeader.fs" />
     <Compile Include="Formatter.fs" />
-    <Compile Include="Types.fs" />
     <Compile Include="FormatterUtils.fs" />
+    <Compile Include="ExpressionTrees.fs" />
+    <Compile Include="TypeFormatter.fs" />
     <Compile Include="BaseFormatters.fs" />
+    <Compile Include="ReflectionFormatters.fs" />
     <Compile Include="DotNetFormatters.fs" />
-    <Compile Include="ArrayFormatter.fs" />
+    <Compile Include="FSharpFormatters.fs" />
+    <Compile Include="GenericFormatters.fs" />
     <Compile Include="TypeShape.fs" />
-    <Compile Include="FsTypeFormatters.fs" />
     <Compile Include="FormatterResolution.fs" />
     <Compile Include="FsCoreSerializer.fs" />
+    <Compile Include="ExtensionMethods.fs" />
     <None Include="test.fsx" />
   </ItemGroup>
   <ItemGroup>

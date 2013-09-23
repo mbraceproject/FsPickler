@@ -115,9 +115,11 @@
             } |> Async.RunSynchronously
 
 
-        member __.Test(x : 'T) =
+        member __.Test(x : 'T) : 'T =
             match sendSerializationRequest(Serialize(typeof<'T>, x)) with
-            | Success bytes -> Serializer.read testedSerializer bytes
+            | Success bytes -> 
+                let o = Serializer.read testedSerializer bytes : obj
+                o :?> 'T
             | Error(SerializationError e) -> raise e
             | Error e -> raise e
 

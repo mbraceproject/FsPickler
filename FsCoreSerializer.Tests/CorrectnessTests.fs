@@ -173,13 +173,8 @@
 
 
         [<Test>]
-        member __.``FSharp Recursive 1`` () =
+        member __.``FSharp Cyclic Union`` () =
             let rec f = Rec (fun g -> let (Rec f) = f in f g)
-            test f
-
-        [<Test>]
-        member __.``FSharp Recursive 2`` () =
-            let rec f = { Rec2 = f }
             test f
 
         [<Test>]

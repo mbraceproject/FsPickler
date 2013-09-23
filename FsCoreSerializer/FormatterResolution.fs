@@ -12,10 +12,10 @@
     open FsCoreSerializer.Utils
     open FsCoreSerializer.TypeShape
     open FsCoreSerializer.FormatterUtils
-    open FsCoreSerializer.BaseFormatters
+    open FsCoreSerializer.ReflectionFormatters
     open FsCoreSerializer.DotNetFormatters
-    open FsCoreSerializer.ArrayFormatter
-    open FsCoreSerializer.FSharpTypeFormatters
+    open FsCoreSerializer.FSharpFormatters
+    open FsCoreSerializer.GenericFormatters
 
     /// Y combinator with parametric recursion support
     let YParametric (externalCache : ConcurrentDictionary<Type, Formatter>)
@@ -52,7 +52,6 @@
     // recursive formatter resolution
 
     let resolveFormatter (typeNameConverter : ITypeNameConverter) 
-                            (factoryIdx : Map<string, IFormatterFactory>) 
                             (genericIdx : GenericFormatterIndex) 
                             (resolver : IFormatterResolver) (t : Type) =
 
@@ -67,21 +66,6 @@
                 | _ -> None
             else
                 None
-
-//        // lookup factory index
-//        let result =
-//            match result with
-//            | Some _ -> result
-//            | None ->
-//                match factoryIdx.TryFind t.AssemblyQualifiedName with
-//                | Some ff -> 
-//                    let f = ff.Create resolver
-//                    if f.Type <> t then
-//                        new SerializationException(sprintf "Invalid formatter factory: expected type '%s' but got '%s'." t.Name f.Type.Name)
-//                        |> raise
-//                    else
-//                        Some f
-//                | None -> None
 
         // lookup generic shapes
         let result =
@@ -116,9 +100,9 @@
                 if t.IsAbstract then 
                     Some <| AbstractFormatter.CreateUntyped t
                 elif typeof<IFsCoreSerializable>.IsAssignableFrom t then
-                    Some <| FsCoreSerialibleFormatter.CreateUntyped(t, resolver)
+                    Some <| IFsCoreSerialibleFormatter.CreateUntyped(t, resolver)
                 elif typeof<ISerializable>.IsAssignableFrom t then
-                    SerializableFormatter.TryCreateUntyped(t, resolver)
+                    ISerializableFormatter.TryCreateUntyped(t, resolver)
                 else None
 
         // .NET reflection serialization
