@@ -191,7 +191,7 @@
                 // do not cache or apply subtype polymorphism for performance
                 mkFormatter FormatterInfo.FSharpValue true false reader writer :> Formatter
 #else
-                mkFormatter FormatterInfo.Custom false false reader writer
+                mkFormatter FormatterInfo.Custom false true reader writer
 #endif
 
     type TripleFormatter () =
@@ -208,7 +208,7 @@
                 // do not cache or apply subtype polymorphism for performance
                 mkFormatter FormatterInfo.FSharpValue true false reader writer :> Formatter
 #else
-                mkFormatter FormatterInfo.Custom false false reader writer
+                mkFormatter FormatterInfo.Custom false true reader writer
 #endif 
 
     type OptionFormatter () =

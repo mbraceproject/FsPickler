@@ -68,20 +68,20 @@
             else
                 None
 
-        // lookup factory index
-        let result =
-            match result with
-            | Some _ -> result
-            | None ->
-                match factoryIdx.TryFind t.AssemblyQualifiedName with
-                | Some ff -> 
-                    let f = ff.Create resolver
-                    if f.Type <> t then
-                        new SerializationException(sprintf "Invalid formatter factory: expected type '%s' but got '%s'." t.Name f.Type.Name)
-                        |> raise
-                    else
-                        Some f
-                | None -> None
+//        // lookup factory index
+//        let result =
+//            match result with
+//            | Some _ -> result
+//            | None ->
+//                match factoryIdx.TryFind t.AssemblyQualifiedName with
+//                | Some ff -> 
+//                    let f = ff.Create resolver
+//                    if f.Type <> t then
+//                        new SerializationException(sprintf "Invalid formatter factory: expected type '%s' but got '%s'." t.Name f.Type.Name)
+//                        |> raise
+//                    else
+//                        Some f
+//                | None -> None
 
         // lookup generic shapes
         let result =
@@ -100,6 +100,12 @@
             | None ->
                 if FSharpType.IsUnion(t, memberBindings) then
                     Some <| FsUnionFormatter.CreateUntyped(t, resolver)
+                elif FSharpType.IsTuple t then
+                    Some <| TupleFormatter.CreateUntyped(t, resolver)
+                elif FSharpType.IsRecord(t, memberBindings) then
+                    Some <| FsRecordFormatter.CreateUntyped(t, resolver, isExceptionType = false)
+                elif FSharpType.IsExceptionRepresentation(t, memberBindings) then
+                    Some <| FsRecordFormatter.CreateUntyped(t, resolver, isExceptionType = true)
                 else None
 
         // .NET serialization interfaces
@@ -114,23 +120,6 @@
                 elif typeof<ISerializable>.IsAssignableFrom t then
                     SerializableFormatter.TryCreateUntyped(t, resolver)
                 else None
-
-//        // lookup F# types
-//        let result =
-//            match result with
-//            | Some _ -> result
-//            | None ->
-//                if FSharpType.IsTuple t then
-//                    mkTupleFormatter self t |> Some
-//                elif FSharpType.IsUnion(t, memberBindings) then
-//                    mkUnionFormatter self t |> Some
-//                elif FSharpType.IsRecord(t, memberBindings) then
-//                    mkRecordFormatter self t |> Some
-//#if EMIT_IL
-//                elif FSharpType.IsExceptionRepresentation(t, memberBindings) then
-//                    mkExceptionFormatter self t |> Some
-//#endif
-//                else None
 
         // .NET reflection serialization
         match result with

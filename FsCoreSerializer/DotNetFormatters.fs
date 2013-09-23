@@ -8,6 +8,7 @@
     open Microsoft.FSharp.Reflection
 
     open FsCoreSerializer
+    open FsCoreSerializer.Reflection
     open FsCoreSerializer.Expression
     open FsCoreSerializer.FormatterUtils
 
@@ -237,29 +238,37 @@
 
 #if EMIT_IL
 
-            let writer = 
-                Expression.compileFunc2<Writer, 'T, unit>(fun writer instance ->
-                    seq {
-                        yield! runSerializationActions onSerializing writer instance
+            let writer =
+                if onSerializing.Length = 0 && fields.Length = 0 && onSerialized.Length = 0 then
+                    fun _ _ -> ()
+                else
+                    let writer =
+                        Expression.compileAction2<Writer, 'T>(fun writer instance ->
+                            seq {
+                                yield! runSerializationActions onSerializing writer instance
 
-                        yield! zipWriter fields formatters writer instance
+                                yield! zipWriter fields formatters writer instance
 
-                        yield! runSerializationActions onSerialized writer instance
+                                yield! runSerializationActions onSerialized writer instance
 
-                        yield Expression.constant ()
+                                yield Expression.constant ()
 
-                    } |> Expression.Block :> Expression)
+                            } |> Expression.Block :> Expression)
+
+                    fun w t -> writer.Invoke(w,t)
 
             let reader =
                 Expression.compileFunc1<Reader, 'T>(fun reader ->
-                    let initializer = 
-                        Expression.Call(objInitializer, Expression.constant typeof<'T>) 
-                        |> Expression.unbox typeof<'T>
+
                     let instance = Expression.Variable(typeof<'T>, "instance")
 
                     let body =
                         seq {
-                            yield Expression.Assign(instance, initializer) :> Expression
+                            let objInitializer = 
+                                Expression.Call(objInitializer, Expression.constant typeof<'T>) 
+                                |> Expression.unbox typeof<'T>
+
+                            yield Expression.Assign(instance, objInitializer) :> Expression
                 
                             yield Expression.Call(reader, readerInitializer, instance) :> _
 
@@ -275,10 +284,10 @@
                             yield instance :> _
                         } 
 
-                    Expression.Block([| instance |], body) :> Expression)
+                    Expression.Block([| instance |], body) :> Expression).Invoke
 
 
-            Formatter<'T>(reader.Invoke, (fun w t -> writer.Invoke(w,t)), FormatterInfo.ReflectionDerived, true, false)
+            new Formatter<'T>(reader, writer, FormatterInfo.ReflectionDerived, cacheObj = true, useWithSubtypes = false)
 
 #else
         let inline run (ms : MethodInfo []) o (sc : StreamingContext) =
@@ -490,3 +499,122 @@
             new Formatter<'Union>(reader.Invoke, (fun w t -> writer.Invoke(w,t)), FormatterInfo.FSharpValue, true, true)
 #else
 #endif
+
+
+    type TupleFormatter =
+
+        static member CreateUntyped(tupleType : Type, resolver : IFormatterResolver) =
+            let m =
+                typeof<TupleFormatter>
+                    .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
+                    .MakeGenericMethod [| tupleType |]
+
+            try m.Invoke(null, [| resolver :> obj |]) :?> Formatter
+            with :? TargetInvocationException as e -> raise e.InnerException
+        
+        static member Create<'Tuple>(resolver : IFormatterResolver) =
+            let ctor,_ = FSharpValue.PreComputeTupleConstructorInfo typeof<'Tuple>
+            let elements = 
+                typeof<'Tuple>.GetProperties()  
+                |> Seq.filter (fun p -> p.Name.StartsWith("Item")) 
+                |> Seq.sortBy (fun p -> p.Name)
+                |> Seq.map (fun p -> p, resolver.Resolve p.PropertyType)
+                |> Seq.toArray
+
+            let nestedTuple =
+                match typeof<'Tuple>.GetProperty("Rest") with
+                | null -> None
+                | rest ->
+                    let fmt = resolver.Resolve rest.PropertyType
+                    Some(rest, fmt)
+
+#if EMIT_IL 
+            let writer =
+                if elements.Length = 0 then fun _ _ -> ()
+                else
+                    let writer =
+                        Expression.compileAction2<Writer, 'Tuple>(fun writer tuple ->
+                            seq {
+                                let writeElement (element : PropertyInfo, f : Formatter) =
+                                    let value = Expression.Property(tuple, element)
+                                    serializeValue writer f value
+
+                                yield! elements |> Seq.map writeElement
+
+                                match nestedTuple with
+                                | None -> ()
+                                | Some (prop, f) ->
+                                    let nested = Expression.Property(tuple, prop)
+                                    yield serializeValue writer f nested
+                            } |> Expression.Block :> _)
+
+                    fun w t -> writer.Invoke(w,t)
+
+            let reader =
+                Expression.compileFunc1<Reader, 'Tuple>(fun reader ->
+                    let elements = elements |> Seq.map (fun (_,f) -> deserializeValue reader f)
+
+                    match nestedTuple with
+                    | None -> Expression.New(ctor, elements) :> _
+                    | Some (_, fmt) ->
+                        let nestedValue = deserializeValue reader fmt
+                        Expression.New(ctor, seq { yield! elements ; yield nestedValue }) :> _).Invoke        
+#else
+#endif
+
+#if OPTIMIZE_FSHARP
+            new Formatter<'Tuple>(reader, writer, FormatterInfo.FSharpValue, false, true)
+#else
+            new Formatter<'Tuple>(reader, writer, FormatterInfo.Custom, true, false)
+#endif
+
+
+    type FsRecordFormatter =
+
+        static member CreateUntyped(t : Type, resolver : IFormatterResolver, isExceptionType) =
+            let m =
+                typeof<FsRecordFormatter>
+                    .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
+                    .MakeGenericMethod [| t |]
+
+            try m.Invoke(null, [| resolver :> obj ; isExceptionType :> obj |]) :?> Formatter
+            with :? TargetInvocationException as e -> raise e.InnerException
+        
+        static member Create<'Record>(resolver : IFormatterResolver, isExceptionType) =
+            let fields, ctor =
+                if isExceptionType then
+                    let fields = FSharpType.GetExceptionFields(typeof<'Record>, memberBindings)
+                    let signature = fields |> Array.map(fun p -> p.PropertyType)
+                    let ctor = 
+                        typeof<'Record>.GetConstructors(memberBindings)
+                        |> Array.find(fun c -> c.GetParameters () |> Array.map(fun p -> p.ParameterType) = signature)
+                    fields, ctor
+                else
+                    let fields = FSharpType.GetRecordFields typeof<'Record>
+                    let ctor = FSharpValue.PreComputeRecordConstructorInfo(typeof<'Record>, memberBindings)
+                    fields, ctor
+
+            let formatters = fields |> Array.map (fun f -> f, resolver.Resolve f.PropertyType)
+
+#if EMIT_IL
+            let writer =
+                if fields.Length = 0 then fun _ _ -> ()
+                else
+                    let writer =
+                        Expression.compileAction2<Writer, 'Record>(fun writer record ->
+                            let writeField (p : PropertyInfo, f : Formatter) =
+                                let value = Expression.Property(record, p)
+                                serializeValue writer f value
+                            
+                            formatters |> Seq.map writeField |> Expression.Block :> _)
+
+                    fun w t -> writer.Invoke(w,t)
+
+            let reader =
+                Expression.compileFunc1<Reader, 'Record>(fun reader ->
+                    let values = formatters |> Seq.map(fun (_,f) -> deserializeValue reader f)
+
+                    Expression.New(ctor, values) :> _).Invoke
+#else
+#endif
+            new Formatter<'Record>(reader, writer, FormatterInfo.FSharpValue, cacheObj = true, useWithSubtypes = false)

@@ -24,3 +24,12 @@ let o = System.Activator.CreateInstance t
 
 let t' = getByName "System.Text.BaseCodePageEncoding"
 loop o
+
+
+open Microsoft.FSharp.Reflection
+
+exception Foo of int * string
+
+let ctors = typeof<Foo>.GetConstructors()
+
+let es = FSharpType.GetTupleElements t
