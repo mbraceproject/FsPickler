@@ -7,6 +7,7 @@
     open System.Collections.Generic
     open System.Runtime.Serialization
 
+    open FsCoreSerializer.Utils
     open FsCoreSerializer.FormatterHeader
 
     type FormatterInfo =
@@ -85,10 +86,11 @@
 
         abstract member UntypedWrite : Writer -> obj -> unit
         abstract member UntypedRead : Reader -> obj
-        abstract member Cast<'S> : unit -> Formatter<'S>
 
         abstract member ManagedWrite : Writer -> obj -> unit
         abstract member ManagedRead : Reader -> obj
+
+        abstract member Cast<'S> : unit -> Formatter<'S>
 
         abstract member InitializeFrom : Formatter -> unit
         default f.InitializeFrom(f' : Formatter) : unit =
@@ -134,19 +136,19 @@
                 m_reader = fun _ -> invalidOp "Attempting to consume formatter at construction time." ;
             }
 
-        override f.UntypedWrite (w : Writer) (o : obj) = f.m_writer w (o :?> 'T)
+        override f.UntypedWrite (w : Writer) (o : obj) = f.m_writer w (fastUnbox<'T> o)
         override f.UntypedRead (r : Reader) = f.m_reader r :> obj
-        override f.ManagedWrite (w : Writer) (o : obj) = w.Write(f, o :?> 'T)
+        override f.ManagedWrite (w : Writer) (o : obj) = w.Write(f, fastUnbox<'T> o)
         override f.ManagedRead (r : Reader) = r.Read f :> obj
 
         override f.Cast<'S> () =
-            if typeof<'T> = typeof<'S> then f :> obj :?> Formatter<'S>
+            if typeof<'T> = typeof<'S> then f |> fastUnbox<Formatter<'S>>
             elif typeof<'T>.IsAssignableFrom typeof<'S> && f.UseWithSubtypes then
-                let writer = let wf = f.m_writer in fun w x -> wf w (x :> obj :?> 'T)
-                let reader = let rf = f.m_reader in fun r -> rf r :> obj :?> 'S
+                let writer = let wf = f.m_writer in fun w x -> wf w (fastUnbox<'T> x)
+                let reader = let rf = f.m_reader in fun r -> rf r |> fastUnbox<'S>
                 new Formatter<'S>(typeof<'T>, reader, writer, f.FormatterInfo, f.CacheObj, f.UseWithSubtypes)
             else
-                failwith "wtf"
+                raise <| new InvalidCastException(sprintf "Cannot cast formatter of type '%O' to type '%O'." typeof<'T> typeof<'S>)
                 
 
         override f.InitializeFrom(f' : Formatter) : unit =
@@ -323,7 +325,7 @@
                     t
                 else
                     let id = br.ReadInt64()
-                    objCache.[id] :?> Type
+                    objCache.[id] |> fastUnbox<Type>
 
             if ObjHeader.hasFlag flags ObjHeader.isNull then Unchecked.defaultof<'T>
             elif fmt.TypeInfo <= TypeInfo.Value then fmt.Read r
@@ -351,17 +353,17 @@
                 if ObjHeader.hasFlag flags ObjHeader.isProperSubtype then
                     let t0 = readType ()
                     let fmt' = resolver.Resolve t0
-                    read fmt' (fun () -> fmt'.UntypedRead r :?> 'T)
+                    read fmt' (fun () -> fmt'.UntypedRead r |> fastUnbox<'T>)
                 else
                     read fmt (fun () -> fmt.Read r)
 
             elif ObjHeader.hasFlag flags ObjHeader.isCachedInstance then
-                let id = br.ReadInt64() in objCache.[id] :?> 'T
+                let id = br.ReadInt64() in objCache.[id] |> fastUnbox<'T>
 
             elif ObjHeader.hasFlag flags ObjHeader.isProperSubtype then
                 let t0 = readType ()
                 let f0 = resolver.Resolve t0
-                f0.UntypedRead r :?> 'T
+                f0.UntypedRead r |> fastUnbox<'T>
             else
                 fmt.Read r
 

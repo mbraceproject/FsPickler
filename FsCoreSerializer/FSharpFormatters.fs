@@ -12,6 +12,7 @@
     open Microsoft.FSharp.Reflection
 
     open FsCoreSerializer
+    open FsCoreSerializer.Utils
     open FsCoreSerializer.FormatterUtils
 
 
@@ -29,6 +30,7 @@
 
         static member Create<'Union> (resolver : IFormatterResolver) =
 
+#if EMIT_IL
             let unionInfo =
                 FSharpType.GetUnionCases(typeof<'Union>, memberBindings) 
                 |> Array.map(fun uci ->
@@ -38,7 +40,6 @@
                     let caseType = if fields.Length = 0 then None else Some <| fields.[0].DeclaringType
                     uci, caseType, ctor, fields, formatters)
 
-#if EMIT_IL
             let callUnionTagReader (union : Expression) =
                 match FSharpValue.PreComputeUnionTagMemberInfo(typeof<'Union>, memberBindings) with
                 | null -> invalidOp "unexpected error"
@@ -100,6 +101,36 @@
 
             new Formatter<'Union>(reader.Invoke, (fun w t -> writer.Invoke(w,t)), FormatterInfo.FSharpValue, true, true)
 #else
+            let tagReader = FSharpValue.PreComputeUnionTagReader(typeof<'Union>, memberBindings)
+            
+            let unionCases =
+                FSharpType.GetUnionCases(typeof<'Union>, memberBindings) 
+                |> Array.map (fun uci ->
+                    let ctor = FSharpValue.PreComputeUnionConstructor(uci, memberBindings)
+                    let reader = FSharpValue.PreComputeUnionReader(uci, memberBindings)
+                    let formatters = uci.GetFields() |> Array.map (fun f -> resolver.Resolve f.PropertyType)
+                    ctor, reader, formatters)
+
+            let writer (w : Writer) (x : 'Union) =
+                let tag = tagReader x
+                w.BW.Write tag
+                let _,reader,formatters = unionCases.[tag]
+                let values = reader x
+                for i = 0 to values.Length - 1 do
+                    formatters.[i].ManagedWrite w values.[i]
+
+            let reader (r : Reader) =
+                let tag = r.BR.ReadInt32()
+                let ctor,_,formatters = unionCases.[tag]
+                let values = Array.zeroCreate<obj> formatters.Length
+                for i = 0 to formatters.Length - 1 do
+                    values.[i] <- formatters.[i].ManagedRead r
+
+                ctor values |> fastUnbox<'Union>
+
+
+            new Formatter<'Union>(reader, writer, FormatterInfo.FSharpValue, true, true)
+
 #endif
 
     // System.Tuple<...> types
@@ -116,21 +147,21 @@
             with :? TargetInvocationException as e -> raise e.InnerException
         
         static member Create<'Tuple>(resolver : IFormatterResolver) =
+
             let ctor,_ = FSharpValue.PreComputeTupleConstructorInfo typeof<'Tuple>
-            let elements = 
+
+            let items = 
                 typeof<'Tuple>.GetProperties()  
                 |> Seq.filter (fun p -> p.Name.StartsWith("Item")) 
                 |> Seq.sortBy (fun p -> p.Name)
-                |> Seq.toArray
 
-            let formatters = elements |> Array.map (fun e -> resolver.Resolve e.PropertyType)
-
-            let nestedTuple =
+            let nestedTuple = 
                 match typeof<'Tuple>.GetProperty("Rest") with
                 | null -> None
-                | rest ->
-                    let fmt = resolver.Resolve rest.PropertyType
-                    Some(rest, fmt)
+                | rest -> Some rest
+
+            let elements = Seq.append items (Option.toList nestedTuple) |> Seq.toArray
+            let formatters = elements |> Array.map (fun e -> resolver.Resolve e.PropertyType)
 
 #if EMIT_IL 
             let writer =
@@ -138,15 +169,8 @@
                 else
                     let writer =
                         Expression.compileAction2<Writer, 'Tuple>(fun writer tuple ->
-                            seq {
-                                yield! Expression.zipWriteProperties elements formatters writer tuple
-
-                                match nestedTuple with
-                                | None -> ()
-                                | Some (prop, f) ->
-                                    let nested = Expression.Property(tuple, prop)
-                                    yield Expression.write writer f nested
-                            } |> Expression.Block :> _)
+                            Expression.zipWriteProperties elements formatters writer tuple
+                            |> Expression.Block :> _)
 
                     fun w t -> writer.Invoke(w,t)
 
@@ -154,12 +178,19 @@
                 Expression.compileFunc1<Reader, 'Tuple>(fun reader ->
                     let values = formatters |> Seq.map (Expression.read reader)
 
-                    match nestedTuple with
-                    | None -> Expression.New(ctor, values) :> _
-                    | Some (_, fmt) ->
-                        let nestedValue = Expression.read reader fmt
-                        Expression.New(ctor, seq { yield! values ; yield nestedValue }) :> _).Invoke        
+                    Expression.New(ctor, values) :> _ ).Invoke 
 #else
+            let writer (w : Writer) (x : 'Tuple) =
+                for i = 0 to elements.Length - 1 do
+                    let o = elements.[i].GetValue(x)
+                    formatters.[i].ManagedWrite w o
+
+            let reader (r : Reader) =
+                let values = Array.zeroCreate<obj> formatters.Length
+                for i = 0 to values.Length - 1 do
+                    values.[i] <- formatters.[i].ManagedRead r
+
+                ctor.Invoke values |> fastUnbox<'Tuple>
 #endif
 
 #if OPTIMIZE_FSHARP
@@ -182,6 +213,7 @@
             with :? TargetInvocationException as e -> raise e.InnerException
         
         static member Create<'Record>(resolver : IFormatterResolver, isExceptionType) =
+
             let fields, ctor =
                 if isExceptionType then
                     let fields = FSharpType.GetExceptionFields(typeof<'Record>, memberBindings)
@@ -213,5 +245,16 @@
 
                     Expression.New(ctor, values) :> _).Invoke
 #else
+            let writer (w : Writer) (x : 'Record) =
+                for i = 0 to fields.Length - 1 do
+                    let o = fields.[i].GetValue x
+                    formatters.[i].ManagedWrite w o
+            
+            let reader (r : Reader) =
+                let values = Array.zeroCreate<obj> fields.Length
+                for i = 0 to fields.Length - 1 do
+                    values.[i] <- formatters.[i].ManagedRead r
+
+                ctor.Invoke values |> fastUnbox<'Record>
 #endif
             new Formatter<'Record>(reader, writer, FormatterInfo.FSharpValue, cacheObj = true, useWithSubtypes = false)

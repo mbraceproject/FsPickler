@@ -35,22 +35,22 @@
                              
                     match rank with
                     | 1 ->
-                        let x = x :> obj :?> 'T []
+                        let x = fastUnbox<'T []> x
                         for i = 0 to x.Length - 1 do
                             write isValue w ef x.[i]
                     | 2 -> 
-                        let x = x :> obj :?> 'T [,]
+                        let x = fastUnbox<'T [,]> x
                         for i = 0 to x.GetLength(0) - 1 do
                             for j = 0 to x.GetLength(1) - 1 do
                                 write isValue w ef x.[i,j]
                     | 3 ->
-                        let x = x :> obj :?> 'T [,,]
+                        let x = fastUnbox<'T [,,]> x
                         for i = 0 to x.GetLength(0) - 1 do
                             for j = 0 to x.GetLength(1) - 1 do
                                 for k = 0 to x.GetLength(2) - 1 do
                                     write isValue w ef x.[i,j,k]
                     | 4 ->
-                        let x = x :> obj :?> 'T [,,,]
+                        let x = fastUnbox<'T [,,,]> x
                         for i = 0 to x.GetLength(0) - 1 do
                             for j = 0 to x.GetLength(1) - 1 do
                                 for k = 0 to x.GetLength(2) - 1 do
@@ -75,7 +75,7 @@
 
                     Stream.CopyToArray(r.BR.BaseStream, array)
 
-                    array :?> 'Array
+                    fastUnbox<'Array> array
                 else
                     let isValue = ef.TypeInfo <= TypeInfo.Value
 
@@ -85,14 +85,16 @@
                         r.EarlyRegisterObject arr
                         for i = 0 to l.[0] - 1 do
                             arr.[i] <- read isValue r ef
-                        arr :> obj :?> 'Array
+
+                        fastUnbox<'Array> arr
                     | 2 -> 
                         let arr = Array2D.zeroCreate<'T> l.[0] l.[1]
                         r.EarlyRegisterObject arr
                         for i = 0 to l.[0] - 1 do
                             for j = 0 to l.[1] - 1 do
                                 arr.[i,j] <- read isValue r ef
-                        arr :> obj :?> 'Array
+
+                        fastUnbox<'Array> arr
                     | 3 ->
                         let arr = Array3D.zeroCreate<'T> l.[0] l.[1] l.[2]
                         r.EarlyRegisterObject arr
@@ -100,7 +102,8 @@
                             for j = 0 to l.[1] - 1 do
                                 for k = 0 to l.[2] - 1 do
                                     arr.[i,j,k] <- read isValue r ef
-                        arr :> obj :?> 'Array
+
+                        fastUnbox<'Array> arr
                     | 4 ->
                         let arr = Array4D.zeroCreate<'T> l.[0] l.[1] l.[2] l.[3]
                         r.EarlyRegisterObject arr
@@ -109,7 +112,8 @@
                                 for k = 0 to l.[2] - 1 do
                                     for l = 0 to l.[3] - 1 do
                                         arr.[i,j,k,l] <- read isValue r ef
-                        arr :> obj :?> 'Array
+
+                        fastUnbox<'Array> arr
                     | _ -> failwith "impossible array rank"
 
             new Formatter<'Array>(reader, writer, FormatterInfo.ReflectionDerived, true, false)
@@ -139,15 +143,10 @@
 
                 let isDeserializationCallback = typeof<IDeserializationCallback>.IsAssignableFrom typeof<'T>
 #if EMIT_IL
-                let inline runW (dele : Action<StreamingContext, 'T> option) (w : Writer) x =
+                let inline run (dele : Action<StreamingContext, 'T> option) w x =
                     match dele with
                     | None -> ()
-                    | Some d -> d.Invoke(w.StreamingContext, x)
-
-                let inline runR (dele : Action<StreamingContext, 'T> option) (r : Reader) x =
-                    match dele with
-                    | None -> ()
-                    | Some d -> d.Invoke(r.StreamingContext, x)
+                    | Some d -> d.Invoke(getStreamingContext w, x)
 
                 let onSerializing = Expression.preComputeSerializationMethods<'T> onSerializing
                 let onSerialized = Expression.preComputeSerializationMethods<'T> onSerialized
@@ -159,14 +158,14 @@
 
                 let inline create si sc = ctor.Invoke(si, sc)
 #else
-                let inline run (ms : MethodInfo []) o (sc : StreamingContext)  =
-                    for i = 0 to ms.Length - 1 do ms.[i].Invoke(o, [| sc :> obj |]) |> ignore
+                let inline run (ms : MethodInfo []) w o  =
+                    for i = 0 to ms.Length - 1 do ms.[i].Invoke(o, [| getStreamingContext w :> obj |]) |> ignore
 
                 let inline create (si : SerializationInfo) (sc : StreamingContext) = 
-                    ctorInfo.Invoke [| si :> obj ; sc :> obj |]
+                    ctorInfo.Invoke [| si :> obj ; sc :> obj |] |> fastUnbox<'T>
 #endif
                 let writer (w : Writer) (x : 'T) =
-                    runW onSerializing w x
+                    run onSerializing w x
                     let sI = new SerializationInfo(typeof<'T>, new FormatterConverter())
                     x.GetObjectData(sI, w.StreamingContext)
                     w.BW.Write sI.MemberCount
@@ -175,7 +174,7 @@
                         w.BW.Write enum.Current.Name
                         w.Write<obj> enum.Current.Value
 
-                    runW onSerialized w x
+                    run onSerialized w x
 
                 let reader (r : Reader) =
                     let sI = new SerializationInfo(typeof<'T>, new FormatterConverter())
@@ -187,8 +186,8 @@
 
                     let x = create sI r.StreamingContext
 
-                    runR onDeserialized r x
-                    if isDeserializationCallback then (x :> obj :?> IDeserializationCallback).OnDeserialization null
+                    run onDeserialized r x
+                    if isDeserializationCallback then (fastUnbox<IDeserializationCallback> x).OnDeserialization null
                     x
 
                 let fmt = new Formatter<'T>(reader, writer, FormatterInfo.ISerializable, true, false)
@@ -216,7 +215,7 @@
 #if EMIT_IL
                 let reader = Expression.compileFunc1<Reader, 'T>(fun reader -> Expression.New(ctorInfo, reader) :>_).Invoke
 #else
-                let reader (r : Reader) = ctorInfo.Invoke [| r :> obj |] :?> 'T
+                let reader (r : Reader) = ctorInfo.Invoke [| r :> obj |] |> fastUnbox<'T>
 #endif
                 let writer (w : Writer) (x : 'T) = x.GetObjectData(w)
 

@@ -53,6 +53,9 @@
 
             ms |> Array.filter isSerializationMethod
 
+        let inline getStreamingContext (x : ^T when ^T : (member StreamingContext : StreamingContext)) =
+            ( ^T : (member StreamingContext : StreamingContext) x)
+
         //
         //  internal read/write combinators
         //

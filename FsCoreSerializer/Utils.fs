@@ -1,5 +1,6 @@
 ﻿namespace FsCoreSerializer
 
+    #nowarn "1204"
 
     module internal Utils =
         
@@ -51,6 +52,9 @@
                     m.Add(key, value)
 
         let inline denull x = if x = null then None else Some x
+
+        let inline fastUnbox<'T> (x : obj) = 
+            Microsoft.FSharp.Core.LanguagePrimitives.IntrinsicFunctions.UnboxFast<'T> x
 
         let (|InnerExn|_|) (e : #exn) = denull e.InnerException
 
