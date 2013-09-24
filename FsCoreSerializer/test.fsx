@@ -1,4 +1,4 @@
-﻿#r "bin/Release/FsCoreSerializer.dll"
+﻿#r "bin/Debug/FsCoreSerializer.dll"
 
 open FsCoreSerializer
 open System
@@ -12,6 +12,3 @@ let loop (x : 'T) =
     fsc.Serialize<obj>(mem, x)
     mem.Position <- 0L
     fsc.Deserialize<obj>(mem) :?> 'T
-
-
-loop 12

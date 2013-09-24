@@ -1,17 +1,36 @@
 ﻿namespace FsCoreSerializer
 
     #nowarn "1204"
+    #nowarn "42"
 
     module internal Utils =
         
         open System
         open System.Collections.Generic
         open System.IO
+        open System.Reflection
         open System.Threading
         open System.Text
         open System.Runtime.Serialization
 
         let runsOnMono = System.Type.GetType("Mono.Runtime") <> null
+
+        /// stackless raise operator
+        let inline raise (e: System.Exception) = (# "throw" e : 'U #)
+
+        // bad implementation: would be safer using ExceptionDispatchInfo but would break compatibility with 4.0
+        let rec inline reraise' (e : #exn) =
+            do remoteStackTraceField.SetValue(e, e.StackTrace + System.Environment.NewLine)
+            raise e
+
+        and private remoteStackTraceField : FieldInfo =
+            let bfs = BindingFlags.NonPublic ||| BindingFlags.Instance
+            match typeof<System.Exception>.GetField("remote_stack_trace", bfs) with
+            | null ->
+                match typeof<System.Exception>.GetField("_remoteStackTraceString", bfs) with
+                | null -> failwith "Could not locate RemoteStackTrace field for System.Exception."
+                | f -> f
+            | f -> f
 
         type Atom<'T when 'T : not struct>(value : 'T) =
             let refCell = ref value
@@ -40,6 +59,13 @@
             let transact (f : 'T -> 'T * 'R) (a : Atom<_>) = a.Transact f
 
 
+        type MethodInfo with
+            member m.GuardedInvoke(instance : obj, parameters : obj []) =
+                try m.Invoke(instance, parameters)
+                with :? TargetInvocationException as e when e.InnerException <> null ->
+                    reraise' e.InnerException
+
+
         type IDictionary<'K,'V> with
             member d.TryFind (k : 'K) =
                 let found, v = d.TryGetValue k
@@ -64,26 +90,26 @@
         let inline mkTypedReader (f : 'a -> obj) = fun x -> f x :?> 'b
 
 
-//        // produces a structural hashcode out of a byte array
-//        let getByteHashCode (bs : byte []) =
-//            let n = bs.Length
-//            let mutable i = 0
-//            let mutable acc = 0
-//
-//            let inline bytes2Int x y z w = 
-//                int x + (int y <<< 8) + (int z <<< 16) + (int w <<< 24)
-//
-//            while i + 4 <= n do
-//                acc <- acc ^^^ bytes2Int bs.[i] bs.[i + 1] bs.[i + 2] bs.[i + 3]
-//                i <- i + 4
-//
-//            match n - i with
-//            | 0 -> ()
-//            | 1 -> acc <- acc ^^^ bytes2Int bs.[i] 0uy 0uy 0uy
-//            | 2 -> acc <- acc ^^^ bytes2Int bs.[i] bs.[i+1] 0uy 0uy
-//            | _ -> acc <- acc ^^^ bytes2Int bs.[i] bs.[i+1] bs.[i+2] 0uy
-//
-//            acc
+        // produces a structural hashcode out of a byte array
+        let getByteHashCode (bs : byte []) =
+            let n = bs.Length
+            let mutable i = 0
+            let mutable acc = 0
+
+            let inline bytes2Int x y z w = 
+                int x + (int y <<< 8) + (int z <<< 16) + (int w <<< 24)
+
+            while i + 4 <= n do
+                acc <- acc ^^^ bytes2Int bs.[i] bs.[i + 1] bs.[i + 2] bs.[i + 3]
+                i <- i + 4
+
+            match n - i with
+            | 0 -> ()
+            | 1 -> acc <- acc ^^^ bytes2Int bs.[i] 0uy 0uy 0uy
+            | 2 -> acc <- acc ^^^ bytes2Int bs.[i] bs.[i+1] 0uy 0uy
+            | _ -> acc <- acc ^^^ bytes2Int bs.[i] bs.[i+1] bs.[i+2] 0uy
+
+            acc
 
         [<RequireQualifiedAccess>]
         module Stream =

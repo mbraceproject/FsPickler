@@ -173,15 +173,6 @@
             mkFormatter FormatterInfo.Custom false true reader writer :> Formatter
 
 
-//    type ExprFormatter () =
-//        interface IGenericFormatterFactory1 with
-//            member __.Create<'T> (resolver : IFormatterResolver) =
-//                let exprFormatter = resolver.Resolve<Expr> ()
-//                mkFormatter FormatterInfo.Custom false true 
-//                                (fun r -> Expr.Cast<'T>(r.Read exprFormatter))
-//                                (fun w e -> w.Write(exprFormatter, e :> _))
-
-
     let mkGenericFormatters () =
         [
             new ListFormatter() :> IGenericFormatterFactory
@@ -189,7 +180,6 @@
             new TripleFormatter() :> _
             new OptionFormatter() :> _
             new RefFormatter() :> _
-//            new ExprFormatter() :> _
             new SetFormatter() :> _
             new MapFormatter() :> _
             new DictionaryFormatter() :> _

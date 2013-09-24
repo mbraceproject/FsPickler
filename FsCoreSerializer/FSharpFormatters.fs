@@ -25,8 +25,7 @@
                     .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
                     .MakeGenericMethod [| unionType |]
 
-            try m.Invoke(null, [| resolver :> obj |]) :?> Formatter
-            with :? TargetInvocationException as e -> raise e.InnerException
+            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Formatter
 
         static member Create<'Union> (resolver : IFormatterResolver) =
 
@@ -143,8 +142,7 @@
                     .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
                     .MakeGenericMethod [| tupleType |]
 
-            try m.Invoke(null, [| resolver :> obj |]) :?> Formatter
-            with :? TargetInvocationException as e -> raise e.InnerException
+            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Formatter
         
         static member Create<'Tuple>(resolver : IFormatterResolver) =
 
@@ -209,8 +207,7 @@
                     .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
                     .MakeGenericMethod [| t |]
 
-            try m.Invoke(null, [| resolver :> obj ; isExceptionType :> obj |]) :?> Formatter
-            with :? TargetInvocationException as e -> raise e.InnerException
+            m.GuardedInvoke(null, [| resolver :> obj ; isExceptionType :> obj |]) :?> Formatter
         
         static member Create<'Record>(resolver : IFormatterResolver, isExceptionType) =
 

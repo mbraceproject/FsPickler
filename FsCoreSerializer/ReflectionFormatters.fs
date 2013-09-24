@@ -56,8 +56,7 @@
                     .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
                     .MakeGenericMethod [| t |]
 
-            try m.Invoke(null, null) :?> Formatter
-            with :? TargetInvocationException as e -> raise e.InnerException
+            m.GuardedInvoke(null, null) :?> Formatter
 
     // formatter rules for enum types
 
@@ -85,7 +84,7 @@
                     .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
                     .MakeGenericMethod [| enum ; underlying |]
 
-            m.Invoke(null, [| resolver :> obj |]) :?> Formatter
+            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Formatter
 
     // formatter builder for struct types
 
@@ -147,8 +146,7 @@
                     .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
                     .MakeGenericMethod [| t |]
 
-            try m.Invoke(null, [| resolver :> obj |]) :?> Formatter
-            with :? TargetInvocationException as e -> raise e.InnerException
+            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Formatter
                     
 
     // reflection-based serialization rules for reference types
@@ -254,8 +252,7 @@
                     .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
                     .MakeGenericMethod [| t |]
 
-            try m.Invoke(null, [| resolver :> obj |]) :?> Formatter
-            with :? TargetInvocationException as e -> raise e.InnerException
+            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Formatter
 
 
     type DelegateFormatter =
@@ -295,5 +292,4 @@
                     .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
                     .MakeGenericMethod [| t |]
 
-            try m.Invoke(null, [| resolver :> obj |]) :?> Formatter
-            with :? TargetInvocationException as e -> raise e.InnerException
+            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Formatter

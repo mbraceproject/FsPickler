@@ -125,8 +125,7 @@
                     .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
                     .MakeGenericMethod [| et ; t |]
 
-            try m.Invoke(null, [| resolver :> obj |]) :?> Formatter
-            with :? TargetInvocationException as e -> raise e.InnerException
+            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Formatter
 
     // formatter builder for ISerializable types
 
@@ -199,8 +198,7 @@
                     .GetMethod("TryCreate", BindingFlags.NonPublic ||| BindingFlags.Static)
                     .MakeGenericMethod [| t |]
 
-            try m.Invoke(null, [| resolver :> obj |]) :?> Formatter option
-            with :? TargetInvocationException as e -> raise e.InnerException
+            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Formatter option
 
 
     // formatter builder for IFsCoreSerializable types
@@ -227,5 +225,4 @@
                     .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
                     .MakeGenericMethod [| t |]
 
-            try m.Invoke(null, [| resolver :> obj |]) :?> Formatter
-            with :? TargetInvocationException as e -> raise e.InnerException
+            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Formatter
