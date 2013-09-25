@@ -31,16 +31,16 @@
 
 #if EMIT_IL
             let unionInfo =
-                FSharpType.GetUnionCases(typeof<'Union>, memberBindings) 
+                FSharpType.GetUnionCases(typeof<'Union>, allMembers) 
                 |> Array.map(fun uci ->
                     let fields = uci.GetFields()
-                    let ctor = FSharpValue.PreComputeUnionConstructorInfo(uci, memberBindings)
+                    let ctor = FSharpValue.PreComputeUnionConstructorInfo(uci, allMembers)
                     let formatters = fields |> Array.map (fun f -> resolver.Resolve f.PropertyType)
                     let caseType = if fields.Length = 0 then None else Some <| fields.[0].DeclaringType
                     uci, caseType, ctor, fields, formatters)
 
             let callUnionTagReader (union : Expression) =
-                match FSharpValue.PreComputeUnionTagMemberInfo(typeof<'Union>, memberBindings) with
+                match FSharpValue.PreComputeUnionTagMemberInfo(typeof<'Union>, allMembers) with
                 | null -> invalidOp "unexpected error"
                 | :? PropertyInfo as p -> Expression.Property(union, p) :> Expression
                 | :? MethodInfo as m when m.IsStatic -> Expression.Call(m, union) :> Expression
@@ -67,7 +67,7 @@
                 let unionCase = Expression.callMethod ctor formatters reader
                 Expression.SwitchCase(unionCase, Expression.constant uci.Tag)
 
-            let writer =
+            let writerFunc =
                 Expression.compileAction2<Writer, 'Union>(fun writer union ->
                     let tag = Expression.Variable(typeof<int>, "tag")
                     let cases = 
@@ -86,7 +86,7 @@
 
                     Expression.Block([| tag |] , body) :> _)
 
-            let reader =
+            let readerFunc =
                 Expression.compileFunc1<Reader, 'Union>(fun reader ->
                     let tag = Expression.readInt reader
                     let cases =
@@ -97,8 +97,8 @@
 
                     Expression.Switch(tag, defCase, cases) :> _)
 
-
-            new Formatter<'Union>(reader.Invoke, (fun w t -> writer.Invoke(w,t)), FormatterInfo.FSharpValue, true, true)
+            let writer (w : Writer) (u : 'Union) = writerFunc.Invoke(w, u)
+            let reader = readerFunc.Invoke
 #else
             let tagReader = FSharpValue.PreComputeUnionTagReader(typeof<'Union>, memberBindings)
             
@@ -126,11 +126,10 @@
                     values.[i] <- formatters.[i].ManagedRead r
 
                 ctor values |> fastUnbox<'Union>
-
-
-            new Formatter<'Union>(reader, writer, FormatterInfo.FSharpValue, true, true)
-
 #endif
+
+            new Formatter<'Union>(reader, writer, FormatterInfo.FSharpValue, cacheObj = false, useWithSubtypes = true)
+
 
     // System.Tuple<...> types
 
@@ -192,9 +191,10 @@
 #endif
 
 #if OPTIMIZE_FSHARP
-            new Formatter<'Tuple>(reader, writer, FormatterInfo.FSharpValue, false, true)
+            // do not cache or perform subtype resolution for performance
+            new Formatter<'Tuple>(reader, writer, FormatterInfo.FSharpValue, cacheObj = false, useWithSubtypes = true)
 #else
-            new Formatter<'Tuple>(reader, writer, FormatterInfo.Custom, true, false)
+            new Formatter<'Tuple>(reader, writer, FormatterInfo.Custom, cacheObj = true, useWithSubtypes = false)
 #endif
 
     // F# record/exception types
@@ -213,15 +213,15 @@
 
             let fields, ctor =
                 if isExceptionType then
-                    let fields = FSharpType.GetExceptionFields(typeof<'Record>, memberBindings)
+                    let fields = FSharpType.GetExceptionFields(typeof<'Record>, allMembers)
                     let signature = fields |> Array.map(fun p -> p.PropertyType)
                     let ctor = 
-                        typeof<'Record>.GetConstructors(memberBindings)
+                        typeof<'Record>.GetConstructors(allMembers)
                         |> Array.find(fun c -> c.GetParameters () |> Array.map(fun p -> p.ParameterType) = signature)
                     fields, ctor
                 else
                     let fields = FSharpType.GetRecordFields typeof<'Record>
-                    let ctor = FSharpValue.PreComputeRecordConstructorInfo(typeof<'Record>, memberBindings)
+                    let ctor = FSharpValue.PreComputeRecordConstructorInfo(typeof<'Record>, allMembers)
                     fields, ctor
 
             let formatters = fields |> Array.map (fun f -> resolver.Resolve f.PropertyType)
@@ -254,4 +254,5 @@
 
                 ctor.Invoke values |> fastUnbox<'Record>
 #endif
-            new Formatter<'Record>(reader, writer, FormatterInfo.FSharpValue, cacheObj = true, useWithSubtypes = false)
+
+            new Formatter<'Record>(reader, writer, FormatterInfo.FSharpValue, cacheObj = false, useWithSubtypes = false)

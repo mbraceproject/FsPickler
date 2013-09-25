@@ -6,6 +6,7 @@
     open System.Runtime.Serialization
 
     open FsCoreSerializer
+    open FsCoreSerializer.Utils
     open FsCoreSerializer.FormatterUtils
 
     let mkPrimitiveFormatters () =
@@ -74,7 +75,7 @@
             let t = r.Read typeFormatter
             let mname = r.BR.ReadString()
             let m = 
-                try t.GetMembers(memberBindings) |> Array.find (fun m -> m.ToString() = mname)
+                try t.GetMembers(allMembers) |> Array.find (fun m -> m.ToString() = mname)
                 with :? KeyNotFoundException ->
                     raise <| new SerializationException(sprintf "Could not deserialize member '%O.%s'" t.Name mname)
 

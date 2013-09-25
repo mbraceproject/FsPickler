@@ -13,6 +13,8 @@
         open System.Text
         open System.Runtime.Serialization
 
+        open Microsoft.FSharp.Reflection
+
         let runsOnMono = System.Type.GetType("Mono.Runtime") <> null
 
         /// stackless raise operator
@@ -59,12 +61,10 @@
             let transact (f : 'T -> 'T * 'R) (a : Atom<_>) = a.Transact f
 
 
-        type MethodInfo with
-            member m.GuardedInvoke(instance : obj, parameters : obj []) =
-                try m.Invoke(instance, parameters)
-                with :? TargetInvocationException as e when e.InnerException <> null ->
-                    reraise' e.InnerException
+        let inline denull x = if x = null then None else Some x
 
+        let inline fastUnbox<'T> (x : obj) = 
+            Microsoft.FSharp.Core.LanguagePrimitives.IntrinsicFunctions.UnboxFast<'T> x
 
         type IDictionary<'K,'V> with
             member d.TryFind (k : 'K) =
@@ -76,11 +76,6 @@
                 if m.ContainsKey key then invalidArg "key" "An item with the same key has already been added."
                 else
                     m.Add(key, value)
-
-        let inline denull x = if x = null then None else Some x
-
-        let inline fastUnbox<'T> (x : obj) = 
-            Microsoft.FSharp.Core.LanguagePrimitives.IntrinsicFunctions.UnboxFast<'T> x
 
         let (|InnerExn|_|) (e : #exn) = denull e.InnerException
 
@@ -174,3 +169,92 @@
                 if r > 0 then
                     do readBytes r
                     Buffer.BlockCopy(buf, 0, array, d * bufferSize, r)
+
+
+        // reflection utils
+
+        let allFields = 
+            BindingFlags.NonPublic ||| BindingFlags.Public ||| 
+                BindingFlags.Instance ||| BindingFlags.FlattenHierarchy 
+
+        let allMembers =
+            BindingFlags.NonPublic ||| BindingFlags.Public |||
+                BindingFlags.Instance ||| BindingFlags.Static ||| BindingFlags.FlattenHierarchy
+
+        let allConstructors = BindingFlags.Instance ||| BindingFlags.NonPublic ||| BindingFlags.Public
+
+        let containsAttr<'T when 'T :> Attribute> (m : MemberInfo) =
+            m.GetCustomAttributes(typeof<'T>, true) |> Seq.isEmpty |> not
+
+        type Type with
+            member t.GetGenericMethod(isStatic, name : string, genericArgCount : int, paramCount : int) =
+                t.GetMethods(allMembers)
+                |> Array.find(fun m ->
+                    m.Name = name && m.IsStatic = isStatic
+                        && genericArgCount = m.GetGenericArguments().Length
+                        && paramCount = m.GetParameters().Length)
+
+            member t.TryGetConstructor(args : Type []) = denull <| t.GetConstructor(allConstructors,null,args, [||])
+
+        type MethodInfo with
+            member m.GuardedInvoke(instance : obj, parameters : obj []) =
+                try m.Invoke(instance, parameters)
+                with :? TargetInvocationException as e when e.InnerException <> null ->
+                    reraise' e.InnerException
+
+            member m.GetParameterTypes() = m.GetParameters() |> Array.map (fun p -> p.ParameterType)
+
+
+        // this predicate decides whether instances of given type can be cyclic.
+        // F# union types are treated specially since recursive bindings cannot be created under normal circumstances
+        // for instance, the
+        //
+        //      type Peano = Zero | Succ of Peano 
+        //
+        // is flagged as non-recursive since defining cyclic graphs of this type are impossible in F#.
+        // On the other hand, the
+        //
+        //     type Func = Func of (int -> int)
+        //
+        // is flagged as recursive since cyclic bindings *can* be made, for example
+        // `let rec f = Func (fun x -> let (Func f0) = f in f0 x + 1)`
+        let isRecursiveType (t : Type) =
+            let rec isRecursiveType (traversed : (bool * Type) list) (t : Type) =
+
+                if t.IsValueType then false else
+ 
+#if OPTIMIZE_FSHARP                   
+                let unions, rest = 
+                    traversed 
+                    |> List.filter (fun (_,t') -> t.IsAssignableFrom t')
+                    |> List.partition (fun (isUnion, t') -> if isUnion then t' = t else false)
+
+                if rest.Length > 0 then true
+                elif unions.Length > 0 then false
+#else
+                if traversed |> List.exists (fun (_,t') -> t.IsAssignableFrom t') then true
+#endif
+                elif t.IsArray || t.IsByRef || t.IsPointer then
+                    isRecursiveType ((false,t) :: traversed) <| t.GetElementType()
+                elif FSharpType.IsUnion(t, allMembers) then
+                    FSharpType.GetUnionCases(t, allMembers)
+                    |> Seq.map (fun u -> u.GetFields() |> Seq.map (fun p -> p.PropertyType))
+                    |> Seq.concat
+                    |> Seq.distinct
+                    |> Seq.exists (isRecursiveType ((true,t) :: traversed))
+#if OPTIMIZE_FSHARP
+                // System.Tuple is not sealed, but inheriting is not an idiomatic pattern in F#
+                elif FSharpType.IsTuple t then
+                    FSharpType.GetTupleElements t
+                    |> Seq.distinct
+                    |> Seq.exists (isRecursiveType ((false,t) :: traversed))
+#endif
+                // leaves with open hiearchies are treated as recursive by definition
+                elif not t.IsSealed then true
+                else
+                    t.GetFields(allFields)
+                    |> Seq.map (fun f -> f.FieldType)
+                    |> Seq.distinct
+                    |> Seq.exists (isRecursiveType ((false,t) :: traversed))
+
+            isRecursiveType [] t

@@ -53,16 +53,15 @@
                     s.AddValue("integer", x)
 
 
-        type FsCoreSerializableClass(x : int, y : string) =
-            new(r : Reader) = new FsCoreSerializableClass(r.Read<int>(), r.Read<string>())
+        type ClassWithFormatterFactory (x : int) =
 
-            member __.Value = string x + y
-            override __.Equals y = match y with :? FsCoreSerializableClass as y -> y.Value = __.Value | _ -> false
+            member __.Value = x
 
-            interface IFsCoreSerializable with
-                member __.GetObjectData(w : Writer) =
-                    w.Write x ; w.Write y
-
+            static member CreateFormatter (resolver : IFormatterResolver) =
+                Formatter.Create(
+                    (fun _ -> ClassWithFormatterFactory(42)),
+                    (fun _ _ -> ()),
+                        true, false)
 
         exception FsharpException of int * string
 
@@ -75,21 +74,7 @@
             | 0 -> Leaf
             | n -> Node(n, mkTree(n-1), mkTree(n-1))
 
-        type Rec = Rec of (Rec -> Rec)
-
-        type Rec2 = { Rec2 : Rec2 }
-
-//        type FormatterFactoryTest() =
-//            interface IFormatterFactory with
-//                member __.Type = typeof<int * string * unit>
-//                member __.Create (resolver : IFormatterResolver) =
-//                    let writer (w : Writer) ((x,y,_) : int * string * unit) = w.Write x
-//                    let reader (r : Reader) =
-//                        let x = r.Read<int> ()
-//                        (x + 1, "42", ())
-//
-//                    Formatter.Create(reader, writer, cache = false) :> Formatter
-
+        type Rec = { Rec : Rec }
 
         type GenericType<'T when 'T : comparison>(x : 'T) =
             member __.Value = x
@@ -164,7 +149,6 @@
         let testSerializer =
             let registry = new FormatterRegistry()
             do
-//                registry.RegisterFormatterFactory(new FormatterFactoryTest())
                 registry.RegisterGenericFormatter(new GenericTypeFormatter())
 
             new TestFsCoreSerializer(registry) :> ISerializer

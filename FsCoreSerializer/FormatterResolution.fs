@@ -67,6 +67,12 @@
             else
                 None
 
+        // resolve factory method
+        let result =
+            match result with
+            | Some _ -> result
+            | None -> FormatterFactory.TryCall(t, resolver)
+
         // lookup generic shapes
         let result =
             match result with
@@ -82,13 +88,13 @@
             match result with
             | Some _ -> result
             | None ->
-                if FSharpType.IsUnion(t, memberBindings) then
+                if FSharpType.IsUnion(t, allMembers) then
                     Some <| FsUnionFormatter.CreateUntyped(t, resolver)
                 elif FSharpType.IsTuple t then
                     Some <| TupleFormatter.CreateUntyped(t, resolver)
-                elif FSharpType.IsRecord(t, memberBindings) then
+                elif FSharpType.IsRecord(t, allMembers) then
                     Some <| FsRecordFormatter.CreateUntyped(t, resolver, isExceptionType = false)
-                elif FSharpType.IsExceptionRepresentation(t, memberBindings) then
+                elif FSharpType.IsExceptionRepresentation(t, allMembers) then
                     Some <| FsRecordFormatter.CreateUntyped(t, resolver, isExceptionType = true)
                 else None
 
@@ -99,8 +105,6 @@
             | None ->
                 if t.IsAbstract then 
                     Some <| AbstractFormatter.CreateUntyped t
-                elif typeof<IFsCoreSerializable>.IsAssignableFrom t then
-                    Some <| IFsCoreSerialibleFormatter.CreateUntyped(t, resolver)
                 elif typeof<ISerializable>.IsAssignableFrom t then
                     ISerializableFormatter.TryCreateUntyped(t, resolver)
                 else None

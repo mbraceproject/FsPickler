@@ -10,21 +10,13 @@
     open FsCoreSerializer.Utils
     open FsCoreSerializer.FormatterHeader
 
-    type FormatterInfo =
-        | Atomic = 0
-        | ReflectionType = 1
-        | ReflectionDerived = 2
-        | ISerializable = 3
-        | FSharpValue = 4 // tuples, records and DUs
-        | IFsCoreSerializable = 5
-        | Custom = 6
-
     [<AutoSerializable(false)>]
     [<AbstractClass>]
     type Formatter =
 
         val private declared_type : Type
-        val mutable private m_reflected_type : Type
+        val private is_recursive_type : bool
+        val mutable private m_formatter_type : Type
         val mutable private m_typeInfo : TypeInfo
         val mutable private m_typeHash : TypeHash
         
@@ -36,11 +28,11 @@
 
         internal new (t : Type) =
             {
-                declared_type = t ;
+                declared_type = t ; is_recursive_type = isRecursiveType t ;
 
                 m_isInitialized = false ;
 
-                m_reflected_type = null ; 
+                m_formatter_type = null ; 
                 m_typeInfo = Unchecked.defaultof<_> ; 
                 m_typeHash = Unchecked.defaultof<_> ;
                 m_formatterInfo = Unchecked.defaultof<_> ; 
@@ -50,11 +42,11 @@
 
         internal new (t : Type, formatterInfo, cacheObj, useWithSubtypes) =
             {
-                declared_type = t ;
+                declared_type = t ; is_recursive_type = isRecursiveType t ;
 
                 m_isInitialized = true ;
 
-                m_reflected_type = t ; m_typeInfo = getTypeInfo t ; m_typeHash = ObjHeader.computeHash t ;
+                m_formatter_type = t ; m_typeInfo = computeTypeInfo t ; m_typeHash = computeTypeHash t ;
                 
                 m_formatterInfo = formatterInfo ;
                 m_cacheObj = cacheObj ;
@@ -62,8 +54,9 @@
             }
 
         member f.Type = f.declared_type
-        member f.FormatterType = f.m_reflected_type
-        member internal f.TypeInfo = f.m_typeInfo
+        member f.FormatterType = f.m_formatter_type
+        member f.IsRecursiveType = f.is_recursive_type
+        member f.TypeInfo = f.m_typeInfo
         member internal f.TypeHash = f.m_typeHash
 
         member f.FormatterInfo =
@@ -101,7 +94,7 @@
             elif f.Type <> f'.Type && not (f'.Type.IsAssignableFrom(f.Type) && f'.UseWithSubtypes) then
                 raise <| new InvalidCastException(sprintf "Cannot cast formatter from %O to %O." f'.Type f.Type)
             else
-                f.m_reflected_type <- f'.m_reflected_type
+                f.m_formatter_type <- f'.m_formatter_type
                 f.m_typeHash <- f'.m_typeHash
                 f.m_typeInfo <- f'.m_typeInfo
                 f.m_formatterInfo <- f'.m_formatterInfo
@@ -214,7 +207,7 @@
 
             do RuntimeHelpers.EnsureSufficientExecutionStack()
 
-            if fmt.CacheObj then
+            if fmt.CacheObj || fmt.IsRecursiveType then
                 let mutable firstOccurence = false
                 let id = idGen.GetId(x, &firstOccurence)
                 if firstOccurence then
@@ -243,7 +236,7 @@
                             write fmt (fun () -> fmt.Write w x)
 
                 elif objStack.Contains id then
-                    raise <| new SerializationException(sprintf "Unexpected cyclic object graph '%s'." fmt.Type.FullName)
+                    raise <| new SerializationException(sprintf "Unsupported cyclic object graph '%s'." fmt.Type.FullName)
                 else
                     writeHeader ObjHeader.isCachedInstance
                     bw.Write id
@@ -293,7 +286,7 @@
         // at the initialization stage to support cyclic object graphs.
         member internal r.EarlyRegisterObject (o : obj) =
             if currentReflectedObjId = 0L then
-                raise <| new SerializationException("Unexpected reflected object binding.")
+                raise <| new SerializationException("Unanticipated reflected object binding.")
             else
                 objCache.Add(currentReflectedObjId, o)
                 currentReflectedObjId <- 0L
@@ -379,15 +372,6 @@
         interface IDisposable with
             member __.Dispose () = br.Dispose ()
 
-
-
-    /// an ISerializable-like pattern for describing serialization rules in new types
-    /// serialization is performed by providing direct access to the underlying stream
-    /// through the Reader/Writer types.
-    ///
-    /// Types implementing this interface require a constructor 'new (reader : Reader)'
-    type IFsCoreSerializable =
-        abstract GetObjectData : Writer -> unit
 
     /// A factory pattern for generating formatters for generic types
     /// any type implementing this interface must declare a method

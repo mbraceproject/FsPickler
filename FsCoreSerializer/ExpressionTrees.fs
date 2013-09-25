@@ -10,6 +10,7 @@
     open System.Runtime.Serialization
 
     open FsCoreSerializer
+    open FsCoreSerializer.Utils
     open FsCoreSerializer.FormatterUtils
 
     module internal Expression =

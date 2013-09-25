@@ -90,7 +90,7 @@
 
     type StructFormatter =
         static member Create<'T when 'T : struct>(resolver : IFormatterResolver) =
-            let fields = typeof<'T>.GetFields(fieldBindings)
+            let fields = typeof<'T>.GetFields(allFields)
             if fields |> Array.exists(fun f -> f.IsInitOnly) then
                 raise <| new NonSerializableTypeException(typeof<'T>, "type is marked with read-only instance fields.")
             
@@ -155,7 +155,7 @@
         static member Create<'T when 'T : not struct>(resolver : IFormatterResolver) =
 
             let fields = 
-                typeof<'T>.GetFields(fieldBindings) 
+                typeof<'T>.GetFields(allFields) 
                 |> Array.filter (fun f -> not (containsAttr<NonSerializedAttribute> f))
 
             if fields |> Array.exists(fun f -> f.IsInitOnly) then
@@ -165,7 +165,7 @@
 
             let isDeserializationCallback = typeof<IDeserializationCallback>.IsAssignableFrom typeof<'T>
 
-            let allMethods = typeof<'T>.GetMethods(memberBindings)
+            let allMethods = typeof<'T>.GetMethods(allMembers)
             let onSerializing = allMethods |> getSerializationMethods<OnSerializingAttribute>
             let onSerialized = allMethods |> getSerializationMethods<OnSerializedAttribute>
             let onDeserializing = allMethods |> getSerializationMethods<OnDeserializingAttribute>

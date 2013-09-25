@@ -15,31 +15,6 @@
 
             new Formatter<'T>(reader, writer, info, cacheObj = cache, useWithSubtypes = useWithSubtypes)
 
-        let fieldBindings = 
-            BindingFlags.NonPublic ||| BindingFlags.Public ||| 
-                BindingFlags.Instance ||| BindingFlags.FlattenHierarchy 
-
-        let memberBindings =
-            BindingFlags.NonPublic ||| BindingFlags.Public |||
-                BindingFlags.Instance ||| BindingFlags.Static ||| BindingFlags.FlattenHierarchy
-
-        let ctorBindings = BindingFlags.Instance ||| BindingFlags.NonPublic ||| BindingFlags.Public
-
-        type Type with
-            member t.GetGenericMethod(isStatic, name : string, genericArgCount : int, paramCount : int) =
-                t.GetMethods(memberBindings)
-                |> Array.find(fun m ->
-                    m.Name = name && m.IsStatic = isStatic 
-                        && genericArgCount = m.GetGenericArguments().Length
-                        && paramCount = m.GetParameters().Length)
-
-            member t.TryGetConstructor(args : Type []) = denull <| t.GetConstructor(ctorBindings,null,args, [||])
-
-
-
-        let containsAttr<'T when 'T :> Attribute> (m : MemberInfo) =
-            m.GetCustomAttributes(typeof<'T>, true) |> Seq.isEmpty |> not
-
         /// filter a collection of methods that carry serialization attributes
         let getSerializationMethods<'Attr when 'Attr :> Attribute> (ms : MethodInfo []) =
             let isSerializationMethod(m : MethodInfo) =

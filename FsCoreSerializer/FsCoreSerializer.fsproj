@@ -53,6 +53,7 @@
     <Compile Include="FormatterResolution.fs" />
     <Compile Include="FsCoreSerializer.fs" />
     <Compile Include="ExtensionMethods.fs" />
+    <Compile Include="Combinators.fs" />
     <None Include="test.fsx" />
   </ItemGroup>
   <ItemGroup>

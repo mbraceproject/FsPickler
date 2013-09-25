@@ -134,7 +134,7 @@
             match typeof<'T>.TryGetConstructor [| typeof<SerializationInfo> ; typeof<StreamingContext> |] with
             | None -> None
             | Some ctorInfo ->
-                let allMethods = typeof<'T>.GetMethods(memberBindings)
+                let allMethods = typeof<'T>.GetMethods(allMembers)
                 let onSerializing = allMethods |> getSerializationMethods< OnSerializingAttribute>
                 let onSerialized = allMethods |> getSerializationMethods<OnSerializedAttribute>
 //                let onDeserializing = allMethods |> getSerializationMethods<OnDeserializingAttribute>
@@ -201,28 +201,18 @@
             m.GuardedInvoke(null, [| resolver :> obj |]) :?> Formatter option
 
 
-    // formatter builder for IFsCoreSerializable types
+    //
+    //  check if type implements a static factory method : IFormatterResolver -> Formatter<'DeclaringType>
+    //
 
-    type IFsCoreSerialibleFormatter =
-        static member Create<'T when 'T :> IFsCoreSerializable>(resolver : IFormatterResolver) =
-            match typeof<'T>.TryGetConstructor [| typeof<Reader> |] with
-            | None ->
-                let msg = "declared IFsCoreSerializable but missing constructor Reader -> T."
-                raise <| new NonSerializableTypeException(typeof<'T>, msg)
-            | Some ctorInfo ->
-#if EMIT_IL
-                let reader = Expression.compileFunc1<Reader, 'T>(fun reader -> Expression.New(ctorInfo, reader) :>_).Invoke
-#else
-                let reader (r : Reader) = ctorInfo.Invoke [| r :> obj |] |> fastUnbox<'T>
-#endif
-                let writer (w : Writer) (x : 'T) = x.GetObjectData(w)
+    type FormatterFactory =
+        static member TryCall(t : Type, resolver : IFormatterResolver) =
+            match t.GetMethod("CreateFormatter", BindingFlags.Public ||| BindingFlags.Static) with
+            | null -> None
+            | m ->
+                if  m.GetParameterTypes() = [| typeof<IFormatterResolver> |] && 
+                    m.ReturnType = typedefof<Formatter<_>>.MakeGenericType [| t |] then
 
-                new Formatter<'T>(reader, writer, FormatterInfo.IFsCoreSerializable, true, false)
-
-        static member CreateUntyped(t : Type, resolver : IFormatterResolver) =
-            let m =
-                typeof<IFsCoreSerialibleFormatter>
-                    .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
-                    .MakeGenericMethod [| t |]
-
-            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Formatter
+                    let fmt = m.GuardedInvoke(null, [| resolver :> obj |]) :?> Formatter
+                    Some fmt
+                else None

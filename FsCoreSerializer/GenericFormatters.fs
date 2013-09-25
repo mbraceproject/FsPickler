@@ -2,11 +2,6 @@
 
     open System
     open System.Collections.Generic
-//    open System.Runtime.Serialization
-
-//    open Microsoft.FSharp.Reflection
-//    open Microsoft.FSharp.Quotations
-//    open Microsoft.FSharp.Quotations.ExprShape
 
     open FsCoreSerializer
     open FsCoreSerializer.Utils
@@ -69,7 +64,7 @@
                 // do not cache or apply subtype polymorphism for performance
                 mkFormatter FormatterInfo.FSharpValue true false reader writer :> Formatter
 #else
-                mkFormatter FormatterInfo.Custom false true reader writer
+                mkFormatter FormatterInfo.Custom false true reader writer :> Formatter
 #endif
 
     type TripleFormatter () =
@@ -86,7 +81,7 @@
                 // do not cache or apply subtype polymorphism for performance
                 mkFormatter FormatterInfo.FSharpValue true false reader writer :> Formatter
 #else
-                mkFormatter FormatterInfo.Custom false true reader writer
+                mkFormatter FormatterInfo.Custom false true reader writer :> Formatter
 #endif 
 
     type OptionFormatter () =
@@ -108,7 +103,7 @@
                 // do not cache or apply subtype polymorphism for performance
                 mkFormatter FormatterInfo.FSharpValue true false reader writer :> Formatter
 #else
-                mkFormatter FormatterInfo.Custom false false reader writer
+                mkFormatter FormatterInfo.Custom false false reader writer :> Formatter
 #endif 
 
     type RefFormatter () =
@@ -150,7 +145,7 @@
             let reader (r : Reader) =
                 readKVPair<'K,'V> r kf vf |> Map.ofArray
 
-            mkFormatter FormatterInfo.Custom false true reader writer // :> Formatter
+            mkFormatter FormatterInfo.Custom false true reader writer
 
 
     // TODO: check perf
@@ -170,7 +165,7 @@
                     d.Add(k,v)
                 d
 
-            mkFormatter FormatterInfo.Custom false true reader writer :> Formatter
+            mkFormatter FormatterInfo.Custom false true reader writer
 
 
     let mkGenericFormatters () =

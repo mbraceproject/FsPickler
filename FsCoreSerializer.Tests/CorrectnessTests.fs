@@ -54,7 +54,9 @@
         [<Test>] member __.``Recursive Class`` () = testEquals <| RecursiveClass(Some (RecursiveClass(None)))
         [<Test>] member __.``Cyclic Object`` () = test <| CyclicClass()
         [<Test>] member __.``ISerializable Class`` () = testEquals <| SerializableClass(42, "fortyTwo")
-        [<Test>] member __.``IFsCoreSerializable Class`` () = testEquals <| FsCoreSerializableClass(42, "fortyTwo")
+        [<Test>] member __.``Formatter Factory Class`` () = 
+                            let x = ClassWithFormatterFactory(0) |> testLoop
+                            x.Value |> should equal 42
 
         [<Test>]
         member __.``NonSerializable Type`` () =
@@ -168,13 +170,12 @@
 
 
         [<Test>]
-        member __.``FSharp Tree`` () =
-            testEquals (mkTree 5)
+        member __.``FSharp Tree`` () = testEquals (mkTree 5)
 
 
         [<Test>]
-        member __.``FSharp Cyclic Union`` () =
-            let rec f = Rec (fun g -> let (Rec f) = f in f g)
+        member __.``FSharp Cyclic Value`` () = 
+            let rec f = { Rec = f }
             test f
 
         [<Test>]
@@ -213,10 +214,6 @@
                 @>
 
             test quot
-
-        [<Test>]
-        member __.``IFormatterFactory test`` () =
-            (0,"0",()) |> testLoop |> should equal (42,"42",()) 
 
 
         [<Test>]
