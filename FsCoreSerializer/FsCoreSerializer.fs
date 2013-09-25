@@ -13,21 +13,21 @@
     open FsCoreSerializer.TypeShape
     open FsCoreSerializer.FormatterUtils
     open FsCoreSerializer.BaseFormatters
-    open FsCoreSerializer.GenericFormatters
+    open FsCoreSerializer.FSharpCombinators
     open FsCoreSerializer.FormatterResolution
 
     [<Sealed>]
     type FormatterRegistry () =
 
-        let typeNameConverter = ref (DefaultTypeNameConverter() :> ITypeNameConverter)
+        let mutable typeNameConverter = DefaultTypeNameConverter() :> ITypeNameConverter
         let formatters = Atom.atom Map.empty<string, Formatter>
 //        let formatterFactories = Atom.atom Map.empty<string, IFormatterFactory>
         let genericFactories = Atom.atom GenericFormatterIndex.Empty
 
         /// register custom type serialization rules; useful for FSI type serializations
         member __.TypeNameConverter
-            with get () = typeNameConverter.Value
-            and set tyConv = typeNameConverter := tyConv
+            with get () = typeNameConverter
+            and set tyConv = typeNameConverter <- tyConv
 
         /// register formatter for a specific type
         member __.RegisterFormatter(f : Formatter) =

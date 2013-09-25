@@ -58,10 +58,22 @@
             member __.Value = x
 
             static member CreateFormatter (resolver : IFormatterResolver) =
-                Formatter.Create(
+                Formatter.FromPrimitives(
                     (fun _ -> ClassWithFormatterFactory(42)),
                     (fun _ _ -> ()),
                         true, false)
+
+        type ClassWithCombinators (x : int, y : ClassWithCombinators option) =
+            member __.Value = x,y
+
+            static member CreateFormatter (resolver : IFormatterResolver) =
+                let fmt' = 
+                    Formatter.auto<ClassWithCombinators> resolver 
+                    |> Formatter.option 
+                    |> Formatter.pair (Formatter.auto<int> resolver)
+
+                Formatter.wrap fmt' (fun (x,y) -> new ClassWithCombinators(x,y)) (fun c -> c.Value)
+
 
         exception FsharpException of int * string
 
@@ -92,7 +104,7 @@
                     let value = r.Read valueFmt
                     new GenericType<'T>(Unchecked.defaultof<'T>)
 
-                Formatter.Create(reader, writer) :> Formatter
+                Formatter.FromPrimitives(reader, writer) :> Formatter
 
         type TestDelegate = delegate of unit -> unit
 

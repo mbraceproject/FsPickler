@@ -48,12 +48,11 @@
     <Compile Include="ReflectionFormatters.fs" />
     <Compile Include="DotNetFormatters.fs" />
     <Compile Include="FSharpFormatters.fs" />
-    <Compile Include="GenericFormatters.fs" />
+    <Compile Include="FSharpCombinators.fs" />
     <Compile Include="TypeShape.fs" />
     <Compile Include="FormatterResolution.fs" />
     <Compile Include="FsCoreSerializer.fs" />
     <Compile Include="ExtensionMethods.fs" />
-    <Compile Include="Combinators.fs" />
     <None Include="test.fsx" />
   </ItemGroup>
   <ItemGroup>

@@ -47,13 +47,13 @@
 
         // length passed as argument to avoid unecessary evaluations of sequence
         let inline writeSeq (w : Writer) (ef : Formatter<'T>) (length : int) (xs : seq<'T>) =
-            let isValue = ef.TypeInfo <= TypeInfo.Value
+            let isValue = isValue ef
             w.BW.Write length
             for x in xs do write isValue w ef x
 
         // TODO : value types should probably be block deserialized
-        let inline readSeq<'T> (r : Reader) (ef : Formatter<'T>) =
-            let isValue = ef.TypeInfo <= TypeInfo.Value
+        let inline readSeq (r : Reader) (ef : Formatter<'T>) =
+            let isValue = isValue ef
             let length = r.BR.ReadInt32()
             let xs = Array.zeroCreate<'T> length
             for i = 0 to length - 1 do
@@ -61,17 +61,17 @@
             xs
 
         // length passed as argument to avoid unecessary evaluations of sequence
-        let inline writeKVPair (w : Writer) (kf : Formatter<'K>) (vf : Formatter<'V>) (length : int) (xs : ('K * 'V) seq) =
-            let kIsValue = kf.TypeInfo <= TypeInfo.Value
-            let vIsValue = vf.TypeInfo <= TypeInfo.Value
+        let inline writeKVPairs (w : Writer) (kf : Formatter<'K>) (vf : Formatter<'V>) (length : int) (xs : ('K * 'V) seq) =
+            let kIsValue = isValue kf
+            let vIsValue = isValue vf
             w.BW.Write length
             for k,v in xs do
                 write kIsValue w kf k
                 write vIsValue w vf v
 
-        let inline readKVPair<'K,'V> (r : Reader) (kf : Formatter<'K>) (vf : Formatter<'V>) =
-            let kIsValue = kf.TypeInfo <= TypeInfo.Value
-            let vIsValue = vf.TypeInfo <= TypeInfo.Value
+        let inline readKVPairs (r : Reader) (kf : Formatter<'K>) (vf : Formatter<'V>) =
+            let kIsValue = isValue kf
+            let vIsValue = isValue vf
             let length = r.BR.ReadInt32()
             let xs = Array.zeroCreate<'K * 'V> length
             for i = 0 to length - 1 do
@@ -80,3 +80,108 @@
                 xs.[i] <- k,v
 
             xs
+
+
+        // equivalent implementations for client facade
+
+        let writeSeq' (ef : Formatter<'T>) (w : Writer) (xs : 'T seq) : unit =
+            let isValue = isValue ef
+            match xs with
+            | :? ('T []) as arr ->
+                w.BW.Write true
+                w.BW.Write arr.Length
+                for i = 0 to arr.Length - 1 do
+                    write isValue w ef (arr.[i])
+            | :? ('T list) as list ->
+                w.BW.Write true
+                w.BW.Write list.Length
+                let rec iter rest =
+                    match rest with
+                    | [] -> ()
+                    | hd :: tl ->
+                        write isValue w ef hd
+                        iter tl
+
+                iter list
+            | _ ->
+                w.BW.Write false
+                use e = xs.GetEnumerator()
+                while e.MoveNext() do
+                    w.BW.Write true
+                    write isValue w ef e.Current
+
+                w.BW.Write false
+
+        let readSeq' (ef : Formatter<'T>) (r : Reader) : 'T seq =
+            let isValue = isValue ef
+
+            if r.BR.ReadBoolean() then
+                let length = r.BR.ReadInt32()
+                let arr = Array.zeroCreate<'T> length
+                for i = 0 to length - 1 do
+                    arr.[i] <- read isValue r ef
+                arr :> _
+            else
+                let ra = new ResizeArray<'T> ()
+                while r.BR.ReadBoolean() do
+                    let next = read isValue r ef
+                    ra.Add next
+
+                ra :> _
+
+        let writeKVPairs' (kf : Formatter<'K>) (vf : Formatter<'V>) (w : Writer) (xs : ('K * 'V) seq) : unit =
+            let kIsValue = isValue kf
+            let vIsValue = isValue vf
+            match xs with
+            | :? (('K * 'V) []) as arr ->
+                w.BW.Write true
+                w.BW.Write arr.Length
+                for i = 0 to arr.Length - 1 do
+                    let k,v = arr.[i]
+                    write kIsValue w kf k
+                    write vIsValue w vf v
+            | :? (('K * 'V) list) as list ->
+                w.BW.Write true
+                w.BW.Write list.Length
+                let rec iter rest =
+                    match rest with
+                    | [] -> ()
+                    | (k,v) :: tl ->
+                        write kIsValue w kf k
+                        write vIsValue w vf v
+                        iter tl
+
+                iter list
+            | _ ->
+                w.BW.Write false
+                let e = xs.GetEnumerator()
+                while e.MoveNext() do
+                    w.BW.Write true
+                    let k,v = e.Current
+                    write kIsValue w kf k
+                    write vIsValue w vf v
+
+                w.BW.Write false
+
+
+        /// Deserializes a sequence of key/value pairs from the underlying stream
+        let readKVPairs' (kf : Formatter<'K>) (vf : Formatter<'V>) (r : Reader) =
+            let kIsValue = isValue kf
+            let vIsValue = isValue vf
+
+            if r.BR.ReadBoolean() then
+                let length = r.BR.ReadInt32()
+                let arr = Array.zeroCreate<'K * 'V> length
+                for i = 0 to length - 1 do
+                    let k = read kIsValue r kf
+                    let v = read vIsValue r vf
+                    arr.[i] <- k,v
+                arr :> seq<'K * 'V>
+            else
+                let ra = new ResizeArray<'K * 'V> ()
+                while r.BR.ReadBoolean() do
+                    let k = read kIsValue r kf
+                    let v = read vIsValue r vf
+                    ra.Add (k,v)
+
+                ra :> seq<'K * 'V>

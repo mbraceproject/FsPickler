@@ -159,6 +159,16 @@
 
 
         [<Test>]
+        member __.``Combinators with recursive bindings`` () =
+            let x = new ClassWithCombinators(42, None)
+            let y = new ClassWithCombinators(0, Some x)
+
+            let z = testLoop y
+
+            z.Value |> snd |> Option.map (fun x -> x.Value) |> Option.get |> fst |> should equal 42
+
+
+        [<Test>]
         member __.``FSharp Closure`` () =
             let f () =
                 let x = System.Random().Next()

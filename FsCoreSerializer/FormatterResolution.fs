@@ -15,7 +15,6 @@
     open FsCoreSerializer.ReflectionFormatters
     open FsCoreSerializer.DotNetFormatters
     open FsCoreSerializer.FSharpFormatters
-    open FsCoreSerializer.GenericFormatters
 
     /// Y combinator with parametric recursion support
     let YParametric (externalCache : ConcurrentDictionary<Type, Formatter>)
