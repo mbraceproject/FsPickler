@@ -1,7 +1,7 @@
 ﻿namespace FsPickler
 
     open FsPickler.PicklerUtils
-    open FsPickler.FSharpCombinators
+    open FsPickler.CombinatorImpls
 
 
     [<AutoOpen>]
@@ -11,7 +11,9 @@
         [<RequireQualifiedAccess>]
         module Pickler =
 
-            let inline auto<'T> (resolver : IPicklerResolver) = resolver.Resolve<'T> ()
+            let private resolver = lazy(PicklerCache.GetDefault() :> IPicklerResolver)
+
+            let auto<'T> = resolver.Value.Resolve<'T> ()
             
             let pair f g = PairPickler.Create(f,g)
             let triple f g h = TriplePickler.Create(f,g,h)
@@ -29,8 +31,20 @@
             let map f = FSharpMapPickler.Create f
             let set f = FSharpSetPickler.Create f
 
-            let wrap fmt recover convert = WrapPickler.Create(fmt, convert, recover)
+            let wrap recover convert fmt = WrapPickler.Create(fmt, recover, convert)
             let alt tagReader fmts = AltPickler.Create(tagReader, fmts)
+
+            let fix (F : Pickler<'T> -> Pickler<'T>) =
+                let f = new Pickler<'T>()
+                let f' = F f
+                f.InitializeFrom f' ; f
+
+            let fix2 (F : Pickler<'T> -> Pickler<'S> -> Pickler<'T> * Pickler<'S>) =
+                let f = new Pickler<'T>()
+                let g = new Pickler<'S>()
+                let f',g' = F f g
+                f.InitializeFrom f' ; g.InitializeFrom g'
+                f',g'
 
 
         type Pickler with
@@ -44,20 +58,20 @@
 
         type Writer with
             member w.WriteSequence(xs : seq<'T>) =
-                let fmt = w.ResolvePickler<'T> ()
+                let fmt = w.Resolver.Resolve<'T> ()
                 writeSeq' fmt w xs
 
             member w.WriteKeyValueSequence(xs : seq<'K * 'V>) =
-                let kf = w.ResolvePickler<'K> ()
-                let vf = w.ResolvePickler<'V> ()
+                let kf = w.Resolver.Resolve<'K> ()
+                let vf = w.Resolver.Resolve<'V> ()
                 writeKVPairs' kf vf w xs
 
         type Reader with
             member r.ReadSequence<'T> () =
-                let fmt = r.ResolvePickler<'T> ()
+                let fmt = r.Resolver.Resolve<'T> ()
                 readSeq' fmt r
 
             member r.ReadKeyValueSequence<'K, 'V> () =
-                let kf = r.ResolvePickler<'K> ()
-                let vf = r.ResolvePickler<'V> ()
+                let kf = r.Resolver.Resolve<'K> ()
+                let vf = r.Resolver.Resolve<'V> ()
                 readKVPairs' kf vf r

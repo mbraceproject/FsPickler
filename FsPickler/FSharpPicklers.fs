@@ -112,14 +112,14 @@
 
             let writer (w : Writer) (x : 'Union) =
                 let tag = tagReader x
-                w.BW.Write tag
+                w.BinaryWriter.Write tag
                 let _,reader,formatters = unionCases.[tag]
                 let values = reader x
                 for i = 0 to values.Length - 1 do
                     formatters.[i].ManagedWrite w values.[i]
 
             let reader (r : Reader) =
-                let tag = r.BR.ReadInt32()
+                let tag = r.BinaryReader.ReadInt32()
                 let ctor,_,formatters = unionCases.[tag]
                 let values = Array.zeroCreate<obj> formatters.Length
                 for i = 0 to formatters.Length - 1 do

@@ -12,6 +12,7 @@
 
         open TestTypes
 
+        let fsc = testSerializer :> ISerializer
         let bfs = new TestBinaryPickler () :> ISerializer
         let ndc = new TestNetDataContractSerializer () :> ISerializer
 
@@ -41,7 +42,7 @@
                             else otherM
                         else otherM / fscM
 
-                    printfn "%s is %.2fx faster and %.2fx more memory efficient than %s." testSerializer.Name time space other.Name
+                    printfn "%s is %.2fx faster and %.2fx more memory efficient than %s." fsc.Name time space other.Name
                     // measure combined performance benefit with an 80% bias to time results
                     (4. * time + space) / 5.
                 | Choice2Of2 e ->
@@ -51,14 +52,15 @@
             printfn "Running %d iterations on type %O:" iterations typeof<'T>
 
             let fscResults = runBenchmark TestTypes.testSerializer
-            let ndcResults = runBenchmark ndc
-            let bfsResults = runBenchmark bfs
                 
             match fscResults with
             | Choice2Of2 e -> 
-                printfn "%s failed during test." TestTypes.testSerializer.Name
+                printfn "%s failed during test." fsc.Name
                 raise e
             | Choice1Of2 r ->
+                let ndcResults = runBenchmark ndc
+                let bfsResults = runBenchmark bfs
+
                 let bfsMetric = compareResults r bfs bfsResults
                 let ndcMetric = compareResults r ndc ndcResults
 

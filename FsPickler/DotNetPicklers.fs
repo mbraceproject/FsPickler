@@ -26,10 +26,10 @@
             let writer (w : Writer) (x : 'Array) =
 
                 for d = 0 to rank - 1 do
-                    w.BW.Write(x.GetLength d)
+                    w.BinaryWriter.Write(x.GetLength d)
 
                 if ef.TypeInfo = TypeInfo.Primitive then
-                    Stream.WriteArray(w.BW.BaseStream, x)
+                    Stream.WriteArray(w.BinaryWriter.BaseStream, x)
                 else
                     let isValue = ef.TypeInfo <= TypeInfo.Value
                              
@@ -60,7 +60,7 @@
 
             let reader (r : Reader) =
                 let l = Array.zeroCreate<int> rank
-                for i = 0 to rank - 1 do l.[i] <- r.BR.ReadInt32()
+                for i = 0 to rank - 1 do l.[i] <- r.BinaryReader.ReadInt32()
 
                 if ef.TypeInfo = TypeInfo.Primitive then
                     let array =
@@ -73,7 +73,7 @@
 
                     r.EarlyRegisterObject array
 
-                    Stream.CopyToArray(r.BR.BaseStream, array)
+                    Stream.CopyToArray(r.BinaryReader.BaseStream, array)
 
                     fastUnbox<'Array> array
                 else
@@ -167,19 +167,19 @@
                     run onSerializing w x
                     let sI = new SerializationInfo(typeof<'T>, new FormatterConverter())
                     x.GetObjectData(sI, w.StreamingContext)
-                    w.BW.Write sI.MemberCount
+                    w.BinaryWriter.Write sI.MemberCount
                     let enum = sI.GetEnumerator()
                     while enum.MoveNext() do
-                        w.BW.Write enum.Current.Name
+                        w.BinaryWriter.Write enum.Current.Name
                         w.Write<obj> enum.Current.Value
 
                     run onSerialized w x
 
                 let reader (r : Reader) =
                     let sI = new SerializationInfo(typeof<'T>, new FormatterConverter())
-                    let memberCount = r.BR.ReadInt32()
+                    let memberCount = r.BinaryReader.ReadInt32()
                     for i = 1 to memberCount do
-                        let name = r.BR.ReadString()
+                        let name = r.BinaryReader.ReadString()
                         let v = r.Read<obj> ()
                         sI.AddValue(name, v)
 

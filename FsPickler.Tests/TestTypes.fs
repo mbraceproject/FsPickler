@@ -24,6 +24,42 @@
 
         let rec int2Peano n = match n with 0 -> Zero | n -> Succ(int2Peano(n-1))
 
+
+        type Tree<'T> = Empty | Node of 'T * Forest<'T>
+        and Forest<'T> = Nil | Cons of Tree<'T> * Forest<'T>
+
+
+        let rec nTree (n : int) =
+            if n = 0 then Empty
+            else
+                Node(n, nForest (n-1) (n-1))
+
+        and nForest (d : int) (l : int) =
+            if l = 0 then Nil
+            else
+                Cons(nTree d, nForest d (l-1))
+
+
+        let getTreePicklers<'T> () =
+            Pickler.fix2(fun treeP forestP ->
+                let tp = Pickler.auto<'T>
+
+                let treeP' =
+                    Pickler.pair tp forestP
+                    |> Pickler.option 
+                    |> Pickler.wrap 
+                        (function None -> Empty | Some (v,f) -> Node(v,f))
+                        (function Empty -> None | Node (v,f) -> Some(v,f))
+
+                let forestP' =
+                    Pickler.pair treeP forestP
+                    |> Pickler.option
+                    |> Pickler.wrap
+                        (function None -> Nil | Some (t,f) -> Cons(t,f))
+                        (function Nil -> None | Cons(t,f) -> Some (t,f))
+
+                treeP', forestP')
+
         type SimpleClass(x : int, y : string) =
             member __.Value = string x + y
             override __.Equals y = match y with :? SimpleClass as y -> y.Value = __.Value | _ -> false
@@ -67,12 +103,14 @@
             member __.Value = x,y
 
             static member CreatePickler (resolver : IPicklerResolver) =
-                let fmt' = 
-                    Pickler.auto<ClassWithCombinators> resolver 
+                Pickler.fix(fun self -> 
+                    self 
                     |> Pickler.option 
-                    |> Pickler.pair (Pickler.auto<int> resolver)
+                    |> Pickler.pair Pickler.auto<int>
+                    |> Pickler.wrap (fun (x,y) -> new ClassWithCombinators(x,y)) (fun c -> c.Value))
 
-                Pickler.wrap fmt' (fun (x,y) -> new ClassWithCombinators(x,y)) (fun c -> c.Value)
+
+        
 
 
         exception FsharpException of int * string
@@ -159,16 +197,16 @@
 
         // create serializer
         let testSerializer =
-            let registry = new PicklerRegistry()
+            let registry = new CustomPicklerRegistry()
             do
                 registry.RegisterGenericPickler(new GenericTypePickler())
 
-            new TestFsPickler(registry) :> ISerializer
+            new TestFsPickler(registry)
 
 
         // automated large-scale object generation
         let generateSerializableObjects (assembly : Assembly) =
-            let fscs = (testSerializer :?> TestFsPickler).FSCS
+            let fscs = testSerializer.FSCS
 
             let filterType (t : Type) =
                 try fscs.IsSerializableType t

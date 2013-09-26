@@ -76,8 +76,8 @@
             let deserializationCallBack = typeof<IDeserializationCallback>.GetMethod("OnDeserialization")
             let writerM = typeof<Writer>.GetGenericMethod(false, "Write", 1, 2)
             let readerM = typeof<Reader>.GetGenericMethod(false, "Read", 1, 1)
-            let bw = typeof<Writer>.GetProperty("BW", BindingFlags.NonPublic ||| BindingFlags.Instance)
-            let br = typeof<Reader>.GetProperty("BR", BindingFlags.NonPublic ||| BindingFlags.Instance)
+            let bw = typeof<Writer>.GetProperty("BinaryWriter", BindingFlags.Public ||| BindingFlags.Instance)
+            let br = typeof<Reader>.GetProperty("BinaryReader", BindingFlags.Public ||| BindingFlags.Instance)
             let bwIntWriter = typeof<System.IO.BinaryWriter>.GetMethod("Write", [| typeof<int> |])
             let brIntReader = typeof<System.IO.BinaryReader>.GetMethod("ReadInt32")
             

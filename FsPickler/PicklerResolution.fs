@@ -17,42 +17,45 @@
     open FsPickler.FSharpPicklers
 
     /// Y combinator with parametric recursion support
-    let YParametric (externalCache : ConcurrentDictionary<Type, Pickler>)
-                    (resolverF : IPicklerResolver -> Type -> Pickler) 
-                    (t : Type) =
+    let YParametric (externalCacheLookup : Type -> Pickler option)
+                    (externalCacheCommit : Type -> Pickler -> unit)
+                    (resolverF : IPicklerResolver -> Type -> Pickler) (t : Type) =
 
         // use internal cache to avoid corruption in event of exceptions being raised
         let internalCache = new Dictionary<Type, Pickler> ()
 
-        let rec recurse (t : Type) =
-            match externalCache.TryFind t with
+        let rec lookup (t : Type) =
+            match externalCacheLookup t with
+            | Some f -> f
             | None ->
                 match internalCache.TryFind t with
+                | Some f -> f
                 | None ->
-                    let fmt = UninitializedPickler.CreateUntyped t
-                    internalCache.Add(t, fmt)
-                    let fmt' = resolverF resolver t
-                    do fmt.InitializeFrom(fmt')
-                    // recursive operation successful, commit to external cache
-                    externalCache.TryAdd(t, fmt) |> ignore
-                    fmt
-                | Some l -> l
-            | Some f -> f
+                    // start pickler construction
+                    let f = UninitializedPickler.CreateUntyped t
+                    internalCache.Add(t, f)
+                    let f' = resolverF resolver t
+                    do f.InitializeFrom(f')
+
+                    // pickler construction successful, commit to external cache
+                    do externalCacheCommit t f
+                    f
 
         and resolver =
             {
                 new IPicklerResolver with
-                    member __.Resolve<'T> () = recurse typeof<'T> :?> Pickler<'T>
-                    member __.Resolve (t : Type) = recurse t
+                    member __.Resolve<'T> () = lookup typeof<'T> :?> Pickler<'T>
+                    member __.Resolve (t : Type) = lookup t
             }
 
-        recurse t
+        lookup t
 
-    // recursive formatter resolution
 
-    let resolvePickler (typeNameConverter : ITypeNameConverter) 
-                            (genericIdx : GenericPicklerIndex) 
-                            (resolver : IPicklerResolver) (t : Type) =
+
+
+    // reflection - based pickler resolution
+
+    let resolvePickler (genericIdx : GenericPicklerIndex) (resolver : IPicklerResolver) (t : Type) =
 
         // check if type is supported
         if isUnSupportedType t then raise <| new NonSerializableTypeException(t)

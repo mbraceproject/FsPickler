@@ -48,13 +48,13 @@
         // length passed as argument to avoid unecessary evaluations of sequence
         let inline writeSeq (w : Writer) (ef : Pickler<'T>) (length : int) (xs : seq<'T>) =
             let isValue = isValue ef
-            w.BW.Write length
+            w.BinaryWriter.Write length
             for x in xs do write isValue w ef x
 
         // TODO : value types should probably be block deserialized
         let inline readSeq (r : Reader) (ef : Pickler<'T>) =
             let isValue = isValue ef
-            let length = r.BR.ReadInt32()
+            let length = r.BinaryReader.ReadInt32()
             let xs = Array.zeroCreate<'T> length
             for i = 0 to length - 1 do
                 xs.[i] <- read isValue r ef
@@ -64,7 +64,7 @@
         let inline writeKVPairs (w : Writer) (kf : Pickler<'K>) (vf : Pickler<'V>) (length : int) (xs : ('K * 'V) seq) =
             let kIsValue = isValue kf
             let vIsValue = isValue vf
-            w.BW.Write length
+            w.BinaryWriter.Write length
             for k,v in xs do
                 write kIsValue w kf k
                 write vIsValue w vf v
@@ -72,7 +72,7 @@
         let inline readKVPairs (r : Reader) (kf : Pickler<'K>) (vf : Pickler<'V>) =
             let kIsValue = isValue kf
             let vIsValue = isValue vf
-            let length = r.BR.ReadInt32()
+            let length = r.BinaryReader.ReadInt32()
             let xs = Array.zeroCreate<'K * 'V> length
             for i = 0 to length - 1 do
                 let k = read kIsValue r kf
@@ -88,13 +88,13 @@
             let isValue = isValue ef
             match xs with
             | :? ('T []) as arr ->
-                w.BW.Write true
-                w.BW.Write arr.Length
+                w.BinaryWriter.Write true
+                w.BinaryWriter.Write arr.Length
                 for i = 0 to arr.Length - 1 do
                     write isValue w ef (arr.[i])
             | :? ('T list) as list ->
-                w.BW.Write true
-                w.BW.Write list.Length
+                w.BinaryWriter.Write true
+                w.BinaryWriter.Write list.Length
                 let rec iter rest =
                     match rest with
                     | [] -> ()
@@ -104,26 +104,26 @@
 
                 iter list
             | _ ->
-                w.BW.Write false
+                w.BinaryWriter.Write false
                 use e = xs.GetEnumerator()
                 while e.MoveNext() do
-                    w.BW.Write true
+                    w.BinaryWriter.Write true
                     write isValue w ef e.Current
 
-                w.BW.Write false
+                w.BinaryWriter.Write false
 
         let readSeq' (ef : Pickler<'T>) (r : Reader) : 'T seq =
             let isValue = isValue ef
 
-            if r.BR.ReadBoolean() then
-                let length = r.BR.ReadInt32()
+            if r.BinaryReader.ReadBoolean() then
+                let length = r.BinaryReader.ReadInt32()
                 let arr = Array.zeroCreate<'T> length
                 for i = 0 to length - 1 do
                     arr.[i] <- read isValue r ef
                 arr :> _
             else
                 let ra = new ResizeArray<'T> ()
-                while r.BR.ReadBoolean() do
+                while r.BinaryReader.ReadBoolean() do
                     let next = read isValue r ef
                     ra.Add next
 
@@ -134,15 +134,15 @@
             let vIsValue = isValue vf
             match xs with
             | :? (('K * 'V) []) as arr ->
-                w.BW.Write true
-                w.BW.Write arr.Length
+                w.BinaryWriter.Write true
+                w.BinaryWriter.Write arr.Length
                 for i = 0 to arr.Length - 1 do
                     let k,v = arr.[i]
                     write kIsValue w kf k
                     write vIsValue w vf v
             | :? (('K * 'V) list) as list ->
-                w.BW.Write true
-                w.BW.Write list.Length
+                w.BinaryWriter.Write true
+                w.BinaryWriter.Write list.Length
                 let rec iter rest =
                     match rest with
                     | [] -> ()
@@ -153,15 +153,15 @@
 
                 iter list
             | _ ->
-                w.BW.Write false
+                w.BinaryWriter.Write false
                 let e = xs.GetEnumerator()
                 while e.MoveNext() do
-                    w.BW.Write true
+                    w.BinaryWriter.Write true
                     let k,v = e.Current
                     write kIsValue w kf k
                     write vIsValue w vf v
 
-                w.BW.Write false
+                w.BinaryWriter.Write false
 
 
         /// Deserializes a sequence of key/value pairs from the underlying stream
@@ -169,8 +169,8 @@
             let kIsValue = isValue kf
             let vIsValue = isValue vf
 
-            if r.BR.ReadBoolean() then
-                let length = r.BR.ReadInt32()
+            if r.BinaryReader.ReadBoolean() then
+                let length = r.BinaryReader.ReadInt32()
                 let arr = Array.zeroCreate<'K * 'V> length
                 for i = 0 to length - 1 do
                     let k = read kIsValue r kf
@@ -179,7 +179,7 @@
                 arr :> seq<'K * 'V>
             else
                 let ra = new ResizeArray<'K * 'V> ()
-                while r.BR.ReadBoolean() do
+                while r.BinaryReader.ReadBoolean() do
                     let k = read kIsValue r kf
                     let v = read vIsValue r vf
                     ra.Add (k,v)

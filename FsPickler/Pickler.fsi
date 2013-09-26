@@ -76,17 +76,16 @@
       class
         interface IDisposable
 
-        internal new : Stream * IPicklerResolver * StreamingContext * ?leaveOpen:bool * ?encoding:Encoding -> Writer
+        internal new : Stream * IPicklerResolver * ?streamingContext:obj * ?leaveOpen:bool * ?encoding:Encoding -> Writer
 
-        member ResolvePickler : unit -> Pickler<'T>
+        member Resolver : IPicklerResolver
+
+        member BinaryWriter : BinaryWriter
+        member StreamingContext : StreamingContext
 
         member Write : 'T -> unit
         member Write : Pickler<'T> * 'T -> unit
-
         member internal WriteObj : Type * obj -> unit
-        member internal BW : BinaryWriter
-
-        member StreamingContext : StreamingContext
 
       end
 
@@ -94,14 +93,17 @@
       class
         interface IDisposable
 
-        internal new : Stream * IPicklerResolver * StreamingContext * ?leaveOpen:bool * ?encoding:Encoding -> Reader
-        member internal EarlyRegisterObject : obj -> unit
+        internal new : Stream * IPicklerResolver * ?streamingContext:obj * ?leaveOpen:bool * ?encoding:Encoding -> Reader
+
+        member Resolver : IPicklerResolver
+        
+        member StreamingContext : StreamingContext
+        member BinaryReader : BinaryReader
 
         member Read : unit -> 'T
         member Read : Pickler<'T> -> 'T
         member internal ReadObj : Type -> obj
-        member ResolvePickler : unit -> Pickler<'T>
-        member internal BR : BinaryReader
-        member StreamingContext : StreamingContext
+        
+        member internal EarlyRegisterObject : obj -> unit
 
       end

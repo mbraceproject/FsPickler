@@ -261,17 +261,17 @@
             let writer (w : Writer) (dele : 'Delegate) =
                 match dele.GetInvocationList() with
                 | [| _ |] ->
-                    w.BW.Write true
+                    w.BinaryWriter.Write true
                     w.Write(memberInfoPickler, dele.Method)
                     if not dele.Method.IsStatic then w.Write<obj> dele.Target
                 | deleList ->
-                    w.BW.Write false
-                    w.BW.Write deleList.Length
+                    w.BinaryWriter.Write false
+                    w.BinaryWriter.Write deleList.Length
                     for i = 0 to deleList.Length - 1 do
                         w.Write<System.Delegate> (deleList.[i])
 
             let reader (r : Reader) =
-                if r.BR.ReadBoolean() then
+                if r.BinaryReader.ReadBoolean() then
                     let meth = r.Read memberInfoPickler
                     if not meth.IsStatic then
                         let target = r.Read<obj> ()
@@ -279,7 +279,7 @@
                     else
                         Delegate.CreateDelegate(typeof<'Delegate>, meth, throwOnBindFailure = true) |> fastUnbox<'Delegate>
                 else
-                    let n = r.BR.ReadInt32()
+                    let n = r.BinaryReader.ReadInt32()
                     let deleList = Array.zeroCreate<System.Delegate> n
                     for i = 0 to n - 1 do deleList.[i] <- r.Read<System.Delegate> ()
                     Delegate.Combine deleList |> fastUnbox<'Delegate>

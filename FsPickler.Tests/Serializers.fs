@@ -12,7 +12,7 @@
         abstract Serialize : Stream * 'T -> unit
         abstract Deserialize : Stream -> 'T
 
-    type TestFsPickler (?registry : PicklerRegistry) =
+    type TestFsPickler (?registry : CustomPicklerRegistry) =
         let fsc = match registry with None -> new FsPickler() | Some r -> new FsPickler(r)
 
         member __.FSCS = fsc

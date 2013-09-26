@@ -58,6 +58,28 @@
                             let x = ClassWithPicklerFactory(0) |> testLoop
                             x.Value |> should equal 42
 
+
+        [<Test>] member __.``Combinator-based Peano`` () =
+                    let pp = 
+                        Pickler.fix(fun peanoP -> 
+                            peanoP 
+                            |> Pickler.option 
+                            |> Pickler.wrap 
+                                (function None -> Zero | Some p -> Succ p) 
+                                (function Zero -> None | Succ p -> Some p))
+
+                    let p = int2Peano 100
+
+                    p |> testSerializer.FSCS.Pickle pp |> testSerializer.FSCS.UnPickle pp |> should equal p
+
+        [<Test>] member __.``Mutual Recursive Unions`` () = testEquals <| nTree 6
+
+        [<Test>] member __.``Combinator-based Mutual Recursion`` () =
+                    let tp,_ = getTreePicklers<int> ()
+                    let t = nTree 6
+
+                    t |> testSerializer.FSCS.Pickle tp |> testSerializer.FSCS.UnPickle tp |> should equal t
+
         [<Test>]
         member __.``NonSerializable Type`` () =
             let fs = new System.IO.FileStream(System.IO.Path.GetTempFileName(), System.IO.FileMode.Open)

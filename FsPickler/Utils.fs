@@ -79,10 +79,16 @@
 
         let (|InnerExn|_|) (e : #exn) = denull e.InnerException
 
-        let inline mkUntypedWriter (f : 'a -> 'b -> 'c) = fun x (y:obj) -> f x (y :?> _)
-        let inline mkUntypedReader (f : 'a -> 'b) = fun x -> f x :> obj
-        let inline mkTypedWriter (f : 'a -> obj -> 'c) = fun x (y : 'b) -> f x (y :> obj)
-        let inline mkTypedReader (f : 'a -> obj) = fun x -> f x :?> 'b
+//        let inline mkUntypedWriter (f : 'a -> 'b -> 'c) = fun x (y:obj) -> f x (y :?> _)
+//        let inline mkUntypedReader (f : 'a -> 'b) = fun x -> f x :> obj
+//        let inline mkTypedWriter (f : 'a -> obj -> 'c) = fun x (y : 'b) -> f x (y :> obj)
+//        let inline mkTypedReader (f : 'a -> obj) = fun x -> f x :?> 'b
+
+
+        let initStreamingContext (ctx : obj option) = 
+            match ctx with 
+            | None -> StreamingContext() 
+            | Some o -> StreamingContext(StreamingContextStates.All, o)
 
 
         // produces a structural hashcode out of a byte array

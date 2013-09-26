@@ -14,98 +14,66 @@ let loop (x : 'T) =
     fsc.Serialize<obj>(mem, x)
     mem.Position <- 0L
     fsc.Deserialize<obj>(mem) :?> 'T
-    
-    
-//M<T> -> (T -> M<U>) -> M<U>
-//M<T> -> (M<T> -> U) -> M<U>
-
-open System.IO
- 
-type Format<'T> =
-    {
-        Read : BinaryReader -> 'T
-        Write : BinaryWriter -> 'T -> unit
-    }
- 
-type FormatUnionPart<'X,'U> =
-    {
-        R : list<BinaryReader -> 'U>
-        W : 'X -> 'U -> BinaryWriter -> unit
-    }
- 
-let Case (ctor: 'C -> 'U) (fmt: Format<'C>) 
-        (part: FormatUnionPart<'X,'U>) : FormatUnionPart<('C -> unit) -> 'X,'U> =
-
-    let tag = char part.R.Length
-    let write (w: BinaryWriter) x =
-        w.Write(tag)
-        fmt.Write w x
-    {
-        R = (fmt.Read >> ctor) :: part.R
-        W = fun f u w -> part.W (f (write w)) u w
-    }
- 
-let End<'U> : FormatUnionPart<('U -> unit),'U> =
-    {
-        R = []
-        W = fun f u w -> f u
-    }
- 
-let Union (proof: 'X) (part: FormatUnionPart<'X,'U>) : Format<'U> =
-    let rs = Array.rev (List.toArray part.R)
-    {
-        Read = fun r ->
-            let tag = int (r.ReadChar())
-            rs.[tag] r
-        Write = fun w x -> part.W proof x w
-    }
- 
-let IntFormat : Format<int> =
-    {
-        Read = fun r -> r.ReadInt32()
-        Write = fun w x -> w.Write(x)
-    }
- 
-let FloatFormat : Format<float> =
-    {
-        Read = fun r -> r.ReadDouble()
-        Write = fun w x -> w.Write(x)
-    }
- 
-let StringFormat : Format<string> =
-    {
-        Read = fun r -> r.ReadString()
-        Write = fun w x -> w.Write(x)
-    }
- 
-type U =
-    | A of int
-    | B of float
-    | C of string
- 
-let UFormat =
-    Union (fun a b c x ->
-        match x with
-        | A x -> a x
-        | B x -> b x
-        | C x -> c x)
-    << Case A IntFormat
-    << Case B FloatFormat
-    << Case C StringFormat
-    <| End
- 
-let test (fmt: Format<'T>) (value: 'T) =
-    let bytes =
-        use s = new MemoryStream()
-        use w = new BinaryWriter(s)
-        fmt.Write w value
-        s.ToArray()
-    let roundtrip =
-        use s = new MemoryStream(bytes, false)
-        use r = new BinaryReader(s)
-        fmt.Read r
-    roundtrip = value
 
 
-let func = System.Func<int,int,int>(fun x y -> x + y)
-let f = FuncConvert.FuncFromTupled func
+type Foo = A | B of int
+
+type Peano = Zero | Succ of Peano
+
+let pp = 
+    Pickler.fix(fun peanoP -> 
+        peanoP 
+        |> Pickler.option 
+        |> Pickler.wrap 
+            (function None -> Zero | Some p -> Succ p) 
+            (function Zero -> None | Succ p -> Some p))
+
+let rec int2Peano n = match n with 0 -> Zero | n -> Succ(int2Peano (n-1))
+
+let p = int2Peano 42
+
+p |> fsc.Pickle pp |> fsc.UnPickle pp
+
+
+type Tree<'T> = Empty | Node of 'T * Forest<'T>
+and Forest<'T> = Nil | Cons of Tree<'T> * Forest<'T>
+
+
+let rec nTree (n : int) =
+    if n = 0 then Empty
+    else
+        Node(n, nForest (n-1) (n-1))
+
+and nForest (d : int) (l : int) =
+    if l = 0 then Nil
+    else
+        Cons(nTree d, nForest d (l-1))
+
+
+let get<'T> () =
+    Pickler.fix2(fun treeP forestP ->
+        let tp = Pickler.auto<'T>
+
+        let treeP' =
+            Pickler.pair tp forestP
+            |> Pickler.option 
+            |> Pickler.wrap 
+                (function None -> Empty | Some (v,f) -> Node(v,f))
+                (function Empty -> None | Node (v,f) -> Some(v,f))
+
+        let forestP' =
+            Pickler.pair treeP forestP
+            |> Pickler.option
+            |> Pickler.wrap
+                (function None -> Nil | Some (t,f) -> Cons(t,f))
+                (function Nil -> None | Cons(t,f) -> Some (t,f))
+
+        treeP', forestP')
+
+
+let tp, fp = get<int> ()
+
+
+let n = nTree 5
+
+n |> fsc.Pickle tp |> fsc.UnPickle tp

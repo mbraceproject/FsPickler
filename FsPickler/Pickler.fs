@@ -102,7 +102,7 @@
                 f.m_useWithSubtypes <- f'.m_useWithSubtypes
                 f.m_isInitialized <- true
 
-    and [<Sealed>] Pickler<'T> =
+    and [<Sealed>][<AutoSerializable(false)>] Pickler<'T> =
         inherit Pickler
         
         val mutable private m_writer : Writer -> 'T -> unit
@@ -159,26 +159,28 @@
         abstract Resolve<'T> : unit -> Pickler<'T>
         abstract Resolve : Type -> Pickler
 
-    and [<AutoSerializable(false)>] 
-        Writer internal (stream : Stream, resolver : IPicklerResolver, sc : StreamingContext, ?leaveOpen, ?encoding) as self =
+    and [<AutoSerializable(false)>]
+        Writer internal (stream : Stream, resolver : IPicklerResolver, ?streamingContext, ?leaveOpen, ?encoding) =
+        
+        do if not stream.CanWrite then invalidOp "Cannot write to stream."
 
         // using UTF8 gives an observed performance improvement ~200%
         let encoding = defaultArg encoding Encoding.UTF8
 
         let bw = new BinaryWriter(stream, encoding, defaultArg leaveOpen true)
+        let sc = initStreamingContext streamingContext
         let idGen = new ObjectIDGenerator()
         let objStack = new Stack<int64> ()
 
         let tyPickler = resolver.Resolve<Type> ()
 
         /// BinaryWriter to the underlying stream.
-        member internal w.BW = bw
+        member w.BinaryWriter = bw
 
         /// Access the current streaming context.
         member w.StreamingContext = sc
 
-        /// <summary>Precomputes formatter for the given type at runtime.</summary>
-        member w.ResolvePickler<'T> () = resolver.Resolve<'T> ()
+        member w.Resolver = resolver
         //Pickler<'T>(resolver typeof<'T>)
 
         /// <summary>
@@ -196,7 +198,7 @@
                 let mutable firstOccurence = false
                 let id = idGen.GetId(t, &firstOccurence)
                 bw.Write firstOccurence
-                if firstOccurence then tyPickler.Write self t
+                if firstOccurence then tyPickler.Write w t
                 else
                     bw.Write id
 
@@ -270,12 +272,15 @@
             member __.Dispose () = bw.Dispose ()
 
     and [<AutoSerializable(false)>] 
-        Reader internal (stream : Stream, resolver : IPicklerResolver, sc : StreamingContext, ?leaveOpen, ?encoding) as self =
+        Reader internal (stream : Stream, resolver : IPicklerResolver, ?streamingContext : obj, ?leaveOpen, ?encoding) =
+
+        do if not stream.CanRead then invalidOp "Cannot read from stream."
 
         // using UTF8 gives an observed performance improvement ~200%
         let encoding = defaultArg encoding Encoding.UTF8
 
         let br = new BinaryReader(stream, encoding, defaultArg leaveOpen true)
+        let sc = initStreamingContext streamingContext
         let objCache = new Dictionary<int64, obj> ()
         let mutable counter = 1L
         let mutable currentReflectedObjId = 0L
@@ -292,14 +297,13 @@
                 currentReflectedObjId <- 0L
 
         /// BinaryReader to the underlying stream.
-        member internal r.BR = br
+        member r.BinaryReader = br
 
         /// Access the current streaming context.
         member r.StreamingContext = sc
 
         /// <summary>Precomputes formatter for the given type at runtime.</summary>
-        member w.ResolvePickler<'T> () = resolver.Resolve<'T> ()
-
+        member w.Resolver = resolver
 
         /// <summary>
         ///     Read object from stream using given formatter rules.
@@ -312,7 +316,7 @@
 
             let inline readType () =
                 if br.ReadBoolean () then
-                    let t = tyPickler.Read self
+                    let t = tyPickler.Read r
                     objCache.Add(counter, t)
                     counter <- counter + 1L
                     t

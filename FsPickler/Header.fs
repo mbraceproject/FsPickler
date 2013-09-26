@@ -92,8 +92,8 @@
 
             let inline read (hash : TypeHash) (header : uint32) =
                 if byte header <> initByte then
-                    raise <| new SerializationException ("Stream error: expected object header")
+                    raise <| new SerializationException ("Stream error: invalid serialization data.")
                 elif uint16 (header >>> 8) <> hash then 
-                    raise <| new SerializationException("Stream error: invalid object header")
+                    raise <| new SerializationException("Stream error: invalid object header.")
                 else 
                     byte (header >>> 24)
