@@ -12,7 +12,7 @@
         abstract Serialize : Stream * 'T -> unit
         abstract Deserialize : Stream -> 'T
 
-    type TestFsPickler (?registry : FormatterRegistry) =
+    type TestFsPickler (?registry : PicklerRegistry) =
         let fsc = match registry with None -> new FsPickler() | Some r -> new FsPickler(r)
 
         member __.FSCS = fsc
@@ -22,7 +22,7 @@
             member __.Serialize(stream : Stream, x : 'T) = fsc.Serialize(stream, x)
             member __.Deserialize(stream : Stream) = fsc.Deserialize<'T> stream
 
-    type TestBinaryFormatter () =
+    type TestBinaryPickler () =
         let bfs = new BinaryFormatter()
 
         interface ISerializer with

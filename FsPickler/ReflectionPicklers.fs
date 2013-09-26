@@ -1,4 +1,4 @@
-﻿module internal FsPickler.ReflectionFormatters
+﻿module internal FsPickler.ReflectionPicklers
 
     open System
     open System.Reflection
@@ -11,7 +11,7 @@
 
     open FsPickler
     open FsPickler.Utils
-    open FsPickler.FormatterUtils
+    open FsPickler.PicklerUtils
 
     //
     //  reflection - based serializers
@@ -28,40 +28,40 @@
 
     // creates a placeholder formatter instance
 
-    type UninitializedFormatter =
-        static member Create<'T>() = new Formatter<'T>()
+    type UninitializedPickler =
+        static member Create<'T>() = new Pickler<'T>()
         static member CreateUntyped (t : Type) =
             if isUnSupportedType t then raise <| new NonSerializableTypeException(t)
 
             let m =
-                typeof<UninitializedFormatter>
+                typeof<UninitializedPickler>
                     .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
                     .MakeGenericMethod [| t |]
 
-            try m.Invoke(null, null) :?> Formatter
+            try m.Invoke(null, null) :?> Pickler
             with :? TargetInvocationException as e -> raise e.InnerException
 
     // creates a formatter for abstract types
 
-    type AbstractFormatter =
+    type AbstractPickler =
         static member Create<'T> () =
             let writer = fun _ _ -> invalidOp <| sprintf "Attempting to use formatter for abstract type '%O'." typeof<'T>
             let reader = fun _ -> invalidOp <| sprintf "Attempting to use formatter for abstract type '%O'." typeof<'T>
 
-            new Formatter<'T>(reader, writer, FormatterInfo.ReflectionDerived, true, false)
+            new Pickler<'T>(reader, writer, PicklerInfo.ReflectionDerived, true, false)
 
         static member CreateUntyped(t : Type) =
             let m = 
-                typeof<AbstractFormatter>
+                typeof<AbstractPickler>
                     .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
                     .MakeGenericMethod [| t |]
 
-            m.GuardedInvoke(null, null) :?> Formatter
+            m.GuardedInvoke(null, null) :?> Pickler
 
     // formatter rules for enum types
 
-    type EnumFormatter =
-        static member Create<'Enum, 'Underlying when 'Enum : enum<'Underlying>> (resolver : IFormatterResolver) =
+    type EnumPickler =
+        static member Create<'Enum, 'Underlying when 'Enum : enum<'Underlying>> (resolver : IPicklerResolver) =
             let fmt = resolver.Resolve<'Underlying> ()
             let writer_func = fmt.Write
             let reader_func = fmt.Read
@@ -74,22 +74,22 @@
                 let value = reader_func r
                 Microsoft.FSharp.Core.LanguagePrimitives.EnumOfValue<'Underlying, 'Enum> value
 
-            new Formatter<'Enum>(reader, writer, FormatterInfo.ReflectionDerived, false, false)
+            new Pickler<'Enum>(reader, writer, PicklerInfo.ReflectionDerived, false, false)
 
-        static member CreateUntyped(enum : Type, resolver : IFormatterResolver) =
+        static member CreateUntyped(enum : Type, resolver : IPicklerResolver) =
             let underlying = enum.GetEnumUnderlyingType()
             // reflection call typed method
             let m = 
-                typeof<EnumFormatter>
+                typeof<EnumPickler>
                     .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
                     .MakeGenericMethod [| enum ; underlying |]
 
-            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Formatter
+            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler
 
     // formatter builder for struct types
 
-    type StructFormatter =
-        static member Create<'T when 'T : struct>(resolver : IFormatterResolver) =
+    type StructPickler =
+        static member Create<'T when 'T : struct>(resolver : IPicklerResolver) =
             let fields = typeof<'T>.GetFields(allFields)
             if fields |> Array.exists(fun f -> f.IsInitOnly) then
                 raise <| new NonSerializableTypeException(typeof<'T>, "type is marked with read-only instance fields.")
@@ -130,7 +130,7 @@
                     formatters.[i].ManagedWrite w o
 
             let reader (r : Reader) =
-                let t = FormatterServices.GetUninitializedObject(typeof<'T>)
+                let t = PicklerServices.GetUninitializedObject(typeof<'T>)
                 for i = 0 to fields.Length - 1 do
                     let o = formatters.[i].ManagedRead r
                     fields.[i].SetValue(t, o)
@@ -138,21 +138,21 @@
                 fastUnbox<'T> t
 #endif
 
-            new Formatter<'T>(reader, writer, FormatterInfo.ReflectionDerived, false, false)
+            new Pickler<'T>(reader, writer, PicklerInfo.ReflectionDerived, false, false)
 
-        static member CreateUntyped(t : Type, resolver : IFormatterResolver) =
+        static member CreateUntyped(t : Type, resolver : IPicklerResolver) =
             let m = 
-                typeof<StructFormatter>
+                typeof<StructPickler>
                     .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
                     .MakeGenericMethod [| t |]
 
-            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Formatter
+            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler
                     
 
     // reflection-based serialization rules for reference types
 
-    type ClassFormatter =
-        static member Create<'T when 'T : not struct>(resolver : IFormatterResolver) =
+    type ClassPickler =
+        static member Create<'T when 'T : not struct>(resolver : IPicklerResolver) =
 
             let fields = 
                 typeof<'T>.GetFields(allFields) 
@@ -230,7 +230,7 @@
                 run onSerialized t w
 
             let reader (r : Reader) =
-                let t = FormatterServices.GetUninitializedObject(typeof<'T>) |> fastUnbox<'T>
+                let t = PicklerServices.GetUninitializedObject(typeof<'T>) |> fastUnbox<'T>
                 do r.EarlyRegisterObject t
                 run onDeserializing t r
 
@@ -243,26 +243,26 @@
                 t
 #endif
 
-            new Formatter<'T>(reader, writer, FormatterInfo.ReflectionDerived, cacheObj = true, useWithSubtypes = false)
+            new Pickler<'T>(reader, writer, PicklerInfo.ReflectionDerived, cacheObj = true, useWithSubtypes = false)
 
 
-        static member CreateUntyped(t : Type, resolver : IFormatterResolver) =
+        static member CreateUntyped(t : Type, resolver : IPicklerResolver) =
             let m =
-                typeof<ClassFormatter>
+                typeof<ClassPickler>
                     .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
                     .MakeGenericMethod [| t |]
 
-            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Formatter
+            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler
 
 
-    type DelegateFormatter =
-        static member Create<'Delegate when 'Delegate :> Delegate> (resolver : IFormatterResolver) =
-            let memberInfoFormatter = resolver.Resolve<MethodInfo> ()
+    type DelegatePickler =
+        static member Create<'Delegate when 'Delegate :> Delegate> (resolver : IPicklerResolver) =
+            let memberInfoPickler = resolver.Resolve<MethodInfo> ()
             let writer (w : Writer) (dele : 'Delegate) =
                 match dele.GetInvocationList() with
                 | [| _ |] ->
                     w.BW.Write true
-                    w.Write(memberInfoFormatter, dele.Method)
+                    w.Write(memberInfoPickler, dele.Method)
                     if not dele.Method.IsStatic then w.Write<obj> dele.Target
                 | deleList ->
                     w.BW.Write false
@@ -272,7 +272,7 @@
 
             let reader (r : Reader) =
                 if r.BR.ReadBoolean() then
-                    let meth = r.Read memberInfoFormatter
+                    let meth = r.Read memberInfoPickler
                     if not meth.IsStatic then
                         let target = r.Read<obj> ()
                         Delegate.CreateDelegate(typeof<'Delegate>, target, meth, throwOnBindFailure = true) |> fastUnbox<'Delegate>
@@ -284,12 +284,12 @@
                     for i = 0 to n - 1 do deleList.[i] <- r.Read<System.Delegate> ()
                     Delegate.Combine deleList |> fastUnbox<'Delegate>
 
-            new Formatter<'Delegate>(reader, writer, FormatterInfo.Custom, true, false)
+            new Pickler<'Delegate>(reader, writer, PicklerInfo.Delegate, true, false)
 
-        static member CreateUntyped(t : Type, resolver : IFormatterResolver) =
+        static member CreateUntyped(t : Type, resolver : IPicklerResolver) =
             let m =
-                typeof<DelegateFormatter>
+                typeof<DelegatePickler>
                     .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
                     .MakeGenericMethod [| t |]
 
-            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Formatter
+            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler

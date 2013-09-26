@@ -1,4 +1,4 @@
-﻿module internal FsPickler.FSharpFormatters
+﻿module internal FsPickler.FSharpPicklers
 
     open System
     open System.IO
@@ -13,21 +13,21 @@
 
     open FsPickler
     open FsPickler.Utils
-    open FsPickler.FormatterUtils
+    open FsPickler.PicklerUtils
 
 
     // F# union types
 
-    type FsUnionFormatter =
-        static member CreateUntyped(unionType : Type, resolver : IFormatterResolver) =
+    type FsUnionPickler =
+        static member CreateUntyped(unionType : Type, resolver : IPicklerResolver) =
             let m =
-                typeof<FsUnionFormatter>
+                typeof<FsUnionPickler>
                     .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
                     .MakeGenericMethod [| unionType |]
 
-            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Formatter
+            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler
 
-        static member Create<'Union> (resolver : IFormatterResolver) =
+        static member Create<'Union> (resolver : IPicklerResolver) =
 
 #if EMIT_IL
             let unionInfo =
@@ -48,7 +48,7 @@
                 | _ -> invalidOp "unexpected error"
 
             let callCaseWriter (uci : UnionCaseInfo) (caseType : Type option) (fields : PropertyInfo []) 
-                                (formatters : Formatter []) (writer : Expression) (instance : Expression) =
+                                (formatters : Pickler []) (writer : Expression) (instance : Expression) =
 
                 let body =
                     if fields.Length = 0 then Expression.Empty() :> Expression
@@ -63,7 +63,7 @@
                 Expression.SwitchCase(body, Expression.constant uci.Tag)
 
 
-            let callCaseReader (uci : UnionCaseInfo) (formatters : Formatter []) (ctor : MethodInfo) (reader : Expression) =
+            let callCaseReader (uci : UnionCaseInfo) (formatters : Pickler []) (ctor : MethodInfo) (reader : Expression) =
                 let unionCase = Expression.callMethod ctor formatters reader
                 Expression.SwitchCase(unionCase, Expression.constant uci.Tag)
 
@@ -128,22 +128,22 @@
                 ctor values |> fastUnbox<'Union>
 #endif
 
-            new Formatter<'Union>(reader, writer, FormatterInfo.FSharpValue, cacheObj = false, useWithSubtypes = true)
+            new Pickler<'Union>(reader, writer, PicklerInfo.FSharpValue, cacheObj = false, useWithSubtypes = true)
 
 
     // System.Tuple<...> types
 
-    type TupleFormatter =
+    type TuplePickler =
 
-        static member CreateUntyped(tupleType : Type, resolver : IFormatterResolver) =
+        static member CreateUntyped(tupleType : Type, resolver : IPicklerResolver) =
             let m =
-                typeof<TupleFormatter>
+                typeof<TuplePickler>
                     .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
                     .MakeGenericMethod [| tupleType |]
 
-            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Formatter
+            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler
         
-        static member Create<'Tuple>(resolver : IFormatterResolver) =
+        static member Create<'Tuple>(resolver : IPicklerResolver) =
 
             let ctor,_ = FSharpValue.PreComputeTupleConstructorInfo typeof<'Tuple>
 
@@ -192,24 +192,24 @@
 
 #if OPTIMIZE_FSHARP
             // do not cache or perform subtype resolution for performance
-            new Formatter<'Tuple>(reader, writer, FormatterInfo.FSharpValue, cacheObj = false, useWithSubtypes = true)
+            new Pickler<'Tuple>(reader, writer, PicklerInfo.FSharpValue, cacheObj = false, useWithSubtypes = true)
 #else
-            new Formatter<'Tuple>(reader, writer, FormatterInfo.Custom, cacheObj = true, useWithSubtypes = false)
+            new Pickler<'Tuple>(reader, writer, PicklerInfo.Custom, cacheObj = true, useWithSubtypes = false)
 #endif
 
     // F# record/exception types
 
-    type FsRecordFormatter =
+    type FsRecordPickler =
 
-        static member CreateUntyped(t : Type, resolver : IFormatterResolver, isExceptionType) =
+        static member CreateUntyped(t : Type, resolver : IPicklerResolver, isExceptionType) =
             let m =
-                typeof<FsRecordFormatter>
+                typeof<FsRecordPickler>
                     .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
                     .MakeGenericMethod [| t |]
 
-            m.GuardedInvoke(null, [| resolver :> obj ; isExceptionType :> obj |]) :?> Formatter
+            m.GuardedInvoke(null, [| resolver :> obj ; isExceptionType :> obj |]) :?> Pickler
         
-        static member Create<'Record>(resolver : IFormatterResolver, isExceptionType) =
+        static member Create<'Record>(resolver : IPicklerResolver, isExceptionType) =
 
             let fields, ctor =
                 if isExceptionType then
@@ -255,4 +255,4 @@
                 ctor.Invoke values |> fastUnbox<'Record>
 #endif
 
-            new Formatter<'Record>(reader, writer, FormatterInfo.FSharpValue, cacheObj = false, useWithSubtypes = false)
+            new Pickler<'Record>(reader, writer, PicklerInfo.FSharpValue, cacheObj = false, useWithSubtypes = false)

@@ -53,26 +53,26 @@
                     s.AddValue("integer", x)
 
 
-        type ClassWithFormatterFactory (x : int) =
+        type ClassWithPicklerFactory (x : int) =
 
             member __.Value = x
 
-            static member CreateFormatter (resolver : IFormatterResolver) =
-                Formatter.FromPrimitives(
-                    (fun _ -> ClassWithFormatterFactory(42)),
+            static member CreatePickler (resolver : IPicklerResolver) =
+                Pickler.FromPrimitives(
+                    (fun _ -> ClassWithPicklerFactory(42)),
                     (fun _ _ -> ()),
                         true, false)
 
         type ClassWithCombinators (x : int, y : ClassWithCombinators option) =
             member __.Value = x,y
 
-            static member CreateFormatter (resolver : IFormatterResolver) =
+            static member CreatePickler (resolver : IPicklerResolver) =
                 let fmt' = 
-                    Formatter.auto<ClassWithCombinators> resolver 
-                    |> Formatter.option 
-                    |> Formatter.pair (Formatter.auto<int> resolver)
+                    Pickler.auto<ClassWithCombinators> resolver 
+                    |> Pickler.option 
+                    |> Pickler.pair (Pickler.auto<int> resolver)
 
-                Formatter.wrap fmt' (fun (x,y) -> new ClassWithCombinators(x,y)) (fun c -> c.Value)
+                Pickler.wrap fmt' (fun (x,y) -> new ClassWithCombinators(x,y)) (fun c -> c.Value)
 
 
         exception FsharpException of int * string
@@ -91,10 +91,10 @@
         type GenericType<'T when 'T : comparison>(x : 'T) =
             member __.Value = x
 
-        type GenericTypeFormatter () =
-            interface IGenericFormatterFactory
+        type GenericTypePickler () =
+            interface IGenericPicklerFactory
 
-            member __.Create<'T when 'T : comparison> (resolver : IFormatterResolver) =
+            member __.Create<'T when 'T : comparison> (resolver : IPicklerResolver) =
                 let valueFmt = resolver.Resolve<'T> ()
 
                 let writer (w : Writer) (g : GenericType<'T>) =
@@ -104,7 +104,7 @@
                     let value = r.Read valueFmt
                     new GenericType<'T>(Unchecked.defaultof<'T>)
 
-                Formatter.FromPrimitives(reader, writer) :> Formatter
+                Pickler.FromPrimitives(reader, writer) :> Pickler
 
         type TestDelegate = delegate of unit -> unit
 
@@ -159,9 +159,9 @@
 
         // create serializer
         let testSerializer =
-            let registry = new FormatterRegistry()
+            let registry = new PicklerRegistry()
             do
-                registry.RegisterGenericFormatter(new GenericTypeFormatter())
+                registry.RegisterGenericPickler(new GenericTypePickler())
 
             new TestFsPickler(registry) :> ISerializer
 
@@ -182,7 +182,7 @@
                     | ctorInfo -> Some (t, ctorInfo.Invoke [||])
                 with _ -> None
 
-            let bfs = new TestBinaryFormatter()
+            let bfs = new TestBinaryPickler()
             let filterObject (t : Type, o : obj) =
                 try Serializer.writeRead bfs o |> ignore ; true
                 with _ -> false

@@ -17,7 +17,7 @@
         let ipAddr = "127.0.0.1"
         let port = 2323
 
-        let defaultProtocolSerializer () = new TestBinaryFormatter() :> ISerializer
+        let defaultProtocolSerializer () = new TestBinaryPickler() :> ISerializer
     
     exception SerializationError of exn
     exception ProtocolError of exn    

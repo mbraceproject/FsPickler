@@ -14,16 +14,17 @@
         | NonSealed = 5
         | Abstract = 6
 
-    type FormatterInfo =
+    type PicklerInfo =
         | Atomic = 0
         | ReflectionType = 1
         | ReflectionDerived = 2
         | ISerializable = 3
         | FSharpValue = 4 // tuples, records and DUs
-        | IFsCoreSerializable = 5
-        | Custom = 6
+        | Delegate = 5
+        | Combinator = 6
+        | UserDefined = 7
 
-    module internal FormatterHeader =
+    module internal Header =
 
         /// builds type info enumeration out of reflection info
         let computeTypeInfo (t : Type) =

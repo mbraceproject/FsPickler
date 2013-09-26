@@ -12,7 +12,7 @@
 
         open TestTypes
 
-        let bfs = new TestBinaryFormatter () :> ISerializer
+        let bfs = new TestBinaryPickler () :> ISerializer
         let ndc = new TestNetDataContractSerializer () :> ISerializer
 
         let leastAcceptableImprovementFactor = 1.

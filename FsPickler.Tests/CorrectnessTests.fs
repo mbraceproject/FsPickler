@@ -54,8 +54,8 @@
         [<Test>] member __.``Recursive Class`` () = testEquals <| RecursiveClass(Some (RecursiveClass(None)))
         [<Test>] member __.``Cyclic Object`` () = test <| CyclicClass()
         [<Test>] member __.``ISerializable Class`` () = testEquals <| SerializableClass(42, "fortyTwo")
-        [<Test>] member __.``Formatter Factory Class`` () = 
-                            let x = ClassWithFormatterFactory(0) |> testLoop
+        [<Test>] member __.``Pickler Factory Class`` () = 
+                            let x = ClassWithPicklerFactory(0) |> testLoop
                             x.Value |> should equal 42
 
         [<Test>]
@@ -227,7 +227,7 @@
 
 
         [<Test>]
-        member __.``GenericFormatterFactory test`` () =
+        member __.``GenericPicklerFactory test`` () =
             let x = testLoop (GenericType<int>(42))
             x.Value |> should equal 0  
             

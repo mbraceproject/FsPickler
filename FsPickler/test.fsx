@@ -7,6 +7,8 @@ open System.Reflection
 
 let fsc = new FsPickler()
 
+let p = fsc.ResolvePickler<int * string option []> ()
+
 let loop (x : 'T) =
     use mem = new MemoryStream()
     fsc.Serialize<obj>(mem, x)

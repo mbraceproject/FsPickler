@@ -5,15 +5,15 @@
 
     open FsPickler
     open FsPickler.Utils
-    open FsPickler.FormatterUtils
-    open FsPickler.BaseFormatters
+    open FsPickler.PicklerUtils
+    open FsPickler.BasePicklers
 
     //
     //  F# pickler combinators
     //
 
-    type ListFormatter () =
-        static member Create (ef : Formatter<'T>) =
+    type ListPickler () =
+        static member Create (ef : Pickler<'T>) =
             let writer (w : Writer) (l : 'T list) =
 
                 if ef.TypeInfo = TypeInfo.Primitive then
@@ -45,17 +45,17 @@
                                     
                     Array.toList array
 
-            new Formatter<_>(reader, writer, FormatterInfo.FSharpValue, cacheObj = true, useWithSubtypes = false)
+            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheObj = true, useWithSubtypes = false)
             
 
-        interface IGenericFormatterFactory1 with
-            member __.Create<'T> (resolver : IFormatterResolver) =
+        interface IGenericPicklerFactory1 with
+            member __.Create<'T> (resolver : IPicklerResolver) =
                 let ef = resolver.Resolve<'T> ()
-                ListFormatter.Create ef :> Formatter
+                ListPickler.Create ef :> Pickler
 
 
-    type PairFormatter () =
-        static member Create(tf : Formatter<'T>, sf : Formatter<'S>) =
+    type PairPickler () =
+        static member Create(tf : Pickler<'T>, sf : Pickler<'S>) =
 
             let writer (w : Writer) ((t,s) : 'T * 'S) =
                 write (isValue tf) w tf t ; write (isValue sf) w sf s
@@ -64,21 +64,21 @@
 
 #if OPTIMIZE_FSHARP
             // do not cache or apply subtype resolution for performance
-            new Formatter<_>(reader, writer, FormatterInfo.FSharpValue, cacheObj = false, useWithSubtypes = true)
+            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheObj = false, useWithSubtypes = true)
 #else
-            new Formatter<_>(reader, writer, FormatterInfo.FSharpValue, cacheObj = true, useWithSubtypes = false)
+            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheObj = true, useWithSubtypes = false)
 #endif
             
-        interface IGenericFormatterFactory2 with
-            member __.Create<'T,'S> (resolver : IFormatterResolver) =
+        interface IGenericPicklerFactory2 with
+            member __.Create<'T,'S> (resolver : IPicklerResolver) =
                 let tf, sf = resolver.Resolve<'T> (), resolver.Resolve<'S> ()
                 
-                PairFormatter.Create(tf,sf) :> Formatter
+                PairPickler.Create(tf,sf) :> Pickler
 
 
-    type TripleFormatter () =
+    type TriplePickler () =
 
-        static member Create(f1 : Formatter<'T1>, f2 : Formatter<'T2>, f3 : Formatter<'T3>) =
+        static member Create(f1 : Pickler<'T1>, f2 : Pickler<'T2>, f3 : Pickler<'T3>) =
             let writer (w : Writer) ((t1,t2,t3) : 'T1 * 'T2 * 'T3) =
                 write (isValue f1) w f1 t1 ; write (isValue f2) w f2 t2 ; write (isValue f3) w f3 t3
 
@@ -87,19 +87,19 @@
 
 #if OPTIMIZE_FSHARP
             // do not cache or apply subtype resolution for performance
-            new Formatter<_>(reader, writer, FormatterInfo.FSharpValue, cacheObj = false, useWithSubtypes = true)
+            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheObj = false, useWithSubtypes = true)
 #else
-            new Formatter<_>(reader, writer, FormatterInfo.FSharpValue, cacheObj = true, useWithSubtypes = false)
+            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheObj = true, useWithSubtypes = false)
 #endif    
 
-        interface IGenericFormatterFactory3 with
-            member __.Create<'T1, 'T2, 'T3> (resolver : IFormatterResolver) =
+        interface IGenericPicklerFactory3 with
+            member __.Create<'T1, 'T2, 'T3> (resolver : IPicklerResolver) =
                 let f1, f2, f3 = resolver.Resolve<'T1>(), resolver.Resolve<'T2>(), resolver.Resolve<'T3>()
-                TripleFormatter.Create(f1, f2, f3) :> Formatter
+                TriplePickler.Create(f1, f2, f3) :> Pickler
 
-    type QuadFormatter () =
+    type QuadPickler () =
 
-        static member Create(f1 : Formatter<'T1>, f2 : Formatter<'T2>, f3 : Formatter<'T3>, f4 : Formatter<'T4>) =
+        static member Create(f1 : Pickler<'T1>, f2 : Pickler<'T2>, f3 : Pickler<'T3>, f4 : Pickler<'T4>) =
             let writer (w : Writer) ((t1,t2,t3,t4) : 'T1 * 'T2 * 'T3 * 'T4) =
                 write (isValue f1) w f1 t1 ; write (isValue f2) w f2 t2 ;
                 write (isValue f3) w f3 t3 ; write (isValue f4) w f4 t4 ; 
@@ -109,21 +109,21 @@
 
 #if OPTIMIZE_FSHARP
             // do not cache or apply subtype resolution for performance
-            new Formatter<_>(reader, writer, FormatterInfo.FSharpValue, cacheObj = false, useWithSubtypes = true)
+            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheObj = false, useWithSubtypes = true)
 #else
-            new Formatter<_>(reader, writer, FormatterInfo.FSharpValue, cacheObj = true, useWithSubtypes = false)
+            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheObj = true, useWithSubtypes = false)
 #endif    
 
-        interface IGenericFormatterFactory4 with
-            member __.Create<'T1, 'T2, 'T3, 'T4> (resolver : IFormatterResolver) =
+        interface IGenericPicklerFactory4 with
+            member __.Create<'T1, 'T2, 'T3, 'T4> (resolver : IPicklerResolver) =
                 let f1, f2 = resolver.Resolve<'T1>(), resolver.Resolve<'T2>()
                 let f3, f4 = resolver.Resolve<'T3>(), resolver.Resolve<'T4>()
-                QuadFormatter.Create(f1, f2, f3, f4) :> Formatter
+                QuadPickler.Create(f1, f2, f3, f4) :> Pickler
 
 
-    type OptionFormatter () =
+    type OptionPickler () =
 
-        static member Create (ef : Formatter<'T>) =
+        static member Create (ef : Pickler<'T>) =
             let writer (w : Writer) (x : 'T option) =
                 match x with
                 | None -> w.BW.Write true
@@ -134,16 +134,16 @@
                 else
                     Some(read (isValue ef) r ef)
 
-            new Formatter<_>(reader, writer, FormatterInfo.FSharpValue, cacheObj = false, useWithSubtypes = true)
+            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheObj = false, useWithSubtypes = true)
 
-        interface IGenericFormatterFactory1 with
-            member __.Create<'T> (resolver : IFormatterResolver) =
+        interface IGenericPicklerFactory1 with
+            member __.Create<'T> (resolver : IPicklerResolver) =
                 let ef = resolver.Resolve<'T> ()
-                OptionFormatter.Create ef :> Formatter
+                OptionPickler.Create ef :> Pickler
 
 
-    type Choice2Formatter () =
-        static member Create(f1 : Formatter<'T1>, f2 : Formatter<'T2>) =
+    type Choice2Pickler () =
+        static member Create(f1 : Pickler<'T1>, f2 : Pickler<'T2>) =
             let writer (w : Writer) (c : Choice<'T1, 'T2>) =
                 match c with
                 | Choice1Of2 t1 -> 
@@ -158,16 +158,16 @@
                 | 0uy -> read (isValue f1) r f1 |> Choice1Of2
                 | _ -> read (isValue f2) r f2 |> Choice2Of2
 
-            new Formatter<_>(reader, writer, FormatterInfo.FSharpValue, cacheObj = false, useWithSubtypes = true)
+            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheObj = false, useWithSubtypes = true)
 
-        interface IGenericFormatterFactory2 with
-            member __.Create<'T1, 'T2> (resolver : IFormatterResolver) =
+        interface IGenericPicklerFactory2 with
+            member __.Create<'T1, 'T2> (resolver : IPicklerResolver) =
                 let f1, f2 = resolver.Resolve<'T1> (), resolver.Resolve<'T2> ()
-                Choice2Formatter.Create(f1, f2) :> Formatter
+                Choice2Pickler.Create(f1, f2) :> Pickler
 
 
-    type Choice3Formatter () =
-        static member Create(f1 : Formatter<'T1>, f2 : Formatter<'T2>, f3 : Formatter<'T3>) =
+    type Choice3Pickler () =
+        static member Create(f1 : Pickler<'T1>, f2 : Pickler<'T2>, f3 : Pickler<'T3>) =
             let writer (w : Writer) (c : Choice<'T1, 'T2, 'T3>) =
                 match c with
                 | Choice1Of3 t1 -> 
@@ -186,16 +186,16 @@
                 | 1uy -> read (isValue f2) r f2 |> Choice2Of3
                 | _   -> read (isValue f3) r f3 |> Choice3Of3
 
-            new Formatter<_>(reader, writer, FormatterInfo.FSharpValue, cacheObj = false, useWithSubtypes = true)
+            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheObj = false, useWithSubtypes = true)
 
-        interface IGenericFormatterFactory3 with
-            member __.Create<'T1, 'T2, 'T3> (resolver : IFormatterResolver) =
+        interface IGenericPicklerFactory3 with
+            member __.Create<'T1, 'T2, 'T3> (resolver : IPicklerResolver) =
                 let f1, f2, f3 = resolver.Resolve<'T1> (), resolver.Resolve<'T2> (), resolver.Resolve<'T3> ()
-                Choice3Formatter.Create(f1, f2, f3) :> Formatter
+                Choice3Pickler.Create(f1, f2, f3) :> Pickler
 
 
-    type Choice4Formatter () =
-        static member Create(f1 : Formatter<'T1>, f2 : Formatter<'T2>, f3 : Formatter<'T3>, f4 : Formatter<'T4>) =
+    type Choice4Pickler () =
+        static member Create(f1 : Pickler<'T1>, f2 : Pickler<'T2>, f3 : Pickler<'T3>, f4 : Pickler<'T4>) =
             let writer (w : Writer) (c : Choice<'T1, 'T2, 'T3, 'T4>) =
                 match c with
                 | Choice1Of4 t1 -> 
@@ -218,17 +218,17 @@
                 | 2uy -> read (isValue f3) r f3 |> Choice3Of4
                 | _   -> read (isValue f4) r f4 |> Choice4Of4
 
-            new Formatter<_>(reader, writer, FormatterInfo.FSharpValue, cacheObj = false, useWithSubtypes = true)
+            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheObj = false, useWithSubtypes = true)
 
-        interface IGenericFormatterFactory4 with
-            member __.Create<'T1, 'T2, 'T3, 'T4> (resolver : IFormatterResolver) =
+        interface IGenericPicklerFactory4 with
+            member __.Create<'T1, 'T2, 'T3, 'T4> (resolver : IPicklerResolver) =
                 let f1, f2 = resolver.Resolve<'T1> (), resolver.Resolve<'T2> ()
                 let f3, f4 = resolver.Resolve<'T3> (), resolver.Resolve<'T4> ()
-                Choice4Formatter.Create(f1, f2, f3, f4) :> Formatter
+                Choice4Pickler.Create(f1, f2, f3, f4) :> Pickler
 
 
-    type FSharpRefFormatter () =
-        static member Create (ef : Formatter<'T>) =
+    type FSharpRefPickler () =
+        static member Create (ef : Pickler<'T>) =
             let writer (w : Writer) (r : 'T ref) =
                 write (isValue ef) w ef r.Value
 
@@ -236,32 +236,32 @@
                 read (isValue ef) r ef |> ref
 
             // do not cache for performance
-            new Formatter<_>(reader, writer, FormatterInfo.FSharpValue, cacheObj = false, useWithSubtypes = false)
+            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheObj = false, useWithSubtypes = false)
             
-        interface IGenericFormatterFactory1 with
-            member __.Create<'T> (resolver : IFormatterResolver) =
+        interface IGenericPicklerFactory1 with
+            member __.Create<'T> (resolver : IPicklerResolver) =
                 let ef = resolver.Resolve<'T> ()
-                FSharpRefFormatter.Create ef :> Formatter
+                FSharpRefPickler.Create ef :> Pickler
 
 
-    type FSharpSetFormatter () =
-        static member Create<'T when 'T : comparison>(ef : Formatter<'T>) =
+    type FSharpSetPickler () =
+        static member Create<'T when 'T : comparison>(ef : Pickler<'T>) =
             let writer (w : Writer) (s : Set<'T>) = 
                 writeSeq w ef s.Count s
 
             let reader (r : Reader) =
                 readSeq r ef |> Set.ofArray
 
-            new Formatter<_>(reader, writer, FormatterInfo.FSharpValue, cacheObj = true, useWithSubtypes = false)
+            new Pickler<_>(reader, writer, PicklerInfo.Combinator, cacheObj = true, useWithSubtypes = false)
             
-        interface IGenericFormatterFactory
-        member __.Create<'T when 'T : comparison> (resolver : IFormatterResolver) =
+        interface IGenericPicklerFactory
+        member __.Create<'T when 'T : comparison> (resolver : IPicklerResolver) =
             let ef = resolver.Resolve<'T>()
-            FSharpSetFormatter.Create ef :> Formatter
+            FSharpSetPickler.Create ef :> Pickler
 
 
-    type FSharpMapFormatter () =
-        static member Create<'K, 'V when 'K : comparison> (kf : Formatter<'K>, vf : Formatter<'V>) =
+    type FSharpMapPickler () =
+        static member Create<'K, 'V when 'K : comparison> (kf : Pickler<'K>, vf : Pickler<'V>) =
             
             let writer (w : Writer) (m : Map<'K,'V>) =
                 writeKVPairs w kf vf m.Count (Map.toSeq m)
@@ -269,16 +269,16 @@
             let reader (r : Reader) =
                 readKVPairs r kf vf |> Map.ofArray
 
-            new Formatter<_>(reader, writer, FormatterInfo.FSharpValue, cacheObj = true, useWithSubtypes = false)
+            new Pickler<_>(reader, writer, PicklerInfo.Combinator, cacheObj = true, useWithSubtypes = false)
             
-        interface IGenericFormatterFactory
-        member __.Create<'K, 'V when 'K : comparison> (resolver : IFormatterResolver) =
+        interface IGenericPicklerFactory
+        member __.Create<'K, 'V when 'K : comparison> (resolver : IPicklerResolver) =
             let kf, vf = resolver.Resolve<'K> (), resolver.Resolve<'V> ()
-            FSharpMapFormatter.Create(kf, vf) :> Formatter
+            FSharpMapPickler.Create(kf, vf) :> Pickler
 
 
-    type DictionaryFormatter () =
-        static member Create<'K, 'V when 'K : comparison> (kf : Formatter<'K>, vf : Formatter<'V>) =
+    type DictionaryPickler () =
+        static member Create<'K, 'V when 'K : comparison> (kf : Pickler<'K>, vf : Pickler<'V>) =
 
             let writer (w : Writer) (d : Dictionary<'K,'V>) =
                 let kvs = Seq.map (fun (KeyValue (k,v)) -> k,v) d
@@ -292,17 +292,17 @@
                     d.Add(k,v)
                 d
 
-            Formatter<_>(reader, writer, FormatterInfo.Custom, cacheObj = true, useWithSubtypes = false)
+            Pickler<_>(reader, writer, PicklerInfo.Combinator, cacheObj = true, useWithSubtypes = false)
             
-        interface IGenericFormatterFactory
-        member __.Create<'K, 'V when 'K : comparison> (resolver : IFormatterResolver) =
+        interface IGenericPicklerFactory
+        member __.Create<'K, 'V when 'K : comparison> (resolver : IPicklerResolver) =
             let kf, vf = resolver.Resolve<'K>(), resolver.Resolve<'V>()
-            DictionaryFormatter.Create (kf, vf) :> Formatter
+            DictionaryPickler.Create (kf, vf) :> Pickler
 
 
-    type AltFormatter =
+    type AltPickler =
         
-        static member Create(tagReader : 'T -> int, formatters : Formatter<'T> list) =
+        static member Create(tagReader : 'T -> int, formatters : Pickler<'T> list) =
             let writer (w : Writer) (t : 'T) =
                 let tag = tagReader t
                 do w.BW.Write tag
@@ -312,37 +312,37 @@
                 let tag = r.BR.ReadInt32()
                 formatters.[tag].Read r
 
-            new Formatter<_>(reader, writer, FormatterInfo.Custom, cacheObj = true, useWithSubtypes = false)
+            new Pickler<_>(reader, writer, PicklerInfo.Combinator, cacheObj = true, useWithSubtypes = false)
 
 
-    type WrapFormatter =
-        static member Create(origin : Formatter<'T>, convert : 'S -> 'T, recover : 'T -> 'S) =
-            new Formatter<_>(origin.Read >> recover, (fun w t -> origin.Write w (convert t)), 
-                                    FormatterInfo.Custom, cacheObj = true, useWithSubtypes = false)
+    type WrapPickler =
+        static member Create(origin : Pickler<'T>, convert : 'S -> 'T, recover : 'T -> 'S) =
+            new Pickler<_>(origin.Read >> recover, (fun w t -> origin.Write w (convert t)), 
+                                    PicklerInfo.Combinator, cacheObj = true, useWithSubtypes = false)
 
 
-    type SeqFormatter =
-        static member Create(ef : Formatter<'T>) =
-            new Formatter<_>(readSeq' ef, writeSeq' ef, FormatterInfo.Custom, cacheObj = true, useWithSubtypes = false)
+    type SeqPickler =
+        static member Create(ef : Pickler<'T>) =
+            new Pickler<_>(readSeq' ef, writeSeq' ef, PicklerInfo.Combinator, cacheObj = true, useWithSubtypes = false)
 
-    type KeyValueSeqFormatter =
-        static member Create(kf : Formatter<'K>, vf : Formatter<'V>) =
-            new Formatter<_>(readKVPairs' kf vf, writeKVPairs' kf vf, FormatterInfo.Custom, cacheObj = true, useWithSubtypes = false)
+    type KeyValueSeqPickler =
+        static member Create(kf : Pickler<'K>, vf : Pickler<'V>) =
+            new Pickler<_>(readKVPairs' kf vf, writeKVPairs' kf vf, PicklerInfo.Combinator, cacheObj = true, useWithSubtypes = false)
 
                 
 
-    let mkGenericFormatters () =
+    let mkGenericPicklers () =
         [
-            new ListFormatter() :> IGenericFormatterFactory
-            new PairFormatter() :> _
-            new TripleFormatter() :> _
-            new QuadFormatter() :> _
-            new OptionFormatter() :> _
-            new Choice2Formatter() :> _
-            new Choice3Formatter() :> _
-            new Choice4Formatter() :> _
-            new FSharpRefFormatter() :> _
-            new FSharpSetFormatter() :> _
-            new FSharpMapFormatter() :> _
-            new DictionaryFormatter() :> _
+            new ListPickler() :> IGenericPicklerFactory
+            new PairPickler() :> _
+            new TriplePickler() :> _
+            new QuadPickler() :> _
+            new OptionPickler() :> _
+            new Choice2Pickler() :> _
+            new Choice3Pickler() :> _
+            new Choice4Pickler() :> _
+            new FSharpRefPickler() :> _
+            new FSharpSetPickler() :> _
+            new FSharpMapPickler() :> _
+            new DictionaryPickler() :> _
         ]

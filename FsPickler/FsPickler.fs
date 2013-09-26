@@ -11,18 +11,18 @@
     open FsPickler
     open FsPickler.Utils
     open FsPickler.TypeShape
-    open FsPickler.FormatterUtils
-    open FsPickler.BaseFormatters
+    open FsPickler.PicklerUtils
+    open FsPickler.BasePicklers
     open FsPickler.FSharpCombinators
-    open FsPickler.FormatterResolution
+    open FsPickler.PicklerResolution
 
     [<Sealed>]
-    type FormatterRegistry () =
+    type PicklerRegistry () =
 
         let mutable typeNameConverter = DefaultTypeNameConverter() :> ITypeNameConverter
-        let formatters = Atom.atom Map.empty<string, Formatter>
-//        let formatterFactories = Atom.atom Map.empty<string, IFormatterFactory>
-        let genericFactories = Atom.atom GenericFormatterIndex.Empty
+        let formatters = Atom.atom Map.empty<string, Pickler>
+//        let formatterFactories = Atom.atom Map.empty<string, IPicklerFactory>
+        let genericFactories = Atom.atom GenericPicklerIndex.Empty
 
         /// register custom type serialization rules; useful for FSI type serializations
         member __.TypeNameConverter
@@ -30,41 +30,41 @@
             and set tyConv = typeNameConverter <- tyConv
 
         /// register formatter for a specific type
-        member __.RegisterFormatter(f : Formatter) =
+        member __.RegisterPickler(f : Pickler) =
             formatters.Swap(fun fmts -> fmts.AddNoOverwrite(f.Type.AssemblyQualifiedName, f))
 //
 //        /// register a formatter factory
-//        member __.RegisterFormatterFactory(ff : IFormatterFactory) =
+//        member __.RegisterPicklerFactory(ff : IPicklerFactory) =
 //            formatterFactories.Swap(fun fmtf -> fmtf.AddNoOverwrite(ff.Type.AssemblyQualifiedName, ff))
 
         /// register generic formatter rules
-        member __.RegisterGenericFormatter(gf : IGenericFormatterFactory) =
-            genericFactories.Swap(fun genericFactories -> genericFactories.AddGenericFormatter(gf, Fail))
+        member __.RegisterGenericPickler(gf : IGenericPicklerFactory) =
+            genericFactories.Swap(fun genericFactories -> genericFactories.AddGenericPickler(gf, Fail))
 
-//        member internal __.FormatterFactories = formatterFactories.Value
+//        member internal __.PicklerFactories = formatterFactories.Value
         member internal __.GenericFactories = genericFactories.Value
 
-        member __.RegisteredFormatters = formatters.Value |> Map.toSeq |> Seq.map snd |> List.ofSeq
-//        member __.RegisteredFormatterFactories = formatterFactories.Value |> Map.toSeq |> Seq.map snd |> List.ofSeq
-        member __.RegisteredGenericFormatterFactories = genericFactories.Value.GetEntries()
+        member __.RegisteredPicklers = formatters.Value |> Map.toSeq |> Seq.map snd |> List.ofSeq
+//        member __.RegisteredPicklerFactories = formatterFactories.Value |> Map.toSeq |> Seq.map snd |> List.ofSeq
+        member __.RegisteredGenericPicklerFactories = genericFactories.Value.GetEntries()
 
 
 
-    and FormatterCache internal (tyConv : ITypeNameConverter, formatters : seq<Formatter>, 
-                                    gfi : GenericFormatterIndex) = //, ffs : Map<string, IFormatterFactory>) =
+    and PicklerCache internal (tyConv : ITypeNameConverter, formatters : seq<Pickler>, 
+                                    gfi : GenericPicklerIndex) = //, ffs : Map<string, IPicklerFactory>) =
         
         let cache =
             seq {
-                yield! mkPrimitiveFormatters ()
-                yield! mkAtomicFormatters ()
-                yield! mkReflectionFormatters tyConv
+                yield! mkPrimitivePicklers ()
+                yield! mkAtomicPicklers ()
+                yield! mkReflectionPicklers tyConv
             }
             |> Seq.map (fun f -> KeyValuePair(f.Type, f)) 
             |> fun x -> new ConcurrentDictionary<_,_>(x)
 
         let gfi =
-            let fsharpGenericFormatters = mkGenericFormatters ()
-            gfi.AddGenericFormatters(fsharpGenericFormatters, Discard)
+            let fsharpGenericPicklers = mkGenericPicklers ()
+            gfi.AddGenericPicklers(fsharpGenericPicklers, Discard)
 
         do 
             for f in formatters do 
@@ -72,21 +72,21 @@
 
         member internal __.TypeNameConverter = tyConv
 
-        interface IFormatterResolver with
-            member s.Resolve<'T> () = YParametric cache (resolveFormatter tyConv gfi) typeof<'T> :?> Formatter<'T>
-            member s.Resolve (t : Type) = YParametric cache (resolveFormatter tyConv gfi) t
+        interface IPicklerResolver with
+            member s.Resolve<'T> () = YParametric cache (resolvePickler tyConv gfi) typeof<'T> :?> Pickler<'T>
+            member s.Resolve (t : Type) = YParametric cache (resolvePickler tyConv gfi) t
         
-        static member internal FromFormatterRegistry(fr : FormatterRegistry) =
-            new FormatterCache(fr.TypeNameConverter, fr.RegisteredFormatters, fr.GenericFactories)
+        static member internal FromPicklerRegistry(fr : PicklerRegistry) =
+            new PicklerCache(fr.TypeNameConverter, fr.RegisteredPicklers, fr.GenericFactories)
 
         static member internal Default() = 
-            new FormatterCache(new DefaultTypeNameConverter(), [], GenericFormatterIndex.Empty)
+            new PicklerCache(new DefaultTypeNameConverter(), [], GenericPicklerIndex.Empty)
 
 
-    and FsPickler private (cache : IFormatterResolver) =
+    and FsPickler private (cache : IPicklerResolver) =
 
-        new () = new FsPickler(FormatterCache.Default())
-        new (registry : FormatterRegistry) = new FsPickler(FormatterCache.FromFormatterRegistry registry)
+        new () = new FsPickler(PicklerCache.Default())
+        new (registry : PicklerRegistry) = new FsPickler(PicklerCache.FromPicklerRegistry registry)
 
         /// <summary>Initializes an object writer for the given stream.</summary>
         /// <param name="stream">The target stream.</param>
@@ -158,4 +158,4 @@
             try cache.Resolve<'T> () |> ignore ; true
             with :? NonSerializableTypeException -> false
 
-        member __.ResolveFormatter<'T> () = cache.Resolve<'T> ()
+        member __.ResolvePickler<'T> () = cache.Resolve<'T> ()

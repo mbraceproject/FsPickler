@@ -1,6 +1,6 @@
 ﻿namespace FsPickler
 
-    open FsPickler.FormatterUtils
+    open FsPickler.PicklerUtils
     open FsPickler.FSharpCombinators
 
 
@@ -9,55 +9,55 @@
 
         [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
         [<RequireQualifiedAccess>]
-        module Formatter =
+        module Pickler =
 
-            let inline auto<'T> (resolver : IFormatterResolver) = resolver.Resolve<'T> ()
+            let inline auto<'T> (resolver : IPicklerResolver) = resolver.Resolve<'T> ()
             
-            let pair f g = PairFormatter.Create(f,g)
-            let triple f g h = TripleFormatter.Create(f,g,h)
-            let quad f g h i = QuadFormatter.Create(f,g,h,i)
+            let pair f g = PairPickler.Create(f,g)
+            let triple f g h = TriplePickler.Create(f,g,h)
+            let quad f g h i = QuadPickler.Create(f,g,h,i)
 
-            let option f = OptionFormatter.Create f
-            let choice2 f g = Choice2Formatter.Create(f,g)
-            let choice3 f g h = Choice3Formatter.Create(f,g,h)
-            let choice4 f g h i = Choice4Formatter.Create(f,g,h,i)
+            let option f = OptionPickler.Create f
+            let choice2 f g = Choice2Pickler.Create(f,g)
+            let choice3 f g h = Choice3Pickler.Create(f,g,h)
+            let choice4 f g h i = Choice4Pickler.Create(f,g,h,i)
 
-            let ref f = FSharpRefFormatter.Create f
-            let list f = ListFormatter.Create f
-            let seq f = SeqFormatter.Create f
-            let pairSeq kf vf = KeyValueSeqFormatter.Create(kf, vf)
-            let map f = FSharpMapFormatter.Create f
-            let set f = FSharpSetFormatter.Create f
+            let ref f = FSharpRefPickler.Create f
+            let list f = ListPickler.Create f
+            let seq f = SeqPickler.Create f
+            let pairSeq kf vf = KeyValueSeqPickler.Create(kf, vf)
+            let map f = FSharpMapPickler.Create f
+            let set f = FSharpSetPickler.Create f
 
-            let wrap fmt recover convert = WrapFormatter.Create(fmt, convert, recover)
-            let alt tagReader fmts = AltFormatter.Create(tagReader, fmts)
+            let wrap fmt recover convert = WrapPickler.Create(fmt, convert, recover)
+            let alt tagReader fmts = AltPickler.Create(tagReader, fmts)
 
 
-        type Formatter with
+        type Pickler with
             /// <summary>Initializes a formatter out of a pair of read/write lambdas.</summary>
             /// <param name="cache">Specifies whether the serializer should cache by reference when serializing.</param>
             /// <param name="useWithSubtypes">Specifies whether this specific formatter should apply to all subtypes.</param>
             static member FromPrimitives(reader : Reader -> 'T, writer : Writer -> 'T -> unit, ?cache, ?useWithSubtypes) =
                 let cache = defaultArg cache (not typeof<'T>.IsValueType)
                 let useWithSubtypes = defaultArg useWithSubtypes false
-                mkFormatter FormatterInfo.Custom useWithSubtypes cache reader writer
+                mkPickler PicklerInfo.UserDefined useWithSubtypes cache reader writer
 
         type Writer with
             member w.WriteSequence(xs : seq<'T>) =
-                let fmt = w.ResolveFormatter<'T> ()
+                let fmt = w.ResolvePickler<'T> ()
                 writeSeq' fmt w xs
 
             member w.WriteKeyValueSequence(xs : seq<'K * 'V>) =
-                let kf = w.ResolveFormatter<'K> ()
-                let vf = w.ResolveFormatter<'V> ()
+                let kf = w.ResolvePickler<'K> ()
+                let vf = w.ResolvePickler<'V> ()
                 writeKVPairs' kf vf w xs
 
         type Reader with
             member r.ReadSequence<'T> () =
-                let fmt = r.ResolveFormatter<'T> ()
+                let fmt = r.ResolvePickler<'T> ()
                 readSeq' fmt r
 
             member r.ReadKeyValueSequence<'K, 'V> () =
-                let kf = r.ResolveFormatter<'K> ()
-                let vf = r.ResolveFormatter<'V> ()
+                let kf = r.ResolvePickler<'K> ()
+                let vf = r.ResolvePickler<'V> ()
                 readKVPairs' kf vf r

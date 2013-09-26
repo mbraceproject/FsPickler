@@ -11,7 +11,7 @@
 
     open FsPickler
     open FsPickler.Utils
-    open FsPickler.FormatterUtils
+    open FsPickler.PicklerUtils
 
     module internal Expression =
 
@@ -114,49 +114,49 @@
             Expression.Call(dc, deserializationCallBack, constant null) :> Expression
 
         /// serialize a given value
-        let write (writer : Expression) (formatter : Formatter) (value : Expression) =
-            let ft = typedefof<Formatter<_>>.MakeGenericType [| formatter.Type |]
+        let write (writer : Expression) (formatter : Pickler) (value : Expression) =
+            let ft = typedefof<Pickler<_>>.MakeGenericType [| formatter.Type |]
             let fExpr = Expression.Constant(formatter, ft)
             Expression.Call(writer, writerM.MakeGenericMethod [| formatter.Type |], fExpr, value) :> Expression
 
         /// deserialize a given value
-        let read (reader : Expression) (formatter : Formatter) =
-            let ft = typedefof<Formatter<_>>.MakeGenericType [| formatter.Type |]
+        let read (reader : Expression) (formatter : Pickler) =
+            let ft = typedefof<Pickler<_>>.MakeGenericType [| formatter.Type |]
             let fExpr = Expression.Constant(formatter, ft)
             Expression.Call(reader, readerM.MakeGenericMethod [| formatter.Type |], fExpr) :> Expression
 
         /// write a collection of formatter from a corresponding collection of properties
-        let zipWriteProperties (properties : PropertyInfo []) (formatters : Formatter []) 
+        let zipWriteProperties (properties : PropertyInfo []) (formatters : Pickler []) 
                                                     (writer : Expression) (instance : Expression) =
-            let writeValue (formatter : Formatter, property : PropertyInfo) =
+            let writeValue (formatter : Pickler, property : PropertyInfo) =
                 let value = Expression.Property(instance, property)
                 write writer formatter value
 
             Seq.zip formatters properties |> Seq.map writeValue
 
         /// read from a collection of formatters and pass to given constructor
-        let callConstructor (ctor : ConstructorInfo) (formatters : Formatter []) (reader : Expression) =
+        let callConstructor (ctor : ConstructorInfo) (formatters : Pickler []) (reader : Expression) =
             let values = Seq.map (read reader) formatters
             Expression.New(ctor, values) :> Expression
 
         /// read from a collection of formatters and pass to given static method
-        let callMethod (methodInfo : MethodInfo) (formatters : Formatter []) (reader : Expression) =
+        let callMethod (methodInfo : MethodInfo) (formatters : Pickler []) (reader : Expression) =
             let values = Seq.map (read reader) formatters
             Expression.Call(methodInfo, values) :> Expression
 
         /// zip write a collection of fields to corresponding collection of formatters
-        let zipWriteFields (fields : FieldInfo []) (formatters : Formatter []) 
+        let zipWriteFields (fields : FieldInfo []) (formatters : Pickler []) 
                                             (writer : Expression) (instance : Expression) =
 
-            let writeValue (formatter : Formatter, field : FieldInfo) =
+            let writeValue (formatter : Pickler, field : FieldInfo) =
                 let value = Expression.Field(instance, field)
                 write writer formatter value
 
             Seq.zip formatters fields |> Seq.map writeValue
 
         /// zip read a collection of formatters to corresponding collection of fields
-        let zipReadFields (fields : FieldInfo []) (formatters : Formatter []) (reader : Expression) (instance : Expression) =
-            let readValue (formatter : Formatter, field : FieldInfo) =
+        let zipReadFields (fields : FieldInfo []) (formatters : Pickler []) (reader : Expression) (instance : Expression) =
+            let readValue (formatter : Pickler, field : FieldInfo) =
                 let value = read reader formatter
                 let field = Expression.Field(instance, field)
                 Expression.Assign(field, value) :> Expression

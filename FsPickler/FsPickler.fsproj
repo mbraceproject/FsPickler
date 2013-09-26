@@ -39,18 +39,20 @@
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets')" />
   <ItemGroup>
     <Compile Include="Utils.fs" />
-    <Compile Include="FormatterHeader.fs" />
-    <Compile Include="Formatter.fs" />
-    <Compile Include="FormatterUtils.fs" />
+    <Compile Include="Header.fs" />
+    <Compile Include="Pickler.fsi" />
+    <Compile Include="Pickler.fs" />
+    <Compile Include="Interfaces.fs" />
+    <Compile Include="PicklerUtils.fs" />
     <Compile Include="ExpressionTrees.fs" />
-    <Compile Include="TypeFormatter.fs" />
-    <Compile Include="BaseFormatters.fs" />
-    <Compile Include="ReflectionFormatters.fs" />
-    <Compile Include="DotNetFormatters.fs" />
-    <Compile Include="FSharpFormatters.fs" />
+    <Compile Include="TypePickler.fs" />
+    <Compile Include="BasePicklers.fs" />
+    <Compile Include="ReflectionPicklers.fs" />
+    <Compile Include="DotNetPicklers.fs" />
+    <Compile Include="FSharpPicklers.fs" />
     <Compile Include="FSharpCombinators.fs" />
     <Compile Include="TypeShape.fs" />
-    <Compile Include="FormatterResolution.fs" />
+    <Compile Include="PicklerResolution.fs" />
     <Compile Include="FsPickler.fs" />
     <Compile Include="ExtensionMethods.fs" />
     <None Include="test.fsx" />

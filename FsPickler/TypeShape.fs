@@ -1,13 +1,13 @@
 ﻿module internal FsPickler.TypeShape
 
-    // The following provides management logic for IGenericFormatterFactory implementations.
+    // The following provides management logic for IGenericPicklerFactory implementations.
     // Since generic types come with multiple combinations of type variables and constraints,
     // specifying a predetermined set of generic formatter interfaces is simply not practical.
     //
-    // All that is required of input formatters is to implement the IGenericFormatterFactory interface
+    // All that is required of input formatters is to implement the IGenericPicklerFactory interface
     // (which contains no methods) and to contain an implementation of a non-static method
     //
-    //         Create<'T1,..,'Tn> : (Type -> Lazy<Formatter>) -> Formatter
+    //         Create<'T1,..,'Tn> : (Type -> Lazy<Pickler>) -> Pickler
     //
     // The method is determined and executed through reflection, hence the possibility of runtime errors is real.
     // This has the advantage of not having to concern ourselves with type constraints at this stage, where they do
@@ -227,11 +227,11 @@
         static member Empty = ShapeMap<'T>(Map.empty)
 
     /// an immutable index for generic formatters
-    type GenericFormatterIndex internal (shapeMap : ShapeMap<IGenericFormatterFactory * MethodInfo>) =
+    type GenericPicklerIndex internal (shapeMap : ShapeMap<IGenericPicklerFactory * MethodInfo>) =
 
-        static member Empty = new GenericFormatterIndex(ShapeMap.Empty)
+        static member Empty = new GenericPicklerIndex(ShapeMap.Empty)
 
-        member i.AddGenericFormatter(gf : IGenericFormatterFactory, overwrite) =
+        member i.AddGenericPickler(gf : IGenericPicklerFactory, overwrite) =
             let t = gf.GetType()
             let tryGetCreateMethod (t : Type) =
                 t.GetMethods(BindingFlags.Instance ||| BindingFlags.Public ||| BindingFlags.NonPublic)
@@ -239,9 +239,9 @@
                         m.Name = "Create" &&  m.IsGenericMethod 
                         &&
                             (let ts = m.GetParameters() |> Array.map (fun p -> p.ParameterType)
-                                in ts = [| typeof<IFormatterResolver> |])
+                                in ts = [| typeof<IPicklerResolver> |])
                         &&
-                            typeof<Formatter>.IsAssignableFrom m.ReturnType)
+                            typeof<Pickler>.IsAssignableFrom m.ReturnType)
 
             let createMethod =
                 match tryGetCreateMethod t with
@@ -249,30 +249,30 @@
                 | None ->
                     // Create method may be hidden in intermediate interfaces
                     t.GetInterfaces() 
-                    |> Seq.filter (fun i -> typeof<IGenericFormatterFactory>.IsAssignableFrom i)
+                    |> Seq.filter (fun i -> typeof<IGenericPicklerFactory>.IsAssignableFrom i)
                     |> Seq.tryPick tryGetCreateMethod
 
             match createMethod with
             | None -> 
-                SerializationException(sprintf "IGenericFormatter: instance '%s' does not implement a factory method 'Create<..> : (Type -> Lazy<Formatter>) -> Formatter'" t.Name)
+                SerializationException(sprintf "IGenericPickler: instance '%s' does not implement a factory method 'Create<..> : (Type -> Lazy<Pickler>) -> Pickler'" t.Name)
                 |> raise
             | Some m ->
                 // apply Peano type variables to formatter in order to extrapolate the type shape
                 let tyVars = getPeanoVars (m.GetGenericArguments().Length)
                 let resolver =
                     {
-                        new IFormatterResolver with
-                            member __.Resolve (t : Type) = ReflectionFormatters.AbstractFormatter.CreateUntyped t
-                            member __.Resolve<'T> () = ReflectionFormatters.AbstractFormatter.Create<'T> ()
+                        new IPicklerResolver with
+                            member __.Resolve (t : Type) = ReflectionPicklers.AbstractPickler.CreateUntyped t
+                            member __.Resolve<'T> () = ReflectionPicklers.AbstractPickler.Create<'T> ()
                     }
 
                 let m0 =
                     try m.MakeGenericMethod tyVars
                     with :? System.ArgumentException & InnerExn (:? System.Security.VerificationException) ->
-                        SerializationException(sprintf "IGenericFormatter: instance '%s' contains unsupported type constraint." t.Name)
+                        SerializationException(sprintf "IGenericPickler: instance '%s' contains unsupported type constraint." t.Name)
                         |> raise
 
-                let fmt = m0.Invoke(gf, [| resolver :> obj|]) :?> Formatter
+                let fmt = m0.Invoke(gf, [| resolver :> obj|]) :?> Pickler
                 let shape = TypeShape.OfType fmt.Type
                 let fvs = shape.FreeVars
                 if fvs.Length < tyVars.Length then
@@ -281,27 +281,27 @@
                         | None -> fvs.Length
                         | Some i -> i
 
-                    SerializationException(sprintf "IGenericFormatter: type variable #%d in instance '%s' is not used in pattern." missingVar t.Name)
+                    SerializationException(sprintf "IGenericPickler: type variable #%d in instance '%s' is not used in pattern." missingVar t.Name)
                     |> raise
 
                 match shape with
                 | Var _ -> 
-                    SerializationException(sprintf "IGenericFormatter: pattern in instance '%s' has type variable at top level position." t.Name)
+                    SerializationException(sprintf "IGenericPickler: pattern in instance '%s' has type variable at top level position." t.Name)
                     |> raise
                 | _ -> ()
 
-                new GenericFormatterIndex(shapeMap.Add(shape, (gf,m), overwrite))
+                new GenericPicklerIndex(shapeMap.Add(shape, (gf,m), overwrite))
 
-        member i.AddGenericFormatters(gfs : seq<IGenericFormatterFactory>, overwrite) =
-            (i,gfs) ||> Seq.fold (fun i gf -> i.AddGenericFormatter(gf,overwrite))
+        member i.AddGenericPicklers(gfs : seq<IGenericPicklerFactory>, overwrite) =
+            (i,gfs) ||> Seq.fold (fun i gf -> i.AddGenericPickler(gf,overwrite))
 
-        member i.TryResolveGenericFormatter(t : Type, resolver : IFormatterResolver) : Formatter option =
+        member i.TryResolveGenericPickler(t : Type, resolver : IPicklerResolver) : Pickler option =
             match shapeMap.TryFind t with
             | None -> None
             | Some (shapes, (gf,m)) ->
                 // get hole instances that match given pattern
                 let types = shapes |> Array.map (fun s -> s.Type)
-                Some(m.MakeGenericMethod(types).Invoke(gf, [| resolver :> obj |]) :?> Formatter)
+                Some(m.MakeGenericMethod(types).Invoke(gf, [| resolver :> obj |]) :?> Pickler)
 
         member __.GetEntries() =
             shapeMap.ToList()
