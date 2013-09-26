@@ -1,11 +1,11 @@
-﻿namespace FsCoreSerializer.Tests
+﻿namespace FsPickler.Tests
 
     open System
     open System.Reflection
     open System.Runtime.Serialization
 
     open FsUnit
-    open FsCoreSerializer
+    open FsPickler
 
     open NUnit.Framework
 

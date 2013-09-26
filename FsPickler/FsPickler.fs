@@ -1,4 +1,4 @@
-﻿namespace FsCoreSerializer
+﻿namespace FsPickler
     
     open System
     open System.IO
@@ -8,13 +8,13 @@
     open System.Collections.Concurrent
     open System.Runtime.Serialization
 
-    open FsCoreSerializer
-    open FsCoreSerializer.Utils
-    open FsCoreSerializer.TypeShape
-    open FsCoreSerializer.FormatterUtils
-    open FsCoreSerializer.BaseFormatters
-    open FsCoreSerializer.FSharpCombinators
-    open FsCoreSerializer.FormatterResolution
+    open FsPickler
+    open FsPickler.Utils
+    open FsPickler.TypeShape
+    open FsPickler.FormatterUtils
+    open FsPickler.BaseFormatters
+    open FsPickler.FSharpCombinators
+    open FsPickler.FormatterResolution
 
     [<Sealed>]
     type FormatterRegistry () =
@@ -83,10 +83,10 @@
             new FormatterCache(new DefaultTypeNameConverter(), [], GenericFormatterIndex.Empty)
 
 
-    and FsCoreSerializer private (cache : IFormatterResolver) =
+    and FsPickler private (cache : IFormatterResolver) =
 
-        new () = new FsCoreSerializer(FormatterCache.Default())
-        new (registry : FormatterRegistry) = new FsCoreSerializer(FormatterCache.FromFormatterRegistry registry)
+        new () = new FsPickler(FormatterCache.Default())
+        new (registry : FormatterRegistry) = new FsPickler(FormatterCache.FromFormatterRegistry registry)
 
         /// <summary>Initializes an object writer for the given stream.</summary>
         /// <param name="stream">The target stream.</param>

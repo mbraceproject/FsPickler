@@ -1,4 +1,4 @@
-﻿module internal FsCoreSerializer.DotNetFormatters
+﻿module internal FsPickler.DotNetFormatters
 
     open System
     open System.IO
@@ -9,10 +9,10 @@
 #endif
     open System.Runtime.Serialization
 
-    open FsCoreSerializer
-    open FsCoreSerializer.Utils
-    open FsCoreSerializer.FormatterUtils
-    open FsCoreSerializer.BaseFormatters
+    open FsPickler
+    open FsPickler.Utils
+    open FsPickler.FormatterUtils
+    open FsPickler.BaseFormatters
 
     // formatter rules for array types
 

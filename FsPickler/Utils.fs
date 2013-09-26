@@ -1,4 +1,4 @@
-﻿namespace FsCoreSerializer
+﻿namespace FsPickler
 
     #nowarn "1204"
     #nowarn "42"

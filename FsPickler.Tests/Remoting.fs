@@ -1,4 +1,4 @@
-﻿namespace FsCoreSerializer.Tests
+﻿namespace FsPickler.Tests
 
     open System
     open System.Diagnostics
@@ -8,7 +8,7 @@
     open System.Threading
     open System.Threading.Tasks
 
-    open FsCoreSerializer
+    open FsPickler
 
     open NUnit.Framework
 

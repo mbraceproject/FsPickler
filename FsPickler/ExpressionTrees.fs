@@ -1,4 +1,4 @@
-﻿namespace FsCoreSerializer
+﻿namespace FsPickler
 
     // LINQ expression utilities
 
@@ -9,9 +9,9 @@
     open System.Linq.Expressions
     open System.Runtime.Serialization
 
-    open FsCoreSerializer
-    open FsCoreSerializer.Utils
-    open FsCoreSerializer.FormatterUtils
+    open FsPickler
+    open FsPickler.Utils
+    open FsPickler.FormatterUtils
 
     module internal Expression =
 

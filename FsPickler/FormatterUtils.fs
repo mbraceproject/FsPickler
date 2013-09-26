@@ -1,11 +1,11 @@
-﻿namespace FsCoreSerializer
+﻿namespace FsPickler
 
     open System
     open System.Reflection
     open System.Runtime.Serialization
     
-    open FsCoreSerializer
-    open FsCoreSerializer.Utils
+    open FsPickler
+    open FsPickler.Utils
 
     module internal FormatterUtils =
 

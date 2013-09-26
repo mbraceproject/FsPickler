@@ -1,4 +1,4 @@
-﻿namespace FsCoreSerializer.Tests
+﻿namespace FsPickler.Tests
 
     module PerformanceTests =
 
@@ -8,7 +8,7 @@
         open System.Runtime.Serialization
 
         open NUnit.Framework
-        open FsCoreSerializer
+        open FsPickler
 
         open TestTypes
 

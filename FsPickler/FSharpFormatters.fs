@@ -1,4 +1,4 @@
-﻿module internal FsCoreSerializer.FSharpFormatters
+﻿module internal FsPickler.FSharpFormatters
 
     open System
     open System.IO
@@ -11,9 +11,9 @@
 
     open Microsoft.FSharp.Reflection
 
-    open FsCoreSerializer
-    open FsCoreSerializer.Utils
-    open FsCoreSerializer.FormatterUtils
+    open FsPickler
+    open FsPickler.Utils
+    open FsPickler.FormatterUtils
 
 
     // F# union types

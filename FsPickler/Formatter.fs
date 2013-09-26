@@ -1,4 +1,4 @@
-﻿namespace FsCoreSerializer
+﻿namespace FsPickler
 
     open System
     open System.IO
@@ -7,8 +7,8 @@
     open System.Collections.Generic
     open System.Runtime.Serialization
 
-    open FsCoreSerializer.Utils
-    open FsCoreSerializer.FormatterHeader
+    open FsPickler.Utils
+    open FsPickler.FormatterHeader
 
     [<AutoSerializable(false)>]
     [<AbstractClass>]
@@ -399,7 +399,7 @@
         inherit IGenericFormatterFactory
         abstract Create<'T, 'S, 'U, 'V> : IFormatterResolver -> Formatter
 
-    /// Raised by FsCoreSerializer whenever an unsupported type is encountered in the object graph.
+    /// Raised by FsPickler whenever an unsupported type is encountered in the object graph.
     type NonSerializableTypeException(unsupportedType : Type, ?message : string) =
         inherit SerializationException(
             match message with

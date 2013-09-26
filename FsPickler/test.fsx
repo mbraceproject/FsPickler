@@ -1,11 +1,11 @@
-﻿#r "bin/Debug/FsCoreSerializer.dll"
+﻿#r "bin/Debug/FsPickler.dll"
 
-open FsCoreSerializer
+open FsPickler
 open System
 open System.IO
 open System.Reflection
 
-let fsc = new FsCoreSerializer()
+let fsc = new FsPickler()
 
 let loop (x : 'T) =
     use mem = new MemoryStream()

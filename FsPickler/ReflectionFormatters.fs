@@ -1,4 +1,4 @@
-﻿module internal FsCoreSerializer.ReflectionFormatters
+﻿module internal FsPickler.ReflectionFormatters
 
     open System
     open System.Reflection
@@ -9,9 +9,9 @@
 
     open Microsoft.FSharp.Reflection
 
-    open FsCoreSerializer
-    open FsCoreSerializer.Utils
-    open FsCoreSerializer.FormatterUtils
+    open FsPickler
+    open FsPickler.Utils
+    open FsPickler.FormatterUtils
 
     //
     //  reflection - based serializers

@@ -1,9 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
     <metadata>
-        <id>FsCoreSerializer</id>
-        <version>0.5</version>
-        <title>FsCoreSerializer</title>
+        <id>FsPickler</id>
+        <version>0.6</version>
+        <title>FsPickler</title>
         <authors>Eirik Tsarpalis</authors>
         <owners>Eirik Tsarpalis</owners>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>

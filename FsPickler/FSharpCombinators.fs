@@ -1,12 +1,12 @@
-﻿module internal FsCoreSerializer.FSharpCombinators
+﻿module internal FsPickler.FSharpCombinators
 
     open System
     open System.Collections.Generic
 
-    open FsCoreSerializer
-    open FsCoreSerializer.Utils
-    open FsCoreSerializer.FormatterUtils
-    open FsCoreSerializer.BaseFormatters
+    open FsPickler
+    open FsPickler.Utils
+    open FsPickler.FormatterUtils
+    open FsPickler.BaseFormatters
 
     //
     //  F# pickler combinators

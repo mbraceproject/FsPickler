@@ -1,4 +1,4 @@
-﻿namespace FsCoreSerializer
+﻿namespace FsPickler
 
     open System
     open System.Runtime.Serialization

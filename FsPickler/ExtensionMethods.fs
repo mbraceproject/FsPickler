@@ -1,7 +1,7 @@
-﻿namespace FsCoreSerializer
+﻿namespace FsPickler
 
-    open FsCoreSerializer.FormatterUtils
-    open FsCoreSerializer.FSharpCombinators
+    open FsPickler.FormatterUtils
+    open FsPickler.FSharpCombinators
 
 
     [<AutoOpen>]

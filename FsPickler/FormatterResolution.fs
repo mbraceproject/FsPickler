@@ -1,4 +1,4 @@
-﻿module internal FsCoreSerializer.FormatterResolution
+﻿module internal FsPickler.FormatterResolution
 
     open System
     open System.Reflection
@@ -8,13 +8,13 @@
 
     open Microsoft.FSharp.Reflection
 
-    open FsCoreSerializer
-    open FsCoreSerializer.Utils
-    open FsCoreSerializer.TypeShape
-    open FsCoreSerializer.FormatterUtils
-    open FsCoreSerializer.ReflectionFormatters
-    open FsCoreSerializer.DotNetFormatters
-    open FsCoreSerializer.FSharpFormatters
+    open FsPickler
+    open FsPickler.Utils
+    open FsPickler.TypeShape
+    open FsPickler.FormatterUtils
+    open FsPickler.ReflectionFormatters
+    open FsPickler.DotNetFormatters
+    open FsPickler.FSharpFormatters
 
     /// Y combinator with parametric recursion support
     let YParametric (externalCache : ConcurrentDictionary<Type, Formatter>)

@@ -1,24 +1,24 @@
-﻿namespace FsCoreSerializer.Tests
+﻿namespace FsPickler.Tests
     
     open System
     open System.IO
     open System.Runtime.Serialization
     open System.Runtime.Serialization.Formatters.Binary
 
-    open FsCoreSerializer
+    open FsPickler
 
     type ISerializer =
         abstract Name : string
         abstract Serialize : Stream * 'T -> unit
         abstract Deserialize : Stream -> 'T
 
-    type TestFsCoreSerializer (?registry : FormatterRegistry) =
-        let fsc = match registry with None -> new FsCoreSerializer() | Some r -> new FsCoreSerializer(r)
+    type TestFsPickler (?registry : FormatterRegistry) =
+        let fsc = match registry with None -> new FsPickler() | Some r -> new FsPickler(r)
 
         member __.FSCS = fsc
 
         interface ISerializer with
-            member __.Name = "FsCoreSerializer"
+            member __.Name = "FsPickler"
             member __.Serialize(stream : Stream, x : 'T) = fsc.Serialize(stream, x)
             member __.Deserialize(stream : Stream) = fsc.Deserialize<'T> stream
 

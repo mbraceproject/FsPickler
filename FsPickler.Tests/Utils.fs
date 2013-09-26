@@ -1,4 +1,4 @@
-﻿namespace FsCoreSerializer.Tests
+﻿namespace FsPickler.Tests
 
     [<AutoOpen>]
     module Utils =
@@ -11,7 +11,7 @@
         open System.Runtime.Serialization
         open System.Threading.Tasks
 
-//        open FsCoreSerializer
+//        open FsPickler
 
         let runsOnMono = System.Type.GetType("Mono.Runtime") <> null
 

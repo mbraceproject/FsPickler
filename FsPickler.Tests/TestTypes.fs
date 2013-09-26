@@ -1,4 +1,4 @@
-﻿namespace FsCoreSerializer.Tests
+﻿namespace FsPickler.Tests
 
     #nowarn "346"
 
@@ -6,7 +6,7 @@
     open System.Reflection
     open System.Runtime.Serialization
 
-    open FsCoreSerializer
+    open FsPickler
 
     module TestTypes =
 
@@ -163,12 +163,12 @@
             do
                 registry.RegisterGenericFormatter(new GenericTypeFormatter())
 
-            new TestFsCoreSerializer(registry) :> ISerializer
+            new TestFsPickler(registry) :> ISerializer
 
 
         // automated large-scale object generation
         let generateSerializableObjects (assembly : Assembly) =
-            let fscs = (testSerializer :?> TestFsCoreSerializer).FSCS
+            let fscs = (testSerializer :?> TestFsPickler).FSCS
 
             let filterType (t : Type) =
                 try fscs.IsSerializableType t

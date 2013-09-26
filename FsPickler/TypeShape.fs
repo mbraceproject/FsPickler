@@ -1,4 +1,4 @@
-﻿module internal FsCoreSerializer.TypeShape
+﻿module internal FsPickler.TypeShape
 
     // The following provides management logic for IGenericFormatterFactory implementations.
     // Since generic types come with multiple combinations of type variables and constraints,
@@ -22,8 +22,8 @@
     open System.Reflection
     open System.Runtime.Serialization
 
-    open FsCoreSerializer
-    open FsCoreSerializer.Utils
+    open FsPickler
+    open FsPickler.Utils
 
     // embed peano arithmetic in System.Type
     type Peano =

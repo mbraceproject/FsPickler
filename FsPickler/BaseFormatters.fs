@@ -1,13 +1,13 @@
-﻿module internal FsCoreSerializer.BaseFormatters
+﻿module internal FsPickler.BaseFormatters
 
     open System
     open System.Reflection
     open System.Collections.Generic
     open System.Runtime.Serialization
 
-    open FsCoreSerializer
-    open FsCoreSerializer.Utils
-    open FsCoreSerializer.FormatterUtils
+    open FsPickler
+    open FsPickler.Utils
+    open FsPickler.FormatterUtils
 
     let mkPrimitiveFormatters () =
         [   
