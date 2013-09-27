@@ -61,6 +61,16 @@
     // formatter rules for enum types
 
     type EnumPickler =
+        static member CreateUntyped(enum : Type, resolver : IPicklerResolver) =
+            let underlying = enum.GetEnumUnderlyingType()
+            // reflection call typed method
+            let m = 
+                typeof<EnumPickler>
+                    .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
+                    .MakeGenericMethod [| enum ; underlying |]
+
+            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler
+
         static member Create<'Enum, 'Underlying when 'Enum : enum<'Underlying>> (resolver : IPicklerResolver) =
             let fmt = resolver.Resolve<'Underlying> ()
             let writer_func = fmt.Write
@@ -74,21 +84,19 @@
                 let value = reader_func r
                 Microsoft.FSharp.Core.LanguagePrimitives.EnumOfValue<'Underlying, 'Enum> value
 
-            new Pickler<'Enum>(reader, writer, PicklerInfo.ReflectionDerived, false, false)
-
-        static member CreateUntyped(enum : Type, resolver : IPicklerResolver) =
-            let underlying = enum.GetEnumUnderlyingType()
-            // reflection call typed method
-            let m = 
-                typeof<EnumPickler>
-                    .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
-                    .MakeGenericMethod [| enum ; underlying |]
-
-            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler
+            new Pickler<'Enum>(reader, writer, PicklerInfo.ReflectionDerived, cacheByRef = false, useWithSubtypes = false)
 
     // formatter builder for struct types
 
     type StructPickler =
+        static member CreateUntyped(t : Type, resolver : IPicklerResolver) =
+            let m = 
+                typeof<StructPickler>
+                    .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
+                    .MakeGenericMethod [| t |]
+
+            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler
+
         static member Create<'T when 'T : struct>(resolver : IPicklerResolver) =
             let fields = typeof<'T>.GetFields(allFields)
             if fields |> Array.exists(fun f -> f.IsInitOnly) then
@@ -138,22 +146,22 @@
                 fastUnbox<'T> t
 #endif
 
-            new Pickler<'T>(reader, writer, PicklerInfo.ReflectionDerived, false, false)
-
-        static member CreateUntyped(t : Type, resolver : IPicklerResolver) =
-            let m = 
-                typeof<StructPickler>
-                    .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
-                    .MakeGenericMethod [| t |]
-
-            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler
+            new Pickler<'T>(reader, writer, PicklerInfo.ReflectionDerived, cacheByRef = false, useWithSubtypes = false)
                     
 
     // reflection-based serialization rules for reference types
 
     type ClassPickler =
-        static member Create<'T when 'T : not struct>(resolver : IPicklerResolver) =
 
+        static member CreateUntyped(t : Type, resolver : IPicklerResolver) =
+            let m =
+                typeof<ClassPickler>
+                    .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
+                    .MakeGenericMethod [| t |]
+
+            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler
+
+        static member Create<'T when 'T : not struct>(resolver : IPicklerResolver) =
             let fields = 
                 typeof<'T>.GetFields(allFields) 
                 |> Array.filter (fun f -> not (containsAttr<NonSerializedAttribute> f))
@@ -243,19 +251,19 @@
                 t
 #endif
 
-            new Pickler<'T>(reader, writer, PicklerInfo.ReflectionDerived, cacheObj = true, useWithSubtypes = false)
+            new Pickler<'T>(reader, writer, PicklerInfo.ReflectionDerived, cacheByRef = true, useWithSubtypes = false)
 
+
+    type DelegatePickler =
 
         static member CreateUntyped(t : Type, resolver : IPicklerResolver) =
             let m =
-                typeof<ClassPickler>
+                typeof<DelegatePickler>
                     .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
                     .MakeGenericMethod [| t |]
 
             m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler
 
-
-    type DelegatePickler =
         static member Create<'Delegate when 'Delegate :> Delegate> (resolver : IPicklerResolver) =
             let memberInfoPickler = resolver.Resolve<MethodInfo> ()
             let writer (w : Writer) (dele : 'Delegate) =
@@ -284,12 +292,4 @@
                     for i = 0 to n - 1 do deleList.[i] <- r.Read<System.Delegate> ()
                     Delegate.Combine deleList |> fastUnbox<'Delegate>
 
-            new Pickler<'Delegate>(reader, writer, PicklerInfo.Delegate, true, false)
-
-        static member CreateUntyped(t : Type, resolver : IPicklerResolver) =
-            let m =
-                typeof<DelegatePickler>
-                    .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
-                    .MakeGenericMethod [| t |]
-
-            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler
+            new Pickler<'Delegate>(reader, writer, PicklerInfo.Delegate, cacheByRef = true, useWithSubtypes = false)

@@ -79,12 +79,6 @@
 
         let (|InnerExn|_|) (e : #exn) = denull e.InnerException
 
-//        let inline mkUntypedWriter (f : 'a -> 'b -> 'c) = fun x (y:obj) -> f x (y :?> _)
-//        let inline mkUntypedReader (f : 'a -> 'b) = fun x -> f x :> obj
-//        let inline mkTypedWriter (f : 'a -> obj -> 'c) = fun x (y : 'b) -> f x (y :> obj)
-//        let inline mkTypedReader (f : 'a -> obj) = fun x -> f x :?> 'b
-
-
         let initStreamingContext (ctx : obj option) = 
             match ctx with 
             | None -> StreamingContext() 
@@ -196,7 +190,8 @@
             member t.GetGenericMethod(isStatic, name : string, genericArgCount : int, paramCount : int) =
                 t.GetMethods(allMembers)
                 |> Array.find(fun m ->
-                    m.Name = name && m.IsStatic = isStatic
+                    m.Name = name 
+                        && m.IsStatic = isStatic
                         && genericArgCount = m.GetGenericArguments().Length
                         && paramCount = m.GetParameters().Length)
 

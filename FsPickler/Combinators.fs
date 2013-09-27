@@ -45,7 +45,7 @@
                                     
                     Array.toList array
 
-            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheObj = true, useWithSubtypes = false)
+            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = true, useWithSubtypes = false)
             
 
         interface IGenericPicklerFactory1 with
@@ -64,9 +64,9 @@
 
 #if OPTIMIZE_FSHARP
             // do not cache or apply subtype resolution for performance
-            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheObj = false, useWithSubtypes = true)
+            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
 #else
-            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheObj = true, useWithSubtypes = false)
+            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = true, useWithSubtypes = false)
 #endif
             
         interface IGenericPicklerFactory2 with
@@ -87,9 +87,9 @@
 
 #if OPTIMIZE_FSHARP
             // do not cache or apply subtype resolution for performance
-            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheObj = false, useWithSubtypes = true)
+            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
 #else
-            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheObj = true, useWithSubtypes = false)
+            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = true, useWithSubtypes = false)
 #endif    
 
         interface IGenericPicklerFactory3 with
@@ -109,9 +109,9 @@
 
 #if OPTIMIZE_FSHARP
             // do not cache or apply subtype resolution for performance
-            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheObj = false, useWithSubtypes = true)
+            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
 #else
-            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheObj = true, useWithSubtypes = false)
+            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = true, useWithSubtypes = false)
 #endif    
 
         interface IGenericPicklerFactory4 with
@@ -134,7 +134,7 @@
                 else
                     Some(read (isValue ef) r ef)
 
-            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheObj = false, useWithSubtypes = true)
+            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
 
         interface IGenericPicklerFactory1 with
             member __.Create<'T> (resolver : IPicklerResolver) =
@@ -158,7 +158,7 @@
                 | 0uy -> read (isValue f1) r f1 |> Choice1Of2
                 | _ -> read (isValue f2) r f2 |> Choice2Of2
 
-            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheObj = false, useWithSubtypes = true)
+            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
 
         interface IGenericPicklerFactory2 with
             member __.Create<'T1, 'T2> (resolver : IPicklerResolver) =
@@ -186,7 +186,7 @@
                 | 1uy -> read (isValue f2) r f2 |> Choice2Of3
                 | _   -> read (isValue f3) r f3 |> Choice3Of3
 
-            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheObj = false, useWithSubtypes = true)
+            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
 
         interface IGenericPicklerFactory3 with
             member __.Create<'T1, 'T2, 'T3> (resolver : IPicklerResolver) =
@@ -218,7 +218,7 @@
                 | 2uy -> read (isValue f3) r f3 |> Choice3Of4
                 | _   -> read (isValue f4) r f4 |> Choice4Of4
 
-            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheObj = false, useWithSubtypes = true)
+            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
 
         interface IGenericPicklerFactory4 with
             member __.Create<'T1, 'T2, 'T3, 'T4> (resolver : IPicklerResolver) =
@@ -236,7 +236,7 @@
                 read (isValue ef) r ef |> ref
 
             // do not cache for performance
-            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheObj = false, useWithSubtypes = false)
+            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = false)
             
         interface IGenericPicklerFactory1 with
             member __.Create<'T> (resolver : IPicklerResolver) =
@@ -252,7 +252,7 @@
             let reader (r : Reader) =
                 readSeq r ef |> Set.ofArray
 
-            new Pickler<_>(reader, writer, PicklerInfo.Combinator, cacheObj = true, useWithSubtypes = false)
+            new Pickler<_>(reader, writer, PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = false)
             
         interface IGenericPicklerFactory
         member __.Create<'T when 'T : comparison> (resolver : IPicklerResolver) =
@@ -269,7 +269,7 @@
             let reader (r : Reader) =
                 readKVPairs r kf vf |> Map.ofArray
 
-            new Pickler<_>(reader, writer, PicklerInfo.Combinator, cacheObj = true, useWithSubtypes = false)
+            new Pickler<_>(reader, writer, PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = false)
             
         interface IGenericPicklerFactory
         member __.Create<'K, 'V when 'K : comparison> (resolver : IPicklerResolver) =
@@ -292,7 +292,7 @@
                     d.Add(k,v)
                 d
 
-            Pickler<_>(reader, writer, PicklerInfo.Combinator, cacheObj = true, useWithSubtypes = false)
+            Pickler<_>(reader, writer, PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = false)
             
         interface IGenericPicklerFactory
         member __.Create<'K, 'V when 'K : comparison> (resolver : IPicklerResolver) =
@@ -312,21 +312,21 @@
                 let tag = r.BinaryReader.ReadInt32()
                 formatters.[tag].Read r
 
-            new Pickler<_>(reader, writer, PicklerInfo.Combinator, cacheObj = true, useWithSubtypes = false)
+            new Pickler<_>(reader, writer, PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = false)
 
 
     type WrapPickler =
         static member Create(origin : Pickler<'T>, recover : 'T -> 'S, convert : 'S -> 'T) =
             new Pickler<_>(origin.Read >> recover, (fun w t -> origin.Write w (convert t)), 
-                                    PicklerInfo.Combinator, cacheObj = true, useWithSubtypes = false)
+                                    PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = false)
 
     type SeqPickler =
         static member Create(ef : Pickler<'T>) =
-            new Pickler<_>(readSeq' ef, writeSeq' ef, PicklerInfo.Combinator, cacheObj = true, useWithSubtypes = false)
+            new Pickler<_>(readSeq' ef, writeSeq' ef, PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = false)
 
     type KeyValueSeqPickler =
         static member Create(kf : Pickler<'K>, vf : Pickler<'V>) =
-            new Pickler<_>(readKVPairs' kf vf, writeKVPairs' kf vf, PicklerInfo.Combinator, cacheObj = true, useWithSubtypes = false)
+            new Pickler<_>(readKVPairs' kf vf, writeKVPairs' kf vf, PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = false)
 
                 
 

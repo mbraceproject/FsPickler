@@ -34,7 +34,7 @@
         member __.RegisteredGenericPicklerFactories = genericFactories.Value.GetEntries()
 
 
-    type PicklerCache internal (tyConv : ITypeNameConverter option, formatters : seq<Pickler>, gfi : GenericPicklerIndex) =
+    type internal PicklerCache (tyConv : ITypeNameConverter option, formatters : seq<Pickler>, gfi : GenericPicklerIndex) =
 
         static let singleton = lazy(new PicklerCache(None, [], GenericPicklerIndex.Empty))
 
@@ -68,7 +68,7 @@
             member s.Resolve<'T> () = resolver typeof<'T> :?> Pickler<'T>
             member s.Resolve (t : Type) = resolver t
         
-        static member internal FromPicklerRegistry(fr : CustomPicklerRegistry) =
+        static member FromPicklerRegistry(fr : CustomPicklerRegistry) =
             new PicklerCache(fr.TypeNameConverter, fr.RegisteredPicklers, fr.GenericFactories)
 
-        static member internal GetDefault () = singleton.Value
+        static member GetDefault () = singleton.Value

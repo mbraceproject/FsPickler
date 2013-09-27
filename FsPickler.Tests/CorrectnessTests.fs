@@ -49,36 +49,39 @@
         [<Test>] member __.``Tuples`` () = testEquals (2,3) ; testEquals (2, "test", Some (3, Some 2)) ; testEquals (1,2,3,4,5,(1,"test"),6,7,8,9,10)
         [<Test>] member __.``Simple DU`` () = testEquals A ; testEquals E ; testEquals (D(42, "42"))
         [<Test>] member __.``Recursive DU`` () = testEquals Zero ; testEquals (int2Peano 42)
+        [<Test>] member __.``Mutual Recursive Unions`` () = testEquals <| nTree 6
         [<Test>] member __.``Simple Class`` () = testEquals <| SimpleClass(42, "fortyTwo")
         [<Test>] member __.``Generic Class`` () = testEquals <| new GenericClass<string * int>("fortyTwo", 42)
         [<Test>] member __.``Recursive Class`` () = testEquals <| RecursiveClass(Some (RecursiveClass(None)))
         [<Test>] member __.``Cyclic Object`` () = test <| CyclicClass()
         [<Test>] member __.``ISerializable Class`` () = testEquals <| SerializableClass(42, "fortyTwo")
-        [<Test>] member __.``Pickler Factory Class`` () = 
-                            let x = ClassWithPicklerFactory(0) |> testLoop
-                            x.Value |> should equal 42
+        
+        [<Test>] 
+        member __.``Pickler Factory Class`` () = 
+            let x = ClassWithPicklerFactory(0) |> testLoop
+            x.Value |> should equal 42
 
 
-        [<Test>] member __.``Combinator-based Peano`` () =
-                    let pp = 
-                        Pickler.fix(fun peanoP -> 
-                            peanoP 
-                            |> Pickler.option 
-                            |> Pickler.wrap 
-                                (function None -> Zero | Some p -> Succ p) 
-                                (function Zero -> None | Succ p -> Some p))
+        [<Test>] 
+        member __.``Combinator-based Peano`` () =
+            let pp = 
+                Pickler.fix(fun peanoP -> 
+                    peanoP 
+                    |> Pickler.option 
+                    |> Pickler.wrap 
+                        (function None -> Zero | Some p -> Succ p) 
+                        (function Zero -> None | Succ p -> Some p))
 
-                    let p = int2Peano 100
+            let p = int2Peano 100
 
-                    p |> testSerializer.FSCS.Pickle pp |> testSerializer.FSCS.UnPickle pp |> should equal p
+            p |> testSerializer.FSCS.Pickle pp |> testSerializer.FSCS.UnPickle pp |> should equal p
 
-        [<Test>] member __.``Mutual Recursive Unions`` () = testEquals <| nTree 6
+        [<Test>] 
+        member __.``Combinator-based Mutual Recursion`` () =
+            let tp,_ = getTreePicklers<int> ()
+            let t = nTree 6
 
-        [<Test>] member __.``Combinator-based Mutual Recursion`` () =
-                    let tp,_ = getTreePicklers<int> ()
-                    let t = nTree 6
-
-                    t |> testSerializer.FSCS.Pickle tp |> testSerializer.FSCS.UnPickle tp |> should equal t
+            t |> testSerializer.FSCS.Pickle tp |> testSerializer.FSCS.UnPickle tp |> should equal t
 
         [<Test>]
         member __.``NonSerializable Type`` () =
@@ -182,7 +185,7 @@
 
         [<Test>]
         member __.``Combinators with recursive bindings`` () =
-            let x = new ClassWithCombinators(42, None)
+            let x = new ClassWithCombinators(12, None)
             let y = new ClassWithCombinators(0, Some x)
 
             let z = testLoop y

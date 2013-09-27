@@ -69,12 +69,6 @@
             else
                 None
 
-        // resolve factory method
-        let result =
-            match result with
-            | Some _ -> result
-            | None -> PicklerFactory.TryCall(t, resolver)
-
         // lookup generic shapes
         let result =
             match result with
@@ -82,6 +76,16 @@
             | None ->
                 if t.IsGenericType || t.IsArray then
                     genericIdx.TryResolveGenericPickler(t, resolver)
+                else
+                    None
+
+        // pickler factories
+        let result =
+            match result with
+            | Some _ -> result
+            | None ->
+                if containsAttr<CustomPicklerAttribute> t then
+                    Some <| CustomPickler.Create(t, resolver)
                 else
                     None
 

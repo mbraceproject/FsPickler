@@ -3,17 +3,16 @@
     open FsPickler.PicklerUtils
     open FsPickler.CombinatorImpls
 
-
     [<AutoOpen>]
     module ExtensionMethods =
 
-        [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+        let pickle (pickler : Pickler<'T>) (value : 'T) = FsPickler.Singleton.Pickle pickler value
+        let unpickle (pickler : Pickler<'T>) (pickle : byte []) = FsPickler.Singleton.UnPickle pickler pickle
+
         [<RequireQualifiedAccess>]
         module Pickler =
 
-            let private resolver = lazy(PicklerCache.GetDefault() :> IPicklerResolver)
-
-            let auto<'T> = resolver.Value.Resolve<'T> ()
+            let auto<'T> = FsPickler.Singleton.ResolvePickler<'T> ()
             
             let pair f g = PairPickler.Create(f,g)
             let triple f g h = TriplePickler.Create(f,g,h)
@@ -46,9 +45,19 @@
                 f.InitializeFrom f' ; g.InitializeFrom g'
                 f',g'
 
+            let fix3 (F : Pickler<'T> -> Pickler<'S> -> Pickler<'U> -> Pickler<'T> * Pickler<'S> * Pickler<'U>) =
+                let f = new Pickler<'T>()
+                let g = new Pickler<'S>()
+                let h = new Pickler<'U>()
+                let f',g',h' = F f g h
+                f.InitializeFrom f' ; g.InitializeFrom g' ; h.InitializeFrom h'
+                f',g',h'
+
 
         type Pickler with
             /// <summary>Initializes a formatter out of a pair of read/write lambdas.</summary>
+            /// <param name="reader">Deserialization logic for the pickler.</param>
+            /// <param name="writer">Serialization logic for the pickler.</param>
             /// <param name="cache">Specifies whether the serializer should cache by reference when serializing.</param>
             /// <param name="useWithSubtypes">Specifies whether this specific formatter should apply to all subtypes.</param>
             static member FromPrimitives(reader : Reader -> 'T, writer : Writer -> 'T -> unit, ?cache, ?useWithSubtypes) =

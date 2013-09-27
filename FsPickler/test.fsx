@@ -16,6 +16,22 @@ let loop (x : 'T) =
     fsc.Deserialize<obj>(mem) :?> 'T
 
 
+[<CustomPickler>]
+type ClassWithCombinators (x : int, y : ClassWithCombinators option) =
+    member __.Value = x,y
+
+    static member CreatePickler (resolver : IPicklerResolver) =
+        Pickler.fix(fun self -> 
+            self 
+            |> Pickler.option 
+            |> Pickler.pair Pickler.auto<int>
+            |> Pickler.wrap (fun (x,y) -> new ClassWithCombinators(x,y)) (fun c -> c.Value))
+
+let p = fsc.ResolvePickler<ClassWithCombinators>()
+
+fsc.Pickle new
+
+
 type Foo = A | B of int
 
 type Peano = Zero | Succ of Peano

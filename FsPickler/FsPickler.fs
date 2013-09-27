@@ -5,9 +5,11 @@
     open System.Runtime.Serialization
 
 
-    type FsPickler (resolver : IPicklerResolver) =
+    type FsPickler internal (resolver : IPicklerResolver) =
+        
+        static let singleton = lazy(new FsPickler())
 
-        new () = new FsPickler(PicklerCache.GetDefault ())
+        new () = FsPickler(PicklerCache.GetDefault ())
         new (registry : CustomPicklerRegistry) = new FsPickler(PicklerCache.FromPicklerRegistry registry)
 
         /// <summary>Serialize an object of given type to the underlying stream.</summary>
@@ -28,6 +30,7 @@
         member __.Deserialize<'T> (stream : Stream, ?streamingContext : obj, ?encoding, ?leaveOpen) : 'T =
             use reader = new Reader(stream, resolver, ?streamingContext = streamingContext, ?encoding = encoding, ?leaveOpen = leaveOpen)
             
+            // TODO : type header
             reader.Read<'T> ()
 
         /// <summary>Deserialize object of given type from the underlying stream.</summary>
@@ -72,3 +75,5 @@
             with :? NonSerializableTypeException -> false
 
         member __.ResolvePickler<'T> () = resolver.Resolve<'T> ()
+
+        static member internal Singleton = singleton.Value

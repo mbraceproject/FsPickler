@@ -116,7 +116,7 @@
                         fastUnbox<'Array> arr
                     | _ -> failwith "impossible array rank"
 
-            new Pickler<'Array>(reader, writer, PicklerInfo.ReflectionDerived, true, false)
+            new Pickler<'Array>(reader, writer, PicklerInfo.ReflectionDerived, cacheByRef = true, useWithSubtypes = false)
 
         static member CreateUntyped(t : Type, resolver : IPicklerResolver) =
             let et = t.GetElementType()
@@ -130,6 +130,15 @@
     // formatter builder for ISerializable types
 
     type ISerializablePickler =
+
+        static member TryCreateUntyped(t : Type, resolver : IPicklerResolver) =
+            let m =
+                typeof<ISerializablePickler>
+                    .GetMethod("TryCreate", BindingFlags.NonPublic ||| BindingFlags.Static)
+                    .MakeGenericMethod [| t |]
+
+            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler option
+
         static member TryCreate<'T when 'T :> ISerializable>(resolver : IPicklerResolver) =
             match typeof<'T>.TryGetConstructor [| typeof<SerializationInfo> ; typeof<StreamingContext> |] with
             | None -> None
@@ -189,30 +198,26 @@
                     if isDeserializationCallback then (fastUnbox<IDeserializationCallback> x).OnDeserialization null
                     x
 
-                let fmt = new Pickler<'T>(reader, writer, PicklerInfo.ISerializable, true, false)
+                let fmt = new Pickler<'T>(reader, writer, PicklerInfo.ISerializable, cacheByRef = true, useWithSubtypes = false)
                 Some(fmt :> Pickler)
 
-        static member TryCreateUntyped(t : Type, resolver : IPicklerResolver) =
-            let m =
-                typeof<ISerializablePickler>
-                    .GetMethod("TryCreate", BindingFlags.NonPublic ||| BindingFlags.Static)
-                    .MakeGenericMethod [| t |]
 
-            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler option
+    //  check if type implements a static factory method : IPicklerResolver -> Pickler<DeclaringType>
 
+    type CustomPickler =
+        static member Create(t : Type, resolver : IPicklerResolver) =
+            let factoryMethod =
+                match t.GetMethod("CreatePickler", BindingFlags.Public ||| BindingFlags.Static) with
+                | null -> None
+                | m when    not m.IsGenericMethod &&
+                            m.GetParameterTypes() = [| typeof<IPicklerResolver> |] && 
+                            m.ReturnType = typedefof<Pickler<_>>.MakeGenericType [| t |] -> 
+                    Some m
 
-    //
-    //  check if type implements a static factory method : IPicklerResolver -> Pickler<'DeclaringType>
-    //
+                | _ -> None
 
-    type PicklerFactory =
-        static member TryCall(t : Type, resolver : IPicklerResolver) =
-            match t.GetMethod("CreatePickler", BindingFlags.Public ||| BindingFlags.Static) with
-            | null -> None
-            | m ->
-                if  m.GetParameterTypes() = [| typeof<IPicklerResolver> |] && 
-                    m.ReturnType = typedefof<Pickler<_>>.MakeGenericType [| t |] then
-
-                    let fmt = m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler
-                    Some fmt
-                else None
+            match factoryMethod with
+            | Some m -> m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler
+            | None ->
+                let msg = "marked with CustomPickler but missing a 'CreatePickler : IPicklerResolver -> Formatter<DeclaringType>' factory method."
+                raise <| new NonSerializableTypeException(t, msg)

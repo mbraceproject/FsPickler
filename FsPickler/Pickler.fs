@@ -10,6 +10,8 @@
     open FsPickler.Utils
     open FsPickler.Header
 
+
+
     [<AutoSerializable(false)>]
     [<AbstractClass>]
     type Pickler =
@@ -23,7 +25,7 @@
         val mutable private m_isInitialized : bool
 
         val mutable private m_picklerInfo : PicklerInfo
-        val mutable private m_cacheObj : bool
+        val mutable private m_isCacheByRef : bool
         val mutable private m_useWithSubtypes : bool
 
         internal new (t : Type) =
@@ -36,11 +38,11 @@
                 m_typeInfo = Unchecked.defaultof<_> ; 
                 m_typeHash = Unchecked.defaultof<_> ;
                 m_picklerInfo = Unchecked.defaultof<_> ; 
-                m_cacheObj = Unchecked.defaultof<_> ; 
+                m_isCacheByRef = Unchecked.defaultof<_> ; 
                 m_useWithSubtypes = Unchecked.defaultof<_> ; 
             }
 
-        internal new (t : Type, picklerInfo, cacheObj, useWithSubtypes) =
+        internal new (t : Type, picklerInfo, isCacheByRef, useWithSubtypes) =
             {
                 declared_type = t ; is_recursive_type = isRecursiveType t ;
 
@@ -49,24 +51,28 @@
                 m_pickler_type = t ; m_typeInfo = computeTypeInfo t ; m_typeHash = computeTypeHash t ;
                 
                 m_picklerInfo = picklerInfo ;
-                m_cacheObj = cacheObj ;
+                m_isCacheByRef = isCacheByRef ;
                 m_useWithSubtypes = useWithSubtypes ;
             }
 
         member f.Type = f.declared_type
-        member f.PicklerType = f.m_pickler_type
         member f.IsRecursiveType = f.is_recursive_type
-        member f.TypeInfo = f.m_typeInfo
+
+        member internal f.TypeInfo = f.m_typeInfo
         member internal f.TypeHash = f.m_typeHash
+
+        member f.PicklerType =
+            if f.m_isInitialized then f.m_pickler_type
+            else
+                invalidOp "Attempting to consume formatter at construction time."
 
         member f.PicklerInfo =
             if f.m_isInitialized then f.m_picklerInfo
             else
-                // TODO : define message elsewhere
                 invalidOp "Attempting to consume formatter at construction time."
 
-        member f.CacheObj =
-            if f.m_isInitialized then f.m_cacheObj
+        member f.IsCacheByRef =
+            if f.m_isInitialized then f.m_isCacheByRef
             else
                 invalidOp "Attempting to consume formatter at construction time."
 
@@ -75,7 +81,7 @@
             else
                 invalidOp "Attempting to consume formatter at construction time."
 
-        member f.IsInitialized = f.m_isInitialized
+        member internal f.IsInitialized = f.m_isInitialized
 
         abstract member UntypedWrite : Writer -> obj -> unit
         abstract member UntypedRead : Reader -> obj
@@ -98,7 +104,7 @@
                 f.m_typeHash <- f'.m_typeHash
                 f.m_typeInfo <- f'.m_typeInfo
                 f.m_picklerInfo <- f'.m_picklerInfo
-                f.m_cacheObj <- f'.m_cacheObj
+                f.m_isCacheByRef <- f'.m_isCacheByRef
                 f.m_useWithSubtypes <- f'.m_useWithSubtypes
                 f.m_isInitialized <- true
 
@@ -108,16 +114,16 @@
         val mutable private m_writer : Writer -> 'T -> unit
         val mutable private m_reader : Reader -> 'T
 
-        internal new (reader, writer, picklerInfo, cacheObj, useWithSubtypes) = 
+        internal new (reader, writer, picklerInfo, isCacheByRef, useWithSubtypes) = 
             { 
-                inherit Pickler(typeof<'T>, picklerInfo, cacheObj, useWithSubtypes) ;
+                inherit Pickler(typeof<'T>, picklerInfo, isCacheByRef, useWithSubtypes) ;
                 m_writer = writer ;
                 m_reader = reader ;
             }
 
-        private new (t, reader, writer, picklerInfo, cacheObj, useWithSubtypes) = 
+        private new (t, reader, writer, picklerInfo, isCacheByRef, useWithSubtypes) = 
             { 
-                inherit Pickler(t, picklerInfo, cacheObj, useWithSubtypes) ;
+                inherit Pickler(t, picklerInfo, isCacheByRef, useWithSubtypes) ;
                 m_writer = writer ;
                 m_reader = reader ;
             }
@@ -139,9 +145,9 @@
             elif typeof<'T>.IsAssignableFrom typeof<'S> && f.UseWithSubtypes then
                 let writer = let wf = f.m_writer in fun w x -> wf w (fastUnbox<'T> x)
                 let reader = let rf = f.m_reader in fun r -> rf r |> fastUnbox<'S>
-                new Pickler<'S>(typeof<'T>, reader, writer, f.PicklerInfo, f.CacheObj, f.UseWithSubtypes)
+                new Pickler<'S>(typeof<'T>, reader, writer, f.PicklerInfo, f.IsCacheByRef, f.UseWithSubtypes)
             else
-                raise <| new InvalidCastException(sprintf "Cannot cast formatter of type '%O' to type '%O'." typeof<'T> typeof<'S>)
+                raise <| new InvalidCastException(sprintf "Cannot cast pickler of type '%O' to type '%O'." typeof<'T> typeof<'S>)
                 
 
         override f.InitializeFrom(f' : Pickler) : unit =
@@ -174,21 +180,12 @@
 
         let tyPickler = resolver.Resolve<Type> ()
 
-        /// BinaryWriter to the underlying stream.
         member w.BinaryWriter = bw
 
-        /// Access the current streaming context.
         member w.StreamingContext = sc
 
-        member w.Resolver = resolver
-        //Pickler<'T>(resolver typeof<'T>)
+        member internal w.Resolver = resolver
 
-        /// <summary>
-        ///     Write object to stream using given formatter rules. Unsafe method.
-        ///     Has to be deserialized with the dual method Reader.ReadObj : Pickler -> obj.
-        /// </summary>
-        /// <param name="fmt">Pickler used in serialization. Needs to be compatible with input object.</param>
-        /// <param name="o">The input object.</param>
         member w.Write<'T> (fmt : Pickler<'T>, x : 'T) =
 
             let inline writeHeader (flags : byte) =
@@ -209,7 +206,7 @@
 
             do RuntimeHelpers.EnsureSufficientExecutionStack()
 
-            if fmt.CacheObj || fmt.IsRecursiveType then
+            if fmt.IsCacheByRef || fmt.IsRecursiveType then
                 let mutable firstOccurence = false
                 let id = idGen.GetId(x, &firstOccurence)
                 if firstOccurence then
@@ -257,12 +254,6 @@
                         writeHeader ObjHeader.empty
                         fmt.Write w x
 
-        /// <summary>
-        ///     Writes given object to the underlying stream.
-        ///     Serialization rules are resolved at runtime based on the type argument.
-        ///     Object has to be read with the dual Reader.Read&lt;'T&gt; method.
-        /// </summary>
-        /// <param name="t">The input value.</param>
         member w.Write<'T>(t : 'T) = let f = resolver.Resolve<'T> () in w.Write(f, t)
 
         member internal w.WriteObj(t : Type, o : obj) =
@@ -296,21 +287,13 @@
                 objCache.Add(currentReflectedObjId, o)
                 currentReflectedObjId <- 0L
 
-        /// BinaryReader to the underlying stream.
         member r.BinaryReader = br
 
-        /// Access the current streaming context.
         member r.StreamingContext = sc
 
-        /// <summary>Precomputes formatter for the given type at runtime.</summary>
-        member w.Resolver = resolver
+        member internal r.Resolver = resolver
 
-        /// <summary>
-        ///     Read object from stream using given formatter rules.
-        ///     Needs to have been serialized with the dual method Writer.WriteObj : Pickler * obj -> unit.
-        /// </summary>
-        /// <param name="fmt">Pickler used in deserialization. Needs to be compatible with input object.</param>
-        /// <param name="o">The input object.</param>
+        // the mean deserialization logic
         member r.Read(fmt : Pickler<'T>) : 'T =
             let flags = ObjHeader.read fmt.TypeHash (br.ReadUInt32())
 
@@ -364,11 +347,6 @@
             else
                 fmt.Read r
 
-        /// <summary>
-        ///     Reads object of given type from the underlying stream.
-        ///     Serialization rules are resolved at runtime based on the object header.
-        ///     Needs to have been serialized with the dual Writer.Write&lt;'T&gt; method.
-        /// </summary>
         member r.Read<'T> () : 'T = let f = resolver.Resolve<'T> () in r.Read f
 
         member internal r.ReadObj(t : Type) = let f = resolver.Resolve t in f.ManagedRead r

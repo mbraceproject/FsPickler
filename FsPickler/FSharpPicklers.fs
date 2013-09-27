@@ -128,7 +128,7 @@
                 ctor values |> fastUnbox<'Union>
 #endif
 
-            new Pickler<'Union>(reader, writer, PicklerInfo.FSharpValue, cacheObj = false, useWithSubtypes = true)
+            new Pickler<'Union>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
 
 
     // System.Tuple<...> types
@@ -192,9 +192,9 @@
 
 #if OPTIMIZE_FSHARP
             // do not cache or perform subtype resolution for performance
-            new Pickler<'Tuple>(reader, writer, PicklerInfo.FSharpValue, cacheObj = false, useWithSubtypes = true)
+            new Pickler<'Tuple>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
 #else
-            new Pickler<'Tuple>(reader, writer, PicklerInfo.Custom, cacheObj = true, useWithSubtypes = false)
+            new Pickler<'Tuple>(reader, writer, PicklerInfo.Custom, cacheByRef = true, useWithSubtypes = false)
 #endif
 
     // F# record/exception types
@@ -255,4 +255,4 @@
                 ctor.Invoke values |> fastUnbox<'Record>
 #endif
 
-            new Pickler<'Record>(reader, writer, PicklerInfo.FSharpValue, cacheObj = false, useWithSubtypes = false)
+            new Pickler<'Record>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = false)

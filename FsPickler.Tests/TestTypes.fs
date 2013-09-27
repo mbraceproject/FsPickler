@@ -88,7 +88,7 @@
                     s.AddValue("string", y)
                     s.AddValue("integer", x)
 
-
+        [<CustomPickler>]
         type ClassWithPicklerFactory (x : int) =
 
             member __.Value = x
@@ -99,6 +99,7 @@
                     (fun _ _ -> ()),
                         true, false)
 
+        [<CustomPickler>]
         type ClassWithCombinators (x : int, y : ClassWithCombinators option) =
             member __.Value = x,y
 
@@ -107,11 +108,7 @@
                     self 
                     |> Pickler.option 
                     |> Pickler.pair Pickler.auto<int>
-                    |> Pickler.wrap (fun (x,y) -> new ClassWithCombinators(x,y)) (fun c -> c.Value))
-
-
-        
-
+                    |> Pickler.wrap (fun (_,y) -> new ClassWithCombinators(42,y)) (fun c -> c.Value))
 
         exception FsharpException of int * string
 

@@ -13,7 +13,7 @@
         let inline mkPickler<'T> (info:PicklerInfo) (useWithSubtypes:bool) (cache:bool) 
                                             (reader : Reader -> 'T) (writer : Writer -> 'T -> unit) =
 
-            new Pickler<'T>(reader, writer, info, cacheObj = cache, useWithSubtypes = useWithSubtypes)
+            new Pickler<'T>(reader, writer, info, cacheByRef = cache, useWithSubtypes = useWithSubtypes)
 
         /// filter a collection of methods that carry serialization attributes
         let getSerializationMethods<'Attr when 'Attr :> Attribute> (ms : MethodInfo []) =
