@@ -18,11 +18,12 @@
         | Atomic = 0
         | ReflectionType = 1
         | ReflectionDerived = 2
-        | ISerializable = 3
-        | FSharpValue = 4 // tuples, records and DUs
-        | Delegate = 5
-        | Combinator = 6
-        | UserDefined = 7
+        | Array = 3
+        | ISerializable = 4
+        | FSharpValue = 5 // tuples, records and DUs
+        | Delegate = 6
+        | Combinator = 7
+        | UserDefined = 8
 
     module internal Header =
 
@@ -84,6 +85,8 @@
             let isNewInstance       = 4uy
             [<Literal>]
             let isCachedInstance    = 8uy
+            [<Literal>]
+            let isCyclicInstance    = 16uy
 
             let inline hasFlag (h : byte) (flag : byte) = h &&& flag = flag
         

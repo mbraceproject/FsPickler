@@ -11,18 +11,18 @@
     open FsPickler.Header
 
 
-
     [<AutoSerializable(false)>]
     [<AbstractClass>]
     type Pickler =
 
         val private declared_type : Type
         val private is_recursive_type : bool
+
+        val mutable private m_isInitialized : bool
+
         val mutable private m_pickler_type : Type
         val mutable private m_typeInfo : TypeInfo
         val mutable private m_typeHash : TypeHash
-        
-        val mutable private m_isInitialized : bool
 
         val mutable private m_picklerInfo : PicklerInfo
         val mutable private m_isCacheByRef : bool
@@ -177,6 +177,7 @@
         let sc = initStreamingContext streamingContext
         let idGen = new ObjectIDGenerator()
         let objStack = new Stack<int64> ()
+        let cyclicObjects = new SortedSet<int64> ()
 
         let tyPickler = resolver.Resolve<Type> ()
 
@@ -186,6 +187,7 @@
 
         member internal w.Resolver = resolver
 
+        // the primary serialization routine; handles all the caching, subtype resolution logic, etc
         member w.Write<'T> (fmt : Pickler<'T>, x : 'T) =
 
             let inline writeHeader (flags : byte) =
@@ -199,60 +201,70 @@
                 else
                     bw.Write id
 
+            let inline write header =
+                if fmt.TypeInfo <= TypeInfo.Sealed || fmt.UseWithSubtypes then
+                    writeHeader header
+                    fmt.Write w x
+                else
+                    // object might be proper subtype, perform reflection resolution
+                    let t0 = x.GetType()
+                    if t0 <> fmt.Type then
+                        let fmt' = resolver.Resolve t0
+                        writeHeader (header ||| ObjHeader.isProperSubtype)
+                        writeType t0
+                        fmt'.UntypedWrite w x
+                    else
+                        writeHeader header
+                        fmt.Write w x
+
             if fmt.TypeInfo <= TypeInfo.Value then 
                 writeHeader ObjHeader.empty
                 fmt.Write w x
+
             elif obj.ReferenceEquals(x, null) then writeHeader ObjHeader.isNull else
 
             do RuntimeHelpers.EnsureSufficientExecutionStack()
 
             if fmt.IsCacheByRef || fmt.IsRecursiveType then
-                let mutable firstOccurence = false
-                let id = idGen.GetId(x, &firstOccurence)
-                if firstOccurence then
+                let id, firstOccurence = idGen.GetId x
 
-                    let inline write (fmt : Pickler) (writeOp : unit -> unit) =
-                        if fmt.PicklerInfo = PicklerInfo.ReflectionDerived then
-                            writeOp ()
-                        else
-                            objStack.Push id
-                            writeOp ()
-                            objStack.Pop () |> ignore
+                if firstOccurence then
+                    // push id to the symbolic stack to detect cyclic objects during traversal
+                    objStack.Push id
+                    write ObjHeader.isNewInstance
+                    objStack.Pop () |> ignore
+                    cyclicObjects.Remove id |> ignore
+
+                elif objStack.Contains id && not <| cyclicObjects.Contains id then
+                    // came across cyclic object, record fixup-related data
+                    // cyclic objects are handled once per instance
+                    // instanses of cyclic arrays are handled differently than other reference types
+
+                    do cyclicObjects.Add(id) |> ignore
                     
                     if fmt.TypeInfo <= TypeInfo.Sealed || fmt.UseWithSubtypes then
-                        writeHeader ObjHeader.isNewInstance
-                        write fmt (fun () -> fmt.Write w x)
-                    else
-                        // type is not sealed, do subtype resolution
-                        let t0 = x.GetType()
-                        if t0 <> fmt.Type then
-                            let fmt' = resolver.Resolve t0
-                            writeHeader (ObjHeader.isNewInstance ||| ObjHeader.isProperSubtype)
-                            writeType t0
-                            write fmt' (fun () -> fmt'.UntypedWrite w x)
+                        if fmt.TypeInfo = TypeInfo.Array then
+                            writeHeader ObjHeader.isCachedInstance
                         else
-                            writeHeader ObjHeader.isNewInstance
-                            write fmt (fun () -> fmt.Write w x)
+                            writeHeader ObjHeader.isCyclicInstance
+                    else
+                        let t = x.GetType()
 
-                elif objStack.Contains id then
-                    raise <| new SerializationException(sprintf "Unsupported cyclic object graph '%s'." fmt.Type.FullName)
+                        if t.IsArray then
+                            writeHeader ObjHeader.isCachedInstance
+                        elif t <> fmt.Type then
+                            writeHeader (ObjHeader.isCyclicInstance ||| ObjHeader.isProperSubtype)
+                            writeType t
+                        else
+                            writeHeader ObjHeader.isCyclicInstance
+
+                    bw.Write id
                 else
                     writeHeader ObjHeader.isCachedInstance
                     bw.Write id
+
             else
-                if fmt.TypeInfo <= TypeInfo.Sealed || fmt.UseWithSubtypes then
-                    writeHeader ObjHeader.empty
-                    fmt.Write w x
-                else
-                    // type is not sealed, do subtype resolution
-                    let t0 = x.GetType ()
-                    if t0 <> fmt.Type then
-                        let f0 = resolver.Resolve t0
-                        writeHeader ObjHeader.isProperSubtype
-                        f0.UntypedWrite w (x :> obj)
-                    else
-                        writeHeader ObjHeader.empty
-                        fmt.Write w x
+                write ObjHeader.empty
 
         member w.Write<'T>(t : 'T) = let f = resolver.Resolve<'T> () in w.Write(f, t)
 
@@ -273,19 +285,17 @@
         let br = new BinaryReader(stream, encoding, defaultArg leaveOpen true)
         let sc = initStreamingContext streamingContext
         let objCache = new Dictionary<int64, obj> ()
-        let mutable counter = 1L
-        let mutable currentReflectedObjId = 0L
-
+        let fixupIndex = new Dictionary<int64, Type> ()
         let tyPickler = resolver.Resolve<Type> ()
+
+        let mutable counter = 1L
+        let mutable currentDeserializedObjectId = 0L
 
         // objects deserialized with reflection-based rules are registered to the cache
         // at the initialization stage to support cyclic object graphs.
-        member internal r.EarlyRegisterObject (o : obj) =
-            if currentReflectedObjId = 0L then
-                raise <| new SerializationException("Unanticipated reflected object binding.")
-            else
-                objCache.Add(currentReflectedObjId, o)
-                currentReflectedObjId <- 0L
+        member internal r.EarlyRegisterObject (o : obj) = 
+            objCache.Add(currentDeserializedObjectId, o)
+            currentDeserializedObjectId <- 0L
 
         member r.BinaryReader = br
 
@@ -293,9 +303,8 @@
 
         member internal r.Resolver = resolver
 
-        // the mean deserialization logic
+        // the primary deserialization routine; handles all the caching, subtype resolution logic, etc
         member r.Read(fmt : Pickler<'T>) : 'T =
-            let flags = ObjHeader.read fmt.TypeHash (br.ReadUInt32())
 
             let inline readType () =
                 if br.ReadBoolean () then
@@ -307,45 +316,55 @@
                     let id = br.ReadInt64()
                     objCache.[id] |> fastUnbox<Type>
 
-            if ObjHeader.hasFlag flags ObjHeader.isNull then Unchecked.defaultof<'T>
+            let inline read flags =
+                if ObjHeader.hasFlag flags ObjHeader.isProperSubtype then
+                    let t = readType ()
+                    let fmt' = resolver.Resolve t
+                    fmt'.UntypedRead r |> fastUnbox<'T>
+                else
+                    fmt.Read r
+
+            let flags = ObjHeader.read fmt.TypeHash (br.ReadUInt32())
+
+            if ObjHeader.hasFlag flags ObjHeader.isNull then fastUnbox<'T> null
             elif fmt.TypeInfo <= TypeInfo.Value then fmt.Read r
+            elif ObjHeader.hasFlag flags ObjHeader.isCyclicInstance then
+                // came across a nested instance of a cyclic object
+                // add an uninitialized object to the cache and perform
+                // reflection - based fixup at the root level.
+
+                let t =
+                    if ObjHeader.hasFlag flags ObjHeader.isProperSubtype then readType ()
+                    else fmt.Type
+
+                let id = br.ReadInt64()
+
+                let x = FormatterServices.GetUninitializedObject(t) |> fastUnbox<'T>
+                fixupIndex.Add(id, t) ; objCache.Add(id, x) ;  x
+
             elif ObjHeader.hasFlag flags ObjHeader.isNewInstance then
                 let id = counter
+                currentDeserializedObjectId <- id
                 counter <- counter + 1L
 
-                let inline read (fmt : Pickler) (readOp : unit -> 'T) =
-                    let inline checkState () =
-                        if currentReflectedObjId <> 0L then
-                            raise <| new SerializationException("Internal error: reader state is corrupt.")
+                let x = read flags
 
-                    if fmt.PicklerInfo = PicklerInfo.ReflectionDerived && fmt.TypeInfo > TypeInfo.Value then
-                        do checkState ()
-
-                        currentReflectedObjId <- id
-                        let x = readOp ()
-
-                        do checkState ()
-                        x
-                    else
-                        let x = readOp ()
-                        objCache.Add(id, x) ; x
-                
-                if ObjHeader.hasFlag flags ObjHeader.isProperSubtype then
-                    let t0 = readType ()
-                    let fmt' = resolver.Resolve t0
-                    read fmt' (fun () -> fmt'.UntypedRead r |> fastUnbox<'T>)
+                let found, t = fixupIndex.TryGetValue id
+                if found then
+                    // deserialization reached root level of a cyclic object
+                    // perform fixup by doing reflection-based field copying
+                    let o = objCache.[id]
+                    do shallowCopy t x o
+                    fixupIndex.Remove id |> ignore
+                    fastUnbox<'T> o
                 else
-                    read fmt (fun () -> fmt.Read r)
+                    objCache.[id] <- x ; x
 
             elif ObjHeader.hasFlag flags ObjHeader.isCachedInstance then
                 let id = br.ReadInt64() in objCache.[id] |> fastUnbox<'T>
-
-            elif ObjHeader.hasFlag flags ObjHeader.isProperSubtype then
-                let t0 = readType ()
-                let f0 = resolver.Resolve t0
-                f0.UntypedRead r |> fastUnbox<'T>
             else
-                fmt.Read r
+                read flags
+
 
         member r.Read<'T> () : 'T = let f = resolver.Resolve<'T> () in r.Read f
 

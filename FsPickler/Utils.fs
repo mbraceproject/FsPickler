@@ -206,6 +206,14 @@
             member m.GetParameterTypes() = m.GetParameters() |> Array.map (fun p -> p.ParameterType)
 
 
+        
+        let shallowCopy (t : Type) (src : obj) (dst : obj) =
+            let fields = t.GetFields(BindingFlags.Instance ||| BindingFlags.Public ||| BindingFlags.NonPublic)
+            for f in fields do
+                let v = f.GetValue(src)
+                f.SetValue(dst, v)
+
+
         // this predicate decides whether instances of given type can be cyclic.
         // F# union types are treated specially since recursive bindings cannot be created under normal circumstances
         // for instance, the

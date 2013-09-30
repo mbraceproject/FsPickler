@@ -7,18 +7,38 @@ open System.Reflection
 
 let fsc = new FsPickler()
 
-let p = fsc.ResolvePickler<int * string option []> ()
-
 let loop (x : 'T) =
     use mem = new MemoryStream()
     fsc.Serialize<obj>(mem, x)
     mem.Position <- 0L
     fsc.Deserialize<obj>(mem) :?> 'T
 
+let x = ref (box 3)
+x := box x
+
+loop x
+
+
+let x = [| box 3 ; box 3 |]
+x.[0] <- box x
+x.[1] <- box x
+
+loop x
+
+type CyclicClass () as self =
+    let s = Some (self, 42)
+    let t = Some self
+    member x.Value = s
+    member x.Value' = t
+
+let y = new CyclicClass()
+
+loop y
+
 
 [<CustomPickler>]
 type ClassWithCombinators (x : int, y : ClassWithCombinators option) =
-    member __.Value = x,y
+    member private __.Value = x,y
 
     static member CreatePickler (resolver : IPicklerResolver) =
         Pickler.fix(fun self -> 
@@ -29,15 +49,10 @@ type ClassWithCombinators (x : int, y : ClassWithCombinators option) =
 
 let p = fsc.ResolvePickler<ClassWithCombinators>()
 
-fsc.Pickle new
-
-
-type Foo = A | B of int
-
 type Peano = Zero | Succ of Peano
 
 let pp = 
-    Pickler.fix(fun peanoP -> 
+    Pickler.fix(fun peanoP ->
         peanoP 
         |> Pickler.option 
         |> Pickler.wrap 
@@ -48,7 +63,7 @@ let rec int2Peano n = match n with 0 -> Zero | n -> Succ(int2Peano (n-1))
 
 let p = int2Peano 42
 
-p |> fsc.Pickle pp |> fsc.UnPickle pp
+p |> pickle pp |> unpickle pp
 
 
 type Tree<'T> = Empty | Node of 'T * Forest<'T>
@@ -93,3 +108,19 @@ let tp, fp = get<int> ()
 let n = nTree 5
 
 n |> fsc.Pickle tp |> fsc.UnPickle tp
+
+
+open System.Runtime.Serialization
+open System.Collections.Generic
+
+let x = (typeof<int>, 32) :> obj
+
+match x with
+| :? (Type * int) as x -> Some x
+| _ -> None
+
+exception Foo of string
+
+let e = Exception("outer", Exception("inner"))
+
+loop e

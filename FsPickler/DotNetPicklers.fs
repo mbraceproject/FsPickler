@@ -18,9 +18,18 @@
 
     type ArrayPickler =
 
-        static member Create<'T, 'Array when 'Array :> Array> (resolver : IPicklerResolver) =
+        static member CreateUntyped(t : Type, resolver : IPicklerResolver) =
+            let et = t.GetElementType()
+            let ef = resolver.Resolve et
+            let m =
+                typeof<ArrayPickler>
+                    .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
+                    .MakeGenericMethod [| et ; t |]
+
+            m.GuardedInvoke(null, [| ef :> obj |]) :?> Pickler
+
+        static member Create<'T, 'Array when 'Array :> Array> (ef : Pickler<'T>) : Pickler<'Array> =
             assert(typeof<'T> = typeof<'Array>.GetElementType())
-            let ef = resolver.Resolve<'T> ()
             let rank = typeof<'Array>.GetArrayRank()
 
             let writer (w : Writer) (x : 'Array) =
@@ -116,16 +125,7 @@
                         fastUnbox<'Array> arr
                     | _ -> failwith "impossible array rank"
 
-            new Pickler<'Array>(reader, writer, PicklerInfo.ReflectionDerived, cacheByRef = true, useWithSubtypes = false)
-
-        static member CreateUntyped(t : Type, resolver : IPicklerResolver) =
-            let et = t.GetElementType()
-            let m =
-                typeof<ArrayPickler>
-                    .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
-                    .MakeGenericMethod [| et ; t |]
-
-            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler
+            new Pickler<'Array>(reader, writer, PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = false)
 
     // formatter builder for ISerializable types
 

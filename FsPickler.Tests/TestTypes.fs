@@ -74,7 +74,9 @@
 
         type CyclicClass () as self =
             let s = Some (self, 42)
+            let t = Choice1Of2 self
             member x.Value = s
+            member x.Value' = t
 
         type SerializableClass(x : int, y : string) =
             new(s : SerializationInfo, _ : StreamingContext) =

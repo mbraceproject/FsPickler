@@ -206,8 +206,6 @@
                     let body =
                         seq {
                             yield Expression.Assign(instance, Expression.initializeObject<'T> ()) :> Expression
-                
-                            yield Expression.earlyRegisterObject reader instance
 
                             yield! Expression.runDeserializationActions onDeserializing reader instance
 
@@ -239,7 +237,6 @@
 
             let reader (r : Reader) =
                 let t = PicklerServices.GetUninitializedObject(typeof<'T>) |> fastUnbox<'T>
-                do r.EarlyRegisterObject t
                 run onDeserializing t r
 
                 for i = 0 to fields.Length - 1 do

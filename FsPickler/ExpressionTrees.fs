@@ -71,7 +71,6 @@
 
             let writerCtx = typeof<Writer>.GetProperty("StreamingContext")
             let readerCtx = typeof<Reader>.GetProperty("StreamingContext")
-            let readerInitializer = typeof<Reader>.GetMethod("EarlyRegisterObject", BindingFlags.NonPublic ||| BindingFlags.Instance)
             let objInitializer = typeof<FormatterServices>.GetMethod("GetUninitializedObject")
             let deserializationCallBack = typeof<IDeserializationCallback>.GetMethod("OnDeserialization")
             let writerM = typeof<Writer>.GetGenericMethod(false, "Write", 1, 2)
@@ -93,10 +92,6 @@
         let initializeObject<'T> () =
             let obj = Expression.Call(objInitializer, constant typeof<'T>) 
             unbox typeof<'T> obj
-
-        /// early register object to reader cache
-        let earlyRegisterObject (reader : Expression) (instance : Expression) =
-            Expression.Call(reader, readerInitializer, instance) :> Expression
 
         /// execute a collection of serialization actions
         let runSerializationActions (ms : MethodInfo []) (writerInstance : Expression) (instance : Expression) =

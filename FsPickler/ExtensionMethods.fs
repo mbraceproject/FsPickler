@@ -25,6 +25,10 @@
 
             let ref f = FSharpRefPickler.Create f
             let list f = ListPickler.Create f
+            let array f = DotNetPicklers.ArrayPickler.Create<'T, 'T []> f
+            let array2D f = DotNetPicklers.ArrayPickler.Create<'T, 'T [,]> f
+            let array3D f = DotNetPicklers.ArrayPickler.Create<'T, 'T [,,]> f
+            let array4D f = DotNetPicklers.ArrayPickler.Create<'T, 'T [,,,]> f
             let seq f = SeqPickler.Create f
             let pairSeq kf vf = KeyValueSeqPickler.Create(kf, vf)
             let map f = FSharpMapPickler.Create f
