@@ -1,4 +1,4 @@
-FsCoreSerializer (v0.5)
+FsPickler (v0.5)
 ================
 
 A general purpose binary serializer for .NET objects written in F#.
