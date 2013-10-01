@@ -12,7 +12,7 @@
             internal new : Type -> Pickler
             internal new : Type * PicklerInfo * bool * bool -> Pickler
 
-            /// casts pickler to a typed version. may result in runtime error.
+            /// casts pickler to a typed version; may result in runtime error.
             abstract member Cast<'S> : unit -> Pickler<'S>
 
             // serialization managed by reader/writer objects
@@ -40,11 +40,12 @@
             member IsRecursiveType : bool
             /// Provides information on the pickler generation method.
             member PicklerInfo : PicklerInfo
+            /// Resolver id used to generate this pickler.
+            member ResolverName : string
 
             member internal IsInitialized : bool
             member internal TypeHash : TypeHash
             member internal TypeInfo : TypeInfo
-            member ResolverName : string
             member internal ResolverName : string with set
         end
 

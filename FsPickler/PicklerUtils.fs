@@ -9,7 +9,7 @@
 
     module internal PicklerUtils =
 
-        // initialize a formatter from a typed set of lambdas
+        // initialize a pickler from a typed set of lambdas
         let inline mkPickler<'T> (info:PicklerInfo) (useWithSubtypes:bool) (cache:bool) 
                                             (reader : Reader -> 'T) (writer : Writer -> 'T -> unit) =
 

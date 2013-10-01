@@ -109,23 +109,23 @@
             Expression.Call(dc, deserializationCallBack, constant null) :> Expression
 
         /// serialize a given value
-        let write (writer : Expression) (formatter : Pickler) (value : Expression) =
-            let ft = typedefof<Pickler<_>>.MakeGenericType [| formatter.Type |]
-            let fExpr = Expression.Constant(formatter, ft)
-            Expression.Call(writer, writerM.MakeGenericMethod [| formatter.Type |], fExpr, value) :> Expression
+        let write (writer : Expression) (pickler : Pickler) (value : Expression) =
+            let ft = typedefof<Pickler<_>>.MakeGenericType [| pickler.Type |]
+            let fExpr = Expression.Constant(pickler, ft)
+            Expression.Call(writer, writerM.MakeGenericMethod [| pickler.Type |], fExpr, value) :> Expression
 
         /// deserialize a given value
-        let read (reader : Expression) (formatter : Pickler) =
-            let ft = typedefof<Pickler<_>>.MakeGenericType [| formatter.Type |]
-            let fExpr = Expression.Constant(formatter, ft)
-            Expression.Call(reader, readerM.MakeGenericMethod [| formatter.Type |], fExpr) :> Expression
+        let read (reader : Expression) (pickler : Pickler) =
+            let ft = typedefof<Pickler<_>>.MakeGenericType [| pickler.Type |]
+            let fExpr = Expression.Constant(pickler, ft)
+            Expression.Call(reader, readerM.MakeGenericMethod [| pickler.Type |], fExpr) :> Expression
 
-        /// write a collection of formatter from a corresponding collection of properties
+        /// write a collection of pickler from a corresponding collection of properties
         let zipWriteProperties (properties : PropertyInfo []) (formatters : Pickler []) 
                                                     (writer : Expression) (instance : Expression) =
-            let writeValue (formatter : Pickler, property : PropertyInfo) =
+            let writeValue (pickler : Pickler, property : PropertyInfo) =
                 let value = Expression.Property(instance, property)
-                write writer formatter value
+                write writer pickler value
 
             Seq.zip formatters properties |> Seq.map writeValue
 
@@ -143,16 +143,16 @@
         let zipWriteFields (fields : FieldInfo []) (formatters : Pickler []) 
                                             (writer : Expression) (instance : Expression) =
 
-            let writeValue (formatter : Pickler, field : FieldInfo) =
+            let writeValue (pickler : Pickler, field : FieldInfo) =
                 let value = Expression.Field(instance, field)
-                write writer formatter value
+                write writer pickler value
 
             Seq.zip formatters fields |> Seq.map writeValue
 
         /// zip read a collection of formatters to corresponding collection of fields
         let zipReadFields (fields : FieldInfo []) (formatters : Pickler []) (reader : Expression) (instance : Expression) =
-            let readValue (formatter : Pickler, field : FieldInfo) =
-                let value = read reader formatter
+            let readValue (pickler : Pickler, field : FieldInfo) =
+                let value = read reader pickler
                 let field = Expression.Field(instance, field)
                 Expression.Assign(field, value) :> Expression
 

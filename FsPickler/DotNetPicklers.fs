@@ -14,7 +14,7 @@
     open FsPickler.PicklerUtils
     open FsPickler.BasePicklers
 
-    // formatter rules for array types
+    // pickler rules for array types
 
     type ArrayPickler =
 
@@ -125,9 +125,9 @@
                         fastUnbox<'Array> arr
                     | _ -> failwith "impossible array rank"
 
-            new Pickler<'Array>(reader, writer, PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = false)
+            new Pickler<'Array>(reader, writer, PicklerInfo.Array, cacheByRef = true, useWithSubtypes = false)
 
-    // formatter builder for ISerializable types
+    // pickler builder for ISerializable types
 
     type ISerializablePickler =
 

@@ -2,7 +2,7 @@
 
     // The following provides management logic for IGenericPicklerFactory implementations.
     // Since generic types come with multiple combinations of type variables and constraints,
-    // specifying a predetermined set of generic formatter interfaces is simply not practical.
+    // specifying a predetermined set of generic pickler interfaces is simply not practical.
     //
     // All that is required of input formatters is to implement the IGenericPicklerFactory interface
     // (which contains no methods) and to contain an implementation of a non-static method
@@ -13,9 +13,9 @@
     // This has the advantage of not having to concern ourselves with type constraints at this stage, where they do
     // not really matter. 
     //
-    // Furthermore, a type shape scheme is used in order for the formatter resolver to assign the best matching
-    // generic formatter given an input type. 
-    // For instance, given input (int * int) [] , the resolver will determine that a generic formatter of 
+    // Furthermore, a type shape scheme is used in order for the pickler resolver to assign the best matching
+    // generic pickler given an input type. 
+    // For instance, given input (int * int) [] , the resolver will determine that a generic pickler of 
     // shape ('X * 'X) [] is more suitable than one of shape 'X []
 
     open System
@@ -266,7 +266,7 @@
                 |> raise
 
             | [| m |] when m.IsGenericMethodDefinition ->
-                // apply Peano type variables to formatter in order to extrapolate the type shape
+                // apply Peano type variables to pickler in order to extrapolate the type shape
                 let tyVars = getPeanoVars (m.GetGenericArguments().Length)
 
                 let m0 =

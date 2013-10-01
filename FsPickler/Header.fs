@@ -70,7 +70,7 @@
 
         // each reference type is serialized with a 32 bit header
         //   1. the first byte is a fixed identifier
-        //   2. the next two bytes are the formatter's typehash.
+        //   2. the next two bytes are the pickler's typehash.
         //   3. the third byte conveys object-specific switches
         //
         module ObjHeader =

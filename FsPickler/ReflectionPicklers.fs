@@ -23,10 +23,10 @@
         || t.IsCOMObject
         || t.IsImport
         || t.IsMarshalByRef
-        || t.IsPrimitive // supported primitives are already stored in the formatter cache
+        || t.IsPrimitive // supported primitives are already stored in the pickler cache
 
 
-    // creates a placeholder formatter instance
+    // creates a placeholder pickler instance
 
     type UninitializedPickler =
         static member Create<'T>() = new Pickler<'T>()
@@ -41,12 +41,12 @@
             try m.Invoke(null, null) :?> Pickler
             with :? TargetInvocationException as e -> raise e.InnerException
 
-    // creates a formatter for abstract types
+    // creates a pickler for abstract types
 
     type AbstractPickler =
         static member Create<'T> () =
-            let writer = fun _ _ -> invalidOp <| sprintf "Attempting to use formatter for abstract type '%O'." typeof<'T>
-            let reader = fun _ -> invalidOp <| sprintf "Attempting to use formatter for abstract type '%O'." typeof<'T>
+            let writer = fun _ _ -> invalidOp <| sprintf "Attempting to use pickler for abstract type '%O'." typeof<'T>
+            let reader = fun _ -> invalidOp <| sprintf "Attempting to use pickler for abstract type '%O'." typeof<'T>
 
             new Pickler<'T>(reader, writer, PicklerInfo.ReflectionDerived, true, false)
 
@@ -58,7 +58,7 @@
 
             m.GuardedInvoke(null, null) :?> Pickler
 
-    // formatter rules for enum types
+    // pickler rules for enum types
 
     type EnumPickler =
         static member CreateUntyped(enum : Type, resolver : IPicklerResolver) =
@@ -86,7 +86,7 @@
 
             new Pickler<'Enum>(reader, writer, PicklerInfo.ReflectionDerived, cacheByRef = false, useWithSubtypes = false)
 
-    // formatter builder for struct types
+    // pickler builder for struct types
 
     type StructPickler =
         static member CreateUntyped(t : Type, resolver : IPicklerResolver) =

@@ -17,6 +17,9 @@ let loop (x : 'T) =
 
 type Peano = Zero | Succ of Peano
 
+
+let f (x : Pickler<'T>) = x |> Pickler.option |> Pickler.list |> Pickler.choice2 Pickler.int
+
 let peano =
     Pickler.fix(fun peano ->
         peano

@@ -77,22 +77,22 @@
         member f.PicklerType =
             if f.m_isInitialized then f.m_pickler_type
             else
-                invalidOp "Attempting to consume formatter at construction time."
+                invalidOp "Attempting to consume pickler at construction time."
 
         member f.PicklerInfo =
             if f.m_isInitialized then f.m_picklerInfo
             else
-                invalidOp "Attempting to consume formatter at construction time."
+                invalidOp "Attempting to consume pickler at construction time."
 
         member f.IsCacheByRef =
             if f.m_isInitialized then f.m_isCacheByRef
             else
-                invalidOp "Attempting to consume formatter at construction time."
+                invalidOp "Attempting to consume pickler at construction time."
 
         member f.UseWithSubtypes =
             if f.m_isInitialized then f.m_useWithSubtypes
             else
-                invalidOp "Attempting to consume formatter at construction time."
+                invalidOp "Attempting to consume pickler at construction time."
 
         member internal f.IsInitialized = f.m_isInitialized
 
@@ -109,9 +109,9 @@
             if f.m_isInitialized then
                 invalidOp "Pickler has already been initialized."
             elif not f'.m_isInitialized then 
-                invalidOp "Attempting to consume formatter at construction time."
+                invalidOp "Attempting to consume pickler at construction time."
             elif f.Type <> f'.Type && not (f'.Type.IsAssignableFrom(f.Type) && f'.UseWithSubtypes) then
-                raise <| new InvalidCastException(sprintf "Cannot cast formatter from %O to %O." f'.Type f.Type)
+                raise <| new InvalidCastException(sprintf "Cannot cast pickler from %O to %O." f'.Type f.Type)
             else
                 f.m_pickler_type <- f'.m_pickler_type
                 f.m_typeHash <- f'.m_typeHash
@@ -144,8 +144,8 @@
         internal new () = 
             {
                 inherit Pickler(typeof<'T>) ;
-                m_writer = fun _ _ -> invalidOp "Attempting to consume formatter at construction time." ;
-                m_reader = fun _ -> invalidOp "Attempting to consume formatter at construction time." ;
+                m_writer = fun _ _ -> invalidOp "Attempting to consume pickler at construction time." ;
+                m_reader = fun _ -> invalidOp "Attempting to consume pickler at construction time." ;
             }
 
         override f.UntypedWrite (w : Writer) (o : obj) = f.m_writer w (fastUnbox<'T> o)
@@ -220,7 +220,7 @@
                     writeHeader header
                     fmt.Write w x
                 else
-                    // object might be proper subtype, perform reflection resolution
+                    // object might be of proper subtype, perform reflection resolution
                     let t0 = x.GetType()
                     if t0 <> fmt.Type then
                         let fmt' = resolver.Resolve t0
@@ -309,7 +309,6 @@
         // at the initialization stage to support cyclic object graphs.
         member internal r.EarlyRegisterObject (o : obj) = 
             objCache.Add(currentDeserializedObjectId, o)
-            currentDeserializedObjectId <- 0L
 
         member r.BinaryReader = br
 
