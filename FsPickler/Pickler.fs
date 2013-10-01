@@ -28,9 +28,12 @@
         val mutable private m_isCacheByRef : bool
         val mutable private m_useWithSubtypes : bool
 
+        val mutable private m_source : string
+
         internal new (t : Type) =
             {
-                declared_type = t ; is_recursive_type = isRecursiveType t ;
+                declared_type = t ; 
+                is_recursive_type = isRecursiveType t ;
 
                 m_isInitialized = false ;
 
@@ -39,20 +42,27 @@
                 m_typeHash = Unchecked.defaultof<_> ;
                 m_picklerInfo = Unchecked.defaultof<_> ; 
                 m_isCacheByRef = Unchecked.defaultof<_> ; 
-                m_useWithSubtypes = Unchecked.defaultof<_> ; 
+                m_useWithSubtypes = Unchecked.defaultof<_> ;
+
+                m_source = null ;
             }
 
         internal new (t : Type, picklerInfo, isCacheByRef, useWithSubtypes) =
             {
-                declared_type = t ; is_recursive_type = isRecursiveType t ;
+                declared_type = t ; 
+                is_recursive_type = isRecursiveType t ;
 
                 m_isInitialized = true ;
 
-                m_pickler_type = t ; m_typeInfo = computeTypeInfo t ; m_typeHash = computeTypeHash t ;
-                
+                m_pickler_type = t ; 
+                m_typeInfo = computeTypeInfo t ; 
+                m_typeHash = computeTypeHash t ;
+
                 m_picklerInfo = picklerInfo ;
                 m_isCacheByRef = isCacheByRef ;
                 m_useWithSubtypes = useWithSubtypes ;
+
+                m_source = null ;
             }
 
         member f.Type = f.declared_type
@@ -60,6 +70,9 @@
 
         member internal f.TypeInfo = f.m_typeInfo
         member internal f.TypeHash = f.m_typeHash
+        member f.ResolverName
+            with get () = f.m_source
+            and internal set id = f.m_source <- id
 
         member f.PicklerType =
             if f.m_isInitialized then f.m_pickler_type
@@ -162,8 +175,9 @@
 
 
     and IPicklerResolver =
-        abstract Resolve<'T> : unit -> Pickler<'T>
+        abstract Id : string
         abstract Resolve : Type -> Pickler
+        abstract Resolve<'T> : unit -> Pickler<'T>
 
     and [<AutoSerializable(false)>]
         Writer internal (stream : Stream, resolver : IPicklerResolver, ?streamingContext, ?leaveOpen, ?encoding) =
@@ -231,7 +245,7 @@
                 if firstOccurence then
                     // push id to the symbolic stack to detect cyclic objects during traversal
                     objStack.Push id
-                    write ObjHeader.isNewInstance
+                    write ObjHeader.isNewCachedInstance
                     objStack.Pop () |> ignore
                     cyclicObjects.Remove id |> ignore
 
@@ -244,14 +258,14 @@
                     
                     if fmt.TypeInfo <= TypeInfo.Sealed || fmt.UseWithSubtypes then
                         if fmt.TypeInfo = TypeInfo.Array then
-                            writeHeader ObjHeader.isCachedInstance
+                            writeHeader ObjHeader.isOldCachedInstance
                         else
                             writeHeader ObjHeader.isCyclicInstance
                     else
                         let t = x.GetType()
 
                         if t.IsArray then
-                            writeHeader ObjHeader.isCachedInstance
+                            writeHeader ObjHeader.isOldCachedInstance
                         elif t <> fmt.Type then
                             writeHeader (ObjHeader.isCyclicInstance ||| ObjHeader.isProperSubtype)
                             writeType t
@@ -260,7 +274,7 @@
 
                     bw.Write id
                 else
-                    writeHeader ObjHeader.isCachedInstance
+                    writeHeader ObjHeader.isOldCachedInstance
                     bw.Write id
 
             else
@@ -285,7 +299,7 @@
         let br = new BinaryReader(stream, encoding, defaultArg leaveOpen true)
         let sc = initStreamingContext streamingContext
         let objCache = new Dictionary<int64, obj> ()
-        let fixupIndex = new Dictionary<int64, Type> ()
+        let fixupIndex = new Dictionary<int64, Type * obj> ()
         let tyPickler = resolver.Resolve<Type> ()
 
         let mutable counter = 1L
@@ -324,47 +338,47 @@
                 else
                     fmt.Read r
 
-            let flags = ObjHeader.read fmt.TypeHash (br.ReadUInt32())
+            let flags = ObjHeader.read fmt.Type fmt.TypeHash (br.ReadUInt32())
 
             if ObjHeader.hasFlag flags ObjHeader.isNull then fastUnbox<'T> null
             elif fmt.TypeInfo <= TypeInfo.Value then fmt.Read r
             elif ObjHeader.hasFlag flags ObjHeader.isCyclicInstance then
                 // came across a nested instance of a cyclic object
-                // add an uninitialized object to the cache and perform
-                // reflection - based fixup at the root level.
-
+                // crete an uninitialized object to the cache and schedule
+                // reflection-based fixup at the root level.
                 let t =
                     if ObjHeader.hasFlag flags ObjHeader.isProperSubtype then readType ()
                     else fmt.Type
 
                 let id = br.ReadInt64()
 
-                let x = FormatterServices.GetUninitializedObject(t) |> fastUnbox<'T>
-                fixupIndex.Add(id, t) ; objCache.Add(id, x) ;  x
+                let x = FormatterServices.GetUninitializedObject(t)
+                fixupIndex.Add(id, (t, x)) 
+                objCache.Add(id, x)
+                fastUnbox<'T> x
 
-            elif ObjHeader.hasFlag flags ObjHeader.isNewInstance then
+            elif ObjHeader.hasFlag flags ObjHeader.isNewCachedInstance then
                 let id = counter
                 currentDeserializedObjectId <- id
                 counter <- counter + 1L
 
                 let x = read flags
 
-                let found, t = fixupIndex.TryGetValue id
+                let found, content = fixupIndex.TryGetValue id
                 if found then
                     // deserialization reached root level of a cyclic object
                     // perform fixup by doing reflection-based field copying
-                    let o = objCache.[id]
+                    let t,o = content
                     do shallowCopy t x o
                     fixupIndex.Remove id |> ignore
                     fastUnbox<'T> o
                 else
                     objCache.[id] <- x ; x
 
-            elif ObjHeader.hasFlag flags ObjHeader.isCachedInstance then
+            elif ObjHeader.hasFlag flags ObjHeader.isOldCachedInstance then
                 let id = br.ReadInt64() in objCache.[id] |> fastUnbox<'T>
             else
                 read flags
-
 
         member r.Read<'T> () : 'T = let f = resolver.Resolve<'T> () in r.Read f
 

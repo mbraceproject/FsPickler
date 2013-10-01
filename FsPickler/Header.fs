@@ -3,6 +3,8 @@
     open System
     open System.Runtime.Serialization
 
+    open FsPickler.Utils
+
     type TypeHash = uint16
 
     type TypeInfo =
@@ -38,7 +40,8 @@
             else TypeInfo.NonSealed
 
         // build a rudimentary 16-bit hash out of a given type
-        // this should be persistable and runtime-independent
+        // this should be runtime-invariant and not dependent on
+        // their qualified names or ITypeNameConverter implementations
         let computeTypeHash (t : Type) : TypeHash =
             let mutable hash = 0us
             
@@ -52,12 +55,13 @@
             if t.IsGenericType then hash <- hash ||| 128us
             if t = typeof<obj> then hash <- hash ||| 256us
 
+            if t.Assembly = typeof<int>.Assembly then hash <- hash ||| 512us
+            elif t.Assembly = typeof<int option>.Assembly then hash <- hash ||| 1024us
+
             match t.Namespace with
-            | null -> hash <- hash ||| 512us
+            | null -> hash <- hash ||| 2048us
             | ns -> 
-                if ns.StartsWith("System") then hash <- hash ||| 1024us
-                if ns.StartsWith("System.Reflection") then hash <- hash ||| 2048us
-                if ns.StartsWith("Microsoft.FSharp") then hash <- hash ||| 4096us
+                if ns.StartsWith("System.Reflection") then hash <- hash ||| 4096us
 
             if typeof<ISerializable>.IsAssignableFrom t then hash <- hash ||| 8192us
 
@@ -82,9 +86,9 @@
             [<Literal>]
             let isProperSubtype     = 2uy
             [<Literal>]
-            let isNewInstance       = 4uy
+            let isNewCachedInstance = 4uy
             [<Literal>]
-            let isCachedInstance    = 8uy
+            let isOldCachedInstance = 8uy
             [<Literal>]
             let isCyclicInstance    = 16uy
 
@@ -93,10 +97,11 @@
             let inline create (hash : TypeHash) (flags : byte) =
                 uint32 initByte ||| (uint32 hash <<< 8) ||| (uint32 flags <<< 24)
 
-            let inline read (hash : TypeHash) (header : uint32) =
+            let inline read (t : Type) (hash : TypeHash) (header : uint32) =
                 if byte header <> initByte then
                     raise <| new SerializationException ("Stream error: invalid serialization data.")
-                elif uint16 (header >>> 8) <> hash then 
-                    raise <| new SerializationException("Stream error: invalid object header.")
+                elif uint16 (header >>> 8) <> hash then
+                    let msg = sprintf "Stream error: next object is of unexpected type (anticipated %O)." t
+                    raise <| new SerializationException(msg)
                 else 
                     byte (header >>> 24)

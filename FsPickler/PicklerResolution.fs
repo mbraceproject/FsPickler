@@ -17,7 +17,8 @@
     open FsPickler.FSharpPicklers
 
     /// Y combinator with parametric recursion support
-    let YParametric (externalCacheLookup : Type -> Pickler option)
+    let YParametric (resolverName : string)
+                    (externalCacheLookup : Type -> Pickler option)
                     (externalCacheCommit : Type -> Pickler -> unit)
                     (resolverF : IPicklerResolver -> Type -> Pickler) (t : Type) =
 
@@ -34,8 +35,11 @@
                     // start pickler construction
                     let f = UninitializedPickler.CreateUntyped t
                     internalCache.Add(t, f)
+
                     let f' = resolverF resolver t
-                    do f.InitializeFrom(f')
+                    do 
+                        f.InitializeFrom f'
+                        f.ResolverName <- resolverName
 
                     // pickler construction successful, commit to external cache
                     do externalCacheCommit t f
@@ -44,6 +48,7 @@
         and resolver =
             {
                 new IPicklerResolver with
+                    member __.Id = resolverName
                     member __.Resolve<'T> () = lookup typeof<'T> :?> Pickler<'T>
                     member __.Resolve (t : Type) = lookup t
             }
@@ -51,11 +56,11 @@
         lookup t
 
 
-
-
     // reflection - based pickler resolution
 
-    let resolvePickler (genericIdx : GenericPicklerIndex) (resolver : IPicklerResolver) (t : Type) =
+    let resolvePickler (customPicklers : Map<string, Pickler>)
+                        (picklerFactoryIndex : PicklerFactoryIndex)
+                        (resolver : IPicklerResolver) (t : Type) =
 
         // check if type is supported
         if isUnSupportedType t then raise <| new NonSerializableTypeException(t)
@@ -69,15 +74,12 @@
             else
                 None
 
-        // lookup generic shapes
+        // custom pickler lookup
         let result =
             match result with
             | Some _ -> result
             | None ->
-                if t.IsGenericType || t.IsArray then
-                    genericIdx.TryResolveGenericPickler(t, resolver)
-                else
-                    None
+                customPicklers.TryFind t.AssemblyQualifiedName
 
         // pickler factories
         let result =
@@ -88,6 +90,12 @@
                     Some <| CustomPickler.Create(t, resolver)
                 else
                     None
+
+        // pluggable pickler factories, resolved by type shape
+        let result =
+            match result with
+            | Some _ -> result
+            | None -> picklerFactoryIndex.TryResolvePicklerFactory(t, resolver)
 
         // FSharp Values
         let result =
@@ -116,18 +124,21 @@
                 else None
 
         // .NET reflection serialization
-        match result with
-        | None ->
-            if t.IsEnum then 
-                EnumPickler.CreateUntyped(t, resolver)
-            elif t.IsValueType then 
-                StructPickler.CreateUntyped(t, resolver)
-            elif t.IsArray then 
-                ArrayPickler.CreateUntyped(t, resolver)
-            elif typeof<System.Delegate>.IsAssignableFrom t then
-                DelegatePickler.CreateUntyped(t, resolver)
-            elif not t.IsSerializable then 
-                raise <| new NonSerializableTypeException(t)
-            else
-                ClassPickler.CreateUntyped(t, resolver)
-        | Some r -> r
+        let result =
+            match result with
+            | None ->
+                if t.IsEnum then 
+                    EnumPickler.CreateUntyped(t, resolver)
+                elif t.IsValueType then 
+                    StructPickler.CreateUntyped(t, resolver)
+                elif t.IsArray then 
+                    ArrayPickler.CreateUntyped(t, resolver)
+                elif typeof<System.Delegate>.IsAssignableFrom t then
+                    DelegatePickler.CreateUntyped(t, resolver)
+                elif not t.IsSerializable then 
+                    raise <| new NonSerializableTypeException(t)
+                else
+                    ClassPickler.CreateUntyped(t, resolver)
+            | Some r -> r
+
+        result

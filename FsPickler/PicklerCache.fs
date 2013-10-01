@@ -11,64 +11,80 @@
     open FsPickler.PicklerResolution
 
     [<Sealed>]
-    type CustomPicklerRegistry () =
+    type CustomPicklerRegistry (?id : string) =
+        let id = match id with None -> string <| Guid.NewGuid() | Some id -> id
 
         let typeNameConverter = ref None : ITypeNameConverter option ref
-        let formatters = Atom.atom Map.empty<string, Pickler>
-        let genericFactories = Atom.atom GenericPicklerIndex.Empty
+        let customPicklers = Atom.atom Map.empty<string, Pickler>
+        let customPicklerFactories = Atom.atom PicklerFactoryIndex.Empty
 
-        /// register custom type serialization rules; useful for FSI type serializations
+        /// registered type name converted, if present.
         member __.TypeNameConverter = typeNameConverter.Value
+        /// register custom type serialization rules; useful for FSI type serializations.
         member __.SetTypeNameConverter tc = typeNameConverter := Some tc
 
-        /// register formatter for a specific type
+        /// register pickler for a specific type
         member __.RegisterPickler(f : Pickler) =
-            formatters.Swap(fun fmts -> fmts.AddNoOverwrite(f.Type.AssemblyQualifiedName, f))
+            customPicklers.Swap(fun fmts -> fmts.AddNoOverwrite(f.Type.AssemblyQualifiedName, f))
 
-        /// register generic formatter rules
-        member __.RegisterGenericPickler(gf : IGenericPicklerFactory) =
-            genericFactories.Swap(fun genericFactories -> genericFactories.AddGenericPickler(gf, Fail))
+        /// register pluggable pickler factories
+        member __.RegisterPicklerFactory(pf : IPicklerFactory) =
+            customPicklerFactories.Swap(fun factories -> factories.AddPicklerFactory(pf, Fail))
 
-        member internal __.GenericFactories = genericFactories.Value
-        member __.RegisteredPicklers = formatters.Value |> Map.toSeq |> Seq.map snd |> List.ofSeq
-        member __.RegisteredGenericPicklerFactories = genericFactories.Value.GetEntries()
+        member internal __.CustomPicklerFactories = customPicklerFactories.Value
+        member internal __.CustomPicklers = customPicklers.Value
+
+        /// Identifier for the current registry
+        member __.Id = id
+        /// list of currently registered custom picklers
+        member __.RegisteredPicklers = customPicklers.Value |> Map.toSeq |> Seq.map snd |> List.ofSeq
+        /// list of currently registered custom pickler factories
+        member __.RegisteredPicklerFactories = customPicklerFactories.Value.GetEntries()
 
 
-    type internal PicklerCache (tyConv : ITypeNameConverter option, formatters : seq<Pickler>, gfi : GenericPicklerIndex) =
+    type internal PicklerCache private (id : string, 
+                                            tyConv : ITypeNameConverter option, 
+                                            customPicklers : Map<string, Pickler>, 
+                                            customPicklerFactories : PicklerFactoryIndex) =
 
-        static let singleton = lazy(new PicklerCache(None, [], GenericPicklerIndex.Empty))
+        static let singleton = lazy(
+            let id = "default pickler cache"
+            new PicklerCache(id, None, Map.empty, PicklerFactoryIndex.Empty))
 
+        // resolve the default type name converter
         let tyConv =
             match tyConv with 
             | Some tc -> tc 
             | None -> new DefaultTypeNameConverter() :> _
+
+        // include default pickler factories
+        let customPicklerFactories =
+            let defaultFactories = getDefaultPicklerFactories ()
+            customPicklerFactories.AddPicklerFactories(defaultFactories, Discard)
         
+        // populate initial cache with primitives
         let cache =
             [|
-                mkPrimitivePicklers ()
                 mkAtomicPicklers ()
                 mkReflectionPicklers tyConv
             |]
             |> Seq.concat
+            |> Seq.map (fun f -> f.ResolverName <- id ; f)
             |> Seq.map (fun f -> KeyValuePair(f.Type, f)) 
             |> fun fs -> new ConcurrentDictionary<_,_>(fs)
 
-        let gfi =
-            let fsharpGenericPicklers = mkGenericPicklers ()
-            gfi.AddGenericPicklers(fsharpGenericPicklers, Discard)
-
-        do 
-            for f in formatters do 
-                cache.AddOrUpdate(f.Type, f, fun _ _ -> f) |> ignore
-
         let resolver (t : Type) = 
-            YParametric cache.TryFind (fun t f -> cache.TryAdd(t,f) |> ignore) (resolvePickler gfi) t
+            YParametric id 
+                        cache.TryFind (fun t f -> cache.TryAdd(t,f) |> ignore) 
+                        (resolvePickler customPicklers customPicklerFactories) t
 
         interface IPicklerResolver with
-            member s.Resolve<'T> () = resolver typeof<'T> :?> Pickler<'T>
-            member s.Resolve (t : Type) = resolver t
+            member r.Id = id
+            member r.Resolve<'T> () = resolver typeof<'T> :?> Pickler<'T>
+            member r.Resolve (t : Type) = resolver t
         
-        static member FromPicklerRegistry(fr : CustomPicklerRegistry) =
-            new PicklerCache(fr.TypeNameConverter, fr.RegisteredPicklers, fr.GenericFactories)
+        static member FromPicklerRegistry(pr : CustomPicklerRegistry) =
+            let uuid = string <| Guid.NewGuid ()
+            new PicklerCache(uuid, pr.TypeNameConverter, pr.CustomPicklers, pr.CustomPicklerFactories)
 
-        static member GetDefault () = singleton.Value
+        static member GetDefaultInstance () = singleton.Value

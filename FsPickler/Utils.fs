@@ -206,7 +206,7 @@
             member m.GetParameterTypes() = m.GetParameters() |> Array.map (fun p -> p.ParameterType)
 
 
-        
+        // perform a shallow copy of the contents of given reference type
         let shallowCopy (t : Type) (src : obj) (dst : obj) =
             let fields = t.GetFields(BindingFlags.Instance ||| BindingFlags.Public ||| BindingFlags.NonPublic)
             for f in fields do

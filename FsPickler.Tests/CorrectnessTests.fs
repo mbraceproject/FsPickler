@@ -6,6 +6,7 @@
 
     open FsUnit
     open FsPickler
+    open FsPickler.Combinators
 
     open NUnit.Framework
 
@@ -74,14 +75,14 @@
 
             let p = int2Peano 100
 
-            p |> testSerializer.FSCS.Pickle pp |> testSerializer.FSCS.UnPickle pp |> should equal p
+            p |> pickle pp |> unpickle pp |> should equal p
 
         [<Test>] 
         member __.``Combinator-based Mutual Recursion`` () =
-            let tp,_ = getTreePicklers<int> ()
+            let tp,_ = getTreeForestPicklers Pickler.int
             let t = nTree 6
 
-            t |> testSerializer.FSCS.Pickle tp |> testSerializer.FSCS.UnPickle tp |> should equal t
+            t |> pickle tp |> unpickle tp |> should equal t
 
         [<Test>]
         member __.``NonSerializable Type`` () =
@@ -100,20 +101,40 @@
 
         [<Test>] 
         member __.``Lists`` () = 
-                    testEquals []
-                    testEquals [1..100] 
-                    testEquals ([1..100] |> List.map (fun i -> i, string i))
+            testEquals []
+            testEquals [1..100] 
+            testEquals ([1..100] |> List.map (fun i -> i, string i))
 
         [<Test>]
         member __.``Arrays`` () =
-                    testEquals [||]
-                    testEquals ([|1.0 .. 100.0|] |> Array.map (fun i -> (i, i)))
-                    testEquals ([|1L .. 100L|] |> Array.map (fun i -> TimeSpan i))
+            testEquals [||]
+            testEquals ([|1.0 .. 100.0|] |> Array.map (fun i -> (i, i)))
+            testEquals ([|1L .. 100L|] |> Array.map (fun i -> TimeSpan i))
+
+        [<Test>]
+        member __.``Call-By-Value Sequence Pickler`` () =
+            let seqPickler = Pickler.seq Pickler.int
+
+            let state = ref 0
+            let sequence =
+                seq {
+                    while !state < 100 do
+                        yield !state
+                        incr state
+                }
+            
+            let sequence' = sequence |> pickle seqPickler |> unpickle seqPickler
+
+            // check that sequence has been evaluated
+            !state |> should equal 100
+
+            sequence' |> Seq.length |> should equal 100
+            
 
         [<Test>]
         member __.``Exceptions`` () =
-                    test <| Exception("outer", Exception("inner"))
-                    test <| ArgumentException()
+            test <| Exception("outer", Exception("inner"))
+            test <| ArgumentException()
 
     
         [<Test>]
@@ -250,11 +271,16 @@
 
             test quot
 
+        [<Test>]
+        member __.``Pluggable Pickler Factory`` () =
+            let (NGValue x) = testLoop (NGValue 0)
+            x |> should equal 42
 
         [<Test>]
-        member __.``GenericPicklerFactory test`` () =
+        member __.``Pluggable Generic Pickler Factory`` () =
             let x = testLoop (GenericType<int>(42))
             x.Value |> should equal 0  
+
             
         [<Test>]
         member __.``Test Massively Auto-Generated Objects`` () =

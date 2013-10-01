@@ -7,6 +7,7 @@
     open System.Runtime.Serialization
 
     open FsPickler
+    open FsPickler.Combinators
 
     module TestTypes =
 
@@ -40,12 +41,11 @@
                 Cons(nTree d, nForest d (l-1))
 
 
-        let getTreePicklers<'T> () =
+        let getTreeForestPicklers (elementPickler : Pickler<'T>) =
             Pickler.fix2(fun treeP forestP ->
-                let tp = Pickler.auto<'T>
 
                 let treeP' =
-                    Pickler.pair tp forestP
+                    Pickler.pair elementPickler forestP
                     |> Pickler.option 
                     |> Pickler.wrap 
                         (function None -> Empty | Some (v,f) -> Node(v,f))
@@ -109,7 +109,7 @@
                 Pickler.fix(fun self -> 
                     self 
                     |> Pickler.option 
-                    |> Pickler.pair Pickler.auto<int>
+                    |> Pickler.pair Pickler.int
                     |> Pickler.wrap (fun (_,y) -> new ClassWithCombinators(42,y)) (fun c -> c.Value))
 
         exception FsharpException of int * string
@@ -125,11 +125,19 @@
 
         type Rec = { Rec : Rec }
 
+        type NonGenericType = NGValue of int
+
+        type ExternalTypePickler () =
+            interface IPicklerFactory
+
+            member __.Create (resolver : IPicklerResolver) =
+                Pickler.FromPrimitives((fun _ -> NGValue 42), fun _ _ -> ())
+
         type GenericType<'T when 'T : comparison>(x : 'T) =
             member __.Value = x
 
-        type GenericTypePickler () =
-            interface IGenericPicklerFactory
+        type ExternalGenericTypePickler () =
+            interface IPicklerFactory
 
             member __.Create<'T when 'T : comparison> (resolver : IPicklerResolver) =
                 let valueFmt = resolver.Resolve<'T> ()
@@ -198,7 +206,8 @@
         let testSerializer =
             let registry = new CustomPicklerRegistry()
             do
-                registry.RegisterGenericPickler(new GenericTypePickler())
+                registry.RegisterPicklerFactory(new ExternalTypePickler())
+                registry.RegisterPicklerFactory(new ExternalGenericTypePickler())
 
             new TestFsPickler(registry)
 

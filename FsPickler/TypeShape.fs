@@ -7,7 +7,7 @@
     // All that is required of input formatters is to implement the IGenericPicklerFactory interface
     // (which contains no methods) and to contain an implementation of a non-static method
     //
-    //         Create<'T1,..,'Tn> : (Type -> Lazy<Pickler>) -> Pickler
+    //         Create<'T1,..,'Tn> : IPicklerResolver -> Pickler
     //
     // The method is determined and executed through reflection, hence the possibility of runtime errors is real.
     // This has the advantage of not having to concern ourselves with type constraints at this stage, where they do
@@ -180,6 +180,8 @@
             | Named t -> t.AssemblyQualifiedName
             | Generic(t,_,_) -> t.AssemblyQualifiedName
 
+        // lookup a typeshape that matches input type, 
+        // returning an array of typeshapes that correspond to the shape's holes
         member __.TryFind (t : Type) =
             let shape = TypeShape.OfType t
 
@@ -210,7 +212,7 @@
             match overwrite with
             | Discard when isRegisteredShape -> m
             | Fail when isRegisteredShape ->
-                invalidOp "A generic formatter of equivalent shape already exists."
+                invalidOp "A pickler factory of equivalent type shape already exists."
             | _ ->
                 ShapeMap<_>(map.Add(shapeId, updated))
 
@@ -227,52 +229,52 @@
         static member Empty = ShapeMap<'T>(Map.empty)
 
     /// an immutable index for generic formatters
-    type GenericPicklerIndex internal (shapeMap : ShapeMap<IGenericPicklerFactory * MethodInfo>) =
+    type PicklerFactoryIndex internal (shapeMap : ShapeMap<IPicklerFactory * MethodInfo>) =
 
-        static member Empty = new GenericPicklerIndex(ShapeMap.Empty)
+        static let dummyResolver =
+            {
+                new IPicklerResolver with
+                    member __.Id = null
+                    member __.Resolve (t : Type) = ReflectionPicklers.AbstractPickler.CreateUntyped t
+                    member __.Resolve<'T> () = ReflectionPicklers.AbstractPickler.Create<'T> ()
+            }
 
-        member i.AddGenericPickler(gf : IGenericPicklerFactory, overwrite) =
-            let t = gf.GetType()
-            let tryGetCreateMethod (t : Type) =
+        static member Empty = new PicklerFactoryIndex(ShapeMap.Empty)
+
+        member i.AddPicklerFactory(pf : IPicklerFactory, overwrite) =
+            let t = pf.GetType()
+            let getCreateMethods (t : Type) =
                 t.GetMethods(BindingFlags.Instance ||| BindingFlags.Public ||| BindingFlags.NonPublic)
-                |> Seq.tryFind(fun m -> 
-                        m.Name = "Create" &&  m.IsGenericMethod 
+                |> Array.filter(fun m -> 
+                        m.Name = "Create"
                         &&
-                            (let ts = m.GetParameters() |> Array.map (fun p -> p.ParameterType)
-                                in ts = [| typeof<IPicklerResolver> |])
+                            m.GetParameterTypes() = [| typeof<IPicklerResolver> |]
                         &&
                             typeof<Pickler>.IsAssignableFrom m.ReturnType)
 
-            let createMethod =
-                match tryGetCreateMethod t with
-                | Some m -> Some m
-                | None ->
-                    // Create method may be hidden in intermediate interfaces
-                    t.GetInterfaces() 
-                    |> Seq.filter (fun i -> typeof<IGenericPicklerFactory>.IsAssignableFrom i)
-                    |> Seq.tryPick tryGetCreateMethod
+            // 'Create' method may be hidden in intermediate interfaces
+            let createMethods = 
+                t.GetInterfaces() 
+                |> Seq.filter (fun i -> typeof<IPicklerFactory>.IsAssignableFrom i)
+                |> Seq.append [| t |]
+                |> Seq.collect getCreateMethods
+                |> Seq.toArray
 
-            match createMethod with
-            | None -> 
-                SerializationException(sprintf "IGenericPickler: instance '%s' does not implement a factory method 'Create<..> : (Type -> Lazy<Pickler>) -> Pickler'" t.Name)
+            match createMethods with
+            | [||] ->
+                PicklerFactoryException(pf, "does not implement a factory method 'Create<..> : IPicklerResolver -> Pickler'.")
                 |> raise
-            | Some m ->
+
+            | [| m |] when m.IsGenericMethodDefinition ->
                 // apply Peano type variables to formatter in order to extrapolate the type shape
                 let tyVars = getPeanoVars (m.GetGenericArguments().Length)
-                let resolver =
-                    {
-                        new IPicklerResolver with
-                            member __.Resolve (t : Type) = ReflectionPicklers.AbstractPickler.CreateUntyped t
-                            member __.Resolve<'T> () = ReflectionPicklers.AbstractPickler.Create<'T> ()
-                    }
 
                 let m0 =
                     try m.MakeGenericMethod tyVars
                     with :? System.ArgumentException & InnerExn (:? System.Security.VerificationException) ->
-                        SerializationException(sprintf "IGenericPickler: instance '%s' contains unsupported type constraint." t.Name)
-                        |> raise
+                        raise <| new PicklerFactoryException(pf, "contains unsupported type constraint.")
 
-                let fmt = m0.Invoke(gf, [| resolver :> obj|]) :?> Pickler
+                let fmt = m0.GuardedInvoke(pf, [| dummyResolver :> obj|]) :?> Pickler
                 let shape = TypeShape.OfType fmt.Type
                 let fvs = shape.FreeVars
                 if fvs.Length < tyVars.Length then
@@ -281,27 +283,44 @@
                         | None -> fvs.Length
                         | Some i -> i
 
-                    SerializationException(sprintf "IGenericPickler: type variable #%d in instance '%s' is not used in pattern." missingVar t.Name)
-                    |> raise
+                    raise <| new PicklerFactoryException(pf, sprintf "type variable #%d is not used in pattern." missingVar)
 
                 match shape with
-                | Var _ -> 
-                    SerializationException(sprintf "IGenericPickler: pattern in instance '%s' has type variable at top level position." t.Name)
-                    |> raise
+                | Var _ ->
+                    raise <| new PicklerFactoryException(pf, "pattern has type variable at root level.")
                 | _ -> ()
 
-                new GenericPicklerIndex(shapeMap.Add(shape, (gf,m), overwrite))
+                new PicklerFactoryIndex(shapeMap.Add(shape, (pf,m), overwrite))
 
-        member i.AddGenericPicklers(gfs : seq<IGenericPicklerFactory>, overwrite) =
-            (i,gfs) ||> Seq.fold (fun i gf -> i.AddGenericPickler(gf,overwrite))
+            | [| m |] ->
+                let fmt = m.GuardedInvoke(pf, [| dummyResolver :> obj |]) :?> Pickler
+                let shape = TypeShape.OfType fmt.Type
 
-        member i.TryResolveGenericPickler(t : Type, resolver : IPicklerResolver) : Pickler option =
+                new PicklerFactoryIndex(shapeMap.Add(shape, (pf, m), overwrite))
+            | ms ->
+                raise <| new PicklerFactoryException(pf, "ambiguous declarations of 'Create' methods found.")
+                
+
+        member i.AddPicklerFactories(gfs : seq<IPicklerFactory>, overwrite) =
+            (i,gfs) ||> Seq.fold (fun i gf -> i.AddPicklerFactory(gf,overwrite))
+
+        member i.TryResolvePicklerFactory(t : Type, resolver : IPicklerResolver) : Pickler option =
             match shapeMap.TryFind t with
             | None -> None
-            | Some (shapes, (gf,m)) ->
+            | Some (shapes, (pf,m)) ->
                 // get hole instances that match given pattern
                 let types = shapes |> Array.map (fun s -> s.Type)
-                Some(m.MakeGenericMethod(types).Invoke(gf, [| resolver :> obj |]) :?> Pickler)
+                let m0 =
+                    if types.Length = 0 then m
+                    else
+                        m.MakeGenericMethod types
+                
+                let pickler = m0.GuardedInvoke(pf, [| resolver :> obj |]) :?> Pickler
+
+                if pickler.Type <> t then
+                    raise <| new PicklerFactoryException(pf, sprintf "yielded pickler has type '%O', expected '%O'." pickler.Type t)
+
+                Some pickler
 
         member __.GetEntries() =
             shapeMap.ToList()

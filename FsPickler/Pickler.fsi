@@ -12,16 +12,6 @@
             internal new : Type -> Pickler
             internal new : Type * PicklerInfo * bool * bool -> Pickler
 
-            val private declared_type: Type
-            val private is_recursive_type: bool
-            val mutable private m_pickler_type: Type
-            val mutable private m_typeInfo: TypeInfo
-            val mutable private m_typeHash: TypeHash
-            val mutable private m_isInitialized: bool
-            val mutable private m_picklerInfo: PicklerInfo
-            val mutable private m_isCacheByRef: bool
-            val mutable private m_useWithSubtypes: bool
-
             /// casts pickler to a typed version. may result in runtime error.
             abstract member Cast<'S> : unit -> Pickler<'S>
 
@@ -54,6 +44,8 @@
             member internal IsInitialized : bool
             member internal TypeHash : TypeHash
             member internal TypeInfo : TypeInfo
+            member ResolverName : string
+            member internal ResolverName : string with set
         end
 
     and [<Sealed>] Pickler<'T> =
@@ -66,9 +58,6 @@
 
             private new : Type * (Reader -> 'T) * (Writer -> 'T -> unit) * 
                                                     PicklerInfo * cacheByRef:bool * useWithSubtypes:bool -> Pickler<'T>
-
-            val mutable private m_writer: Writer -> 'T -> unit
-            val mutable private m_reader: Reader -> 'T
 
             /// casts pickler to a typed version. may result in runtime error.
             override Cast : unit -> Pickler<'S>
@@ -92,9 +81,12 @@
     /// Pickler resolution interface
     and IPicklerResolver =
         interface
+            /// A resolver Identifier
+            abstract member Id : string
+            /// untyped pickler generation
+            abstract member internal Resolve : Type -> Pickler
             /// auto generates a pickler of type 'T
             abstract member Resolve : unit -> Pickler<'T>
-            abstract member internal Resolve : Type -> Pickler
         end
 
     /// Serialization state object.
