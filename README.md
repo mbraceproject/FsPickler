@@ -140,3 +140,34 @@ let p = Pickler.auto<RecursiveClass>
 
 RecursiveClass(RecursiveClass()) |> pickle p |> unpickle p
 ```
+
+### Pluggable Picklers
+
+When in need to define custom serialization rules for elsewhere-defined types, 
+a pluggable pickler mechanism is provided. 
+Supposing the following custom ``Pickler<int option>``:
+```fsharp
+let customOptional = Pickler.FromPrimitives((fun _ -> Some 42), fun _ _ -> ())
+```
+how could one plug it into the pickler generator?
+```fsharp
+let registry = new CustomPicklerRegistry("pickler cache with custom optionals")
+
+do registry.RegisterPickler customOptional
+
+let fsp' = new FsPickler(registry)
+```
+The above initializes a *new* pickler cache; all picklers generated from that cache
+will adhere to the custom rules:
+```fsharp
+let optionlist = fsp'.GeneratePickler<int option list> ()
+
+// outputs a list of Some 42's
+[ for i in 1 .. 100 -> Some i ] |> fsp.Pickle optionlist |> fsp.UnPickle optionlist
+```
+Note that auto-generated picklers do not support interop between caches:
+```fsharp
+let pickler = fsp.GeneratePickler<int list> ()
+
+fsp'.Pickler pickler [1] // runtime error
+```
