@@ -55,6 +55,7 @@
         let tyConv =
             match tyConv with 
             | Some tc -> tc 
+            | None when runsOnMono -> new MonoTypeNameConverter() :> _
             | None -> new DefaultTypeNameConverter() :> _
 
         // include default pickler factories

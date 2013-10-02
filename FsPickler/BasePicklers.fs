@@ -72,9 +72,27 @@
     //
 
     let mkTypePickler (tyConv : ITypeNameConverter) =
-        mkPickler PicklerInfo.ReflectionType true true 
-                    (fun r -> TypePickler.read tyConv r.BinaryReader) 
-                    (fun w t -> TypePickler.write tyConv w.BinaryWriter t)
+        let writer (w : Writer) (t : Type) =
+            if t.IsGenericParameter then
+                tyConv.WriteQualifiedName w.BinaryWriter t.ReflectedType
+                w.BinaryWriter.Write true
+                w.BinaryWriter.Write t.Name
+            else
+                tyConv.WriteQualifiedName w.BinaryWriter t
+                w.BinaryWriter.Write false
+
+        let reader (r : Reader) =
+            let t = tyConv.ReadQualifiedName r.BinaryReader
+            if r.BinaryReader.ReadBoolean() then
+                // is generic parameter
+                let pname = r.BinaryReader.ReadString()
+                try t.GetGenericArguments() |> Array.find(fun a -> a.Name = pname)
+                with :? KeyNotFoundException -> 
+                    raise <| new SerializationException(sprintf "cannot deserialize type '%s'." pname)
+            else
+                t
+
+        mkPickler PicklerInfo.ReflectionType true true reader writer
 
     let mkMemberInfoPickler typePickler =
         let writer (w : Writer) (m : MemberInfo) =
