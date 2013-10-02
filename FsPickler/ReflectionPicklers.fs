@@ -38,8 +38,7 @@
                     .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
                     .MakeGenericMethod [| t |]
 
-            try m.Invoke(null, null) :?> Pickler
-            with :? TargetInvocationException as e -> raise e.InnerException
+            m.GuardedInvoke(null, null) :?> Pickler
 
     // creates a pickler for abstract types
 

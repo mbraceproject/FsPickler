@@ -49,51 +49,51 @@
             let bytes = mkByteArrayPickler ()
             let bigint = mkBigIntPickler () : Pickler<bigint>
 
-            /// auto generate pickler
+            /// auto generate a pickler
             let auto<'T> = defaultSerializer.Value.GeneratePickler<'T> ()
 
             let inline private uc (p : Pickler<'T>) = p :> Pickler
 
             /// pair pickler combinator
-            let pair f g = PairPickler.Create(f,g) |> setPicklerSource [uc f; uc g]
+            let pair f g = PairPickler.Create(f,g) |> setPicklerId [uc f; uc g]
             /// triple pickler combinator
-            let triple f g h = TriplePickler.Create(f,g,h) |> setPicklerSource [uc f; uc g; uc h]
+            let triple f g h = TriplePickler.Create(f,g,h) |> setPicklerId [uc f; uc g; uc h]
             /// quad pickler combinator
-            let quad f g h i = QuadPickler.Create(f,g,h,i) |> setPicklerSource [uc f; uc g; uc h; uc i]
+            let quad f g h i = QuadPickler.Create(f,g,h,i) |> setPicklerId [uc f; uc g; uc h; uc i]
             /// option pickler combinator
-            let option f = OptionPickler.Create f |> setPicklerSource [uc f]
+            let option f = OptionPickler.Create f |> setPicklerId [uc f]
             /// Choice<_,_> pickler combinator
-            let choice2 f g = Choice2Pickler.Create(f,g) |> setPicklerSource [uc f; uc g]
+            let choice2 f g = Choice2Pickler.Create(f,g) |> setPicklerId [uc f; uc g]
             /// Choice<_,_,_> pickler combinator
-            let choice3 f g h = Choice3Pickler.Create(f,g,h) |> setPicklerSource [uc f; uc g; uc h]
+            let choice3 f g h = Choice3Pickler.Create(f,g,h) |> setPicklerId [uc f; uc g; uc h]
             /// Choice<_,_,_,_> pickler combinator
-            let choice4 f g h i = Choice4Pickler.Create(f,g,h,i) |> setPicklerSource [uc f; uc g; uc h; uc i]
+            let choice4 f g h i = Choice4Pickler.Create(f,g,h,i) |> setPicklerId [uc f; uc g; uc h; uc i]
 
             /// FSharp ref pickler combinator
-            let ref f = FSharpRefPickler.Create f |> setPicklerSource [uc f]
+            let ref f = FSharpRefPickler.Create f |> setPicklerId [uc f]
             /// FSharp list pickler combinator
-            let list f = ListPickler.Create f |> setPicklerSource [uc f]
+            let list f = ListPickler.Create f |> setPicklerId [uc f]
             /// FSharp map pickler combinator
-            let map kp vp = FSharpMapPickler.Create(kp,vp) |> setPicklerSource [uc kp; uc kp]
+            let map kp vp = FSharpMapPickler.Create(kp,vp) |> setPicklerId [uc kp; uc kp]
             /// FSharp set pickler combinator
-            let set f = FSharpSetPickler.Create f |> setPicklerSource [uc f]
+            let set f = FSharpSetPickler.Create f |> setPicklerId [uc f]
             /// array pickler combinator
-            let array f = DotNetPicklers.ArrayPickler.Create<'T, 'T []> f |> setPicklerSource [uc f]
+            let array f = DotNetPicklers.ArrayPickler.Create<'T, 'T []> f |> setPicklerId [uc f]
             /// array2D pickler combinator
-            let array2D f = DotNetPicklers.ArrayPickler.Create<'T, 'T [,]> f |> setPicklerSource [uc f]
+            let array2D f = DotNetPicklers.ArrayPickler.Create<'T, 'T [,]> f |> setPicklerId [uc f]
             /// array3D pickler combinator
-            let array3D f = DotNetPicklers.ArrayPickler.Create<'T, 'T [,,]> f |> setPicklerSource [uc f]
+            let array3D f = DotNetPicklers.ArrayPickler.Create<'T, 'T [,,]> f |> setPicklerId [uc f]
             /// array4D pickler combinator
-            let array4D f = DotNetPicklers.ArrayPickler.Create<'T, 'T [,,,]> f |> setPicklerSource [uc f]
+            let array4D f = DotNetPicklers.ArrayPickler.Create<'T, 'T [,,,]> f |> setPicklerId [uc f]
             /// sequence pickler combinator ; uses eager evaluation
-            let seq f = SeqPickler.Create f |> setPicklerSource [uc f]
+            let seq f = SeqPickler.Create f |> setPicklerId [uc f]
             /// sequence of pairs pickler combinator ; uses eager evaluation
-            let pairSeq kp vp = KeyValueSeqPickler.Create(kp, vp) |> setPicklerSource [uc kp; uc vp]
+            let pairSeq kp vp = KeyValueSeqPickler.Create(kp, vp) |> setPicklerId [uc kp; uc vp]
 
             /// wrap combinator: defines picklers up to isomorphism
-            let wrap recover convert p = WrapPickler.Create(p, recover, convert) |> setPicklerSource [p]
+            let wrap recover convert p = WrapPickler.Create(p, recover, convert) |> setPicklerId [p]
             /// alt combinator: choose pickler combinators using tag reader
-            let alt tagReader ps = AltPickler.Create(tagReader, ps) |> setPicklerSource (ps |> Seq.map uc)
+            let alt tagReader ps = AltPickler.Create(tagReader, ps) |> setPicklerId (ps |> Seq.map uc)
 
             /// pickler fixpoint combinator
             let fix (F : Pickler<'T> -> Pickler<'T>) =

@@ -57,7 +57,6 @@
     <Compile Include="FsPickler.fs" />
     <Compile Include="ExtensionMethods.fs" />
     <Compile Include="Combinators.fs" />
-    <None Include="test.fsx" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />

@@ -28,7 +28,7 @@
         val mutable private m_isCacheByRef : bool
         val mutable private m_useWithSubtypes : bool
 
-        val mutable private m_source_id : string
+        val mutable private m_cache_id : string
 
         internal new (t : Type) =
             {
@@ -44,7 +44,7 @@
                 m_isCacheByRef = Unchecked.defaultof<_> ; 
                 m_useWithSubtypes = Unchecked.defaultof<_> ;
 
-                m_source_id = null ;
+                m_cache_id = null ;
             }
 
         internal new (t : Type, picklerInfo, isCacheByRef, useWithSubtypes) =
@@ -62,7 +62,7 @@
                 m_isCacheByRef = isCacheByRef ;
                 m_useWithSubtypes = useWithSubtypes ;
 
-                m_source_id = null ;
+                m_cache_id = null ;
             }
 
         member f.Type = f.declared_type
@@ -71,9 +71,9 @@
         member internal f.TypeInfo = f.m_typeInfo
         member internal f.TypeHash = f.m_typeHash
 
-        member f.SourceId
-            with get () = f.m_source_id
-            and internal set id = f.m_source_id <- id
+        member f.CacheId
+            with get () = f.m_cache_id
+            and internal set id = f.m_cache_id <- id
 
         member f.PicklerType =
             if f.m_isInitialized then f.m_pickler_type
@@ -113,10 +113,10 @@
             elif not f'.m_isInitialized then 
                 invalidOp "Attempting to consume pickler at construction time."
             elif f.Type <> f'.Type && not (f'.Type.IsAssignableFrom(f.Type) && f'.UseWithSubtypes) then
-                raise <| new InvalidCastException(sprintf "Cannot cast pickler from %O to %O." f'.Type f.Type)
+                raise <| new InvalidCastException(sprintf "Cannot cast pickler from '%O' to '%O'." f'.Type f.Type)
             else
                 f.m_pickler_type <- f'.m_pickler_type
-                f.m_source_id <- f'.m_source_id
+                f.m_cache_id <- f'.m_cache_id
                 f.m_typeHash <- f'.m_typeHash
                 f.m_typeInfo <- f'.m_typeInfo
                 f.m_picklerInfo <- f'.m_picklerInfo
@@ -184,7 +184,7 @@
 
 
     and IPicklerResolver =
-        abstract Id : string
+        abstract UUId : string
         abstract Resolve : Type -> Pickler
         abstract Resolve<'T> : unit -> Pickler<'T>
 

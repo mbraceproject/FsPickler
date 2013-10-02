@@ -234,7 +234,7 @@
         static let dummyResolver =
             {
                 new IPicklerResolver with
-                    member __.Id = null
+                    member __.UUId = null
                     member __.Resolve (t : Type) = ReflectionPicklers.AbstractPickler.CreateUntyped t
                     member __.Resolve<'T> () = ReflectionPicklers.AbstractPickler.Create<'T> ()
             }
@@ -318,7 +318,8 @@
                 let pickler = m0.GuardedInvoke(pf, [| resolver :> obj |]) :?> Pickler
 
                 if pickler.Type <> t then
-                    raise <| new PicklerFactoryException(pf, sprintf "yielded pickler has type '%O', expected '%O'." pickler.Type t)
+                    let msg = sprintf "factory yielded pickler of incompatible of type '%O'." pickler.Type
+                    raise <| new PicklerGenerationException(t, msg)
 
                 Some pickler
 

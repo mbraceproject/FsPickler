@@ -4,6 +4,7 @@
     open System.Reflection
     open System.Collections.Generic
     open System.Collections.Concurrent
+    open System.Runtime.CompilerServices
     open System.Runtime.Serialization
 
     open Microsoft.FSharp.Reflection
@@ -17,7 +18,7 @@
     open FsPickler.FSharpPicklers
 
     /// Y combinator with parametric recursion support
-    let YParametric (resolverName : string)
+    let YParametric (cacheId : string)
                     (externalCacheLookup : Type -> Pickler option)
                     (externalCacheCommit : Type -> Pickler -> unit)
                     (resolverF : IPicklerResolver -> Type -> Pickler) (t : Type) =
@@ -32,14 +33,29 @@
                 match internalCache.TryFind t with
                 | Some f -> f
                 | None ->
+                    // while stack overflows are unlikely here (this is a type-level traversal)
+                    // it can be useful in catching a certain class of user errors when declaring custom picklers.
+                    try RuntimeHelpers.EnsureSufficientExecutionStack()
+                    with :? InsufficientExecutionStackException -> 
+                        raise <| PicklerGenerationException(t, "insufficient execution stack.")
+
                     // start pickler construction
                     let f = UninitializedPickler.CreateUntyped t
                     internalCache.Add(t, f)
 
+                    // perform recursive resolution
                     let f' = resolverF resolver t
-                    do 
-                        f.InitializeFrom f'
-                        f.SourceId <- resolverName
+
+                    // check cache Id for sanity
+                    match f'.CacheId with
+                    | null -> ()
+                    | id when id <> cacheId ->
+                        raise <| new PicklerGenerationException(t, "pickler generated using an incompatible cache.")
+                    | _ -> ()
+                    
+                    // copy data to initial pickler
+                    f.InitializeFrom f'
+                    f.CacheId <- cacheId
 
                     // pickler construction successful, commit to external cache
                     do externalCacheCommit t f
@@ -48,7 +64,7 @@
         and resolver =
             {
                 new IPicklerResolver with
-                    member __.Id = resolverName
+                    member __.UUId = cacheId
                     member __.Resolve<'T> () = lookup typeof<'T> :?> Pickler<'T>
                     member __.Resolve (t : Type) = lookup t
             }

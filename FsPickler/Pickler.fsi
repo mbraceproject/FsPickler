@@ -42,9 +42,9 @@
             member IsRecursiveType : bool
             /// Provides information on the pickler generation method.
             member PicklerInfo : PicklerInfo
-            /// Cache id used to generate this pickler.
-            member SourceId : string
-            member internal SourceId : string with set
+            /// Cache Id used to generate this pickler.
+            member CacheId : string
+            member internal CacheId : string with set
 
             member internal IsInitialized : bool
             member internal TypeHash : TypeHash
@@ -85,8 +85,8 @@
     /// Pickler resolution interface
     and IPicklerResolver =
         interface
-            /// A resolver Identifier
-            abstract member Id : string
+            /// Unique resolver identifier
+            abstract member UUId : string
             /// untyped pickler generation
             abstract member internal Resolve : Type -> Pickler
             /// auto generates a pickler of type 'T

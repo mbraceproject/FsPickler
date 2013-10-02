@@ -4,16 +4,22 @@
     open System.IO
     open System.Runtime.Serialization
 
+    open FsPickler.PicklerUtils
 
-    type FsPickler private (resolver : IPicklerResolver) =
+    type FsPickler private (cache : PicklerCache) =
+
+        let name = cache.Name
+        let resolver = cache :> IPicklerResolver
         
         /// initializes an instance that resolves picklers from a global cache
         new () = new FsPickler(PicklerCache.GetDefaultInstance())
         /// initializes a new pickler cache that resolves picklers using custom rules
         new (registry : CustomPicklerRegistry) = new FsPickler(PicklerCache.FromPicklerRegistry registry)
 
+        /// Human-readable name for the pickler cache
+        member __.Name = name
         /// Identifier of the cache instance used by the serializer.
-        member __.CacheID = resolver.Id
+        member __.UUId = resolver.UUId
 
         /// <summary>Serialize value to the underlying stream.</summary>
         /// <param name="stream">The target stream.</param>
@@ -33,6 +39,7 @@
         /// <param name="encoding">The encoding passed to the binary reader.</param>
         /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to true.</param>
         member __.Serialize<'T>(pickler : Pickler<'T>, stream : Stream, value : 'T, ?streamingContext : obj, ?encoding, ?leaveOpen) : unit =
+            do checkPicklerCompat resolver.UUId pickler
             use writer = new Writer(stream, resolver, ?streamingContext = streamingContext, ?encoding = encoding, ?leaveOpen = leaveOpen)
             writer.Write(pickler, value)
 
@@ -63,6 +70,7 @@
         /// <param name="encoding">The encoding passed to the binary reader.</param>
         /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to true.</param>
         member __.Deserialize<'T> (pickler : Pickler<'T>, stream : Stream, ?streamingContext : obj, ?encoding, ?leaveOpen) : 'T =
+            do checkPicklerCompat resolver.UUId pickler
             use reader = new Reader(stream, resolver, ?streamingContext = streamingContext, ?encoding = encoding, ?leaveOpen = leaveOpen)
             reader.Read<'T> pickler
 

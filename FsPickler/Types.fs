@@ -36,7 +36,17 @@
         inherit IPicklerFactory
         abstract Create<'T, 'S, 'U, 'V> : IPicklerResolver -> Pickler
 
-    /// Raised by FsPickler whenever an unsupported type is encountered in the object graph.
+
+    /// raised by pickler generator whenever an unexpected error is encountered.
+    type PicklerGenerationException internal (t : Type, ?message : string) =
+        inherit SerializationException(
+            match message with
+            | None -> sprintf "Error while generating pickler for type '%O'." t
+            | Some msg -> sprintf "Error while generating pickler for type '%O': %s" t msg)
+
+        member __.GeneratedType = t
+
+    /// raised by pickler generator whenever an unsupported type is encountered in the type graph.
     type NonSerializableTypeException internal (unsupportedType : Type, ?message : string) =
         inherit SerializationException(
             match message with
@@ -45,6 +55,7 @@
 
         member __.UnsupportedType = unsupportedType
 
+    /// raised by pickler generator whenever an unexpected error is encountered while calling pickler factories
     type PicklerFactoryException internal (picklerFactory : IPicklerFactory, ?message) =
         inherit SerializationException(
             match message with
@@ -52,3 +63,4 @@
             | Some msg -> sprintf "Error calling pluggable pickler factory '%O': %s" (picklerFactory.GetType()) msg)
 
         member __.PicklerFactory = picklerFactory
+

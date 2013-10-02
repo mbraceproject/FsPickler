@@ -219,5 +219,5 @@
             match factoryMethod with
             | Some m -> m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler
             | None ->
-                let msg = "marked with CustomPickler but missing a 'CreatePickler : IPicklerResolver -> Formatter<DeclaringType>' factory method."
+                let msg = "marked [<CustomPickler>] but missing factory method 'CreatePickler : IPicklerResolver -> Pickler<DeclaringType>'."
                 raise <| new NonSerializableTypeException(t, msg)

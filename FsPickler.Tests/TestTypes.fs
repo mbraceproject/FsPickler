@@ -204,7 +204,7 @@
 
         // create serializer
         let testSerializer =
-            let registry = new CustomPicklerRegistry()
+            let registry = new CustomPicklerRegistry("unit test cache")
             do
                 registry.RegisterPicklerFactory(new ExternalTypePickler())
                 registry.RegisterPicklerFactory(new ExternalGenericTypePickler())

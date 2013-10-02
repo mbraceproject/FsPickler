@@ -11,8 +11,7 @@
     open FsPickler.PicklerResolution
 
     [<Sealed>]
-    type CustomPicklerRegistry (?id : string) =
-        let id = match id with None | Some null -> string <| Guid.NewGuid() | Some id -> id
+    type CustomPicklerRegistry (name : string) =
 
         let typeNameConverter = ref None : ITypeNameConverter option ref
         let customPicklers = Atom.atom Map.empty<string, Pickler>
@@ -33,21 +32,21 @@
 
         member internal __.CustomPicklerFactories = customPicklerFactories.Value
 
-        /// Identifier for the current registry
-        member __.Id = id
+        /// Identifier for the custom registry
+        member __.Name = name
         /// list of currently registered custom picklers
         member __.RegisteredPicklers = customPicklers.Value |> Map.toSeq |> Seq.map snd |> List.ofSeq
         /// list of currently registered custom pickler factories
         member __.RegisteredPicklerFactories = customPicklerFactories.Value.GetEntries()
 
 
-    type internal PicklerCache private (id : string, 
+    type internal PicklerCache private (uuid : string, name : string,
                                             tyConv : ITypeNameConverter option, 
                                             customPicklers : seq<Pickler>, 
                                             customPicklerFactories : PicklerFactoryIndex) =
 
-        static let singleton = 
-            lazy(new PicklerCache("default pickler cache", None, [], PicklerFactoryIndex.Empty))
+        static let singleton =
+            lazy(new PicklerCache(string Guid.Empty, "default cache instance", None, [], PicklerFactoryIndex.Empty))
 
         // resolve the default type name converter
         let tyConv =
@@ -68,7 +67,7 @@
                 mkReflectionPicklers tyConv
             |]
             |> Seq.concat
-            |> Seq.map (fun f -> f.SourceId <- id ; f)
+            |> Seq.map (fun f -> f.CacheId <- uuid ; f)
             |> Seq.map (fun f -> KeyValuePair(f.Type, f)) 
             |> fun fs -> new ConcurrentDictionary<_,_>(fs)
 
@@ -77,20 +76,23 @@
             for cp in customPicklers do
                 // clone custom pickler to contain sourceId mutation
                 let cp' = cp.ClonePickler()
-                cp'.SourceId <- id
+                cp'.CacheId <- uuid
                 cache.AddOrUpdate(cp'.Type, cp', fun _ _ -> cp') |> ignore
 
         let resolver (t : Type) = 
-            YParametric id 
+            YParametric uuid 
                         cache.TryFind (fun t f -> cache.TryAdd(t,f) |> ignore) 
                         (resolvePickler customPicklerFactories) t
 
+        member __.Name = name
+
         interface IPicklerResolver with
-            member r.Id = id
+            member r.UUId = uuid
             member r.Resolve<'T> () = resolver typeof<'T> :?> Pickler<'T>
             member r.Resolve (t : Type) = resolver t
         
         static member FromPicklerRegistry(pr : CustomPicklerRegistry) =
-            new PicklerCache(pr.Id, pr.TypeNameConverter, pr.RegisteredPicklers, pr.CustomPicklerFactories)
+            let uuid = string <| Guid.NewGuid()
+            new PicklerCache(uuid, pr.Name, pr.TypeNameConverter, pr.RegisteredPicklers, pr.CustomPicklerFactories)
 
         static member GetDefaultInstance () = singleton.Value

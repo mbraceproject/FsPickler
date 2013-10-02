@@ -32,20 +32,31 @@
             ( ^T : (member StreamingContext : StreamingContext) x)
 
 
-        /// set pickler source based on a set of source picklers
-        /// will result in error if pickler sources have conflicting generation sources
+        /// set pickler id based on set of source picklers
+        /// will result in error if source picklers have conflicting source ids
         /// used with external combinator library
-        let inline setPicklerSource< ^T when ^T :> Pickler> (sourcePicklers : seq<Pickler>) (targetPickler : ^T) =
+        let inline setPicklerId< ^T when ^T :> Pickler> (sourcePicklers : seq<Pickler>) (targetPickler : ^T) =
             let mutable current = null
             for p in sourcePicklers do
-                match p.SourceId with
+                match p.CacheId with
                 | null -> ()
                 | source when current = null -> current <- source
                 | source when current = source -> ()
-                | source -> invalidOp "Attempting to combine picklers generated from divergent source ids."
+                | source -> 
+                    let msg = "attempting to generate pickler using incompatible sources."
+                    raise <| new PicklerGenerationException(p.Type, msg)
 
-            targetPickler.SourceId <- current
+            targetPickler.CacheId <- current
             targetPickler
+
+        // checks pickler compatibility at runtime
+        let checkPicklerCompat (uuid : string) (p : Pickler) =
+            match p.CacheId with
+            | null -> ()
+            | id when id <> uuid ->
+                let msg = sprintf "Attempting to use pickler of type '%O' generated from incompatible cache." p.Type
+                raise <| new SerializationException(msg)
+            | _ -> ()
 
         //
         //  internal read/write combinators
