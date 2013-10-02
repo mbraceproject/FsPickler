@@ -9,6 +9,7 @@ that doubles as a pickler combinator library.
 * Supports all core serializable types, including types that implement the ``ISerializable`` interface.
 * Highly optimized for the F# core types.
 * Performance about 5-20x faster than the default .NET serializers.
+* Supports mono.
 
 ### Basic Usage
 
@@ -170,4 +171,36 @@ Note that auto-generated picklers do not support interop between caches:
 let pickler = fsp.GeneratePickler<int list> ()
 
 fsp'.Pickler pickler [1] // runtime error
+```
+
+### Pluggable Generic Picklers
+
+Defining pluggable picklers for generic types is a bit more involved, 
+and requires the use of special factory methods that need to be implemented
+as instances of the ``IPicklerFactory`` interface. The interface itself
+does not include any methods but instances need to have implemented a
+factory method with type signature 
+```fsharp
+Create<'T1,...,'Tn when [constraints]> : IPicklerResolver -> Pickler
+```
+For instance, supposing I need to define a custom pickler for F# sets:
+```fsharp
+type CustomSet () =
+    interface IPicklerFactory
+
+    member __.Create<'T when 'T : comparison> (resolver : IPicklerResolver) =
+        let ep = resolver.Resolve<'T> ()
+
+        ep |> Pickler.wrap (fun x -> set [x]) (fun s -> Seq.head s)
+        
+do customPicklers.RegisterPicklerFactory (new CustomSet())
+
+let fsp'' = new FsPickler(customPicklers)
+```
+I can now combine this rather bad pickler implementation as expected:
+```fsharp
+let p = fsp''.GeneratePickler<Set<int> option> ()
+
+// will return singleton set
+Some(set [ 1 .. 1000 ]) |> fsp.Pickle p |> fsp.UnPickle p
 ```
