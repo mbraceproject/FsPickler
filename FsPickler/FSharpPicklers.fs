@@ -35,9 +35,9 @@
                 |> Array.map(fun uci ->
                     let fields = uci.GetFields()
                     let ctor = FSharpValue.PreComputeUnionConstructorInfo(uci, allMembers)
-                    let formatters = fields |> Array.map (fun f -> resolver.Resolve f.PropertyType)
+                    let picklers = fields |> Array.map (fun f -> resolver.Resolve f.PropertyType)
                     let caseType = if fields.Length = 0 then None else Some <| fields.[0].DeclaringType
-                    uci, caseType, ctor, fields, formatters)
+                    uci, caseType, ctor, fields, picklers)
 
             let callUnionTagReader (union : Expression) =
                 match FSharpValue.PreComputeUnionTagMemberInfo(typeof<'Union>, allMembers) with
@@ -48,7 +48,7 @@
                 | _ -> invalidOp "unexpected error"
 
             let callCaseWriter (uci : UnionCaseInfo) (caseType : Type option) (fields : PropertyInfo []) 
-                                (formatters : Pickler []) (writer : Expression) (instance : Expression) =
+                                (picklers : Pickler []) (writer : Expression) (instance : Expression) =
 
                 let body =
                     if fields.Length = 0 then Expression.Empty() :> Expression
@@ -58,13 +58,13 @@
                             | Some t -> Expression.TypeAs(instance, t) :> Expression
                             | None -> instance
 
-                        Expression.zipWriteProperties fields formatters writer instance |> Expression.Block :> _
+                        Expression.zipWriteProperties fields picklers writer instance |> Expression.Block :> _
 
                 Expression.SwitchCase(body, Expression.constant uci.Tag)
 
 
-            let callCaseReader (uci : UnionCaseInfo) (formatters : Pickler []) (ctor : MethodInfo) (reader : Expression) =
-                let unionCase = Expression.callMethod ctor formatters reader
+            let callCaseReader (uci : UnionCaseInfo) (picklers : Pickler []) (ctor : MethodInfo) (reader : Expression) =
+                let unionCase = Expression.callMethod ctor picklers reader
                 Expression.SwitchCase(unionCase, Expression.constant uci.Tag)
 
             let writerFunc =
@@ -72,8 +72,8 @@
                     let tag = Expression.Variable(typeof<int>, "tag")
                     let cases = 
                         unionInfo 
-                        |> Array.map (fun (uci,caseType,_,fields,formatters) -> 
-                            callCaseWriter uci caseType fields formatters writer union)
+                        |> Array.map (fun (uci,caseType,_,fields,picklers) -> 
+                            callCaseWriter uci caseType fields picklers writer union)
 
                     let defCase = Expression.failwith<InvalidOperationException, Expression.SynVoid> "Invalid F# union tag."
 
@@ -91,7 +91,7 @@
                     let tag = Expression.readInt reader
                     let cases =
                         unionInfo
-                        |> Array.map (fun (uci,_,ctor,_,formatters) -> callCaseReader uci formatters ctor reader)
+                        |> Array.map (fun (uci,_,ctor,_,picklers) -> callCaseReader uci picklers ctor reader)
 
                     let defCase = Expression.failwith<InvalidOperationException, 'Union> "Invalid F# union tag."
 
@@ -107,23 +107,23 @@
                 |> Array.map (fun uci ->
                     let ctor = FSharpValue.PreComputeUnionConstructor(uci, memberBindings)
                     let reader = FSharpValue.PreComputeUnionReader(uci, memberBindings)
-                    let formatters = uci.GetFields() |> Array.map (fun f -> resolver.Resolve f.PropertyType)
-                    ctor, reader, formatters)
+                    let picklers = uci.GetFields() |> Array.map (fun f -> resolver.Resolve f.PropertyType)
+                    ctor, reader, picklers)
 
             let writer (w : Writer) (x : 'Union) =
                 let tag = tagReader x
                 w.BinaryWriter.Write tag
-                let _,reader,formatters = unionCases.[tag]
+                let _,reader,picklers = unionCases.[tag]
                 let values = reader x
                 for i = 0 to values.Length - 1 do
-                    formatters.[i].ManagedWrite w values.[i]
+                    picklers.[i].ManagedWrite w values.[i]
 
             let reader (r : Reader) =
                 let tag = r.BinaryReader.ReadInt32()
-                let ctor,_,formatters = unionCases.[tag]
-                let values = Array.zeroCreate<obj> formatters.Length
-                for i = 0 to formatters.Length - 1 do
-                    values.[i] <- formatters.[i].ManagedRead r
+                let ctor,_,picklers = unionCases.[tag]
+                let values = Array.zeroCreate<obj> picklers.Length
+                for i = 0 to picklers.Length - 1 do
+                    values.[i] <- picklers.[i].ManagedRead r
 
                 ctor values |> fastUnbox<'Union>
 #endif
@@ -158,7 +158,7 @@
                 | rest -> Some rest
 
             let elements = Seq.append items (Option.toList nestedTuple) |> Seq.toArray
-            let formatters = elements |> Array.map (fun e -> resolver.Resolve e.PropertyType)
+            let picklers = elements |> Array.map (fun e -> resolver.Resolve e.PropertyType)
 
 #if EMIT_IL 
             let writer =
@@ -166,26 +166,26 @@
                 else
                     let writer =
                         Expression.compileAction2<Writer, 'Tuple>(fun writer tuple ->
-                            Expression.zipWriteProperties elements formatters writer tuple
+                            Expression.zipWriteProperties elements picklers writer tuple
                             |> Expression.Block :> _)
 
                     fun w t -> writer.Invoke(w,t)
 
             let reader =
                 Expression.compileFunc1<Reader, 'Tuple>(fun reader ->
-                    let values = formatters |> Seq.map (Expression.read reader)
+                    let values = picklers |> Seq.map (Expression.read reader)
 
                     Expression.New(ctor, values) :> _ ).Invoke 
 #else
             let writer (w : Writer) (x : 'Tuple) =
                 for i = 0 to elements.Length - 1 do
                     let o = elements.[i].GetValue(x)
-                    formatters.[i].ManagedWrite w o
+                    picklers.[i].ManagedWrite w o
 
             let reader (r : Reader) =
-                let values = Array.zeroCreate<obj> formatters.Length
+                let values = Array.zeroCreate<obj> picklers.Length
                 for i = 0 to values.Length - 1 do
-                    values.[i] <- formatters.[i].ManagedRead r
+                    values.[i] <- picklers.[i].ManagedRead r
 
                 ctor.Invoke values |> fastUnbox<'Tuple>
 #endif
@@ -224,7 +224,7 @@
                     let ctor = FSharpValue.PreComputeRecordConstructorInfo(typeof<'Record>, allMembers)
                     fields, ctor
 
-            let formatters = fields |> Array.map (fun f -> resolver.Resolve f.PropertyType)
+            let picklers = fields |> Array.map (fun f -> resolver.Resolve f.PropertyType)
 
 #if EMIT_IL
             let writer =
@@ -232,25 +232,25 @@
                 else
                     let writer =
                         Expression.compileAction2<Writer, 'Record>(fun writer record ->
-                            Expression.zipWriteProperties fields formatters writer record |> Expression.Block :> _)
+                            Expression.zipWriteProperties fields picklers writer record |> Expression.Block :> _)
 
                     fun w t -> writer.Invoke(w,t)
 
             let reader =
                 Expression.compileFunc1<Reader, 'Record>(fun reader ->
-                    let values = formatters |> Seq.map (Expression.read reader)
+                    let values = picklers |> Seq.map (Expression.read reader)
 
                     Expression.New(ctor, values) :> _).Invoke
 #else
             let writer (w : Writer) (x : 'Record) =
                 for i = 0 to fields.Length - 1 do
                     let o = fields.[i].GetValue x
-                    formatters.[i].ManagedWrite w o
+                    picklers.[i].ManagedWrite w o
             
             let reader (r : Reader) =
                 let values = Array.zeroCreate<obj> fields.Length
                 for i = 0 to fields.Length - 1 do
-                    values.[i] <- formatters.[i].ManagedRead r
+                    values.[i] <- picklers.[i].ManagedRead r
 
                 ctor.Invoke values |> fastUnbox<'Record>
 #endif

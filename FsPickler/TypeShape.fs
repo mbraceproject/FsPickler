@@ -4,7 +4,7 @@
     // Since generic types come with multiple combinations of type variables and constraints,
     // specifying a predetermined set of generic pickler interfaces is simply not practical.
     //
-    // All that is required of input formatters is to implement the IGenericPicklerFactory interface
+    // All that is required of input picklers is to implement the IGenericPicklerFactory interface
     // (which contains no methods) and to contain an implementation of a non-static method
     //
     //         Create<'T1,..,'Tn> : IPicklerResolver -> Pickler
@@ -228,7 +228,7 @@
 
         static member Empty = ShapeMap<'T>(Map.empty)
 
-    /// an immutable index for generic formatters
+    /// an immutable index for generic picklers
     type PicklerFactoryIndex internal (shapeMap : ShapeMap<IPicklerFactory * MethodInfo>) =
 
         static let dummyResolver =

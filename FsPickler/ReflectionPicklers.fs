@@ -102,7 +102,7 @@
             if fields |> Array.exists(fun f -> f.IsInitOnly) then
                 raise <| new NonSerializableTypeException(typeof<'T>, "type is marked with read-only instance fields.")
             
-            let formatters = fields |> Array.map (fun f -> resolver.Resolve f.FieldType)
+            let picklers = fields |> Array.map (fun f -> resolver.Resolve f.FieldType)
 
 #if EMIT_IL
             
@@ -111,7 +111,7 @@
                 else
                     let action =
                         Expression.compileAction2<Writer, 'T>(fun writer instance ->
-                            Expression.zipWriteFields fields formatters writer instance |> Expression.Block :> _)
+                            Expression.zipWriteFields fields picklers writer instance |> Expression.Block :> _)
 
                     fun w t -> action.Invoke(w,t)
 
@@ -124,7 +124,7 @@
                         seq {
                             yield Expression.Assign(instance, Expression.initializeObject<'T> ()) :> Expression
 
-                            yield! Expression.zipReadFields fields formatters reader instance
+                            yield! Expression.zipReadFields fields picklers reader instance
 
                             yield instance :> _
                         }
@@ -135,12 +135,12 @@
             let writer (w : Writer) (t : 'T) =
                 for i = 0 to fields.Length - 1 do
                     let o = fields.[i].GetValue(t)
-                    formatters.[i].ManagedWrite w o
+                    picklers.[i].ManagedWrite w o
 
             let reader (r : Reader) =
                 let t = PicklerServices.GetUninitializedObject(typeof<'T>)
                 for i = 0 to fields.Length - 1 do
-                    let o = formatters.[i].ManagedRead r
+                    let o = picklers.[i].ManagedRead r
                     fields.[i].SetValue(t, o)
                 
                 fastUnbox<'T> t
@@ -169,7 +169,7 @@
             if fields |> Array.exists(fun f -> f.IsInitOnly) then
                 raise <| new NonSerializableTypeException(typeof<'T>, "type is marked with read-only instance fields.") 
 
-            let formatters = fields |> Array.map (fun f -> resolver.Resolve f.FieldType)
+            let picklers = fields |> Array.map (fun f -> resolver.Resolve f.FieldType)
 
             let isDeserializationCallback = typeof<IDeserializationCallback>.IsAssignableFrom typeof<'T>
 
@@ -190,7 +190,7 @@
                             seq {
                                 yield! Expression.runSerializationActions onSerializing writer instance
 
-                                yield! Expression.zipWriteFields fields formatters writer instance
+                                yield! Expression.zipWriteFields fields picklers writer instance
 
                                 yield! Expression.runSerializationActions onSerialized writer instance
 
@@ -209,7 +209,7 @@
 
                             yield! Expression.runDeserializationActions onDeserializing reader instance
 
-                            yield! Expression.zipReadFields fields formatters reader instance
+                            yield! Expression.zipReadFields fields picklers reader instance
 
                             yield! Expression.runDeserializationActions onDeserialized reader instance
 
@@ -231,7 +231,7 @@
 
                 for i = 0 to fields.Length - 1 do
                     let o = fields.[i].GetValue(t)
-                    formatters.[i].ManagedWrite w o
+                    picklers.[i].ManagedWrite w o
 
                 run onSerialized t w
 
@@ -240,7 +240,7 @@
                 run onDeserializing t r
 
                 for i = 0 to fields.Length - 1 do
-                    let o = formatters.[i].ManagedRead r
+                    let o = picklers.[i].ManagedRead r
                     fields.[i].SetValue(t, o)
 
                 run onDeserialized t r

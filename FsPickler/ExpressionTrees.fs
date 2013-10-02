@@ -121,42 +121,42 @@
             Expression.Call(reader, readerM.MakeGenericMethod [| pickler.Type |], fExpr) :> Expression
 
         /// write a collection of pickler from a corresponding collection of properties
-        let zipWriteProperties (properties : PropertyInfo []) (formatters : Pickler []) 
+        let zipWriteProperties (properties : PropertyInfo []) (picklers : Pickler []) 
                                                     (writer : Expression) (instance : Expression) =
             let writeValue (pickler : Pickler, property : PropertyInfo) =
                 let value = Expression.Property(instance, property)
                 write writer pickler value
 
-            Seq.zip formatters properties |> Seq.map writeValue
+            Seq.zip picklers properties |> Seq.map writeValue
 
-        /// read from a collection of formatters and pass to given constructor
-        let callConstructor (ctor : ConstructorInfo) (formatters : Pickler []) (reader : Expression) =
-            let values = Seq.map (read reader) formatters
+        /// read from a collection of picklers and pass to given constructor
+        let callConstructor (ctor : ConstructorInfo) (picklers : Pickler []) (reader : Expression) =
+            let values = Seq.map (read reader) picklers
             Expression.New(ctor, values) :> Expression
 
-        /// read from a collection of formatters and pass to given static method
-        let callMethod (methodInfo : MethodInfo) (formatters : Pickler []) (reader : Expression) =
-            let values = Seq.map (read reader) formatters
+        /// read from a collection of picklers and pass to given static method
+        let callMethod (methodInfo : MethodInfo) (picklers : Pickler []) (reader : Expression) =
+            let values = Seq.map (read reader) picklers
             Expression.Call(methodInfo, values) :> Expression
 
-        /// zip write a collection of fields to corresponding collection of formatters
-        let zipWriteFields (fields : FieldInfo []) (formatters : Pickler []) 
+        /// zip write a collection of fields to corresponding collection of picklers
+        let zipWriteFields (fields : FieldInfo []) (picklers : Pickler []) 
                                             (writer : Expression) (instance : Expression) =
 
             let writeValue (pickler : Pickler, field : FieldInfo) =
                 let value = Expression.Field(instance, field)
                 write writer pickler value
 
-            Seq.zip formatters fields |> Seq.map writeValue
+            Seq.zip picklers fields |> Seq.map writeValue
 
-        /// zip read a collection of formatters to corresponding collection of fields
-        let zipReadFields (fields : FieldInfo []) (formatters : Pickler []) (reader : Expression) (instance : Expression) =
+        /// zip read a collection of picklers to corresponding collection of fields
+        let zipReadFields (fields : FieldInfo []) (picklers : Pickler []) (reader : Expression) (instance : Expression) =
             let readValue (pickler : Pickler, field : FieldInfo) =
                 let value = read reader pickler
                 let field = Expression.Field(instance, field)
                 Expression.Assign(field, value) :> Expression
 
-            Seq.zip formatters fields |> Seq.map readValue
+            Seq.zip picklers fields |> Seq.map readValue
 
         // compilation provision for methods that carry the OnSerializing, OnSerialized, etc attributes
         let preComputeSerializationMethods<'T> (ms : MethodInfo []) =

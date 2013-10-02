@@ -3,6 +3,8 @@
     open System
     open System.Collections.Generic
 
+    open Microsoft.FSharp.Reflection
+
     open FsPickler
     open FsPickler.Utils
     open FsPickler.PicklerUtils
@@ -302,23 +304,34 @@
 
     type AltPickler =
         
-        static member Create(tagReader : 'T -> int, formatters : Pickler<'T> list) =
+        static member Create(tagReader : 'T -> int, picklers : Pickler<'T> list) =
+            
+            let cacheByRef = picklers |> List.exists (fun p -> p.IsCacheByRef)
+            let useWithSubtypes = picklers |> List.forall (fun p -> p.UseWithSubtypes)
+
             let writer (w : Writer) (t : 'T) =
                 let tag = tagReader t
                 do w.BinaryWriter.Write tag
-                formatters.[tag].Write w t
+                picklers.[tag].Write w t
 
-            let reader (r : Reader) = 
+            let reader (r : Reader) =
                 let tag = r.BinaryReader.ReadInt32()
-                formatters.[tag].Read r
+                picklers.[tag].Read r
 
-            new Pickler<_>(reader, writer, PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = false)
+            new Pickler<_>(reader, writer, PicklerInfo.Combinator, 
+                                cacheByRef = cacheByRef, useWithSubtypes = useWithSubtypes)
 
 
     type WrapPickler =
         static member Create(origin : Pickler<'T>, recover : 'T -> 'S, convert : 'S -> 'T) =
+#if OPTIMIZE_FSHARP
+            // disable subtype resolution if F# union or tuple
+            let useWithSubtypes = FSharpType.IsUnion(typeof<'S>, allMembers) || FSharpType.IsTuple typeof<'S>
+#else
+            let useWithSubtypes = false
+#endif
             new Pickler<_>(origin.Read >> recover, (fun w t -> origin.Write w (convert t)), 
-                                    PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = false)
+                                    PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = useWithSubtypes)
 
     type SeqPickler =
         static member Create(ef : Pickler<'T>) =
