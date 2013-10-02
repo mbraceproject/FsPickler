@@ -23,8 +23,11 @@
         member __.SetTypeNameConverter tc = typeNameConverter := Some tc
 
         /// register pickler for a specific type
-        member __.RegisterPickler(f : Pickler) =
-            customPicklers.Swap(fun fmts -> fmts.AddNoOverwrite(f.Type.AssemblyQualifiedName, f))
+        member __.RegisterPickler(pickler : Pickler) =
+            if pickler.TypeInfo = TypeInfo.Primitive then 
+                invalidArg "pickler" "defining custom picklers for primitives not supported."
+
+            customPicklers.Swap(fun fmts -> fmts.AddNoOverwrite(pickler.Type.AssemblyQualifiedName, pickler))
 
         /// register pluggable pickler factories
         member __.RegisterPicklerFactory(pf : IPicklerFactory) =

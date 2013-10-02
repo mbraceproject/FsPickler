@@ -12,14 +12,11 @@
 
         /// pickles a value
         let pickle (pickler : Pickler<'T>) (value : 'T) : byte [] =
-            use mem = new MemoryStream()
-            defaultSerializer.Value.Serialize(pickler, mem, value)
-            mem.ToArray()
+            defaultSerializer.Value.Pickle pickler value
 
         /// upickles a value
         let unpickle (pickler : Pickler<'T>) (data : byte []) =
-            use mem = new MemoryStream(data)
-            defaultSerializer.Value.Deserialize(pickler, mem)
+            defaultSerializer.Value.UnPickle pickler data
 
         [<RequireQualifiedAccess>]
         module Pickler =

@@ -294,6 +294,8 @@
 
             | [| m |] ->
                 let fmt = m.GuardedInvoke(pf, [| dummyResolver :> obj |]) :?> Pickler
+                if fmt.TypeInfo = TypeInfo.Primitive then
+                    raise <| new PicklerFactoryException(pf, "defining custom picklers for primitives not supported.")
                 let shape = TypeShape.OfType fmt.Type
 
                 new PicklerFactoryIndex(shapeMap.Add(shape, (pf, m), overwrite))

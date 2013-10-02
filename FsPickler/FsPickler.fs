@@ -84,6 +84,17 @@
             use reader = new Reader(stream, resolver, ?streamingContext = streamingContext, ?encoding = encoding, ?leaveOpen = leaveOpen)
             reader.ReadObj valueType
 
+
+        member __.Pickle (pickler : Pickler<'T>) (value : 'T) =
+            use mem = new MemoryStream()
+            __.Serialize(pickler, mem, value)
+            mem.ToArray()
+
+        member __.UnPickle (pickler : Pickler<'T>) (data : byte []) =
+            use mem = new MemoryStream(data)
+            __.Deserialize(pickler, mem)
+
+
         /// Auto generates a pickler for given type variable
         member __.GeneratePickler<'T> () = resolver.Resolve<'T> ()
 
