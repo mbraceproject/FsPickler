@@ -30,6 +30,3 @@ let peano =
 peano
 
 (Succ (Succ Zero)) |> pickle peano |> unpickle peano
-
-
-#time

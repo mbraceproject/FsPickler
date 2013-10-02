@@ -31,6 +31,22 @@
         let inline getStreamingContext (x : ^T when ^T : (member StreamingContext : StreamingContext)) =
             ( ^T : (member StreamingContext : StreamingContext) x)
 
+
+        /// set pickler source based on a set of source picklers
+        /// will result in error if pickler sources have conflicting generation sources
+        /// used with external combinator library
+        let inline setPicklerSource< ^T when ^T :> Pickler> (sourcePicklers : seq<Pickler>) (targetPickler : ^T) =
+            let mutable current = null
+            for p in sourcePicklers do
+                match p.SourceId with
+                | null -> ()
+                | source when current = null -> current <- source
+                | source when current = source -> ()
+                | source -> invalidOp "Attempting to combine picklers generated from divergent source ids."
+
+            targetPickler.SourceId <- current
+            targetPickler
+
         //
         //  internal read/write combinators
         //

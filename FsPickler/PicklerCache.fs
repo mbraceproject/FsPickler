@@ -12,7 +12,7 @@
 
     [<Sealed>]
     type CustomPicklerRegistry (?id : string) =
-        let id = match id with None -> string <| Guid.NewGuid() | Some id -> id
+        let id = match id with None | Some null -> string <| Guid.NewGuid() | Some id -> id
 
         let typeNameConverter = ref None : ITypeNameConverter option ref
         let customPicklers = Atom.atom Map.empty<string, Pickler>
@@ -32,7 +32,6 @@
             customPicklerFactories.Swap(fun factories -> factories.AddPicklerFactory(pf, Fail))
 
         member internal __.CustomPicklerFactories = customPicklerFactories.Value
-        member internal __.CustomPicklers = customPicklers.Value
 
         /// Identifier for the current registry
         member __.Id = id
@@ -44,12 +43,11 @@
 
     type internal PicklerCache private (id : string, 
                                             tyConv : ITypeNameConverter option, 
-                                            customPicklers : Map<string, Pickler>, 
+                                            customPicklers : seq<Pickler>, 
                                             customPicklerFactories : PicklerFactoryIndex) =
 
-        static let singleton = lazy(
-            let id = "default pickler cache"
-            new PicklerCache(id, None, Map.empty, PicklerFactoryIndex.Empty))
+        static let singleton = 
+            lazy(new PicklerCache("default pickler cache", None, [], PicklerFactoryIndex.Empty))
 
         // resolve the default type name converter
         let tyConv =
@@ -70,14 +68,22 @@
                 mkReflectionPicklers tyConv
             |]
             |> Seq.concat
-            |> Seq.map (fun f -> f.ResolverName <- id ; f)
+            |> Seq.map (fun f -> f.SourceId <- id ; f)
             |> Seq.map (fun f -> KeyValuePair(f.Type, f)) 
             |> fun fs -> new ConcurrentDictionary<_,_>(fs)
+
+        do
+            // populate cache with custom picklers
+            for cp in customPicklers do
+                // clone custom pickler to contain sourceId mutation
+                let cp' = cp.ClonePickler()
+                cp'.SourceId <- id
+                cache.AddOrUpdate(cp'.Type, cp', fun _ _ -> cp') |> ignore
 
         let resolver (t : Type) = 
             YParametric id 
                         cache.TryFind (fun t f -> cache.TryAdd(t,f) |> ignore) 
-                        (resolvePickler customPicklers customPicklerFactories) t
+                        (resolvePickler customPicklerFactories) t
 
         interface IPicklerResolver with
             member r.Id = id
@@ -85,7 +91,6 @@
             member r.Resolve (t : Type) = resolver t
         
         static member FromPicklerRegistry(pr : CustomPicklerRegistry) =
-            let uuid = string <| Guid.NewGuid ()
-            new PicklerCache(uuid, pr.TypeNameConverter, pr.CustomPicklers, pr.CustomPicklerFactories)
+            new PicklerCache(pr.Id, pr.TypeNameConverter, pr.RegisteredPicklers, pr.CustomPicklerFactories)
 
         static member GetDefaultInstance () = singleton.Value

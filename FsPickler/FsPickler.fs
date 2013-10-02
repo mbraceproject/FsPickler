@@ -76,6 +76,9 @@
             use reader = new Reader(stream, resolver, ?streamingContext = streamingContext, ?encoding = encoding, ?leaveOpen = leaveOpen)
             reader.ReadObj valueType
 
+        /// Auto generates a pickler for given type variable
+        member __.GeneratePickler<'T> () = resolver.Resolve<'T> ()
+
         /// Decides if given type is serializable by FsPickler
         member __.IsSerializableType (t : Type) =
             try resolver.Resolve t |> ignore ; true

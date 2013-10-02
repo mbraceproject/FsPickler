@@ -14,6 +14,8 @@
 
             /// casts pickler to a typed version; may result in runtime error.
             abstract member Cast<'S> : unit -> Pickler<'S>
+            /// clones pickler
+            abstract member internal ClonePickler : unit -> Pickler
 
             // serialization managed by reader/writer objects
             abstract member internal ManagedRead : Reader -> obj
@@ -40,13 +42,14 @@
             member IsRecursiveType : bool
             /// Provides information on the pickler generation method.
             member PicklerInfo : PicklerInfo
-            /// Resolver id used to generate this pickler.
-            member ResolverName : string
+            /// Cache id used to generate this pickler.
+            member SourceId : string
+            member internal SourceId : string with set
 
             member internal IsInitialized : bool
             member internal TypeHash : TypeHash
             member internal TypeInfo : TypeInfo
-            member internal ResolverName : string with set
+            
         end
 
     and [<Sealed>] Pickler<'T> =

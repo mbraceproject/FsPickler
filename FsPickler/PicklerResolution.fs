@@ -39,7 +39,7 @@
                     let f' = resolverF resolver t
                     do 
                         f.InitializeFrom f'
-                        f.ResolverName <- resolverName
+                        f.SourceId <- resolverName
 
                     // pickler construction successful, commit to external cache
                     do externalCacheCommit t f
@@ -58,9 +58,7 @@
 
     // reflection - based pickler resolution
 
-    let resolvePickler (customPicklers : Map<string, Pickler>)
-                        (picklerFactoryIndex : PicklerFactoryIndex)
-                        (resolver : IPicklerResolver) (t : Type) =
+    let resolvePickler (picklerFactoryIndex : PicklerFactoryIndex) (resolver : IPicklerResolver) (t : Type) =
 
         // check if type is supported
         if isUnSupportedType t then raise <| new NonSerializableTypeException(t)
@@ -73,13 +71,6 @@
                 | _ -> None
             else
                 None
-
-        // custom pickler lookup
-        let result =
-            match result with
-            | Some _ -> result
-            | None ->
-                customPicklers.TryFind t.AssemblyQualifiedName
 
         // pickler factories
         let result =

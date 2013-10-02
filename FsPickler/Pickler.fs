@@ -28,7 +28,7 @@
         val mutable private m_isCacheByRef : bool
         val mutable private m_useWithSubtypes : bool
 
-        val mutable private m_source : string
+        val mutable private m_source_id : string
 
         internal new (t : Type) =
             {
@@ -44,7 +44,7 @@
                 m_isCacheByRef = Unchecked.defaultof<_> ; 
                 m_useWithSubtypes = Unchecked.defaultof<_> ;
 
-                m_source = null ;
+                m_source_id = null ;
             }
 
         internal new (t : Type, picklerInfo, isCacheByRef, useWithSubtypes) =
@@ -62,7 +62,7 @@
                 m_isCacheByRef = isCacheByRef ;
                 m_useWithSubtypes = useWithSubtypes ;
 
-                m_source = null ;
+                m_source_id = null ;
             }
 
         member f.Type = f.declared_type
@@ -70,9 +70,10 @@
 
         member internal f.TypeInfo = f.m_typeInfo
         member internal f.TypeHash = f.m_typeHash
-        member f.ResolverName
-            with get () = f.m_source
-            and internal set id = f.m_source <- id
+
+        member f.SourceId
+            with get () = f.m_source_id
+            and internal set id = f.m_source_id <- id
 
         member f.PicklerType =
             if f.m_isInitialized then f.m_pickler_type
@@ -103,6 +104,7 @@
         abstract member ManagedRead : Reader -> obj
 
         abstract member Cast<'S> : unit -> Pickler<'S>
+        abstract member ClonePickler : unit -> Pickler
 
         abstract member InitializeFrom : Pickler -> unit
         default f.InitializeFrom(f' : Pickler) : unit =
@@ -114,6 +116,7 @@
                 raise <| new InvalidCastException(sprintf "Cannot cast pickler from %O to %O." f'.Type f.Type)
             else
                 f.m_pickler_type <- f'.m_pickler_type
+                f.m_source_id <- f'.m_source_id
                 f.m_typeHash <- f'.m_typeHash
                 f.m_typeInfo <- f'.m_typeInfo
                 f.m_picklerInfo <- f'.m_picklerInfo
@@ -152,6 +155,12 @@
         override f.UntypedRead (r : Reader) = f.m_reader r :> obj
         override f.ManagedWrite (w : Writer) (o : obj) = w.Write(f, fastUnbox<'T> o)
         override f.ManagedRead (r : Reader) = r.Read f :> obj
+
+        override f.ClonePickler () =
+            if f.IsInitialized then
+                new Pickler<'T>(f.m_reader, f.m_writer, f.PicklerInfo, f.IsCacheByRef, f.UseWithSubtypes) :> Pickler
+            else
+                invalidOp "Attempting to consume pickler at construction time."
 
         override f.Cast<'S> () =
             if typeof<'T> = typeof<'S> then f |> fastUnbox<Pickler<'S>>
