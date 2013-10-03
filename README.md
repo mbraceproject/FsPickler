@@ -5,11 +5,11 @@ that doubles as a pickler combinator library.
 
 * Based on the notion of pickler combinators.
 * Provides an automated, strongly typed, pickler generation framework.
-* Full support for the .NET type system, including open hierarchies.
-* Supports all core serializable types, including types that implement the ``ISerializable`` interface.
+* Full support for .NET types, including classes and open hierarchies.
+* Compatible with all serializable types, including the ``ISerializable`` interface.
 * Highly optimized for the F# core types.
 * Performance about 5-20x faster than the default .NET serializers.
-* Supports mono.
+* Full support for the mono framework.
 
 ### Basic Usage
 
