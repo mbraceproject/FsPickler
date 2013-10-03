@@ -29,6 +29,10 @@ let pickler : Pickler<int list option> = fsp.GeneratePickler<int list option> ()
 
 fsp.Serialize(pickler, stream, Some [1; 2; 3])
 fsp.Deserialize(pickler, stream) : int list option
+
+// untyped serialization
+fsp.Serialize(typeof<int>, stream, 2 :> obj)
+fsp.Deserialize(typeof<int>, stream)
 ```
 
 All generated picklers are strongly typed; pickling is performed efficiently
