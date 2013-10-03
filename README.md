@@ -69,8 +69,8 @@ let pp : Pickler<Peano> =
                         
 Succ (Succ Zero) |> pickle pp |> unpickle pp
 ```
-The library comes with the ``array``, ``array2D``, ``list``, ``seq``, ``set`` and ``map`` 
-combinators that are used to build picklers for the corresponding generic types. 
+The library comes with ``array``, ``array2D``, ``list``, ``seq``, ``set`` and ``map`` 
+combinators that are used to build picklers for corresponding generic types. 
 It should be noted that ``Pickler.seq`` serializes sequences using eager evaluation.
 
 When it comes to generic types, picklers can be defined using user-defined combinators:
