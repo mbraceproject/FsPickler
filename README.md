@@ -5,11 +5,11 @@ that doubles as a pickler combinator library.
 
 * Based on the notion of pickler combinators.
 * Provides an automated, strongly typed, pickler generation framework.
-* Full support for the .NET type system, including open hierarchies.
-* Supports all core serializable types, including types that implement the ``ISerializable`` interface.
-* Highly optimized for the F# core types.
+* Full support for .NET types, including classes and open hierarchies.
+* Compatible with all serializable types, including the ``ISerializable`` interface.
+* Highly optimized for F# core types.
 * Performance about 5-20x faster than the default .NET serializers.
-* Supports mono.
+* Full support for the mono framework.
 
 ### Basic Usage
 
@@ -29,6 +29,10 @@ let pickler : Pickler<int list option> = fsp.GeneratePickler<int list option> ()
 
 fsp.Serialize(pickler, stream, Some [1; 2; 3])
 fsp.Deserialize(pickler, stream) : int list option
+
+// untyped serialization
+fsp.Serialize(typeof<int>, stream, 2)
+fsp.Deserialize(typeof<int>, stream) : obj
 ```
 
 All generated picklers are strongly typed; pickling is performed efficiently
@@ -56,7 +60,7 @@ The combinator library includes all primitives as described in Andrew Kennedy's
 [Pickler Combinators](http://research.microsoft.com/en-us/um/people/akenn/fun/picklercombinators.pdf)
 such as ``wrap`` and ``alt``. Fixpoint combinators for declaring recursive picklers are also available:
 ```fsharp
-val Pickler.fix : (Pickler<'T> -> Pickler<'T>) -> Pickler<'T>
+// val Pickler.fix : (Pickler<'T> -> Pickler<'T>) -> Pickler<'T>
 
 type Peano = Zero | Succ of Peano
 
@@ -69,9 +73,10 @@ let pp : Pickler<Peano> =
                         
 Succ (Succ Zero) |> pickle pp |> unpickle pp
 ```
-The library comes with the ``array``, ``array2D``, ``list``, ``seq``, ``set`` and ``map`` 
-combinators that are used to build picklers for the corresponding generic types. 
-It should be noted that ``Pickler.seq`` serializes sequences using eager evaluation.
+The library comes with ``array``, ``array2D``, ``list``, ``set`` and ``map`` 
+combinators that are used to build picklers for the corresponding generic types.
+The ``Pickler.seq`` combinator generates picklers for sequences using eager evaluation of elements.
+Finally, ``Pickler.func<'a,'b>`` : ``Pickler<('a -> 'b)>`` instantiates picklers for F# functions.
 
 When it comes to generic types, picklers can be defined using user-defined combinators:
 
@@ -172,6 +177,10 @@ let pickler = fsp.GeneratePickler<int list> ()
 
 fsp'.Pickler pickler [1] // runtime error
 ```
+
+Care should be taken that custom ``FsPickler`` instances are treated as singletons;
+generating arbitrarily many instances might put strain on the runtime, 
+since each will initialize a unique cache of picklers and emitted code.
 
 ### Pluggable Generic Picklers
 
