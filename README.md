@@ -31,8 +31,8 @@ fsp.Serialize(pickler, stream, Some [1; 2; 3])
 fsp.Deserialize(pickler, stream) : int list option
 
 // untyped serialization
-fsp.Serialize(typeof<int>, stream, 2 :> obj)
-fsp.Deserialize(typeof<int>, stream)
+fsp.Serialize(typeof<int>, stream, 2)
+fsp.Deserialize(typeof<int>, stream) : obj
 ```
 
 All generated picklers are strongly typed; pickling is performed efficiently
