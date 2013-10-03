@@ -213,3 +213,8 @@ let p = fsp''.GeneratePickler<Set<int> option> ()
 // will return singleton set
 Some(set [ 1 .. 1000 ]) |> fsp.Pickle p |> fsp.UnPickle p
 ```
+
+### Future work
+
+* Support for fast structural hashcode generation.
+* Support for multiple pickle formats.
