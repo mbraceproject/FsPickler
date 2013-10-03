@@ -7,7 +7,7 @@ that doubles as a pickler combinator library.
 * Provides an automated, strongly typed, pickler generation framework.
 * Full support for .NET types, including classes and open hierarchies.
 * Compatible with all serializable types, including the ``ISerializable`` interface.
-* Highly optimized for the F# core types.
+* Highly optimized for F# core types.
 * Performance about 5-20x faster than the default .NET serializers.
 * Full support for the mono framework.
 
