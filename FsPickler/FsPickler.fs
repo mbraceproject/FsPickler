@@ -22,74 +22,75 @@
         member __.UUId = resolver.UUId
 
         /// <summary>Serialize value to the underlying stream.</summary>
-        /// <param name="stream">The target stream.</param>
-        /// <param name="value">The value to be serialized.</param>
-        /// <param name="streamingContext">The untyped parameter passed to the streaming context.</param>
-        /// <param name="encoding">The encoding passed to the binary writer.</param>
+        /// <param name="stream">target stream.</param>
+        /// <param name="value">value to be serialized.</param>
+        /// <param name="streamingContext">untyped parameter passed to the streaming context.</param>
+        /// <param name="encoding">encoding passed to the binary writer.</param>
         /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to true.</param>
         member __.Serialize<'T>(stream : Stream, value : 'T, ?streamingContext : obj, ?encoding, ?leaveOpen) : unit =
             use writer = new Writer(stream, resolver, ?streamingContext = streamingContext, ?encoding = encoding, ?leaveOpen = leaveOpen)
             writer.Write<'T> value
 
         /// <summary>Serialize value to the underlying stream using given pickler.</summary>
-        /// <param name="pickler">The pickler used for serialization.</param>
-        /// <param name="stream">The target stream.</param>
-        /// <param name="value">The value to be serialized.</param>
-        /// <param name="streamingContext">The untyped parameter passed to the streaming context.</param>
-        /// <param name="encoding">The encoding passed to the binary reader.</param>
-        /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to true.</param>
+        /// <param name="pickler">pickler used for serialization.</param>
+        /// <param name="stream">target stream.</param>
+        /// <param name="value">value to be serialized.</param>
+        /// <param name="streamingContext">untyped parameter passed to the streaming context.</param>
+        /// <param name="encoding">encoding passed to the binary reader.</param>
+        /// <param name="leaveOpen">leave underlying stream open when finished. Defaults to true.</param>
         member __.Serialize<'T>(pickler : Pickler<'T>, stream : Stream, value : 'T, ?streamingContext : obj, ?encoding, ?leaveOpen) : unit =
             do checkPicklerCompat resolver.UUId pickler
             use writer = new Writer(stream, resolver, ?streamingContext = streamingContext, ?encoding = encoding, ?leaveOpen = leaveOpen)
             writer.Write(pickler, value)
 
         /// <summary>Serialize object of given type to the underlying stream.</summary>
-        /// <param name="valueType">The type of the given object.</param>
-        /// <param name="stream">The target stream.</param>
-        /// <param name="value">The value to be serialized.</param>
-        /// <param name="streamingContext">The untyped parameter passed to the streaming context.</param>
-        /// <param name="encoding">The encoding passed to the binary reader.</param>
-        /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to true.</param>
+        /// <param name="valueType">type of the given object.</param>
+        /// <param name="stream">target stream.</param>
+        /// <param name="value">value to be serialized.</param>
+        /// <param name="streamingContext">untyped parameter passed to the streaming context.</param>
+        /// <param name="encoding">encoding passed to the binary reader.</param>
+        /// <param name="leaveOpen">leave underlying stream open when finished. Defaults to true.</param>
         member __.Serialize(valueType : Type, stream : Stream, value : obj, ?streamingContext : obj, ?encoding, ?leaveOpen) : unit =
             use writer = new Writer(stream, resolver, ?streamingContext = streamingContext, ?encoding = encoding, ?leaveOpen = leaveOpen)
             writer.WriteObj(valueType, value)
 
         /// <summary>Deserialize value of given type from the underlying stream.</summary>
-        /// <param name="stream">The source stream.</param>
-        /// <param name="streamingContext">The untyped parameter passed to the streaming context.</param>
-        /// <param name="encoding">The encoding passed to the binary reader.</param>
-        /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to true.</param>
+        /// <param name="stream">source stream.</param>
+        /// <param name="streamingContext">untyped parameter passed to the streaming context.</param>
+        /// <param name="encoding">encoding passed to the binary reader.</param>
+        /// <param name="leaveOpen">leave underlying stream open when finished. Defaults to true.</param>
         member __.Deserialize<'T> (stream : Stream, ?streamingContext : obj, ?encoding, ?leaveOpen) : 'T =
             use reader = new Reader(stream, resolver, ?streamingContext = streamingContext, ?encoding = encoding, ?leaveOpen = leaveOpen)
             reader.Read<'T> ()
 
         /// <summary>Deserialize value of given type from the underlying stream, using given pickler.</summary>
-        /// <param name="pickler">The pickler used for serialization.</param>
-        /// <param name="stream">The source stream.</param>
-        /// <param name="streamingContext">The untyped parameter passed to the streaming context.</param>
-        /// <param name="encoding">The encoding passed to the binary reader.</param>
-        /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to true.</param>
+        /// <param name="pickler">pickler used for serialization.</param>
+        /// <param name="stream">source stream.</param>
+        /// <param name="streamingContext">untyped parameter passed to the streaming context.</param>
+        /// <param name="encoding">encoding passed to the binary reader.</param>
+        /// <param name="leaveOpen">leave underlying stream open when finished. Defaults to true.</param>
         member __.Deserialize<'T> (pickler : Pickler<'T>, stream : Stream, ?streamingContext : obj, ?encoding, ?leaveOpen) : 'T =
             do checkPicklerCompat resolver.UUId pickler
             use reader = new Reader(stream, resolver, ?streamingContext = streamingContext, ?encoding = encoding, ?leaveOpen = leaveOpen)
             reader.Read<'T> pickler
 
         /// <summary>Deserialize object of given type from the underlying stream.</summary>
-        /// <param name="valueType">The anticipated value type.</param>
-        /// <param name="stream">The source stream.</param>
-        /// <param name="streamingContext">The untyped parameter passed to the streaming context.</param>
-        /// <param name="encoding">The encoding passed to the binary reader.</param>
-        /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to true.</param>
+        /// <param name="valueType">anticipated value type.</param>
+        /// <param name="stream">source stream.</param>
+        /// <param name="streamingContext">untyped parameter passed to the streaming context.</param>
+        /// <param name="encoding">encoding passed to the binary reader.</param>
+        /// <param name="leaveOpen">leave underlying stream open when finished. Defaults to true.</param>
         member __.Deserialize (valueType : Type, stream : Stream, ?streamingContext : obj, ?encoding, ?leaveOpen) : obj =
             use reader = new Reader(stream, resolver, ?streamingContext = streamingContext, ?encoding = encoding, ?leaveOpen = leaveOpen)
             reader.ReadObj valueType
 
-
-        member __.Pickle (pickler : Pickler<'T>) (value : 'T) =
+        /// creates a byte array pickle out of given pickler and value
+        member __.Pickle (pickler : Pickler<'T>) (value : 'T) : byte [] =
             use mem = new MemoryStream()
             __.Serialize(pickler, mem, value)
             mem.ToArray()
 
+        /// unpickles a byte array using given pickler
         member __.UnPickle (pickler : Pickler<'T>) (data : byte []) =
             use mem = new MemoryStream(data)
             __.Deserialize(pickler, mem)

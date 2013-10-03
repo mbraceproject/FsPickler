@@ -44,8 +44,8 @@
 
     type AbstractPickler =
         static member Create<'T> () =
-            let writer = fun _ _ -> invalidOp <| sprintf "Attempting to use pickler for abstract type '%O'." typeof<'T>
-            let reader = fun _ -> invalidOp <| sprintf "Attempting to use pickler for abstract type '%O'." typeof<'T>
+            let writer _ _ = invalidOp <| sprintf "Attempting to call abstract pickler '%O'." typeof<'T>
+            let reader _ = invalidOp <| sprintf "Attempting to call abstract pickler '%O'." typeof<'T>
 
             new Pickler<'T>(reader, writer, PicklerInfo.ReflectionDerived, true, false)
 

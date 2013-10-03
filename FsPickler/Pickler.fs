@@ -78,23 +78,15 @@
         member f.PicklerType =
             if f.m_isInitialized then f.m_pickler_type
             else
-                invalidOp "Attempting to consume pickler at construction time."
+                invalidOp "Attempting to consume pickler at initialization time."
 
         member f.PicklerInfo =
             if f.m_isInitialized then f.m_picklerInfo
             else
-                invalidOp "Attempting to consume pickler at construction time."
+                invalidOp "Attempting to consume pickler at initialization time."
 
-        member f.IsCacheByRef =
-            if f.m_isInitialized then f.m_isCacheByRef
-            else
-                invalidOp "Attempting to consume pickler at construction time."
-
-        member f.UseWithSubtypes =
-            if f.m_isInitialized then f.m_useWithSubtypes
-            else
-                invalidOp "Attempting to consume pickler at construction time."
-
+        member f.IsCacheByRef = f.m_isCacheByRef
+        member f.UseWithSubtypes = f.m_useWithSubtypes
         member internal f.IsInitialized = f.m_isInitialized
 
         abstract member UntypedWrite : Writer -> obj -> unit
@@ -109,9 +101,9 @@
         abstract member InitializeFrom : Pickler -> unit
         default f.InitializeFrom(f' : Pickler) : unit =
             if f.m_isInitialized then
-                invalidOp "Pickler has already been initialized."
+                invalidOp "Target pickler has already been initialized."
             elif not f'.m_isInitialized then 
-                invalidOp "Attempting to consume pickler at construction time."
+                invalidOp "Attempting to consume pickler at initialization time."
             elif f.Type <> f'.Type && not (f'.Type.IsAssignableFrom(f.Type) && f'.UseWithSubtypes) then
                 raise <| new InvalidCastException(sprintf "Cannot cast pickler from '%O' to '%O'." f'.Type f.Type)
             else
@@ -124,7 +116,10 @@
                 f.m_useWithSubtypes <- f'.m_useWithSubtypes
                 f.m_isInitialized <- true
 
-    and [<Sealed>][<AutoSerializable(false)>] Pickler<'T> =
+    and [<Sealed>]
+        [<AutoSerializable(false)>] 
+        Pickler<'T> =
+
         inherit Pickler
         
         val mutable private m_writer : Writer -> 'T -> unit
@@ -147,8 +142,8 @@
         internal new () = 
             {
                 inherit Pickler(typeof<'T>) ;
-                m_writer = fun _ _ -> invalidOp "Attempting to consume pickler at construction time." ;
-                m_reader = fun _ -> invalidOp "Attempting to consume pickler at construction time." ;
+                m_writer = fun _ _ -> invalidOp "Attempting to consume pickler at initialization time." ;
+                m_reader = fun _ -> invalidOp "Attempting to consume pickler at initialization time." ;
             }
 
         override f.UntypedWrite (w : Writer) (o : obj) = f.m_writer w (fastUnbox<'T> o)
@@ -160,7 +155,7 @@
             if f.IsInitialized then
                 new Pickler<'T>(f.m_reader, f.m_writer, f.PicklerInfo, f.IsCacheByRef, f.UseWithSubtypes) :> Pickler
             else
-                invalidOp "Attempting to consume pickler at construction time."
+                invalidOp "Attempting to consume pickler at initialization time."
 
         override f.Cast<'S> () =
             if typeof<'T> = typeof<'S> then f |> fastUnbox<Pickler<'S>>
@@ -169,7 +164,7 @@
                 let reader = let rf = f.m_reader in fun r -> rf r |> fastUnbox<'S>
                 new Pickler<'S>(typeof<'T>, reader, writer, f.PicklerInfo, f.IsCacheByRef, f.UseWithSubtypes)
             else
-                raise <| new InvalidCastException(sprintf "Cannot cast pickler of type '%O' to type '%O'." typeof<'T> typeof<'S>)
+                raise <| new InvalidCastException(sprintf "Cannot cast pickler of type '%O' to '%O'." typeof<'T> typeof<'S>)
                 
 
         override f.InitializeFrom(f' : Pickler) : unit =

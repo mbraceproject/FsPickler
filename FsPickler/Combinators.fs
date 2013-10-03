@@ -4,6 +4,7 @@
 
     open FsPickler.PicklerUtils
     open FsPickler.BasePicklers
+    open FsPickler.ReflectionPicklers
     open FsPickler.CombinatorImpls
 
     module Combinators =
@@ -39,12 +40,13 @@
             let uint64 = mkUInt64P ()
 
             // misc atomic picklers
-
-            let any = mkObjPickler () : Pickler<obj>
             let string = mkStringPickler ()
             let guid = mkGuidPickler ()
             let bytes = mkByteArrayPickler ()
             let bigint = mkBigIntPickler () : Pickler<bigint>
+
+            /// the default System.Object pickler
+            let obj = mkObjPickler () : Pickler<obj>
 
             /// auto generate a pickler
             let auto<'T> = defaultSerializer.Value.GeneratePickler<'T> ()
@@ -89,8 +91,11 @@
 
             /// wrap combinator: defines picklers up to isomorphism
             let wrap recover convert p = WrapPickler.Create(p, recover, convert) |> setPicklerId [p]
-            /// alt combinator: choose pickler combinators using tag reader
+            /// alt combinator: choose from list of pickler combinators using tag reader
             let alt tagReader ps = AltPickler.Create(tagReader, ps) |> setPicklerId (ps |> Seq.map uc)
+
+            /// F# function combinator
+            let func<'T, 'U> = AbstractPickler.Create<'T -> 'U> ()
 
             /// pickler fixpoint combinator
             let fix (F : Pickler<'T> -> Pickler<'T>) =

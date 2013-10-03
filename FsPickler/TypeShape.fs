@@ -235,7 +235,7 @@
             {
                 new IPicklerResolver with
                     member __.UUId = null
-                    member __.Resolve (t : Type) = ReflectionPicklers.AbstractPickler.CreateUntyped t
+                    member __.Resolve (t : Type) = ReflectionPicklers.AbstractPickler.CreateUntyped(t)
                     member __.Resolve<'T> () = ReflectionPicklers.AbstractPickler.Create<'T> ()
             }
 

@@ -29,16 +29,16 @@
             abstract member internal InitializeFrom : Pickler -> unit
             default internal InitializeFrom : Pickler -> unit
 
-            /// The declared generic type of given pickler.
+            /// Returns the pickler's declared type.
             member Type : Type
-            /// The actual type of the given pickler.
+            /// Returns the pickler's actual type.
             member PicklerType : Type
 
             /// Specifies if pickled objects are to be cached by reference.
             member IsCacheByRef : bool
             /// Specifies if pickler can be used on objects of proper subtype.
             member UseWithSubtypes : bool
-            /// Specifies if given object graphs of given type can be cyclic.
+            /// Specifies if pickler type supports cyclic objects.
             member IsRecursiveType : bool
             /// Provides information on the pickler generation method.
             member PicklerInfo : PicklerInfo

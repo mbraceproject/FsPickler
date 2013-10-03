@@ -7,7 +7,7 @@
     module ExtensionMethods =
 
         type Pickler with
-            /// <summary>Initializes a pickler out of a pair of read/write lambdas; unsafe.</summary>
+            /// <summary>Initializes a pickler out of a pair of read/write lambdas. Unsafe pickler generation method.</summary>
             /// <param name="reader">Deserialization logic for the pickler.</param>
             /// <param name="writer">Serialization logic for the pickler.</param>
             /// <param name="cache">Specifies whether the serializer should cache by reference when serializing.</param>
