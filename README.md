@@ -56,7 +56,7 @@ The combinator library includes all primitives as described in Andrew Kennedy's
 [Pickler Combinators](http://research.microsoft.com/en-us/um/people/akenn/fun/picklercombinators.pdf)
 such as ``wrap`` and ``alt``. Fixpoint combinators for declaring recursive picklers are also available:
 ```fsharp
-val Pickler.fix : (Pickler<'T> -> Pickler<'T>) -> Pickler<'T>
+// val Pickler.fix : (Pickler<'T> -> Pickler<'T>) -> Pickler<'T>
 
 type Peano = Zero | Succ of Peano
 
