@@ -23,7 +23,7 @@ open FsPickler
 let fsp = new FsPickler()
 
 // serialize without explicit pickler use
-fsp.Serialize<int list option>(stream, Some [1;2;3])
+fsp.Serialize<int list option>(stream, Some [1; 2; 3])
 fsp.Deserialize<int list option>(stream)
 
 // serialize with explicit pickler use
