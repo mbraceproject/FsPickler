@@ -11,6 +11,8 @@ that doubles as a pickler combinator library.
 * Performance about 5-20x faster than the default .NET serializers.
 * Full support for the mono framework.
 
+Get the NuGet package [here](https://www.nuget.org/packages/FsPickler/).
+
 ### Basic Usage
 
 The following snippet presents the basic serialization/deserialization API for FsPickler:
