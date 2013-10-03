@@ -6,7 +6,10 @@
         <title>FsPickler</title>
         <authors>Eirik Tsarpalis</authors>
         <owners>Eirik Tsarpalis</owners>
+        <copyright>Eirik Tsarpalis</copyright>
+        <projectUrl>https://github.com/eiriktsarpalis/FsPickler/</projectUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <licenseUrl>https://github.com/eiriktsarpalis/FsPickler/blob/master/License.md</licenseUrl>
         <description>* Based on the notion of pickler combinators.
 * Provides an automated, strongly typed, pickler generation framework.
 * Full support for .NET types, including classes and open hierarchies.
