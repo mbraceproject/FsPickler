@@ -7,17 +7,19 @@
         <authors>Eirik Tsarpalis</authors>
         <owners>Eirik Tsarpalis</owners>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
-        <description>* Serializers are precomputed in a compositional manner.
-* Uses dynamic methods over reflection for performance.
-* Supports most serializable .NET types, including classes implementing the ISerializable interface.
-* Highly optimized for the ML types used in F#.
-* Observed performance about 5-20x faster than most serializers bundled with .NET.
+        <description>* Based on the notion of pickler combinators.
+* Provides an automated, strongly typed, pickler generation framework.
+* Full support for .NET types, including classes and open hierarchies.
+* Compatible with all serializable types, including the ISerializable interface.
+* Highly optimized for F# core types.
+* Performance about 5-20x faster than the default .NET serializers.
+* Full support for the mono framework.
 
 Provided "as is" with no express or implied warranty.
 
-For more information, see http://egtsrp.wordpress.com/</description>
-        <summary>A general purpose binary serializer for .NET objects written in F#.</summary>
-        <releaseNotes>version 0.5 is a complete rewrite featuring serialization of arbitrary .NET types.</releaseNotes>
-        <tags>F#, serializer</tags>
+For more information, see https://github.com/eiriktsarpalis/FsPickler</description>
+        <summary>A fast, general-purpose binary serializer for .NET written in F# that doubles as a pickler combinator library.</summary>
+        <releaseNotes>A rewrite of FsCoreSerializer, featuring strongly typed pickler generation.</releaseNotes>
+        <tags>F#, serializer, pickler combinators</tags>
     </metadata>
 </package>
