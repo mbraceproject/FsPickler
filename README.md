@@ -173,6 +173,10 @@ let pickler = fsp.GeneratePickler<int list> ()
 fsp'.Pickler pickler [1] // runtime error
 ```
 
+Care should be taken that custom ``FsPickler`` instances are treated as singletons;
+generating arbitrarily many instances might put strain on the runtime, 
+since each will initialize a unique cache of picklers and emitted code.
+
 ### Pluggable Generic Picklers
 
 Defining pluggable picklers for generic types is a bit more involved, 
