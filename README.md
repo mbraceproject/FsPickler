@@ -218,3 +218,4 @@ Some(set [ 1 .. 1000 ]) |> fsp.Pickle p |> fsp.UnPickle p
 
 * Support for fast structural hashcode generation.
 * Support for multiple pickle formats.
+* A C# friendly API.
