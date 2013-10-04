@@ -139,6 +139,7 @@
                 m_nested_pickler = None ;
             }
 
+        // constructor called by Cast<_> method
         private new (nested : Pickler, reader, writer) =
             { 
                 inherit Pickler(typeof<'T>, nested.Type, nested.PicklerInfo, nested.IsCacheByRef, nested.UseWithSubtypes) ;
@@ -171,18 +172,19 @@
                 invalidOp "Attempting to consume pickler at initialization time."
 
         override f.Cast<'S> () =
-            if not f.IsInitialized then invalidOp "Attempting to consume pickler at initialization time."
-            elif typeof<'T> = typeof<'S> then fastUnbox<Pickler<'S>> f
-            elif typeof<'T>.IsAssignableFrom typeof<'S> && f.UseWithSubtypes then
-                match f.m_nested_pickler with
-                | Some nested -> nested.Cast<'S> ()
-                | None ->
+            match f.m_nested_pickler with
+            | Some nested -> nested.Cast<'S> ()
+            | None ->
+                if not f.IsInitialized then invalidOp "Attempting to consume pickler at initialization time."
+                elif typeof<'T> = typeof<'S> then fastUnbox<Pickler<'S>> f
+                elif typeof<'T>.IsAssignableFrom typeof<'S> && f.UseWithSubtypes then
                     let writer = let wf = f.m_writer in fun w x -> wf w (fastUnbox<'T> x)
                     let reader = let rf = f.m_reader in fun r -> fastUnbox<'S> (rf r)
 
                     new Pickler<'S>(f, reader, writer)
-            else
-                raise <| new InvalidCastException(sprintf "Cannot cast pickler of type '%O' to '%O'." typeof<'T> typeof<'S>)
+                else
+                    let msg = sprintf "Cannot cast pickler of type '%O' to '%O'." typeof<'T> typeof<'S>
+                    raise <| new InvalidCastException(msg)
                 
 
         override f.InitializeFrom(f' : Pickler) : unit =
