@@ -22,19 +22,25 @@ open FsPickler
 
 let fsp = new FsPickler()
 
-// serialize without explicit pickler use
+// typed serialization
 fsp.Serialize<int list option>(stream, Some [1; 2; 3])
 fsp.Deserialize<int list option>(stream)
 
-// serialize with explicit pickler use
+// typed serialization with explicit pickler use
 let pickler : Pickler<int list option> = fsp.GeneratePickler<int list option> ()
 
 fsp.Serialize(pickler, stream, Some [1; 2; 3])
 fsp.Deserialize(pickler, stream) : int list option
 
 // untyped serialization
-fsp.Serialize(typeof<int>, stream, 2)
+fsp.Serialize(typeof<int>, stream, 42)
 fsp.Deserialize(typeof<int>, stream) : obj
+
+// untyped serialization with explicit pickler use
+let pickler' : Pickler = fsp.GeneratePickler typeof<int>
+
+fsp.Serialize(pickler', stream, 42)
+fsp.Deserializer(pickler', stream) : obj
 ```
 
 All generated picklers are strongly typed; pickling is performed efficiently
