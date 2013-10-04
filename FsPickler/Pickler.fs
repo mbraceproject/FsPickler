@@ -212,8 +212,7 @@
                 bw.Write(ObjHeader.create fmt.TypeHash flags)
 
             let inline writeType (t : Type) =
-                let mutable firstOccurence = false
-                let id = idGen.GetId(t, &firstOccurence)
+                let id, firstOccurence = idGen.GetId t
                 bw.Write firstOccurence
                 if firstOccurence then tyPickler.Write w t
                 else
