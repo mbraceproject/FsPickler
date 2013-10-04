@@ -100,13 +100,13 @@
             let writer (w : Writer) (u : 'Union) = writerFunc.Invoke(w, u)
             let reader = readerFunc.Invoke
 #else
-            let tagReader = FSharpValue.PreComputeUnionTagReader(typeof<'Union>, memberBindings)
+            let tagReader = FSharpValue.PreComputeUnionTagReader(typeof<'Union>, allMembers)
             
             let unionCases =
-                FSharpType.GetUnionCases(typeof<'Union>, memberBindings) 
+                FSharpType.GetUnionCases(typeof<'Union>, allMembers) 
                 |> Array.map (fun uci ->
-                    let ctor = FSharpValue.PreComputeUnionConstructor(uci, memberBindings)
-                    let reader = FSharpValue.PreComputeUnionReader(uci, memberBindings)
+                    let ctor = FSharpValue.PreComputeUnionConstructor(uci, allMembers)
+                    let reader = FSharpValue.PreComputeUnionReader(uci, allMembers)
                     let picklers = uci.GetFields() |> Array.map (fun f -> resolver.Resolve f.PropertyType)
                     ctor, reader, picklers)
 

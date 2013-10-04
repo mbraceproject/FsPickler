@@ -137,7 +137,7 @@
                     picklers.[i].ManagedWrite w o
 
             let reader (r : Reader) =
-                let t = PicklerServices.GetUninitializedObject(typeof<'T>)
+                let t = FormatterServices.GetUninitializedObject(typeof<'T>)
                 for i = 0 to fields.Length - 1 do
                     let o = picklers.[i].ManagedRead r
                     fields.[i].SetValue(t, o)
@@ -235,7 +235,7 @@
                 run onSerialized t w
 
             let reader (r : Reader) =
-                let t = PicklerServices.GetUninitializedObject(typeof<'T>) |> fastUnbox<'T>
+                let t = FormatterServices.GetUninitializedObject(typeof<'T>) |> fastUnbox<'T>
                 run onDeserializing t r
 
                 for i = 0 to fields.Length - 1 do
