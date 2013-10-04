@@ -119,3 +119,69 @@
                 let f',g',h' = F f g h
                 f.InitializeFrom f' ; g.InitializeFrom g' ; h.InitializeFrom h'
                 f,g,h
+
+            /// Experimental support for n-way product types such as records.
+            /// See `product` and `field` combinators.
+            module ProductInternals =
+
+                type Part<'R,'X,'Z> =
+                    private
+                    | P of ('R -> 'Z) * ('X -> 'Z -> 'R) * Pickler<'Z>
+
+                let private pp f g t =
+                    P (f, g, t)
+
+                let private finish () =
+                    pp ignore (fun r () -> r) unit
+
+                type Wrap<'T> =
+                    internal
+                    | W of 'T
+
+                    static member ( ^+ ) (W f, x) =
+                        f x
+
+                    static member ( ^. ) (W f, W x) =
+                        f (x (finish ()))
+
+                let internal defProduct e p =
+                    match p with
+                    | P (f, g, t) ->
+                        wrap (g e) f t
+
+                let internal defField proj tf p =
+                    match p with
+                    | P (g, h, tr) ->
+                        pp
+                            (fun rr -> (proj rr, g rr))
+                            (fun c fx -> h (c (fst fx)) (snd fx))
+                            (pair tf tr)
+
+            /// Starts defining a pickler for an n-ary product, such as
+            /// record. Example:
+            ///
+            ///    type Person =
+            ///        {
+            ///            Address : string
+            ///            Age : int
+            ///            Name : string
+            ///        }
+            ///
+            ///    let makePerson name age address =
+            ///        {
+            ///            Address = address
+            ///            Age = age
+            ///            Name = name
+            ///        }
+            ///
+            ///    let personPickler =
+            ///        product makePerson
+            ///        ^+ field (fun p -> p.Name) Pickler.string
+            ///        ^+ field (fun p -> p.Age) Pickler.int
+            ///        ^. field (fun p -> p.Address) Pickler.string
+            let product f =
+                ProductInternals.W (ProductInternals.defProduct f)
+
+            /// See `product`.
+            let field f p =
+                ProductInternals.W (ProductInternals.defField f p)
