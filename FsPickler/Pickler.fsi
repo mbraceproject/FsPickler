@@ -10,7 +10,7 @@
     type Pickler =
         class
             internal new : Type -> Pickler
-            internal new : Type * PicklerInfo * bool * bool -> Pickler
+            internal new : declaredType:Type * picklerType:Type * PicklerInfo * cacheByRef:bool * useWithSubtypes:bool -> Pickler
 
             /// casts pickler to a typed version; may result in runtime error.
             abstract member Cast<'S> : unit -> Pickler<'S>
@@ -57,11 +57,8 @@
             inherit Pickler
 
             internal new : unit -> Pickler<'T>
-            internal new : (Reader -> 'T) * (Writer -> 'T -> unit) * 
-                                        PicklerInfo * cacheByRef:bool * useWithSubtypes:bool -> Pickler<'T>
-
-            private new : Type * (Reader -> 'T) * (Writer -> 'T -> unit) * 
-                                                    PicklerInfo * cacheByRef:bool * useWithSubtypes:bool -> Pickler<'T>
+            internal new : (Reader -> 'T) * (Writer -> 'T -> unit) * PicklerInfo * cacheByRef:bool * useWithSubtypes:bool -> Pickler<'T>
+            private new : nested:Pickler * (Reader -> 'T) * (Writer -> 'T -> unit) -> Pickler<'T>
 
             /// casts pickler to a typed version. may result in runtime error.
             override Cast : unit -> Pickler<'S>

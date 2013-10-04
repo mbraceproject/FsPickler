@@ -47,16 +47,17 @@
                 m_cache_id = null ;
             }
 
-        internal new (t : Type, picklerInfo, isCacheByRef, useWithSubtypes) =
+        internal new (declaredType : Type, picklerType : Type, picklerInfo, isCacheByRef, useWithSubtypes) =
+            assert(picklerType.IsAssignableFrom declaredType)
             {
-                declared_type = t ; 
-                is_recursive_type = isRecursiveType t ;
+                declared_type = declaredType ; 
+                is_recursive_type = isRecursiveType declaredType ;
 
                 m_isInitialized = true ;
 
-                m_pickler_type = t ; 
-                m_typeInfo = computeTypeInfo t ; 
-                m_typeHash = computeTypeHash t ;
+                m_pickler_type = picklerType ; 
+                m_typeInfo = computeTypeInfo picklerType ; 
+                m_typeHash = computeTypeHash picklerType ;
 
                 m_picklerInfo = picklerInfo ;
                 m_isCacheByRef = isCacheByRef ;
@@ -125,25 +126,37 @@
         val mutable private m_writer : Writer -> 'T -> unit
         val mutable private m_reader : Reader -> 'T
 
+        // stores the supertype pickler, if generated using subtype resolution
+        val mutable private m_nested_pickler : Pickler option
+
         internal new (reader, writer, picklerInfo, isCacheByRef, useWithSubtypes) = 
             { 
-                inherit Pickler(typeof<'T>, picklerInfo, isCacheByRef, useWithSubtypes) ;
+                inherit Pickler(typeof<'T>, typeof<'T>, picklerInfo, isCacheByRef, useWithSubtypes) ;
+
                 m_writer = writer ;
                 m_reader = reader ;
+
+                m_nested_pickler = None ;
             }
 
-        private new (t, reader, writer, picklerInfo, isCacheByRef, useWithSubtypes) = 
+        private new (nested : Pickler, reader, writer) =
             { 
-                inherit Pickler(t, picklerInfo, isCacheByRef, useWithSubtypes) ;
+                inherit Pickler(typeof<'T>, nested.Type, nested.PicklerInfo, nested.IsCacheByRef, nested.UseWithSubtypes) ;
+                
                 m_writer = writer ;
                 m_reader = reader ;
+
+                m_nested_pickler = Some nested ;
             }
 
         internal new () = 
             {
                 inherit Pickler(typeof<'T>) ;
+                
                 m_writer = fun _ _ -> invalidOp "Attempting to consume pickler at initialization time." ;
                 m_reader = fun _ -> invalidOp "Attempting to consume pickler at initialization time." ;
+
+                m_nested_pickler = None ;
             }
 
         override f.UntypedWrite (w : Writer) (o : obj) = f.m_writer w (fastUnbox<'T> o)
@@ -158,11 +171,16 @@
                 invalidOp "Attempting to consume pickler at initialization time."
 
         override f.Cast<'S> () =
-            if typeof<'T> = typeof<'S> then f |> fastUnbox<Pickler<'S>>
+            if not f.IsInitialized then invalidOp "Attempting to consume pickler at initialization time."
+            elif typeof<'T> = typeof<'S> then fastUnbox<Pickler<'S>> f
             elif typeof<'T>.IsAssignableFrom typeof<'S> && f.UseWithSubtypes then
-                let writer = let wf = f.m_writer in fun w x -> wf w (fastUnbox<'T> x)
-                let reader = let rf = f.m_reader in fun r -> rf r |> fastUnbox<'S>
-                new Pickler<'S>(typeof<'T>, reader, writer, f.PicklerInfo, f.IsCacheByRef, f.UseWithSubtypes)
+                match f.m_nested_pickler with
+                | Some nested -> nested.Cast<'S> ()
+                | None ->
+                    let writer = let wf = f.m_writer in fun w x -> wf w (fastUnbox<'T> x)
+                    let reader = let rf = f.m_reader in fun r -> fastUnbox<'S> (rf r)
+
+                    new Pickler<'S>(f, reader, writer)
             else
                 raise <| new InvalidCastException(sprintf "Cannot cast pickler of type '%O' to '%O'." typeof<'T> typeof<'S>)
                 
@@ -170,10 +188,10 @@
         override f.InitializeFrom(f' : Pickler) : unit =
             let f' = f'.Cast<'T> ()
             base.InitializeFrom f'
+            f.m_nested_pickler <- f'.m_nested_pickler
             f.m_writer <- f'.m_writer
             f.m_reader <- f'.m_reader
             
-
         member internal f.Write = f.m_writer
         member internal f.Read = f.m_reader
 
