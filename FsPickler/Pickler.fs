@@ -309,8 +309,7 @@
         let mutable counter = 1L
         let mutable currentDeserializedObjectId = 0L
 
-        // objects deserialized with reflection-based rules are registered to the cache
-        // at the initialization stage to support cyclic object graphs.
+        // used internally for early registration of cyclic objects
         member internal r.EarlyRegisterObject (o : obj) = 
             objCache.Add(currentDeserializedObjectId, o)
 
