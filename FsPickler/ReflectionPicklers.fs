@@ -40,7 +40,7 @@
 
             m.GuardedInvoke(null, null) :?> Pickler
 
-    // creates a pickler for abstract types
+    // abstract type pickler factory
 
     type AbstractPickler =
         static member Create<'T> () =
@@ -57,7 +57,7 @@
 
             m.GuardedInvoke(null, null) :?> Pickler
 
-    // pickler rules for enum types
+    // pickler combinator for enum types
 
     type EnumPickler =
         static member CreateUntyped(enum : Type, resolver : IPicklerResolver) =
@@ -85,7 +85,7 @@
 
             new Pickler<'Enum>(reader, writer, PicklerInfo.ReflectionDerived, cacheByRef = false, useWithSubtypes = false)
 
-    // pickler builder for struct types
+    // pickler combinator for struct types
 
     type StructPickler =
         static member CreateUntyped(t : Type, resolver : IPicklerResolver) =
@@ -148,7 +148,7 @@
             new Pickler<'T>(reader, writer, PicklerInfo.ReflectionDerived, cacheByRef = false, useWithSubtypes = false)
                     
 
-    // reflection-based serialization rules for reference types
+    // general-purpose pickler combinator for reference types
 
     type ClassPickler =
 
@@ -249,6 +249,8 @@
 
             new Pickler<'T>(reader, writer, PicklerInfo.ReflectionDerived, cacheByRef = true, useWithSubtypes = false)
 
+
+    // pickler combinator for delegates
 
     type DelegatePickler =
 

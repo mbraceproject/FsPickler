@@ -306,8 +306,9 @@
         
         static member Create(tagReader : 'T -> int, picklers : Pickler<'T> list) =
             
-            let cacheByRef = picklers |> List.exists (fun p -> p.IsCacheByRef)
-            let useWithSubtypes = picklers |> List.forall (fun p -> p.UseWithSubtypes)
+            let picklers = List.toArray picklers
+            let cacheByRef = picklers |> Array.exists (fun p -> p.IsCacheByRef)
+            let useWithSubtypes = picklers |> Array.forall (fun p -> p.UseWithSubtypes)
 
             let writer (w : Writer) (t : 'T) =
                 let tag = tagReader t
@@ -328,7 +329,7 @@
             // disable subtype resolution if F# union or tuple
             let useWithSubtypes = FSharpType.IsUnion(typeof<'S>, allMembers) || FSharpType.IsTuple typeof<'S>
 #else
-            let useWithSubtypes = false
+            let useWithSubtypes = FSharpType.IsUnion(typeof<'S>, allMembers)
 #endif
             new Pickler<_>(origin.Read >> recover, (fun w t -> origin.Write w (convert t)), 
                                     PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = useWithSubtypes)

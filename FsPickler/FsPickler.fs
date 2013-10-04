@@ -54,6 +54,17 @@
             use writer = new Writer(stream, resolver, ?streamingContext = streamingContext, ?encoding = encoding, ?leaveOpen = leaveOpen)
             writer.WriteObj(valueType, value)
 
+        /// <summary>Serialize object to the underlying stream using given pickler.</summary>
+        /// <param name="pickler">untyped pickler used for serialization.</param>
+        /// <param name="stream">target stream.</param>
+        /// <param name="value">value to be serialized.</param>
+        /// <param name="streamingContext">untyped parameter passed to the streaming context.</param>
+        /// <param name="encoding">encoding passed to the binary reader.</param>
+        /// <param name="leaveOpen">leave underlying stream open when finished. Defaults to true.</param>
+        member __.Serialize(pickler : Pickler, stream : Stream, value : obj, ?streamingContext : obj, ?encoding, ?leaveOpen) : unit =
+            use writer = new Writer(stream, resolver, ?streamingContext = streamingContext, ?encoding = encoding, ?leaveOpen = leaveOpen)
+            pickler.ManagedWrite writer value
+
         /// <summary>Deserialize value of given type from the underlying stream.</summary>
         /// <param name="stream">source stream.</param>
         /// <param name="streamingContext">untyped parameter passed to the streaming context.</param>
@@ -84,6 +95,16 @@
             use reader = new Reader(stream, resolver, ?streamingContext = streamingContext, ?encoding = encoding, ?leaveOpen = leaveOpen)
             reader.ReadObj valueType
 
+        /// <summary>Deserialize object from the underlying stream using given pickler.</summary>
+        /// <param name="pickler">untyped pickler used for deserialization.</param>
+        /// <param name="stream">source stream.</param>
+        /// <param name="streamingContext">untyped parameter passed to the streaming context.</param>
+        /// <param name="encoding">encoding passed to the binary reader.</param>
+        /// <param name="leaveOpen">leave underlying stream open when finished. Defaults to true.</param>
+        member __.Deserialize (pickler : Pickler, stream : Stream, ?streamingContext : obj, ?encoding, ?leaveOpen) : obj =
+            use reader = new Reader(stream, resolver, ?streamingContext = streamingContext, ?encoding = encoding, ?leaveOpen = leaveOpen)
+            pickler.ManagedRead reader
+
         /// creates a byte array pickle out of given pickler and value
         member __.Pickle (pickler : Pickler<'T>) (value : 'T) : byte [] =
             use mem = new MemoryStream()
@@ -98,6 +119,10 @@
 
         /// Auto generates a pickler for given type variable
         member __.GeneratePickler<'T> () = resolver.Resolve<'T> ()
+        
+        /// Auto generates a pickler for given type
+        member __.GeneratePickler (t : Type) = resolver.Resolve t
+
 
         /// Decides if given type is serializable by FsPickler
         member __.IsSerializableType (t : Type) =

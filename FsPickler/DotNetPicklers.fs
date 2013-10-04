@@ -14,7 +14,7 @@
     open FsPickler.PicklerUtils
     open FsPickler.BasePicklers
 
-    // pickler rules for array types
+    // pickler combinator for array types
 
     type ArrayPickler =
 
@@ -127,7 +127,7 @@
 
             new Pickler<'Array>(reader, writer, PicklerInfo.Array, cacheByRef = true, useWithSubtypes = false)
 
-    // pickler builder for ISerializable types
+    // pickler combinator for ISerializable types
 
     type ISerializablePickler =
 
@@ -146,7 +146,6 @@
                 let allMethods = typeof<'T>.GetMethods(allMembers)
                 let onSerializing = allMethods |> getSerializationMethods< OnSerializingAttribute>
                 let onSerialized = allMethods |> getSerializationMethods<OnSerializedAttribute>
-//                let onDeserializing = allMethods |> getSerializationMethods<OnDeserializingAttribute>
                 let onDeserialized = allMethods |> getSerializationMethods<OnDeserializedAttribute>
 
                 let isDeserializationCallback = typeof<IDeserializationCallback>.IsAssignableFrom typeof<'T>
