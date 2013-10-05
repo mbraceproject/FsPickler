@@ -112,6 +112,63 @@ let binTree<'T> =
 Node([1],[Leaf ; Leaf]) |> pickle binTree
 ```
 
+### Experimental N-way Sum and Product Combinators
+
+N-way sum and product combinators provide an alternative pretty syntax for
+defining picklers over arbitrary discriminated unions and records.  Unfortunately
+at the moment the performance of resulting picklers is sub-optimal, this might
+improve in the future.
+
+The types involved in the examples are not fit for human consumption, but thankfully
+F# infers them automatically. The implementation is total and purely functional,
+see this [gist][nway] for some Coq code used to model these combinators.
+
+[nway]: https://gist.github.com/toyvo/6834822
+
+#### Records / Product Types
+ 
+```fsharp    
+type Person =
+    {
+        Address : string
+        Age : int
+        Name : string
+    }
+
+let makePerson name age address =
+    {
+        Address = address
+        Age = age
+        Name = name
+    }
+
+let personPickler =
+    Pickler.product makePerson
+    ^+ Pickler.field (fun p -> p.Name) Pickler.string
+    ^+ Pickler.field (fun p -> p.Age) Pickler.int
+    ^. Pickler.field (fun p -> p.Address) Pickler.string
+```
+
+#### Unions / Sum Types
+
+```fsharp
+type U =
+| Case1
+| Case2 of int
+| Case3 of string * int
+
+let uPickler =
+    Pickler.sum (fun x k1 k2 k3 ->
+        match x with
+        | Case1 -> k1 ()
+        | Case2 x -> k2 x
+        | Case3 (x, y) -> k3 (x, y))
+    ^+ Pickler.variant Case1
+    ^+ Pickler.case Case2 Pickler.int
+    ^. Pickler.case Case3 (Pickler.pair Pickler.string Pickler.int)
+```
+
+
 ### Custom Pickler Declarations
 
 Since F# lacks mechanisms such as type classes or implicits, 
