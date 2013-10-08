@@ -1,4 +1,4 @@
-﻿#r "bin/Debug/FsPickler.dll"
+﻿#r "bin/Release/FsPickler.dll"
 
 open FsPickler
 open FsPickler.Combinators

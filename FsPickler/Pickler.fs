@@ -3,8 +3,9 @@
     open System
     open System.IO
     open System.Text
-    open System.Runtime.CompilerServices
+    open System.Collections
     open System.Collections.Generic
+    open System.Runtime.CompilerServices
     open System.Runtime.Serialization
 
     open FsPickler.Utils
@@ -96,6 +97,9 @@
         abstract member ManagedWrite : Writer -> obj -> unit
         abstract member ManagedRead : Reader -> obj
 
+        abstract member WriteSequence : Writer -> IEnumerable -> unit
+        abstract member ReadSequence : Reader -> IEnumerator
+
         abstract member Cast<'S> : unit -> Pickler<'S>
         abstract member ClonePickler : unit -> Pickler
 
@@ -164,6 +168,8 @@
         override f.UntypedRead (r : Reader) = f.m_reader r :> obj
         override f.ManagedWrite (w : Writer) (o : obj) = w.Write(f, fastUnbox<'T> o)
         override f.ManagedRead (r : Reader) = r.Read f :> obj
+        override f.WriteSequence (w : Writer) (e : IEnumerable) = w.WriteSequence(f, e :?> seq<'T>)
+        override f.ReadSequence (r : Reader) = r.ReadSequence f :> IEnumerator
 
         override f.ClonePickler () =
             if f.IsInitialized then
@@ -213,7 +219,7 @@
 
         let bw = new BinaryWriter(stream, encoding, defaultArg leaveOpen true)
         let sc = initStreamingContext streamingContext
-        let idGen = new ObjectIDGenerator()
+        let mutable idGen = new ObjectIDGenerator()
         let objStack = new Stack<int64> ()
         let cyclicObjects = new SortedSet<int64> ()
 
@@ -305,8 +311,51 @@
 
         member w.Write<'T>(t : 'T) = let f = resolver.Resolve<'T> () in w.Write(f, t)
 
-        member internal w.WriteObj(t : Type, o : obj) =
-            let f = resolver.Resolve t in f.ManagedWrite w o
+        // efficient sequence serialization; must be used as top-level operation only
+        member internal w.WriteSequence<'T>(f : Pickler<'T>, xs : seq<'T>) =
+            let inline flushState () =
+                idGen <- new ObjectIDGenerator()
+                
+            let isPrimitive = f.TypeInfo = TypeInfo.Primitive
+            let isNonAtomic = f.PicklerInfo <> PicklerInfo.Atomic
+
+            let inline write idx (x : 'T) =
+                if isPrimitive then f.Write w x
+                elif isNonAtomic then
+                    if idx % sequenceCounterResetThreshold = 0 then
+                        flushState ()
+                    w.Write(f, x)
+                elif obj.ReferenceEquals(x, null) then
+                    bw.Write true
+                else
+                    bw.Write false 
+                    f.Write w x
+            
+            // specialize enumeration
+            match xs with
+            | :? ('T []) as array ->
+                bw.Write true
+                bw.Write array.Length
+                for i = 0 to array.Length - 1 do
+                    write i array.[i]
+
+            | :? ('T list) as list ->
+                bw.Write true
+                bw.Write list.Length
+                let rec writeLst i lst =
+                    match lst with
+                    | [] -> ()
+                    | hd :: tl -> write i hd ; writeLst (i+1) tl
+
+                writeLst 0 list
+            | _ ->
+                bw.Write false
+                let mutable i = 0
+                for x in xs do
+                    bw.Write true
+                    write i x
+                    i <- i + 1
+                bw.Write false
 
         interface IDisposable with
             member __.Dispose () = bw.Dispose ()
@@ -403,7 +452,77 @@
 
         member r.Read<'T> () : 'T = let f = resolver.Resolve<'T> () in r.Read f
 
-        member internal r.ReadObj(t : Type) = let f = resolver.Resolve t in f.ManagedRead r
+        // efficient sequence deserialization; must be used as top-level operation only
+        member internal r.ReadSequence<'T> (f : Pickler<'T>) =
+            let inline flushState () =
+                objCache.Clear ()
+                counter <- 1L
+
+            let isPrimitive = f.TypeInfo = TypeInfo.Primitive
+            let isNonAtomic = f.PicklerInfo <> PicklerInfo.Atomic
+
+            let read idx =
+                if isPrimitive then f.Read r
+                elif isNonAtomic then
+                    if idx % sequenceCounterResetThreshold = 0 then
+                        flushState ()
+                    r.Read f
+                elif br.ReadBoolean () then fastUnbox<'T> null
+                else
+                    f.Read r
+
+            if br.ReadBoolean() then
+                // build enumerator with predetermined length
+                let length = br.ReadInt32()
+                let cnt = ref 0
+                let curr = ref Unchecked.defaultof<'T>
+                let initPos = stream.Position
+                {
+                    new IEnumerator<'T> with
+                        member __.Current = !curr
+                        member __.Current = box !curr
+                        member __.Dispose () = (r :> IDisposable).Dispose ()
+                        member __.MoveNext () =
+                            if !cnt < length then
+                                curr := read !cnt
+                                incr cnt
+                                true
+                            else
+                                false
+
+                        member __.Reset () =
+                            stream.Position <- initPos
+                            curr := Unchecked.defaultof<'T>
+                            cnt := 0
+                            do flushState ()
+                }
+            else
+                // build enumerator with unknown length
+                let initPos = stream.Position
+                let hasNext = ref (br.ReadBoolean())
+                let cnt = ref 0
+                let curr = ref Unchecked.defaultof<'T>
+                {
+                    new IEnumerator<'T> with
+                        member __.Current = !curr
+                        member __.Current = box !curr
+                        member __.Dispose () = (r :> IDisposable).Dispose ()
+                        member __.MoveNext () =
+                            if !hasNext then
+                                curr := read !cnt
+                                hasNext := br.ReadBoolean()
+                                incr cnt
+                                true
+                            else
+                                false
+
+                        member __.Reset () =
+                            stream.Position <- initPos
+                            hasNext := br.ReadBoolean()
+                            cnt := 0
+                            curr := Unchecked.defaultof<'T>
+                            do flushState ()
+                }
 
         interface IDisposable with
             member __.Dispose () = br.Dispose ()

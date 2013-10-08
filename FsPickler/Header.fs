@@ -29,6 +29,9 @@
 
     module internal Header =
 
+        [<Literal>]
+        let sequenceCounterResetThreshold = 1000
+
         /// builds type info enumeration out of reflection info
         let computeTypeInfo (t : Type) =
             if t.IsPrimitive then TypeInfo.Primitive

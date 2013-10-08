@@ -25,7 +25,7 @@
 
         let testMembers (t : Type) =
             let members = t.GetMembers(BindingFlags.Public ||| BindingFlags.NonPublic ||| BindingFlags.Instance ||| BindingFlags.Static)
-            for m in members do test m 
+            for m in members do test m
 
         abstract TestSerializer : 'T -> byte []
         abstract TestDeserializer : byte [] -> obj
@@ -309,6 +309,48 @@
                 raise <| new AssertionException(msg)
             else
                 printfn "Failed Serializations: %d out of %d." failedResults results.Length
+
+
+        [<Test>]
+        member __.``Int Sequence Serialization`` () =
+            testSequence [1 .. 10000] |> should equal true
+            testSequence [|1 .. 10000|] |> should equal true
+            
+            let customSeq =
+                seq {
+                    let cnt = ref 0
+                    while !cnt < 100 do
+                        yield 2 * !cnt
+                        incr cnt
+                }
+
+            testSequence customSeq |> should equal true
+
+        [<Test>]
+        member __.``String Sequence Serialization`` () =
+            testSequence (List.map string [1 .. 10000]) |> should equal true
+            testSequence (Array.map string [|1 .. 10000|]) |> should equal true
+
+            let customSeq =
+                seq {
+                    yield "string0"
+                    for i in 1 .. 10 do
+                        yield sprintf "string%d" i
+                }
+
+            testSequence customSeq |> should equal true
+
+        [<Test>]
+        member __.``Pair Sequence Serialization`` () =
+            testSequence ([1..10000] |> List.map (fun i -> string i, i)) |> should equal true
+            
+            let customSeq =
+                seq {
+                    for i in 1 .. 10000 do
+                        yield (string i, i)
+                }
+
+            testSequence customSeq |> should equal true
 
 
 

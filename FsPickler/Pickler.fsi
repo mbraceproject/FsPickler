@@ -3,6 +3,8 @@
     open System
     open System.IO
     open System.Text
+    open System.Collections
+    open System.Collections.Generic
     open System.Runtime.Serialization
 
     /// The base type for all picklers
@@ -24,6 +26,10 @@
             // untyped version of reader/writers
             abstract member internal UntypedRead : Reader -> obj
             abstract member internal UntypedWrite : Writer -> obj -> unit
+
+            // used internally for reading/writing sequences to the underlying stream
+            abstract member internal WriteSequence : Writer -> IEnumerable -> unit
+            abstract member internal ReadSequence : Reader -> IEnumerator
 
             // used for recursive binding of picklers
             abstract member internal InitializeFrom : Pickler -> unit
@@ -115,9 +121,9 @@
             /// <param name="value">The input value.</param>
             member Write : pickler:Pickler<'T> * value:'T -> unit
 
-            /// internal unsafe serialization method
-            member internal WriteObj : t:Type * o:obj -> unit
-
+            /// used internally for optimized writing of sequences to the underlying stream.
+            /// must only be performed as a top-level-operation
+            member internal WriteSequence<'T> : Pickler<'T> * sequence:seq<'T> -> unit
         end
 
     /// Deserialization State object
@@ -142,10 +148,11 @@
             /// <summary>Deserialize value from the underlying stream using the given pickler.</summary>
             /// <param name="pickler">Pickler used in deserialization.</param>
             member Read : pickler:Pickler<'T> -> 'T
-
-            /// internal unsafe deserialization method
-            member internal ReadObj : Type -> obj
         
             /// used internaly for cyclic object graphs
             member internal EarlyRegisterObject : obj -> unit
+
+            /// used internally for optimized reading of sequences from the underlying stream.
+            /// must only be performed as a top-level-operation
+            member internal ReadSequence<'T> : Pickler<'T> -> IEnumerator<'T>
         end
