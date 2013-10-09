@@ -97,8 +97,8 @@
         abstract member ManagedWrite : Writer -> obj -> unit
         abstract member ManagedRead : Reader -> obj
 
-        abstract member WriteSequence : Writer -> IEnumerable -> unit
-        abstract member ReadSequence : Reader -> IEnumerator
+        abstract member WriteSequence : Writer * IEnumerable -> int
+        abstract member ReadSequence : Reader * int -> IEnumerator
 
         abstract member Cast<'S> : unit -> Pickler<'S>
         abstract member ClonePickler : unit -> Pickler
@@ -168,8 +168,8 @@
         override f.UntypedRead (r : Reader) = f.m_reader r :> obj
         override f.ManagedWrite (w : Writer) (o : obj) = w.Write(f, fastUnbox<'T> o)
         override f.ManagedRead (r : Reader) = r.Read f :> obj
-        override f.WriteSequence (w : Writer) (e : IEnumerable) = w.WriteSequence(f, e :?> seq<'T>)
-        override f.ReadSequence (r : Reader) = r.ReadSequence f :> IEnumerator
+        override f.WriteSequence (w : Writer, e : IEnumerable) = w.WriteSequence(f, e :?> seq<'T>)
+        override f.ReadSequence (r : Reader, length : int) = r.ReadSequence(f, length) :> IEnumerator
 
         override f.ClonePickler () =
             if f.IsInitialized then
@@ -312,7 +312,7 @@
         member w.Write<'T>(t : 'T) = let f = resolver.Resolve<'T> () in w.Write(f, t)
 
         // efficient sequence serialization; must be used as top-level operation only
-        member internal w.WriteSequence<'T>(f : Pickler<'T>, xs : seq<'T>) =
+        member internal w.WriteSequence<'T>(f : Pickler<'T>, xs : seq<'T>) : int =
             let inline flushState () =
                 idGen <- new ObjectIDGenerator()
                 
@@ -330,32 +330,30 @@
                 else
                     bw.Write false 
                     f.Write w x
+
+            // write sequence header
+            bw.Write(ObjHeader.create f.TypeHash ObjHeader.isSequenceHeader)
             
             // specialize enumeration
             match xs with
             | :? ('T []) as array ->
-                bw.Write true
-                bw.Write array.Length
-                for i = 0 to array.Length - 1 do
+                let n = array.Length
+                for i = 0 to n - 1 do
                     write i array.[i]
-
+                n
             | :? ('T list) as list ->
-                bw.Write true
-                bw.Write list.Length
                 let rec writeLst i lst =
                     match lst with
-                    | [] -> ()
+                    | [] -> i
                     | hd :: tl -> write i hd ; writeLst (i+1) tl
 
                 writeLst 0 list
             | _ ->
-                bw.Write false
                 let mutable i = 0
                 for x in xs do
-                    bw.Write true
                     write i x
                     i <- i + 1
-                bw.Write false
+                i
 
         interface IDisposable with
             member __.Dispose () = bw.Dispose ()
@@ -453,7 +451,7 @@
         member r.Read<'T> () : 'T = let f = resolver.Resolve<'T> () in r.Read f
 
         // efficient sequence deserialization; must be used as top-level operation only
-        member internal r.ReadSequence<'T> (f : Pickler<'T>) =
+        member internal r.ReadSequence<'T> (f : Pickler<'T>, length : int) =
             let inline flushState () =
                 objCache.Clear ()
                 counter <- 1L
@@ -470,59 +468,36 @@
                 elif br.ReadBoolean () then fastUnbox<'T> null
                 else
                     f.Read r
+            
+            // read object header
+            match ObjHeader.read f.Type f.TypeHash (br.ReadUInt32()) with
+            | ObjHeader.isSequenceHeader -> ()
+            | _ -> 
+                let msg = "FsPickler: invalid stream data; expected object stream."
+                raise <| new SerializationException(msg)
 
-            if br.ReadBoolean() then
-                // build enumerator with predetermined length
-                let length = br.ReadInt32()
-                let cnt = ref 0
-                let curr = ref Unchecked.defaultof<'T>
-                let initPos = stream.Position
-                {
-                    new IEnumerator<'T> with
-                        member __.Current = !curr
-                        member __.Current = box !curr
-                        member __.Dispose () = (r :> IDisposable).Dispose ()
-                        member __.MoveNext () =
-                            if !cnt < length then
-                                curr := read !cnt
-                                incr cnt
-                                true
-                            else
-                                false
+            let cnt = ref 0
+            let curr = ref Unchecked.defaultof<'T>
+            let initPos = stream.Position
+            {
+                new IEnumerator<'T> with
+                    member __.Current = !curr
+                    member __.Current = box !curr
+                    member __.Dispose () = (r :> IDisposable).Dispose ()
+                    member __.MoveNext () =
+                        if !cnt < length then
+                            curr := read !cnt
+                            incr cnt
+                            true
+                        else
+                            false
 
-                        member __.Reset () =
-                            stream.Position <- initPos
-                            curr := Unchecked.defaultof<'T>
-                            cnt := 0
-                            do flushState ()
-                }
-            else
-                // build enumerator with unknown length
-                let initPos = stream.Position
-                let hasNext = ref (br.ReadBoolean())
-                let cnt = ref 0
-                let curr = ref Unchecked.defaultof<'T>
-                {
-                    new IEnumerator<'T> with
-                        member __.Current = !curr
-                        member __.Current = box !curr
-                        member __.Dispose () = (r :> IDisposable).Dispose ()
-                        member __.MoveNext () =
-                            if !hasNext then
-                                curr := read !cnt
-                                hasNext := br.ReadBoolean()
-                                incr cnt
-                                true
-                            else
-                                false
-
-                        member __.Reset () =
-                            stream.Position <- initPos
-                            hasNext := br.ReadBoolean()
-                            cnt := 0
-                            curr := Unchecked.defaultof<'T>
-                            do flushState ()
-                }
+                    member __.Reset () =
+                        stream.Position <- initPos
+                        curr := Unchecked.defaultof<'T>
+                        cnt := 0
+                        do flushState ()
+            }
 
         interface IDisposable with
             member __.Dispose () = br.Dispose ()

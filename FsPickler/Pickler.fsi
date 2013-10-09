@@ -28,8 +28,8 @@
             abstract member internal UntypedWrite : Writer -> obj -> unit
 
             // used internally for reading/writing sequences to the underlying stream
-            abstract member internal WriteSequence : Writer -> IEnumerable -> unit
-            abstract member internal ReadSequence : Reader -> IEnumerator
+            abstract member internal WriteSequence : Writer * IEnumerable -> int
+            abstract member internal ReadSequence : Reader * int -> IEnumerator
 
             // used for recursive binding of picklers
             abstract member internal InitializeFrom : Pickler -> unit
@@ -123,7 +123,7 @@
 
             /// used internally for optimized writing of sequences to the underlying stream.
             /// must only be performed as a top-level-operation
-            member internal WriteSequence<'T> : Pickler<'T> * sequence:seq<'T> -> unit
+            member internal WriteSequence<'T> : Pickler<'T> * sequence:seq<'T> -> int
         end
 
     /// Deserialization State object
@@ -154,5 +154,5 @@
 
             /// used internally for optimized reading of sequences from the underlying stream.
             /// must only be performed as a top-level-operation
-            member internal ReadSequence<'T> : Pickler<'T> -> IEnumerator<'T>
+            member internal ReadSequence<'T> : Pickler<'T> * int -> IEnumerator<'T>
         end

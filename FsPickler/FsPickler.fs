@@ -105,6 +105,7 @@
         /// <param name="streamingContext">untyped parameter passed to the streaming context.</param>
         /// <param name="encoding">encoding passed to the binary reader.</param>
         /// <param name="leaveOpen">leave underlying stream open when finished. Defaults to true.</param>
+        /// <return>number of elements written to the stream.</return>
         member __.Deserialize (pickler : Pickler, stream : Stream, ?streamingContext : obj, ?encoding, ?leaveOpen) : obj =
             use reader = new Reader(stream, resolver, ?streamingContext = streamingContext, ?encoding = encoding, ?leaveOpen = leaveOpen)
             pickler.ManagedRead reader
@@ -115,7 +116,7 @@
         /// <param name="streamingContext">untyped parameter passed to the streaming context.</param>
         /// <param name="encoding">encoding passed to the binary reader.</param>
         /// <param name="leaveOpen">leave underlying stream open when finished. Defaults to true.</param>
-        member __.SerializeSequence<'T>(stream : Stream, sequence:seq<'T>, ?streamingContext : obj, ?encoding, ?leaveOpen) : unit =
+        member __.SerializeSequence<'T>(stream : Stream, sequence:seq<'T>, ?streamingContext : obj, ?encoding, ?leaveOpen) : int =
             use writer = new Writer(stream, resolver, ?encoding = encoding, ?leaveOpen = leaveOpen)
             let pickler = resolver.Resolve<'T> ()
             writer.WriteSequence(pickler, sequence)
@@ -127,33 +128,36 @@
         /// <param name="streamingContext">untyped parameter passed to the streaming context.</param>
         /// <param name="encoding">encoding passed to the binary reader.</param>
         /// <param name="leaveOpen">leave underlying stream open when finished. Defaults to true.</param>
-        member __.SerializeSequence(elementType : Type, stream : Stream, sequence : IEnumerable, ?streamingContext : obj, ?encoding, ?leaveOpen) : unit =
+        /// <return>number of elements written to the stream.</return>
+        member __.SerializeSequence(elementType : Type, stream : Stream, sequence : IEnumerable, ?streamingContext : obj, ?encoding, ?leaveOpen) : int =
             use writer = new Writer(stream, resolver, ?encoding = encoding, ?leaveOpen = leaveOpen)
             let pickler = resolver.Resolve elementType
-            pickler.WriteSequence writer sequence
+            pickler.WriteSequence(writer, sequence)
 
         /// <summary>Lazily deserialize a sequence of objects from the underlying stream.</summary>
         /// <param name="stream">source stream.</param>
+        /// <param name="length">number of elements to be deserialized.</param>
         /// <param name="streamingContext">untyped parameter passed to the streaming context.</param>
         /// <param name="encoding">encoding passed to the binary reader.</param>
         /// <param name="leaveOpen">leave underlying stream open when finished. Defaults to true.</param>
         /// <returns>An IEnumerator that lazily consumes elements from the stream.</returns>
-        member __.DeserializeSequence<'T>(stream : Stream, ?streamingContext : obj, ?encoding, ?leaveOpen) : IEnumerator<'T> =
+        member __.DeserializeSequence<'T>(stream : Stream, length : int, ?streamingContext : obj, ?encoding, ?leaveOpen) : IEnumerator<'T> =
             let reader = new Reader(stream, resolver, ?encoding = encoding, ?leaveOpen = leaveOpen)
             let pickler = resolver.Resolve<'T> ()
-            reader.ReadSequence(pickler)
+            reader.ReadSequence(pickler, length)
 
         /// <summary>Lazily deserialize a sequence of objects from the underlying stream.</summary>
         /// <param name="elementType">element type used in sequence.</param>
         /// <param name="stream">source stream.</param>
+        /// <param name="length">number of elements to be deserialized.</param>
         /// <param name="streamingContext">untyped parameter passed to the streaming context.</param>
         /// <param name="encoding">encoding passed to the binary reader.</param>
         /// <param name="leaveOpen">leave underlying stream open when finished. Defaults to true.</param>
         /// <returns>An IEnumerator that lazily consumes elements from the stream.</returns>
-        member __.DeserializeSequence(elementType : Type, stream : Stream, ?streamingContext : obj, ?encoding, ?leaveOpen) : IEnumerator =
+        member __.DeserializeSequence(elementType : Type, stream : Stream, length : int, ?streamingContext : obj, ?encoding, ?leaveOpen) : IEnumerator =
             let reader = new Reader(stream, resolver, ?encoding = encoding, ?leaveOpen = leaveOpen)
             let pickler = resolver.Resolve elementType
-            pickler.ReadSequence reader
+            pickler.ReadSequence(reader, length)
 
         /// creates a byte array pickle out of given pickler and value
         member __.Pickle (pickler : Pickler<'T>) (value : 'T) : byte [] =

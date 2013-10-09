@@ -94,6 +94,8 @@
             let isOldCachedInstance = 8uy
             [<Literal>]
             let isCyclicInstance    = 16uy
+            [<Literal>]
+            let isSequenceHeader    = 32uy
 
             let inline hasFlag (h : byte) (flag : byte) = h &&& flag = flag
         
@@ -102,9 +104,9 @@
 
             let inline read (t : Type) (hash : TypeHash) (header : uint32) =
                 if byte header <> initByte then
-                    raise <| new SerializationException ("Stream error: invalid serialization data.")
+                    raise <| new SerializationException ("FsPickler: invalid stream data.")
                 elif uint16 (header >>> 8) <> hash then
-                    let msg = sprintf "Stream error: next object is of unexpected type (anticipated %O)." t
+                    let msg = sprintf "FsPickler: next object is of unexpected type (anticipated %O)." t
                     raise <| new SerializationException(msg)
                 else 
                     byte (header >>> 24)
