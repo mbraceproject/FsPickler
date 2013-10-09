@@ -216,10 +216,10 @@
         // test provision for top-level sequence serialization
         let testSequence<'T when 'T : equality> (xs : seq<'T>) =
             use m = new MemoryStream()
-            testSerializer.FSCS.SerializeSequence(m, xs)
+            let length = testSerializer.FSCS.SerializeSequence(m, xs)
             m.Position <- 0L
             use enum = xs.GetEnumerator()
-            use enum' = testSerializer.FSCS.DeserializeSequence<'T>(m)
+            use enum' = testSerializer.FSCS.DeserializeSequence<'T>(m, length)
             let mutable success = true
             while success && enum.MoveNext() do 
                 if enum'.MoveNext() && enum.Current = enum'.Current then ()

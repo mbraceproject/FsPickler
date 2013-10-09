@@ -35,7 +35,7 @@
         /// set pickler id based on set of source picklers
         /// will result in error if source picklers have conflicting source ids
         /// used with external combinator library
-        let inline setPicklerId< ^T when ^T :> Pickler> (sourcePicklers : seq<Pickler>) (targetPickler : ^T) =
+        let setPicklerId<'T when 'T :> Pickler> (sourcePicklers : seq<Pickler>) (targetPickler : ^T) =
             let mutable current = null
             for p in sourcePicklers do
                 match p.CacheId with
@@ -62,7 +62,7 @@
         //  internal read/write combinators
         //
 
-        let inline isValue (f : Pickler) = f.TypeInfo <= TypeInfo.Value
+        let inline isValue (f : Pickler) = f.TypeKind <= TypeKind.Value
 
         let inline write bypass (w : Writer) (f : Pickler<'T>) (x : 'T) =
             if bypass then f.Write w x

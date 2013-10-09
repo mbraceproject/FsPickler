@@ -22,7 +22,7 @@
         val mutable private m_isInitialized : bool
 
         val mutable private m_pickler_type : Type
-        val mutable private m_typeInfo : TypeInfo
+        val mutable private m_TypeKind : TypeKind
         val mutable private m_typeHash : TypeHash
 
         val mutable private m_picklerInfo : PicklerInfo
@@ -39,7 +39,7 @@
                 m_isInitialized = false ;
 
                 m_pickler_type = Unchecked.defaultof<_> ; 
-                m_typeInfo = Unchecked.defaultof<_> ; 
+                m_TypeKind = Unchecked.defaultof<_> ; 
                 m_typeHash = Unchecked.defaultof<_> ;
                 m_picklerInfo = Unchecked.defaultof<_> ; 
                 m_isCacheByRef = Unchecked.defaultof<_> ; 
@@ -57,7 +57,7 @@
                 m_isInitialized = true ;
 
                 m_pickler_type = picklerType ; 
-                m_typeInfo = computeTypeInfo picklerType ; 
+                m_TypeKind = computeTypeKind picklerType ; 
                 m_typeHash = computeTypeHash picklerType ;
 
                 m_picklerInfo = picklerInfo ;
@@ -70,7 +70,7 @@
         member f.Type = f.declared_type
         member f.IsRecursiveType = f.is_recursive_type
 
-        member internal f.TypeInfo = f.m_typeInfo
+        member internal f.TypeKind = f.m_TypeKind
         member internal f.TypeHash = f.m_typeHash
 
         member f.CacheId
@@ -115,7 +115,7 @@
                 f.m_pickler_type <- f'.m_pickler_type
                 f.m_cache_id <- f'.m_cache_id
                 f.m_typeHash <- f'.m_typeHash
-                f.m_typeInfo <- f'.m_typeInfo
+                f.m_TypeKind <- f'.m_TypeKind
                 f.m_picklerInfo <- f'.m_picklerInfo
                 f.m_isCacheByRef <- f'.m_isCacheByRef
                 f.m_useWithSubtypes <- f'.m_useWithSubtypes
@@ -230,22 +230,29 @@
         member w.StreamingContext = sc
 
         member internal w.Resolver = resolver
+        
+//        member internal w.TryWriteFromCache(o : obj) : bool =
+//            let id, firstOccurence = idGen.GetId o
+//            bw.Write firstOccurence
+//            if firstOccurence then false
+//            else
+//                bw.Write id ; true
 
         // the primary serialization routine; handles all the caching, subtype resolution logic, etc
         member w.Write<'T> (fmt : Pickler<'T>, x : 'T) =
 
             let inline writeHeader (flags : byte) =
                 bw.Write(ObjHeader.create fmt.TypeHash flags)
-
-            let inline writeType (t : Type) =
-                let id, firstOccurence = idGen.GetId t
-                bw.Write firstOccurence
-                if firstOccurence then tyPickler.Write w t
-                else
-                    bw.Write id
+//
+//            let inline writeType (t : Type) =
+//                let id, firstOccurence = idGen.GetId t
+//                bw.Write firstOccurence
+//                if firstOccurence then tyPickler.Write w t
+//                else
+//                    bw.Write id
 
             let inline write header =
-                if fmt.TypeInfo <= TypeInfo.Sealed || fmt.UseWithSubtypes then
+                if fmt.TypeKind <= TypeKind.Sealed || fmt.UseWithSubtypes then
                     writeHeader header
                     fmt.Write w x
                 else
@@ -254,13 +261,13 @@
                     if t0 <> fmt.Type then
                         let fmt' = resolver.Resolve t0
                         writeHeader (header ||| ObjHeader.isProperSubtype)
-                        writeType t0
+                        tyPickler.Write w t0
                         fmt'.UntypedWrite w x
                     else
                         writeHeader header
                         fmt.Write w x
 
-            if fmt.TypeInfo <= TypeInfo.Value then 
+            if fmt.TypeKind <= TypeKind.Value then 
                 writeHeader ObjHeader.empty
                 fmt.Write w x
 
@@ -285,8 +292,8 @@
 
                     do cyclicObjects.Add(id) |> ignore
                     
-                    if fmt.TypeInfo <= TypeInfo.Sealed || fmt.UseWithSubtypes then
-                        if fmt.TypeInfo = TypeInfo.Array then
+                    if fmt.TypeKind <= TypeKind.Sealed || fmt.UseWithSubtypes then
+                        if fmt.TypeKind = TypeKind.Array then
                             writeHeader ObjHeader.isOldCachedInstance
                         else
                             writeHeader ObjHeader.isCyclicInstance
@@ -297,7 +304,7 @@
                             writeHeader ObjHeader.isOldCachedInstance
                         elif t <> fmt.Type then
                             writeHeader (ObjHeader.isCyclicInstance ||| ObjHeader.isProperSubtype)
-                            writeType t
+                            tyPickler.Write w t
                         else
                             writeHeader ObjHeader.isCyclicInstance
 
@@ -316,7 +323,7 @@
             let inline flushState () =
                 idGen <- new ObjectIDGenerator()
                 
-            let isPrimitive = f.TypeInfo = TypeInfo.Primitive
+            let isPrimitive = f.TypeKind = TypeKind.Primitive
             let isNonAtomic = f.PicklerInfo <> PicklerInfo.Atomic
 
             let inline write idx (x : 'T) =
@@ -385,22 +392,34 @@
 
         member internal r.Resolver = resolver
 
+//        member internal r.TryReadFromCache(success : byref<bool>) : obj =
+//            if r.BinaryReader.ReadBoolean() then
+//                success <- false
+//                null
+//            else
+//                let id = br.ReadInt64()
+//                success <- true
+//                objCache.[id]
+
+//        member internal r.CacheObj(o : obj) =
+//            objCache.Add(counter, o) ; counter <- counter + 1L
+
         // the primary deserialization routine; handles all the caching, subtype resolution logic, etc
         member r.Read(fmt : Pickler<'T>) : 'T =
 
-            let inline readType () =
-                if br.ReadBoolean () then
-                    let t = tyPickler.Read r
-                    objCache.Add(counter, t)
-                    counter <- counter + 1L
-                    t
-                else
-                    let id = br.ReadInt64()
-                    objCache.[id] |> fastUnbox<Type>
+//            let inline readType () =
+//                if br.ReadBoolean () then
+//                    let t = tyPickler.Read r
+//                    objCache.Add(counter, t)
+//                    counter <- counter + 1L
+//                    t
+//                else
+//                    let id = br.ReadInt64()
+//                    objCache.[id] |> fastUnbox<Type>
 
             let inline read flags =
                 if ObjHeader.hasFlag flags ObjHeader.isProperSubtype then
-                    let t = readType ()
+                    let t = tyPickler.Read r
                     let fmt' = resolver.Resolve t
                     fmt'.UntypedRead r |> fastUnbox<'T>
                 else
@@ -409,13 +428,13 @@
             let flags = ObjHeader.read fmt.Type fmt.TypeHash (br.ReadUInt32())
 
             if ObjHeader.hasFlag flags ObjHeader.isNull then fastUnbox<'T> null
-            elif fmt.TypeInfo <= TypeInfo.Value then fmt.Read r
+            elif fmt.TypeKind <= TypeKind.Value then fmt.Read r
             elif ObjHeader.hasFlag flags ObjHeader.isCyclicInstance then
                 // came across a nested instance of a cyclic object
                 // crete an uninitialized object to the cache and schedule
                 // reflection-based fixup at the root level.
                 let t =
-                    if ObjHeader.hasFlag flags ObjHeader.isProperSubtype then readType ()
+                    if ObjHeader.hasFlag flags ObjHeader.isProperSubtype then tyPickler.Read r
                     else fmt.Type
 
                 let id = br.ReadInt64()
@@ -456,7 +475,7 @@
                 objCache.Clear ()
                 counter <- 1L
 
-            let isPrimitive = f.TypeInfo = TypeInfo.Primitive
+            let isPrimitive = f.TypeKind = TypeKind.Primitive
             let isNonAtomic = f.PicklerInfo <> PicklerInfo.Atomic
 
             let read idx =

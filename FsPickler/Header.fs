@@ -7,7 +7,7 @@
 
     type TypeHash = uint16
 
-    type TypeInfo =
+    type TypeKind =
         | Primitive = 0
         | Enum = 1
         | Value = 2
@@ -33,14 +33,14 @@
         let sequenceCounterResetThreshold = 1000
 
         /// builds type info enumeration out of reflection info
-        let computeTypeInfo (t : Type) =
-            if t.IsPrimitive then TypeInfo.Primitive
-            elif t.IsEnum then TypeInfo.Enum
-            elif t.IsValueType then TypeInfo.Value
-            elif t.IsArray then TypeInfo.Array
-            elif t.IsSealed then TypeInfo.Sealed
-            elif t.IsAbstract then TypeInfo.Abstract
-            else TypeInfo.NonSealed
+        let computeTypeKind (t : Type) =
+            if t.IsPrimitive then TypeKind.Primitive
+            elif t.IsEnum then TypeKind.Enum
+            elif t.IsValueType then TypeKind.Value
+            elif t.IsArray then TypeKind.Array
+            elif t.IsSealed then TypeKind.Sealed
+            elif t.IsAbstract then TypeKind.Abstract
+            else TypeKind.NonSealed
 
         // build a rudimentary 16-bit hash out of a given type
         // this should be runtime-invariant and not dependent on

@@ -7,6 +7,7 @@
         
         open System
         open System.Collections.Generic
+        open System.Collections.Concurrent
         open System.IO
         open System.Reflection
         open System.Threading
@@ -83,6 +84,18 @@
             match ctx with 
             | None -> StreamingContext() 
             | Some o -> StreamingContext(StreamingContextStates.All, o)
+
+        /// thread-safe memo operator
+        let memoize (f : 'K -> 'V) =
+            let d = new ConcurrentDictionary<'K, 'V> ()
+
+            fun (k : 'K) ->
+                let found, value = d.TryGetValue k
+                if found then value
+                else
+                    let v = f k
+                    let _ = d.TryAdd(k, v)
+                    v
 
 
         // produces a structural hashcode out of a byte array

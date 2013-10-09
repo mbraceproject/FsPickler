@@ -4,7 +4,7 @@
 
     open FsPickler.PicklerUtils
     open FsPickler.BasePicklers
-    open FsPickler.ReflectionPicklers
+    open FsPickler.DotNetPicklers
     open FsPickler.CombinatorImpls
 
     module Combinators =
@@ -77,13 +77,13 @@
             /// FSharp set pickler combinator
             let set f = FSharpSetPickler.Create f |> setPicklerId [uc f]
             /// array pickler combinator
-            let array f = DotNetPicklers.ArrayPickler.Create<'T, 'T []> f |> setPicklerId [uc f]
+            let array f = ArrayPickler.Create<'T, 'T []> f |> setPicklerId [uc f]
             /// array2D pickler combinator
-            let array2D f = DotNetPicklers.ArrayPickler.Create<'T, 'T [,]> f |> setPicklerId [uc f]
+            let array2D f = ArrayPickler.Create<'T, 'T [,]> f |> setPicklerId [uc f]
             /// array3D pickler combinator
-            let array3D f = DotNetPicklers.ArrayPickler.Create<'T, 'T [,,]> f |> setPicklerId [uc f]
+            let array3D f = ArrayPickler.Create<'T, 'T [,,]> f |> setPicklerId [uc f]
             /// array4D pickler combinator
-            let array4D f = DotNetPicklers.ArrayPickler.Create<'T, 'T [,,,]> f |> setPicklerId [uc f]
+            let array4D f = ArrayPickler.Create<'T, 'T [,,,]> f |> setPicklerId [uc f]
             /// sequence pickler combinator ; uses eager evaluation
             let seq f = SeqPickler.Create f |> setPicklerId [uc f]
             /// sequence of pairs pickler combinator ; uses eager evaluation

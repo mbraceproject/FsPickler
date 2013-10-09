@@ -7,6 +7,7 @@
     open FsPickler.Utils
     open FsPickler.TypeShape
     open FsPickler.BasePicklers
+    open FsPickler.ReflectionPicklers
     open FsPickler.CombinatorImpls
     open FsPickler.PicklerResolution
 
@@ -24,7 +25,7 @@
 
         /// register pickler for a specific type
         member __.RegisterPickler(pickler : Pickler) =
-            if pickler.TypeInfo = TypeInfo.Primitive then 
+            if pickler.TypeKind = TypeKind.Primitive then 
                 invalidArg "pickler" "defining custom picklers for primitives not supported."
 
             customPicklers.Swap(fun fmts -> fmts.AddNoOverwrite(pickler.Type.AssemblyQualifiedName, pickler))
@@ -55,7 +56,6 @@
         let tyConv =
             match tyConv with 
             | Some tc -> tc 
-            | None when runsOnMono -> new MonoTypeNameConverter() :> _
             | None -> new DefaultTypeNameConverter() :> _
 
         // include default pickler factories

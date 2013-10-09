@@ -54,7 +54,7 @@
 
             member internal IsInitialized : bool
             member internal TypeHash : TypeHash
-            member internal TypeInfo : TypeInfo
+            member internal TypeKind : TypeKind
             
         end
 
@@ -106,6 +106,8 @@
             /// <summary>The Pickler resolver used by the writer.</summary>
             member internal Resolver : IPicklerResolver
 
+//            member internal TryWriteFromCache : o:obj -> bool
+
             /// <summary>StreamingContext of the current serialization.</summary>
             member StreamingContext : StreamingContext
 
@@ -135,6 +137,10 @@
 
             /// <summary>The Pickler resolver used by the reader.</summary>
             member internal Resolver : IPicklerResolver
+
+//            /// used for external cache evaluation
+//            member internal TryReadFromCache : success:byref<bool> -> obj
+//            member internal CacheObj : obj -> unit
         
             /// <summary>StreamingContext of the current deserialization.</summary>
             member StreamingContext : StreamingContext

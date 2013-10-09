@@ -45,7 +45,6 @@
     <Compile Include="Types.fs" />
     <Compile Include="PicklerUtils.fs" />
     <Compile Include="ExpressionTrees.fs" />
-    <Compile Include="TypeNameConverter.fs" />
     <Compile Include="BasePicklers.fs" />
     <Compile Include="ReflectionPicklers.fs" />
     <Compile Include="DotNetPicklers.fs" />
