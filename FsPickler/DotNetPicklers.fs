@@ -15,12 +15,13 @@
     open FsPickler.BasePicklers
 
     let isUnSupportedType (t : Type) =
-        t.IsPointer
+        t.IsPointer 
+        || t = typeof<System.Reflection.Pointer>
         || t.IsByRef
         || t.IsCOMObject
         || t.IsImport
         || t.IsMarshalByRef
-        || t.IsPrimitive // supported primitives are already stored in the pickler cache
+        || t.IsPrimitive // supported primitives should be already stored in the pickler cache        
 
 
     // creates a placeholder pickler instance
@@ -260,31 +261,34 @@
             m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler
 
         static member Create<'Delegate when 'Delegate :> Delegate> (resolver : IPicklerResolver) =
+            let objPickler = resolver.Resolve<obj> ()
             let memberInfoPickler = resolver.Resolve<MethodInfo> ()
+            let delePickler = resolver.Resolve<System.Delegate> ()
+
             let writer (w : Writer) (dele : 'Delegate) =
                 match dele.GetInvocationList() with
                 | [| _ |] ->
                     w.BinaryWriter.Write true
                     w.Write(memberInfoPickler, dele.Method)
-                    if not dele.Method.IsStatic then w.Write<obj> dele.Target
+                    if not dele.Method.IsStatic then w.Write(objPickler, dele.Target)
                 | deleList ->
                     w.BinaryWriter.Write false
                     w.BinaryWriter.Write deleList.Length
                     for i = 0 to deleList.Length - 1 do
-                        w.Write<System.Delegate> (deleList.[i])
+                        w.Write<System.Delegate> (delePickler, deleList.[i])
 
             let reader (r : Reader) =
                 if r.BinaryReader.ReadBoolean() then
                     let meth = r.Read memberInfoPickler
                     if not meth.IsStatic then
-                        let target = r.Read<obj> ()
+                        let target = r.Read objPickler
                         Delegate.CreateDelegate(typeof<'Delegate>, target, meth, throwOnBindFailure = true) |> fastUnbox<'Delegate>
                     else
                         Delegate.CreateDelegate(typeof<'Delegate>, meth, throwOnBindFailure = true) |> fastUnbox<'Delegate>
                 else
                     let n = r.BinaryReader.ReadInt32()
                     let deleList = Array.zeroCreate<System.Delegate> n
-                    for i = 0 to n - 1 do deleList.[i] <- r.Read<System.Delegate> ()
+                    for i = 0 to n - 1 do deleList.[i] <- r.Read delePickler
                     Delegate.Combine deleList |> fastUnbox<'Delegate>
 
             new Pickler<'Delegate>(reader, writer, PicklerInfo.Delegate, cacheByRef = true, useWithSubtypes = false)
@@ -311,6 +315,8 @@
                 let onDeserialized = allMethods |> getSerializationMethods<OnDeserializedAttribute>
 
                 let isDeserializationCallback = typeof<IDeserializationCallback>.IsAssignableFrom typeof<'T>
+
+                let objPickler = resolver.Resolve<obj> ()
 #if EMIT_IL
                 let inline run (dele : Action<StreamingContext, 'T> option) w x =
                     match dele with
@@ -341,7 +347,7 @@
                     let enum = sI.GetEnumerator()
                     while enum.MoveNext() do
                         w.BinaryWriter.Write enum.Current.Name
-                        w.Write<obj> enum.Current.Value
+                        w.Write(objPickler, enum.Current.Value)
 
                     run onSerialized w x
 
@@ -350,7 +356,7 @@
                     let memberCount = r.BinaryReader.ReadInt32()
                     for i = 1 to memberCount do
                         let name = r.BinaryReader.ReadString()
-                        let v = r.Read<obj> ()
+                        let v = r.Read objPickler
                         sI.AddValue(name, v)
 
                     let x = create sI r.StreamingContext

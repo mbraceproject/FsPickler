@@ -1,6 +1,7 @@
 ﻿namespace FsPickler
 
     open System
+    open System.IO
     open System.Reflection
     open System.Runtime.Serialization
     
@@ -71,6 +72,18 @@
         let inline read bypass (r : Reader) (f : Pickler<'T>) =
             if bypass then f.Read r
             else r.Read f
+
+        /// safely serialize strings, including nulls
+        let inline writeStringSafe (bw : BinaryWriter) (x : string) =
+            if obj.ReferenceEquals(x, null) then bw.Write true
+            else
+                bw.Write false ; bw.Write x
+
+        /// safely deserialize strings, including nulls
+        let inline readStringSafe (br : BinaryReader) =
+            if br.ReadBoolean() then null
+            else
+                br.ReadString()
 
         // length passed as argument to avoid unecessary evaluations of sequence
         let inline writeSeq (w : Writer) (ef : Pickler<'T>) (length : int) (xs : seq<'T>) =

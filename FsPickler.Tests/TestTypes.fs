@@ -237,11 +237,7 @@
                 with _ -> true
 
             let tryActivate (t : Type) =
-                try
-                    let ctorFlags = BindingFlags.Public ||| BindingFlags.NonPublic ||| BindingFlags.Instance
-                    match t.GetConstructor(ctorFlags, null, [||], [||]) with
-                    | null -> None
-                    | ctorInfo -> Some (t, ctorInfo.Invoke [||])
+                try Some (t, Activator.CreateInstance t)
                 with _ -> None
 
             let bfs = new TestBinaryPickler()

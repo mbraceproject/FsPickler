@@ -31,7 +31,8 @@
         /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to true.</param>
         member __.Serialize<'T>(stream : Stream, value : 'T, ?streamingContext : obj, ?encoding, ?leaveOpen) : unit =
             use writer = new Writer(stream, resolver, ?streamingContext = streamingContext, ?encoding = encoding, ?leaveOpen = leaveOpen)
-            writer.Write<'T> value
+            let pickler = resolver.Resolve<'T> ()
+            writer.Write<'T>(pickler, value)
 
         /// <summary>Serialize value to the underlying stream using given pickler.</summary>
         /// <param name="pickler">pickler used for serialization.</param>
@@ -75,7 +76,8 @@
         /// <param name="leaveOpen">leave underlying stream open when finished. Defaults to true.</param>
         member __.Deserialize<'T> (stream : Stream, ?streamingContext : obj, ?encoding, ?leaveOpen) : 'T =
             use reader = new Reader(stream, resolver, ?streamingContext = streamingContext, ?encoding = encoding, ?leaveOpen = leaveOpen)
-            reader.Read<'T> ()
+            let pickler = resolver.Resolve<'T> ()
+            reader.Read<'T> pickler
 
         /// <summary>Deserialize value of given type from the underlying stream, using given pickler.</summary>
         /// <param name="pickler">pickler used for serialization.</param>

@@ -1,4 +1,4 @@
-﻿namespace FsPickler
+﻿module internal FsPickler.ReflectionPicklers
 
     open System
     open System.Globalization
@@ -11,160 +11,263 @@
     open FsPickler.Utils
     open FsPickler.PicklerUtils
 
-    module internal ReflectionPicklers =
 
-        let getAssemblyInfo (a : Assembly) =
+    /// replacement for the System.Reflection.AssemblyName type,
+    /// which does not implement proper equality semantics
+    type AssemblyInfo =
+        {
+            Name : string
+            Version : Version
+            CultureInfo : CultureInfo
+            PublicKeyToken : byte []
+        }
+    with
+        static member OfAssembly (a : Assembly) =
             let an = a.GetName()
             {
                 Name = an.Name
-                Version = an.Version.ToString()
+                Version = an.Version
                 CultureInfo = an.CultureInfo
                 PublicKeyToken = an.GetPublicKeyToken()
             }
 
-        let loadAssembly (aI : AssemblyInfo) =
+        static member ToAssembly (aI : AssemblyInfo) =
             let an = new AssemblyName()
             an.Name <- aI.Name
-            an.Version <- new Version(aI.Version)
+            an.Version <- aI.Version
             an.CultureInfo <- aI.CultureInfo
             an.SetPublicKeyToken(aI.PublicKeyToken)
             Assembly.Load(an)
 
+    // custom serialize/deserialize routines for TypeInfo records
+        
+    let writeTypeInfo (bw : BinaryWriter) (tI : TypeInfo) =
+        writeStringSafe bw tI.Name
+        writeStringSafe bw tI.AssemblyName
 
-        // type pickler definition
+        if obj.ReferenceEquals(tI.CultureInfo, null) then bw.Write true
+        else
+            bw.Write false
+            bw.Write tI.CultureInfo.LCID
 
-        let mkTypePickler (tyConv : ITypeNameConverter) =
-            let getAssemblyInfo = memoize getAssemblyInfo
-            let loadAssembly = memoize loadAssembly
-            let loadType = memoize (fun (a,n) -> FormatterServices.GetTypeFromAssembly(a,n))
+        if obj.ReferenceEquals(tI.Version, null) then bw.Write true
+        else
+            bw.Write false
+            bw.Write(tI.Version.ToString())
 
-            let rec writer (w : Writer) (t : Type) =
-                if t.IsGenericType && not t.IsGenericTypeDefinition then
-                    w.BinaryWriter.Write 0uy
-                    w.Write(tyPickler, t.GetGenericTypeDefinition())
-                    let gas = t.GetGenericArguments()
-                    w.BinaryWriter.Write gas.Length
-                    for ga in gas do
-                        w.Write(tyPickler, ga)
+        match tI.PublicKeyToken with
+        | null | [||] -> bw.Write true
+        | bytes ->
+            bw.Write false
+            bw.Write bytes
 
-                elif t.IsGenericParameter then
-                    w.BinaryWriter.Write 1uy
-                    let dt = t.DeclaringType
-                    let rank = dt.GetGenericArguments() |> Array.findIndex((=) t)
-                    w.Write(tyPickler, dt)
-                    w.BinaryWriter.Write rank
-                else
-                    w.BinaryWriter.Write 2uy
-                    let aI = getAssemblyInfo t.Assembly
-                    tyConv.Write w.BinaryWriter { FullName = t.FullName ; AssemblyInfo = aI }
+    let readTypeInfo (br : BinaryReader) =
+        let name = readStringSafe br
+        let assemblyName = readStringSafe br
+        let cI = 
+            if br.ReadBoolean() then null
+            else
+                new CultureInfo(br.ReadInt32())
 
-            and reader (r : Reader) : Type =
-                match r.BinaryReader.ReadByte() with
-                | 0uy ->
-                    let gt = r.Read tyPickler
-                    let n = r.BinaryReader.ReadInt32()
-                    let gas = Array.zeroCreate<Type> n
-                    for i = 0 to n - 1 do
-                        gas.[i] <- r.Read tyPickler
+        let version =
+            if br.ReadBoolean() then null
+            else
+                new Version(br.ReadString())
 
-                    gt.MakeGenericType gas
-                | 1uy ->
-                    let dt = r.Read tyPickler
-                    let idx = r.BinaryReader.ReadInt32()
-                    dt.GetGenericArguments().[idx]
-                | _ ->
-                    let tI = tyConv.Read r.BinaryReader
-                    let assembly = loadAssembly tI.AssemblyInfo
-                    FormatterServices.GetTypeFromAssembly(assembly, tI.FullName)
-//                    loadType(assembly, tI.FullName)
+        let pkt =
+            if br.ReadBoolean() then null
+            else
+                br.ReadBytes(8)
 
-            and tyPickler = mkPickler PicklerInfo.ReflectionType true true reader writer
-
-            tyPickler
+        {
+            Name = name
+            AssemblyName = assemblyName
+            CultureInfo = cI
+            Version = version
+            PublicKeyToken = pkt
+        }
 
 
-        let mkMemberInfoPickler typePickler =
-            let writer (w : Writer) (m : MemberInfo) =
-                w.Write(typePickler, m.ReflectedType)
-                match m with
-                | :? MethodInfo as m when m.IsGenericMethod && not m.IsGenericMethodDefinition ->
-                    let gm = m.GetGenericMethodDefinition()
-                    let ga = m.GetGenericArguments()
-                    w.BinaryWriter.Write (gm.ToString())
+    // resolve MemberInfo from a collection of members using given signature
+    let resolveBySignature<'T when 'T :> MemberInfo> (declaringType : Type) (signature : string) (members : 'T []) =
+        match members |> Array.tryFind(fun m -> m.ToString() = signature) with
+        | Some m -> fastUnbox<MemberInfo> m
+        | None ->
+            let msg = sprintf "FsPickler: could not locate '%s' in type '%O'." signature declaringType
+            raise <| new SerializationException(msg)
 
+
+    // System.Type & MemberInfo pickler definitions
+
+    let mkReflectionPicklers (tyConv : ITypeNameConverter) =
+
+        // memoize Assembly loaders
+
+        let getAssemblyInfo = memoize AssemblyInfo.OfAssembly
+        let loadAssembly = memoize AssemblyInfo.ToAssembly
+
+        //
+        // System.Type serialization logic
+        //
+
+        let rec writeType (w : Writer) (t : Type) =
+            if t.IsGenericType && not t.IsGenericTypeDefinition then
+                w.BinaryWriter.Write 0uy
+                w.Write(typePickler, t.GetGenericTypeDefinition())
+                let gas = t.GetGenericArguments()
+                w.BinaryWriter.Write gas.Length
+                for ga in gas do
+                    w.Write(typePickler, ga)
+
+            elif t.IsGenericParameter then
+                w.BinaryWriter.Write 1uy
+                w.BinaryWriter.Write t.GenericParameterPosition
+
+                match t.DeclaringMethod with
+                | null ->
+                    // is type-level generic parameter
                     w.BinaryWriter.Write true
-                    w.BinaryWriter.Write ga.Length
-                    for a in ga do w.Write(typePickler, a)
-                | _ ->
-                    w.BinaryWriter.Write (m.ToString())
+                    w.Write(typePickler, t.DeclaringType)
+                | dm ->
+                    // is method-level generic parameter
+                    w.BinaryWriter.Write false
+                    w.Write(memberInfoPickler, fastUnbox<MemberInfo> dm)
+            else
+                w.BinaryWriter.Write 2uy
+                let aI = getAssemblyInfo t.Assembly
+                let typeInfo =
+                    {
+                        Name = t.FullName
+                        AssemblyName = aI.Name
+                        CultureInfo = aI.CultureInfo
+                        Version = aI.Version
+                        PublicKeyToken = aI.PublicKeyToken
+                    }
+                    
+                do writeTypeInfo w.BinaryWriter (tyConv.OfSerializedType typeInfo)
+
+        and readType (r : Reader) : Type =
+            match r.BinaryReader.ReadByte() with
+            | 0uy ->
+                let gt = r.Read typePickler
+                let n = r.BinaryReader.ReadInt32()
+                let gas = Array.zeroCreate<Type> n
+                for i = 0 to n - 1 do
+                    gas.[i] <- r.Read typePickler
+
+                gt.MakeGenericType gas
+            | 1uy ->
+                let idx = r.BinaryReader.ReadInt32()
+                if r.BinaryReader.ReadBoolean() then
+                    let dt = r.Read typePickler
+                    dt.GetGenericArguments().[idx]
+                else
+                    let dm = r.Read memberInfoPickler |> fastUnbox<MethodInfo>
+                    dm.GetGenericArguments().[idx]
+            | _ ->
+                let tI = tyConv.ToDeserializedType (readTypeInfo r.BinaryReader)
+                let aI =
+                    {
+                        Name = tI.AssemblyName
+                        CultureInfo = tI.CultureInfo
+                        Version = tI.Version
+                        PublicKeyToken = tI.PublicKeyToken
+                    }
+                let assembly = loadAssembly aI
+                assembly.GetType(tI.Name, throwOnError = true)
+
+        //
+        // MemberInfo serialization logic
+        //
+
+        and writeMemberInfo (w : Writer) (m : MemberInfo) =
+            w.BinaryWriter.Write (byte m.MemberType)
+            match m.MemberType with
+            | MemberTypes.TypeInfo | MemberTypes.NestedType ->
+                typePickler.Write w (fastUnbox<Type> m)
+
+            | MemberTypes.Constructor ->
+                w.Write(typePickler, m.DeclaringType)
+                w.BinaryWriter.Write(m.ToString())
+
+            | MemberTypes.Method ->
+                let meth = fastUnbox<MethodInfo> m
+                if meth.IsGenericMethod && not meth.IsGenericMethodDefinition then
+                    w.BinaryWriter.Write true
+                    let gMeth = meth.GetGenericMethodDefinition()
+                    let tyArgs = meth.GetGenericArguments()
+
+                    w.BinaryWriter.Write tyArgs.Length
+                    for tyArg in tyArgs do w.Write(typePickler, tyArg)
+                    w.Write(memberInfoPickler, fastUnbox<MemberInfo> gMeth)
+                else
                     w.BinaryWriter.Write false
 
-            let reader (r : Reader) =
-                let t = r.Read typePickler
-                let mname = r.BinaryReader.ReadString()
-                let m = 
-                    try t.GetMembers(allMembers) |> Array.find (fun m -> m.ToString() = mname)
-                    with :? KeyNotFoundException ->
-                        raise <| new SerializationException(sprintf "FsPickler: could not deserialize member '%O.%s'" t.Name mname)
+                    w.Write(typePickler, m.DeclaringType)
 
+                    w.BinaryWriter.Write meth.IsStatic
+                    w.BinaryWriter.Write meth.IsPublic
+                    w.BinaryWriter.Write(m.ToString())
+            | _ ->
+                w.Write(typePickler, m.DeclaringType)
+                w.BinaryWriter.Write m.Name
+
+        and readMemberInfo (r : Reader) =
+            let memberType = enum<MemberTypes> (int <| r.BinaryReader.ReadByte())
+            match memberType with
+            | MemberTypes.TypeInfo | MemberTypes.NestedType ->
+                readType r |> fastUnbox<MemberInfo>
+
+            | MemberTypes.Constructor ->
+                let dt = r.Read typePickler
+                let signature = r.BinaryReader.ReadString()
+                dt.GetConstructors(allConstructors)
+                |> resolveBySignature dt signature
+
+            | MemberTypes.Method ->
                 if r.BinaryReader.ReadBoolean() then
                     let n = r.BinaryReader.ReadInt32()
-                    let ga = Array.zeroCreate<Type> n
-                    for i = 0 to n - 1 do ga.[i] <- r.Read typePickler
-                    (m :?> MethodInfo).MakeGenericMethod ga :> MemberInfo
+                    let tyArgs = Array.zeroCreate<Type> n
+                    for i = 0 to n - 1 do
+                        tyArgs.[i] <- r.Read typePickler
+
+                    let gMeth = r.Read memberInfoPickler |> fastUnbox<MethodInfo>
+                    gMeth.MakeGenericMethod tyArgs |> fastUnbox<MemberInfo>
                 else
-                    m
+                    let dt = r.Read typePickler
 
-            mkPickler PicklerInfo.ReflectionType true true reader writer
+                    let bf1 =
+                        if r.BinaryReader.ReadBoolean() then BindingFlags.Static
+                        else BindingFlags.Instance
 
+                    let bf2 =
+                        if r.BinaryReader.ReadBoolean() then BindingFlags.Public
+                        else BindingFlags.NonPublic
 
-        let mkReflectionPicklers tyConv =
-            let typePickler = mkTypePickler tyConv
-            let memberPickler = mkMemberInfoPickler typePickler
-            [
-                typePickler :> Pickler ; memberPickler :> _ ; 
-            ]
+                    let signature = r.BinaryReader.ReadString()
 
+                    dt.GetMethods(bf1 ||| bf2)
+                    |> resolveBySignature dt signature
 
-    type DefaultTypeNameConverter(?strongNames : bool) =
-        let strongNames = defaultArg strongNames true
+            | _ ->
+                let dt = r.Read typePickler
+                let name = r.BinaryReader.ReadString()
+                match dt.GetMember(name, memberType, allMembers) with
+                | [| m |] -> m
+                | [| |] -> 
+                    let msg = sprintf "FsPickler: could not locate %O '%s' in type '%O'." memberType name dt
+                    raise <| new SerializationException(msg)
+                | _ ->
+                    let msg = sprintf "FsPickler: ambiguous matches for %O '%s' in type '%O'." memberType name dt
+                    raise <| new SerializationException(msg)
 
-        interface ITypeNameConverter with
-            member __.Write (bw : BinaryWriter) (tI : TypeInfo) =
-                bw.Write tI.FullName
-                let aI = tI.AssemblyInfo
-                bw.Write aI.Name
-                if strongNames then
-                    bw.Write(aI.CultureInfo.LCID)
-                    bw.Write(aI.Version)
-                    match aI.PublicKeyToken with
-                    | null | [||] -> bw.Write false
-                    | bytes ->
-                        bw.Write true
-                        bw.Write aI.PublicKeyToken
+        and typePickler : Pickler<Type> = 
+            mkPickler PicklerInfo.ReflectionType true true readType writeType
 
-            member __.Read (br : BinaryReader) =
-                let name = br.ReadString()
-                let assemblyName = br.ReadString ()
-                let assemblyInfo =
-                    if strongNames then
-                        let lcid = br.ReadInt32()
-                        let version = br.ReadString()
-                        let pkt = 
-                            if br.ReadBoolean() then br.ReadBytes(8)
-                            else null
-                        {
-                            Name = assemblyName
-                            CultureInfo = new System.Globalization.CultureInfo(lcid)
-                            Version = version
-                            PublicKeyToken = pkt
-                        }
-                    else
-                        {
-                            Name = assemblyName
-                            CultureInfo = null
-                            Version = null
-                            PublicKeyToken = null
-                        }
+        and memberInfoPickler : Pickler<MemberInfo> = 
+            mkPickler PicklerInfo.ReflectionType true true readMemberInfo writeMemberInfo
 
-                { FullName = name ; AssemblyInfo = assemblyInfo }
+        let typeDelegatorPickler = 
+            mkPickler PicklerInfo.ReflectionType true true (fun r -> TypeDelegator(readType r)) (fun w t -> writeType w (t.AsType()))
+
+        [| memberInfoPickler :> Pickler ; typePickler :> Pickler ; typeDelegatorPickler :> Pickler |]

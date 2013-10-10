@@ -106,17 +106,11 @@
             /// <summary>The Pickler resolver used by the writer.</summary>
             member internal Resolver : IPicklerResolver
 
-//            member internal TryWriteFromCache : o:obj -> bool
-
             /// <summary>StreamingContext of the current serialization.</summary>
             member StreamingContext : StreamingContext
 
             /// <summary>BinaryWriter to underlying stream.</summary>
             member BinaryWriter : BinaryWriter
-
-            /// <summary>Serialize value to the underlying stream. Pickler is resolved at runtime.</summary>
-            /// <param name="value">The input value.</param>
-            member Write : value:'T -> unit
             
             /// <summary>Serialize value to the underlying stream using the given pickler.</summary>
             /// <param name="pickler">Pickler used in serialization.</param>
@@ -137,19 +131,12 @@
 
             /// <summary>The Pickler resolver used by the reader.</summary>
             member internal Resolver : IPicklerResolver
-
-//            /// used for external cache evaluation
-//            member internal TryReadFromCache : success:byref<bool> -> obj
-//            member internal CacheObj : obj -> unit
         
             /// <summary>StreamingContext of the current deserialization.</summary>
             member StreamingContext : StreamingContext
 
             /// <summary>BinaryReader to underlying stream.</summary> 
             member BinaryReader : BinaryReader
-
-            /// <summary>Deserialize value from the underlying stream. Pickler is resolved at runtime.</summary>
-            member Read : unit -> 'T
 
             /// <summary>Deserialize value from the underlying stream using the given pickler.</summary>
             /// <param name="pickler">Pickler used in deserialization.</param>

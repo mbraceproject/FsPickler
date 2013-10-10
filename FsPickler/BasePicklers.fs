@@ -55,98 +55,12 @@
 
 
     let mkAtomicPicklers () =
-        [ 
-            // primitives
-            mkByteP () :> Pickler ; mkSByteP () :> _ ; mkCharP () :> _ ; mkBoolP () :> _ ; mkDecimalP () :> _ ;
-            mkSingleP () :> _ ; mkFloatP () :> _ ; mkInt16P () :> _ ; mkInt32P () :> _ ; mkInt64P () :> _ ;
-            mkUInt16P () :> _ ; mkUInt32P () :> _ ; mkUInt64P () :> _
-            // misc atomic picklers
-            mkObjPickler () :> _ ; mkUnitP () :> _ ; mkDBNullPickler () :> _ ; mkStringPickler () :> _ ;
-            mkGuidPickler () :> _ ; mkTimeSpanPickler () :> _ ; mkDateTimePickler () :> _ ;
-            mkByteArrayPickler () :> _ ; mkBigIntPickler () :> _
-        ]
-
-
-//    //
-//    //  Reflection type picklers
-//    //
-//
-//    let mkTypePickler (tyConv : ITypeNameConverter) =
-//        let writer (w : Writer) (t : Type) =
-//            if t.IsGenericParameter then
-//                tyConv.WriteQualifiedName w.BinaryWriter t.ReflectedType
-//                w.BinaryWriter.Write true
-//                w.BinaryWriter.Write t.Name
-//            else
-//                tyConv.WriteQualifiedName w.BinaryWriter t
-//                w.BinaryWriter.Write false
-//
-//        let reader (r : Reader) =
-//            let t = tyConv.ReadQualifiedName r.BinaryReader
-//            if r.BinaryReader.ReadBoolean() then
-//                // is generic parameter
-//                let pname = r.BinaryReader.ReadString()
-//                try t.GetGenericArguments() |> Array.find(fun a -> a.Name = pname)
-//                with :? KeyNotFoundException -> 
-//                    raise <| new SerializationException(sprintf "cannot deserialize type '%s'." pname)
-//            else
-//                t
-//
-//        mkPickler PicklerInfo.ReflectionType true true reader writer
-//
-//    let mkMemberInfoPickler typePickler =
-//        let writer (w : Writer) (m : MemberInfo) =
-//            w.Write(typePickler, m.ReflectedType)
-//            match m with
-//            | :? MethodInfo as m when m.IsGenericMethod && not m.IsGenericMethodDefinition ->
-//                let gm = m.GetGenericMethodDefinition()
-//                let ga = m.GetGenericArguments()
-//                w.BinaryWriter.Write (gm.ToString())
-//
-//                w.BinaryWriter.Write true
-//                w.BinaryWriter.Write ga.Length
-//                for a in ga do w.Write(typePickler, a)
-//            | _ ->
-//                w.BinaryWriter.Write (m.ToString())
-//                w.BinaryWriter.Write false
-//
-//        let reader (r : Reader) =
-//            let t = r.Read typePickler
-//            let mname = r.BinaryReader.ReadString()
-//            let m = 
-//                try t.GetMembers(allMembers) |> Array.find (fun m -> m.ToString() = mname)
-//                with :? KeyNotFoundException ->
-//                    raise <| new SerializationException(sprintf "Could not deserialize member '%O.%s'" t.Name mname)
-//
-//            if r.BinaryReader.ReadBoolean() then
-//                let n = r.BinaryReader.ReadInt32()
-//                let ga = Array.zeroCreate<Type> n
-//                for i = 0 to n - 1 do ga.[i] <- r.Read typePickler
-//                (m :?> MethodInfo).MakeGenericMethod ga :> MemberInfo
-//            else
-//                m
-//
-//        mkPickler PicklerInfo.ReflectionType true true reader writer
-//
-//    let mkTypeHandlePickler (typePickler : Pickler<Type>) =
-//        mkPickler PicklerInfo.ReflectionType true true 
-//                (fun r -> let t = r.Read typePickler in t.TypeHandle)
-//                (fun w th -> w.Write(typePickler, Type.GetTypeFromHandle th))
-//
-//    let mkFieldHandlePickler (memberInfoPickler : Pickler<MemberInfo>) =
-//        mkPickler PicklerInfo.ReflectionType true true
-//                (fun r -> let f = r.Read memberInfoPickler :?> FieldInfo in f.FieldHandle)
-//                (fun w fh -> w.Write(memberInfoPickler, FieldInfo.GetFieldFromHandle fh :> _))
-//
-//    let mkMethodHandlePickler (memberInfoPickler : Pickler<MemberInfo>) =
-//        mkPickler PicklerInfo.ReflectionType true true
-//                (fun r -> let m = read false r memberInfoPickler :?> MethodInfo in m.MethodHandle)
-//                (fun w mh -> w.Write(memberInfoPickler, MethodInfo.GetMethodFromHandle mh :> _))
-//
-//    let mkReflectionPicklers tyConv =
-//        let typePickler = mkTypePickler tyConv
-//        let memberPickler = mkMemberInfoPickler typePickler
-//        [
-//            typePickler :> Pickler ; memberPickler :> _ ; mkTypeHandlePickler typePickler :> _; 
-//            mkFieldHandlePickler memberPickler :> _; mkMethodHandlePickler memberPickler :> _
-//        ]
+        let make (f : unit -> Pickler<_>) = f () :> Pickler
+        [| 
+            make mkByteP ; make mkSByteP ; make mkCharP ; make mkBoolP
+            make mkDecimalP ; make mkSingleP ; make mkFloatP ; make mkInt16P
+            make mkInt32P ; make mkInt64P ; make mkUInt16P ; make mkUInt32P
+            make mkUInt64P ; make mkObjPickler ; make mkUnitP ; make mkDBNullPickler
+            make mkStringPickler ; make mkGuidPickler ; make mkTimeSpanPickler
+            make mkDateTimePickler ; make mkByteArrayPickler ; make mkBigIntPickler
+        |]

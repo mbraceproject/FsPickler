@@ -243,7 +243,9 @@
         let isRecursiveType (t : Type) =
             let rec isRecursiveType (traversed : (bool * Type) list) (t : Type) =
 
-                if t.IsValueType then false else
+                if t.IsValueType then false
+                elif typeof<MemberInfo>.IsAssignableFrom t then false
+                else
  
 #if OPTIMIZE_FSHARP                   
                 let unions, rest = 

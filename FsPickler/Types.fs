@@ -74,21 +74,26 @@
     /// This is particularly useful in cases where bridging mono/.NET runtimes or
     /// dynamic/static assemblies is required.</summary>
     type ITypeNameConverter =
-        abstract member Write : BinaryWriter -> TypeInfo -> unit
-        abstract member Read : BinaryReader -> TypeInfo
+        abstract member OfSerializedType : TypeInfo -> TypeInfo
+        abstract member ToDeserializedType : TypeInfo -> TypeInfo
 
     and TypeInfo =
         {
-            FullName : string
-            AssemblyInfo : AssemblyInfo
-        } 
-
-    /// replacement for the System.Reflection.AssemblyName type,
-    /// which does not implement proper equality semantics
-    and AssemblyInfo =
-        {
             Name : string
-            Version : string
+            AssemblyName : string
+            Version : Version
             CultureInfo : CultureInfo
             PublicKeyToken : byte []
-        }
+        } 
+
+
+    type DefaultTypeNameConverter(?strongNames : bool) =
+        let strongNames = defaultArg strongNames true
+
+        interface ITypeNameConverter with
+            member __.OfSerializedType (tI : TypeInfo) =
+                if strongNames then tI
+                else
+                    { tI with CultureInfo = null ; PublicKeyToken = null ; Version = null }
+
+            member __.ToDeserializedType (tI : TypeInfo) = tI

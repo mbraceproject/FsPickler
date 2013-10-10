@@ -11,8 +11,6 @@
         open System.Runtime.Serialization
         open System.Threading.Tasks
 
-//        open FsPickler
-
         let runsOnMono = System.Type.GetType("Mono.Runtime") <> null
 
         let runOnce (f : unit -> 'T) : unit -> 'T = let x = lazy (f ()) in fun () -> x.Value
