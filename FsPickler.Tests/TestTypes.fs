@@ -216,19 +216,15 @@
         // test provision for top-level sequence serialization
         let testSequence<'T when 'T : equality> (xs : seq<'T>) =
             use m = new MemoryStream()
-            let size = testSerializer.FSCS.SerializeSequence(m, xs)
+            let length = testSerializer.FSCS.SerializeSequence(m, xs)
             m.Position <- 0L
             use enum = xs.GetEnumerator()
-            use enum' = testSerializer.FSCS.DeserializeSequence<'T>(m, size)
+            use enum' = testSerializer.FSCS.DeserializeSequence<'T>(m, length)
             let mutable success = true
             while success && enum.MoveNext() do 
                 if enum'.MoveNext() && enum.Current = enum'.Current then ()
                 else
                     success <- false
-
-            // check if enum' has been consumed
-            if enum'.MoveNext() then success <- false
-
             success
 
 
@@ -241,11 +237,7 @@
                 with _ -> true
 
             let tryActivate (t : Type) =
-                try
-                    let ctorFlags = BindingFlags.Public ||| BindingFlags.NonPublic ||| BindingFlags.Instance
-                    match t.GetConstructor(ctorFlags, null, [||], [||]) with
-                    | null -> None
-                    | ctorInfo -> Some (t, ctorInfo.Invoke [||])
+                try Some (t, Activator.CreateInstance t)
                 with _ -> None
 
             let bfs = new TestBinaryPickler()

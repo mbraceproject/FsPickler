@@ -16,6 +16,7 @@
     open FsPickler.ReflectionPicklers
     open FsPickler.DotNetPicklers
     open FsPickler.FSharpPicklers
+    open FsPickler.CombinatorImpls
 
     /// Y combinator with parametric recursion support
     let YParametric (cacheId : string)

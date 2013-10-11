@@ -1,6 +1,7 @@
 ﻿namespace FsPickler
 
     open System
+    open System.IO
     open System.Reflection
     open System.Runtime.Serialization
     
@@ -35,7 +36,7 @@
         /// set pickler id based on set of source picklers
         /// will result in error if source picklers have conflicting source ids
         /// used with external combinator library
-        let inline setPicklerId< ^T when ^T :> Pickler> (sourcePicklers : seq<Pickler>) (targetPickler : ^T) =
+        let setPicklerId<'T when 'T :> Pickler> (sourcePicklers : seq<Pickler>) (targetPickler : ^T) =
             let mutable current = null
             for p in sourcePicklers do
                 match p.CacheId with
@@ -62,7 +63,7 @@
         //  internal read/write combinators
         //
 
-        let inline isValue (f : Pickler) = f.TypeInfo <= TypeInfo.Value
+        let inline isValue (f : Pickler) = f.TypeKind <= TypeKind.Value
 
         let inline write bypass (w : Writer) (f : Pickler<'T>) (x : 'T) =
             if bypass then f.Write w x
@@ -71,6 +72,18 @@
         let inline read bypass (r : Reader) (f : Pickler<'T>) =
             if bypass then f.Read r
             else r.Read f
+
+        /// safely serialize strings, including nulls
+        let inline writeStringSafe (bw : BinaryWriter) (x : string) =
+            if obj.ReferenceEquals(x, null) then bw.Write true
+            else
+                bw.Write false ; bw.Write x
+
+        /// safely deserialize strings, including nulls
+        let inline readStringSafe (br : BinaryReader) =
+            if br.ReadBoolean() then null
+            else
+                br.ReadString()
 
         // length passed as argument to avoid unecessary evaluations of sequence
         let inline writeSeq (w : Writer) (ef : Pickler<'T>) (length : int) (xs : seq<'T>) =

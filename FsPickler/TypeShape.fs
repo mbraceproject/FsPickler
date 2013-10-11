@@ -232,8 +232,8 @@
             {
                 new IPicklerResolver with
                     member __.UUId = null
-                    member __.Resolve (t : Type) = ReflectionPicklers.AbstractPickler.CreateUntyped(t)
-                    member __.Resolve<'T> () = ReflectionPicklers.AbstractPickler.Create<'T> ()
+                    member __.Resolve (t : Type) = DotNetPicklers.AbstractPickler.CreateUntyped(t)
+                    member __.Resolve<'T> () = DotNetPicklers.AbstractPickler.Create<'T> ()
             }
 
         static member Empty = new PicklerFactoryIndex(ShapeMap.Empty)
@@ -291,7 +291,7 @@
 
             | [| m |] ->
                 let fmt = m.GuardedInvoke(pf, [| dummyResolver :> obj |]) :?> Pickler
-                if fmt.TypeInfo = TypeInfo.Primitive then
+                if fmt.TypeKind = TypeKind.Primitive then
                     raise <| new PicklerFactoryException(pf, "defining custom picklers for primitives not supported.")
                 let shape = TypeShape.OfType fmt.Type
 

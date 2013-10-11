@@ -54,7 +54,7 @@
 
             member internal IsInitialized : bool
             member internal TypeHash : TypeHash
-            member internal TypeInfo : TypeInfo
+            member internal TypeKind : TypeKind
             
         end
 
@@ -111,10 +111,6 @@
 
             /// <summary>BinaryWriter to underlying stream.</summary>
             member BinaryWriter : BinaryWriter
-
-            /// <summary>Serialize value to the underlying stream. Pickler is resolved at runtime.</summary>
-            /// <param name="value">The input value.</param>
-            member Write : value:'T -> unit
             
             /// <summary>Serialize value to the underlying stream using the given pickler.</summary>
             /// <param name="pickler">Pickler used in serialization.</param>
@@ -141,9 +137,6 @@
 
             /// <summary>BinaryReader to underlying stream.</summary> 
             member BinaryReader : BinaryReader
-
-            /// <summary>Deserialize value from the underlying stream. Pickler is resolved at runtime.</summary>
-            member Read : unit -> 'T
 
             /// <summary>Deserialize value from the underlying stream using the given pickler.</summary>
             /// <param name="pickler">Pickler used in deserialization.</param>

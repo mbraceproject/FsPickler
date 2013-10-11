@@ -1,293 +1,270 @@
 ﻿module internal FsPickler.ReflectionPicklers
 
     open System
+    open System.Globalization
+    open System.IO
     open System.Reflection
     open System.Runtime.Serialization
-#if EMIT_IL
-    open System.Linq.Expressions
-#endif
-
-    open Microsoft.FSharp.Reflection
+    open System.Collections.Generic
 
     open FsPickler
     open FsPickler.Utils
     open FsPickler.PicklerUtils
 
-    //
-    //  reflection - based serializers
-    //
 
-    let isUnSupportedType (t : Type) =
-        t.IsPointer
-        || t.IsByRef
-        || t.IsCOMObject
-        || t.IsImport
-        || t.IsMarshalByRef
-        || t.IsPrimitive // supported primitives are already stored in the pickler cache
+    /// replacement for the System.Reflection.AssemblyName type,
+    /// which does not implement proper equality semantics
+    type AssemblyInfo =
+        {
+            Name : string
+            Version : string
+            Culture : string
+            PublicKeyToken : byte []
+        }
+    with
+        static member OfAssembly (a : Assembly) =
+            let an = a.GetName()
+            {
+                Name = an.Name
+                Version = an.Version.ToString()
+                Culture = an.CultureInfo.ToString()
+                PublicKeyToken = an.GetPublicKeyToken()
+            }
 
+        static member ToAssembly (aI : AssemblyInfo) =
+            let an = new AssemblyName()
 
-    // creates a placeholder pickler instance
+            an.Name <- aI.Name
 
-    type UninitializedPickler =
-        static member Create<'T>() = new Pickler<'T>()
-        static member CreateUntyped (t : Type) =
-            if isUnSupportedType t then raise <| new NonSerializableTypeException(t)
-
-            let m =
-                typeof<UninitializedPickler>
-                    .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
-                    .MakeGenericMethod [| t |]
-
-            m.GuardedInvoke(null, null) :?> Pickler
-
-    // abstract type pickler factory
-
-    type AbstractPickler =
-        static member Create<'T> () =
-            let writer _ _ = invalidOp <| sprintf "Attempting to call abstract pickler '%O'." typeof<'T>
-            let reader _ = invalidOp <| sprintf "Attempting to call abstract pickler '%O'." typeof<'T>
-
-            new Pickler<'T>(reader, writer, PicklerInfo.ReflectionDerived, true, false)
-
-        static member CreateUntyped(t : Type) =
-            let m = 
-                typeof<AbstractPickler>
-                    .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
-                    .MakeGenericMethod [| t |]
-
-            m.GuardedInvoke(null, null) :?> Pickler
-
-    // pickler combinator for enum types
-
-    type EnumPickler =
-        static member CreateUntyped(enum : Type, resolver : IPicklerResolver) =
-            let underlying = enum.GetEnumUnderlyingType()
-            // reflection call typed method
-            let m = 
-                typeof<EnumPickler>
-                    .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
-                    .MakeGenericMethod [| enum ; underlying |]
-
-            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler
-
-        static member Create<'Enum, 'Underlying when 'Enum : enum<'Underlying>> (resolver : IPicklerResolver) =
-            let fmt = resolver.Resolve<'Underlying> ()
-            let writer_func = fmt.Write
-            let reader_func = fmt.Read
-
-            let writer (w : Writer) (x : 'Enum) =
-                let value = Microsoft.FSharp.Core.LanguagePrimitives.EnumToValue<'Enum, 'Underlying> x
-                writer_func w value
-
-            let reader (r : Reader) =
-                let value = reader_func r
-                Microsoft.FSharp.Core.LanguagePrimitives.EnumOfValue<'Underlying, 'Enum> value
-
-            new Pickler<'Enum>(reader, writer, PicklerInfo.ReflectionDerived, cacheByRef = false, useWithSubtypes = false)
-
-    // pickler combinator for struct types
-
-    type StructPickler =
-        static member CreateUntyped(t : Type, resolver : IPicklerResolver) =
-            let m = 
-                typeof<StructPickler>
-                    .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
-                    .MakeGenericMethod [| t |]
-
-            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler
-
-        static member Create<'T when 'T : struct>(resolver : IPicklerResolver) =
-            let fields = typeof<'T>.GetFields(allFields)
-            if fields |> Array.exists(fun f -> f.IsInitOnly) then
-                raise <| new NonSerializableTypeException(typeof<'T>, "type is marked with read-only instance fields.")
-            
-            let picklers = fields |> Array.map (fun f -> resolver.Resolve f.FieldType)
-
-#if EMIT_IL
-            
-            let writer =
-                if fields.Length = 0 then (fun _ _ -> ())
-                else
-                    let action =
-                        Expression.compileAction2<Writer, 'T>(fun writer instance ->
-                            Expression.zipWriteFields fields picklers writer instance |> Expression.Block :> _)
-
-                    fun w t -> action.Invoke(w,t)
-
-            let reader =
-                Expression.compileFunc1<Reader, 'T>(fun reader ->
-
-                    let instance = Expression.Variable(typeof<'T>, "instance")
-
-                    let body =
-                        seq {
-                            yield Expression.Assign(instance, Expression.initializeObject<'T> ()) :> Expression
-
-                            yield! Expression.zipReadFields fields picklers reader instance
-
-                            yield instance :> _
-                        }
-
-                    Expression.Block([| instance |], body) :> _).Invoke
-
-#else
-            let writer (w : Writer) (t : 'T) =
-                for i = 0 to fields.Length - 1 do
-                    let o = fields.[i].GetValue(t)
-                    picklers.[i].ManagedWrite w o
-
-            let reader (r : Reader) =
-                let t = FormatterServices.GetUninitializedObject(typeof<'T>)
-                for i = 0 to fields.Length - 1 do
-                    let o = picklers.[i].ManagedRead r
-                    fields.[i].SetValue(t, o)
+            match aI.Version with
+            | null -> ()
+            | version -> an.Version <- new Version(version)
                 
-                fastUnbox<'T> t
-#endif
+            match aI.Culture with
+            | null -> ()
+            | culture -> an.CultureInfo <- new CultureInfo(culture)
 
-            new Pickler<'T>(reader, writer, PicklerInfo.ReflectionDerived, cacheByRef = false, useWithSubtypes = false)
-                    
+            match aI.PublicKeyToken with
+            | null | [||] -> ()
+            | pkt -> an.SetPublicKeyToken(pkt)
 
-    // general-purpose pickler combinator for reference types
+            try Assembly.Load(an)
+            with e -> raise <| new SerializationException("FsPickler: Assembly load exception.", e)
 
-    type ClassPickler =
+    // custom serialize/deserialize routines for TypeInfo records
+        
+    let writeTypeInfo (bw : BinaryWriter) (tI : TypeInfo) =
+        writeStringSafe bw tI.Name
+        writeStringSafe bw tI.AssemblyName
+        writeStringSafe bw tI.Version
+        writeStringSafe bw tI.Culture
 
-        static member CreateUntyped(t : Type, resolver : IPicklerResolver) =
-            let m =
-                typeof<ClassPickler>
-                    .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
-                    .MakeGenericMethod [| t |]
+        match tI.PublicKeyToken with
+        | null | [||] -> bw.Write true
+        | bytes ->
+            bw.Write false
+            bw.Write bytes
 
-            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler
+    let readTypeInfo (br : BinaryReader) =
+        let name = readStringSafe br
+        let assemblyName = readStringSafe br
+        let version = readStringSafe br
+        let culture = readStringSafe br
 
-        static member Create<'T when 'T : not struct>(resolver : IPicklerResolver) =
-            let fields = 
-                typeof<'T>.GetFields(allFields) 
-                |> Array.filter (fun f -> not (containsAttr<NonSerializedAttribute> f))
+        let pkt =
+            if br.ReadBoolean() then null
+            else
+                br.ReadBytes(8)
 
-            if fields |> Array.exists(fun f -> f.IsInitOnly) then
-                raise <| new NonSerializableTypeException(typeof<'T>, "type is marked with read-only instance fields.") 
-
-            let picklers = fields |> Array.map (fun f -> resolver.Resolve f.FieldType)
-
-            let isDeserializationCallback = typeof<IDeserializationCallback>.IsAssignableFrom typeof<'T>
-
-            let allMethods = typeof<'T>.GetMethods(allMembers)
-            let onSerializing = allMethods |> getSerializationMethods<OnSerializingAttribute>
-            let onSerialized = allMethods |> getSerializationMethods<OnSerializedAttribute>
-            let onDeserializing = allMethods |> getSerializationMethods<OnDeserializingAttribute>
-            let onDeserialized = allMethods |> getSerializationMethods<OnDeserializedAttribute>
-
-#if EMIT_IL
-
-            let writer =
-                if onSerializing.Length = 0 && fields.Length = 0 && onSerialized.Length = 0 then
-                    fun _ _ -> ()
-                else
-                    let writer =
-                        Expression.compileAction2<Writer, 'T>(fun writer instance ->
-                            seq {
-                                yield! Expression.runSerializationActions onSerializing writer instance
-
-                                yield! Expression.zipWriteFields fields picklers writer instance
-
-                                yield! Expression.runSerializationActions onSerialized writer instance
-
-                            } |> Expression.Block :> Expression)
-
-                    fun w t -> writer.Invoke(w,t)
-
-            let reader =
-                Expression.compileFunc1<Reader, 'T>(fun reader ->
-
-                    let instance = Expression.Variable(typeof<'T>, "instance")
-
-                    let body =
-                        seq {
-                            yield Expression.Assign(instance, Expression.initializeObject<'T> ()) :> Expression
-
-                            yield! Expression.runDeserializationActions onDeserializing reader instance
-
-                            yield! Expression.zipReadFields fields picklers reader instance
-
-                            yield! Expression.runDeserializationActions onDeserialized reader instance
-
-                            if isDeserializationCallback then
-                                yield Expression.runDeserializationCallback instance
-
-                            yield instance :> _
-                        } 
-
-                    Expression.Block([| instance |], body) :> Expression).Invoke
-
-#else
-            let inline run (ms : MethodInfo []) (x : obj) w =
-                for i = 0 to ms.Length - 1 do 
-                    ms.[i].Invoke(x, [| getStreamingContext w :> obj |]) |> ignore
-
-            let writer (w : Writer) (t : 'T) =
-                run onSerializing t w
-
-                for i = 0 to fields.Length - 1 do
-                    let o = fields.[i].GetValue(t)
-                    picklers.[i].ManagedWrite w o
-
-                run onSerialized t w
-
-            let reader (r : Reader) =
-                let t = FormatterServices.GetUninitializedObject(typeof<'T>) |> fastUnbox<'T>
-                run onDeserializing t r
-
-                for i = 0 to fields.Length - 1 do
-                    let o = picklers.[i].ManagedRead r
-                    fields.[i].SetValue(t, o)
-
-                run onDeserialized t r
-                if isDeserializationCallback then (fastUnbox<IDeserializationCallback> t).OnDeserialization null
-                t
-#endif
-
-            new Pickler<'T>(reader, writer, PicklerInfo.ReflectionDerived, cacheByRef = true, useWithSubtypes = false)
+        {
+            Name = name
+            AssemblyName = assemblyName
+            Version = version
+            Culture = culture
+            PublicKeyToken = pkt
+        }
 
 
-    // pickler combinator for delegates
+    // resolve MemberInfo from a collection of members using given signature
+    let resolveBySignature<'T when 'T :> MemberInfo> (declaringType : Type) (signature : string) (members : 'T []) =
+        match members |> Array.tryFind(fun m -> m.ToString() = signature) with
+        | Some m -> fastUnbox<MemberInfo> m
+        | None ->
+            let msg = sprintf "FsPickler: could not locate '%s' in type '%O'." signature declaringType
+            raise <| new SerializationException(msg)
 
-    type DelegatePickler =
 
-        static member CreateUntyped(t : Type, resolver : IPicklerResolver) =
-            let m =
-                typeof<DelegatePickler>
-                    .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
-                    .MakeGenericMethod [| t |]
+    // System.Type & MemberInfo pickler definitions
 
-            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler
+    let mkReflectionPicklers (tyConv : ITypeNameConverter) =
 
-        static member Create<'Delegate when 'Delegate :> Delegate> (resolver : IPicklerResolver) =
-            let memberInfoPickler = resolver.Resolve<MethodInfo> ()
-            let writer (w : Writer) (dele : 'Delegate) =
-                match dele.GetInvocationList() with
-                | [| _ |] ->
+        // memoize Assembly loaders
+
+        let getAssemblyInfo = memoize AssemblyInfo.OfAssembly
+        let loadAssembly = memoize AssemblyInfo.ToAssembly
+
+        //
+        // System.Type serialization logic
+        //
+
+        let rec writeType (w : Writer) (t : Type) =
+            if t.IsGenericType && not t.IsGenericTypeDefinition then
+                w.BinaryWriter.Write 0uy
+                w.Write(typePickler, t.GetGenericTypeDefinition())
+                let gas = t.GetGenericArguments()
+                w.BinaryWriter.Write gas.Length
+                for ga in gas do
+                    w.Write(typePickler, ga)
+
+            elif t.IsGenericParameter then
+                w.BinaryWriter.Write 1uy
+                w.BinaryWriter.Write t.GenericParameterPosition
+
+                match t.DeclaringMethod with
+                | null ->
+                    // is type-level generic parameter
                     w.BinaryWriter.Write true
-                    w.Write(memberInfoPickler, dele.Method)
-                    if not dele.Method.IsStatic then w.Write<obj> dele.Target
-                | deleList ->
+                    w.Write(typePickler, t.DeclaringType)
+                | dm ->
+                    // is method-level generic parameter
                     w.BinaryWriter.Write false
-                    w.BinaryWriter.Write deleList.Length
-                    for i = 0 to deleList.Length - 1 do
-                        w.Write<System.Delegate> (deleList.[i])
+                    w.Write(memberInfoPickler, fastUnbox<MemberInfo> dm)
+            else
+                w.BinaryWriter.Write 2uy
+                let aI = getAssemblyInfo t.Assembly
+                let typeInfo =
+                    {
+                        Name = t.FullName
+                        AssemblyName = aI.Name
+                        Culture = aI.Culture
+                        Version = aI.Version
+                        PublicKeyToken = aI.PublicKeyToken
+                    }
+                    
+                do writeTypeInfo w.BinaryWriter (tyConv.OfSerializedType typeInfo)
 
-            let reader (r : Reader) =
+        and readType (r : Reader) : Type =
+            match r.BinaryReader.ReadByte() with
+            | 0uy ->
+                let gt = r.Read typePickler
+                let n = r.BinaryReader.ReadInt32()
+                let gas = Array.zeroCreate<Type> n
+                for i = 0 to n - 1 do
+                    gas.[i] <- r.Read typePickler
+
+                gt.MakeGenericType gas
+            | 1uy ->
+                let idx = r.BinaryReader.ReadInt32()
                 if r.BinaryReader.ReadBoolean() then
-                    let meth = r.Read memberInfoPickler
-                    if not meth.IsStatic then
-                        let target = r.Read<obj> ()
-                        Delegate.CreateDelegate(typeof<'Delegate>, target, meth, throwOnBindFailure = true) |> fastUnbox<'Delegate>
-                    else
-                        Delegate.CreateDelegate(typeof<'Delegate>, meth, throwOnBindFailure = true) |> fastUnbox<'Delegate>
+                    let dt = r.Read typePickler
+                    dt.GetGenericArguments().[idx]
                 else
-                    let n = r.BinaryReader.ReadInt32()
-                    let deleList = Array.zeroCreate<System.Delegate> n
-                    for i = 0 to n - 1 do deleList.[i] <- r.Read<System.Delegate> ()
-                    Delegate.Combine deleList |> fastUnbox<'Delegate>
+                    let dm = r.Read memberInfoPickler |> fastUnbox<MethodInfo>
+                    dm.GetGenericArguments().[idx]
+            | _ ->
+                let tI = tyConv.ToDeserializedType (readTypeInfo r.BinaryReader)
+                let aI =
+                    {
+                        Name = tI.AssemblyName
+                        Culture = tI.Culture
+                        Version = tI.Version
+                        PublicKeyToken = tI.PublicKeyToken
+                    }
+                let assembly = loadAssembly aI
+                
+                try assembly.GetType(tI.Name, throwOnError = true)
+                with e ->
+                    raise <| new SerializationException("FsPickler: Type load exception.", e)
 
-            new Pickler<'Delegate>(reader, writer, PicklerInfo.Delegate, cacheByRef = true, useWithSubtypes = false)
+        //
+        // MemberInfo serialization logic
+        //
+
+        and writeMemberInfo (w : Writer) (m : MemberInfo) =
+            w.BinaryWriter.Write (byte m.MemberType)
+            match m.MemberType with
+            | MemberTypes.TypeInfo | MemberTypes.NestedType ->
+                typePickler.Write w (fastUnbox<Type> m)
+
+            | MemberTypes.Constructor ->
+                w.Write(typePickler, m.DeclaringType)
+                w.BinaryWriter.Write(m.ToString())
+
+            | MemberTypes.Method ->
+                let meth = fastUnbox<MethodInfo> m
+                if meth.IsGenericMethod && not meth.IsGenericMethodDefinition then
+                    w.BinaryWriter.Write true
+                    let gMeth = meth.GetGenericMethodDefinition()
+                    let tyArgs = meth.GetGenericArguments()
+
+                    w.BinaryWriter.Write tyArgs.Length
+                    for tyArg in tyArgs do w.Write(typePickler, tyArg)
+                    w.Write(memberInfoPickler, fastUnbox<MemberInfo> gMeth)
+                else
+                    w.BinaryWriter.Write false
+
+                    w.Write(typePickler, m.DeclaringType)
+
+                    w.BinaryWriter.Write meth.IsStatic
+                    w.BinaryWriter.Write meth.IsPublic
+                    w.BinaryWriter.Write(m.ToString())
+            | _ ->
+                w.Write(typePickler, m.DeclaringType)
+                w.BinaryWriter.Write m.Name
+
+        and readMemberInfo (r : Reader) =
+            let memberType = enum<MemberTypes> (int <| r.BinaryReader.ReadByte())
+            match memberType with
+            | MemberTypes.TypeInfo | MemberTypes.NestedType ->
+                readType r |> fastUnbox<MemberInfo>
+
+            | MemberTypes.Constructor ->
+                let dt = r.Read typePickler
+                let signature = r.BinaryReader.ReadString()
+                dt.GetConstructors(allConstructors)
+                |> resolveBySignature dt signature
+
+            | MemberTypes.Method ->
+                if r.BinaryReader.ReadBoolean() then
+                    let n = r.BinaryReader.ReadInt32()
+                    let tyArgs = Array.zeroCreate<Type> n
+                    for i = 0 to n - 1 do
+                        tyArgs.[i] <- r.Read typePickler
+
+                    let gMeth = r.Read memberInfoPickler |> fastUnbox<MethodInfo>
+                    gMeth.MakeGenericMethod tyArgs |> fastUnbox<MemberInfo>
+                else
+                    let dt = r.Read typePickler
+
+                    let bf1 =
+                        if r.BinaryReader.ReadBoolean() then BindingFlags.Static
+                        else BindingFlags.Instance
+
+                    let bf2 =
+                        if r.BinaryReader.ReadBoolean() then BindingFlags.Public
+                        else BindingFlags.NonPublic
+
+                    let signature = r.BinaryReader.ReadString()
+
+                    dt.GetMethods(bf1 ||| bf2)
+                    |> resolveBySignature dt signature
+
+            | _ ->
+                let dt = r.Read typePickler
+                let name = r.BinaryReader.ReadString()
+                match dt.GetMember(name, memberType, allMembers) with
+                | [| m |] -> m
+                | [| |] -> 
+                    let msg = sprintf "FsPickler: could not locate %O '%s' in type '%O'." memberType name dt
+                    raise <| new SerializationException(msg)
+                | _ ->
+                    let msg = sprintf "FsPickler: ambiguous matches for %O '%s' in type '%O'." memberType name dt
+                    raise <| new SerializationException(msg)
+
+        and typePickler : Pickler<Type> = 
+            mkPickler PicklerInfo.ReflectionType true true readType writeType
+
+        and memberInfoPickler : Pickler<MemberInfo> = 
+            mkPickler PicklerInfo.ReflectionType true true readMemberInfo writeMemberInfo
+
+        [| memberInfoPickler :> Pickler ; typePickler :> Pickler |]

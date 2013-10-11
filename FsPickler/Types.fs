@@ -1,6 +1,8 @@
 ﻿namespace FsPickler
 
     open System
+    open System.Globalization
+    open System.IO
     open System.Runtime.Serialization
 
     /// Marks a type that uses a pickler generated from a static factory method.
@@ -64,3 +66,34 @@
 
         member __.PicklerFactory = picklerFactory
 
+
+
+    // reflection - related types
+
+    /// <summary>Provides facility for implementing a custom type serialization scheme.
+    /// This is particularly useful in cases where bridging mono/.NET runtimes or
+    /// dynamic/static assemblies is required.</summary>
+    type ITypeNameConverter =
+        abstract member OfSerializedType : TypeInfo -> TypeInfo
+        abstract member ToDeserializedType : TypeInfo -> TypeInfo
+
+    and TypeInfo =
+        {
+            Name : string
+            AssemblyName : string
+            Version : string
+            Culture : string
+            PublicKeyToken : byte []
+        } 
+
+
+    type DefaultTypeNameConverter(?strongNames : bool) =
+        let strongNames = defaultArg strongNames true
+
+        interface ITypeNameConverter with
+            member __.OfSerializedType (tI : TypeInfo) =
+                if strongNames then tI
+                else
+                    { tI with Version = null ; Culture = null ; PublicKeyToken = null }
+
+            member __.ToDeserializedType (tI : TypeInfo) = tI
