@@ -81,8 +81,8 @@
         {
             Name : string
             AssemblyName : string
-            Version : Version
-            CultureInfo : CultureInfo
+            Version : string
+            Culture : string
             PublicKeyToken : byte []
         } 
 
@@ -94,6 +94,6 @@
             member __.OfSerializedType (tI : TypeInfo) =
                 if strongNames then tI
                 else
-                    { tI with CultureInfo = null ; PublicKeyToken = null ; Version = null }
+                    { tI with Version = null ; Culture = null ; PublicKeyToken = null }
 
             member __.ToDeserializedType (tI : TypeInfo) = tI

@@ -17,8 +17,8 @@
     type AssemblyInfo =
         {
             Name : string
-            Version : Version
-            CultureInfo : CultureInfo
+            Version : string
+            Culture : string
             PublicKeyToken : byte []
         }
     with
@@ -26,34 +26,38 @@
             let an = a.GetName()
             {
                 Name = an.Name
-                Version = an.Version
-                CultureInfo = an.CultureInfo
+                Version = an.Version.ToString()
+                Culture = an.CultureInfo.ToString()
                 PublicKeyToken = an.GetPublicKeyToken()
             }
 
         static member ToAssembly (aI : AssemblyInfo) =
             let an = new AssemblyName()
+
             an.Name <- aI.Name
-            an.Version <- aI.Version
-            an.CultureInfo <- aI.CultureInfo
-            an.SetPublicKeyToken(aI.PublicKeyToken)
-            Assembly.Load(an)
+
+            match aI.Version with
+            | null -> ()
+            | version -> an.Version <- new Version(version)
+                
+            match aI.Culture with
+            | null -> ()
+            | culture -> an.CultureInfo <- new CultureInfo(culture)
+
+            match aI.PublicKeyToken with
+            | null | [||] -> ()
+            | pkt -> an.SetPublicKeyToken(pkt)
+
+            try Assembly.Load(an)
+            with e -> raise <| new SerializationException("FsPickler: Assembly load exception.", e)
 
     // custom serialize/deserialize routines for TypeInfo records
         
     let writeTypeInfo (bw : BinaryWriter) (tI : TypeInfo) =
         writeStringSafe bw tI.Name
         writeStringSafe bw tI.AssemblyName
-
-        if obj.ReferenceEquals(tI.CultureInfo, null) then bw.Write true
-        else
-            bw.Write false
-            bw.Write tI.CultureInfo.LCID
-
-        if obj.ReferenceEquals(tI.Version, null) then bw.Write true
-        else
-            bw.Write false
-            bw.Write(tI.Version.ToString())
+        writeStringSafe bw tI.Version
+        writeStringSafe bw tI.Culture
 
         match tI.PublicKeyToken with
         | null | [||] -> bw.Write true
@@ -64,15 +68,8 @@
     let readTypeInfo (br : BinaryReader) =
         let name = readStringSafe br
         let assemblyName = readStringSafe br
-        let cI = 
-            if br.ReadBoolean() then null
-            else
-                new CultureInfo(br.ReadInt32())
-
-        let version =
-            if br.ReadBoolean() then null
-            else
-                new Version(br.ReadString())
+        let version = readStringSafe br
+        let culture = readStringSafe br
 
         let pkt =
             if br.ReadBoolean() then null
@@ -82,8 +79,8 @@
         {
             Name = name
             AssemblyName = assemblyName
-            CultureInfo = cI
             Version = version
+            Culture = culture
             PublicKeyToken = pkt
         }
 
@@ -139,7 +136,7 @@
                     {
                         Name = t.FullName
                         AssemblyName = aI.Name
-                        CultureInfo = aI.CultureInfo
+                        Culture = aI.Culture
                         Version = aI.Version
                         PublicKeyToken = aI.PublicKeyToken
                     }
@@ -169,12 +166,15 @@
                 let aI =
                     {
                         Name = tI.AssemblyName
-                        CultureInfo = tI.CultureInfo
+                        Culture = tI.Culture
                         Version = tI.Version
                         PublicKeyToken = tI.PublicKeyToken
                     }
                 let assembly = loadAssembly aI
-                assembly.GetType(tI.Name, throwOnError = true)
+                
+                try assembly.GetType(tI.Name, throwOnError = true)
+                with e ->
+                    raise <| new SerializationException("FsPickler: Type load exception.", e)
 
         //
         // MemberInfo serialization logic
@@ -267,7 +267,4 @@
         and memberInfoPickler : Pickler<MemberInfo> = 
             mkPickler PicklerInfo.ReflectionType true true readMemberInfo writeMemberInfo
 
-        let typeDelegatorPickler = 
-            mkPickler PicklerInfo.ReflectionType true true (fun r -> TypeDelegator(readType r)) (fun w t -> writeType w (t.AsType()))
-
-        [| memberInfoPickler :> Pickler ; typePickler :> Pickler ; typeDelegatorPickler :> Pickler |]
+        [| memberInfoPickler :> Pickler ; typePickler :> Pickler |]
