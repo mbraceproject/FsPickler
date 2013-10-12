@@ -13,11 +13,11 @@
 
         /// pickles a value
         let pickle (pickler : Pickler<'T>) (value : 'T) : byte [] =
-            defaultSerializer.Value.Pickle pickler value
+            defaultSerializer.Value.Pickle (pickler, value)
 
         /// upickles a value
         let unpickle (pickler : Pickler<'T>) (data : byte []) =
-            defaultSerializer.Value.UnPickle pickler data
+            defaultSerializer.Value.UnPickle (pickler, data)
 
         [<RequireQualifiedAccess>]
         module Pickler =

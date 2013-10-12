@@ -6,6 +6,7 @@
     open System.Collections.Generic
     open System.Runtime.Serialization
 
+    open FsPickler.Utils
     open FsPickler.PicklerUtils
 
     type FsPickler private (cache : PicklerCache) =
@@ -162,15 +163,20 @@
             pickler.ReadSequence(reader, length)
 
         /// creates a byte array pickle out of given pickler and value
-        member __.Pickle (pickler : Pickler<'T>) (value : 'T) : byte [] =
-            use mem = new MemoryStream()
-            __.Serialize(pickler, mem, value)
-            mem.ToArray()
+        member f.Pickle (pickler : Pickler<'T>, value : 'T) : byte [] =
+            pickle (fun m v -> f.Serialize(pickler, m, v)) value
 
-        /// unpickles a byte array using given pickler
-        member __.UnPickle (pickler : Pickler<'T>) (data : byte []) =
-            use mem = new MemoryStream(data)
-            __.Deserialize(pickler, mem)
+        /// creates a byte array pickle out of a given value
+        member f.Pickle (value : 'T) : byte [] =
+            pickle (fun m v -> f.Serialize(m, v)) value
+
+        /// deserializes value out of given byte array using given pickler
+        member f.UnPickle (pickler : Pickler<'T>, data : byte []) =
+            unpickle (fun m -> f.Deserialize(pickler, m)) data
+
+        /// deserializes value out of a given byte array
+        member f.UnPickle<'T> (data : byte []) =
+            unpickle (fun m -> f.Deserialize<'T> m) data
 
 
         /// Auto generates a pickler for given type variable

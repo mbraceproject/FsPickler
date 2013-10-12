@@ -227,6 +227,16 @@
                 f.SetValue(dst, v)
 
 
+        let inline pickle (f : Stream -> 'T -> unit) (x : 'T) : byte [] =
+            use mem = new MemoryStream()
+            f mem x
+            mem.ToArray()
+
+        let inline unpickle (f : Stream -> 'T) (data : byte []) : 'T =
+            use mem = new MemoryStream()
+            f mem
+
+
         // this predicate decides whether instances of given type can be cyclic.
         // F# union types are treated specially since recursive bindings cannot be created under normal circumstances
         // for instance, the
