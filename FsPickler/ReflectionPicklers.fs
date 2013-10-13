@@ -49,7 +49,7 @@
             | pkt -> an.SetPublicKeyToken(pkt)
 
             try Assembly.Load(an)
-            with :? FileLoadException as e ->
+            with :? FileNotFoundException | :? FileLoadException as e ->
             
                 // Assembly.Load fails in certain cases where assemblies are loaded at runtime
                 // attempt to resolve this by performing a direct query on the AppDomain 
