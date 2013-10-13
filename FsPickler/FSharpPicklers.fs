@@ -220,7 +220,7 @@
                         |> Array.find(fun c -> c.GetParameters () |> Array.map(fun p -> p.ParameterType) = signature)
                     fields, ctor
                 else
-                    let fields = FSharpType.GetRecordFields typeof<'Record>
+                    let fields = FSharpType.GetRecordFields(typeof<'Record>, allMembers)
                     let ctor = FSharpValue.PreComputeRecordConstructorInfo(typeof<'Record>, allMembers)
                     fields, ctor
 

@@ -45,7 +45,7 @@
             | culture -> an.CultureInfo <- new CultureInfo(culture)
 
             match aI.PublicKeyToken with
-            | null | [||] -> ()
+            | null -> an.SetPublicKeyToken [||]
             | pkt -> an.SetPublicKeyToken(pkt)
 
             try Assembly.Load(an)
@@ -72,7 +72,7 @@
         let culture = readStringSafe br
 
         let pkt =
-            if br.ReadBoolean() then null
+            if br.ReadBoolean() then [||]
             else
                 br.ReadBytes(8)
 

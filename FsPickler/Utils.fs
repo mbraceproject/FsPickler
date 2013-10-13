@@ -233,7 +233,7 @@
             mem.ToArray()
 
         let inline unpickle (f : Stream -> 'T) (data : byte []) : 'T =
-            use mem = new MemoryStream()
+            use mem = new MemoryStream(data)
             f mem
 
 

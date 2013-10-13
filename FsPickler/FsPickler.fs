@@ -9,6 +9,8 @@
     open FsPickler.Utils
     open FsPickler.PicklerUtils
 
+    [<Sealed>]
+    [<AutoSerializableAttribute(false)>]
     type FsPickler private (cache : PicklerCache) =
 
         let name = cache.Name
