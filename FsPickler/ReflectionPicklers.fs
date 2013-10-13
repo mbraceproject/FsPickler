@@ -49,7 +49,30 @@
             | pkt -> an.SetPublicKeyToken(pkt)
 
             try Assembly.Load(an)
-            with e -> raise <| new SerializationException("FsPickler: Assembly load exception.", e)
+            with :? FileLoadException as e ->
+            
+                // Assembly.Load fails in certain cases where assemblies are loaded at runtime
+                // attempt to resolve this by performing a direct query on the AppDomain 
+                
+                let isPartialMatch (an : AssemblyName) (a : Assembly) =
+                    let an' = a.GetName()
+                    if an.Name <> an'.Name then false
+                    elif an.Version <> null && an.Version <> an'.Version then false
+                    elif an.CultureInfo <> null && an.CultureInfo <> an'.CultureInfo then false
+                    else
+                        match an.GetPublicKeyToken() with
+                        | null | [||] -> true
+                        | pkt -> pkt = an'.GetPublicKeyToken()
+
+                let result =
+                    System.AppDomain.CurrentDomain.GetAssemblies()
+                    |> Array.tryFind (isPartialMatch an)
+
+                match result with
+                | None -> raise <| new SerializationException("FsPickler: Assembly load exception.", e)
+                | Some a -> a
+
+
 
     // custom serialize/deserialize routines for TypeInfo records
         
