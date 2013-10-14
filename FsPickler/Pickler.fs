@@ -259,7 +259,9 @@
 
             elif obj.ReferenceEquals(x, null) then writeHeader ObjHeader.isNull else
 
+#if PROTECT_STACK_OVERFLOWS
             do RuntimeHelpers.EnsureSufficientExecutionStack()
+#endif
 
             let isRecursive = fmt.IsRecursiveType
 

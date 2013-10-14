@@ -52,8 +52,14 @@
         // resolve the default type name converter
         let tyConv =
             match tyConv with 
-            | Some tc -> tc 
-            | None -> new DefaultTypeNameConverter(strongNames = true) :> _
+            | Some tc -> tc
+            | None -> 
+#if SERIALIZE_STRONG_NAMES
+                let strongNames = true
+#else   
+                let strongNames = false
+#endif
+                new DefaultTypeNameConverter(strongNames = strongNames) :> _
 
         // include default pickler factories
         let customPicklerFactories =
