@@ -21,6 +21,8 @@
         || t.IsCOMObject
         || t.IsImport
         || t.IsMarshalByRef
+        || t.IsGenericParameter
+        || t.IsGenericTypeDefinition
         || t.IsPrimitive // supported primitives should be already stored in the pickler cache        
 
 

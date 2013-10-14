@@ -237,51 +237,67 @@
             f mem
 
 
-        // this predicate decides whether instances of given type can be cyclic.
+        //
+        // Let 't1 -> t2' be the binary relation between types that denotes the statement 't1 contans a field of type t2'.
+        // A type t is defined as being *recursive* iff either of the following properties hold:
+        //     a) t is not sealed,
+        //     b) there exists t -> t' such that t' is recursive
+        //     c) there exists a chain (t -> t1 -> ... -> tn) so that t <: tn
+        //
+        // A type is recursive iff its instances admit cyclic object graphs.
+        //
         // F# union types are treated specially since recursive bindings cannot be created under normal circumstances
         // for instance, the
         //
-        //      type Peano = Zero | Succ of Peano 
+        //      type Tree = Leaf | Branch of Tree list
         //
         // is flagged as non-recursive since defining cyclic graphs of this type are impossible in F#.
         // On the other hand, the
+        //
+        //     type Tree = Leaf | Branch of Tree []
+        //
+        // is flagged as recursive since the recursive union definition is intertwined with a mutable container.
+        // Finally, the
         //
         //     type Func = Func of (int -> int)
         //
         // is flagged as recursive since cyclic bindings *can* be made, for example
         // `let rec f = Func (fun x -> let (Func f0) = f in f0 x + 1)`
         let isRecursiveType (t : Type) =
-            let rec isRecursiveType (traversed : (bool * Type) list) (t : Type) =
+            let rec isRecursiveType d (traversed : (int * bool * Type) list) (t : Type) =
 
                 if t.IsValueType then false
                 elif typeof<MemberInfo>.IsAssignableFrom t then false
                 else
- 
-#if OPTIMIZE_FSHARP                   
-                let unions, rest = 
-                    traversed 
-                    |> List.filter (fun (_,t') -> t.IsAssignableFrom t')
-                    |> List.partition (fun (isUnion, t') -> if isUnion then t' = t else false)
 
-                if rest.Length > 0 then true
-                elif unions.Length > 0 then false
+                let recAncestors = traversed |> List.filter (fun (_,_,t') -> t.IsAssignableFrom t') 
+                if recAncestors.Length > 0 then
+#if OPTIMIZE_FSHARP
+                    recAncestors
+                    |> List.exists (fun (d,isUnion,_) ->
+                        if isUnion then
+                            // union types marked as 'recursive' only if intertwined with non-union(mutable) types
+                            // e.g. type Peano = Zero | Succ of Peano ref is recursive
+                            traversed |> List.exists(fun (i,isUnion,_) -> i > d && not isUnion)
+                        else
+                            true)  
 #else
-                if traversed |> List.exists (fun (_,t') -> t.IsAssignableFrom t') then true
+                    true
 #endif
                 elif t.IsArray || t.IsByRef || t.IsPointer then
-                    isRecursiveType ((false,t) :: traversed) <| t.GetElementType()
+                    isRecursiveType (d+1) ((d,false,t) :: traversed) <| t.GetElementType()
                 elif FSharpType.IsUnion(t, allMembers) then
                     FSharpType.GetUnionCases(t, allMembers)
                     |> Seq.map (fun u -> u.GetFields() |> Seq.map (fun p -> p.PropertyType))
                     |> Seq.concat
                     |> Seq.distinct
-                    |> Seq.exists (isRecursiveType ((true,t) :: traversed))
+                    |> Seq.exists (isRecursiveType (d+1) ((d,true,t) :: traversed))
 #if OPTIMIZE_FSHARP
                 // System.Tuple is not sealed, but inheriting is not an idiomatic pattern in F#
                 elif FSharpType.IsTuple t then
                     FSharpType.GetTupleElements t
                     |> Seq.distinct
-                    |> Seq.exists (isRecursiveType ((false,t) :: traversed))
+                    |> Seq.exists (isRecursiveType (d+1) ((d,false,t) :: traversed))
 #endif
                 // leaves with open hiearchies are treated as recursive by definition
                 elif not t.IsSealed then true
@@ -289,6 +305,6 @@
                     t.GetFields(allFields)
                     |> Seq.map (fun f -> f.FieldType)
                     |> Seq.distinct
-                    |> Seq.exists (isRecursiveType ((false,t) :: traversed))
+                    |> Seq.exists (isRecursiveType (d+1) ((d,false,t) :: traversed))
 
-            isRecursiveType [] t
+            isRecursiveType 0 [] t
