@@ -219,6 +219,13 @@
             member m.GetParameterTypes() = m.GetParameters() |> Array.map (fun p -> p.ParameterType)
 
 
+        let isISerializable (t : Type) =
+            if typeof<ISerializable>.IsAssignableFrom t then
+                t.TryGetConstructor [| typeof<SerializationInfo> ; typeof<StreamingContext> |]
+                |> Option.isSome
+            else
+                false
+
         // perform a shallow copy of the contents of given reference type
         let shallowCopy (t : Type) (src : obj) (dst : obj) =
             let fields = t.GetFields(BindingFlags.Instance ||| BindingFlags.Public ||| BindingFlags.NonPublic)
@@ -240,7 +247,7 @@
         //
         // Let 't1 -> t2' be the binary relation between types that denotes the statement 't1 contans a field of type t2'.
         // A type t is defined as being *recursive* iff either of the following properties hold:
-        //     a) t is not sealed,
+        //     a) t is not sealed or ISerializable,
         //     b) there exists t -> t' such that t' is recursive
         //     c) there exists a chain (t -> t1 -> ... -> tn) so that t <: tn
         //
@@ -268,6 +275,7 @@
 
                 if t.IsValueType then false
                 elif typeof<MemberInfo>.IsAssignableFrom t then false
+                elif isISerializable t then true
                 else
 
                 let recAncestors = traversed |> List.filter (fun (_,_,t') -> t.IsAssignableFrom t') 

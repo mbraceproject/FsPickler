@@ -66,7 +66,7 @@
             | ns -> 
                 if ns.StartsWith("System.Reflection") then hash <- hash ||| 4096us
 
-            if typeof<ISerializable>.IsAssignableFrom t then hash <- hash ||| 8192us
+            if isISerializable t then hash <- hash ||| 8192us
 
             hash
 
