@@ -7,7 +7,14 @@
     open System.Runtime.Serialization
 
     open FsPickler.Utils
+    open FsPickler.Hashing
     open FsPickler.PicklerUtils
+
+    type HashResult =
+        {
+            Length : int64
+            Hash : byte []
+        }
 
     [<Sealed>]
     [<AutoSerializableAttribute(false)>]
@@ -180,6 +187,24 @@
         member f.UnPickle<'T> (data : byte []) =
             unpickle (fun m -> f.Deserialize<'T> m) data
 
+        /// <summary>Compute size and hashcode for given input.</summary>
+        /// <param name="value">input value.</param>
+        /// <param name="hashFactory">the hashing algorithm to be used. MurMur3 by default</param>
+        member f.ComputeHash<'T>(value : 'T, ?hashFactory : IHashStreamFactory) =
+            let hashFactory = match hashFactory with Some h -> h | None -> new MurMur3() :> _
+            let hashStream = hashFactory.Create ()
+            f.Serialize(hashStream, value)
+            {
+                Length = hashStream.Length
+                Hash = hashStream.ComputeHash()
+            }
+
+        /// <summary>Compute size in bytes for given input.</summary>
+        /// <param name="value">input value.</param>
+        member f.ComputeSize<'T>(value : 'T) =
+            let lengthCounter = new LengthCounter()
+            f.Serialize(lengthCounter, value)
+            lengthCounter.Length
 
         /// Auto generates a pickler for given type variable
         member __.GeneratePickler<'T> () = resolver.Resolve<'T> ()

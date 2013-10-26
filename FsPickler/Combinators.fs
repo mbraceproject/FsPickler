@@ -19,6 +19,8 @@
         let unpickle (pickler : Pickler<'T>) (data : byte []) =
             defaultSerializer.Value.UnPickle (pickler, data)
 
+//        let getSize (pickler
+
         [<RequireQualifiedAccess>]
         module Pickler =
 
