@@ -18,7 +18,7 @@
     <Optimize>false</Optimize>
     <Tailcalls>false</Tailcalls>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;OPTIMIZE_FSHARP;EMIT_IL</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;OPTIMIZE_FSHARP;EMIT_IL;COMPILETOMETHOD</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\Debug\FsPickler.XML</DocumentationFile>
     <OtherFlags>
@@ -29,7 +29,7 @@
     <Optimize>true</Optimize>
     <Tailcalls>true</Tailcalls>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE;PROTECT_STACK_OVERFLOWS;OPTIMIZE_FSHARP;EMIT_IL;SERIALIZE_STRONG_NAMES</DefineConstants>
+    <DefineConstants>TRACE;PROTECT_STACK_OVERFLOWS;OPTIMIZE_FSHARP;EMIT_IL;SERIALIZE_STRONG_NAMES;COMPILETOMETHOD</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\Release\FsPickler.XML</DocumentationFile>
   </PropertyGroup>

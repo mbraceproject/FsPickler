@@ -18,117 +18,118 @@
 
     // F# union types
 
-    type FsUnionPickler =
-        static member CreateUntyped(unionType : Type, resolver : IPicklerResolver) =
-            let m =
-                typeof<FsUnionPickler>
-                    .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
-                    .MakeGenericMethod [| unionType |]
-
-            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler
-
-        static member Create<'Union> (resolver : IPicklerResolver) =
-
-#if EMIT_IL
-            let unionInfo =
-                FSharpType.GetUnionCases(typeof<'Union>, allMembers) 
-                |> Array.map(fun uci ->
-                    let fields = uci.GetFields()
-                    let ctor = FSharpValue.PreComputeUnionConstructorInfo(uci, allMembers)
-                    let picklers = fields |> Array.map (fun f -> resolver.Resolve f.PropertyType)
-                    let caseType = if fields.Length = 0 then None else Some <| fields.[0].DeclaringType
-                    uci, caseType, ctor, fields, picklers)
-
-            let callUnionTagReader (union : Expression) =
-                match FSharpValue.PreComputeUnionTagMemberInfo(typeof<'Union>, allMembers) with
-                | null -> invalidOp "unexpected error"
-                | :? PropertyInfo as p -> Expression.Property(union, p) :> Expression
-                | :? MethodInfo as m when m.IsStatic -> Expression.Call(m, union) :> Expression
-                | :? MethodInfo as m -> Expression.Call(union, m) :> Expression
-                | _ -> invalidOp "unexpected error"
-
-            let callCaseWriter (uci : UnionCaseInfo) (caseType : Type option) (fields : PropertyInfo []) 
-                                (picklers : Pickler []) (writer : Expression) (instance : Expression) =
-
-                let body =
-                    if fields.Length = 0 then Expression.Empty() :> Expression
-                    else
-                        let instance =
-                            match caseType with
-                            | Some t -> Expression.TypeAs(instance, t) :> Expression
-                            | None -> instance
-
-                        Expression.zipWriteProperties fields picklers writer instance |> Expression.Block :> _
-
-                Expression.SwitchCase(body, Expression.constant uci.Tag)
-
-
-            let callCaseReader (uci : UnionCaseInfo) (picklers : Pickler []) (ctor : MethodInfo) (reader : Expression) =
-                let unionCase = Expression.callMethod ctor picklers reader
-                Expression.SwitchCase(unionCase, Expression.constant uci.Tag)
-
-            let writerFunc =
-                Expression.compileAction2<Writer, 'Union>(fun writer union ->
-                    let tag = Expression.Variable(typeof<int>, "tag")
-                    let cases = 
-                        unionInfo 
-                        |> Array.map (fun (uci,caseType,_,fields,picklers) -> 
-                            callCaseWriter uci caseType fields picklers writer union)
-
-                    let defCase = Expression.failwith<InvalidOperationException, Expression.SynVoid> "Invalid F# union tag."
-
-                    let body =
-                        [|
-                            Expression.Assign(tag, callUnionTagReader union) :> Expression
-                            Expression.writeInt writer tag
-                            Expression.Switch(tag, defCase, cases) :> _
-                        |]
-
-                    Expression.Block([| tag |] , body) :> _)
-
-            let readerFunc =
-                Expression.compileFunc1<Reader, 'Union>(fun reader ->
-                    let tag = Expression.readInt reader
-                    let cases =
-                        unionInfo
-                        |> Array.map (fun (uci,_,ctor,_,picklers) -> callCaseReader uci picklers ctor reader)
-
-                    let defCase = Expression.failwith<InvalidOperationException, 'Union> "Invalid F# union tag."
-
-                    Expression.Switch(tag, defCase, cases) :> _)
-
-            let writer (w : Writer) (u : 'Union) = writerFunc.Invoke(w, u)
-            let reader = readerFunc.Invoke
-#else
-            let tagReader = FSharpValue.PreComputeUnionTagReader(typeof<'Union>, allMembers)
-            
-            let unionCases =
-                FSharpType.GetUnionCases(typeof<'Union>, allMembers) 
-                |> Array.map (fun uci ->
-                    let ctor = FSharpValue.PreComputeUnionConstructor(uci, allMembers)
-                    let reader = FSharpValue.PreComputeUnionReader(uci, allMembers)
-                    let picklers = uci.GetFields() |> Array.map (fun f -> resolver.Resolve f.PropertyType)
-                    ctor, reader, picklers)
-
-            let writer (w : Writer) (x : 'Union) =
-                let tag = tagReader x
-                w.BinaryWriter.Write tag
-                let _,reader,picklers = unionCases.[tag]
-                let values = reader x
-                for i = 0 to values.Length - 1 do
-                    picklers.[i].ManagedWrite w values.[i]
-
-            let reader (r : Reader) =
-                let tag = r.BinaryReader.ReadInt32()
-                let ctor,_,picklers = unionCases.[tag]
-                let values = Array.zeroCreate<obj> picklers.Length
-                for i = 0 to picklers.Length - 1 do
-                    values.[i] <- picklers.[i].ManagedRead r
-
-                ctor values |> fastUnbox<'Union>
-#endif
-
-            new Pickler<'Union>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
+//    type FsUnionPickler =
+//        static member CreateUntyped(unionType : Type, resolver : IPicklerResolver) =
+//            let m =
+//                typeof<FsUnionPickler>
+//                    .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
+//                    .MakeGenericMethod [| unionType |]
+//
+//            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler
+//
+//        static member Create<'Union> (resolver : IPicklerResolver) =
+//
+//#if EMIT_IL
+//            let unionInfo =
+//                FSharpType.GetUnionCases(typeof<'Union>, allMembers) 
+//                |> Array.map(fun uci ->
+//                    let fields = uci.GetFields()
+//                    let ctor = FSharpValue.PreComputeUnionConstructorInfo(uci, allMembers)
+//                    let picklers = fields |> Array.map (fun f -> resolver.Resolve f.PropertyType)
+//                    let caseType = if fields.Length = 0 then None else Some <| fields.[0].DeclaringType
+//                    uci, caseType, ctor, fields, picklers)
+//
+//            let callUnionTagReader (union : Expression) =
+//                match FSharpValue.PreComputeUnionTagMemberInfo(typeof<'Union>, allMembers) with
+//                | null -> invalidOp "unexpected error"
+//                | :? PropertyInfo as p -> Expression.Property(union, p) :> Expression
+//                | :? MethodInfo as m when m.IsStatic -> Expression.Call(m, union) :> Expression
+//                | :? MethodInfo as m -> Expression.Call(union, m) :> Expression
+//                | _ -> invalidOp "unexpected error"
+//
+//            let callCaseWriter (uci : UnionCaseInfo) (caseType : Type option) (fields : PropertyInfo []) 
+//                                (picklers : Expression) (writer : Expression) (instance : Expression) =
+//
+//                let body =
+//                    if fields.Length = 0 then Expression.Empty() :> Expression
+//                    else
+//                        let instance =
+//                            match caseType with
+//                            | Some t -> Expression.TypeAs(instance, t) :> Expression
+//                            | None -> instance
+//
+//                        Expression.zipWriteProperties fields picklers writer instance |> Expression.Block :> _
+//
+//                Expression.SwitchCase(body, Expression.constant uci.Tag)
+//
+//
+//            let callCaseReader (uci : UnionCaseInfo) (picklers : Expression) (ctor : MethodInfo) (reader : Expression) =
+//                let ctorParams = ctor.GetParameterTypes()
+//                let unionCase = Expression.callMethod ctor ctorParams picklers reader
+//                Expression.SwitchCase(unionCase, Expression.constant uci.Tag)
+//
+//            let writerFunc =
+//                Expression.compileAction3<Pickler [], Writer, 'Union>(fun picklers writer union ->
+//                    let tag = Expression.Variable(typeof<int>, "tag")
+//                    let cases = 
+//                        unionInfo 
+//                        |> Array.map (fun (uci,caseType,_,fields,_) -> 
+//                            callCaseWriter uci caseType fields picklers writer union)
+//
+//                    let defCase = Expression.failwith<InvalidOperationException, Expression.SynVoid> "Invalid F# union tag."
+//
+//                    let body =
+//                        [|
+//                            Expression.Assign(tag, callUnionTagReader union) :> Expression
+//                            Expression.writeInt writer tag
+//                            Expression.Switch(tag, defCase, cases) :> _
+//                        |]
+//
+//                    Expression.Block([| tag |] , body) :> _)
+//
+//            let readerFunc =
+//                Expression.compileFunc1<Reader, 'Union>(fun reader ->
+//                    let tag = Expression.readInt reader
+//                    let cases =
+//                        unionInfo
+//                        |> Array.map (fun (uci,_,ctor,_,picklers) -> callCaseReader uci picklers ctor reader)
+//
+//                    let defCase = Expression.failwith<InvalidOperationException, 'Union> "Invalid F# union tag."
+//
+//                    Expression.Switch(tag, defCase, cases) :> _)
+//
+//            let writer (w : Writer) (u : 'Union) = writerFunc.Invoke(w, u)
+//            let reader = readerFunc.Invoke
+//#else
+//            let tagReader = FSharpValue.PreComputeUnionTagReader(typeof<'Union>, allMembers)
+//            
+//            let unionCases =
+//                FSharpType.GetUnionCases(typeof<'Union>, allMembers) 
+//                |> Array.map (fun uci ->
+//                    let ctor = FSharpValue.PreComputeUnionConstructor(uci, allMembers)
+//                    let reader = FSharpValue.PreComputeUnionReader(uci, allMembers)
+//                    let picklers = uci.GetFields() |> Array.map (fun f -> resolver.Resolve f.PropertyType)
+//                    ctor, reader, picklers)
+//
+//            let writer (w : Writer) (x : 'Union) =
+//                let tag = tagReader x
+//                w.BinaryWriter.Write tag
+//                let _,reader,picklers = unionCases.[tag]
+//                let values = reader x
+//                for i = 0 to values.Length - 1 do
+//                    picklers.[i].ManagedWrite w values.[i]
+//
+//            let reader (r : Reader) =
+//                let tag = r.BinaryReader.ReadInt32()
+//                let ctor,_,picklers = unionCases.[tag]
+//                let values = Array.zeroCreate<obj> picklers.Length
+//                for i = 0 to picklers.Length - 1 do
+//                    values.[i] <- picklers.[i].ManagedRead r
+//
+//                ctor values |> fastUnbox<'Union>
+//#endif
+//
+//            new Pickler<'Union>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
 
 
     // System.Tuple<...> types
@@ -165,17 +166,19 @@
                 if elements.Length = 0 then fun _ _ -> ()
                 else
                     let writer =
-                        Expression.compileAction2<Writer, 'Tuple>(fun writer tuple ->
+                        Expression.compileAction3<Pickler [], Writer, 'Tuple>(fun picklers writer tuple ->
                             Expression.zipWriteProperties elements picklers writer tuple
                             |> Expression.Block :> _)
 
-                    fun w t -> writer.Invoke(w,t)
+                    fun w t -> writer.Invoke(picklers,w,t)
 
-            let reader =
-                Expression.compileFunc1<Reader, 'Tuple>(fun reader ->
-                    let values = picklers |> Seq.map (Expression.read reader)
+            let readerDele =
+                Expression.compileFunc2<Pickler [], Reader, 'Tuple>(fun picklers reader ->
+                    let values = Expression.zipReadProperties elements picklers reader
 
-                    Expression.New(ctor, values) :> _ ).Invoke 
+                    Expression.New(ctor, values) :> _ ) 
+
+            let reader r = readerDele.Invoke(picklers, r)
 #else
             let writer (w : Writer) (x : 'Tuple) =
                 for i = 0 to elements.Length - 1 do
@@ -231,16 +234,18 @@
                 if fields.Length = 0 then fun _ _ -> ()
                 else
                     let writer =
-                        Expression.compileAction2<Writer, 'Record>(fun writer record ->
+                        Expression.compileAction3<Pickler [], Writer, 'Record>(fun picklers writer record ->
                             Expression.zipWriteProperties fields picklers writer record |> Expression.Block :> _)
 
-                    fun w t -> writer.Invoke(w,t)
+                    fun w t -> writer.Invoke(picklers, w,t)
 
-            let reader =
-                Expression.compileFunc1<Reader, 'Record>(fun reader ->
-                    let values = picklers |> Seq.map (Expression.read reader)
+            let readerDele =
+                Expression.compileFunc2<Pickler [], Reader, 'Record>(fun picklers reader ->
+                    let values = Expression.zipReadProperties fields picklers reader
 
-                    Expression.New(ctor, values) :> _).Invoke
+                    Expression.New(ctor, values) :> _)
+            
+            let reader r = readerDele.Invoke(picklers, r)
 #else
             let writer (w : Writer) (x : 'Record) =
                 for i = 0 to fields.Length - 1 do

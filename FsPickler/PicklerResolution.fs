@@ -110,8 +110,8 @@
             match result with
             | Some _ -> result
             | None ->
-                if FSharpType.IsUnion(t, allMembers) then
-                    Some <| FsUnionPickler.CreateUntyped(t, resolver)
+                if false && FSharpType.IsUnion(t, allMembers) then failwith "not implemented"
+//                    Some <| FsUnionPickler.CreateUntyped(t, resolver)
                 elif FSharpType.IsTuple t then
                     Some <| TuplePickler.CreateUntyped(t, resolver)
                 elif FSharpType.IsRecord(t, allMembers) then

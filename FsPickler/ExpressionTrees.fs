@@ -6,12 +6,32 @@
 
     open System
     open System.Reflection
+    open System.Reflection.Emit
     open System.Linq.Expressions
     open System.Runtime.Serialization
 
     open FsPickler
     open FsPickler.Utils
     open FsPickler.PicklerUtils
+
+#if COMPILETOMETHOD
+    type DynamicAssembly private () =
+        
+        static let assemblyName = AssemblyName("FsPicklerDynamicAssembly")
+        static let getUUID () = Guid.NewGuid().ToString("N")
+
+        static let moduleBuilder =
+            let dynAsmb = AppDomain.CurrentDomain.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.Run)
+            dynAsmb.DefineDynamicModule("PicklerModule")
+
+        static member CompileExpr(expr : LambdaExpression) =
+            let methodName = getUUID()
+            let typeBuilder = moduleBuilder.DefineType(getUUID (), TypeAttributes.Public)
+            let methodBuilder = typeBuilder.DefineMethod(methodName, MethodAttributes.Public ||| MethodAttributes.Static)
+            expr.CompileToMethod(methodBuilder)
+            let ty = typeBuilder.CreateType()
+            ty.GetMethod(methodName)
+#endif
 
     module internal Expression =
 
@@ -22,27 +42,70 @@
                 if t = typeof<SynVoid> then typeof<System.Void>
                 else t
 
-        let inline compileFunc1<'U, 'V>(f : Expression -> Expression) =
+        let compileFunc1<'U, 'V>(f : Expression -> Expression) =
             let parameter = Expression.Parameter(typeof<'U>)
             let lambda = Expression.Lambda<Func<'U,'V>>(f parameter, parameter)
+#if COMPILETOMETHOD
+            let meth = DynamicAssembly.CompileExpr lambda
+            Func<'U,'V>(fun u -> meth.Invoke(null, [| box u |]) :?> 'V)
+#else
             lambda.Compile()
+#endif
 
-        let inline compileFunc2<'U1, 'U2, 'V>(f : Expression -> Expression -> Expression) =
+        let compileFunc2<'U1, 'U2, 'V>(f : Expression -> Expression -> Expression) =
             let p1 = Expression.Parameter typeof<'U1>
             let p2 = Expression.Parameter typeof<'U2>
             let lambda = Expression.Lambda<Func<'U1,'U2,'V>>(f p1 p2, p1, p2)
+#if COMPILETOMETHOD
+            let meth = DynamicAssembly.CompileExpr lambda
+            Func<'U1, 'U2, 'V>(fun u1 u2 -> meth.Invoke(null, [| box u1; box u2 |]) :?> 'V)
+#else
             lambda.Compile()
+#endif
 
-        let inline compileAction1<'U1>(f : Expression -> Expression) =
+        let compileFunc3<'U1, 'U2, 'U3, 'V>(f : Expression -> Expression -> Expression -> Expression) =
+            let p1 = Expression.Parameter typeof<'U1>
+            let p2 = Expression.Parameter typeof<'U2>
+            let p3 = Expression.Parameter typeof<'U3>
+            let lambda = Expression.Lambda<Func<'U1,'U2,'V>>(f p1 p2 p3, p1, p2, p3)
+#if COMPILETOMETHOD
+            let meth = DynamicAssembly.CompileExpr lambda
+            Func<'U1, 'U2, 'U3, 'V>(fun u1 u2 u3 -> meth.Invoke(null, [| box u1; box u2; box u3 |]) :?> 'V)
+#else
+            lambda.Compile()
+#endif
+
+        let compileAction1<'U1>(f : Expression -> Expression) =
             let p1 = Expression.Parameter typeof<'U1>
             let lambda = Expression.Lambda<Action<'U1>>(f p1, p1)
+#if COMPILETOMETHOD
+            let meth = DynamicAssembly.CompileExpr lambda
+            Action<'U1>(fun u -> meth.Invoke(null, [| box u |]) |> ignore)
+#else
             lambda.Compile()
+#endif
 
-        let inline compileAction2<'U1, 'U2>(f : Expression -> Expression -> Expression) =
+        let compileAction2<'U1, 'U2>(f : Expression -> Expression -> Expression) =
             let p1 = Expression.Parameter typeof<'U1>
             let p2 = Expression.Parameter typeof<'U2>
             let lambda = Expression.Lambda<Action<'U1, 'U2>>(f p1 p2, p1, p2)
+#if COMPILETOMETHOD
+            let meth = DynamicAssembly.CompileExpr lambda
+            Action<'U1, 'U2>(fun u1 u2 -> meth.Invoke(null, [| box u1; box u2 |]) |> ignore)
+#else
             lambda.Compile()
+#endif
+        let compileAction3<'U1, 'U2, 'U3>(f : Expression -> Expression -> Expression -> Expression) =
+            let p1 = Expression.Parameter typeof<'U1>
+            let p2 = Expression.Parameter typeof<'U2>
+            let p3 = Expression.Parameter typeof<'U3>
+            let lambda = Expression.Lambda<Action<'U1, 'U2, 'U3>>(f p1 p2 p3, p1, p2, p3)
+#if COMPILETOMETHOD
+            let meth = DynamicAssembly.CompileExpr lambda
+            Action<'U1, 'U2, 'U3>(fun u1 u2 u3 -> meth.Invoke(null, [| box u1; box u2; box u3 |]) |> ignore)
+#else
+            lambda.Compile()
+#endif
 
         let pair<'T, 'U>(e1 : Expression, e2 : Expression) =
             let ctor = typeof<System.Tuple<'T,'U>>.GetConstructor([| SynVoid.Replace typeof<'T> ;  SynVoid.Replace typeof<'U> |])
@@ -69,9 +132,12 @@
         [<AutoOpen>]
         module private ReflectedAPI =
 
+            type ObjInitializer =
+                static member Init<'T> () = FormatterServices.GetUninitializedObject typeof<'T>
+
             let writerCtx = typeof<Writer>.GetProperty("StreamingContext")
             let readerCtx = typeof<Reader>.GetProperty("StreamingContext")
-            let objInitializer = typeof<FormatterServices>.GetMethod("GetUninitializedObject")
+            let objInitializer = typeof<ObjInitializer>.GetMethod("Init", BindingFlags.NonPublic ||| BindingFlags.Static)
             let deserializationCallBack = typeof<IDeserializationCallback>.GetMethod("OnDeserialization")
             let writerM = typeof<Writer>.GetGenericMethod(false, "Write", 1, 2)
             let readerM = typeof<Reader>.GetGenericMethod(false, "Read", 1, 1)
@@ -90,7 +156,7 @@
 
         /// initializes an empty object instance
         let initializeObject<'T> () =
-            let obj = Expression.Call(objInitializer, constant typeof<'T>) 
+            let obj = Expression.Call(objInitializer.MakeGenericMethod typeof<'T>) 
             unbox typeof<'T> obj
 
         /// execute a collection of serialization actions
@@ -109,54 +175,57 @@
             Expression.Call(dc, deserializationCallBack, constant null) :> Expression
 
         /// serialize a given value
-        let write (writer : Expression) (pickler : Pickler) (value : Expression) =
-            let ft = typedefof<Pickler<_>>.MakeGenericType [| pickler.Type |]
-            let fExpr = Expression.Constant(pickler, ft)
-            Expression.Call(writer, writerM.MakeGenericMethod [| pickler.Type |], fExpr, value) :> Expression
+        let write (writer : Expression) (picklers : Expression) (picklerType : Type) (picklerIdx : int) (value : Expression) =
+            let ft = typedefof<Pickler<_>>.MakeGenericType [| picklerType |]
+            let pickler = unbox ft <| Expression.ArrayIndex(picklers, constant picklerIdx)
+            Expression.Call(writer, writerM.MakeGenericMethod [| picklerType |], pickler, value) :> Expression
 
         /// deserialize a given value
-        let read (reader : Expression) (pickler : Pickler) =
-            let ft = typedefof<Pickler<_>>.MakeGenericType [| pickler.Type |]
-            let fExpr = Expression.Constant(pickler, ft)
-            Expression.Call(reader, readerM.MakeGenericMethod [| pickler.Type |], fExpr) :> Expression
+        let read (reader : Expression) (picklers : Expression) (picklerType : Type) (picklerIdx : int) =
+            let ft = typedefof<Pickler<_>>.MakeGenericType [| picklerType |]
+            let pickler = unbox ft <| Expression.ArrayIndex(picklers, constant picklerIdx)
+            Expression.Call(reader, readerM.MakeGenericMethod [| picklerType |], pickler) :> Expression
 
         /// write a collection of pickler from a corresponding collection of properties
-        let zipWriteProperties (properties : PropertyInfo []) (picklers : Pickler []) 
+        let zipWriteProperties (properties : PropertyInfo []) (picklers : Expression) 
                                                     (writer : Expression) (instance : Expression) =
-            let writeValue (pickler : Pickler, property : PropertyInfo) =
-                let value = Expression.Property(instance, property)
-                write writer pickler value
 
-            Seq.zip picklers properties |> Seq.map writeValue
+            let writeValue (idx : int) (property : PropertyInfo) =
+                let value = Expression.Property(instance, property)
+                write writer picklers property.PropertyType idx value
+
+            Seq.mapi writeValue properties
+
+        let zipReadProperties (properties : PropertyInfo []) (picklers : Expression) (reader : Expression) =
+            properties |> Seq.mapi (fun i p -> read reader picklers p.PropertyType i)
 
         /// read from a collection of picklers and pass to given constructor
-        let callConstructor (ctor : ConstructorInfo) (picklers : Pickler []) (reader : Expression) =
-            let values = Seq.map (read reader) picklers
+        let callConstructor (ctor : ConstructorInfo) (ctorParams : Type []) (picklers : Expression) (reader : Expression) =
+            let values = ctorParams |> Seq.mapi (fun i t -> read reader picklers t i)
             Expression.New(ctor, values) :> Expression
 
         /// read from a collection of picklers and pass to given static method
-        let callMethod (methodInfo : MethodInfo) (picklers : Pickler []) (reader : Expression) =
-            let values = Seq.map (read reader) picklers
+        let callMethod (methodInfo : MethodInfo) (methodParams : Type []) (picklers : Expression) (reader : Expression) =
+            let values = methodParams |> Seq.mapi (fun i t -> read reader picklers t i)
             Expression.Call(methodInfo, values) :> Expression
 
         /// zip write a collection of fields to corresponding collection of picklers
-        let zipWriteFields (fields : FieldInfo []) (picklers : Pickler []) 
-                                            (writer : Expression) (instance : Expression) =
+        let zipWriteFields (fields : FieldInfo []) (picklers : Expression) (writer : Expression) (instance : Expression) =
 
-            let writeValue (pickler : Pickler, field : FieldInfo) =
+            let writeValue (idx : int) (field : FieldInfo) =
                 let value = Expression.Field(instance, field)
-                write writer pickler value
+                write writer picklers field.FieldType idx value
 
-            Seq.zip picklers fields |> Seq.map writeValue
+            Seq.mapi writeValue fields
 
         /// zip read a collection of picklers to corresponding collection of fields
-        let zipReadFields (fields : FieldInfo []) (picklers : Pickler []) (reader : Expression) (instance : Expression) =
-            let readValue (pickler : Pickler, field : FieldInfo) =
-                let value = read reader pickler
+        let zipReadFields (fields : FieldInfo []) (picklers : Expression) (reader : Expression) (instance : Expression) =
+            let readValue (idx : int) (field : FieldInfo) =
+                let value = read reader picklers field.FieldType idx
                 let field = Expression.Field(instance, field)
                 Expression.Assign(field, value) :> Expression
 
-            Seq.zip picklers fields |> Seq.map readValue
+            Seq.mapi readValue fields
 
         // compilation provision for methods that carry the OnSerializing, OnSerialized, etc attributes
         let preComputeSerializationMethods<'T> (ms : MethodInfo []) =

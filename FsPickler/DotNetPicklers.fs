@@ -109,13 +109,13 @@
                 if fields.Length = 0 then (fun _ _ -> ())
                 else
                     let action =
-                        Expression.compileAction2<Writer, 'T>(fun writer instance ->
+                        Expression.compileAction3<Pickler [], Writer, 'T>(fun picklers writer instance ->
                             Expression.zipWriteFields fields picklers writer instance |> Expression.Block :> _)
 
-                    fun w t -> action.Invoke(w,t)
+                    fun w t -> action.Invoke(picklers, w, t)
 
-            let reader =
-                Expression.compileFunc1<Reader, 'T>(fun reader ->
+            let readerDele =
+                Expression.compileFunc2<Pickler [], Reader, 'T>(fun picklers reader ->
 
                     let instance = Expression.Variable(typeof<'T>, "instance")
 
@@ -128,7 +128,9 @@
                             yield instance :> _
                         }
 
-                    Expression.Block([| instance |], body) :> _).Invoke
+                    Expression.Block([| instance |], body) :> _)
+
+            let reader r = readerDele.Invoke(picklers, r)
 
 #else
             let writer (w : Writer) (t : 'T) =
@@ -185,7 +187,7 @@
                     fun _ _ -> ()
                 else
                     let writer =
-                        Expression.compileAction2<Writer, 'T>(fun writer instance ->
+                        Expression.compileAction3<Pickler [], Writer, 'T>(fun picklers writer instance ->
                             seq {
                                 yield! Expression.runSerializationActions onSerializing writer instance
 
@@ -195,10 +197,10 @@
 
                             } |> Expression.Block :> Expression)
 
-                    fun w t -> writer.Invoke(w,t)
+                    fun w t -> writer.Invoke(picklers, w,t)
 
-            let reader =
-                Expression.compileFunc1<Reader, 'T>(fun reader ->
+            let readerDele =
+                Expression.compileFunc2<Pickler [], Reader, 'T>(fun picklers reader ->
 
                     let instance = Expression.Variable(typeof<'T>, "instance")
 
@@ -218,7 +220,9 @@
                             yield instance :> _
                         } 
 
-                    Expression.Block([| instance |], body) :> Expression).Invoke
+                    Expression.Block([| instance |], body) :> Expression)
+
+            let reader r = readerDele.Invoke(picklers, r)
 
 #else
             let inline run (ms : MethodInfo []) (x : obj) w =
