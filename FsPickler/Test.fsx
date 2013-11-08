@@ -5,10 +5,6 @@ open FsPickler.Combinators
 
 let fsp = new FsPickler()
 
-let p = fsp.GeneratePickler<int * string []> ()
-
-pickle p (42, [| "test" ; "" ; null |]) |> unpickle p
-
 open FsPickler.Hashing
 
 
@@ -22,7 +18,7 @@ for i = 0 to 100 do
     fsp.ComputeHash(value, fnv) |> ignore // ~ 129
 
 for i = 0 to 100 do
-    fsp.ComputeHash value |> ignore // ~380
+    fsp.ComputeHash value |> ignore // ~433
 
 for i = 0 to 100 do
     fsp.Pickle value |> ignore // ~ 450
@@ -38,9 +34,18 @@ let x = [| 1 .. 10000000 |]
 
 let rand = new System.Random()
 
-let d = new System.Collections.Generic.HashSet<int> ()
+let d = new System.Collections.Generic.HashSet<byte []> ()
 
-d.Add 2
+for k = 1 to 100000 do
+    let i = rand.Next(0,10000000)
+    let j = rand.Next()
+    x.[i] <- j
+    if d.Add((fsp.ComputeHash x).Hash) then ()
+    else
+        failwithf "colision at iteration %d" k
 
-fsp.ComputeHash x
-fsp.ComputeHash (x, fnv)
+//d.Add 2
+//
+//fsp.ComputeHash x
+//fsp.ComputeHash (x, fnv)
+

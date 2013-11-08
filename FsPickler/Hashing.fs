@@ -188,21 +188,34 @@
                 pos <- 0
 
         override __.Write(bytes : byte [], offset : int, count : int) =
-            let mutable remaining = count - offset
-            let mutable i = offset
-        
-            while pos + remaining >= 16 do
-                let copied = 16 - pos
-                Buffer.BlockCopy(bytes, i, buf, pos, copied)
-                computePartial &h1 &h2
+            if pos + count < 16 then
+                Buffer.BlockCopy(bytes, offset, buf, pos, count)
+                pos <- pos + count
+            else
+                let mutable remaining = count
+                let mutable i = offset
 
-                pos <- 0
-                remaining <- remaining - copied
-                i <- i + copied
+                if pos > 0 then
+                    let copied = 16 - pos
+                    Buffer.BlockCopy(bytes, i, buf, pos, copied)
+                    computePartial &h1 &h2
 
-            if remaining > 0 then
-                Buffer.BlockCopy(bytes, i, buf, pos, remaining)
-                pos <- pos + remaining
+                    remaining <- remaining - copied
+                    i <- i + copied
+
+                while remaining >= 16 do
+                    let k1 = bytesToUInt64 buf i
+                    let k2 = bytesToUInt64 buf (i+8)
+
+                    do mixBody &h1 &h2 k1 k2
+
+                    remaining <- remaining - 16
+                    i <- i + 16
+
+                if remaining > 0 then
+                    Buffer.BlockCopy(bytes, i, buf, 0, remaining)
+    
+                pos <- remaining
 
             length <- length + int64 count
 
@@ -214,7 +227,7 @@
             let length =
                 if pos > 0 then 
                     computePartial &h1 &h2
-                    uint64 length + 16UL
+                    uint64 length + 16UL - uint64 pos
                 else
                     uint64 length
 
