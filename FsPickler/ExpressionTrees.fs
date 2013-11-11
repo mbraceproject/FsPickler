@@ -47,7 +47,7 @@
             let lambda = Expression.Lambda<Func<'U,'V>>(f parameter, parameter)
 #if COMPILETOMETHOD
             let meth = DynamicAssembly.CompileExpr lambda
-            Func<'U,'V>(fun u -> meth.Invoke(null, [| box u |]) :?> 'V)
+            Func<'U,'V>(fun u -> meth.GuardedInvoke(null, [| box u |]) :?> 'V)
 #else
             lambda.Compile()
 #endif
@@ -58,7 +58,7 @@
             let lambda = Expression.Lambda<Func<'U1,'U2,'V>>(f p1 p2, p1, p2)
 #if COMPILETOMETHOD
             let meth = DynamicAssembly.CompileExpr lambda
-            Func<'U1, 'U2, 'V>(fun u1 u2 -> meth.Invoke(null, [| box u1; box u2 |]) :?> 'V)
+            Func<'U1, 'U2, 'V>(fun u1 u2 -> meth.GuardedInvoke(null, [| box u1; box u2 |]) :?> 'V)
 #else
             lambda.Compile()
 #endif
@@ -70,7 +70,7 @@
             let lambda = Expression.Lambda<Func<'U1,'U2,'V>>(f p1 p2 p3, p1, p2, p3)
 #if COMPILETOMETHOD
             let meth = DynamicAssembly.CompileExpr lambda
-            Func<'U1, 'U2, 'U3, 'V>(fun u1 u2 u3 -> meth.Invoke(null, [| box u1; box u2; box u3 |]) :?> 'V)
+            Func<'U1, 'U2, 'U3, 'V>(fun u1 u2 u3 -> meth.GuardedInvoke(null, [| box u1; box u2; box u3 |]) :?> 'V)
 #else
             lambda.Compile()
 #endif
@@ -80,7 +80,7 @@
             let lambda = Expression.Lambda<Action<'U1>>(f p1, p1)
 #if COMPILETOMETHOD
             let meth = DynamicAssembly.CompileExpr lambda
-            Action<'U1>(fun u -> meth.Invoke(null, [| box u |]) |> ignore)
+            Action<'U1>(fun u -> meth.GuardedInvoke(null, [| box u |]) |> ignore)
 #else
             lambda.Compile()
 #endif
@@ -91,7 +91,7 @@
             let lambda = Expression.Lambda<Action<'U1, 'U2>>(f p1 p2, p1, p2)
 #if COMPILETOMETHOD
             let meth = DynamicAssembly.CompileExpr lambda
-            Action<'U1, 'U2>(fun u1 u2 -> meth.Invoke(null, [| box u1; box u2 |]) |> ignore)
+            Action<'U1, 'U2>(fun u1 u2 -> meth.GuardedInvoke(null, [| box u1; box u2 |]) |> ignore)
 #else
             lambda.Compile()
 #endif
@@ -102,7 +102,7 @@
             let lambda = Expression.Lambda<Action<'U1, 'U2, 'U3>>(f p1 p2 p3, p1, p2, p3)
 #if COMPILETOMETHOD
             let meth = DynamicAssembly.CompileExpr lambda
-            Action<'U1, 'U2, 'U3>(fun u1 u2 u3 -> meth.Invoke(null, [| box u1; box u2; box u3 |]) |> ignore)
+            Action<'U1, 'U2, 'U3>(fun u1 u2 u3 -> meth.GuardedInvoke(null, [| box u1; box u2; box u3 |]) |> ignore)
 #else
             lambda.Compile()
 #endif
