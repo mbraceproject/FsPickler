@@ -30,6 +30,7 @@
             m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler
 
         static member Create<'Union> (resolver : IPicklerResolver) =
+            // resolve tag reader methodInfo
             let tagReaderMethod =
                 match FSharpValue.PreComputeUnionTagMemberInfo(typeof<'Union>, allMembers) with
                 | null -> invalidOp "unexpected error"
@@ -59,7 +60,7 @@
                     let picklers = EnvItem<Pickler []>.Arg0
                     let reader = EnvItem<Reader>.Arg1
 
-                    emitDeserializeFactoryMethod (Choice1Of2 ctor) (ctor.GetParameterTypes()) reader picklers ilGen
+                    emitDeserializeAndConstruct (Choice1Of2 ctor) (ctor.GetParameterTypes()) reader picklers ilGen
                     
                     ilGen.Emit(OpCodes.Ret))
 
@@ -173,7 +174,7 @@
                     let picklers = EnvItem<Pickler []>.Arg0
                     let reader = EnvItem<Reader>.Arg1
 
-                    emitDeserializeFactoryMethod (Choice2Of2 ctor) (ctor.GetParameterTypes()) reader picklers ilGen
+                    emitDeserializeAndConstruct (Choice2Of2 ctor) (ctor.GetParameterTypes()) reader picklers ilGen
                     ilGen.Emit OpCodes.Ret)
 
             let reader r = readerDele.Invoke(picklers, r)
@@ -246,7 +247,7 @@
                     let picklers = EnvItem<Pickler []>.Arg0
                     let reader = EnvItem<Reader>.Arg1
 
-                    emitDeserializeFactoryMethod (Choice2Of2 ctor) (ctor.GetParameterTypes()) reader picklers ilGen
+                    emitDeserializeAndConstruct (Choice2Of2 ctor) (ctor.GetParameterTypes()) reader picklers ilGen
 
                     ilGen.Emit OpCodes.Ret)
             

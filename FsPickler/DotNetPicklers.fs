@@ -25,6 +25,7 @@
         || t.IsGenericParameter
         || t.IsGenericTypeDefinition
         || t.IsPrimitive // supported primitives should be already stored in the pickler cache        
+        || t = Type.GetType("System.__Canon")
 
 
     // creates a placeholder pickler instance
@@ -98,10 +99,8 @@
             m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler
 
         static member Create<'T when 'T : struct>(resolver : IPicklerResolver) =
+
             let fields = typeof<'T>.GetFields(allFields)
-//            if fields |> Array.exists(fun f -> f.IsInitOnly) then
-//                raise <| new NonSerializableTypeException(typeof<'T>, "type is marked with read-only instance fields.")
-            
             let picklers = fields |> Array.map (fun f -> resolver.Resolve f.FieldType)
 
 #if EMIT_IL
@@ -207,7 +206,6 @@
                     emitObjectInitializer typeof<'T> ilGen
                     value.Store ilGen
 
-                    // 
                     emitSerializationMethodCalls onDeserializing (Choice2Of2 reader) value ilGen
 
                     emitDeserializeFields fields reader picklers value ilGen
@@ -221,28 +219,6 @@
                 )
 
             let reader r = readerDele.Invoke(picklers, r)
-
-//
-//                    let body =
-//                        seq {
-//                            yield Expression.Assign(instance, Expression.initializeObject<'T> ()) :> Expression
-//
-//                            yield! Expression.runDeserializationActions onDeserializing reader instance
-//
-//                            yield! Expression.zipReadFields fields picklers reader instance
-//
-//                            yield! Expression.runDeserializationActions onDeserialized reader instance
-//
-//                            if isDeserializationCallback then
-//                                yield Expression.runDeserializationCallback instance
-//
-//                            yield instance :> _
-//                        } 
-//
-//                    Expression.Block([| instance |], body) :> Expression)
-//
-//            let reader r = readerDele.Invoke(picklers, r)
-
 #else
             let inline run (ms : MethodInfo []) (x : obj) w =
                 for i = 0 to ms.Length - 1 do 

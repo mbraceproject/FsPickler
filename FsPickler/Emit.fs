@@ -1,4 +1,6 @@
-﻿module FsPickler.Emit
+﻿module internal FsPickler.Emit
+
+#if EMIT_IL
 
     open System
     open System.Reflection
@@ -74,7 +76,7 @@
         member e.Store (ilGen : ILGenerator) =
             match e with
             | LocalVar v -> ilGen.Emit(OpCodes.Stloc, v)
-            | _ -> invalidArg "EnvItem" "cannot store to arg param."
+            | _ -> invalidOp "cannot store to arg param."
 
         member e.LocalBuilder =
             match e with
@@ -98,10 +100,6 @@
         let picklerT = typedefof<Pickler<_>>
         let writerM = typeof<Writer>.GetGenericMethod(false, "Write", 1, 2)
         let readerM = typeof<Reader>.GetGenericMethod(false, "Read", 1, 1)
-        let bw = typeof<Writer>.GetProperty("BinaryWriter", BindingFlags.Public ||| BindingFlags.Instance)
-        let br = typeof<Reader>.GetProperty("BinaryReader", BindingFlags.Public ||| BindingFlags.Instance)
-        let bwIntWriter = typeof<System.IO.BinaryWriter>.GetMethod("Write", [| typeof<int> |])
-        let brIntReader = typeof<System.IO.BinaryReader>.GetMethod("ReadInt32")
 
     /// emits typed pickler from array of untyped picklers
     let emitLoadPickler (picklers : EnvItem<Pickler []>) (t : Type) (idx : int) (ilGen : ILGenerator) =
@@ -181,12 +179,12 @@
             // perform serialization
             emitSerialize m.ReturnType ilGen
 
-    /// deserialize, call factory method and push to stack
-    let emitDeserializeFactoryMethod (factory : Choice<MethodInfo,ConstructorInfo>)
-                                        (fparams : Type [])
-                                        (reader : EnvItem<Reader>)
-                                        (picklers : EnvItem<Pickler []>)
-                                        (ilGen : ILGenerator) =
+    /// deserialize fields, pass to factory method and push to stack
+    let emitDeserializeAndConstruct (factory : Choice<MethodInfo,ConstructorInfo>)
+                                    (fparams : Type [])
+                                    (reader : EnvItem<Reader>)
+                                    (picklers : EnvItem<Pickler []>)
+                                    (ilGen : ILGenerator) =
 
         for i = 0 to fparams.Length - 1 do
             let p = fparams.[i]
@@ -203,7 +201,7 @@
         | Choice2Of2 c -> ilGen.Emit(OpCodes.Newobj, c)
 
 
-    /// push an initialized object of type 't' to the stack
+    /// push an uninitialized object of type 't' to the stack
     let emitObjectInitializer (t : Type) (ilGen : ILGenerator) =
         // reify type instance
         ilGen.Emit(OpCodes.Ldtoken, t)
@@ -237,13 +235,14 @@
             ctx.Load ilGen
             ilGen.EmitCall(OpCodes.Call, m, null)
 
-
+    /// emit a call to the 'OnDeserialization' method on given value
     let emitDeserializationCallback (value : EnvItem<'T>) (ilGen : ILGenerator) =
         value.Load ilGen
         ilGen.Emit(OpCodes.Castclass, typeof<IDeserializationCallback>)
+        ilGen.Emit OpCodes.Ldnull
         ilGen.EmitCall(OpCodes.Callvirt, deserializationCallBack, null)
 
-
+    /// wraps call to ISerializable constructor in a dynamic method
     let wrapISerializableConstructor<'T> (ctor : ConstructorInfo) =
         DynamicMethod.compileFunc2<SerializationInfo, StreamingContext, 'T> "ISerializableCtor" (fun ilGen ->
             ilGen.Emit OpCodes.Ldarg_0
@@ -253,3 +252,4 @@
             ilGen.Emit OpCodes.Ret
         )
         
+#endif
