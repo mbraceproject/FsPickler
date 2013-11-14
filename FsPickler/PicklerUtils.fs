@@ -29,6 +29,10 @@
 
             ms |> Array.filter isSerializationMethod
 
+        let mkDelegates<'T> (ms : MethodInfo []) =
+            let wrap m = Delegate.CreateDelegate(typeof<Action<'T, StreamingContext>>, m) :?> Action<'T, StreamingContext>
+            Array.map wrap ms
+
         let inline getStreamingContext (x : ^T when ^T : (member StreamingContext : StreamingContext)) =
             ( ^T : (member StreamingContext : StreamingContext) x)
 
