@@ -199,6 +199,10 @@
         let containsAttr<'T when 'T :> Attribute> (m : MemberInfo) =
             m.GetCustomAttributes(typeof<'T>, true) |> Seq.isEmpty |> not
 
+        type Delegate with
+            static member CreateDelegate<'T when 'T :> Delegate> (m : MethodInfo) =
+                System.Delegate.CreateDelegate(typeof<'T>, m) :?> 'T
+
         type Type with
             member t.GetGenericMethod(isStatic, name : string, genericArgCount : int, paramCount : int) =
                 t.GetMethods(allMembers)
@@ -217,6 +221,9 @@
                     reraise' e.InnerException
 
             member m.GetParameterTypes() = m.GetParameters() |> Array.map (fun p -> p.ParameterType)
+
+        type ConstructorInfo with
+            member c.GetParameterTypes() = c.GetParameters() |> Array.map (fun p -> p.ParameterType)
 
 
         let isISerializable (t : Type) =

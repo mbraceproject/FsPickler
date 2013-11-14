@@ -5,7 +5,8 @@
     open System.Reflection
     open System.Threading
 #if EMIT_IL
-    open System.Linq.Expressions
+    open System.Reflection.Emit
+    open FsPickler.Emit
 #endif
     open System.Runtime.Serialization
 
@@ -24,6 +25,7 @@
         || t.IsGenericParameter
         || t.IsGenericTypeDefinition
         || t.IsPrimitive // supported primitives should be already stored in the pickler cache        
+        || t = Type.GetType("System.__Canon")
 
 
     // creates a placeholder pickler instance
@@ -97,38 +99,40 @@
             m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler
 
         static member Create<'T when 'T : struct>(resolver : IPicklerResolver) =
+
             let fields = typeof<'T>.GetFields(allFields)
-            if fields |> Array.exists(fun f -> f.IsInitOnly) then
-                raise <| new NonSerializableTypeException(typeof<'T>, "type is marked with read-only instance fields.")
-            
             let picklers = fields |> Array.map (fun f -> resolver.Resolve f.FieldType)
 
 #if EMIT_IL
-            
-            let writer =
-                if fields.Length = 0 then (fun _ _ -> ())
-                else
-                    let action =
-                        Expression.compileAction2<Writer, 'T>(fun writer instance ->
-                            Expression.zipWriteFields fields picklers writer instance |> Expression.Block :> _)
+            let writerDele =
+                DynamicMethod.compileAction3<Pickler [], Writer, 'T> "structSerializer" (fun ilGen ->
+                    let picklers = EnvItem<Pickler []>.Arg0
+                    let writer = EnvItem<Writer>.Arg1
+                    let parent = EnvItem<'T>.Arg2
 
-                    fun w t -> action.Invoke(w,t)
+                    emitSerializeFields fields writer picklers parent ilGen
 
-            let reader =
-                Expression.compileFunc1<Reader, 'T>(fun reader ->
+                    ilGen.Emit OpCodes.Ret
+                )
 
-                    let instance = Expression.Variable(typeof<'T>, "instance")
+            let readerDele =
+                DynamicMethod.compileFunc2<Pickler [], Reader, 'T> "structDeserializer" (fun ilGen ->
+                    let picklers = EnvItem<Pickler []>.Arg0
+                    let reader = EnvItem<Reader>.Arg1
+                    
+                    // initialize empty value type
+                    let value = EnvItem<'T>.InitVar ilGen
+                    emitObjectInitializer typeof<'T> ilGen
+                    value.Store ilGen
 
-                    let body =
-                        seq {
-                            yield Expression.Assign(instance, Expression.initializeObject<'T> ()) :> Expression
+                    emitDeserializeFields fields reader picklers value ilGen
 
-                            yield! Expression.zipReadFields fields picklers reader instance
+                    value.Load ilGen
+                    ilGen.Emit OpCodes.Ret
+                )
 
-                            yield instance :> _
-                        }
-
-                    Expression.Block([| instance |], body) :> _).Invoke
+            let writer (w : Writer) (t : 'T) = writerDele.Invoke(picklers, w, t)
+            let reader (r : Reader) = readerDele.Invoke(picklers, r)
 
 #else
             let writer (w : Writer) (t : 'T) =
@@ -165,9 +169,6 @@
                 typeof<'T>.GetFields(allFields) 
                 |> Array.filter (fun f -> not (containsAttr<NonSerializedAttribute> f))
 
-            if fields |> Array.exists(fun f -> f.IsInitOnly) then
-                raise <| new NonSerializableTypeException(typeof<'T>, "type is marked with read-only instance fields.") 
-
             let picklers = fields |> Array.map (fun f -> resolver.Resolve f.FieldType)
 
             let isDeserializationCallback = typeof<IDeserializationCallback>.IsAssignableFrom typeof<'T>
@@ -179,47 +180,49 @@
             let onDeserialized = allMethods |> getSerializationMethods<OnDeserializedAttribute>
 
 #if EMIT_IL
-
             let writer =
                 if onSerializing.Length = 0 && fields.Length = 0 && onSerialized.Length = 0 then
                     fun _ _ -> ()
                 else
-                    let writer =
-                        Expression.compileAction2<Writer, 'T>(fun writer instance ->
-                            seq {
-                                yield! Expression.runSerializationActions onSerializing writer instance
+                    let writerDele =
+                        DynamicMethod.compileAction3<Pickler [], Writer, 'T> "classSerializer" (fun ilGen ->
+                            let picklers = EnvItem<Pickler []>.Arg0
+                            let writer = EnvItem<Writer>.Arg1
+                            let value = EnvItem<'T>.Arg2
 
-                                yield! Expression.zipWriteFields fields picklers writer instance
+                            emitSerializationMethodCalls onSerializing (Choice1Of2 writer) value ilGen
 
-                                yield! Expression.runSerializationActions onSerialized writer instance
+                            emitSerializeFields fields writer picklers value ilGen
 
-                            } |> Expression.Block :> Expression)
+                            emitSerializationMethodCalls onSerialized (Choice1Of2 writer) value ilGen
+                            
+                            ilGen.Emit OpCodes.Ret)
 
-                    fun w t -> writer.Invoke(w,t)
+                    fun w t -> writerDele.Invoke(picklers, w, t)
 
-            let reader =
-                Expression.compileFunc1<Reader, 'T>(fun reader ->
+            let readerDele =
+                DynamicMethod.compileFunc2<Pickler [], Reader, 'T> "classDeserializer" (fun ilGen ->
+                    let picklers = EnvItem<Pickler []>.Arg0
+                    let reader = EnvItem<Reader>.Arg1
 
-                    let instance = Expression.Variable(typeof<'T>, "instance")
+                    // get uninitialized object and store locally
+                    let value = EnvItem<'T>.InitVar ilGen
+                    emitObjectInitializer typeof<'T> ilGen
+                    value.Store ilGen
 
-                    let body =
-                        seq {
-                            yield Expression.Assign(instance, Expression.initializeObject<'T> ()) :> Expression
+                    emitSerializationMethodCalls onDeserializing (Choice2Of2 reader) value ilGen
 
-                            yield! Expression.runDeserializationActions onDeserializing reader instance
+                    emitDeserializeFields fields reader picklers value ilGen
 
-                            yield! Expression.zipReadFields fields picklers reader instance
+                    emitSerializationMethodCalls onSerialized (Choice2Of2 reader) value ilGen
 
-                            yield! Expression.runDeserializationActions onDeserialized reader instance
+                    if isDeserializationCallback then emitDeserializationCallback value ilGen
 
-                            if isDeserializationCallback then
-                                yield Expression.runDeserializationCallback instance
+                    value.Load ilGen
+                    ilGen.Emit OpCodes.Ret
+                )
 
-                            yield instance :> _
-                        } 
-
-                    Expression.Block([| instance |], body) :> Expression).Invoke
-
+            let reader r = readerDele.Invoke(picklers, r)
 #else
             let inline run (ms : MethodInfo []) (x : obj) w =
                 for i = 0 to ms.Length - 1 do 
@@ -312,32 +315,23 @@
             | None -> None
             | Some ctorInfo ->
                 let allMethods = typeof<'T>.GetMethods(allMembers)
-                let onSerializing = allMethods |> getSerializationMethods< OnSerializingAttribute>
-                let onSerialized = allMethods |> getSerializationMethods<OnSerializedAttribute>
-                let onDeserialized = allMethods |> getSerializationMethods<OnDeserializedAttribute>
+                let onSerializing = allMethods |> getSerializationMethods<OnSerializingAttribute> |> mkDelegates<'T>
+                let onSerialized = allMethods |> getSerializationMethods<OnSerializedAttribute> |> mkDelegates<'T>
+                let onDeserialized = allMethods |> getSerializationMethods<OnDeserializedAttribute> |> mkDelegates<'T>
 
                 let isDeserializationCallback = typeof<IDeserializationCallback>.IsAssignableFrom typeof<'T>
 
                 let objPickler = resolver.Resolve<obj> ()
+
+                let inline run (dele : Action<'T, StreamingContext> []) w x =
+                    for d in dele do
+                        d.Invoke(x, getStreamingContext w)
+
 #if EMIT_IL
-                let inline run (dele : Action<StreamingContext, 'T> option) w x =
-                    match dele with
-                    | None -> ()
-                    | Some d -> d.Invoke(getStreamingContext w, x)
+                let ctorDele = wrapISerializableConstructor<'T> ctorInfo
 
-                let onSerializing = Expression.preComputeSerializationMethods<'T> onSerializing
-                let onSerialized = Expression.preComputeSerializationMethods<'T> onSerialized
-                let onDeserialized = Expression.preComputeSerializationMethods<'T> onDeserialized
-
-                let ctor =
-                    Expression.compileFunc2<SerializationInfo, StreamingContext, 'T>(fun si sc -> 
-                        Expression.New(ctorInfo, si, sc) :> _)
-
-                let inline create si sc = ctor.Invoke(si, sc)
+                let inline create si sc = ctorDele.Invoke(si, sc)
 #else
-                let inline run (ms : MethodInfo []) w o  =
-                    for i = 0 to ms.Length - 1 do ms.[i].Invoke(o, [| getStreamingContext w :> obj |]) |> ignore
-
                 let inline create (si : SerializationInfo) (sc : StreamingContext) = 
                     ctorInfo.Invoke [| si :> obj ; sc :> obj |] |> fastUnbox<'T>
 #endif

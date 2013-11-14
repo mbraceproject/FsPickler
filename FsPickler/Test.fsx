@@ -1,12 +1,9 @@
-﻿#r "bin/Release/FsPickler.dll"
+﻿#r "bin/Debug/FsPickler.dll"
 
 open FsPickler
 open FsPickler.Combinators
 
 let fsp = new FsPickler()
-
-open FsPickler.Hashing
-
 
 let fnv = new FNV1aStreamFactory()
 
@@ -43,9 +40,3 @@ for k = 1 to 100000 do
     if d.Add((fsp.ComputeHash x).Hash) then ()
     else
         failwithf "colision at iteration %d" k
-
-//d.Add 2
-//
-//fsp.ComputeHash x
-//fsp.ComputeHash (x, fnv)
-
