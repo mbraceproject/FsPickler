@@ -111,6 +111,8 @@
                     let parent = EnvItem<'T>.Arg2
 
                     emitSerializeFields fields writer picklers parent ilGen
+
+                    ilGen.Emit OpCodes.Ret
                 )
 
             let readerDele =
@@ -192,7 +194,9 @@
 
                             emitSerializeFields fields writer picklers value ilGen
 
-                            emitSerializationMethodCalls onSerialized (Choice1Of2 writer) value ilGen)
+                            emitSerializationMethodCalls onSerialized (Choice1Of2 writer) value ilGen
+                            
+                            ilGen.Emit OpCodes.Ret)
 
                     fun w t -> writerDele.Invoke(picklers, w, t)
 

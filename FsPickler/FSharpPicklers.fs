@@ -53,7 +53,9 @@
                     ilGen.Emit(OpCodes.Castclass, caseType)
                     union.Store ilGen
 
-                    emitSerializeProperties fields writer picklers union ilGen)
+                    emitSerializeProperties fields writer picklers union ilGen
+                    
+                    ilGen.Emit OpCodes.Ret)
 
             let buildCaseReader ctor =
                 DynamicMethod.compileFunc2<Pickler [], Reader, 'Union> "unionDeserializer" (fun ilGen ->
@@ -165,7 +167,9 @@
                             let writer = EnvItem<Writer>.Arg1
                             let tuple = EnvItem<'Tuple>.Arg2
 
-                            emitSerializeProperties elements writer picklers tuple ilGen)
+                            emitSerializeProperties elements writer picklers tuple ilGen
+                            
+                            ilGen.Emit OpCodes.Ret)
 
                     fun w t -> writerDele.Invoke(picklers, w, t)
 
@@ -238,7 +242,9 @@
                             let writer = EnvItem<Writer>.Arg1
                             let record = EnvItem<'Record>.Arg2
 
-                            emitSerializeProperties fields writer picklers record ilGen)
+                            emitSerializeProperties fields writer picklers record ilGen
+                            
+                            ilGen.Emit OpCodes.Ret)
 
                     fun w t -> writerDele.Invoke(picklers, w,t)
 
