@@ -38,70 +38,128 @@
                 | :? MethodInfo as m -> m
                 | _ -> invalidOp "unexpected error"
 
-            let tagReader = Delegate.CreateDelegate<Func<'Union,int>> tagReaderMethod
-
 #if EMIT_IL
-            let buildCaseWriter (caseType : Type) fields =
-                
-                DynamicMethod.compileAction3<Pickler [], Writer, 'Union> "unionSerializer" (fun ilGen ->
-                    let picklers = EnvItem<Pickler []>.Arg0
-                    let writer = EnvItem<Writer>.Arg1
-                    let union = EnvItem<'Union>.InitVar(ilGen, reflectedType = caseType)
+            let emitCaseWriter (label : Label) (caseType : Type option) 
+                                    (union : EnvItem<'Union>)
+                                    (writer : EnvItem<Writer>)
+                                    (picklers : EnvItem<Pickler []>)
+                                    (fields : PropertyInfo []) (ilGen : ILGenerator) =
 
-                    // push union and downcast
-                    ilGen.Emit(OpCodes.Ldarg_2)
-                    ilGen.Emit(OpCodes.Castclass, caseType)
-                    union.Store ilGen
+                ilGen.MarkLabel label
+
+                match caseType with
+                | None -> ()
+                | Some ct ->
+//                    let unionCase = EnvItem<'Union>.InitVar(ilGen, reflectedType = ct)
+//
+//                    // downcast
+//                    union.Load ilGen
+//                    ilGen.Emit(OpCodes.Castclass, ct)
+//                    unionCase.Store ilGen
 
                     emitSerializeProperties fields writer picklers union ilGen
-                    
-                    ilGen.Emit OpCodes.Ret)
 
-            let buildCaseReader ctor =
-                DynamicMethod.compileFunc2<Pickler [], Reader, 'Union> "unionDeserializer" (fun ilGen ->
-                    let picklers = EnvItem<Pickler []>.Arg0
-                    let reader = EnvItem<Reader>.Arg1
+                ilGen.Emit OpCodes.Ret
 
-                    emitDeserializeAndConstruct (Choice1Of2 ctor) (ctor.GetParameterTypes()) reader picklers ilGen
-                    
-                    ilGen.Emit(OpCodes.Ret))
+            let emitCaseReader (label : Label) (ctor : MethodInfo) 
+                                        (reader : EnvItem<Reader>)
+                                        (picklers : EnvItem<Pickler []>) (ilGen : ILGenerator) =
 
-            let caseSerializers =
-                FSharpType.GetUnionCases(typeof<'Union>, allMembers)
-                |> Array.sortBy(fun uci -> uci.Tag)
+                ilGen.MarkLabel label
+                emitDeserializeAndConstruct (Choice1Of2 ctor) (ctor.GetParameterTypes()) reader picklers ilGen
+                ilGen.Emit OpCodes.Ret
+
+            let caseInfo =
+                FSharpType.GetUnionCases(typeof<'Union>, allMembers) 
+                |> Array.sortBy (fun uci -> uci.Tag)
                 |> Array.map (fun uci ->
                     let fields = uci.GetFields()
-                    let ctor = FSharpValue.PreComputeUnionConstructorInfo(uci, allMembers)
-                    let picklers = fields |> Array.map (fun f -> resolver.Resolve f.PropertyType)
-                    let caseWriter = 
+                    let caseType = 
                         if fields.Length = 0 then None
                         else
-                            let caseType = fields.[0].DeclaringType
-                            Some <| buildCaseWriter caseType fields
+                            match fields.[0].DeclaringType with
+                            | dt when dt <> uci.DeclaringType -> Some dt
+                            | _ -> None
+                    let ctor = FSharpValue.PreComputeUnionConstructorInfo(uci, allMembers)
+                    let picklers = uci.GetFields() |> Array.map (fun f -> resolver.Resolve f.PropertyType)
+                    caseType, ctor, fields, picklers)
 
-                    let caseReader = buildCaseReader ctor
-                    picklers, caseWriter, caseReader)
+            let picklerss = caseInfo |> Array.map (fun (_,_,_,picklers) -> picklers)
 
+            let writerDele =
+                DynamicMethod.compileAction3<Pickler [] [], Writer, 'Union> "unionSerializer" (fun ilGen ->
+                    let picklerss = EnvItem<Pickler [] []>.Arg0
+                    let writer = EnvItem<Writer>.Arg1
+                    let union = EnvItem<'Union>.Arg2
+                    let tag = EnvItem<int>.InitVar ilGen
+                    let picklers = EnvItem<Pickler []>.InitVar ilGen
 
-            let writer (w : Writer) (u : 'Union) =
-                let tag = tagReader.Invoke u
+                    let labels = Array.init caseInfo.Length (fun _ -> ilGen.DefineLabel())
 
-                let picklers,caseWriter,_ = caseSerializers.[tag]
+                    // read union tag & store to local value
+                    union.Load ilGen
+                    ilGen.EmitCall(OpCodes.Call, tagReaderMethod, null)
+                    tag.Store ilGen
 
-                w.BinaryWriter.Write (byte tag)
+                    // select appropriate picklers & store
+                    picklerss.Load ilGen
+                    tag.Load ilGen
+                    ilGen.Emit OpCodes.Ldelem_Ref
+                    picklers.Store ilGen
 
-                match caseWriter with
-                | None -> ()
-                | Some cw -> cw.Invoke(picklers, w, u)
+                    // write tag to stream
+                    writeInt writer tag ilGen
 
-            let reader (r : Reader) =
-                let tag = int (r.BinaryReader.ReadByte())
+                    // make jump table
+                    tag.Load ilGen
+                    ilGen.Emit(OpCodes.Switch, labels)
 
-                let picklers,_,caseReader = caseSerializers.[tag]
-                caseReader.Invoke(picklers, r)
+                    // emit cases
+                    for i = 0 to caseInfo.Length - 1 do
+                        let label = labels.[i]
+                        let caseType,_,properties,_ = caseInfo.[i]
 
+                        emitCaseWriter label caseType union writer picklers properties ilGen
+                )
+
+            let readerDele =
+                DynamicMethod.compileFunc2<Pickler [] [], Reader, 'Union> "unionDeserializer" (fun ilGen ->
+                    let picklerss = EnvItem<Pickler [] []>.Arg0
+                    let reader = EnvItem<Reader>.Arg1
+                    let tag = EnvItem<int>.InitVar ilGen
+                    let picklers = EnvItem<Pickler []>.InitVar ilGen
+
+                    let labels = Array.init caseInfo.Length (fun _ -> ilGen.DefineLabel())
+
+                    // read tag from stream & store
+                    readInt reader ilGen
+                    tag.Store ilGen
+
+                    // select appropriate picklers & store
+                    picklerss.Load ilGen
+                    tag.Load ilGen
+                    ilGen.Emit OpCodes.Ldelem_Ref
+                    picklers.Store ilGen
+
+                    // make jump table
+                    tag.Load ilGen
+                    ilGen.Emit(OpCodes.Switch, labels)
+
+                    // emit cases
+                    for i = 0 to caseInfo.Length - 1 do
+                        let label = labels.[i]
+                        let _,ctor,_,_ = caseInfo.[i]
+
+                        emitCaseReader label ctor reader picklers ilGen
+
+                )
+
+            let writer w u = writerDele.Invoke(picklerss, w, u)
+            let reader r = readerDele.Invoke(picklerss, r)
 #else
-            let unionCases =
+            let tagReader = Delegate.CreateDelegate<Func<'Union,int>> tagReaderMethod
+
+            let caseInfo =
                 FSharpType.GetUnionCases(typeof<'Union>, allMembers) 
                 |> Array.map (fun uci ->
                     let ctor = FSharpValue.PreComputeUnionConstructor(uci, allMembers)
@@ -112,14 +170,14 @@
             let writer (w : Writer) (x : 'Union) =
                 let tag = tagReader.Invoke x
                 w.BinaryWriter.Write (byte tag)
-                let _,reader,picklers = unionCases.[tag]
+                let _,reader,picklers = caseInfo.[tag]
                 let values = reader x
                 for i = 0 to values.Length - 1 do
                     picklers.[i].ManagedWrite w values.[i]
 
             let reader (r : Reader) =
                 let tag = int (r.BinaryReader.ReadByte())
-                let ctor,_,picklers = unionCases.[tag]
+                let ctor,_,picklers = caseInfo.[tag]
                 let values = Array.zeroCreate<obj> picklers.Length
                 for i = 0 to picklers.Length - 1 do
                     values.[i] <- picklers.[i].ManagedRead r

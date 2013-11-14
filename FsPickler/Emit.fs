@@ -100,6 +100,10 @@
         let picklerT = typedefof<Pickler<_>>
         let writerM = typeof<Writer>.GetGenericMethod(false, "Write", 1, 2)
         let readerM = typeof<Reader>.GetGenericMethod(false, "Read", 1, 1)
+        let bw = typeof<Writer>.GetProperty("BinaryWriter", BindingFlags.Public ||| BindingFlags.Instance).GetGetMethod(true)
+        let br = typeof<Reader>.GetProperty("BinaryReader", BindingFlags.Public ||| BindingFlags.Instance).GetGetMethod(true)
+        let bwIntWriter = typeof<System.IO.BinaryWriter>.GetMethod("Write", [| typeof<int> |])
+        let brIntReader = typeof<System.IO.BinaryReader>.GetMethod("ReadInt32")
 
     /// emits typed pickler from array of untyped picklers
     let emitLoadPickler (picklers : EnvItem<Pickler []>) (t : Type) (idx : int) (ilGen : ILGenerator) =
@@ -251,5 +255,18 @@
             ilGen.Emit(OpCodes.Newobj, ctor)
             ilGen.Emit OpCodes.Ret
         )
+
+    /// writes and integer
+    let writeInt (writer : EnvItem<Writer>) (n : EnvItem<int>) (ilGen : ILGenerator) =
+        writer.Load ilGen
+        ilGen.EmitCall(OpCodes.Call, bw, null) // load BinaryWriter
+        n.Load ilGen
+        ilGen.EmitCall(OpCodes.Call, bwIntWriter, null) // perform write
+
+    /// reads an integer and push to stack
+    let readInt (reader : EnvItem<Reader>) (ilGen : ILGenerator) =
+        reader.Load ilGen
+        ilGen.EmitCall(OpCodes.Call, br, null) // load BinaryReader
+        ilGen.EmitCall(OpCodes.Call, brIntReader, null) // perform read, push to stacks
         
 #endif
