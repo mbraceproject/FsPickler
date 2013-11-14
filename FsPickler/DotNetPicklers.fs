@@ -105,9 +105,9 @@
 
 #if EMIT_IL
             let writerDele =
-                DynamicMethod.compileAction3<Writer, Pickler [], 'T> "structSerializer" (fun ilGen ->
-                    let writer = EnvItem<Writer>.Arg0
-                    let picklers = EnvItem<Pickler []>.Arg1
+                DynamicMethod.compileAction3<Pickler [], Writer, 'T> "structSerializer" (fun ilGen ->
+                    let picklers = EnvItem<Pickler []>.Arg0
+                    let writer = EnvItem<Writer>.Arg1
                     let parent = EnvItem<'T>.Arg2
 
                     emitSerializeFields fields writer picklers parent ilGen
@@ -116,9 +116,9 @@
                 )
 
             let readerDele =
-                DynamicMethod.compileFunc2<Reader, Pickler [], 'T> "structDeserializer" (fun ilGen ->
-                    let reader = EnvItem<Reader>.Arg0
-                    let picklers = EnvItem<Pickler []>.Arg1
+                DynamicMethod.compileFunc2<Pickler [], Reader, 'T> "structDeserializer" (fun ilGen ->
+                    let picklers = EnvItem<Pickler []>.Arg0
+                    let reader = EnvItem<Reader>.Arg1
                     
                     // initialize empty value type
                     let value = EnvItem<'T>.InitVar ilGen
@@ -131,8 +131,8 @@
                     ilGen.Emit OpCodes.Ret
                 )
 
-            let writer (w : Writer) (t : 'T) = writerDele.Invoke(w, picklers, t)
-            let reader (r : Reader) = readerDele.Invoke(r, picklers)
+            let writer (w : Writer) (t : 'T) = writerDele.Invoke(picklers, w, t)
+            let reader (r : Reader) = readerDele.Invoke(picklers, r)
 
 #else
             let writer (w : Writer) (t : 'T) =

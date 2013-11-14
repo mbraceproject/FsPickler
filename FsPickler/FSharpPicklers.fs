@@ -39,36 +39,6 @@
                 | _ -> invalidOp "unexpected error"
 
 #if EMIT_IL
-            let emitCaseWriter (label : Label) (caseType : Type option) 
-                                    (union : EnvItem<'Union>)
-                                    (writer : EnvItem<Writer>)
-                                    (picklers : EnvItem<Pickler []>)
-                                    (fields : PropertyInfo []) (ilGen : ILGenerator) =
-
-                ilGen.MarkLabel label
-
-                match caseType with
-                | None -> ()
-                | Some ct ->
-//                    let unionCase = EnvItem<'Union>.InitVar(ilGen, reflectedType = ct)
-//
-//                    // downcast
-//                    union.Load ilGen
-//                    ilGen.Emit(OpCodes.Castclass, ct)
-//                    unionCase.Store ilGen
-
-                    emitSerializeProperties fields writer picklers union ilGen
-
-                ilGen.Emit OpCodes.Ret
-
-            let emitCaseReader (label : Label) (ctor : MethodInfo) 
-                                        (reader : EnvItem<Reader>)
-                                        (picklers : EnvItem<Pickler []>) (ilGen : ILGenerator) =
-
-                ilGen.MarkLabel label
-                emitDeserializeAndConstruct (Choice1Of2 ctor) (ctor.GetParameterTypes()) reader picklers ilGen
-                ilGen.Emit OpCodes.Ret
-
             let caseInfo =
                 FSharpType.GetUnionCases(typeof<'Union>, allMembers) 
                 |> Array.sortBy (fun uci -> uci.Tag)
@@ -117,9 +87,11 @@
                     // emit cases
                     for i = 0 to caseInfo.Length - 1 do
                         let label = labels.[i]
-                        let caseType,_,properties,_ = caseInfo.[i]
+                        let caseType,_,fields,_ = caseInfo.[i]
 
-                        emitCaseWriter label caseType union writer picklers properties ilGen
+                        ilGen.MarkLabel label
+                        emitSerializeProperties fields writer picklers union ilGen
+                        ilGen.Emit OpCodes.Ret
                 )
 
             let readerDele =
@@ -150,8 +122,9 @@
                         let label = labels.[i]
                         let _,ctor,_,_ = caseInfo.[i]
 
-                        emitCaseReader label ctor reader picklers ilGen
-
+                        ilGen.MarkLabel label
+                        emitDeserializeAndConstruct (Choice1Of2 ctor) (ctor.GetParameterTypes()) reader picklers ilGen
+                        ilGen.Emit OpCodes.Ret
                 )
 
             let writer w u = writerDele.Invoke(picklerss, w, u)
