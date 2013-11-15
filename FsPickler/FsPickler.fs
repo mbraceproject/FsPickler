@@ -12,6 +12,7 @@
 
     type HashResult =
         {
+            Algorithm : string
             Length : int64
             Hash : byte []
         }
@@ -191,10 +192,14 @@
         /// <param name="value">input value.</param>
         /// <param name="hashFactory">the hashing algorithm to be used. MurMur3 by default</param>
         member f.ComputeHash<'T>(value : 'T, ?hashFactory : IHashStreamFactory) =
-            let hashFactory = match hashFactory with Some h -> h | None -> new MurMur3() :> _
-            let hashStream = hashFactory.Create ()
+            let hashStream = 
+                match hashFactory with 
+                | Some h -> h.Create()
+                | None -> new MurMur3Stream() :> HashStream
+
             f.Serialize(hashStream, value)
             {
+                Algorithm = hashStream.HashAlgorithm
                 Length = hashStream.Length
                 Hash = hashStream.ComputeHash()
             }

@@ -44,8 +44,10 @@
             member IsCacheByRef : bool
             /// Specifies if pickler can be used on objects of proper subtype.
             member UseWithSubtypes : bool
-            /// Specifies if pickler type supports cyclic objects.
-            member IsRecursiveType : bool
+            /// Specifies if pickled type supports cyclic objects.
+            member IsCyclicType : bool
+            /// Specifies if pickled type has object graphs of fixed size.
+            member IsFixedSize : bool
             /// Provides information on the pickler generation method.
             member PicklerInfo : PicklerInfo
             /// Cache Id used to generate this pickler.

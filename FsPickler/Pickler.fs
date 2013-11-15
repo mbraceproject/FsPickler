@@ -17,7 +17,8 @@
     type Pickler =
 
         val private declared_type : Type
-        val private is_recursive_type : bool
+        val private is_cyclic_type : bool
+        val private is_fixed_size : bool
 
         val mutable private m_isInitialized : bool
 
@@ -33,8 +34,13 @@
 
         internal new (t : Type) =
             {
-                declared_type = t ; 
-                is_recursive_type = isRecursiveType t ;
+                declared_type = t ;
+#if OPTIMIZE_FSHARP
+                is_cyclic_type = isCyclicType true t ;
+#else
+                is_cyclic_type = isCyclicType false t ;
+#endif
+                is_fixed_size = isOfFixedSize t ;
 
                 m_isInitialized = false ;
 
@@ -52,7 +58,12 @@
             assert(picklerType.IsAssignableFrom declaredType)
             {
                 declared_type = declaredType ; 
-                is_recursive_type = isRecursiveType declaredType ;
+#if OPTIMIZE_FSHARP
+                is_cyclic_type = isCyclicType true declaredType ;
+#else
+                is_cyclic_type = isCyclicType false declaredType ;
+#endif
+                is_fixed_size = isOfFixedSize declaredType ;
 
                 m_isInitialized = true ;
 
@@ -68,7 +79,8 @@
             }
 
         member f.Type = f.declared_type
-        member f.IsRecursiveType = f.is_recursive_type
+        member f.IsCyclicType = f.is_cyclic_type
+        member f.IsFixedSize = f.is_fixed_size
 
         member internal f.TypeKind = f.m_TypeKind
         member internal f.TypeHash = f.m_typeHash
@@ -263,26 +275,26 @@
             do RuntimeHelpers.EnsureSufficientExecutionStack()
 #endif
 
-            let isRecursive = fmt.IsRecursiveType
+            let isCyclic = fmt.IsCyclicType
 
-            if isRecursive || fmt.IsCacheByRef then
+            if isCyclic || fmt.IsCacheByRef then
                 let id, firstOccurence = idGen.GetId x
 
                 if firstOccurence then
                     // push id to the symbolic stack to detect cyclic objects during traversal
-                    if isRecursive then 
+                    if isCyclic then 
                         objStack.Push id
 
                     write ObjHeader.isNewCachedInstance
 
-                    if isRecursive then
+                    if isCyclic then
                         objStack.Pop () |> ignore
                         cyclicObjects.Remove id |> ignore
 
-                elif isRecursive && objStack.Contains id && not <| cyclicObjects.Contains id then
+                elif isCyclic && objStack.Contains id && not <| cyclicObjects.Contains id then
                     // came across cyclic object, record fixup-related data
                     // cyclic objects are handled once per instance
-                    // instanses of cyclic arrays are handled differently than other reference types
+                    // instances of cyclic arrays are handled differently than other reference types
 
                     do cyclicObjects.Add(id) |> ignore
                     
@@ -425,7 +437,7 @@
 
                 let x = read flags
 
-                if fmt.IsRecursiveType then 
+                if fmt.IsCyclicType then 
                     let found, contents = fixupIndex.TryGetValue id
 
                     if found then

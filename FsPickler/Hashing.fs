@@ -8,13 +8,10 @@
         abstract Create : unit -> HashStream
 
     /// An abstract byte sink used as a hash generating state machine
-    and [<AbstractClass>] HashStream(?underlying : Stream) =
+    and [<AbstractClass>] HashStream() =
         inherit System.IO.Stream()
 
-        static let notSupported () = raise <| new NotSupportedException()
-
-        let underlying = defaultArg underlying null
-
+        abstract HashAlgorithm : string
         abstract ComputeHash : unit -> byte []
 
         override __.CanRead = false
@@ -23,11 +20,11 @@
         override __.CanWrite = true
         override __.ReadTimeout = 0
         override __.WriteTimeout = 0
-        override __.Seek(_,_) = notSupported ()
-        override __.SetLength _ = notSupported ()
-        override __.Read(_,_,_) = notSupported ()
+        override __.Seek(_,_) = raise <| new NotSupportedException()
+        override __.SetLength _ = raise <| new NotSupportedException()
+        override __.Read(_,_,_) = raise <| new NotSupportedException()
         override __.Flush () = ()
-        override __.Position with set _ = notSupported ()
+        override __.Position with set _ = raise <| new NotSupportedException()
 
     //
     // 64-bit Fowler-Noll-Vo hashing algorithm
@@ -49,6 +46,8 @@
         let mutable pos = 0L
         let mutable hash = 0xcbf29ce484222325UL
 
+        override __.HashAlgorithm = "FNV-1a"
+
         override __.Length = pos
         override __.Position = pos
 
@@ -66,8 +65,8 @@
             pos <- pos + 1L
 
         override __.Write(bytes : byte [], offset : int, count : int) =
-            let mutable remaining = offset - count
-            let mutable i = 0
+            let mutable remaining = count
+            let mutable i = offset
 
             let inline append k = hash <- (hash ^^^ uint64 bytes.[k]) * 0x100000001b3uL
 
@@ -101,23 +100,6 @@
 
         let inline rotateLeft (original : uint64) (bits : int) = original <<< bits ||| original >>> (64 - bits)
         let inline rotateRight (original : uint64) (bits : int) = original >>> bits ||| original <<< (64 - bits)
-
-        // 2x faster than BitConverter
-        let inline bytesToUInt64 (bytes : byte []) (i : int) =
-            let inline b2i j s = (uint64 bytes.[i + j]) <<< s
-
-            uint64 (bytes.[i]) ||| b2i 1 8 ||| b2i 2 16 ||| b2i 3 24 |||
-            b2i 4 32 ||| b2i 5 40 ||| b2i 6 48 ||| b2i 7 56
-
-        let inline uint64ToBytes (buf : byte []) (i : int) (value : uint64) =
-            buf.[i] <- byte value
-            buf.[i+1] <- byte (value >>> 8)
-            buf.[i+2] <- byte (value >>> 16)
-            buf.[i+3] <- byte (value >>> 24)
-            buf.[i+4] <- byte (value >>> 32)
-            buf.[i+5] <- byte (value >>> 40)
-            buf.[i+6] <- byte (value >>> 48)
-            buf.[i+7] <- byte (value >>> 56)
 
         let inline mixkey1 (k : uint64) =
             let mutable k = k
@@ -153,6 +135,23 @@
             k <- k * 0xc4ceb9fe1a85ec53uL
             k <- k ^^^ (k >>> 33)
 
+        // 2x faster than BitConverter
+        let inline bytesToUInt64 (bytes : byte []) (i : int) =
+            let inline b2i j s = (uint64 bytes.[i + j]) <<< s
+
+            uint64 (bytes.[i]) ||| b2i 1 8 ||| b2i 2 16 ||| b2i 3 24 |||
+            b2i 4 32 ||| b2i 5 40 ||| b2i 6 48 ||| b2i 7 56
+
+        let inline uint64ToBytes (buf : byte []) (i : int) (value : uint64) =
+            buf.[i] <- byte value
+            buf.[i+1] <- byte (value >>> 8)
+            buf.[i+2] <- byte (value >>> 16)
+            buf.[i+3] <- byte (value >>> 24)
+            buf.[i+4] <- byte (value >>> 32)
+            buf.[i+5] <- byte (value >>> 40)
+            buf.[i+6] <- byte (value >>> 48)
+            buf.[i+7] <- byte (value >>> 56)
+
 
     type MurMur3(?seed) =
         interface IHashStreamFactory with
@@ -175,17 +174,20 @@
 
             mixBody &h1 &h2 k1 k2
 
+        override __.HashAlgorithm = "MurMur3"
+
         override __.Length = length
         override __.Position = length
 
         override __.WriteByte(b : byte) =
             buf.[pos] <- b
-            pos <- pos + 1
             length <- length + 1L
 
-            if pos = 16 then
+            if pos = 15 then
                 computePartial &h1 &h2
                 pos <- 0
+            else
+                pos <- pos + 1
 
         override __.Write(bytes : byte [], offset : int, count : int) =
             if pos + count < 16 then
@@ -204,8 +206,8 @@
                     i <- i + copied
 
                 while remaining >= 16 do
-                    let k1 = bytesToUInt64 buf i
-                    let k2 = bytesToUInt64 buf (i+8)
+                    let k1 = bytesToUInt64 bytes i
+                    let k2 = bytesToUInt64 bytes (i+8)
 
                     do mixBody &h1 &h2 k1 k2
 
@@ -257,9 +259,10 @@
 
         let mutable pos = 0L
 
+        override __.HashAlgorithm = raise <| new NotSupportedException()
         override __.ComputeHash () = raise <| new NotSupportedException()
 
         override __.Length = pos
         override __.Position = pos
         override __.WriteByte _ = pos <- pos + 1L
-        override __.Write(_ : byte [], _ : int, count : int) = pos <- pos + int64 count
+        override __.Write(_, _, count : int) = pos <- pos + int64 count
