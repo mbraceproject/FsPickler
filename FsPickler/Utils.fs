@@ -260,74 +260,76 @@
         //
         // A type is cyclic iff its instances admit cyclic object graphs.
         //
-        // F# core types are treated specially since cyclic bindings cannot be created under normal circumstances
+        // F# union types are treated specially since cyclic bindings cannot be created under normal circumstances
         // for instance, the
         //
-        //      type Tree = Leaf | Branch of Tree list
+        //      type Rec = Rec of Rec
         //
-        // is flagged as non-cyclic since defining cyclic graphs of this type are impossible in F#.
-        // On the other hand, the
+        // is flagged as non-cyclic since defining instances of this type is impossible in F#.
+        // However,
         //
-        //     type Tree = Leaf | Branch of Tree []
+        //     type Rec = { Rec : Rec }
         //
-        // is flagged as cyclic since the union definition is intertwined with a mutable container.
+        // is flagged as cyclic since a recursive definition is actually possible in F#.
         // Finally, the
         //
         //     type Func = Func of (int -> int)
         //
         // is flagged as cyclic since cyclic bindings *can* be made, for example
         // `let rec f = Func (fun x -> let (Func f0) = f in f0 x + 1)`
-        let isCyclicType (excludeImmutableRecTypes : bool) (t : Type) =
-            let rec aux d (traversed : (int * bool * Type) list) (t : Type) =
+        let isCyclicType (excludeUnionRecTypes : bool) (t : Type) =
+            let rec aux d (traversed : (int * bool * bool * Type) list) (t : Type) =
 
                 if t.IsValueType then false
                 elif typeof<MemberInfo>.IsAssignableFrom t then false
                 elif isISerializable t then true
                 else
 
-                let recAncestors = traversed |> List.filter (fun (_,_,t') -> t.IsAssignableFrom t') 
+                let recAncestors = traversed |> List.filter (fun (_,_,_,t') -> t.IsAssignableFrom t') 
 
                 if recAncestors.Length > 0 then
-                    if excludeImmutableRecTypes then
-                        // recursive F# core types marked as 'cyclic' only if intertwined with non-union(mutable) types
+                    if excludeUnionRecTypes then
+                        // recursive F# union types marked as 'cyclic' only if intertwined with non-union(mutable) types
                         // e.g. 'type Peano = Zero | Succ of Peano ref' is cyclic
-                        let isCyclicType (d : int, isMutable : bool, _ : Type) =
-                            if isMutable then true
+                        let isCyclicType (d : int, isUnion : bool, _, _ : Type) =
+                            if isUnion then
+                                traversed |> List.exists (fun (i,_,isMutable,_) -> i > d && isMutable)
                             else
-                                traversed |> List.exists (fun (i,isMutable,_) -> i > d && isMutable)
+                                true
+                                
 
                         List.exists isCyclicType recAncestors
                     else
                         true
 
                 elif t.IsArray || t.IsByRef || t.IsPointer then
-                    aux (d+1) ((d,true,t) :: traversed) <| t.GetElementType()
+                    aux (d+1) ((d,false,true,t) :: traversed) <| t.GetElementType()
                 elif FSharpType.IsUnion(t, allMembers) then
                     FSharpType.GetUnionCases(t, allMembers)
                     |> Seq.map (fun u -> u.GetFields() |> Seq.map (fun p -> p.PropertyType))
                     |> Seq.concat
                     |> Seq.distinct
-                    |> Seq.exists (aux (d+1) ((d,false,t) :: traversed))
+                    |> Seq.exists (aux (d+1) ((d,true,false,t) :: traversed))
 #if OPTIMIZE_FSHARP
                 // System.Tuple is not sealed, but inheriting is not an idiomatic pattern in F#
                 elif FSharpType.IsTuple t then
                     FSharpType.GetTupleElements t
                     |> Seq.distinct
-                    |> Seq.exists (aux (d+1) ((d,false,t) :: traversed))
+                    |> Seq.exists (aux (d+1) ((d,false,false,t) :: traversed))
 #endif
                 elif FSharpType.IsRecord(t, allMembers) then
                     FSharpType.GetRecordFields(t, allMembers)
                     |> Seq.map (fun p -> p.CanWrite, p.PropertyType)
                     |> Seq.distinct
-                    |> Seq.exists (fun (isMutable, t') -> aux (d+1) ((d,isMutable,t) :: traversed) t')
+                    |> Seq.exists (fun (isMutable, t') -> aux (d+1) ((d,false,isMutable,t) :: traversed) t')
 
-                // leaves with open hiearchies are treated as recursive by definition
+                // leaves with open hiearchies are treated as cyclic by definition
                 elif not t.IsSealed then true
                 else
                     t.GetFields(allFields)
                     |> Seq.map (fun f -> f.FieldType)
                     |> Seq.distinct
-                    |> Seq.exists (aux (d+1) ((d,true,t) :: traversed))
+                    |> Seq.exists (aux (d+1) ((d,false,true,t) :: traversed))
 
             aux 0 [] t
 

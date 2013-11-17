@@ -6,15 +6,17 @@ open FsPickler.Combinators
 let fsp = new FsPickler()
 let fnv = FsPickler.Hashing.FNV1aStreamFactory()
 
-let value = [1..10000] |> List.map (fun i -> Some (string i, Some i))
+let value = [1..100000] |> List.map (fun i -> Some (string i, Some i))
 
 #time
 
-fsp.Pickle value
-fsp.ComputeSize value
-fsp.ComputeHash value
-fsp.ComputeHash(value, fnv)
-value.GetHashCode()
-
-type Peano = Zero | Succ of Peano
-Pickler.auto<Quotations.Expr>
+for i = 0 to 100 do
+    fsp.Pickle value |> ignore
+for i = 0 to 100 do
+    fsp.ComputeSize value |> ignore
+for i = 0 to 100 do
+    fsp.ComputeHash value |> ignore
+for i = 0 to 100 do
+    fsp.ComputeHash(value, fnv) |> ignore
+for i = 0 to 100 do
+    value.GetHashCode() |> ignore

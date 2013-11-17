@@ -98,8 +98,10 @@
         [<Literal>]
         let C2 = 0x4cf5ad432745937fuL
 
-        let inline rotateLeft (original : uint64) (bits : int) = original <<< bits ||| original >>> (64 - bits)
-        let inline rotateRight (original : uint64) (bits : int) = original >>> bits ||| original <<< (64 - bits)
+        let inline rotateLeft (original : uint64) (bits : int) = 
+            original <<< bits ||| original >>> (64 - bits)
+        let inline rotateRight (original : uint64) (bits : int) = 
+            original >>> bits ||| original <<< (64 - bits)
 
         let inline mixkey1 (k : uint64) =
             let mutable k = k
@@ -152,7 +154,16 @@
             buf.[i+6] <- byte (value >>> 48)
             buf.[i+7] <- byte (value >>> 56)
 
+        // assume k is all 0's where b is to be written
+        let inline writeByte (k : uint64) (i : int) (b : byte) =
+            k ||| (uint64 b <<< i * 8)
 
+        let inline writeBytes (k : byref<uint64>) boffset koffset count (bs : byte []) =
+            for i = 0 to count - 1 do
+                k <- writeByte k (koffset + i) bs.[boffset + i]
+
+    /// MurMur3 128-bit hashing algorithm.
+    /// Optimized for 64-bit architectures
     type MurMur3(?seed) =
         interface IHashStreamFactory with
             member __.Create () = new MurMur3Stream(?seed = seed) :> HashStream
@@ -160,19 +171,19 @@
     and MurMur3Stream(?seed : uint64) =
         inherit HashStream()
 
+        let mutable length = 0L
+
+        // partial 128-bit hash store
         let mutable h1 = defaultArg seed 0UL
         let mutable h2 = 0UL
 
-        let mutable length = 0L
+        // buffer
+        let mutable k1 = 0UL
+        let mutable k2 = 0UL
 
-        let buf = Array.zeroCreate<byte> 16
-        let mutable pos = 0 // write position on the buffer
-
-        let computePartial (h1 : byref<uint64>) (h2 : byref<uint64>) =
-            let k1 = bytesToUInt64 buf 0
-            let k2 = bytesToUInt64 buf 8
-
-            mixBody &h1 &h2 k1 k2
+        // position parameters
+        let mutable atK2 = false
+        let mutable pos = 0
 
         override __.HashAlgorithm = "MurMur3"
 
@@ -180,44 +191,80 @@
         override __.Position = length
 
         override __.WriteByte(b : byte) =
-            buf.[pos] <- b
-            length <- length + 1L
+            if atK2 then
+                k2 <- writeByte k2 pos b
+            else
+                k1 <- writeByte k1 pos b
 
-            if pos = 15 then
-                computePartial &h1 &h2
+            if pos = 7 then 
+                if atK2 then
+                    // got 16 bytes, perform partial hash computation and reset state
+                    mixBody &h1 &h2 k1 k2
+                    k1 <- 0UL
+                    k2 <- 0UL
                 pos <- 0
+                atK2 <- not atK2
             else
                 pos <- pos + 1
+                
+            length <- length + 1L
 
         override __.Write(bytes : byte [], offset : int, count : int) =
-            if pos + count < 16 then
-                Buffer.BlockCopy(bytes, offset, buf, pos, count)
+            if pos + count < 8 then
+                // data insufficient to fill a block, just copy & increase count
+                if atK2 then
+                    writeBytes &k2 offset pos count bytes
+                else
+                    writeBytes &k1 offset pos count bytes
+
                 pos <- pos + count
             else
                 let mutable remaining = count
                 let mutable i = offset
+                let mutable latK2 = atK2
 
                 if pos > 0 then
-                    let copied = 16 - pos
-                    Buffer.BlockCopy(bytes, i, buf, pos, copied)
-                    computePartial &h1 &h2
+                    // synchronize with previous partial state
+                    let copied = 8 - pos
+                    if latK2 then
+                        writeBytes &k2 i pos copied bytes
+                        // got 16 bytes, perform partial hash computation and reset state
+                        mixBody &h1 &h2 k1 k2
+                        k1 <- 0UL
+                        k2 <- 0UL
+                    else
+                        writeBytes &k1 i pos copied bytes
 
+                    latK2 <- not latK2
                     remaining <- remaining - copied
                     i <- i + copied
 
-                while remaining >= 16 do
-                    let k1 = bytesToUInt64 bytes i
-                    let k2 = bytesToUInt64 bytes (i+8)
+                // synced, now compute in blocks
 
-                    do mixBody &h1 &h2 k1 k2
+                while remaining >= 8 do
+                    if latK2 then
+                        k2 <- bytesToUInt64 bytes i
+                        // got 16 bytes, perform partial hash computation and reset state
+                        mixBody &h1 &h2 k1 k2
+                        k1 <- 0UL
+                        k2 <- 0UL
+                    else
+                        k1 <- bytesToUInt64 bytes i
+                    
+                    latK2 <- not latK2
+                    remaining <- remaining - 8
+                    i <- i + 8
 
-                    remaining <- remaining - 16
-                    i <- i + 16
+                // copy any remaining data
 
                 if remaining > 0 then
-                    Buffer.BlockCopy(bytes, i, buf, 0, remaining)
-    
+                    if latK2 then
+                        writeBytes &k2 i 0 remaining bytes
+                    else
+                        writeBytes &k1 i 0 remaining bytes
+
                 pos <- remaining
+                atK2 <- latK2
 
             length <- length + int64 count
 
@@ -227,11 +274,13 @@
             let mutable h2 = h2
 
             let length =
-                if pos > 0 then 
-                    computePartial &h1 &h2
-                    uint64 length + 16UL - uint64 pos
-                else
+                // have read precisely 0 (mod 16) bytes, no need to normalize length
+                if pos = 0 && not atK2 then 
                     uint64 length
+                else
+                    // have unprocessed bytes, perform a final hash operation & normalize length
+                    mixBody &h1 &h2 k1 k2
+                    (uint64 length / 16UL + 1UL) * 16UL
 
             h1 <- h1 ^^^ length
             h2 <- h2 ^^^ length
@@ -257,12 +306,12 @@
     type internal LengthCounter () =
         inherit HashStream ()
 
-        let mutable pos = 0L
+        let mutable length = 0L
 
         override __.HashAlgorithm = raise <| new NotSupportedException()
         override __.ComputeHash () = raise <| new NotSupportedException()
 
-        override __.Length = pos
-        override __.Position = pos
-        override __.WriteByte _ = pos <- pos + 1L
-        override __.Write(_, _, count : int) = pos <- pos + int64 count
+        override __.Length = length
+        override __.Position = length
+        override __.WriteByte _ = length <- length + 1L
+        override __.Write(_, _, count : int) = length <- length + int64 count
