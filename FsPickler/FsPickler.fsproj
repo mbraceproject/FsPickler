@@ -29,7 +29,7 @@
     <Optimize>true</Optimize>
     <Tailcalls>true</Tailcalls>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE;PROTECT_STACK_OVERFLOWS;OPTIMIZE_FSHARP;SERIALIZE_STRONG_NAMES;EMIT_IL</DefineConstants>
+    <DefineConstants>TRACE;PROTECT_STACK_OVERFLOWS;OPTIMIZE_FSHARP;SERIALIZE_STRONG_NAMES;BUILD_STRONG_NAME;EMIT_IL</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\Release\FsPickler.XML</DocumentationFile>
   </PropertyGroup>
