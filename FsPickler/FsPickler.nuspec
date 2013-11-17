@@ -9,6 +9,7 @@
         <copyright>Eirik Tsarpalis</copyright>
         <projectUrl>https://github.com/eiriktsarpalis/FsPickler/</projectUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
+		<iconUrl>http://www.m-brace.net/media/pickler.jpg</iconUrl>
         <licenseUrl>https://github.com/eiriktsarpalis/FsPickler/blob/master/License.md</licenseUrl>
         <description>* Based on the notion of pickler combinators.
 * Provides an automated, strongly typed, pickler generation framework.
