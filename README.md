@@ -279,8 +279,34 @@ let p = fsp''.GeneratePickler<Set<int> option> ()
 Some(set [ 1 .. 1000 ]) |> fsp.Pickle p |> fsp.UnPickle p
 ```
 
+### Structural Hashcodes
+
+FsPickler now offers experimental support for structural, non-cryptographic, hashcode generation:
+```fsharp
+> fsp.ComputeHash [1 .. 100000] ;;
+val it : HashResult =
+  {Algorithm = "MurMur3";
+   Length = 400008L;
+   Hash =
+    [|52uy; 70uy; 141uy; 214uy; 3uy; 231uy; 11uy; 100uy; 94uy; 250uy; 231uy;
+      97uy; 188uy; 215uy; 70uy; 0uy|];}
+```
+This will generate a 128-bit structural hashcode based on the [MurMurHash](http://en.wikipedia.org/wiki/MurmurHash) algorithm.
+Implementation is memory efficient, since the hashing algorithm is integrated with
+the underlying stream implementation. It is possible for users to define their own hashing
+algorithms by inheriting the special `HashStream` class. 
+
+Hashing functionality offered by FsPickler is an ideal replacement to `.GetHashCode()` for
+large objects or complex object graphs, but it is not recommended for small values or primitives.
+
+If a hashcode is not required, the size of an object alone can be computed as follows:
+```fsharp
+> fsp.ComputeSize [1 .. 1000000] ;;
+val it : int64 = 4000008L
+```
+
+
 ### Future work
 
-* Support for fast structural hashcode generation.
 * Support for multiple pickle formats.
 * A C# friendly API.
