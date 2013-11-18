@@ -19,7 +19,13 @@
         let unpickle (pickler : Pickler<'T>) (data : byte []) =
             defaultSerializer.Value.UnPickle (pickler, data)
 
-//        let getSize (pickler
+        /// computes the size of given value
+        let getSize (value : 'T) =
+            defaultSerializer.Value.ComputeSize(value)
+
+        /// computes the hashcode of given value
+        let getHashCode (value : 'T) =
+            defaultSerializer.Value.ComputeHash(value)
 
         [<RequireQualifiedAccess>]
         module Pickler =

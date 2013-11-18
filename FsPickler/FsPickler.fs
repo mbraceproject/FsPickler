@@ -190,14 +190,18 @@
 
         /// <summary>Compute size and hashcode for given input.</summary>
         /// <param name="value">input value.</param>
+        /// <param name="pickler">use specific pickler for hashcode generation.</param>
         /// <param name="hashFactory">the hashing algorithm to be used. MurMur3 by default</param>
-        member f.ComputeHash<'T>(value : 'T, ?hashFactory : IHashStreamFactory) =
+        member f.ComputeHash<'T>(value : 'T, ?pickler : Pickler<'T>, ?hashFactory : IHashStreamFactory) =
             let hashStream = 
                 match hashFactory with 
                 | Some h -> h.Create()
                 | None -> new MurMur3Stream() :> HashStream
 
-            f.Serialize(hashStream, value)
+            match pickler with
+            | None -> f.Serialize(hashStream, value)
+            | Some p -> f.Serialize(hashStream, p, value)
+
             {
                 Algorithm = hashStream.HashAlgorithm
                 Length = hashStream.Length
@@ -205,10 +209,13 @@
             }
 
         /// <summary>Compute size in bytes for given input.</summary>
+        /// <param name="pickler">use specific pickler for length computation.</param>
         /// <param name="value">input value.</param>
-        member f.ComputeSize<'T>(value : 'T) =
+        member f.ComputeSize<'T>(value : 'T, ?pickler : Pickler<'T>) =
             let lengthCounter = new LengthCounter()
-            f.Serialize(lengthCounter, value)
+            match pickler with
+            | None -> f.Serialize(lengthCounter, value)
+            | Some p -> f.Serialize(p, lengthCounter, value)
             lengthCounter.Length
 
         /// Auto generates a pickler for given type variable
