@@ -17,6 +17,6 @@ for i = 0 to 100 do
 for i = 0 to 100 do
     fsp.ComputeHash value |> ignore
 for i = 0 to 100 do
-    fsp.ComputeHash(value, fnv) |> ignore
+    fsp.ComputeHash(value, hashFactory = fnv) |> ignore
 for i = 0 to 100 do
     value.GetHashCode() |> ignore
