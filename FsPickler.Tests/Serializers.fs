@@ -6,9 +6,10 @@
     open System.Runtime.Serialization.Formatters.Binary
 
     open FsPickler
+    open PerfUtil
 
     type ISerializer =
-        abstract Name : string
+        inherit ITestable
         abstract Serialize : Stream * 'T -> unit
         abstract Deserialize : Stream -> 'T
 
@@ -22,7 +23,7 @@
             member __.Serialize(stream : Stream, x : 'T) = fsc.Serialize(stream, x)
             member __.Deserialize(stream : Stream) = fsc.Deserialize<'T> stream
 
-    type TestBinaryPickler () =
+    type TestBinaryFormatter () =
         let bfs = new BinaryFormatter()
 
         interface ISerializer with
@@ -50,16 +51,16 @@
             use m = new MemoryStream(bytes)
             s.Deserialize m : 'T
 
-        let writeRead (s : ISerializer) (x : 'T) =
+        let roundtrip (x : 'T) (s : ISerializer) =
             use m = new MemoryStream()
             s.Serialize(m, x)
             m.Position <- 0L
             s.Deserialize<'T> m
 
-        let loop (s : ISerializer) iters (x : 'T) =
+        let roundtrips times (x : 'T) (s : ISerializer) =
             use m = new MemoryStream()
 
-            for i = 1 to iters do
+            for i = 1 to times do
                 m.Position <- 0L
                 s.Serialize(m, x)
                 m.Position <- 0L

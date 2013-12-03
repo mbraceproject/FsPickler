@@ -17,7 +17,7 @@
         let ipAddr = "127.0.0.1"
         let port = 2323
 
-        let defaultProtocolSerializer () = new TestBinaryPickler() :> ISerializer
+        let defaultProtocolSerializer () = new TestBinaryFormatter() :> ISerializer
     
     exception SerializationError of exn
     exception ProtocolError of exn    
@@ -138,7 +138,7 @@
         member __.Start() =
             if isActive () then failwith "server already running"
 
-            let thisExe = System.Reflection.Assembly.GetExecutingAssembly().Location
+            let thisExe = System.IO.Path.GetFullPath("FsPickler.Tests.exe")
 
             let psi = new ProcessStartInfo()
 

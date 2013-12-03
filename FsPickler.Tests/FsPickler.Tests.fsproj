@@ -23,7 +23,8 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DocumentationFile>bin\Debug\FsPickler.Tests.XML</DocumentationFile>
     <Prefer32Bit>true</Prefer32Bit>
-    <OtherFlags>--staticlink:FsPickler</OtherFlags>
+    <OtherFlags>
+    </OtherFlags>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -35,14 +36,14 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DocumentationFile>bin\Release\FsPickler.Tests.XML</DocumentationFile>
     <Prefer32Bit>true</Prefer32Bit>
-    <OtherFlags>--staticlink:FsPickler</OtherFlags>
+    <OtherFlags>
+    </OtherFlags>
   </PropertyGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets')" />
   <ItemGroup>
-    <Compile Include="FsUnit.fs" />
     <Compile Include="Utils.fs" />
     <Compile Include="Serializers.fs" />
     <Compile Include="Remoting.fs" />
@@ -50,23 +51,33 @@
     <Compile Include="CorrectnessTests.fs" />
     <Compile Include="PerformanceTests.fs" />
     <Compile Include="main.fs" />
+    <None Include="App.config" />
     <None Include="packages.config" />
+    <Content Include="perfResults.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="FsUnit.NUnit">
+      <HintPath>..\packages\FsUnit.1.2.1.0\Lib\Net40\FsUnit.NUnit.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core, Version=4.3.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <Private>True</Private>
     </Reference>
     <Reference Include="nunit.framework">
-      <HintPath>..\packages\NUnit.2.6.2\lib\nunit.framework.dll</HintPath>
+      <HintPath>..\packages\NUnit.2.6.3\lib\nunit.framework.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="PerfUtil">
+      <HintPath>..\packages\PerfUtil.0.1.0\lib\net45\PerfUtil.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
     <Reference Include="System.Runtime.Serialization" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\FsPickler\FsPickler.fsproj">
       <Name>FsPickler</Name>
       <Project>{3ad987bf-f0fa-40bd-9dae-4af3a5fe9cc7}</Project>

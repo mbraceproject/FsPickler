@@ -360,7 +360,7 @@
 
         override __.TestSerializer (x : 'T) = Serializer.write testSerializer x
         override __.TestDeserializer (bytes : byte []) = Serializer.read testSerializer bytes
-        override __.TestLoop(x : 'T) = Serializer.writeRead testSerializer x
+        override __.TestLoop(x : 'T) = Serializer.roundtrip x testSerializer
 
         override __.Init () = ()
         override __.Fini () = ()

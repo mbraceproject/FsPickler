@@ -240,9 +240,9 @@
                 try Some (t, Activator.CreateInstance t)
                 with _ -> None
 
-            let bfs = new TestBinaryPickler()
+            let bfs = new TestBinaryFormatter()
             let filterObject (t : Type, o : obj) =
-                try Serializer.writeRead bfs o |> ignore ; true
+                try Serializer.roundtrip o bfs |> ignore ; true
                 with _ -> false
             
             assembly.GetTypes()

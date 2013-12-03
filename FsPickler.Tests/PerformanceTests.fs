@@ -1,136 +1,80 @@
 ﻿namespace FsPickler.Tests
 
+    open System
+    open System.IO
+    open System.Diagnostics
+    open System.Runtime.Serialization
+
+    open NUnit.Framework
+    open PerfUtil
+
+    open FsPickler
+    open FsPickler.Tests.Serializer
+    open FsPickler.Tests.TestTypes
+
+
     module PerformanceTests =
 
-        open System
-        open System.IO
-        open System.Diagnostics
-        open System.Runtime.Serialization
+        type Marker = class end
 
-        open NUnit.Framework
-        open FsPickler
+        [<PerfTest>]
+        let ``Value: Int`` s = roundtrips 10000 42 s
 
-        open TestTypes
+        [<PerfTest>]
+        let ``Value: Boolean`` s = roundtrips 10000 true s
 
-        let fsc = testSerializer :> ISerializer
-        let bfs = new TestBinaryPickler () :> ISerializer
-        let ndc = new TestNetDataContractSerializer () :> ISerializer
+        [<PerfTest>]
+        let ``Value: Float`` s = roundtrips 10000 3.14 s
 
-        let leastAcceptableImprovementFactor = 1.
+        [<PerfTest>]
+        let ``Value: Decimal`` s = roundtrips 10000 1231231.121M s
 
-        let testPerf iterations (input : 'T) =
-            let runBenchmark (s : ISerializer) =
-                try Choice1Of2 (benchmark (fun () -> Serializer.loop s iterations input))
-                with e -> Choice2Of2 e
+        [<PerfTest>]
+        let ``Value: Guid`` s = roundtrips 1000 (Guid.NewGuid()) s
 
-            // returns a floating point improvement factor
-            let compareResults fscResult (other : ISerializer) =
-                let getTimeMetric (r : BenchmarkResults<_>) = r.Elapsed.Ticks |> decimal
+        [<PerfTest>]
+        let ``Value: DateTime`` s = roundtrips 1000 DateTime.Now s
 
-                let getSpaceMetric (r : BenchmarkResults<_>) =
-                    r.GcDelta |> Seq.mapi (fun i g -> g * pown 10 i) |> Seq.sum |> float
-                
-                function
-                | Choice1Of2 otherResult ->
-                    let time = getTimeMetric otherResult / getTimeMetric fscResult |> float
-                    let space = 
-                        let otherM = getSpaceMetric otherResult 
-                        let fscM = getSpaceMetric fscResult
-                        // avoid NaN and Infinity results
-                        if fscM = 0. then
-                            if otherM = 0. then 1.
-                            else otherM
-                        else otherM / fscM
+        [<PerfTest>]
+        let ``Value: String`` s = roundtrips 10000 stringValue s
 
-                    printfn "%s is %.2fx faster and %.2fx more memory efficient than %s." fsc.Name time space other.Name
-                    // measure combined performance benefit with an 80% bias to time results
-                    (4. * time + space) / 5.
-                | Choice2Of2 e ->
-                    printfn "%s failed during test." other.Name
-                    Double.PositiveInfinity
-
-            printfn "Running %d iterations on type %O:" iterations typeof<'T>
-
-            let fscResults = runBenchmark TestTypes.testSerializer
-                
-            match fscResults with
-            | Choice2Of2 e -> 
-                printfn "%s failed during test." fsc.Name
-                raise e
-            | Choice1Of2 r ->
-                let ndcResults = runBenchmark ndc
-                let bfsResults = runBenchmark bfs
-
-                let bfsMetric = compareResults r bfs bfsResults
-                let ndcMetric = compareResults r ndc ndcResults
-
-                let checkMetric (tested : ISerializer) (comparedTo : ISerializer) (metric : float) =
-                    if metric < leastAcceptableImprovementFactor then
-                        let msg = sprintf "%s scored a subpar %.1f%% improvement factor against %s." tested.Name (metric * 100.) comparedTo.Name
-                        raise <| new AssertionException(msg)
-
-                checkMetric testSerializer bfs bfsMetric
-                checkMetric testSerializer ndc ndcMetric
-
-
-        [<Test>]
-        let ``Value: Int`` () = testPerf 10000 42
-
-        [<Test>]
-        let ``Value: Boolean`` () = testPerf 10000 true
-
-        [<Test>]
-        let ``Value: Float`` () = testPerf 10000 3.14
-
-        [<Test>]
-        let ``Value: Decimal`` () = testPerf 10000 1231231.121M
-
-        [<Test>]
-        let ``Value: Guid`` () = testPerf 1000 <| Guid.NewGuid()
-
-        [<Test>]
-        let ``Value: DateTime`` () = testPerf 1000 <| DateTime.Now
-
-        [<Test>]
-        let ``Value: String`` () = testPerf 10000 stringValue
-
-        [<Test>]
-        let ``Class: Simple F# Class`` () =
+        [<PerfTest>]
+        let ``Class: Simple F# Class`` s =
             let c = new Class(42, stringValue)
-            testPerf 10000 c
+            roundtrips 10000 c s
 
-        [<Test>]
-        let ``Class: ISerializable`` () =
+        [<PerfTest>]
+        let ``Class: ISerializable`` s =
             let c = new SerializableClass<int list>(42, stringValue, [1..1000])
-            testPerf 1000 c
+            roundtrips 1000 c s
 
-        [<Test>]
-        let ``Array: Float`` () =
+        [<PerfTest>]
+        let ``Array: Float`` s =
             let bigFlt = Array.init 100000 (fun i -> float i)
-            testPerf 10 bigFlt
+            roundtrips 10 bigFlt s
 
-        [<Test>]
-        let ``Array: Int`` () =
+        [<PerfTest>]
+        let ``Array: Int`` s =
             let bigFlt = Array.init 100000 id
-            testPerf 10 bigFlt
+            roundtrips 10 bigFlt s
 
         
-        [<Test>]
-        let ``Array: String`` () =
+        [<PerfTest>]
+        let ``Array: String`` s =
             let bigArr = Array.init 10000 (fun i -> stringValue + string i)
-            testPerf 100 bigArr
+            roundtrips 100 bigArr s
 
-        [<Test>]
-        let ``Array: Key-Value Pairs`` () =
+        [<PerfTest>]
+        let ``Array: Key-Value Pairs`` s =
             let kvarr = [|1..10000|] |> Array.map (fun i -> i, string i)
-            testPerf 100 kvarr
+            roundtrips 100 kvarr s
 
-        [<Test>]
-        let ``Array: Discriminated Unions`` () = 
-            testPerf 100 [| for i in 1 .. 10000 -> (Something ("asdasdasdas", i)) |]
+        [<PerfTest>]
+        let ``Array: Discriminated Unions`` s = 
+            roundtrips 100 [| for i in 1 .. 10000 -> (Something ("asdasdasdas", i)) |] s
 
-        [<Test>]
-        let ``Array: Objects`` () =
+        [<PerfTest>]
+        let ``Array: Objects`` s =
             let array = 
                 [| 
                     box 2; box 3; box "hello" ; box <| Some 3; box(2,3) ; 
@@ -138,74 +82,74 @@
                     box stringValue 
                 |]
 
-            testPerf 1000 array
+            roundtrips 1000 array s
 
-        [<Test>]
-        let ``Array: Rank-3 Float`` () =
+        [<PerfTest>]
+        let ``Array: Rank-3 Float`` s =
             let arr = Array3D.init 100 100 100 (fun i j k -> float (i * j + k))
-            testPerf 10 arr
+            roundtrips 10 arr s
 
-        [<Test>]
-        let ``.NET Dictionary`` () =
+        [<PerfTest>]
+        let ``.NET Dictionary`` s =
             let dict = new System.Collections.Generic.Dictionary<string, int>()
             for i = 0 to 1000 do dict.Add(string i, i)
-            testPerf 100 dict
+            roundtrips 100 dict s
 
-        [<Test>]
-        let ``.NET Stack`` () =
+        [<PerfTest>]
+        let ``.NET Stack`` s =
             let stack = new System.Collections.Generic.Stack<string> ()
             for i = 0 to 1000 do stack.Push <| string i
-            testPerf 100 stack
+            roundtrips 100 stack s
 
-        [<Test>]
-        let ``.NET List`` () =
+        [<PerfTest>]
+        let ``.NET List`` s =
             let list = new System.Collections.Generic.List<string * int>()
             for i = 0 to 1000 do list.Add (string i, i)
-            testPerf 100 list
+            roundtrips 100 list s
 
-        [<Test>]
-        let ``.NET Set`` () =
+        [<PerfTest>]
+        let ``.NET Set`` s =
             let set = new System.Collections.Generic.SortedSet<string> ()
             for i = 0 to 1000 do set.Add (string i) |> ignore
-            testPerf 100 set
+            roundtrips 100 set s
 
-        [<Test>]
-        let ``FSharp: Tuple Small`` () = testPerf 10000 (1, DateTime.Now,"hello")
+        [<PerfTest>]
+        let ``FSharp: Tuple Small`` s = roundtrips 10000 (1, DateTime.Now,"hello") s
 
-        [<Test>]
-        let ``FSharp: Tuple Large`` () =
+        [<PerfTest>]
+        let ``FSharp: Tuple Large`` s =
             let tuple = (stringValue, 1, 2, 3, true, "", Some(3.14, [2]), 3, 2, 1, stringValue)
-            testPerf 10000 tuple
+            roundtrips 10000 tuple s
 
-        [<Test>]
-        let ``FSharp: List Int`` () = testPerf 1000 [1..1000]
+        [<PerfTest>]
+        let ``FSharp: List Int`` s = roundtrips 1000 [1..1000] s
 
-        [<Test>]
-        let ``FSharp: List String`` () =
+        [<PerfTest>]
+        let ``FSharp: List String`` s =
             let smallLst = [ for i in 1 .. 1000 -> stringValue + string i ]
-            testPerf 1000 smallLst
+            roundtrips 1000 smallLst s
 
-        [<Test>]
-        let ``FSharp: List Key-Value`` () =
-            testPerf 1000 <| [ for i in 1 .. 1000 -> (string i, i) ]
+        [<PerfTest>]
+        let ``FSharp: List Key-Value`` s =
+            roundtrips 1000 [ for i in 1 .. 1000 -> (string i, i) ] s
 
-        [<Test>]
-        let ``FSharp: List Nested`` () =
+        [<PerfTest>]
+        let ``FSharp: List Nested`` s =
             let nestedLst = let n = [1..1000] in [for _ in 1 .. 100 -> n]
-            testPerf 1000 nestedLst
+            roundtrips 1000 nestedLst s
 
-        [<Test>]
-        let ``FSharp: Union`` () =
+        [<PerfTest>]
+        let ``FSharp: Union`` s =
             let u = SomethingElse(stringValue, 42, box (Some 42))
-            testPerf 10000 u
+            roundtrips 10000 u s
 
-        [<Test>]
-        let ``FSharp: Record`` () =
+        [<PerfTest>]
+        let ``FSharp: Record`` s =
             let r = { Int = 42 ; String = stringValue ; Tuple = (13, "") }
-            testPerf 10000 r
+            roundtrips 10000 r s
 
-        [<Test>]
-        let ``FSharp: Peano Rectype`` () =
+        [<PerfTest>]
+        let ``FSharp: Peano Rectype`` s =
             let int2Peano n =
                 let rec aux pred = 
                     function
@@ -214,34 +158,36 @@
 
                 aux Zero n
 
-            testPerf 100 <| int2Peano 100
+            roundtrips 100 (int2Peano 100) s
 
-        [<Test>]
-        let ``FSharp: Curried Function`` () =
+        [<PerfTest>]
+        let ``FSharp: Curried Function`` s =
             let clo = (@) [ Some([1..100], Set.ofList [1..100]) ]
-            testPerf 1000 clo
+            roundtrips 1000 clo s
 
-        [<Test>]
-        let ``FSharp: Binary Tree`` () =
+        [<PerfTest>]
+        let ``FSharp: Binary Tree`` s =
             let rec mkTree = 
                 function
                 | 0 -> Leaf
                 | n ->
                     Node(string n, mkTree (n-1), mkTree (n-1))
 
-            testPerf 100 <| mkTree 10
+            roundtrips 100 (mkTree 10) s
 
-        [<Test>]
-        let ``FSharp: Set`` () = testPerf 1000 <| Set.ofList [1..1000]
+        [<PerfTest>]
+        let ``FSharp: Set`` s = roundtrips 1000 (Set.ofList [1..1000]) s
 
-        [<Test>]
-        let ``FSharp: Map`` () = testPerf 1000 <| ([1..1000] |> Seq.map (fun i -> (string i,i)) |> Map.ofSeq)
+        [<PerfTest>]
+        let ``FSharp: Map`` s = 
+            let map = [1..1000] |> Seq.map (fun i -> (string i,i)) |> Map.ofSeq
+            roundtrips 1000 map s
 
-        [<Test>]
-        let ``FSharp: Quotation Small`` () = testPerf 10000 <@ fun x -> pown 2 x @>
+        [<PerfTest>]
+        let ``FSharp: Quotation Small`` s = roundtrips 10000 <@ fun x -> pown 2 x @> s
 
-        [<Test>]
-        let ``FSharp: Quotation Large`` () =
+        [<PerfTest>]
+        let ``FSharp: Quotation Large`` s =
             let quotation =
                 <@
                     async {
@@ -261,4 +207,42 @@
                     }
                 @>
 
-            testPerf 1000 quotation
+            roundtrips 1000 quotation s
+
+
+    type ``Serializer Comparison`` () =
+        inherit NUnitPerf<ISerializer>()
+
+        let fsp = testSerializer :> ISerializer
+        let bfs = new TestBinaryFormatter() :> ISerializer
+        let ndc = new TestNetDataContractSerializer() :> ISerializer
+
+        let comparer = new MeanComparer(spaceFactor = 0.2, leastAcceptableImprovementFactor = 1.)
+
+        let tester = new ImplemantationComparer<_>(fsp, [bfs;ndc], throwOnError = true, comparer = comparer)
+        let tests = PerfTest.OfModuleMarker<PerformanceTests.Marker> ()
+
+        override __.PerfTester = tester :> _
+        override __.PerfTests = tests
+
+
+    type ``Past FsPickler Versions Comparison`` () =
+        inherit NUnitPerf<ISerializer> ()
+
+        let persistResults = true
+        let persistenceFile = System.IO.Path.GetFullPath "perfResults.xml"
+
+        let fsp = testSerializer :> ISerializer
+        let version = typeof<FsPickler>.Assembly.GetName().Version
+        let comparer = new MeanComparer(spaceFactor = 0.2, leastAcceptableImprovementFactor = 0.9)
+        let tests = PerfTest.OfModuleMarker<PerformanceTests.Marker> ()
+        let tester = 
+            new PastImplementationComparer<ISerializer>(
+                fsp, version, historyFile = persistenceFile, throwOnError = true, comparer = comparer)
+
+        override __.PerfTester = tester :> _
+        override __.PerfTests = tests
+
+        [<TestFixtureTearDown>]
+        member __.Persist() =
+            if persistResults then tester.PersistCurrentResults ()

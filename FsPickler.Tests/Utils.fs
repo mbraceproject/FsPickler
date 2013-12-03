@@ -11,6 +11,8 @@
         open System.Runtime.Serialization
         open System.Threading.Tasks
 
+        open NUnit.Framework
+
         let runsOnMono = System.Type.GetType("Mono.Runtime") <> null
 
         let runOnce (f : unit -> 'T) : unit -> 'T = let x = lazy (f ()) in fun () -> x.Value
@@ -52,43 +54,9 @@
                     return! s.AsyncReadBytes length
                 }
 
-
-        // new printf def that avoids issues with NUnit GUI.
-        let printfn fmt = Printf.ksprintf Console.WriteLine fmt
-
-        // stolen from FSI time reporter
-
-        type BenchmarkResults<'T> =
-            {
-                Result : 'T
-                Elapsed : TimeSpan
-                CpuTime : TimeSpan
-                GcDelta : int list
-            }
-
-        let benchmark (f : unit -> 'T) =
-            let proc = System.Diagnostics.Process.GetCurrentProcess()
-            let numGC = System.GC.MaxGeneration
-            let stopwatch = new System.Diagnostics.Stopwatch()
-
-            do 
-                GC.Collect(3)
-                GC.WaitForPendingFinalizers()
-                GC.Collect(3)
-
-            let startGC = [| for i in 0 .. numGC -> System.GC.CollectionCount(i) |]
-            let startTotal = proc.TotalProcessorTime
-            stopwatch.Start()
-
-            let res = f ()
-
-            stopwatch.Stop()
-            let total = proc.TotalProcessorTime - startTotal
-            let spanGC = [ for i in 0 .. numGC -> System.GC.CollectionCount(i) - startGC.[i] ]
-
-            {
-                Result = res
-                Elapsed = stopwatch.Elapsed
-                CpuTime = total
-                GcDelta = spanGC
-            }
+        let shouldFailWith<'Exn when 'Exn :> exn> (f : unit -> unit) =
+            try
+                let v = f ()
+                let msg = sprintf "Expected exception of type %O, got value %A." typeof<'Exn> v
+                raise <| new AssertionException(msg)
+            with :? 'Exn -> ()
