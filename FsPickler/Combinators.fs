@@ -1,5 +1,6 @@
 ﻿namespace FsPickler
 
+    open System
     open System.IO
 
     open FsPickler.PicklerUtils
@@ -81,8 +82,10 @@
             /// FSharp list pickler combinator
             let list f = ListPickler.Create f |> setPicklerId [uc f]
             /// FSharp map pickler combinator
+            [<Obsolete("F# Map pickler combinator is suboptimal implementation.")>]
             let map kp vp = FSharpMapPickler.Create(kp,vp) |> setPicklerId [uc kp; uc kp]
             /// FSharp set pickler combinator
+            [<Obsolete("F# Set pickler combinator is suboptimal implementation.")>]
             let set f = FSharpSetPickler.Create f |> setPicklerId [uc f]
             /// array pickler combinator
             let array f = ArrayPickler.Create<'T, 'T []> f |> setPicklerId [uc f]

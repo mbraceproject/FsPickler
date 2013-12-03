@@ -362,7 +362,6 @@
                 let ef = resolver.Resolve<'T> ()
                 FSharpRefPickler.Create ef :> Pickler
 
-
     type FSharpSetPickler () =
         static member Create<'T when 'T : comparison>(ef : Pickler<'T>) =
             let writer (w : Writer) (s : Set<'T>) = 
@@ -377,7 +376,6 @@
         member __.Create<'T when 'T : comparison> (resolver : IPicklerResolver) =
             let ef = resolver.Resolve<'T>()
             FSharpSetPickler.Create ef :> Pickler
-
 
     type FSharpMapPickler () =
         static member Create<'K, 'V when 'K : comparison> (kf : Pickler<'K>, vf : Pickler<'V>) =
@@ -472,7 +470,5 @@
             new Choice3Pickler() :> _
             new Choice4Pickler() :> _
             new FSharpRefPickler() :> _
-            new FSharpSetPickler() :> _
-            new FSharpMapPickler() :> _
             new DictionaryPickler() :> _
         ]
