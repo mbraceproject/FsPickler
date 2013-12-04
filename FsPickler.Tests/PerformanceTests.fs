@@ -230,11 +230,11 @@
         inherit NUnitPerf<ISerializer> ()
 
         let persistResults = true
-        let persistenceFile = System.IO.Path.GetFullPath "perfResults.xml"
+        let persistenceFile = "fspPerf.xml"
 
         let fsp = testSerializer :> ISerializer
         let version = typeof<FsPickler>.Assembly.GetName().Version
-        let comparer = new MeanComparer(spaceFactor = 0.2, leastAcceptableImprovementFactor = 0.9)
+        let comparer = new MeanComparer(spaceFactor = 0.2, leastAcceptableImprovementFactor = 0.8)
         let tests = PerfTest.OfModuleMarker<PerformanceTests.Marker> ()
         let tester = 
             new PastImplementationComparer<ISerializer>(

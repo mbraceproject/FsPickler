@@ -53,7 +53,7 @@
     <Compile Include="main.fs" />
     <None Include="App.config" />
     <None Include="packages.config" />
-    <Content Include="perfResults.xml">
+    <Content Include="fspPerf.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
@@ -71,7 +71,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="PerfUtil">
-      <HintPath>..\packages\PerfUtil.0.1.0\lib\net45\PerfUtil.dll</HintPath>
+      <HintPath>..\packages\PerfUtil.0.1.1\lib\net45\PerfUtil.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
