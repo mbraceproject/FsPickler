@@ -210,7 +210,7 @@
                 registry.RegisterPicklerFactory(new ExternalTypePickler())
                 registry.RegisterPicklerFactory(new ExternalGenericTypePickler())
 
-            new TestFsPickler(registry)
+            new FsPicklerSerializer(registry)
 
 
         // test provision for top-level sequence serialization
@@ -240,7 +240,7 @@
                 try Some (t, Activator.CreateInstance t)
                 with _ -> None
 
-            let bfs = new TestBinaryFormatter()
+            let bfs = new BinaryFormatterSerializer()
             let filterObject (t : Type, o : obj) =
                 try Serializer.roundtrip o bfs |> ignore ; true
                 with _ -> false

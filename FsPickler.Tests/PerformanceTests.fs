@@ -1,9 +1,6 @@
 ﻿namespace FsPickler.Tests
 
     open System
-    open System.IO
-    open System.Diagnostics
-    open System.Runtime.Serialization
 
     open NUnit.Framework
     open PerfUtil
@@ -214,12 +211,15 @@
         inherit NUnitPerf<ISerializer>()
 
         let fsp = testSerializer :> ISerializer
-        let bfs = new TestBinaryFormatter() :> ISerializer
-        let ndc = new TestNetDataContractSerializer() :> ISerializer
+        let bfs = new BinaryFormatterSerializer() :> ISerializer
+        let ndc = new NetDataContractSerializer() :> ISerializer
+        let jdn = new JsonDotNetSerializer() :> ISerializer
+        let ssj = new ServiceStackJsonSerializer() :> ISerializer
+        let sst = new ServiceStackTypeSerializer() :> ISerializer
 
         let comparer = new MeanComparer(spaceFactor = 0.2, leastAcceptableImprovementFactor = 1.)
 
-        let tester = new ImplemantationComparer<_>(fsp, [bfs;ndc], throwOnError = true, comparer = comparer)
+        let tester = new ImplemantationComparer<_>(fsp, [bfs;ndc;jdn;ssj;sst], throwOnError = true, comparer = comparer)
         let tests = PerfTest.OfModuleMarker<PerformanceTests.Marker> ()
 
         override __.PerfTester = tester :> _
