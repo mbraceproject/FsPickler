@@ -75,7 +75,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="PerfUtil">
-      <HintPath>..\packages\PerfUtil.0.1.1\lib\net45\PerfUtil.dll</HintPath>
+      <HintPath>..\packages\PerfUtil.0.1.2\lib\net45\PerfUtil.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="ServiceStack.Text">
