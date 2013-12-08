@@ -214,7 +214,7 @@
 
                     emitDeserializeFields fields reader picklers value ilGen
 
-                    emitSerializationMethodCalls onSerialized (Choice2Of2 reader) value ilGen
+                    emitSerializationMethodCalls onDeserialized (Choice2Of2 reader) value ilGen
 
                     if isDeserializationCallback then emitDeserializationCallback value ilGen
 

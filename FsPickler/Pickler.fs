@@ -222,7 +222,7 @@
         abstract Resolve<'T> : unit -> Pickler<'T>
 
     and [<AutoSerializable(false)>]
-        Writer internal (stream : Stream, resolver : IPicklerResolver, ?streamingContext, ?leaveOpen, ?encoding) =
+        Writer internal (stream : Stream, resolver : IPicklerResolver, ?streamingContext, ?encoding, ?leaveOpen) =
         
         do if not stream.CanWrite then invalidOp "Cannot write to stream."
 
@@ -230,7 +230,7 @@
         let encoding = defaultArg encoding Encoding.UTF8
 
         let bw = new BinaryWriter(stream, encoding, defaultArg leaveOpen true)
-        let sc = initStreamingContext streamingContext
+        let sc = match streamingContext with None -> new StreamingContext() | Some sc -> sc
         let mutable idGen = new ObjectIDGenerator()
         let objStack = new Stack<int64> ()
         let cyclicObjects = new SortedSet<int64> ()
@@ -370,7 +370,7 @@
             member __.Dispose () = bw.Dispose ()
 
     and [<AutoSerializable(false)>] 
-        Reader internal (stream : Stream, resolver : IPicklerResolver, ?streamingContext : obj, ?leaveOpen, ?encoding) =
+        Reader internal (stream : Stream, resolver : IPicklerResolver, ?streamingContext, ?encoding, ?leaveOpen) =
 
         do if not stream.CanRead then invalidOp "Cannot read from stream."
 
@@ -378,7 +378,7 @@
         let encoding = defaultArg encoding Encoding.UTF8
 
         let br = new BinaryReader(stream, encoding, defaultArg leaveOpen true)
-        let sc = initStreamingContext streamingContext
+        let sc = match streamingContext with None -> new StreamingContext() | Some sc -> sc
         let objCache = new Dictionary<int64, obj> ()
         let fixupIndex = new Dictionary<int64, Type * obj> ()
         let tyPickler = resolver.Resolve<Type> ()

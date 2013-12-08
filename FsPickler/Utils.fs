@@ -80,11 +80,6 @@
 
         let (|InnerExn|_|) (e : #exn) = denull e.InnerException
 
-        let initStreamingContext (ctx : obj option) = 
-            match ctx with 
-            | None -> StreamingContext() 
-            | Some o -> StreamingContext(StreamingContextStates.All, o)
-
         /// thread-safe memo operator
         let memoize (f : 'K -> 'V) =
             let d = new ConcurrentDictionary<'K, 'V> ()

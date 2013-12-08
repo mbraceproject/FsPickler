@@ -103,7 +103,7 @@
         class
             interface IDisposable
 
-            internal new : Stream * IPicklerResolver * ?streamingContext:obj * ?leaveOpen:bool * ?encoding:Encoding -> Writer
+            internal new : Stream * IPicklerResolver * ?streamingContext:StreamingContext * ?encoding:Encoding * ?leaveOpen:bool -> Writer
 
             /// <summary>The Pickler resolver used by the writer.</summary>
             member internal Resolver : IPicklerResolver
@@ -129,7 +129,7 @@
         class
             interface IDisposable
 
-            internal new : Stream * IPicklerResolver * ?streamingContext:obj * ?leaveOpen:bool * ?encoding:Encoding -> Reader
+            internal new : Stream * IPicklerResolver * ?streamingContext:StreamingContext * ?encoding:Encoding * ?leaveOpen:bool -> Reader
 
             /// <summary>The Pickler resolver used by the reader.</summary>
             member internal Resolver : IPicklerResolver
