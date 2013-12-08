@@ -173,7 +173,7 @@
             roundtrips 100 (mkTree 10) s
 
         [<PerfTest>]
-        let ``FSharp: Set`` s = roundtrips 1000 (Set.ofList [1..1000]) s
+        let ``FSharp: Set`` s = roundtrips 1000 ([1..1000] |> List.map string |> set) s
 
         [<PerfTest>]
         let ``FSharp: Map`` s = 

@@ -471,4 +471,6 @@
             new Choice4Pickler() :> _
             new FSharpRefPickler() :> _
             new DictionaryPickler() :> _
+            new FSharpSetPickler() :> _
+            new FSharpMapPickler() :> _
         ]
