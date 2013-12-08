@@ -168,76 +168,9 @@
             
 
         interface IGenericPicklerFactory1 with
-            member __.Create<'T> (resolver : IPicklerResolver) =
-                let ef = resolver.Resolve<'T> ()
-                ListPickler.Create ef :> Pickler
-
-
-    type PairPickler () =
-        static member Create(tf : Pickler<'T>, sf : Pickler<'S>) =
-
-            let writer (w : Writer) ((t,s) : 'T * 'S) =
-                write (isValue tf) w tf t ; write (isValue sf) w sf s
-
-            let reader (r : Reader) = (read (isValue tf) r tf, read (isValue sf) r sf)
-
-#if OPTIMIZE_FSHARP
-            // do not cache or apply subtype resolution for performance
-            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
-#else
-            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = true, useWithSubtypes = false)
-#endif
-            
-        interface IGenericPicklerFactory2 with
-            member __.Create<'T,'S> (resolver : IPicklerResolver) =
-                let tf, sf = resolver.Resolve<'T> (), resolver.Resolve<'S> ()
-                
-                PairPickler.Create(tf,sf) :> Pickler
-
-
-    type TriplePickler () =
-
-        static member Create(f1 : Pickler<'T1>, f2 : Pickler<'T2>, f3 : Pickler<'T3>) =
-            let writer (w : Writer) ((t1,t2,t3) : 'T1 * 'T2 * 'T3) =
-                write (isValue f1) w f1 t1 ; write (isValue f2) w f2 t2 ; write (isValue f3) w f3 t3
-
-            let reader (r : Reader) =
-                (read (isValue f1) r f1, read (isValue f2) r f2, read (isValue f3) r f3)
-
-#if OPTIMIZE_FSHARP
-            // do not cache or apply subtype resolution for performance
-            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
-#else
-            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = true, useWithSubtypes = false)
-#endif    
-
-        interface IGenericPicklerFactory3 with
-            member __.Create<'T1, 'T2, 'T3> (resolver : IPicklerResolver) =
-                let f1, f2, f3 = resolver.Resolve<'T1>(), resolver.Resolve<'T2>(), resolver.Resolve<'T3>()
-                TriplePickler.Create(f1, f2, f3) :> Pickler
-
-    type QuadPickler () =
-
-        static member Create(f1 : Pickler<'T1>, f2 : Pickler<'T2>, f3 : Pickler<'T3>, f4 : Pickler<'T4>) =
-            let writer (w : Writer) ((t1,t2,t3,t4) : 'T1 * 'T2 * 'T3 * 'T4) =
-                write (isValue f1) w f1 t1 ; write (isValue f2) w f2 t2 ;
-                write (isValue f3) w f3 t3 ; write (isValue f4) w f4 t4 ; 
-
-            let reader (r : Reader) =
-                (read (isValue f1) r f1, read (isValue f2) r f2, read (isValue f3) r f3, read (isValue f4) r f4)
-
-#if OPTIMIZE_FSHARP
-            // do not cache or apply subtype resolution for performance
-            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
-#else
-            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = true, useWithSubtypes = false)
-#endif    
-
-        interface IGenericPicklerFactory4 with
-            member __.Create<'T1, 'T2, 'T3, 'T4> (resolver : IPicklerResolver) =
-                let f1, f2 = resolver.Resolve<'T1>(), resolver.Resolve<'T2>()
-                let f3, f4 = resolver.Resolve<'T3>(), resolver.Resolve<'T4>()
-                QuadPickler.Create(f1, f2, f3, f4) :> Pickler
+            member __.Create<'T1> (resolver : IPicklerResolver) =
+                let p1 = resolver.Resolve<'T1> ()
+                ListPickler.Create p1 :> Pickler
 
 
     type OptionPickler () =
@@ -462,9 +395,6 @@
     let getDefaultPicklerFactories () =
         [
             new ListPickler() :> IPicklerFactory
-            new PairPickler() :> _
-            new TriplePickler() :> _
-            new QuadPickler() :> _
             new OptionPickler() :> _
             new Choice2Pickler() :> _
             new Choice3Pickler() :> _

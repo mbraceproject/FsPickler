@@ -112,8 +112,6 @@
             | None ->
                 if FSharpType.IsUnion(t, allMembers) then
                     Some <| FsUnionPickler.CreateUntyped(t, resolver)
-                elif FSharpType.IsTuple t then
-                    Some <| TuplePickler.CreateUntyped(t, resolver)
                 elif FSharpType.IsRecord(t, allMembers) then
                     Some <| FsRecordPickler.CreateUntyped(t, resolver, isExceptionType = false)
                 elif FSharpType.IsExceptionRepresentation(t, allMembers) then

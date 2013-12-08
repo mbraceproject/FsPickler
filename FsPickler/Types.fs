@@ -24,19 +24,35 @@
 
     and IGenericPicklerFactory1 =
         inherit IPicklerFactory
-        abstract Create<'T> : IPicklerResolver -> Pickler
+        abstract Create<'T1> : IPicklerResolver -> Pickler
 
     and IGenericPicklerFactory2 =
         inherit IPicklerFactory
-        abstract Create<'T, 'S> : IPicklerResolver -> Pickler
+        abstract Create<'T1, 'T2> : IPicklerResolver -> Pickler
 
     and IGenericPicklerFactory3 =
         inherit IPicklerFactory
-        abstract Create<'T, 'S, 'U> : IPicklerResolver -> Pickler
+        abstract Create<'T1, 'T2, 'T3> : IPicklerResolver -> Pickler
 
     and IGenericPicklerFactory4 =
         inherit IPicklerFactory
-        abstract Create<'T, 'S, 'U, 'V> : IPicklerResolver -> Pickler
+        abstract Create<'T1, 'T2, 'T3, 'T4> : IPicklerResolver -> Pickler
+
+    and IGenericPicklerFactory5 =
+        inherit IPicklerFactory
+        abstract Create<'T1, 'T2, 'T3, 'T4, 'T5> : IPicklerResolver -> Pickler
+
+    and IGenericPicklerFactory6 =
+        inherit IPicklerFactory
+        abstract Create<'T1, 'T2, 'T3, 'T4, 'T5, 'T6> : IPicklerResolver -> Pickler
+
+    and IGenericPicklerFactory7 =
+        inherit IPicklerFactory
+        abstract Create<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7> : IPicklerResolver -> Pickler
+
+    and IGenericPicklerFactory8 =
+        inherit IPicklerFactory
+        abstract Create<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8> : IPicklerResolver -> Pickler
 
 
     /// raised by pickler generator whenever an unexpected error is encountered.

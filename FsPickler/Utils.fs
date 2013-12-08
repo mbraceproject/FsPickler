@@ -308,7 +308,8 @@
 #if OPTIMIZE_FSHARP
                 // System.Tuple is not sealed, but inheriting is not an idiomatic pattern in F#
                 elif FSharpType.IsTuple t then
-                    FSharpType.GetTupleElements t
+                    t.GetFields(allFields)
+                    |> Seq.map (fun f -> f.FieldType)
                     |> Seq.distinct
                     |> Seq.exists (aux (d+1) ((d,false,false,t) :: traversed))
 #endif

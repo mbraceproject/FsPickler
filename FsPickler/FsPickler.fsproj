@@ -52,6 +52,7 @@
     <Compile Include="DotNetPicklers.fs" />
     <Compile Include="FSharpPicklers.fs" />
     <Compile Include="CombinatorImpls.fs" />
+    <Compile Include="TupleCombinators.fs" />
     <Compile Include="TypeShape.fs" />
     <Compile Include="PicklerResolution.fs" />
     <Compile Include="PicklerCache.fs" />

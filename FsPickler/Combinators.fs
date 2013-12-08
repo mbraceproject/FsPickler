@@ -7,6 +7,7 @@
     open FsPickler.BasePicklers
     open FsPickler.DotNetPicklers
     open FsPickler.CombinatorImpls
+    open FsPickler.TupleCombinators
 
     module Combinators =
 
@@ -63,11 +64,11 @@
             let inline private uc (p : Pickler<'T>) = p :> Pickler
 
             /// pair pickler combinator
-            let pair f g = PairPickler.Create(f,g) |> setPicklerId [uc f; uc g]
+            let pair f g = Tuple2Pickler.Create(f,g) |> setPicklerId [uc f; uc g]
             /// triple pickler combinator
-            let triple f g h = TriplePickler.Create(f,g,h) |> setPicklerId [uc f; uc g; uc h]
+            let triple f g h = Tuple3Pickler.Create(f,g,h) |> setPicklerId [uc f; uc g; uc h]
             /// quad pickler combinator
-            let quad f g h i = QuadPickler.Create(f,g,h,i) |> setPicklerId [uc f; uc g; uc h; uc i]
+            let quad f g h i = Tuple4Pickler.Create(f,g,h,i) |> setPicklerId [uc f; uc g; uc h; uc i]
             /// option pickler combinator
             let option f = OptionPickler.Create f |> setPicklerId [uc f]
             /// Choice<_,_> pickler combinator

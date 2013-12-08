@@ -51,6 +51,7 @@
     <Compile Include="CorrectnessTests.fs" />
     <Compile Include="PerformanceTests.fs" />
     <Compile Include="main.fs" />
+    <None Include="tests.fsx" />
     <None Include="App.config" />
     <None Include="packages.config" />
     <Content Include="fspPerf.xml">
@@ -78,6 +79,10 @@
       <HintPath>..\packages\PerfUtil.0.1.2\lib\net45\PerfUtil.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="protobuf-net">
+      <HintPath>..\packages\protobuf-net.2.0.0.668\lib\net40\protobuf-net.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="ServiceStack.Text">
       <HintPath>..\packages\ServiceStack.Text.4.0.3\lib\net40\ServiceStack.Text.dll</HintPath>
       <Private>True</Private>
@@ -91,6 +96,7 @@
       <Project>{3ad987bf-f0fa-40bd-9dae-4af3a5fe9cc7}</Project>
       <Private>True</Private>
     </ProjectReference>
+    <Reference Include="System.Xml" />
   </ItemGroup>
   <PropertyGroup>
     <PreBuildEvent>

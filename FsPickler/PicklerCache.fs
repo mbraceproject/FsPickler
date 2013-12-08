@@ -9,6 +9,7 @@
     open FsPickler.BasePicklers
     open FsPickler.ReflectionPicklers
     open FsPickler.CombinatorImpls
+    open FsPickler.TupleCombinators
     open FsPickler.PicklerResolution
 
     [<Sealed>]
@@ -64,7 +65,8 @@
         // include default pickler factories
         let customPicklerFactories =
             let defaultFactories = getDefaultPicklerFactories ()
-            customPicklerFactories.AddPicklerFactories(defaultFactories, Discard)
+            let tupleFactories = getTuplePicklerFactories ()
+            customPicklerFactories.AddPicklerFactories(defaultFactories @ tupleFactories, Discard)
         
         // populate initial cache with primitives
         let cache =

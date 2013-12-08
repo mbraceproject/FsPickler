@@ -7,6 +7,7 @@
 
     open ServiceStack.Text
     open Newtonsoft.Json
+    open ProtoBuf
 
     open FsPickler
     open PerfUtil
@@ -68,6 +69,14 @@
             member __.Name = "ServiceStack.TypeSerializer"
             member __.Serialize(stream : Stream, x : 'T) = TypeSerializer.SerializeToStream(x, stream)
             member __.Deserialize(stream : Stream) = TypeSerializer.DeserializeFromStream<'T>(stream)
+
+
+    type ProtoBufSerializer () =
+        
+        interface ISerializer with
+            member __.Name = "ProtoBuf.Net"
+            member __.Serialize(stream : Stream, x : 'T) = ProtoBuf.Serializer.Serialize(stream, x)
+            member __.Deserialize(stream : Stream) = ProtoBuf.Serializer.Deserialize<'T>(stream)
 
 
     module Serializer =

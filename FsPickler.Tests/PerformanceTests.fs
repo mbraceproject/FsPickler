@@ -180,6 +180,16 @@
             let map = [1..1000] |> Seq.map (fun i -> (string i,i)) |> Map.ofSeq
             roundtrips 1000 map s
 
+
+        let t = typeof<int * string option * Map<int * string [], string ref option>>
+        let meth = typeof<int option>.GetProperty("Value").GetGetMethod()
+
+        [<PerfTest>]
+        let ``Reflection: Type`` s = roundtrips 1000 t s
+
+        [<PerfTest>]
+        let ``Reflection: MethodInfo`` s = roundtrips 1000 t s
+
         [<PerfTest>]
         let ``FSharp: Quotation Small`` s = roundtrips 10000 <@ fun x -> pown 2 x @> s
 
@@ -214,12 +224,13 @@
         let bfs = new BinaryFormatterSerializer() :> ISerializer
         let ndc = new NetDataContractSerializer() :> ISerializer
         let jdn = new JsonDotNetSerializer() :> ISerializer
+        let pbn = new ProtoBufSerializer() :> ISerializer
         let ssj = new ServiceStackJsonSerializer() :> ISerializer
         let sst = new ServiceStackTypeSerializer() :> ISerializer
 
         let comparer = new MeanComparer(spaceFactor = 0.2, leastAcceptableImprovementFactor = 1.)
 
-        let tester = new ImplemantationComparer<_>(fsp, [bfs;ndc;jdn;ssj;sst], throwOnError = true, comparer = comparer)
+        let tester = new ImplemantationComparer<_>(fsp, [bfs;ndc;jdn;pbn;ssj;sst], throwOnError = true, comparer = comparer)
         let tests = PerfTest.OfModuleMarker<PerformanceTests.Marker> ()
 
         override __.PerfTester = tester :> _
