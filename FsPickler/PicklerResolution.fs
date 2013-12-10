@@ -20,15 +20,14 @@
 
     /// Y combinator with parametric recursion support
     let YParametric (cacheId : string)
-                    (externalCacheLookup : Type -> Pickler option)
-                    (externalCacheCommit : Type -> Pickler -> unit)
+                    (externalCache : ICache<Type,Pickler>)
                     (resolverF : IPicklerResolver -> Type -> Pickler) (t : Type) =
 
         // use internal cache to avoid corruption in event of exceptions being raised
         let internalCache = new Dictionary<Type, Pickler> ()
 
         let rec lookup (t : Type) =
-            match externalCacheLookup t with
+            match externalCache.Lookup t with
             | Some f -> f
             | None ->
                 match internalCache.TryFind t with
@@ -59,7 +58,7 @@
                     f.CacheId <- cacheId
 
                     // pickler construction successful, commit to external cache
-                    do externalCacheCommit t f
+                    do externalCache.Commit t f
                     f
 
         and resolver =

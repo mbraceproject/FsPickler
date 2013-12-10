@@ -88,10 +88,8 @@
                 cp'.CacheId <- uuid
                 cache.AddOrUpdate(cp'.Type, cp', fun _ _ -> cp') |> ignore
 
-        let resolver (t : Type) = 
-            YParametric uuid 
-                        cache.TryFind (fun t f -> cache.TryAdd(t,f) |> ignore) 
-                        (resolvePickler customPicklerFactories) t
+        let icache = new ConcurrentCache<_,_>(cache)
+        let resolver (t : Type) = YParametric uuid icache (resolvePickler customPicklerFactories) t
 
         // default cache instance
         static let singleton =

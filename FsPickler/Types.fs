@@ -93,16 +93,31 @@
         abstract member OfSerializedType : TypeInfo -> TypeInfo
         abstract member ToDeserializedType : TypeInfo -> TypeInfo
 
-    and TypeInfo =
+    and AssemblyInfo =
         {
             Name : string
-            AssemblyName : string
             Version : string
             Culture : string
             PublicKeyToken : byte []
+        }
+
+    and TypeInfo =
+        {
+            Name : string
+            Assembly : AssemblyInfo
         } 
 
 
+//    and TypeInfo =
+//        {
+//            Name : string
+//            AssemblyName : string
+//            Version : string
+//            Culture : string
+//            PublicKeyToken : byte []
+//        } 
+//
+//
     type DefaultTypeNameConverter(?strongNames : bool) =
         let strongNames = defaultArg strongNames true
 
@@ -110,6 +125,7 @@
             member __.OfSerializedType (tI : TypeInfo) =
                 if strongNames then tI
                 else
-                    { tI with Version = null ; Culture = null ; PublicKeyToken = null }
+                    let aI = { tI.Assembly with Version = null ; Culture = null ; PublicKeyToken = null }
+                    { tI with Assembly = aI }
 
             member __.ToDeserializedType (tI : TypeInfo) = tI

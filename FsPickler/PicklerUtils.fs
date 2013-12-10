@@ -89,6 +89,17 @@
             else
                 br.ReadString()
 
+        let inline writeArray (w : Writer) (p : Pickler<'T>) (xs : 'T []) =
+            w.BinaryWriter.Write xs.Length
+            for x in xs do w.Write(p, x)
+
+        let inline readArray (r : Reader) (p : Pickler<'T>) =
+            let n = r.BinaryReader.ReadInt32 ()
+            let arr = Array.zeroCreate<'T> n
+            for i = 0 to n - 1 do
+                arr.[i] <- r.Read p
+            arr
+
         // length passed as argument to avoid unecessary evaluations of sequence
         let inline writeSeq (w : Writer) (ef : Pickler<'T>) (length : int) (xs : seq<'T>) =
             let isValue = isValue ef

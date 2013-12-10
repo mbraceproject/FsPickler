@@ -80,17 +80,61 @@
 
         let (|InnerExn|_|) (e : #exn) = denull e.InnerException
 
-        /// thread-safe memo operator
-        let memoize (f : 'K -> 'V) =
-            let d = new ConcurrentDictionary<'K, 'V> ()
 
-            fun (k : 'K) ->
-                let found, value = d.TryGetValue k
-                if found then value
-                else
-                    let v = f k
-                    let _ = d.TryAdd(k, v)
-                    v
+        type ICache<'K,'V> =
+            abstract Lookup : 'K -> 'V option
+            abstract Commit : 'K -> 'V -> unit
+
+        type ConcurrentCache<'K,'V>(dict : ConcurrentDictionary<'K,'V>) =
+            
+            new () = new ConcurrentCache<'K,'V>(new ConcurrentDictionary<'K,'V> ())
+
+            member __.Dict = dict
+
+            interface ICache<'K,'V> with
+                member __.Lookup k = let found, v = dict.TryGetValue k in if found then Some v else None
+                member __.Commit k v = dict.TryAdd(k,v) |> ignore
+
+
+        let memoize (c : ICache<'T,'S>) (f : 'T -> 'S) (t : 'T) =
+            match c.Lookup t with
+            | Some s -> s
+            | None ->
+                let s = f t
+                c.Commit t s
+                s
+
+        let biMemoize (c : ICache<'T,'S>) (c' : ICache<'S,'T>) (f : 'T -> 'S) (t : 'T) =
+            match c.Lookup t with
+            | Some s -> s
+            | None ->
+                let s = f t
+                c.Commit t s
+                c'.Commit s t
+                s
+
+        let YBiMemoize (c : ICache<'T,'S>) (c' : ICache<'S,'T>) (f : ('T -> 'S) -> 'T -> 'S) (t : 'T) =
+            let rec aux (t : 'T) =
+                match c.Lookup t with
+                | Some s -> s
+                | None ->
+                    let s = f aux t
+                    c.Commit t s
+                    c'.Commit s t
+                    s
+
+            aux t
+//        /// thread-safe memo operator
+//        let memoize (f : 'K -> 'V) =
+//            let d = new ConcurrentDictionary<'K, 'V> ()
+//
+//            fun (k : 'K) ->
+//                let found, value = d.TryGetValue k
+//                if found then value
+//                else
+//                    let v = f k
+//                    let _ = d.TryAdd(k, v)
+//                    v
 
 
         // produces a structural hashcode out of a byte array

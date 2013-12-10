@@ -46,6 +46,15 @@
             roundtrips 1000 c s
 
         [<PerfTest>]
+        let ``Subtype Resolution`` s =
+            let x = box(Some 42)
+//            let bytes = Serializer.write s x
+            for i = 0  to 10000 do
+                Serializer.write s x |> ignore
+//                Serializer.read s bytes |> ignore
+//            roundtrips 10000 x s
+
+        [<PerfTest>]
         let ``Array: Float`` s =
             let bigFlt = Array.init 100000 (fun i -> float i)
             roundtrips 10 bigFlt s
