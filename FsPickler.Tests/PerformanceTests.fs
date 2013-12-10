@@ -3,6 +3,8 @@
     open System
 
     open NUnit.Framework
+    open FsUnit
+
     open PerfUtil
 
     open FsPickler
@@ -182,39 +184,44 @@
 
 
         let t = typeof<int * string option * Map<int * string [], string ref option>>
-        let meth = typeof<int option>.GetProperty("Value").GetGetMethod()
 
         [<PerfTest>]
         let ``Reflection: Type`` s = roundtrips 1000 t s
 
-        [<PerfTest>]
-        let ``Reflection: MethodInfo`` s = roundtrips 1000 t s
+        let quotationSmall = <@ fun x -> pown 2 x @>
+
+        let quotationLarge =
+            <@
+                async {
+                    let rec fibAsync n =
+                        async {
+                            match n with
+                            | _ when n < 0 -> return invalidArg "negative" "n"
+                            | _ when n < 2 -> return n
+                            | n ->
+                                let! fn = fibAsync (n-1)
+                                let! fnn = fibAsync (n-2)
+                                return fn + fnn
+                        }
+
+                    let! values = [1..100] |> Seq.map fibAsync |> Async.Parallel
+                    return Seq.sum values
+                }
+            @>
 
         [<PerfTest>]
-        let ``FSharp: Quotation Small`` s = roundtrips 10000 <@ fun x -> pown 2 x @> s
+        let ``FSharp: Quotation Small`` s = 
+            let q' = roundtrip quotationSmall s
+            q'.ToString() |> should equal (quotationSmall.ToString())
+
+            roundtrips 10000 quotationSmall s
 
         [<PerfTest>]
         let ``FSharp: Quotation Large`` s =
-            let quotation =
-                <@
-                    async {
-                        let rec fibAsync n =
-                            async {
-                                match n with
-                                | _ when n < 0 -> return invalidArg "negative" "n"
-                                | _ when n < 2 -> return n
-                                | n ->
-                                    let! fn = fibAsync (n-1)
-                                    let! fnn = fibAsync (n-2)
-                                    return fn + fnn
-                            }
+            let q' = roundtrip quotationLarge s
+            q'.ToString() |> should equal (quotationLarge.ToString())
 
-                        let! values = [1..100] |> Seq.map fibAsync |> Async.Parallel
-                        return Seq.sum values
-                    }
-                @>
-
-            roundtrips 1000 quotation s
+            roundtrips 1000 quotationLarge s
 
 
     type ``Serializer Comparison`` () =

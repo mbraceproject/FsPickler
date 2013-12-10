@@ -12,6 +12,8 @@
     open FsPickler
     open PerfUtil
 
+    open FsUnit
+
     type ISerializer =
         inherit ITestable
         abstract Serialize : Stream * 'T -> unit
@@ -51,7 +53,7 @@
             member __.Serialize(stream : Stream, x : 'T) =
                 use writer = new System.IO.StreamWriter(stream)
                 jdn.Serialize(writer, x)
-                stream.Flush()
+                writer.Flush()
             member __.Deserialize(stream : Stream) : 'T =
                 use reader = new System.IO.StreamReader(stream)
                 jdn.Deserialize(reader, typeof<'T>) :?> 'T
@@ -90,17 +92,16 @@
             use m = new MemoryStream(bytes)
             s.Deserialize m : 'T
 
-        let roundtrip (x : 'T) (s : ISerializer) =
-            use m = new MemoryStream()
-            s.Serialize(m, x)
-            m.Position <- 0L
-            s.Deserialize<'T> m
-
-
         type ImmortalMemoryStream() =
             inherit MemoryStream()
 
             override __.Close() = ()
+
+        let roundtrip (x : 'T) (s : ISerializer) =
+            use m = new ImmortalMemoryStream()
+            s.Serialize(m, x)
+            m.Position <- 0L
+            s.Deserialize<'T> m
 
         let roundtrips times (x : 'T) (s : ISerializer) =
             use m = new ImmortalMemoryStream()
