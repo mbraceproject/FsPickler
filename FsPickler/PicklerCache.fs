@@ -50,6 +50,14 @@
                                             customPicklers : seq<Pickler>, 
                                             customPicklerFactories : PicklerFactoryIndex) =
 
+        static let caches = Atom.atom Set.empty<string>
+        do
+            caches.Swap(fun s ->
+                if caches.Value.Contains name then
+                    invalidOp <| sprintf "A pickler cache with id '%s' has already been initialized." name
+                else
+                    s.Add name)
+
         // resolve the default type name converter
         let tyConv =
             match tyConv with 
