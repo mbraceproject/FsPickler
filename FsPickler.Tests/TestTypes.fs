@@ -115,14 +115,14 @@
 
         exception FsharpException of int * string
 
-        type Tree =
+        type BinTree<'T> =
             | Leaf
-            | Node of obj * Tree * Tree
+            | Node of 'T * BinTree<'T> * BinTree<'T>
 
         let rec mkTree (n : int) =
             match n with
             | 0 -> Leaf
-            | n -> Node(n, mkTree(n-1), mkTree(n-1))
+            | n -> Node(string n, mkTree(n-1), mkTree(n-1))
 
         type Rec = { Rec : Rec }
 

@@ -37,6 +37,13 @@
         [<PerfTest>]
         let ``Value: String`` s = roundtrips 10000 stringValue s
 
+
+        let boxed = box ([| 1 .. 1000 |], "lorem ipsum")
+
+        [<PerfTest>]
+        let ``Boxed Object`` s =
+            roundtrips 1000 boxed s
+
         [<PerfTest>]
         let ``Class: Simple F# Class`` s =
             let c = new Class(42, stringValue)
@@ -44,8 +51,8 @@
 
         [<PerfTest>]
         let ``Class: ISerializable`` s =
-            let c = new SerializableClass<int list>(42, stringValue, [1..1000])
-            roundtrips 1000 c s
+            let c = new SerializableClass<_>(42, stringValue, [|1..1000|])
+            roundtrips 10000 c s
 
         [<PerfTest>]
         let ``Array: Float`` s =
