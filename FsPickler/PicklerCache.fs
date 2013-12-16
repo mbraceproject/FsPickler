@@ -9,7 +9,7 @@
     open FsPickler.BasePicklers
     open FsPickler.ReflectionPicklers
     open FsPickler.CombinatorImpls
-    open FsPickler.TupleCombinators
+    open FsPickler.TuplePicklers
     open FsPickler.PicklerResolution
 
     [<Sealed>]

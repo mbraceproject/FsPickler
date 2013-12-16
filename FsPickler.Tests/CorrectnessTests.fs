@@ -129,7 +129,16 @@
             !state |> should equal 100
 
             sequence' |> Seq.length |> should equal 100
-            
+
+        [<Test>]
+        member __.``3D float array`` () =
+            let array = Array3D.init 10 10 10 (fun i j k -> float (i * j - k))
+            testEquals array
+
+        [<Test>]
+        member __.``4D tuple array`` () =
+            let array = Array4D.init 10 10 10 10 (fun i j k l -> i,j,k,l)
+            testEquals array
 
         [<Test>]
         member __.``Exceptions`` () =

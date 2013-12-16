@@ -7,3 +7,9 @@
 #endif
     [<assembly:AssemblyVersion("0.7.3.*")>]
     do()
+
+
+    module internal Config =
+        
+        [<Literal>]
+        let optimizeForLittleEndian = true

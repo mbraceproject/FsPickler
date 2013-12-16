@@ -15,6 +15,7 @@
     open FsPickler.PicklerUtils
     open FsPickler.ReflectionPicklers
     open FsPickler.DotNetPicklers
+    open FsPickler.ArrayPickler
     open FsPickler.FSharpPicklers
     open FsPickler.CombinatorImpls
 
