@@ -190,8 +190,10 @@
 
             roundtrips 100 (mkTree 10) s
 
+        let intSet = [1..1000] |> List.map string |> set
+
         [<PerfTest>]
-        let ``FSharp: Set`` s = roundtrips 1000 ([1..1000] |> List.map string |> set) s
+        let ``FSharp: Set`` s = roundtrips 1000 intSet s
 
         [<PerfTest>]
         let ``FSharp: Map`` s = 

@@ -6,8 +6,9 @@
     open FsPickler.PicklerUtils
     open FsPickler.BasePicklers
     open FsPickler.DotNetPicklers
+    open FsPickler.ArrayPickler
+    open FsPickler.TuplePicklers
     open FsPickler.CombinatorImpls
-    open FsPickler.TupleCombinators
 
     module Combinators =
 

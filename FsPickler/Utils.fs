@@ -184,7 +184,7 @@
                 
 
             /// block copy primitive array to stream
-            let WriteArray (stream : Stream, array : Array) =
+            let ReadFromArray (stream : Stream, array : Array) =
                 do stream.Flush()
 
                 let buf = buffer.Value
@@ -202,7 +202,7 @@
                     stream.Write(buf, 0, r)
 
             /// copy stream contents to preallocated array
-            let CopyToArray (stream : Stream, array : Array) =
+            let WriteToArray (stream : Stream, array : Array) =
                 let buf = buffer.Value
                 let inline readBytes (n : int) =
                     if stream.Read(buf, 0, n) < n then

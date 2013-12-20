@@ -5,5 +5,11 @@
 #if BUILD_STRONG_NAME
     [<assembly:AssemblyKeyFile("../../Lib/key.snk")>]
 #endif
-    [<assembly:AssemblyVersion("0.7.1.*")>]
+    [<assembly:AssemblyVersion("0.7.3.*")>]
     do()
+
+
+    module internal Config =
+        
+        [<Literal>]
+        let optimizeForLittleEndian = true

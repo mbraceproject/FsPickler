@@ -15,130 +15,16 @@
     //  Pickler combinator Implementations
     //
 
-    // Array pickler combinator
-
-    type ArrayPickler =
-
-        static member CreateUntyped(t : Type, resolver : IPicklerResolver) =
-            let et = t.GetElementType()
-            let ef = resolver.Resolve et
-            let m =
-                typeof<ArrayPickler>
-                    .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
-                    .MakeGenericMethod [| et ; t |]
-
-            m.GuardedInvoke(null, [| ef :> obj |]) :?> Pickler
-
-        static member Create<'T, 'Array when 'Array :> Array> (ef : Pickler<'T>) : Pickler<'Array> =
-            assert(typeof<'T> = typeof<'Array>.GetElementType())
-            let rank = typeof<'Array>.GetArrayRank()
-
-            let writer (w : Writer) (x : 'Array) =
-
-                for d = 0 to rank - 1 do
-                    w.BinaryWriter.Write(x.GetLength d)
-
-                if ef.TypeKind = TypeKind.Primitive then
-                    Stream.WriteArray(w.BinaryWriter.BaseStream, x)
-                else
-                    let isValue = ef.TypeKind <= TypeKind.Value
-                             
-                    match rank with
-                    | 1 ->
-                        let x = fastUnbox<'T []> x
-                        for i = 0 to x.Length - 1 do
-                            write isValue w ef x.[i]
-                    | 2 -> 
-                        let x = fastUnbox<'T [,]> x
-                        for i = 0 to x.GetLength(0) - 1 do
-                            for j = 0 to x.GetLength(1) - 1 do
-                                write isValue w ef x.[i,j]
-                    | 3 ->
-                        let x = fastUnbox<'T [,,]> x
-                        for i = 0 to x.GetLength(0) - 1 do
-                            for j = 0 to x.GetLength(1) - 1 do
-                                for k = 0 to x.GetLength(2) - 1 do
-                                    write isValue w ef x.[i,j,k]
-                    | 4 ->
-                        let x = fastUnbox<'T [,,,]> x
-                        for i = 0 to x.GetLength(0) - 1 do
-                            for j = 0 to x.GetLength(1) - 1 do
-                                for k = 0 to x.GetLength(2) - 1 do
-                                    for l = 0 to x.GetLength(3) - 1 do
-                                        write isValue w ef x.[i,j,k,l]
-                    | _ -> failwith "impossible array rank"
-
-            let reader (r : Reader) =
-                let l = Array.zeroCreate<int> rank
-                for i = 0 to rank - 1 do l.[i] <- r.BinaryReader.ReadInt32()
-
-                if ef.TypeKind = TypeKind.Primitive then
-                    let array =
-                        match rank with
-                        | 1 -> Array.zeroCreate<'T> l.[0] :> Array
-                        | 2 -> Array2D.zeroCreate<'T> l.[0] l.[1] :> Array
-                        | 3 -> Array3D.zeroCreate<'T> l.[0] l.[1] l.[2] :> Array
-                        | 4 -> Array4D.zeroCreate<'T> l.[0] l.[1] l.[2] l.[3] :> Array
-                        | _ -> failwith "impossible array rank"
-
-                    r.EarlyRegisterObject array
-
-                    Stream.CopyToArray(r.BinaryReader.BaseStream, array)
-
-                    fastUnbox<'Array> array
-                else
-                    let isValue = ef.TypeKind <= TypeKind.Value
-
-                    match rank with
-                    | 1 -> 
-                        let arr = Array.zeroCreate<'T> l.[0]
-                        r.EarlyRegisterObject arr
-                        for i = 0 to l.[0] - 1 do
-                            arr.[i] <- read isValue r ef
-
-                        fastUnbox<'Array> arr
-                    | 2 -> 
-                        let arr = Array2D.zeroCreate<'T> l.[0] l.[1]
-                        r.EarlyRegisterObject arr
-                        for i = 0 to l.[0] - 1 do
-                            for j = 0 to l.[1] - 1 do
-                                arr.[i,j] <- read isValue r ef
-
-                        fastUnbox<'Array> arr
-                    | 3 ->
-                        let arr = Array3D.zeroCreate<'T> l.[0] l.[1] l.[2]
-                        r.EarlyRegisterObject arr
-                        for i = 0 to l.[0] - 1 do
-                            for j = 0 to l.[1] - 1 do
-                                for k = 0 to l.[2] - 1 do
-                                    arr.[i,j,k] <- read isValue r ef
-
-                        fastUnbox<'Array> arr
-                    | 4 ->
-                        let arr = Array4D.zeroCreate<'T> l.[0] l.[1] l.[2] l.[3]
-                        r.EarlyRegisterObject arr
-                        for i = 0 to l.[0] - 1 do
-                            for j = 0 to l.[1] - 1 do
-                                for k = 0 to l.[2] - 1 do
-                                    for l = 0 to l.[3] - 1 do
-                                        arr.[i,j,k,l] <- read isValue r ef
-
-                        fastUnbox<'Array> arr
-                    | _ -> failwith "impossible array rank"
-
-            new Pickler<'Array>(reader, writer, PicklerInfo.Array, cacheByRef = true, useWithSubtypes = false)
-
-
     // F# list pickler combinator
 
     type ListPickler () =
         static member Create (ef : Pickler<'T>) =
             let writer (w : Writer) (l : 'T list) =
 
-                if ef.TypeKind = TypeKind.Primitive then
+                if ef.TypeKind = TypeKind.Primitive && keepEndianness then
                     let arr = List.toArray l
                     w.BinaryWriter.Write arr.Length
-                    do Stream.WriteArray(w.BinaryWriter.BaseStream, arr)
+                    do Stream.ReadFromArray(w.BinaryWriter.BaseStream, arr)
                 else
                     let isValue = ef.TypeKind <= TypeKind.Value
                     let rec writeL (xs : 'T list) =
@@ -152,9 +38,9 @@
             let reader (r : Reader) =
                 let length = r.BinaryReader.ReadInt32 ()
 
-                if ef.TypeKind = TypeKind.Primitive then
+                if ef.TypeKind = TypeKind.Primitive && keepEndianness then
                     let array = Array.zeroCreate<'T> length
-                    Stream.CopyToArray(r.BinaryReader.BaseStream, array)
+                    Stream.WriteToArray(r.BinaryReader.BaseStream, array)
                     Array.toList array
                 else
                     let isValue = ef.TypeKind <= TypeKind.Value
