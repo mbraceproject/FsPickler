@@ -17,14 +17,15 @@
     type Pickler =
 
         val private declared_type : Type
-        val private is_cyclic_type : bool
-        val private is_fixed_size : bool
+        val private pickler_name : string
 
         val mutable private m_isInitialized : bool
 
         val mutable private m_pickler_type : Type
         val mutable private m_TypeKind : TypeKind
-        val mutable private m_typeHash : TypeHash
+        val mutable private m_picklerHash : PicklerHash
+        val mutable private m_is_cyclic_type : bool
+        val mutable private m_is_fixed_size : bool
 
         val mutable private m_picklerInfo : PicklerInfo
         val mutable private m_isCacheByRef : bool
@@ -35,18 +36,21 @@
         internal new (t : Type) =
             {
                 declared_type = t ;
+                // TODO: this is wrong, need to somehow consult ITypeNameConverter
+                pickler_name = t.ToString() ;
+
 #if OPTIMIZE_FSHARP
-                is_cyclic_type = isCyclicType true t ;
+                m_is_cyclic_type = isCyclicType true t ;
 #else
-                is_cyclic_type = isCyclicType false t ;
+                m_is_cyclic_type = isCyclicType false t ;
 #endif
-                is_fixed_size = isOfFixedSize t ;
+                m_is_fixed_size = isOfFixedSize t ;
 
                 m_isInitialized = false ;
 
                 m_pickler_type = Unchecked.defaultof<_> ; 
                 m_TypeKind = Unchecked.defaultof<_> ; 
-                m_typeHash = Unchecked.defaultof<_> ;
+                m_picklerHash = Unchecked.defaultof<_> ;
                 m_picklerInfo = Unchecked.defaultof<_> ; 
                 m_isCacheByRef = Unchecked.defaultof<_> ; 
                 m_useWithSubtypes = Unchecked.defaultof<_> ;
@@ -58,18 +62,21 @@
             assert(picklerType.IsAssignableFrom declaredType)
             {
                 declared_type = declaredType ; 
+                // TODO: this is wrong, need to somehow consult ITypeNameConverter
+                pickler_name = declaredType.ToString() ;
+
 #if OPTIMIZE_FSHARP
-                is_cyclic_type = isCyclicType true declaredType ;
+                m_is_cyclic_type = isCyclicType true declaredType ;
 #else
-                is_cyclic_type = isCyclicType false declaredType ;
+                m_is_cyclic_type = isCyclicType false declaredType ;
 #endif
-                is_fixed_size = isOfFixedSize declaredType ;
+                m_is_fixed_size = isOfFixedSize declaredType ;
 
                 m_isInitialized = true ;
 
                 m_pickler_type = picklerType ; 
                 m_TypeKind = computeTypeKind picklerType ; 
-                m_typeHash = computeTypeHash picklerType ;
+                m_picklerHash = Unchecked.defaultof<_> ;
 
                 m_picklerInfo = picklerInfo ;
                 m_isCacheByRef = isCacheByRef ;
@@ -79,11 +86,13 @@
             }
 
         member f.Type = f.declared_type
-        member f.IsCyclicType = f.is_cyclic_type
-        member f.IsFixedSize = f.is_fixed_size
+        member f.IsCyclicType = f.m_is_cyclic_type
+        member f.IsFixedSize = f.m_is_fixed_size
 
         member internal f.TypeKind = f.m_TypeKind
-        member internal f.TypeHash = f.m_typeHash
+        member internal f.PicklerHash 
+            with get () = f.m_picklerHash
+            and set h = f.m_picklerHash <- h
 
         member f.CacheId
             with get () = f.m_cache_id
@@ -99,6 +108,7 @@
             else
                 invalidOp "Attempting to consume pickler at initialization time."
 
+        member f.Name = f.pickler_name
         member f.IsCacheByRef = f.m_isCacheByRef
         member f.UseWithSubtypes = f.m_useWithSubtypes
         member internal f.IsInitialized = f.m_isInitialized
@@ -106,8 +116,8 @@
         abstract member UntypedWrite : Writer -> obj -> unit
         abstract member UntypedRead : Reader -> obj
 
-        abstract member ManagedWrite : Writer -> obj -> unit
-        abstract member ManagedRead : Reader -> obj
+        abstract member WriteRootObject : Writer -> obj -> unit
+        abstract member ReadRootObject : Reader -> obj
 
         abstract member WriteSequence : Writer * IEnumerable -> int
         abstract member ReadSequence : Reader * int -> IEnumerator
@@ -126,8 +136,10 @@
             else
                 f.m_pickler_type <- f'.m_pickler_type
                 f.m_cache_id <- f'.m_cache_id
-                f.m_typeHash <- f'.m_typeHash
+                f.m_picklerHash <- f'.m_picklerHash
                 f.m_TypeKind <- f'.m_TypeKind
+                f.m_is_cyclic_type <- f'.m_is_cyclic_type
+                f.m_is_fixed_size <- f'.m_is_fixed_size
                 f.m_picklerInfo <- f'.m_picklerInfo
                 f.m_isCacheByRef <- f'.m_isCacheByRef
                 f.m_useWithSubtypes <- f'.m_useWithSubtypes
@@ -178,8 +190,8 @@
 
         override f.UntypedWrite (w : Writer) (o : obj) = f.m_writer w (fastUnbox<'T> o)
         override f.UntypedRead (r : Reader) = f.m_reader r :> obj
-        override f.ManagedWrite (w : Writer) (o : obj) = w.Write(f, fastUnbox<'T> o)
-        override f.ManagedRead (r : Reader) = r.Read f :> obj
+        override f.WriteRootObject (w : Writer) (o : obj) = w.WriteRootObject(f, o :?> 'T)
+        override f.ReadRootObject (r : Reader) = r.ReadRootObject f :> obj
         override f.WriteSequence (w : Writer, e : IEnumerable) = w.WriteSequence(f, e :?> seq<'T>)
         override f.ReadSequence (r : Reader, length : int) = r.ReadSequence(f, length) :> IEnumerator
 
@@ -247,7 +259,7 @@
         member w.Write<'T> (fmt : Pickler<'T>, x : 'T) =
 
             let inline writeHeader (flags : byte) =
-                bw.Write(ObjHeader.create fmt.TypeHash flags)
+                bw.Write(ObjHeader.create fmt.PicklerHash flags)
 
             let inline write header =
                 if fmt.TypeKind <= TypeKind.Sealed || fmt.UseWithSubtypes then
@@ -322,6 +334,10 @@
             else
                 write ObjHeader.empty
 
+        member internal w.WriteRootObject(f : Pickler<'T>, x : 'T) =
+            bw.Write f.Name
+            w.Write(f, x)
+
         // efficient sequence serialization; must be used as top-level operation only
         member internal w.WriteSequence<'T>(f : Pickler<'T>, xs : seq<'T>) : int =
             let inline flushState () =
@@ -343,7 +359,7 @@
                     f.Write w x
 
             // write sequence header
-            bw.Write(ObjHeader.create f.TypeHash ObjHeader.isSequenceHeader)
+            bw.Write(ObjHeader.create f.PicklerHash ObjHeader.isSequenceHeader)
             
             // specialize enumeration
             match xs with
@@ -384,11 +400,17 @@
         let tyPickler = resolver.Resolve<Type> ()
 
         let mutable counter = 1L
-        let mutable currentDeserializedObjectId = 0L
+        // keeps track of a currently deserialized array
+        let mutable currentDeserializedArrayId = 0L
 
-        // used internally for early registration of cyclic objects
-        member internal r.EarlyRegisterObject (o : obj) = 
-            objCache.Add(currentDeserializedObjectId, o)
+        // Arrays are special reference types;
+        // Unlike other objects, their proper initialization depends on
+        // setting the correct rank & dimensions.
+        // Therefore, early registration in the event of a cyclic array
+        // is a responsibility of the pickler. This method gives access
+        // to the object cache for the array pickler.
+        member internal r.EarlyRegisterArray (a : Array) = 
+            objCache.Add(currentDeserializedArrayId, a)
 
         member r.BinaryReader = br
 
@@ -408,13 +430,13 @@
                 else
                     fmt.Read r
 
-            let flags = ObjHeader.read fmt.Type fmt.TypeHash (br.ReadUInt32())
+            let flags = ObjHeader.read fmt.Type fmt.PicklerHash (br.ReadUInt32())
 
             if ObjHeader.hasFlag flags ObjHeader.isNull then fastUnbox<'T> null
             elif fmt.TypeKind <= TypeKind.Value then fmt.Read r
             elif ObjHeader.hasFlag flags ObjHeader.isCyclicInstance then
                 // came across a nested instance of a cyclic object
-                // crete an uninitialized object to the cache and schedule
+                // add an uninitialized object to the cache and schedule
                 // reflection-based fixup at the root level.
                 let t =
                     if ObjHeader.hasFlag flags ObjHeader.isProperSubtype then tyPickler.Read r
@@ -432,7 +454,8 @@
 
             elif ObjHeader.hasFlag flags ObjHeader.isNewCachedInstance then
                 let id = counter
-                currentDeserializedObjectId <- id
+                if fmt.TypeKind = TypeKind.Array || fmt.TypeKind = TypeKind.Object then
+                    currentDeserializedArrayId <- id
                 counter <- counter + 1L
 
                 let x = read flags
@@ -456,6 +479,13 @@
             else
                 read flags
 
+        member internal r.ReadRootObject(f : Pickler<'T>) =
+            let name = br.ReadString()
+            if name <> f.Name then
+                let msg = sprintf "FsPickler: Root object is of type '%s', expected '%s'." name f.Name
+                raise <| new SerializationException(msg)
+            r.Read f
+
         // efficient sequence deserialization; must be used as top-level operation only
         member internal r.ReadSequence<'T> (f : Pickler<'T>, length : int) =
             let inline flushState () =
@@ -476,7 +506,7 @@
                     f.Read r
             
             // read object header
-            match ObjHeader.read f.Type f.TypeHash (br.ReadUInt32()) with
+            match ObjHeader.read f.Type f.PicklerHash (br.ReadUInt32()) with
             | ObjHeader.isSequenceHeader -> ()
             | _ -> 
                 let msg = "FsPickler: invalid stream data; expected sequence serialization."

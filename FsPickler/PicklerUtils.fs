@@ -18,6 +18,27 @@
 
             new Pickler<'T>(reader, writer, info, cacheByRef = cache, useWithSubtypes = useWithSubtypes)
 
+
+        // build a rudimentary 16-bit hash for a given pickler
+        // this should be runtime-invariant and not dependent on
+        // their qualified names or ITypeNameConverter implementations
+        let computePicklerHash (p : Pickler) : PicklerHash =
+            // the first byte encodes pickler information
+            let byte1 = byte p.TypeKind + (byte p.PicklerInfo <<< 4)
+                
+            // the second byte contains data from the type declaration
+            let mutable byte2 = 0uy
+            if p.IsCacheByRef then byte2 <- byte2 ||| 1uy
+            if p.UseWithSubtypes then byte2 <- byte2 ||| 2uy
+            if p.IsCyclicType then byte2 <- byte2 ||| 4uy
+            if p.IsFixedSize then byte2 <- byte2 ||| 8uy
+            if p.Type.IsGenericType then byte2 <- byte2 ||| 16uy
+            if p.Type = typeof<obj> then byte2 <- byte2 ||| 32uy
+            if p.Type.Assembly = typeof<int>.Assembly then byte2 <- byte2 ||| 64uy
+            if p.Type.Assembly = typeof<int option>.Assembly then byte2 <- byte2 ||| 128uy
+
+            uint16 byte1 ||| (uint16 byte2 <<< 8)
+
         /// filter a collection of methods that carry serialization attributes
         let getSerializationMethods<'Attr when 'Attr :> Attribute> (ms : MethodInfo []) =
             let isSerializationMethod(m : MethodInfo) =

@@ -76,7 +76,7 @@
                     | _ -> failwith "impossible array rank"
 
                 // register new object with deserializer cache
-                r.EarlyRegisterObject array
+                r.EarlyRegisterArray array
 
                 if ef.TypeKind = TypeKind.Primitive && keepEndianness then
                     Stream.WriteToArray(r.BinaryReader.BaseStream, array)

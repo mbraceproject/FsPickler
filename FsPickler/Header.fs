@@ -1,11 +1,10 @@
 ﻿namespace FsPickler
 
     open System
+    open System.Reflection
     open System.Runtime.Serialization
 
-    open FsPickler.Utils
-
-    type TypeHash = uint16
+    type PicklerHash = uint16
 
     type TypeKind =
         | Primitive = 0
@@ -15,6 +14,7 @@
         | Sealed = 4
         | NonSealed = 5
         | Abstract = 6
+        | Object = 7
 
     type PicklerInfo =
         | Atomic = 0
@@ -39,43 +39,16 @@
             elif t.IsValueType then TypeKind.Value
             elif t.IsArray then TypeKind.Array
             elif t.IsSealed then TypeKind.Sealed
+            elif t = typeof<obj> then TypeKind.Object
             elif t.IsAbstract then TypeKind.Abstract
             else TypeKind.NonSealed
 
-        // build a rudimentary 16-bit hash out of a given type
-        // this should be runtime-invariant and not dependent on
-        // their qualified names or ITypeNameConverter implementations
-        let computeTypeHash (t : Type) : TypeHash =
-            let mutable hash = 0us
-            
-            if t.IsPrimitive then hash <- hash ||| 1us
-            if t.IsEnum then hash <- hash ||| 4us
-            if t.IsValueType then hash <- hash ||| 2us
-            if t.IsArray then hash <- hash ||| 8us
-            if t.IsClass then hash <- hash ||| 16us
-            if t.IsSealed then hash <- hash ||| 32us
-            if t.IsAbstract then hash <- hash ||| 64us
-            if t.IsGenericType then hash <- hash ||| 128us
-            if t = typeof<obj> then hash <- hash ||| 256us
-
-            if t.Assembly = typeof<int>.Assembly then hash <- hash ||| 512us
-            elif t.Assembly = typeof<int option>.Assembly then hash <- hash ||| 1024us
-
-            match t.Namespace with
-            | null -> hash <- hash ||| 2048us
-            | ns -> 
-                if ns.StartsWith("System.Reflection") then hash <- hash ||| 4096us
-
-            if isISerializable t then hash <- hash ||| 8192us
-
-            hash
-
-
         // each reference type is serialized with a 32 bit header
         //   1. the first byte is a fixed identifier
-        //   2. the next two bytes are the pickler's typehash.
+        //   2. the next two bytes identify the used pickler
         //   3. the third byte conveys object-specific switches
         //
+
         module ObjHeader =
 
             [<Literal>]
@@ -99,10 +72,10 @@
 
             let inline hasFlag (h : byte) (flag : byte) = h &&& flag = flag
         
-            let inline create (hash : TypeHash) (flags : byte) =
+            let inline create (hash : PicklerHash) (flags : byte) =
                 uint32 initByte ||| (uint32 hash <<< 8) ||| (uint32 flags <<< 24)
 
-            let inline read (t : Type) (hash : TypeHash) (header : uint32) =
+            let inline read (t : Type) (hash : PicklerHash) (header : uint32) =
                 if byte header <> initByte then
                     raise <| new SerializationException ("FsPickler: invalid stream data.")
                 elif uint16 (header >>> 8) <> hash then

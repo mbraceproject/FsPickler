@@ -46,7 +46,7 @@
         member __.Serialize<'T>(stream : Stream, value : 'T, [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : unit =
             use writer = new Writer(stream, resolver, ?streamingContext = streamingContext, ?encoding = encoding, ?leaveOpen = leaveOpen)
             let pickler = resolver.Resolve<'T> ()
-            writer.Write<'T>(pickler, value)
+            writer.WriteRootObject<'T>(pickler, value)
 
         /// <summary>Serialize value to the underlying stream using given pickler.</summary>
         /// <param name="pickler">pickler used for serialization.</param>
@@ -58,7 +58,7 @@
         member __.Serialize<'T>(pickler : Pickler<'T>, stream : Stream, value : 'T, [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : unit =
             do checkPicklerCompat resolver.UUId pickler
             use writer = new Writer(stream, resolver, ?streamingContext = streamingContext, ?encoding = encoding, ?leaveOpen = leaveOpen)
-            writer.Write(pickler, value)
+            writer.WriteRootObject(pickler, value)
 
         /// <summary>Serialize object of given type to the underlying stream.</summary>
         /// <param name="valueType">type of the given object.</param>
@@ -70,7 +70,7 @@
         member __.Serialize(valueType : Type, stream : Stream, value : obj, [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : unit =
             use writer = new Writer(stream, resolver, ?streamingContext = streamingContext, ?encoding = encoding, ?leaveOpen = leaveOpen)
             let pickler = resolver.Resolve valueType
-            pickler.ManagedWrite writer value
+            pickler.WriteRootObject writer value
 
         /// <summary>Serialize object to the underlying stream using given pickler.</summary>
         /// <param name="pickler">untyped pickler used for serialization.</param>
@@ -81,7 +81,7 @@
         /// <param name="leaveOpen">leave underlying stream open when finished. Defaults to true.</param>
         member __.Serialize(pickler : Pickler, stream : Stream, value : obj, [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : unit =
             use writer = new Writer(stream, resolver, ?streamingContext = streamingContext, ?encoding = encoding, ?leaveOpen = leaveOpen)
-            pickler.ManagedWrite writer value
+            pickler.WriteRootObject writer value
 
         /// <summary>Deserialize value of given type from the underlying stream.</summary>
         /// <param name="stream">source stream.</param>
@@ -91,7 +91,7 @@
         member __.Deserialize<'T> (stream : Stream, [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : 'T =
             use reader = new Reader(stream, resolver, ?streamingContext = streamingContext, ?encoding = encoding, ?leaveOpen = leaveOpen)
             let pickler = resolver.Resolve<'T> ()
-            reader.Read<'T> pickler
+            reader.ReadRootObject<'T> pickler
 
         /// <summary>Deserialize value of given type from the underlying stream, using given pickler.</summary>
         /// <param name="pickler">pickler used for serialization.</param>
@@ -102,7 +102,7 @@
         member __.Deserialize<'T> (pickler : Pickler<'T>, stream : Stream, [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : 'T =
             do checkPicklerCompat resolver.UUId pickler
             use reader = new Reader(stream, resolver, ?streamingContext = streamingContext, ?encoding = encoding, ?leaveOpen = leaveOpen)
-            reader.Read<'T> pickler
+            reader.ReadRootObject<'T> pickler
 
         /// <summary>Deserialize object of given type from the underlying stream.</summary>
         /// <param name="valueType">anticipated value type.</param>
@@ -113,7 +113,7 @@
         member __.Deserialize (valueType : Type, stream : Stream, [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : obj =
             use reader = new Reader(stream, resolver, ?streamingContext = streamingContext, ?encoding = encoding, ?leaveOpen = leaveOpen)
             let pickler = resolver.Resolve valueType
-            pickler.ManagedRead reader
+            pickler.ReadRootObject reader
 
         /// <summary>Deserialize object from the underlying stream using given pickler.</summary>
         /// <param name="pickler">untyped pickler used for deserialization.</param>
@@ -124,7 +124,7 @@
         /// <return>number of elements written to the stream.</return>
         member __.Deserialize (pickler : Pickler, stream : Stream, [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : obj =
             use reader = new Reader(stream, resolver, ?streamingContext = streamingContext, ?encoding = encoding, ?leaveOpen = leaveOpen)
-            pickler.ManagedRead reader
+            pickler.ReadRootObject reader
 
         /// <summary>Serialize a sequence of objects to the underlying stream.</summary>
         /// <param name="stream">target stream.</param>

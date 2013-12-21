@@ -6,6 +6,7 @@
 
     open FsPickler.Utils
     open FsPickler.TypeShape
+    open FsPickler.PicklerUtils
     open FsPickler.BasePicklers
     open FsPickler.ReflectionPicklers
     open FsPickler.CombinatorImpls
@@ -58,6 +59,7 @@
                 else
                     s.Add name)
 
+
         // include default pickler factories
         let customPicklerFactories =
             let defaultFactories = getDefaultPicklerFactories ()
@@ -76,7 +78,7 @@
             |]
             |> Seq.concat
             // brand all registered picklers with cache-particular uuid
-            |> Seq.map (fun f -> f.CacheId <- uuid ; f)
+            |> Seq.map (fun f -> f.CacheId <- uuid ; f.PicklerHash <- computePicklerHash f ; f)
             |> Seq.map (fun f -> KeyValuePair(f.Type, f)) 
             |> fun fs -> new ConcurrentDictionary<_,_>(fs)
 
@@ -86,6 +88,7 @@
                 // clone to protect external resource from uuid mutation
                 let cp' = cp.ClonePickler()
                 cp'.CacheId <- uuid
+                cp'.PicklerHash <- computePicklerHash cp'
                 cache.AddOrUpdate(cp'.Type, cp', fun _ _ -> cp') |> ignore
 
         let icache = new ConcurrentCache<_,_>(cache)

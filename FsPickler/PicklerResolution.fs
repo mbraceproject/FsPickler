@@ -57,6 +57,7 @@
                     // copy data to initial pickler
                     f.InitializeFrom f'
                     f.CacheId <- cacheId
+                    f.PicklerHash <- computePicklerHash f
 
                     // pickler construction successful, commit to external cache
                     do externalCache.Commit t f
