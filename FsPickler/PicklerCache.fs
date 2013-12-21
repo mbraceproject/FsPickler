@@ -58,18 +58,6 @@
                 else
                     s.Add name)
 
-        // resolve the default type name converter
-        let tyConv =
-            match tyConv with 
-            | Some tc -> tc
-            | None -> 
-#if SERIALIZE_STRONG_NAMES
-                let strongNames = true
-#else   
-                let strongNames = false
-#endif
-                new DefaultTypeNameConverter(strongNames = strongNames) :> _
-
         // include default pickler factories
         let customPicklerFactories =
             let defaultFactories = getDefaultPicklerFactories ()
@@ -80,7 +68,11 @@
         let cache =
             [|
                 mkAtomicPicklers ()
-                mkReflectionPicklers tyConv
+#if SERIALIZE_STRONG_NAMES
+                mkReflectionPicklers true tyConv
+#else
+                mkReflectionPicklers false tyConv
+#endif
             |]
             |> Seq.concat
             // brand all registered picklers with cache-particular uuid

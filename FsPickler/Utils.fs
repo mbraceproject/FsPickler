@@ -80,7 +80,7 @@
 
         let (|InnerExn|_|) (e : #exn) = denull e.InnerException
 
-
+        /// replacement for IDictionary
         type ICache<'K,'V> =
             abstract Lookup : 'K -> 'V option
             abstract Commit : 'K -> 'V -> unit
@@ -95,7 +95,8 @@
                 member __.Lookup k = let found, v = dict.TryGetValue k in if found then Some v else None
                 member __.Commit k v = dict.TryAdd(k,v) |> ignore
 
-
+        /// takes an isomorphic function and its inverse as inputs
+        /// memoizes output in both directions
         type BiMemoizer<'T, 'S>(f : 'T -> 'S, g : 'S -> 'T) =
             let cache = new ConcurrentDictionary<'T,'S> ()
             let cache' = new ConcurrentDictionary<'S,'T> ()

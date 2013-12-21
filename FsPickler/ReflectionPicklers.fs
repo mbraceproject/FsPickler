@@ -13,10 +13,13 @@
     open FsPickler.PicklerUtils
 
 
+    /// Contains breakdown information for a MemberInfo instance
+    /// This information can be memoized for performance and
+    /// is sufficient to restructure the instance at deserialization.
 
     type CompositeMemberInfo =
         // System.Type breakdown
-        | NamedType of TypeInfo
+        | NamedType of string * AssemblyInfo
         | GenericType of Type * Type []
         | GenericTypeParam of Type * int
         | GenericMethodParam of MethodInfo * int
@@ -26,7 +29,7 @@
         // misc MemberInfo
         | NamedMember of Type * (* name *) string * (* isStatic *) bool
         | Constructor of Type * Type []
-        | Unknown
+        | Unknown of Type * string
 
 
     //
@@ -42,22 +45,24 @@
             PublicKeyToken = an.GetPublicKeyToken()
         }
 
-    let loadAssembly (aI : AssemblyInfo) =
+    let loadAssembly useStrongNames (aI : AssemblyInfo) =
         let an = new AssemblyName()
 
         an.Name <- aI.Name
 
-        match aI.Version with
-        | null -> ()
-        | version -> an.Version <- new Version(version)
-                
-        match aI.Culture with
-        | null -> ()
-        | culture -> an.CultureInfo <- new CultureInfo(culture)
+        if useStrongNames then
 
-        match aI.PublicKeyToken with
-        | null -> an.SetPublicKeyToken [||]
-        | pkt -> an.SetPublicKeyToken(pkt)
+            match aI.Version with
+            | null -> ()
+            | version -> an.Version <- new Version(version)
+                
+            match aI.Culture with
+            | null -> ()
+            | culture -> an.CultureInfo <- new CultureInfo(culture)
+
+            match aI.PublicKeyToken with
+            | null -> an.SetPublicKeyToken [||]
+            | pkt -> an.SetPublicKeyToken(pkt)
 
         try Assembly.Load(an)
         with :? FileNotFoundException | :? FileLoadException as e ->
@@ -92,7 +97,7 @@
         let allVisibility = BindingFlags.Public ||| BindingFlags.NonPublic
         allVisibility ||| (if isStatic then BindingFlags.Static else BindingFlags.Instance)
 
-    let getMemberInfo (tyConv : ITypeNameConverter) (ldAssembly : Assembly -> AssemblyInfo) (m : MemberInfo) =
+    let getMemberInfo (tyConv : ITypeNameConverter option) (ldAssembly : Assembly -> AssemblyInfo) (m : MemberInfo) =
         match m with
         | :? Type as t ->
             if t.IsGenericType && not t.IsGenericTypeDefinition then
@@ -104,8 +109,13 @@
                 | null -> GenericMethodParam(t.DeclaringMethod :?> MethodInfo, t.GenericParameterPosition)
                 | dt -> GenericTypeParam(dt, t.GenericParameterPosition)
             else
-                let tI = { Name = t.FullName ; Assembly = ldAssembly t.Assembly }
-                NamedType(tyConv.OfSerializedType tI)
+                let name = t.FullName
+                let aI = ldAssembly t.Assembly
+                match tyConv with
+                | None -> NamedType(name, aI)
+                | Some tc ->
+                    let tI = tc.OfSerializedType <| aI.GetType(name)
+                    NamedType(tI.Name, tI.Assembly)
 
         | :? MethodInfo as m ->
             if m.IsGenericMethod && not m.IsGenericMethodDefinition then
@@ -114,8 +124,7 @@
                 GenericMethod(gm, tyArgs)
             else
                 let dt = m.DeclaringType
-                let flags = getFlags m.IsStatic
-                let overloads = m.DeclaringType.GetMethods(flags) |> Array.filter (fun m' -> m'.Name = m.Name)
+                let overloads = m.DeclaringType.GetMethods(getFlags m.IsStatic) |> Array.filter (fun m' -> m'.Name = m.Name)
                 if overloads.Length = 1 then NamedMember(dt, m.Name, m.IsStatic)
                 else
                     let mparams = m.GetParameters() |> Array.map (fun p -> p.ParameterType)
@@ -140,53 +149,58 @@
             let isStatic = let m = e.GetAddMethod() in m.IsStatic
             NamedMember(dt, e.Name, isStatic)
 
-        | _ -> Unknown
+        | _ -> Unknown (m.GetType(), m.ToString())
 
 
 
-    let loadMember (tyConv : ITypeNameConverter) (ldAssembly : AssemblyInfo -> Assembly) (mI : CompositeMemberInfo) =
+    let loadMember (tyConv : ITypeNameConverter option) (ldAssembly : AssemblyInfo -> Assembly) (mI : CompositeMemberInfo) =
         match mI with
-        | NamedType tI ->
-            let tI = tyConv.ToDeserializedType tI
-            let assembly = ldAssembly tI.Assembly
-            try assembly.GetType(tI.Name, throwOnError = true) :> MemberInfo
+        | NamedType(name, aI) ->
+            let name, aI = 
+                match tyConv with
+                | None -> name, aI
+                | Some tc ->
+                    let tI = tc.ToDeserializedType <| aI.GetType name
+                    tI.Name, tI.Assembly
+
+            let assembly = ldAssembly aI
+            try assembly.GetType(name, throwOnError = true) |> fastUnbox<MemberInfo>
             with e ->
                 raise <| new SerializationException("FsPickler: Type load exception.", e)
 
-        | GenericType(dt, tyArgs) -> dt.MakeGenericType tyArgs :> _
-        | GenericTypeParam(dt, idx) -> dt.GetGenericArguments().[idx] :> _
-        | GenericMethodParam(dm, idx) -> dm.GetGenericArguments().[idx] :> _
+        | GenericType(dt, tyArgs) -> dt.MakeGenericType tyArgs |> fastUnbox<MemberInfo>
+        | GenericTypeParam(dt, idx) -> dt.GetGenericArguments().[idx] |> fastUnbox<MemberInfo>
+        | GenericMethodParam(dm, idx) -> dm.GetGenericArguments().[idx] |> fastUnbox<MemberInfo>
         | NamedMember(dt, name, isStatic) -> dt.GetMember(name, getFlags isStatic).[0]
             
         | OverloadedMethod(dt, name, isStatic, mParams) ->
             try
                 dt.GetMethods(getFlags isStatic)
-                |> Array.find(fun m -> m.Name = name && m.GetParameterTypes() = mParams) :> _
+                |> Array.find(fun m -> m.Name = name && m.GetParameterTypes() = mParams) |> fastUnbox<MemberInfo>
 
             with :? KeyNotFoundException -> raise <| new SerializationException(sprintf "Cloud not load MethodInfo '%s.%s'" dt.Name name)
 
-        | GenericMethod(gm, tyParams) -> gm.MakeGenericMethod tyParams :> _
-        | Constructor (dt, cParams) -> dt.GetConstructor(getFlags false, null, cParams, [||]) :> _
+        | GenericMethod(gm, tyParams) -> gm.MakeGenericMethod tyParams |> fastUnbox<MemberInfo>
+        | Constructor (dt, cParams) -> dt.GetConstructor(getFlags false, null, cParams, [||]) |> fastUnbox<MemberInfo>
 
-        | Unknown -> invalidOp "Unknown memberInfo!"
+        | Unknown (t, name) -> invalidOp <| sprintf "Cannot load '%s' of type %O." name t
 
 
 
-    type ReflectionCache (tyConv : ITypeNameConverter) =
+    type ReflectionCache (useStrongNames, tyConv : ITypeNameConverter option) =
 
-        let assemblyCache = new BiMemoizer<_,_>(getAssemblyInfo, loadAssembly)
+        let assemblyCache = new BiMemoizer<_,_>(getAssemblyInfo, loadAssembly useStrongNames)
         let memberInfoCache = new BiMemoizer<_,_>(getMemberInfo tyConv assemblyCache.F, loadMember tyConv assemblyCache.G)
 
         member __.GetAssemblyInfo(a : Assembly) = assemblyCache.F a
         member __.LoadAssembly(a : AssemblyInfo) = assemblyCache.G a
         member __.GetMemberInfo(m : MemberInfo) = memberInfoCache.F m
         member __.LoadMemberInfo(m : CompositeMemberInfo) = memberInfoCache.G m
-        
 
 
-    let mkReflectionPicklers (tyConv : ITypeNameConverter) =
+    let mkReflectionPicklers useStrongNames (tyConv : ITypeNameConverter option) =
 
-        let cache = new ReflectionCache(tyConv)
+        let cache = new ReflectionCache(useStrongNames, tyConv)
 
         let assemblyInfoPickler =
             let writer (w : Writer) (aI : AssemblyInfo) =
@@ -223,10 +237,10 @@
 
         let rec memberInfoWriter (w : Writer) (m : MemberInfo) =
             match cache.GetMemberInfo m with
-            | NamedType tI ->
+            | NamedType (name, aI) ->
                 w.BinaryWriter.Write 0uy
-                w.BinaryWriter.Write tI.Name
-                w.Write(assemblyInfoPickler, tI.Assembly)
+                w.BinaryWriter.Write name
+                w.Write(assemblyInfoPickler, aI)
 
             | GenericType(dt, tyParams) ->
                 w.BinaryWriter.Write 1uy
@@ -266,7 +280,8 @@
                 w.BinaryWriter.Write name
                 w.BinaryWriter.Write isStatic
 
-            | Unknown -> w.BinaryWriter.Write 8uy
+            | Unknown(t, name) ->
+                raise <| new NonSerializableTypeException(t, sprintf "could not serialize '%s'." name)
 
         and memberInfoReader (r : Reader) =
             let cMemberInfo =
@@ -274,8 +289,7 @@
                 | 0uy ->
                     let name = r.BinaryReader.ReadString()
                     let assembly = r.Read assemblyInfoPickler
-                    let tyInfo = { Name = name ; Assembly = assembly }
-                    NamedType tyInfo
+                    NamedType(name, assembly)
                 | 1uy ->
                     let gt = r.Read typePickler
                     let tyParams = readArray r typePickler
@@ -307,7 +321,9 @@
                     let name = r.BinaryReader.ReadString()
                     let isStatic = r.BinaryReader.ReadBoolean()
                     NamedMember(dt, name, isStatic)
-                | _ -> Unknown
+                | 8uy // 'Unknown' cases never get serialized, so treat as stream error.
+                | _ ->
+                    raise <| new SerializationException("Stream error.")
 
             cache.LoadMemberInfo cMemberInfo
 
