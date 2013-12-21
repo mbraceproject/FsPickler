@@ -96,46 +96,27 @@
                 member __.Commit k v = dict.TryAdd(k,v) |> ignore
 
 
-        let memoize (c : ICache<'T,'S>) (f : 'T -> 'S) (t : 'T) =
-            match c.Lookup t with
-            | Some s -> s
-            | None ->
-                let s = f t
-                c.Commit t s
-                s
+        type BiMemoizer<'T, 'S>(f : 'T -> 'S, g : 'S -> 'T) =
+            let cache = new ConcurrentDictionary<'T,'S> ()
+            let cache' = new ConcurrentDictionary<'S,'T> ()
 
-        let biMemoize (c : ICache<'T,'S>) (c' : ICache<'S,'T>) (f : 'T -> 'S) (t : 'T) =
-            match c.Lookup t with
-            | Some s -> s
-            | None ->
-                let s = f t
-                c.Commit t s
-                c'.Commit s t
-                s
-
-        let YBiMemoize (c : ICache<'T,'S>) (c' : ICache<'S,'T>) (f : ('T -> 'S) -> 'T -> 'S) (t : 'T) =
-            let rec aux (t : 'T) =
-                match c.Lookup t with
-                | Some s -> s
-                | None ->
-                    let s = f aux t
-                    c.Commit t s
-                    c'.Commit s t
+            member __.F(t : 'T) =
+                let found, s = cache.TryGetValue t
+                if found then s
+                else
+                    let s = f t
+                    cache.TryAdd(t,s) |> ignore
+                    cache'.TryAdd(s,t) |> ignore
                     s
 
-            aux t
-//        /// thread-safe memo operator
-//        let memoize (f : 'K -> 'V) =
-//            let d = new ConcurrentDictionary<'K, 'V> ()
-//
-//            fun (k : 'K) ->
-//                let found, value = d.TryGetValue k
-//                if found then value
-//                else
-//                    let v = f k
-//                    let _ = d.TryAdd(k, v)
-//                    v
-
+            member __.G(s : 'S) =
+                let found, t = cache'.TryGetValue s
+                if found then t
+                else
+                    let t = g s
+                    cache.TryAdd(t,s) |> ignore
+                    cache'.TryAdd(s,t) |> ignore
+                    t
 
         // produces a structural hashcode out of a byte array
         let getByteHashCode (bs : byte []) =
