@@ -21,6 +21,7 @@
     type CompositeMemberInfo =
         // System.Type breakdown
         | NamedType of string * AssemblyInfo
+        | ArrayType of Type * (* rank *) int
         | GenericType of Type * Type []
         | GenericTypeParam of Type * int
         | GenericMethodParam of MethodInfo * int
@@ -101,7 +102,11 @@
     let getMemberInfo (tyConv : ITypeNameConverter option) (ldAssembly : Assembly -> AssemblyInfo) (m : MemberInfo) =
         match m with
         | :? Type as t ->
-            if t.IsGenericType && not t.IsGenericTypeDefinition then
+            if t.IsArray then
+                let et = t.GetElementType()
+                let rk = t.GetArrayRank()
+                ArrayType (et, rk)
+            elif t.IsGenericType && not t.IsGenericTypeDefinition then
                 let gt = t.GetGenericTypeDefinition()
                 let gas = t.GetGenericArguments()
                 GenericType(gt, gas)
@@ -169,6 +174,7 @@
             with e ->
                 raise <| new SerializationException("FsPickler: Type load exception.", e)
 
+        | ArrayType(et, rk) -> et.MakeArrayType(rk) |> fastUnbox<MemberInfo>
         | GenericType(dt, tyArgs) -> dt.MakeGenericType tyArgs |> fastUnbox<MemberInfo>
         | GenericTypeParam(dt, idx) -> dt.GetGenericArguments().[idx] |> fastUnbox<MemberInfo>
         | GenericMethodParam(dm, idx) -> dm.GetGenericArguments().[idx] |> fastUnbox<MemberInfo>
@@ -192,6 +198,12 @@
             let inline append (x : string) = b.Append x |> ignore
             match getInfo t with
             | NamedType(name, _) -> append name
+            | ArrayType(et, rk) ->
+                generate b et
+                append "["
+                for i = 1 to rk - 1 do append ","
+                append "]"
+
             | GenericType(gt, tyParams) ->
                 generate b gt
                 append "["
@@ -266,40 +278,45 @@
                 w.BinaryWriter.Write name
                 w.Write(assemblyInfoPickler, aI)
 
-            | GenericType(dt, tyParams) ->
+            | ArrayType (et, rk) ->
                 w.BinaryWriter.Write 1uy
+                w.Write(typePickler, et)
+                w.BinaryWriter.Write rk
+
+            | GenericType(dt, tyParams) ->
+                w.BinaryWriter.Write 2uy
                 w.Write(typePickler, dt)
                 writeArray w typePickler tyParams
 
             | GenericTypeParam(dt, idx) ->
-                w.BinaryWriter.Write 2uy
+                w.BinaryWriter.Write 3uy
                 w.Write(typePickler, dt)
                 w.BinaryWriter.Write idx
 
             | GenericMethodParam(dm, idx) ->
-                w.BinaryWriter.Write 3uy
+                w.BinaryWriter.Write 4uy
                 w.Write(methodInfoPickler, dm)
                 w.BinaryWriter.Write idx
 
             | GenericMethod(gm, mParams) ->
-                w.BinaryWriter.Write 4uy
+                w.BinaryWriter.Write 5uy
                 w.Write(methodInfoPickler, gm)
                 writeArray w typePickler mParams
 
             | OverloadedMethod(dt, name, isStatic, mParams) ->
-                w.BinaryWriter.Write 5uy
+                w.BinaryWriter.Write 6uy
                 w.Write(typePickler, dt)
                 w.BinaryWriter.Write name
                 w.BinaryWriter.Write isStatic
                 writeArray w typePickler mParams
 
             | Constructor(dt, cParams) ->
-                w.BinaryWriter.Write 6uy
+                w.BinaryWriter.Write 7uy
                 w.Write (typePickler, dt)
                 writeArray w typePickler cParams
 
             | NamedMember(dt, name, isStatic) ->
-                w.BinaryWriter.Write 7uy
+                w.BinaryWriter.Write 8uy
                 w.Write (typePickler, dt)
                 w.BinaryWriter.Write name
                 w.BinaryWriter.Write isStatic
@@ -315,37 +332,41 @@
                     let assembly = r.Read assemblyInfoPickler
                     NamedType(name, assembly)
                 | 1uy ->
+                    let et = r.Read typePickler
+                    let rk = r.BinaryReader.ReadInt32()
+                    ArrayType(et, rk)
+                | 2uy ->
                     let gt = r.Read typePickler
                     let tyParams = readArray r typePickler
                     GenericType(gt, tyParams)
-                | 2uy ->
+                | 3uy ->
                     let dt = r.Read typePickler
                     let idx = r.BinaryReader.ReadInt32()
                     GenericTypeParam(dt, idx)
-                | 3uy ->
+                | 4uy ->
                     let dm = r.Read methodInfoPickler
                     let idx = r.BinaryReader.ReadInt32()
                     GenericMethodParam(dm, idx)
-                | 4uy ->
+                | 5uy ->
                    let gm = r.Read methodInfoPickler
                    let tparams = readArray r typePickler 
                    GenericMethod(gm, tparams)
-                | 5uy ->
+                | 6uy ->
                     let dt = r.Read typePickler
                     let name = r.BinaryReader.ReadString()
                     let isStatic = r.BinaryReader.ReadBoolean()
                     let overloads = readArray r typePickler
                     OverloadedMethod(dt, name, isStatic, overloads)
-                | 6uy ->
+                | 7uy ->
                     let dt = r.Read typePickler
                     let cParams = readArray r typePickler
                     Constructor(dt, cParams)
-                | 7uy ->
+                | 8uy ->
                     let dt = r.Read typePickler
                     let name = r.BinaryReader.ReadString()
                     let isStatic = r.BinaryReader.ReadBoolean()
                     NamedMember(dt, name, isStatic)
-                | 8uy // 'Unknown' cases never get serialized, so treat as stream error.
+                // 'Unknown' cases never get serialized, so treat as stream error.
                 | _ ->
                     raise <| new SerializationException("Stream error.")
 

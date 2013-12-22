@@ -271,6 +271,16 @@
             let inline writeHeader (flags : byte) =
                 bw.Write(ObjHeader.create fmt.PicklerFlags flags)
 
+            // ad-hoc System.Type caching
+            let inline writeType (t : Type) =
+                let id, firstOccurence = idGen.GetId t
+                if firstOccurence then
+                    bw.Write true
+                    tyPickler.Write w t
+                else
+                    bw.Write false
+                    bw.Write id
+
             let inline write header =
                 if fmt.TypeKind <= TypeKind.Sealed || fmt.UseWithSubtypes then
                     writeHeader header
@@ -281,7 +291,7 @@
                     if t0 <> fmt.Type then
                         let fmt' = resolver.Resolve t0
                         writeHeader (header ||| ObjHeader.isProperSubtype)
-                        tyPickler.Write w t0
+                        writeType t0
                         fmt'.UntypedWrite w x
                     else
                         writeHeader header
@@ -332,7 +342,7 @@
                             writeHeader ObjHeader.isOldCachedInstance
                         elif t <> fmt.Type then
                             writeHeader (ObjHeader.isCyclicInstance ||| ObjHeader.isProperSubtype)
-                            tyPickler.Write w t
+                            writeType t
                         else
                             writeHeader ObjHeader.isCyclicInstance
 
@@ -434,9 +444,21 @@
         // the primary deserialization routine; handles all the caching, subtype resolution logic, etc
         member r.Read(fmt : Pickler<'T>) : 'T =
 
+            // ad-hoc System.Type caching
+            let inline readType () =
+                if br.ReadBoolean() then
+                    let id = counter
+                    counter <- counter + 1L
+                    let t = tyPickler.Read r
+                    objCache.Add(id, t)
+                    t
+                else
+                    let id = br.ReadInt64()
+                    objCache.[id] |> fastUnbox<Type>
+
             let inline read flags =
                 if ObjHeader.hasFlag flags ObjHeader.isProperSubtype then
-                    let t = tyPickler.Read r
+                    let t = readType ()
                     let fmt' = resolver.Resolve t
                     fmt'.UntypedRead r |> fastUnbox<'T>
                 else
@@ -451,7 +473,7 @@
                 // add an uninitialized object to the cache and schedule
                 // reflection-based fixup at the root level.
                 let t =
-                    if ObjHeader.hasFlag flags ObjHeader.isProperSubtype then tyPickler.Read r
+                    if ObjHeader.hasFlag flags ObjHeader.isProperSubtype then readType ()
                     else fmt.Type
 
                 let id = br.ReadInt64()
