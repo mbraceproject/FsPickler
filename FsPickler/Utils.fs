@@ -18,6 +18,11 @@
 
         let runsOnMono = System.Type.GetType("Mono.Runtime") <> null
 
+        // TODO: include in serialization header
+        let versionTag = 
+            let version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version
+            sprintf "FsPickler-v%O" version
+
         /// stackless raise operator
         let inline raise (e: System.Exception) = (# "throw" e : 'U #)
 
@@ -83,17 +88,18 @@
         /// replacement for IDictionary
         type ICache<'K,'V> =
             abstract Lookup : 'K -> 'V option
-            abstract Commit : 'K -> 'V -> unit
+            abstract Commit : 'K -> 'V -> 'V
 
-        type ConcurrentCache<'K,'V>(dict : ConcurrentDictionary<'K,'V>) =
-            
-            new () = new ConcurrentCache<'K,'V>(new ConcurrentDictionary<'K,'V> ())
-
-            member __.Dict = dict
-
-            interface ICache<'K,'V> with
-                member __.Lookup k = let found, v = dict.TryGetValue k in if found then Some v else None
-                member __.Commit k v = dict.TryAdd(k,v) |> ignore
+        /// thread safe memo operator
+        let memoize (f : 'T -> 'S) =
+            let cache = new ConcurrentDictionary<'T,'S> ()
+            fun t ->
+                let found, s = cache.TryGetValue t
+                if found then s
+                else
+                    let s = f t
+                    cache.TryAdd(t,s) |> ignore
+                    s
 
         /// takes an isomorphic function and its inverse as inputs
         /// memoizes output in both directions

@@ -3,6 +3,7 @@
     open System
     open System.Globalization
     open System.IO
+    open System.Text
     open System.Reflection
     open System.Runtime.Serialization
     open System.Collections.Generic
@@ -185,20 +186,43 @@
 
         | Unknown (t, name) -> invalidOp <| sprintf "Cannot load '%s' of type %O." name t
 
+    // qualified name generator that emulates Type.ToString()
+    let generateQualifiedName (getInfo : Type -> CompositeMemberInfo) (t : Type) =
+        let rec generate (b : StringBuilder) (t : Type) =
+            let inline append (x : string) = b.Append x |> ignore
+            match getInfo t with
+            | NamedType(name, _) -> append name
+            | GenericType(gt, tyParams) ->
+                generate b gt
+                append "["
+                for i = 0 to tyParams.Length - 1 do
+                    generate b tyParams.[i]
+                    if i < tyParams.Length - 1 then append ","
+                append "]"
 
+            | GenericTypeParam _
+            | GenericMethodParam _ -> append t.Name
+            | _ -> failwith "not a type."
+
+        let b = new StringBuilder()
+        generate b t
+        b.ToString()
 
     type ReflectionCache (useStrongNames, tyConv : ITypeNameConverter option) =
 
         let assemblyCache = new BiMemoizer<_,_>(getAssemblyInfo, loadAssembly useStrongNames)
         let memberInfoCache = new BiMemoizer<_,_>(getMemberInfo tyConv assemblyCache.F, loadMember tyConv assemblyCache.G)
 
+        let qualifiedNameCache = memoize (generateQualifiedName memberInfoCache.F)
+
         member __.GetAssemblyInfo(a : Assembly) = assemblyCache.F a
         member __.LoadAssembly(a : AssemblyInfo) = assemblyCache.G a
         member __.GetMemberInfo(m : MemberInfo) = memberInfoCache.F m
         member __.LoadMemberInfo(m : CompositeMemberInfo) = memberInfoCache.G m
+        member __.GetQualifiedName(t : Type) = qualifiedNameCache t
 
 
-    let mkReflectionPicklers useStrongNames (tyConv : ITypeNameConverter option) =
+    type ReflectionManager (useStrongNames, tyConv : ITypeNameConverter option) =
 
         let cache = new ReflectionCache(useStrongNames, tyConv)
 
@@ -336,9 +360,12 @@
                 (fun r -> let aI = r.Read assemblyInfoPickler in cache.LoadAssembly aI)
                 (fun w a -> let aI = cache.GetAssemblyInfo a in w.Write(assemblyInfoPickler, aI))
 
-        [|
-            assemblyPickler :> Pickler
-            methodInfoPickler :> _
-            memberInfoPickler :> _
-            typePickler :> _
-        |]
+        member __.ReflectionPicklers =
+            [|
+                assemblyPickler :> Pickler
+                methodInfoPickler :> _
+                memberInfoPickler :> _
+                typePickler :> _
+            |]
+
+        member __.GetQualifiedName(t : Type) = cache.GetQualifiedName t

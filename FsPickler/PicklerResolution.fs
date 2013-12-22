@@ -20,8 +20,7 @@
     open FsPickler.CombinatorImpls
 
     /// Y combinator with parametric recursion support
-    let YParametric (cacheId : string)
-                    (externalCache : ICache<Type,Pickler>)
+    let YParametric (externalCache : ICache<Type,Pickler>)
                     (resolverF : IPicklerResolver -> Type -> Pickler) (t : Type) =
 
         // use internal cache to avoid corruption in event of exceptions being raised
@@ -46,27 +45,16 @@
 
                     // perform recursive resolution
                     let f' = resolverF resolver t
-
-                    // check cache Id for sanity
-                    match f'.CacheId with
-                    | null -> ()
-                    | id when id <> cacheId ->
-                        raise <| new PicklerGenerationException(t, "pickler generated using an incompatible cache.")
-                    | _ -> ()
                     
-                    // copy data to initial pickler
+                    // complete the recursive binding
                     f.InitializeFrom f'
-                    f.CacheId <- cacheId
-                    f.PicklerHash <- computePicklerHash f
 
                     // pickler construction successful, commit to external cache
-                    do externalCache.Commit t f
-                    f
+                    externalCache.Commit t f
 
         and resolver =
             {
                 new IPicklerResolver with
-                    member __.UUId = cacheId
                     member __.Resolve<'T> () = lookup typeof<'T> :?> Pickler<'T>
                     member __.Resolve (t : Type) = lookup t
             }

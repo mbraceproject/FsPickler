@@ -231,7 +231,6 @@
         static let dummyResolver =
             {
                 new IPicklerResolver with
-                    member __.UUId = null
                     member __.Resolve (t : Type) = DotNetPicklers.AbstractPickler.CreateUntyped(t)
                     member __.Resolve<'T> () = DotNetPicklers.AbstractPickler.Create<'T> ()
             }

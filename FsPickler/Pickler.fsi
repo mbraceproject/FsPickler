@@ -20,16 +20,16 @@
             abstract member internal ClonePickler : unit -> Pickler
 
             // serialization managed by reader/writer objects
-            abstract member internal ReadRootObject : Reader -> obj
-            abstract member internal WriteRootObject : Writer -> obj -> unit
+            abstract member internal ReadRootObject : Reader * id:string -> obj
+            abstract member internal WriteRootObject : Writer * id:string * value:obj -> unit
 
             // untyped version of reader/writers
             abstract member internal UntypedRead : Reader -> obj
             abstract member internal UntypedWrite : Writer -> obj -> unit
 
             // used internally for reading/writing sequences to the underlying stream
-            abstract member internal WriteSequence : Writer * IEnumerable -> int
-            abstract member internal ReadSequence : Reader * int -> IEnumerator
+            abstract member internal WriteSequence : Writer * id : string * sequence:IEnumerable -> int
+            abstract member internal ReadSequence : Reader * id : string * length:int -> IEnumerator
 
             // used for recursive binding of picklers
             abstract member internal InitializeFrom : Pickler -> unit
@@ -39,8 +39,6 @@
             member Type : Type
             /// Returns the pickler's actual type.
             member PicklerType : Type
-            /// Return's the pickler's type name.
-            member Name : string
 
             /// Specifies if pickled objects are to be cached by reference.
             member IsCacheByRef : bool
@@ -57,8 +55,7 @@
             member internal CacheId : string with set
 
             member internal IsInitialized : bool
-            member internal PicklerHash : PicklerHash
-            member internal PicklerHash : PicklerHash with set
+            member internal PicklerFlags : PicklerFlags
             member internal TypeKind : TypeKind
             
         end
@@ -71,30 +68,15 @@
             internal new : (Reader -> 'T) * (Writer -> 'T -> unit) * PicklerInfo * cacheByRef:bool * useWithSubtypes:bool -> Pickler<'T>
             private new : nested:Pickler * (Reader -> 'T) * (Writer -> 'T -> unit) -> Pickler<'T>
 
-//            /// casts pickler to a typed version. may result in runtime error.
-//            override Cast : unit -> Pickler<'S>
-
             // gives access to reader/writer functions
             member internal Read : (Reader -> 'T)
             member internal Write : (Writer -> 'T -> unit)
 
-//            // used for recursive binding of picklers
-//            override internal InitializeFrom : Pickler -> unit
-//
-//            // serialization managed by reader/writer objects
-//            override internal ManagedRead : Reader -> obj
-//            override internal ManagedWrite : Writer -> obj -> unit
-//
-//            // used for recursive binding of picklers
-//            override internal UntypedRead : Reader -> obj
-//            override internal UntypedWrite : Writer -> obj -> unit
         end
 
     /// Pickler resolution interface
     and IPicklerResolver =
         interface
-            /// Unique resolver identifier
-            abstract member UUId : string
             /// untyped pickler generation
             abstract member internal Resolve : Type -> Pickler
             /// auto generates a pickler of type 'T
@@ -124,11 +106,11 @@
 
             /// used internally for writing a root  object to the underlying stream.
             /// must only be performed as a top-level-operation
-            member internal WriteRootObject : pickler:Pickler<'T> * value:'T -> unit
+            member internal WriteRootObject : pickler:Pickler<'T> * id : string * value:'T -> unit
 
             /// used internally for optimized writing of sequences to the underlying stream.
             /// must only be performed as a top-level-operation
-            member internal WriteSequence<'T> : Pickler<'T> * sequence:seq<'T> -> int
+            member internal WriteSequence<'T> : Pickler<'T> * id : string * sequence:seq<'T> -> int
         end
 
     /// Deserialization State object
@@ -156,9 +138,9 @@
 
             /// used internally for reading root  object from the underlying stream.
             /// must only be performed as a top-level-operation
-            member internal ReadRootObject : pickler:Pickler<'T> -> 'T
+            member internal ReadRootObject : pickler:Pickler<'T> * id : string -> 'T
 
             /// used internally for optimized reading of sequences from the underlying stream.
             /// must only be performed as a top-level-operation
-            member internal ReadSequence<'T> : Pickler<'T> * int -> IEnumerator<'T>
+            member internal ReadSequence<'T> : Pickler<'T> * id : string * length : int -> IEnumerator<'T>
         end

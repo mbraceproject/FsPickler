@@ -46,11 +46,42 @@
         member __.PicklerFactories = customPicklerFactories.Value.GetEntries()
 
 
+
+    type private PicklerDictionary(cacheId : string) =
+        let dict = new ConcurrentDictionary<Type, Pickler> ()
+
+        interface ICache<Type, Pickler> with
+            member __.Lookup(t : Type) =
+                let found, p = dict.TryGetValue t
+                if found then Some p
+                else None
+
+            member __.Commit (t : Type) (p : Pickler) =
+                // create a shallow copy of pickler to contain mutation effects
+                let p = p.ClonePickler()
+
+                // check cache id for compatibility
+                match p.CacheId with
+                | null -> ()
+                | id when id <> cacheId ->
+                    raise <| new PicklerGenerationException(p.PicklerType, "pickler generated using an incompatible cache.")
+                | _ -> ()
+
+                // label pickler with current cache id
+                p.CacheId <- cacheId
+
+                // commit
+                if dict.TryAdd(t, p) then p
+                else
+                    dict.[t]
+
+
     type internal PicklerCache private (uuid : string, name : string,
                                             tyConv : ITypeNameConverter option, 
                                             customPicklers : seq<Pickler>, 
                                             customPicklerFactories : PicklerFactoryIndex) =
 
+        // keep a record of all PicklerCache instances.
         static let caches = Atom.atom Set.empty<string>
         do
             caches.Swap(fun s ->
@@ -65,43 +96,41 @@
             let defaultFactories = getDefaultPicklerFactories ()
             let tupleFactories = getTuplePicklerFactories ()
             customPicklerFactories.AddPicklerFactories(defaultFactories @ tupleFactories, Discard)
+
+        let reflection = 
+#if SERIALIZE_STRONG_NAMES
+            new ReflectionManager(true, tyConv)
+#else
+            new ReflectionManager(false, tyConv)
+#endif
+        let cache = new PicklerDictionary(uuid) :> ICache<Type, Pickler>
         
-        // populate initial cache with primitives
-        let cache =
+        // populate the cache
+        do
+            // add atomic/default picklers
             [|
                 mkAtomicPicklers ()
-#if SERIALIZE_STRONG_NAMES
-                mkReflectionPicklers true tyConv
-#else
-                mkReflectionPicklers false tyConv
-#endif
+                reflection.ReflectionPicklers
             |]
             |> Seq.concat
-            // brand all registered picklers with cache-particular uuid
-            |> Seq.map (fun f -> f.CacheId <- uuid ; f.PicklerHash <- computePicklerHash f ; f)
-            |> Seq.map (fun f -> KeyValuePair(f.Type, f)) 
-            |> fun fs -> new ConcurrentDictionary<_,_>(fs)
+            |> Seq.iter (fun p -> cache.Commit p.Type p |> ignore)
 
-        do
-            // populate cache with custom picklers
-            for cp in customPicklers do
-                // clone to protect external resource from uuid mutation
-                let cp' = cp.ClonePickler()
-                cp'.CacheId <- uuid
-                cp'.PicklerHash <- computePicklerHash cp'
-                cache.AddOrUpdate(cp'.Type, cp', fun _ _ -> cp') |> ignore
+            // add custom picklers
+            for p in customPicklers do
+                cache.Commit p.Type p |> ignore
 
-        let icache = new ConcurrentCache<_,_>(cache)
-        let resolver (t : Type) = YParametric uuid icache (resolvePickler customPicklerFactories) t
+        let resolver (t : Type) = YParametric cache (resolvePickler customPicklerFactories) t
 
         // default cache instance
         static let singleton =
             lazy(new PicklerCache(string Guid.Empty, "default cache instance", None, [], PicklerFactoryIndex.Empty))
 
         member __.Name = name
+        member __.UUId = uuid
+
+        member __.GetQualifiedName(t : Type) = reflection.GetQualifiedName t
 
         interface IPicklerResolver with
-            member r.UUId = uuid
             member r.Resolve<'T> () = resolver typeof<'T> :?> Pickler<'T>
             member r.Resolve (t : Type) = resolver t
         
