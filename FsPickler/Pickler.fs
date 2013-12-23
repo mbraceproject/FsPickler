@@ -307,23 +307,22 @@
             do RuntimeHelpers.EnsureSufficientExecutionStack()
 #endif
 
-            let isCyclic = fmt.IsCyclicType
-
-            if isCyclic || fmt.IsCacheByRef then
+            if fmt.IsCacheByRef || fmt.IsCyclicType then
                 let id, firstOccurence = idGen.GetId x
 
                 if firstOccurence then
-                    // push id to the symbolic stack to detect cyclic objects during traversal
-                    if isCyclic then 
+                    if fmt.IsCyclicType then 
+                        // push id to the symbolic stack to detect cyclic objects during traversal
                         objStack.Push id
 
-                    write ObjHeader.isNewCachedInstance
+                        write ObjHeader.isNewCachedInstance
 
-                    if isCyclic then
                         objStack.Pop () |> ignore
                         cyclicObjects.Remove id |> ignore
+                    else
+                        write ObjHeader.isNewCachedInstance
 
-                elif isCyclic && objStack.Contains id && not <| cyclicObjects.Contains id then
+                elif fmt.IsCyclicType && objStack.Contains id && not <| cyclicObjects.Contains id then
                     // came across cyclic object, record fixup-related data
                     // cyclic objects are handled once per instance
                     // instances of cyclic arrays are handled differently than other reference types

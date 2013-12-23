@@ -50,7 +50,7 @@
                                     
                     Array.toList array
 
-            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = true, useWithSubtypes = false)
+            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = true, useWithSubtypes = true)
             
 
         interface IGenericPicklerFactory1 with

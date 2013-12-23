@@ -113,6 +113,11 @@ module PerfTests =
 
     [<PerfTest>]
     let ``Key-Value array`` s = Serializer.roundtrips 100 kvArr s
+
+    let tyArray = Array.init 10 (fun i -> if i % 2 = 0 then typeof<int> else typeof<int * string option []>)
+
+    [<PerfTest>]
+    let ``System.Type`` s = Serializer.roundtrips 10000 tyArray s
         
 
 
