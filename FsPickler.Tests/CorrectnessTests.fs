@@ -56,6 +56,15 @@
         [<Test>] member __.``Recursive Class`` () = testEquals <| RecursiveClass(Some (RecursiveClass(None)))
         [<Test>] member __.``Cyclic Object`` () = test <| CyclicClass()
         [<Test>] member __.``ISerializable Class`` () = testEquals <| SerializableClass(42, "fortyTwo")
+
+        [<Test>]
+        member __.``Avoid Recursion in MemberInfo values`` () =
+            let ms = typeof<OverLoaded>.GetMethods() 
+            let m0 = ms |> Seq.find(fun x -> x.Name = "A" && x.GetParameters().Length = 1) |> fun m -> m.MakeGenericMethod(typeof<int>)
+            testEquals m0
+            for m in ms do
+                testEquals m
+            
         
         [<Test>] 
         member __.``Pickler Factory Class`` () = 

@@ -26,6 +26,11 @@
 
         let rec int2Peano n = match n with 0 -> Zero | n -> Succ(int2Peano(n-1))
 
+        type OverLoaded () =
+            member __.A<'T> () = ()
+            member __.A<'T> (x : 'T) = ()
+            member __.B<'T> (x : 'T option) = ()
+            member __.B<'T> (x : 'T) = ()
 
         type Tree<'T> = Empty | Node of 'T * Forest<'T>
         and Forest<'T> = Nil | Cons of Tree<'T> * Forest<'T>

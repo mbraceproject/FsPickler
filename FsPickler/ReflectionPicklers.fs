@@ -28,6 +28,7 @@
         // System.MethodInfo breakdown
         | GenericMethod of MethodInfo * Type []
         | OverloadedMethod of Type * (* name *) string * (* isStatic *) bool * Type []
+        | OverloadedGenericMethodDefinition of Type * (* name *) string * (* isStatic *) bool * Choice<Type,int> []
         // misc MemberInfo
         | NamedMember of Type * (* name *) string * (* isStatic *) bool
         | Constructor of Type * Type []
@@ -114,9 +115,9 @@
                 let gas = t.GetGenericArguments()
                 GenericType(gt, gas)
             elif t.IsGenericParameter then
-                match t.DeclaringType with
-                | null -> GenericMethodParam(t.DeclaringMethod :?> MethodInfo, t.GenericParameterPosition)
-                | dt -> GenericTypeParam(dt, t.GenericParameterPosition)
+                match t.DeclaringMethod with
+                | null -> GenericTypeParam(t.DeclaringType, t.GenericParameterPosition)
+                | dm -> GenericMethodParam(dm :?> MethodInfo, t.GenericParameterPosition)
             else
                 let name = t.FullName
                 let aI = ldAssembly t.Assembly
@@ -137,7 +138,18 @@
                 if overloads.Length = 1 then NamedMember(dt, m.Name, m.IsStatic)
                 else
                     let mparams = m.GetParameters() |> Array.map (fun p -> p.ParameterType)
-                    OverloadedMethod(dt, m.Name, m.IsStatic, mparams)
+                    if m.IsGenericMethodDefinition then
+                        let resolveParam (t : Type) =
+                            if t.IsGenericParameter && t.DeclaringMethod <> null then
+                                Choice2Of2 t.GenericParameterPosition
+                            else
+                                Choice1Of2 t
+
+                        let mparams = mparams |> Array.map resolveParam
+
+                        OverloadedGenericMethodDefinition(dt, m.Name, m.IsStatic, mparams)
+                    else
+                        OverloadedMethod(dt, m.Name, m.IsStatic, mparams)
 
         | :? ConstructorInfo as ctor ->
             let dt = ctor.DeclaringType 
@@ -184,14 +196,38 @@
         | GenericType(dt, tyArgs) -> dt.MakeGenericType tyArgs |> fastUnbox<MemberInfo>
         | GenericTypeParam(dt, idx) -> dt.GetGenericArguments().[idx] |> fastUnbox<MemberInfo>
         | GenericMethodParam(dm, idx) -> dm.GetGenericArguments().[idx] |> fastUnbox<MemberInfo>
-        | NamedMember(dt, name, isStatic) -> dt.GetMember(name, getFlags isStatic).[0]
+        | NamedMember(dt, name, isStatic) -> 
+            try dt.GetMember(name, getFlags isStatic).[0]
+            with :? IndexOutOfRangeException ->
+                raise <| new SerializationException(sprintf "Could not locate method '%s.%s'" dt.Name name)
             
         | OverloadedMethod(dt, name, isStatic, mParams) ->
             try
                 dt.GetMethods(getFlags isStatic)
                 |> Array.find(fun m -> m.Name = name && m.GetParameterTypes() = mParams) |> fastUnbox<MemberInfo>
 
-            with :? KeyNotFoundException -> raise <| new SerializationException(sprintf "Cloud not load MethodInfo '%s.%s'" dt.Name name)
+            with :? KeyNotFoundException -> 
+                raise <| new SerializationException(sprintf "Cloud not load MethodInfo '%s.%s'" dt.Name name)
+
+        | OverloadedGenericMethodDefinition(dt, name, isStatic, mParams) ->
+            let compare (m : MethodInfo) =
+                let resolveParam (t : Type) =
+                    if t.IsGenericParameter && t.DeclaringMethod <> null then
+                        Choice2Of2 t.GenericParameterPosition
+                    else
+                        Choice1Of2 t
+
+                m.Name = name && 
+                    m.GetParameterTypes() |> Array.map resolveParam = mParams
+
+            try
+                dt.GetMethods(getFlags isStatic)
+                |> Array.find compare 
+                |> fastUnbox<MemberInfo>
+
+            with :? KeyNotFoundException -> 
+                raise <| new SerializationException(sprintf "Cloud not load MethodInfo '%s.%s'" dt.Name name)
+                
 
         | GenericMethod(gm, tyParams) -> gm.MakeGenericMethod tyParams |> fastUnbox<MemberInfo>
         | Constructor (dt, cParams) -> dt.GetConstructor(getFlags false, null, cParams, [||]) |> fastUnbox<MemberInfo>
@@ -325,13 +361,28 @@
                 w.BinaryWriter.Write isStatic
                 writeArray w typePickler mParams
 
-            | Constructor(dt, cParams) ->
+            | OverloadedGenericMethodDefinition(dt, name, isStatic, mParams) ->
                 w.BinaryWriter.Write 7uy
+                w.Write(typePickler, dt)
+                w.BinaryWriter.Write name
+                w.BinaryWriter.Write isStatic
+                w.BinaryWriter.Write mParams.Length
+                for p in mParams do
+                    match p with
+                    | Choice1Of2 t ->
+                        w.BinaryWriter.Write true
+                        w.Write(typePickler, t)
+                    | Choice2Of2 idx ->
+                        w.BinaryWriter.Write false
+                        w.BinaryWriter.Write idx
+
+            | Constructor(dt, cParams) ->
+                w.BinaryWriter.Write 8uy
                 w.Write (typePickler, dt)
                 writeArray w typePickler cParams
 
             | NamedMember(dt, name, isStatic) ->
-                w.BinaryWriter.Write 8uy
+                w.BinaryWriter.Write 9uy
                 w.Write (typePickler, dt)
                 w.BinaryWriter.Write name
                 w.BinaryWriter.Write isStatic
@@ -377,9 +428,24 @@
                     OverloadedMethod(dt, name, isStatic, overloads)
                 | 7uy ->
                     let dt = r.Read typePickler
+                    let name = r.BinaryReader.ReadString()
+                    let isStatic = r.BinaryReader.ReadBoolean()
+                    let length = r.BinaryReader.ReadInt32()
+                    let overloads = Array.zeroCreate length
+                    for i = 0 to length - 1 do
+                        if r.BinaryReader.ReadBoolean() then
+                            let t = r.Read typePickler
+                            overloads.[i] <- Choice1Of2 t
+                        else
+                            let idx = r.BinaryReader.ReadInt32()
+                            overloads.[i] <- Choice2Of2 idx
+
+                    OverloadedGenericMethodDefinition(dt, name, isStatic, overloads)
+                | 8uy ->
+                    let dt = r.Read typePickler
                     let cParams = readArray r typePickler
                     Constructor(dt, cParams)
-                | 8uy ->
+                | 9uy ->
                     let dt = r.Read typePickler
                     let name = r.BinaryReader.ReadString()
                     let isStatic = r.BinaryReader.ReadBoolean()
