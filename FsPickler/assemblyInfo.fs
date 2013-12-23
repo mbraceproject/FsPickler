@@ -5,7 +5,7 @@
 #if BUILD_STRONG_NAME
     [<assembly:AssemblyKeyFile("../../Lib/key.snk")>]
 #endif
-    [<assembly:AssemblyVersion("0.8.0.*")>]
+    [<assembly:AssemblyVersion("0.8.1.*")>]
     do()
 
 
