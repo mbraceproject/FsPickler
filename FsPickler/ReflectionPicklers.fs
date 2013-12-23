@@ -21,7 +21,7 @@
     type CompositeMemberInfo =
         // System.Type breakdown
         | NamedType of string * AssemblyInfo
-        | ArrayType of Type * (* rank *) int
+        | ArrayType of Type * (* rank *) int option
         | GenericType of Type * Type []
         | GenericTypeParam of Type * int
         | GenericMethodParam of MethodInfo * int
@@ -105,7 +105,10 @@
             if t.IsArray then
                 let et = t.GetElementType()
                 let rk = t.GetArrayRank()
-                ArrayType (et, rk)
+                if rk = 1 && et.MakeArrayType() = t then
+                    ArrayType(et, None)
+                else
+                    ArrayType (et, Some rk)
             elif t.IsGenericType && not t.IsGenericTypeDefinition then
                 let gt = t.GetGenericTypeDefinition()
                 let gas = t.GetGenericArguments()
@@ -174,7 +177,10 @@
             with e ->
                 raise <| new SerializationException("FsPickler: Type load exception.", e)
 
-        | ArrayType(et, rk) -> et.MakeArrayType(rk) |> fastUnbox<MemberInfo>
+        | ArrayType(et, rk) -> 
+            match rk with
+            | None -> et.MakeArrayType() |> fastUnbox<MemberInfo>
+            | Some r -> et.MakeArrayType(r) |> fastUnbox<MemberInfo>
         | GenericType(dt, tyArgs) -> dt.MakeGenericType tyArgs |> fastUnbox<MemberInfo>
         | GenericTypeParam(dt, idx) -> dt.GetGenericArguments().[idx] |> fastUnbox<MemberInfo>
         | GenericMethodParam(dm, idx) -> dm.GetGenericArguments().[idx] |> fastUnbox<MemberInfo>
@@ -200,9 +206,13 @@
             | NamedType(name, _) -> append name
             | ArrayType(et, rk) ->
                 generate b et
-                append "["
-                for i = 1 to rk - 1 do append ","
-                append "]"
+                match rk with
+                | None -> append "[]"
+                | Some 1 -> append "[*]"
+                | Some r ->
+                    append "["
+                    for i = 1 to r - 1 do append ","
+                    append "]"
 
             | GenericType(gt, tyParams) ->
                 generate b gt
@@ -281,7 +291,12 @@
             | ArrayType (et, rk) ->
                 w.BinaryWriter.Write 1uy
                 w.Write(typePickler, et)
-                w.BinaryWriter.Write rk
+                match rk with
+                | None ->
+                    w.BinaryWriter.Write true
+                | Some r ->
+                    w.BinaryWriter.Write false
+                    w.BinaryWriter.Write r
 
             | GenericType(dt, tyParams) ->
                 w.BinaryWriter.Write 2uy
@@ -333,8 +348,11 @@
                     NamedType(name, assembly)
                 | 1uy ->
                     let et = r.Read typePickler
-                    let rk = r.BinaryReader.ReadInt32()
-                    ArrayType(et, rk)
+                    if r.BinaryReader.ReadBoolean() then
+                        ArrayType(et, None)
+                    else
+                        let rk = r.BinaryReader.ReadInt32()
+                        ArrayType(et, Some rk)
                 | 2uy ->
                     let gt = r.Read typePickler
                     let tyParams = readArray r typePickler
