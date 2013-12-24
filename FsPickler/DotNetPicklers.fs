@@ -87,6 +87,45 @@
 
             new Pickler<'Enum>(reader, writer, PicklerInfo.ReflectionDerived, cacheByRef = false, useWithSubtypes = false)
 
+
+    // support for nullable types
+
+    type NullablePickler =
+        static member CreateUntyped(t : Type, resolver : IPicklerResolver) =
+            let underlying = t.GetGenericArguments().[0]
+            // reflection call typed method
+            let m = 
+                typeof<NullablePickler>
+                    .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
+                    .MakeGenericMethod [| underlying |]
+
+            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler
+
+        static member Create<'T when 
+                                'T : (new : unit -> 'T) and 
+                                'T : struct and 
+                                'T :> ValueType> (resolver : IPicklerResolver) =
+
+            let fmt = resolver.Resolve<'T> ()
+            let writer_func = fmt.Write
+            let reader_func = fmt.Read
+
+            let writer (w : Writer) (x : Nullable<'T>) =
+                if x.HasValue then 
+                    w.BinaryWriter.Write true
+                    writer_func w x.Value
+                else
+                    w.BinaryWriter.Write false
+
+            let reader (r : Reader) =
+                if r.BinaryReader.ReadBoolean () then
+                    let value = reader_func r
+                    Nullable<'T>(value)
+                else
+                    Nullable<'T> ()
+
+            new Pickler<_>(reader, writer, PicklerInfo.ReflectionDerived, cacheByRef = false, useWithSubtypes = false)
+
     // pickler combinator for struct types
 
     type StructPickler =

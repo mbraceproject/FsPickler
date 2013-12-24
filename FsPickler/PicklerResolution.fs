@@ -124,6 +124,8 @@
             | None ->
                 if t.IsEnum then 
                     EnumPickler.CreateUntyped(t, resolver)
+                elif isNullableType t then
+                    NullablePickler.CreateUntyped(t, resolver) 
                 elif t.IsValueType then 
                     StructPickler.CreateUntyped(t, resolver)
                 elif t.IsArray then 

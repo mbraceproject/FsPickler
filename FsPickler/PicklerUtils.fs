@@ -65,6 +65,9 @@
                 raise <| new SerializationException(msg)
             | _ -> ()
 
+        let isNullableType(t : Type) =
+            t.IsGenericType && t.GetGenericTypeDefinition() = typedefof<Nullable<_>>
+
         //
         //  internal read/write combinators
         //

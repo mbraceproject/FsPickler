@@ -8,6 +8,10 @@ let fnv = FsPickler.Hashing.FNV1aStreamFactory()
 
 let value = [1..100000] |> List.map (fun i -> Some (string i, Some i))
 
+let loop(x : 'T) =
+    let bytes = fsp.Pickle x
+    fsp.UnPickle<'T> bytes
+
 #time
 
 for i = 0 to 100 do

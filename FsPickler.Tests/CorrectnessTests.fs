@@ -311,6 +311,12 @@
             let x = testLoop (GenericType<int>(42))
             x.Value |> should equal 0  
 
+        [<Test>]
+        member __.``Nullable type support`` () =
+            let x = Nullable<int>(42)
+            let y = Nullable<int> ()
+            testEquals x ; testEquals y
+
             
         [<Test>]
         member __.``Test Massively Auto-Generated Objects`` () =
