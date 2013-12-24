@@ -26,12 +26,16 @@
         | GenericTypeParam of Type * int
         | GenericMethodParam of MethodInfo * int
         // System.MethodInfo breakdown
+        | Method of Type * (* name *) string * (* isStatic *) bool * Type []
         | GenericMethod of MethodInfo * Type []
-        | OverloadedMethod of Type * (* name *) string * (* isStatic *) bool * Type []
-        | OverloadedGenericMethodDefinition of Type * (* name *) string * (* isStatic *) bool * Choice<Type,int> []
+        // in generic method definitions, encode as signature
+        // this is to avoid recursive situations in method overload resolutions
+        | GenericMethodDefinition of Type * (* name *) string * (* isStatic *) bool * (*signature*) string
         // misc MemberInfo
-        | NamedMember of Type * (* name *) string * (* isStatic *) bool
         | Constructor of Type * Type []
+        | Property of Type * (* name *) string * (* isStatic *) bool
+        | Field of Type * (* name *) string * (* isStatic *) bool
+        | Event of Type * (* name *) string * (* isStatic *) bool
         | Unknown of Type * string
 
 
@@ -100,140 +104,6 @@
         let allVisibility = BindingFlags.Public ||| BindingFlags.NonPublic
         allVisibility ||| (if isStatic then BindingFlags.Static else BindingFlags.Instance)
 
-    let getMemberInfo (tyConv : ITypeNameConverter option) (ldAssembly : Assembly -> AssemblyInfo) (m : MemberInfo) =
-        match m with
-        | :? Type as t ->
-            if t.IsArray then
-                let et = t.GetElementType()
-                let rk = t.GetArrayRank()
-                if rk = 1 && et.MakeArrayType() = t then
-                    ArrayType(et, None)
-                else
-                    ArrayType (et, Some rk)
-            elif t.IsGenericType && not t.IsGenericTypeDefinition then
-                let gt = t.GetGenericTypeDefinition()
-                let gas = t.GetGenericArguments()
-                GenericType(gt, gas)
-            elif t.IsGenericParameter then
-                match t.DeclaringMethod with
-                | null -> GenericTypeParam(t.DeclaringType, t.GenericParameterPosition)
-                | dm -> GenericMethodParam(dm :?> MethodInfo, t.GenericParameterPosition)
-            else
-                let name = t.FullName
-                let aI = ldAssembly t.Assembly
-                match tyConv with
-                | None -> NamedType(name, aI)
-                | Some tc ->
-                    let tI = tc.OfSerializedType <| aI.GetType(name)
-                    NamedType(tI.Name, tI.Assembly)
-
-        | :? MethodInfo as m ->
-            if m.IsGenericMethod && not m.IsGenericMethodDefinition then
-                let gm = m.GetGenericMethodDefinition()
-                let tyArgs = m.GetGenericArguments()
-                GenericMethod(gm, tyArgs)
-            else
-                let dt = m.DeclaringType
-                let overloads = m.DeclaringType.GetMethods(getFlags m.IsStatic) |> Array.filter (fun m' -> m'.Name = m.Name)
-                if overloads.Length = 1 then NamedMember(dt, m.Name, m.IsStatic)
-                else
-                    let mparams = m.GetParameters() |> Array.map (fun p -> p.ParameterType)
-                    if m.IsGenericMethodDefinition then
-                        let resolveParam (t : Type) =
-                            if t.IsGenericParameter && t.DeclaringMethod <> null then
-                                Choice2Of2 t.GenericParameterPosition
-                            else
-                                Choice1Of2 t
-
-                        let mparams = mparams |> Array.map resolveParam
-
-                        OverloadedGenericMethodDefinition(dt, m.Name, m.IsStatic, mparams)
-                    else
-                        OverloadedMethod(dt, m.Name, m.IsStatic, mparams)
-
-        | :? ConstructorInfo as ctor ->
-            let dt = ctor.DeclaringType 
-            let ps = ctor.GetParameterTypes()
-            Constructor(dt, ps)
-
-        | :? PropertyInfo as p ->
-            let dt = p.DeclaringType
-            let isStatic = let m = p.GetGetMethod(true) in m.IsStatic
-            NamedMember(dt, p.Name, isStatic)
-
-        | :? FieldInfo as f ->
-            let dt = f.DeclaringType
-            NamedMember(dt, f.Name, f.IsStatic)
-
-        | :? EventInfo as e ->
-            let dt = e.DeclaringType
-            let isStatic = let m = e.GetAddMethod() in m.IsStatic
-            NamedMember(dt, e.Name, isStatic)
-
-        | _ -> Unknown (m.GetType(), m.ToString())
-
-
-
-    let loadMember (tyConv : ITypeNameConverter option) (ldAssembly : AssemblyInfo -> Assembly) (mI : CompositeMemberInfo) =
-        match mI with
-        | NamedType(name, aI) ->
-            let name, aI = 
-                match tyConv with
-                | None -> name, aI
-                | Some tc ->
-                    let tI = tc.ToDeserializedType <| aI.GetType name
-                    tI.Name, tI.Assembly
-
-            let assembly = ldAssembly aI
-            try assembly.GetType(name, throwOnError = true) |> fastUnbox<MemberInfo>
-            with e ->
-                raise <| new SerializationException("FsPickler: Type load exception.", e)
-
-        | ArrayType(et, rk) -> 
-            match rk with
-            | None -> et.MakeArrayType() |> fastUnbox<MemberInfo>
-            | Some r -> et.MakeArrayType(r) |> fastUnbox<MemberInfo>
-        | GenericType(dt, tyArgs) -> dt.MakeGenericType tyArgs |> fastUnbox<MemberInfo>
-        | GenericTypeParam(dt, idx) -> dt.GetGenericArguments().[idx] |> fastUnbox<MemberInfo>
-        | GenericMethodParam(dm, idx) -> dm.GetGenericArguments().[idx] |> fastUnbox<MemberInfo>
-        | NamedMember(dt, name, isStatic) -> 
-            try dt.GetMember(name, getFlags isStatic).[0]
-            with :? IndexOutOfRangeException ->
-                raise <| new SerializationException(sprintf "Could not locate method '%s.%s'" dt.Name name)
-            
-        | OverloadedMethod(dt, name, isStatic, mParams) ->
-            try
-                dt.GetMethods(getFlags isStatic)
-                |> Array.find(fun m -> m.Name = name && m.GetParameterTypes() = mParams) |> fastUnbox<MemberInfo>
-
-            with :? KeyNotFoundException -> 
-                raise <| new SerializationException(sprintf "Cloud not load MethodInfo '%s.%s'" dt.Name name)
-
-        | OverloadedGenericMethodDefinition(dt, name, isStatic, mParams) ->
-            let compare (m : MethodInfo) =
-                let resolveParam (t : Type) =
-                    if t.IsGenericParameter && t.DeclaringMethod <> null then
-                        Choice2Of2 t.GenericParameterPosition
-                    else
-                        Choice1Of2 t
-
-                m.Name = name && 
-                    m.GetParameterTypes() |> Array.map resolveParam = mParams
-
-            try
-                dt.GetMethods(getFlags isStatic)
-                |> Array.find compare 
-                |> fastUnbox<MemberInfo>
-
-            with :? KeyNotFoundException -> 
-                raise <| new SerializationException(sprintf "Cloud not load MethodInfo '%s.%s'" dt.Name name)
-                
-
-        | GenericMethod(gm, tyParams) -> gm.MakeGenericMethod tyParams |> fastUnbox<MemberInfo>
-        | Constructor (dt, cParams) -> dt.GetConstructor(getFlags false, null, cParams, [||]) |> fastUnbox<MemberInfo>
-
-        | Unknown (t, name) -> invalidOp <| sprintf "Cannot load '%s' of type %O." name t
-
     // qualified name generator that emulates Type.ToString()
     let generateQualifiedName (getInfo : Type -> CompositeMemberInfo) (t : Type) =
         let rec generate (b : StringBuilder) (t : Type) =
@@ -266,10 +136,150 @@
         generate b t
         b.ToString()
 
+    // print type signature for a generic method definition
+    let getGenericMethodSignature (getInfo : Type -> CompositeMemberInfo) (m : MethodInfo) =
+        let sb = new StringBuilder()
+        let inline append (x : string) = sb.Append x |> ignore
+
+        let rt = generateQualifiedName getInfo m.ReturnType
+        let tyParams = m.GetGenericArguments() |> Array.map (fun p -> p.Name)
+        let mParams = m.GetParameters () |> Array.map (fun p -> generateQualifiedName getInfo p.ParameterType)
+
+        append rt
+        append " "
+        append m.Name
+        
+        append "["
+        for i = 0 to tyParams.Length - 1 do
+            append <| tyParams.[i]
+            if i < tyParams.Length - 1 then
+                append ","
+        append "]"
+
+        append "("
+        for i = 0 to mParams.Length - 1 do
+            append <| mParams.[i]
+            if i < tyParams.Length - 1 then
+                append ","
+        append ")"
+
+        sb.ToString()
+        
+    // converts a memberInfo instance to a CompositeMemberInfo structure
+    let rec getMemberInfo (tyConv : ITypeNameConverter option) (getAssemblyInfo : Assembly -> AssemblyInfo) (m : MemberInfo) =
+        match m with
+        | :? Type as t ->
+            if t.IsArray then
+                let et = t.GetElementType()
+                let rk = t.GetArrayRank()
+                if rk = 1 && et.MakeArrayType() = t then
+                    ArrayType(et, None)
+                else
+                    ArrayType (et, Some rk)
+            elif t.IsGenericType && not t.IsGenericTypeDefinition then
+                let gt = t.GetGenericTypeDefinition()
+                let gas = t.GetGenericArguments()
+                GenericType(gt, gas)
+            elif t.IsGenericParameter then
+                match t.DeclaringMethod with
+                | null -> GenericTypeParam(t.DeclaringType, t.GenericParameterPosition)
+                | dm -> GenericMethodParam(dm :?> MethodInfo, t.GenericParameterPosition)
+            else
+                let name = t.FullName
+                let aI = getAssemblyInfo t.Assembly
+                match tyConv with
+                | None -> NamedType(name, aI)
+                | Some tc ->
+                    let tI = tc.OfSerializedType <| aI.GetType(name)
+                    NamedType(tI.Name, tI.Assembly)
+
+        | :? MethodInfo as m ->
+            if m.IsGenericMethod then
+                if m.IsGenericMethodDefinition then
+                    let signature = getGenericMethodSignature (getMemberInfo tyConv getAssemblyInfo) m
+                    GenericMethodDefinition(m.DeclaringType, m.Name, m.IsStatic, signature)
+                else
+                    let gm = m.GetGenericMethodDefinition()
+                    let tyArgs = m.GetGenericArguments()
+                    GenericMethod(gm, tyArgs)
+            else
+                let mParams = m.GetParameters() |> Array.map (fun p -> p.ParameterType)
+                Method(m.DeclaringType, m.Name, m.IsStatic, mParams)
+
+        | :? ConstructorInfo as ctor ->
+            let dt = ctor.DeclaringType 
+            let ps = ctor.GetParameterTypes()
+            Constructor(dt, ps)
+
+        | :? PropertyInfo as p ->
+            let dt = p.DeclaringType
+            let isStatic = let m = p.GetGetMethod(true) in m.IsStatic
+            Property(dt, p.Name, isStatic)
+
+        | :? FieldInfo as f ->
+            let dt = f.DeclaringType
+            Field(dt, f.Name, f.IsStatic)
+
+        | :? EventInfo as e ->
+            let dt = e.DeclaringType
+            let isStatic = let m = e.GetAddMethod() in m.IsStatic
+            Event(dt, e.Name, isStatic)
+
+        | _ -> Unknown (m.GetType(), m.ToString())
+
+
+
+    let loadMemberInfo (tyConv : ITypeNameConverter option) (getAssemblyInfo : Assembly -> AssemblyInfo)
+                                                        (loadAssembly : AssemblyInfo -> Assembly) 
+                                                        (mI : CompositeMemberInfo) =
+        match mI with
+        | NamedType(name, aI) ->
+            let name, aI = 
+                match tyConv with
+                | None -> name, aI
+                | Some tc ->
+                    let tI = tc.ToDeserializedType <| aI.GetType name
+                    tI.Name, tI.Assembly
+
+            let assembly = loadAssembly aI
+            try assembly.GetType(name, throwOnError = true) |> fastUnbox<MemberInfo>
+            with e ->
+                raise <| new SerializationException("FsPickler: Type load exception.", e)
+
+        | ArrayType(et, rk) -> 
+            match rk with
+            | None -> et.MakeArrayType() |> fastUnbox<MemberInfo>
+            | Some r -> et.MakeArrayType(r) |> fastUnbox<MemberInfo>
+
+        | GenericType(dt, tyArgs) -> dt.MakeGenericType tyArgs |> fastUnbox<MemberInfo>
+        | GenericTypeParam(dt, idx) -> dt.GetGenericArguments().[idx] |> fastUnbox<MemberInfo>
+        | GenericMethodParam(dm, idx) -> dm.GetGenericArguments().[idx] |> fastUnbox<MemberInfo>
+        | Method(dt, name, isStatic, mParams) ->  dt.GetMethod(name, getFlags isStatic, null, mParams, [||]) |> fastUnbox<MemberInfo>
+        | GenericMethod(gm, tyParams) -> gm.MakeGenericMethod tyParams |> fastUnbox<MemberInfo>
+        | GenericMethodDefinition(dt, name, isStatic, signature) ->
+            let isMatchingGenericMethod (m : MethodInfo) =
+                if m.Name = name && m.IsGenericMethodDefinition then
+                    let signature' = getGenericMethodSignature (getMemberInfo tyConv getAssemblyInfo) m
+                    signature = signature'
+                else false
+
+            try dt.GetMethods(getFlags isStatic) |> Array.find isMatchingGenericMethod |> fastUnbox<MemberInfo>
+            with :? KeyNotFoundException -> 
+                raise <| new SerializationException(sprintf "Cloud not load method '%s' from type '%O'." signature dt)
+
+        | Constructor (dt, cParams) -> dt.GetConstructor(getFlags false, null, cParams, [||]) |> fastUnbox<MemberInfo>
+        | Property (dt, name, isStatic) -> dt.GetProperty(name, getFlags isStatic) |> fastUnbox<MemberInfo>
+        | Field(dt, name, isStatic) -> dt.GetField(name, getFlags isStatic) |> fastUnbox<MemberInfo>
+        | Event(dt, name, isStatic) -> dt.GetEvent(name, getFlags isStatic) |> fastUnbox<MemberInfo>
+
+        | Unknown (t, name) -> invalidOp <| sprintf "Cannot load '%s' of type %O." name t
+
+
+
     type ReflectionCache (useStrongNames, tyConv : ITypeNameConverter option) =
 
         let assemblyCache = new BiMemoizer<_,_>(getAssemblyInfo, loadAssembly useStrongNames)
-        let memberInfoCache = new BiMemoizer<_,_>(getMemberInfo tyConv assemblyCache.F, loadMember tyConv assemblyCache.G)
+        let memberInfoCache = new BiMemoizer<_,_>(getMemberInfo tyConv assemblyCache.F, loadMemberInfo tyConv assemblyCache.F assemblyCache.G)
 
         let qualifiedNameCache = memoize (generateQualifiedName memberInfoCache.F)
 
@@ -349,40 +359,44 @@
                 w.Write(methodInfoPickler, dm)
                 w.BinaryWriter.Write idx
 
-            | GenericMethod(gm, mParams) ->
+            | Method(dt, name, isStatic, mParams) ->
                 w.BinaryWriter.Write 5uy
-                w.Write(methodInfoPickler, gm)
-                writeArray w typePickler mParams
-
-            | OverloadedMethod(dt, name, isStatic, mParams) ->
-                w.BinaryWriter.Write 6uy
                 w.Write(typePickler, dt)
                 w.BinaryWriter.Write name
                 w.BinaryWriter.Write isStatic
                 writeArray w typePickler mParams
 
-            | OverloadedGenericMethodDefinition(dt, name, isStatic, mParams) ->
+            | GenericMethod(gm, mParams) ->
+                w.BinaryWriter.Write 6uy
+                w.Write(methodInfoPickler, gm)
+                writeArray w typePickler mParams
+
+            | GenericMethodDefinition(dt, name, isStatic, signature) ->
                 w.BinaryWriter.Write 7uy
                 w.Write(typePickler, dt)
                 w.BinaryWriter.Write name
                 w.BinaryWriter.Write isStatic
-                w.BinaryWriter.Write mParams.Length
-                for p in mParams do
-                    match p with
-                    | Choice1Of2 t ->
-                        w.BinaryWriter.Write true
-                        w.Write(typePickler, t)
-                    | Choice2Of2 idx ->
-                        w.BinaryWriter.Write false
-                        w.BinaryWriter.Write idx
+                w.BinaryWriter.Write signature
 
             | Constructor(dt, cParams) ->
                 w.BinaryWriter.Write 8uy
                 w.Write (typePickler, dt)
                 writeArray w typePickler cParams
 
-            | NamedMember(dt, name, isStatic) ->
+            | Property(dt, name, isStatic) ->
                 w.BinaryWriter.Write 9uy
+                w.Write (typePickler, dt)
+                w.BinaryWriter.Write name
+                w.BinaryWriter.Write isStatic
+
+            | Field(dt, name, isStatic) ->
+                w.BinaryWriter.Write 10uy
+                w.Write (typePickler, dt)
+                w.BinaryWriter.Write name
+                w.BinaryWriter.Write isStatic
+
+            | Event(dt, name, isStatic) ->
+                w.BinaryWriter.Write 11uy
                 w.Write (typePickler, dt)
                 w.BinaryWriter.Write name
                 w.BinaryWriter.Write isStatic
@@ -417,30 +431,21 @@
                     let idx = r.BinaryReader.ReadInt32()
                     GenericMethodParam(dm, idx)
                 | 5uy ->
+                    let dm = r.Read typePickler
+                    let name = r.BinaryReader.ReadString()
+                    let isStatic = r.BinaryReader.ReadBoolean()
+                    let tyParams = readArray r typePickler
+                    Method(dm, name, isStatic, tyParams)
+                | 6uy ->
                    let gm = r.Read methodInfoPickler
                    let tparams = readArray r typePickler 
                    GenericMethod(gm, tparams)
-                | 6uy ->
-                    let dt = r.Read typePickler
-                    let name = r.BinaryReader.ReadString()
-                    let isStatic = r.BinaryReader.ReadBoolean()
-                    let overloads = readArray r typePickler
-                    OverloadedMethod(dt, name, isStatic, overloads)
                 | 7uy ->
                     let dt = r.Read typePickler
                     let name = r.BinaryReader.ReadString()
                     let isStatic = r.BinaryReader.ReadBoolean()
-                    let length = r.BinaryReader.ReadInt32()
-                    let overloads = Array.zeroCreate length
-                    for i = 0 to length - 1 do
-                        if r.BinaryReader.ReadBoolean() then
-                            let t = r.Read typePickler
-                            overloads.[i] <- Choice1Of2 t
-                        else
-                            let idx = r.BinaryReader.ReadInt32()
-                            overloads.[i] <- Choice2Of2 idx
-
-                    OverloadedGenericMethodDefinition(dt, name, isStatic, overloads)
+                    let signature = r.BinaryReader.ReadString()
+                    GenericMethodDefinition(dt, name, isStatic, signature)
                 | 8uy ->
                     let dt = r.Read typePickler
                     let cParams = readArray r typePickler
@@ -449,7 +454,17 @@
                     let dt = r.Read typePickler
                     let name = r.BinaryReader.ReadString()
                     let isStatic = r.BinaryReader.ReadBoolean()
-                    NamedMember(dt, name, isStatic)
+                    Property(dt, name, isStatic)
+                | 10uy ->
+                    let dt = r.Read typePickler
+                    let name = r.BinaryReader.ReadString()
+                    let isStatic = r.BinaryReader.ReadBoolean()
+                    Field(dt, name, isStatic)
+                | 11uy ->
+                    let dt = r.Read typePickler
+                    let name = r.BinaryReader.ReadString()
+                    let isStatic = r.BinaryReader.ReadBoolean()
+                    Event(dt, name, isStatic)
                 // 'Unknown' cases never get serialized, so treat as stream error.
                 | _ ->
                     raise <| new SerializationException("Stream error.")

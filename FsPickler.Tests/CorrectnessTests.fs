@@ -25,7 +25,8 @@
 
         let testMembers (t : Type) =
             let members = t.GetMembers(BindingFlags.Public ||| BindingFlags.NonPublic ||| BindingFlags.Instance ||| BindingFlags.Static)
-            for m in members do test m
+            for m in members do
+                testReflected m
 
         abstract TestSerializer : 'T -> byte []
         abstract TestDeserializer : byte [] -> obj
@@ -45,7 +46,7 @@
         [<Test>] member __.``DateTime`` () = testEquals DateTime.Now
 
         [<Test>] member __.``System.Type`` () = testEquals typeof<int>
-        [<Test>] member __.``System.Reflection.MethodInfo`` () = testMembers typeof<int> ; testMembers typedefof<GenericClass<_>>
+        [<Test>] member __.``System.Reflection.MethodInfo`` () = testMembers typeof<int> ; testMembers typedefof<GenericClass<_>> ; testMembers typeof<Pickler>
         [<Test>] member __.``Option types`` () = testEquals (Some 42) ; testEquals (None : obj option) ; testEquals (Some (Some "test"))
         [<Test>] member __.``Tuples`` () = testEquals (2,3) ; testEquals (2, "test", Some (3, Some 2)) ; testEquals (1,2,3,4,5,(1,"test"),6,7,8,9,10)
         [<Test>] member __.``Simple DU`` () = testEquals A ; testEquals E ; testEquals (D(42, "42"))
@@ -58,7 +59,7 @@
         [<Test>] member __.``ISerializable Class`` () = testEquals <| SerializableClass(42, "fortyTwo")
 
         [<Test>]
-        member __.``Avoid Recursion in MemberInfo values`` () =
+        member __.``Reflection: Avoid Recursion in MemberInfo values`` () =
             let ms = typeof<OverLoaded>.GetMethods() 
             let m0 = ms |> Seq.find(fun x -> x.Name = "A" && x.GetParameters().Length = 1) |> fun m -> m.MakeGenericMethod(typeof<int>)
             testEquals m0

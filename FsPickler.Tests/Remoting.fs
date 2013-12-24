@@ -121,6 +121,7 @@
                 let o = Serializer.read testedSerializer bytes : obj
                 o :?> 'T
             | Error(SerializationError e) -> raise e
+            | Error(ProtocolError e) -> failwithf "Protocol error: %O" e
             | Error e -> raise e
 
         member __.EndPoint = new IPEndPoint(IPAddress.Parse ipAddr, port)
