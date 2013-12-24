@@ -315,9 +315,9 @@
             let test (t : Type, x : obj) =
                 try testLoop x |> ignore ; None
                 with 
-                | ProtocolError _ -> None
+                | :? ProtocolError -> None
                 | e ->
-                    printfn "ERROR: Serializing '%O' failed with error: %O" t e
+                    printfn "Serializing '%O' failed with error: %O" t e
                     Some e
 
             let results = inputData |> Seq.map test |> Seq.toArray

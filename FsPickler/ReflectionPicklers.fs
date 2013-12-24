@@ -185,7 +185,10 @@
                 | null -> GenericTypeParam(t.DeclaringType, t.GenericParameterPosition)
                 | dm -> GenericMethodParam(dm :?> MethodInfo, t.GenericParameterPosition)
             else
-                let name = t.FullName
+                let name = 
+                    match t.FullName with
+                    | null -> t.Name
+                    | name -> name
                 let aI = getAssemblyInfo t.Assembly
                 match tyConv with
                 | None -> NamedType(name, aI)
@@ -330,9 +333,12 @@
         let rec memberInfoWriter (w : Writer) (m : MemberInfo) =
             match cache.GetMemberInfo m with
             | NamedType (name, aI) ->
-                w.BinaryWriter.Write 0uy
-                w.BinaryWriter.Write name
-                w.Write(assemblyInfoPickler, aI)
+                try
+                    w.BinaryWriter.Write 0uy
+                    w.BinaryWriter.Write name
+                    w.Write(assemblyInfoPickler, aI)
+                with e ->
+                    printfn "%A" e
 
             | ArrayType (et, rk) ->
                 w.BinaryWriter.Write 1uy

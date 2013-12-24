@@ -17,13 +17,16 @@
         let ipAddr = "127.0.0.1"
         let port = 2323
 
-        let defaultProtocolSerializer () = new BinaryFormatterSerializer() :> ISerializer
-    
-    exception SerializationError of exn
-    exception ProtocolError of exn    
+        let defaultProtocolSerializer () = new BinaryFormatterSerializer() :> ISerializer 
 
     type Request = Serialize of Type * obj
-    type Reply = Success of byte [] | Error of exn
+    type Reply = 
+        | Success of byte [] 
+        | Error of exn
+        | Fault of exn
+
+    type ProtocolError(e : exn) =
+        inherit System.Exception("Protocol Error.", e)
 
     type State = Init | Started | Stopped
         
@@ -43,7 +46,7 @@
                 result
             with e -> 
                 sprintf "Failed to serialize %A : %s with error:\n %O" o t.Name e |> logF
-                Error (SerializationError e)
+                Error e
 
         let loop () =
             async {
@@ -62,7 +65,7 @@
                             do! stream.AsyncWriteBytes <| Serializer.write protocolSerializer result
                         with e ->
                             logF <| sprintf "Protocol error: %O" e
-                            do! stream.AsyncWriteBytes <| Serializer.write protocolSerializer (Error (ProtocolError e))
+                            do! stream.AsyncWriteBytes <| Serializer.write protocolSerializer (Fault e)
                     with e ->
                         logF <| sprintf "Protocol error: %O" e
             }
@@ -111,7 +114,7 @@
 
                     return Serializer.read protocolSerializer reply
                 with e ->
-                    return Error (ProtocolError e)
+                    return Fault e
             } |> Async.RunSynchronously
 
 
@@ -120,9 +123,8 @@
             | Success bytes -> 
                 let o = Serializer.read testedSerializer bytes : obj
                 o :?> 'T
-            | Error(SerializationError e) -> raise e
-            | Error(ProtocolError e) -> failwithf "Protocol error: %O" e
             | Error e -> raise e
+            | Fault e -> raise (ProtocolError e)
 
         member __.EndPoint = new IPEndPoint(IPAddress.Parse ipAddr, port)
         member __.Serializer = testedSerializer
