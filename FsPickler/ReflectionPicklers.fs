@@ -200,14 +200,14 @@
             if m.IsGenericMethod then
                 if m.IsGenericMethodDefinition then
                     let signature = getGenericMethodSignature (getMemberInfo tyConv getAssemblyInfo) m
-                    GenericMethodDefinition(m.DeclaringType, m.Name, m.IsStatic, signature)
+                    GenericMethodDefinition(m.ReflectedType, m.Name, m.IsStatic, signature)
                 else
                     let gm = m.GetGenericMethodDefinition()
                     let tyArgs = m.GetGenericArguments()
                     GenericMethod(gm, tyArgs)
             else
                 let mParams = m.GetParameters() |> Array.map (fun p -> p.ParameterType)
-                Method(m.DeclaringType, m.Name, m.IsStatic, mParams)
+                Method(m.ReflectedType, m.Name, m.IsStatic, mParams)
 
         | :? ConstructorInfo as ctor ->
             let dt = ctor.DeclaringType 
@@ -215,7 +215,7 @@
             Constructor(dt, ps)
 
         | :? PropertyInfo as p ->
-            let dt = p.DeclaringType
+            let dt = p.ReflectedType
             let isStatic = let m = p.GetGetMethod(true) in m.IsStatic
             Property(dt, p.Name, isStatic)
 
@@ -333,12 +333,9 @@
         let rec memberInfoWriter (w : Writer) (m : MemberInfo) =
             match cache.GetMemberInfo m with
             | NamedType (name, aI) ->
-                try
-                    w.BinaryWriter.Write 0uy
-                    w.BinaryWriter.Write name
-                    w.Write(assemblyInfoPickler, aI)
-                with e ->
-                    printfn "%A" e
+                w.BinaryWriter.Write 0uy
+                w.BinaryWriter.Write name
+                w.Write(assemblyInfoPickler, aI)
 
             | ArrayType (et, rk) ->
                 w.BinaryWriter.Write 1uy
