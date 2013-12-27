@@ -80,7 +80,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="PerfUtil">
-      <HintPath>..\packages\PerfUtil.0.1.3\lib\net45\PerfUtil.dll</HintPath>
+      <HintPath>..\packages\PerfUtil.0.1.4\lib\net45\PerfUtil.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="protobuf-net">
