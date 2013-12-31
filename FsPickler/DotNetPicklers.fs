@@ -139,7 +139,7 @@
 
         static member Create<'T when 'T : struct>(resolver : IPicklerResolver) =
 
-            let fields = typeof<'T>.GetFields(allFields)
+            let fields = gatherFields typeof<'T>
             let picklers = fields |> Array.map (fun f -> resolver.Resolve f.FieldType)
 
 #if EMIT_IL
@@ -205,8 +205,8 @@
 
         static member Create<'T when 'T : not struct>(resolver : IPicklerResolver) =
             let fields = 
-                typeof<'T>.GetFields(allFields) 
-                |> Array.filter (fun f -> not (containsAttr<NonSerializedAttribute> f))
+                gatherFields typeof<'T>
+                |> Array.filter (not << containsAttr<NonSerializedAttribute>)
 
             let picklers = fields |> Array.map (fun f -> resolver.Resolve f.FieldType)
 

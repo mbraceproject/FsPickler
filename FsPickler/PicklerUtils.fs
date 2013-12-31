@@ -31,6 +31,25 @@
 
             ms |> Array.filter isSerializationMethod
 
+        /// walks up the type hierarchy, gathering all instance fields
+        let gatherFields (t : Type) =
+            // resolve conflicts, index by declaring type and field name
+            let gathered = ref Map.empty<string * string, FieldInfo>
+
+            let rec gather (t : Type) =
+                let fields = t.GetFields(allFields)
+                for f in fields do
+                    let k = f.DeclaringType.AssemblyQualifiedName, f.Name
+                    gathered := gathered.Value.Add(k, f)
+
+                match t.BaseType with
+                | null -> ()
+                | bt -> gather bt
+
+            do gather t
+
+            gathered.Value |> Map.toArray |> Array.map snd
+
         let mkDelegates<'T> (ms : MethodInfo []) =
             let wrap m = Delegate.CreateDelegate(typeof<Action<'T, StreamingContext>>, m) :?> Action<'T, StreamingContext>
             Array.map wrap ms
