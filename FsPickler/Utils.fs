@@ -260,14 +260,6 @@
             else
                 false
 
-        // perform a shallow copy of the contents of given reference type
-        let shallowCopy (t : Type) (src : obj) (dst : obj) =
-            let fields = t.GetFields(BindingFlags.Instance ||| BindingFlags.Public ||| BindingFlags.NonPublic)
-            for f in fields do
-                let v = f.GetValue(src)
-                f.SetValue(dst, v)
-
-
         let inline pickle (f : Stream -> 'T -> unit) (x : 'T) : byte [] =
             use mem = new MemoryStream()
             f mem x
@@ -277,6 +269,35 @@
             use mem = new MemoryStream(data)
             f mem
 
+
+        /// walks up the type hierarchy, gathering all instance fields
+        let gatherFields (t : Type) =
+            // resolve conflicts, index by declaring type and field name
+            let gathered = ref Map.empty<string * string, FieldInfo>
+
+            let rec gather (t : Type) =
+                let fields = t.GetFields(allFields)
+                for f in fields do
+                    let k = f.DeclaringType.AssemblyQualifiedName, f.Name
+                    if not <| gathered.Value.ContainsKey k then
+                        gathered := gathered.Value.Add(k, f)
+
+                match t.BaseType with
+                | null -> ()
+                | t when t = typeof<obj> -> ()
+                | bt -> gather bt
+
+            do gather t
+
+            gathered.Value |> Map.toArray |> Array.map snd
+
+
+        // perform a shallow copy of the contents of given reference type
+        let shallowCopy (t : Type) (src : obj) (dst : obj) =
+            let fields = gatherFields t
+            for f in fields do
+                let v = f.GetValue(src)
+                f.SetValue(dst, v)
 
         //
         // Let 't1 -> t2' be the binary relation between types that denotes the statement 't1 contans a field of type t2'.
@@ -354,7 +375,7 @@
                 // leaves with open hiearchies are treated as cyclic by definition
                 elif not t.IsSealed then true
                 else
-                    t.GetFields(allFields)
+                    gatherFields t
                     |> Seq.map (fun f -> f.FieldType)
                     |> Seq.distinct
                     |> Seq.exists (aux (d+1) ((d,false,true,t) :: traversed))
@@ -380,6 +401,6 @@
                 |> Seq.distinct
                 |> Seq.forall(fun f -> isOfFixedSize f.PropertyType)
             else
-                t.GetFields(allFields)
+                gatherFields t
                 |> Seq.distinct
                 |> Seq.forall (fun f -> isOfFixedSize f.FieldType)
