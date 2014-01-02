@@ -652,4 +652,348 @@
       </gcDelta>
     </testResult>
   </testRun>
+  <testRun id="FsPickler v.0.8.4.33657" date="2014-01-02T13:54:23.1339692+02:00">
+    <testResult testId="PerformanceTests.Value: Int" testDate="2014-01-02T13:54:23.2809692+02:00">
+      <elapsedTime>379445</elapsedTime>
+      <cpuTime>468003</cpuTime>
+      <gcDelta>
+        <gen0>6</gen0>
+        <gen1>0</gen1>
+        <gen2>0</gen2>
+      </gcDelta>
+    </testResult>
+    <testResult testId="PerformanceTests.Value: Boolean" testDate="2014-01-02T13:54:23.4869692+02:00">
+      <elapsedTime>438853</elapsedTime>
+      <cpuTime>312002</cpuTime>
+      <gcDelta>
+        <gen0>7</gen0>
+        <gen1>1</gen1>
+        <gen2>0</gen2>
+      </gcDelta>
+    </testResult>
+    <testResult testId="PerformanceTests.Value: Float" testDate="2014-01-02T13:54:23.6829692+02:00">
+      <elapsedTime>486683</elapsedTime>
+      <cpuTime>468003</cpuTime>
+      <gcDelta>
+        <gen0>7</gen0>
+        <gen1>0</gen1>
+        <gen2>0</gen2>
+      </gcDelta>
+    </testResult>
+    <testResult testId="PerformanceTests.Value: Decimal" testDate="2014-01-02T13:54:23.8609692+02:00">
+      <elapsedTime>483659</elapsedTime>
+      <cpuTime>468003</cpuTime>
+      <gcDelta>
+        <gen0>7</gen0>
+        <gen1>0</gen1>
+        <gen2>0</gen2>
+      </gcDelta>
+    </testResult>
+    <testResult testId="PerformanceTests.Value: Guid" testDate="2014-01-02T13:54:24.0399692+02:00">
+      <elapsedTime>111096</elapsedTime>
+      <cpuTime>156001</cpuTime>
+      <gcDelta>
+        <gen0>0</gen0>
+        <gen1>0</gen1>
+        <gen2>0</gen2>
+      </gcDelta>
+    </testResult>
+    <testResult testId="PerformanceTests.Value: DateTime" testDate="2014-01-02T13:54:24.1919692+02:00">
+      <elapsedTime>88656</elapsedTime>
+      <cpuTime>0</cpuTime>
+      <gcDelta>
+        <gen0>0</gen0>
+        <gen1>0</gen1>
+        <gen2>0</gen2>
+      </gcDelta>
+    </testResult>
+    <testResult testId="PerformanceTests.Value: String" testDate="2014-01-02T13:54:24.3569692+02:00">
+      <elapsedTime>543207</elapsedTime>
+      <cpuTime>624004</cpuTime>
+      <gcDelta>
+        <gen0>7</gen0>
+        <gen1>1</gen1>
+        <gen2>0</gen2>
+      </gcDelta>
+    </testResult>
+    <testResult testId="PerformanceTests.Boxed Object" testDate="2014-01-02T13:54:24.5429692+02:00">
+      <elapsedTime>465013</elapsedTime>
+      <cpuTime>468003</cpuTime>
+      <gcDelta>
+        <gen0>2</gen0>
+        <gen1>0</gen1>
+        <gen2>0</gen2>
+      </gcDelta>
+    </testResult>
+    <testResult testId="PerformanceTests.Class: Simple F# Class" testDate="2014-01-02T13:54:24.7189692+02:00">
+      <elapsedTime>733158</elapsedTime>
+      <cpuTime>624004</cpuTime>
+      <gcDelta>
+        <gen0>8</gen0>
+        <gen1>0</gen1>
+        <gen2>0</gen2>
+      </gcDelta>
+    </testResult>
+    <testResult testId="PerformanceTests.Class: ISerializable" testDate="2014-01-02T13:54:24.9299692+02:00">
+      <elapsedTime>2361756</elapsedTime>
+      <cpuTime>2340015</cpuTime>
+      <gcDelta>
+        <gen0>28</gen0>
+        <gen1>1</gen1>
+        <gen2>0</gen2>
+      </gcDelta>
+    </testResult>
+    <testResult testId="PerformanceTests.Subtype Resolution" testDate="2014-01-02T13:54:25.2969692+02:00">
+      <elapsedTime>616775</elapsedTime>
+      <cpuTime>624004</cpuTime>
+      <gcDelta>
+        <gen0>6</gen0>
+        <gen1>0</gen1>
+        <gen2>0</gen2>
+      </gcDelta>
+    </testResult>
+    <testResult testId="PerformanceTests.Array: Float" testDate="2014-01-02T13:54:25.4879692+02:00">
+      <elapsedTime>139522</elapsedTime>
+      <cpuTime>312002</cpuTime>
+      <gcDelta>
+        <gen0>1</gen0>
+        <gen1>1</gen1>
+        <gen2>1</gen2>
+      </gcDelta>
+    </testResult>
+    <testResult testId="PerformanceTests.Array: Int" testDate="2014-01-02T13:54:25.6499692+02:00">
+      <elapsedTime>83529</elapsedTime>
+      <cpuTime>156001</cpuTime>
+      <gcDelta>
+        <gen0>1</gen0>
+        <gen1>1</gen1>
+        <gen2>1</gen2>
+      </gcDelta>
+    </testResult>
+    <testResult testId="PerformanceTests.Array: String" testDate="2014-01-02T13:54:25.8129692+02:00">
+      <elapsedTime>7668740</elapsedTime>
+      <cpuTime>7644049</cpuTime>
+      <gcDelta>
+        <gen0>55</gen0>
+        <gen1>27</gen1>
+        <gen2>2</gen2>
+      </gcDelta>
+    </testResult>
+    <testResult testId="PerformanceTests.Array: Key-Value Pairs" testDate="2014-01-02T13:54:26.7209692+02:00">
+      <elapsedTime>3780374</elapsedTime>
+      <cpuTime>3744024</cpuTime>
+      <gcDelta>
+        <gen0>13</gen0>
+        <gen1>4</gen1>
+        <gen2>0</gen2>
+      </gcDelta>
+    </testResult>
+    <testResult testId="PerformanceTests.Array: Discriminated Unions" testDate="2014-01-02T13:54:27.2289692+02:00">
+      <elapsedTime>5379703</elapsedTime>
+      <cpuTime>5460035</cpuTime>
+      <gcDelta>
+        <gen0>15</gen0>
+        <gen1>4</gen1>
+        <gen2>0</gen2>
+      </gcDelta>
+    </testResult>
+    <testResult testId="PerformanceTests.Array: Objects" testDate="2014-01-02T13:54:27.9049692+02:00">
+      <elapsedTime>488147</elapsedTime>
+      <cpuTime>468003</cpuTime>
+      <gcDelta>
+        <gen0>4</gen0>
+        <gen1>1</gen1>
+        <gen2>0</gen2>
+      </gcDelta>
+    </testResult>
+    <testResult testId="PerformanceTests.Array: Rank-3 Float" testDate="2014-01-02T13:54:28.0819692+02:00">
+      <elapsedTime>1013327</elapsedTime>
+      <cpuTime>1248008</cpuTime>
+      <gcDelta>
+        <gen0>1</gen0>
+        <gen1>1</gen1>
+        <gen2>1</gen2>
+      </gcDelta>
+    </testResult>
+    <testResult testId="PerformanceTests..NET Dictionary" testDate="2014-01-02T13:54:28.3219692+02:00">
+      <elapsedTime>740752</elapsedTime>
+      <cpuTime>624004</cpuTime>
+      <gcDelta>
+        <gen0>5</gen0>
+        <gen1>0</gen1>
+        <gen2>0</gen2>
+      </gcDelta>
+    </testResult>
+    <testResult testId="PerformanceTests..NET Stack" testDate="2014-01-02T13:54:28.5259692+02:00">
+      <elapsedTime>282542</elapsedTime>
+      <cpuTime>156001</cpuTime>
+      <gcDelta>
+        <gen0>1</gen0>
+        <gen1>0</gen1>
+        <gen2>0</gen2>
+      </gcDelta>
+    </testResult>
+    <testResult testId="PerformanceTests..NET List" testDate="2014-01-02T13:54:28.6829692+02:00">
+      <elapsedTime>597893</elapsedTime>
+      <cpuTime>468003</cpuTime>
+      <gcDelta>
+        <gen0>1</gen0>
+        <gen1>0</gen1>
+        <gen2>0</gen2>
+      </gcDelta>
+    </testResult>
+    <testResult testId="PerformanceTests..NET Set" testDate="2014-01-02T13:54:28.8859692+02:00">
+      <elapsedTime>2057571</elapsedTime>
+      <cpuTime>2028013</cpuTime>
+      <gcDelta>
+        <gen0>2</gen0>
+        <gen1>1</gen1>
+        <gen2>0</gen2>
+      </gcDelta>
+    </testResult>
+    <testResult testId="PerformanceTests.FSharp: Tuple Small" testDate="2014-01-02T13:54:29.2239692+02:00">
+      <elapsedTime>731263</elapsedTime>
+      <cpuTime>780005</cpuTime>
+      <gcDelta>
+        <gen0>7</gen0>
+        <gen1>0</gen1>
+        <gen2>0</gen2>
+      </gcDelta>
+    </testResult>
+    <testResult testId="PerformanceTests.FSharp: Tuple Large" testDate="2014-01-02T13:54:29.4289692+02:00">
+      <elapsedTime>1240567</elapsedTime>
+      <cpuTime>1092007</cpuTime>
+      <gcDelta>
+        <gen0>10</gen0>
+        <gen1>0</gen1>
+        <gen2>0</gen2>
+      </gcDelta>
+    </testResult>
+    <testResult testId="PerformanceTests.FSharp: List Int" testDate="2014-01-02T13:54:29.6929692+02:00">
+      <elapsedTime>356950</elapsedTime>
+      <cpuTime>468003</cpuTime>
+      <gcDelta>
+        <gen0>10</gen0>
+        <gen1>1</gen1>
+        <gen2>0</gen2>
+      </gcDelta>
+    </testResult>
+    <testResult testId="PerformanceTests.FSharp: List String" testDate="2014-01-02T13:54:29.8599692+02:00">
+      <elapsedTime>7432524</elapsedTime>
+      <cpuTime>7488048</cpuTime>
+      <gcDelta>
+        <gen0>73</gen0>
+        <gen1>20</gen1>
+        <gen2>0</gen2>
+      </gcDelta>
+    </testResult>
+    <testResult testId="PerformanceTests.FSharp: List Key-Value" testDate="2014-01-02T13:54:30.7339692+02:00">
+      <elapsedTime>3934735</elapsedTime>
+      <cpuTime>3900025</cpuTime>
+      <gcDelta>
+        <gen0>25</gen0>
+        <gen1>0</gen1>
+        <gen2>0</gen2>
+      </gcDelta>
+    </testResult>
+    <testResult testId="PerformanceTests.FSharp: List Nested" testDate="2014-01-02T13:54:31.2679692+02:00">
+      <elapsedTime>676842</elapsedTime>
+      <cpuTime>780005</cpuTime>
+      <gcDelta>
+        <gen0>12</gen0>
+        <gen1>1</gen1>
+        <gen2>0</gen2>
+      </gcDelta>
+    </testResult>
+    <testResult testId="PerformanceTests.FSharp: Union" testDate="2014-01-02T13:54:31.4669692+02:00">
+      <elapsedTime>1582137</elapsedTime>
+      <cpuTime>1560010</cpuTime>
+      <gcDelta>
+        <gen0>13</gen0>
+        <gen1>0</gen1>
+        <gen2>0</gen2>
+      </gcDelta>
+    </testResult>
+    <testResult testId="PerformanceTests.FSharp: Record" testDate="2014-01-02T13:54:31.7559692+02:00">
+      <elapsedTime>662141</elapsedTime>
+      <cpuTime>624004</cpuTime>
+      <gcDelta>
+        <gen0>8</gen0>
+        <gen1>0</gen1>
+        <gen2>0</gen2>
+      </gcDelta>
+    </testResult>
+    <testResult testId="PerformanceTests.FSharp: Peano Rectype" testDate="2014-01-02T13:54:31.9519692+02:00">
+      <elapsedTime>47279</elapsedTime>
+      <cpuTime>156001</cpuTime>
+      <gcDelta>
+        <gen0>0</gen0>
+        <gen1>0</gen1>
+        <gen2>0</gen2>
+      </gcDelta>
+    </testResult>
+    <testResult testId="PerformanceTests.FSharp: Curried Function" testDate="2014-01-02T13:54:32.0969692+02:00">
+      <elapsedTime>786917</elapsedTime>
+      <cpuTime>780005</cpuTime>
+      <gcDelta>
+        <gen0>10</gen0>
+        <gen1>0</gen1>
+        <gen2>0</gen2>
+      </gcDelta>
+    </testResult>
+    <testResult testId="PerformanceTests.FSharp: Binary Tree" testDate="2014-01-02T13:54:32.3069692+02:00">
+      <elapsedTime>687958</elapsedTime>
+      <cpuTime>624004</cpuTime>
+      <gcDelta>
+        <gen0>1</gen0>
+        <gen1>0</gen1>
+        <gen2>0</gen2>
+      </gcDelta>
+    </testResult>
+    <testResult testId="PerformanceTests.FSharp: Set" testDate="2014-01-02T13:54:32.5139692+02:00">
+      <elapsedTime>10601180</elapsedTime>
+      <cpuTime>10608068</cpuTime>
+      <gcDelta>
+        <gen0>142</gen0>
+        <gen1>1</gen1>
+        <gen2>0</gen2>
+      </gcDelta>
+    </testResult>
+    <testResult testId="PerformanceTests.FSharp: Map" testDate="2014-01-02T13:54:33.7049692+02:00">
+      <elapsedTime>12590647</elapsedTime>
+      <cpuTime>12480080</cpuTime>
+      <gcDelta>
+        <gen0>159</gen0>
+        <gen1>1</gen1>
+        <gen2>0</gen2>
+      </gcDelta>
+    </testResult>
+    <testResult testId="PerformanceTests.Reflection: Type" testDate="2014-01-02T13:54:35.0949692+02:00">
+      <elapsedTime>497108</elapsedTime>
+      <cpuTime>468003</cpuTime>
+      <gcDelta>
+        <gen0>2</gen0>
+        <gen1>0</gen1>
+        <gen2>0</gen2>
+      </gcDelta>
+    </testResult>
+    <testResult testId="PerformanceTests.FSharp: Quotation Small" testDate="2014-01-02T13:54:35.2819692+02:00">
+      <elapsedTime>7452870</elapsedTime>
+      <cpuTime>7332047</cpuTime>
+      <gcDelta>
+        <gen0>63</gen0>
+        <gen1>1</gen1>
+        <gen2>0</gen2>
+      </gcDelta>
+    </testResult>
+    <testResult testId="PerformanceTests.FSharp: Quotation Large" testDate="2014-01-02T13:54:36.1609692+02:00">
+      <elapsedTime>4154084</elapsedTime>
+      <cpuTime>4212027</cpuTime>
+      <gcDelta>
+        <gen0>29</gen0>
+        <gen1>0</gen1>
+        <gen2>0</gen2>
+      </gcDelta>
+    </testResult>
+  </testRun>
 </testSuite>
