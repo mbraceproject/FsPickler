@@ -226,6 +226,14 @@
         let containsAttr<'T when 'T :> Attribute> (m : MemberInfo) =
             m.GetCustomAttributes(typeof<'T>, true) |> Seq.isEmpty |> not
 
+
+        module SerializationInfo =
+            let inline write (sI : SerializationInfo) (name : string) (x : 'T) =
+                sI.AddValue(name, x, typeof<'T>)
+
+            let inline read<'T> (sI : SerializationInfo) (name : string) =
+                sI.GetValue(name, typeof<'T>) :?> 'T
+
         type Delegate with
             static member CreateDelegate<'T when 'T :> Delegate> (m : MethodInfo) =
                 System.Delegate.CreateDelegate(typeof<'T>, m) :?> 'T

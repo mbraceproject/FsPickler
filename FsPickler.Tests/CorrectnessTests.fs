@@ -31,6 +31,7 @@
             for m in members do
                 testEquals m
 
+        abstract IsRemoted : bool
         abstract TestSerializer : 'T -> byte []
         abstract TestDeserializer : byte [] -> obj
         abstract TestLoop : 'T -> 'T
@@ -168,7 +169,13 @@
 
     
         [<Test>]
-        member __.``FSharpException`` () = test <| FsharpException(42, "fortyTwo")
+        member __.``FSharpException`` () =
+            let e = FsharpException(42, "fortyTwo")
+            match testLoop e with
+            | FsharpException(42, "fortyTwo") -> ()
+            | FsharpException _ when __.IsRemoted -> () // Protocol will not serialize fields correctly, do not compare
+            | e' -> failwithf "Expected '%A' but got '%A'." e e'
+
 
         [<Test>]
         member __.``Generic Dictionary`` () =
@@ -394,6 +401,8 @@
     type ``In-memory Correctness Tests`` () =
         inherit ``Serializer Correctness Tests`` ()
 
+        override __.IsRemoted = false
+
         override __.TestSerializer (x : 'T) = Serializer.write testSerializer x
         override __.TestDeserializer (bytes : byte []) = Serializer.read testSerializer bytes
         override __.TestLoop(x : 'T) = Serializer.roundtrip x testSerializer
@@ -407,6 +416,8 @@
         inherit ``Serializer Correctness Tests`` ()
 
         let mutable state = None : (ServerManager * SerializationClient) option
+
+        override __.IsRemoted = true
 
         override __.TestSerializer(x : 'T) = 
             match state with

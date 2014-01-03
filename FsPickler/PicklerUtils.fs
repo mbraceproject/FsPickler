@@ -31,6 +31,13 @@
 
             ms |> Array.filter isSerializationMethod
 
+        let rec isISerializable(t : Type) =
+            if typeof<ISerializable>.IsAssignableFrom t then true
+            else
+                match t.BaseType with
+                | null -> false
+                | bt -> isISerializable bt
+
         let mkDelegates<'T> (ms : MethodInfo []) =
             let wrap m = Delegate.CreateDelegate(typeof<Action<'T, StreamingContext>>, m) :?> Action<'T, StreamingContext>
             Array.map wrap ms

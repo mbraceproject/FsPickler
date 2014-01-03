@@ -33,7 +33,7 @@
     type UninitializedPickler =
         static member Create<'T>() = new Pickler<'T>()
         static member CreateUntyped (t : Type) =
-            if isUnSupportedType t then raise <| new NonSerializableTypeException(t)
+            if isUnSupportedType t then raise <| NonSerializableTypeException t
 
             let m =
                 typeof<UninitializedPickler>
@@ -177,12 +177,12 @@
             let writer (w : Writer) (t : 'T) =
                 for i = 0 to fields.Length - 1 do
                     let o = fields.[i].GetValue(t)
-                    picklers.[i].ManagedWrite w o
+                    picklers.[i].UntypedWrite(w, o, managed = true)
 
             let reader (r : Reader) =
                 let t = FormatterServices.GetUninitializedObject(typeof<'T>)
                 for i = 0 to fields.Length - 1 do
-                    let o = picklers.[i].ManagedRead r
+                    let o = picklers.[i].UntypedRead(r, managed = true)
                     fields.[i].SetValue(t, o)
                 
                 fastUnbox<'T> t
@@ -272,7 +272,7 @@
 
                 for i = 0 to fields.Length - 1 do
                     let o = fields.[i].GetValue(t)
-                    picklers.[i].ManagedWrite w o
+                    picklers.[i].UntypedWrite(w, o, managed = true)
 
                 run onSerialized t w
 
@@ -281,7 +281,7 @@
                 run onDeserializing t r
 
                 for i = 0 to fields.Length - 1 do
-                    let o = picklers.[i].ManagedRead r
+                    let o = picklers.[i].UntypedRead(r, managed = true)
                     fields.[i].SetValue(t, o)
 
                 run onDeserialized t r
@@ -341,17 +341,17 @@
 
     type ISerializablePickler =
 
-        static member TryCreateUntyped(t : Type, resolver : IPicklerResolver) =
+        static member CreateUntyped(t : Type, resolver : IPicklerResolver) =
             let m =
                 typeof<ISerializablePickler>
-                    .GetMethod("TryCreate", BindingFlags.NonPublic ||| BindingFlags.Static)
+                    .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
                     .MakeGenericMethod [| t |]
 
-            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler option
+            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler
 
-        static member TryCreate<'T when 'T :> ISerializable>(resolver : IPicklerResolver) =
+        static member Create<'T when 'T :> ISerializable>(resolver : IPicklerResolver) =
             match typeof<'T>.TryGetConstructor [| typeof<SerializationInfo> ; typeof<StreamingContext> |] with
-            | None -> None
+            | None -> raise <| new NonSerializableTypeException(typeof<'T>, "is ISerializable but does not implement constructor with parameters (SerializationInfo, StreamingContext).")
             | Some ctorInfo ->
                 let allMethods = typeof<'T>.GetMethods(allMembers)
                 let onSerializing = allMethods |> getSerializationMethods<OnSerializingAttribute> |> mkDelegates<'T>
@@ -400,8 +400,7 @@
                     if isDeserializationCallback then (fastUnbox<IDeserializationCallback> x).OnDeserialization null
                     x
 
-                let fmt = new Pickler<'T>(reader, writer, PicklerInfo.ISerializable, cacheByRef = true, useWithSubtypes = false)
-                Some(fmt :> Pickler)
+                new Pickler<'T>(reader, writer, PicklerInfo.ISerializable, cacheByRef = true, useWithSubtypes = false)
 
 
     //  check if type implements a static factory method : IPicklerResolver -> Pickler<DeclaringType>

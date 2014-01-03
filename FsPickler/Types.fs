@@ -5,6 +5,8 @@
     open System.IO
     open System.Runtime.Serialization
 
+    open FsPickler.Utils
+
     /// Marks a type that uses a pickler generated from a static factory method.
     type CustomPicklerAttribute () = inherit System.Attribute()
 
@@ -56,33 +58,82 @@
 
 
     /// raised by pickler generator whenever an unexpected error is encountered.
-    type PicklerGenerationException internal (t : Type, ?message : string) =
-        inherit SerializationException(
-            match message with
-            | None -> sprintf "Error while generating pickler for type '%O'." t
-            | Some msg -> sprintf "Error while generating pickler for type '%O': %s" t msg)
+    type PicklerGenerationException =
+        inherit SerializationException
 
-        member __.GeneratedType = t
+        val private ty : Type
+        
+        new (t : Type, ?message : string, ?inner : exn) =
+            let message =
+                match message with
+                | None -> sprintf "Error generating pickler for type '%O'." t
+                | Some msg -> sprintf "Error generating pickler for type '%O': %s." t msg
+
+            match inner with
+            | None -> { inherit SerializationException(message) ; ty = t }
+            | Some e -> { inherit SerializationException(message, e) ; ty = t }
+
+        new (sI : SerializationInfo, sc : StreamingContext) =
+            {
+                inherit SerializationException(sI, sc)
+                ty = SerializationInfo.read sI "picklerType"
+            }
+
+        member __.GeneratedType = __.ty
+
+        interface ISerializable with
+            member __.GetObjectData(sI : SerializationInfo, sc : StreamingContext) =
+                base.GetObjectData(sI, sc)
+                SerializationInfo.write sI "picklerType" __.ty
+
 
     /// raised by pickler generator whenever an unsupported type is encountered in the type graph.
-    type NonSerializableTypeException internal (unsupportedType : Type, ?message : string) =
-        inherit SerializationException(
-            match message with
-            | None -> sprintf "Serialization of type '%O' is not supported." unsupportedType
-            | Some msg -> sprintf "Serialization of type '%O' is not supported: %s" unsupportedType msg)
+    type NonSerializableTypeException =
+        inherit SerializationException
 
-        member __.UnsupportedType = unsupportedType
+        val private ty : Type
+
+        new (t : Type, ?message : string, ?inner : exn) =
+            let message =
+                match message with
+                | None -> sprintf "Serialization of type '%O' is not supported." t
+                | Some msg -> sprintf "Serialization of type '%O' is not supported: %s" t msg
+
+            match inner with
+            | None -> { inherit SerializationException(message) ; ty = t }
+            | Some e -> { inherit SerializationException(message, e) ; ty = t }
+
+        new (sI : SerializationInfo, sc : StreamingContext) =
+            {
+                inherit SerializationException(sI, sc)
+                ty = SerializationInfo.read sI "picklerType"
+            }
+
+        member __.UnsupportedType = __.ty
+
+        interface ISerializable with
+            member __.GetObjectData(sI : SerializationInfo, sc : StreamingContext) =
+                base.GetObjectData(sI, sc)
+                SerializationInfo.write sI "picklerType" __.ty
 
     /// raised by pickler generator whenever an unexpected error is encountered while calling pickler factories
-    type PicklerFactoryException internal (picklerFactory : IPicklerFactory, ?message) =
-        inherit SerializationException(
-            match message with
-            | None -> sprintf "Error calling pluggable pickler factory '%O'." (picklerFactory.GetType())
-            | Some msg -> sprintf "Error calling pluggable pickler factory '%O': %s" (picklerFactory.GetType()) msg)
+    type PicklerFactoryException =
+        inherit SerializationException
 
-        member __.PicklerFactory = picklerFactory
+        val private factoryType : Type
 
+        new (factory : IPicklerFactory, ?message : string, ?inner : exn) =
+            let ft = factory.GetType()
+            let message =
+                match message with
+                | None -> sprintf "Error calling pluggable pickler factory '%O'." ft
+                | Some msg -> sprintf "Error calling pluggable pickler factory '%O': %s" ft msg
 
+            match inner with
+            | None -> { inherit SerializationException(message) ; factoryType = ft }
+            | Some e -> { inherit SerializationException(message, e) ; factoryType = ft }
+
+        member __.FactoryType = __.factoryType
 
     // reflection - related types
 

@@ -124,8 +124,8 @@
 
         member internal f.IsInitialized = f.m_isInitialized
 
-        abstract member UntypedWrite : Writer -> obj -> unit
-        abstract member UntypedRead : Reader -> obj
+        abstract member UntypedWrite : Writer * value:obj * managed:bool -> unit
+        abstract member UntypedRead : Reader * managed:bool -> obj
 
         abstract member WriteRootObject : Writer * id : string * value : obj -> unit
         abstract member ReadRootObject : Reader * id : string -> obj
@@ -199,8 +199,16 @@
                 m_nested_pickler = None
             }
 
-        override f.UntypedWrite (w : Writer) (o : obj) = f.m_writer w (fastUnbox<'T> o)
-        override f.UntypedRead (r : Reader) = f.m_reader r :> obj
+        override f.UntypedWrite (w : Writer, value : obj, managed:bool) =
+            if managed then w.Write(f, fastUnbox<'T> value)
+            else
+                f.m_writer w (fastUnbox<'T> value)
+
+        override f.UntypedRead (r : Reader, managed : bool) = 
+            if managed then r.Read f :> obj
+            else
+                f.m_reader r :> obj
+
         override f.WriteRootObject (w : Writer, id, o : obj) = w.WriteRootObject(f, id, o :?> 'T)
         override f.ReadRootObject (r : Reader, id) = r.ReadRootObject (f, id) :> obj
         override f.WriteSequence (w : Writer, id, e : IEnumerable) = w.WriteSequence(f, id, e :?> seq<'T>)
@@ -292,7 +300,7 @@
                         let fmt' = resolver.Resolve t0
                         writeHeader (header ||| ObjHeader.isProperSubtype)
                         writeType t0
-                        fmt'.UntypedWrite w x
+                        fmt'.UntypedWrite(w, x, managed = false)
                     else
                         writeHeader header
                         fmt.Write w x
@@ -459,7 +467,7 @@
                 if ObjHeader.hasFlag flags ObjHeader.isProperSubtype then
                     let t = readType ()
                     let fmt' = resolver.Resolve t
-                    fmt'.UntypedRead r |> fastUnbox<'T>
+                    fmt'.UntypedRead(r, managed = false) |> fastUnbox<'T>
                 else
                     fmt.Read r
 

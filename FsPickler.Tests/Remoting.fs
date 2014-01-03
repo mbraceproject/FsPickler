@@ -164,8 +164,7 @@
                 failwith "server is not running"
 
         member __.Stop () =
-            if isActive() then 
-                proc.Value.Kill()
+            if isActive() then
                 proc <- None
             else
                 failwith "server is not running"

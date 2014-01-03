@@ -24,8 +24,8 @@
             abstract member internal WriteRootObject : Writer * id:string * value:obj -> unit
 
             // untyped version of reader/writers
-            abstract member internal UntypedRead : Reader -> obj
-            abstract member internal UntypedWrite : Writer -> obj -> unit
+            abstract member internal UntypedRead : Reader * managed:bool -> obj
+            abstract member internal UntypedWrite : Writer * value:obj * managed:bool -> unit
 
             // used internally for reading/writing sequences to the underlying stream
             abstract member internal WriteSequence : Writer * id : string * sequence:IEnumerable -> int

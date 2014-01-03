@@ -146,45 +146,35 @@
                 let _,reader,picklers = caseInfo.[tag]
                 let values = reader x
                 for i = 0 to values.Length - 1 do
-                    picklers.[i].ManagedWrite w values.[i]
+                    picklers.[i].UntypedWrite(w, values.[i], managed = true)
 
             let reader (r : Reader) =
                 let tag = int (r.BinaryReader.ReadByte())
                 let ctor,_,picklers = caseInfo.[tag]
                 let values = Array.zeroCreate<obj> picklers.Length
                 for i = 0 to picklers.Length - 1 do
-                    values.[i] <- picklers.[i].ManagedRead r
+                    values.[i] <- picklers.[i].UntypedRead(r, managed = true)
 
                 ctor values |> fastUnbox<'Union>
 #endif
             new Pickler<'Union>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
 
-    // F# record/exception types
+    // F# record types
 
     type FsRecordPickler =
 
-        static member CreateUntyped(t : Type, resolver : IPicklerResolver, isExceptionType) =
+        static member CreateUntyped(t : Type, resolver : IPicklerResolver) =
             let m =
                 typeof<FsRecordPickler>
                     .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
                     .MakeGenericMethod [| t |]
 
-            m.GuardedInvoke(null, [| resolver :> obj ; isExceptionType :> obj |]) :?> Pickler
+            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler
         
-        static member Create<'Record>(resolver : IPicklerResolver, isExceptionType) =
+        static member Create<'Record>(resolver : IPicklerResolver) =
 
-            let fields, ctor =
-                if isExceptionType then
-                    let fields = FSharpType.GetExceptionFields(typeof<'Record>, allMembers)
-                    let signature = fields |> Array.map(fun p -> p.PropertyType)
-                    let ctor = 
-                        typeof<'Record>.GetConstructors(allMembers)
-                        |> Array.find(fun c -> c.GetParameters () |> Array.map(fun p -> p.ParameterType) = signature)
-                    fields, ctor
-                else
-                    let fields = FSharpType.GetRecordFields(typeof<'Record>, allMembers)
-                    let ctor = FSharpValue.PreComputeRecordConstructorInfo(typeof<'Record>, allMembers)
-                    fields, ctor
+            let fields = FSharpType.GetRecordFields(typeof<'Record>, allMembers)
+            let ctor = FSharpValue.PreComputeRecordConstructorInfo(typeof<'Record>, allMembers)
 
             let picklers = fields |> Array.map (fun f -> resolver.Resolve f.PropertyType)
 
@@ -218,14 +208,90 @@
             let writer (w : Writer) (x : 'Record) =
                 for i = 0 to fields.Length - 1 do
                     let o = fields.[i].GetValue x
-                    picklers.[i].ManagedWrite w o
+                    picklers.[i].UntypedWrite(w, o, managed = true)
             
             let reader (r : Reader) =
                 let values = Array.zeroCreate<obj> fields.Length
                 for i = 0 to fields.Length - 1 do
-                    values.[i] <- picklers.[i].ManagedRead r
+                    values.[i] <- picklers.[i].UntypedRead(r, managed = true)
 
                 ctor.Invoke values |> fastUnbox<'Record>
 #endif
 
             new Pickler<'Record>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = false)
+
+
+    // F# exception types
+    // Exception serialization is broken in F#; while types are ISerializable, added fields will not be serialized properly
+    // Use a combination of ISerializable resolution and reflection to derive correct logic
+    type FsExceptionPickler =
+
+        static member CreateUntyped(t : Type, resolver : IPicklerResolver) =
+            let m =
+                typeof<FsExceptionPickler>
+                    .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
+                    .MakeGenericMethod [| t |]
+
+            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler
+        
+        static member Create<'Exception when 'Exception :> exn>(resolver : IPicklerResolver) =
+            // the default ISerializable pickler that handles exception metadata serialization
+            let defPickler = DotNetPicklers.ISerializablePickler.Create<'Exception>(resolver)
+            // separately serialize exception fields
+            let fields = gatherFields typeof<'Exception> |> Array.filter(fun f -> f.DeclaringType = typeof<'Exception>)
+            let fpicklers = fields |> Array.map (fun f -> resolver.Resolve f.FieldType)
+
+#if EMIT_IL
+            let writerDele = 
+                if fields.Length = 0 then None
+                else
+                    DynamicMethod.compileAction3<Pickler [], Writer, 'Exception> "exceptionSerializer" (fun ilGen ->
+                        let picklers = EnvItem<Pickler []>.Arg0
+                        let writer = EnvItem<Writer>.Arg1
+                        let value = EnvItem<'Exception>.Arg2
+
+                        emitSerializeFields fields writer picklers value ilGen
+
+                        ilGen.Emit OpCodes.Ret
+                    ) |> Some
+
+            let readerDele =
+                if fields.Length = 0 then None
+                else
+                    DynamicMethod.compileAction3<Pickler [], Reader, 'Exception> "exceptionDeserializer" (fun ilGen ->
+                        let picklers = EnvItem<Pickler []>.Arg0
+                        let reader = EnvItem<Reader>.Arg1
+                        let value = EnvItem<'Exception>.Arg2
+                        
+                        emitDeserializeFields fields reader picklers value ilGen
+
+                        ilGen.Emit OpCodes.Ret
+                    ) |> Some
+
+
+            let writer (w : Writer) (e : 'Exception) =
+                defPickler.Write w e
+                match writerDele with
+                | None -> ()
+                | Some d -> d.Invoke(fpicklers, w, e)
+
+            let reader (r : Reader) =
+                let e = defPickler.Read r
+                match readerDele with
+                | None -> e
+                | Some d -> d.Invoke(fpicklers, r, e) ; e
+#else
+            let writer (w : Writer) (e : 'Exception) =
+                defPickler.Write w e
+                for i = 0 to fields.Length - 1 do
+                    let o = fields.[i].GetValue e
+                    fpicklers.[i].UntypedWrite(w, o, managed = true)
+
+            let reader (r : Reader) =
+                let e = defPickler.Read r
+                for i = 0 to fields.Length - 1 do
+                    let o = fpicklers.[i].UntypedRead(r, managed = true)
+                    fields.[i].SetValue(e, o)
+                e
+#endif
+            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = true, useWithSubtypes = true)

@@ -67,7 +67,7 @@
     let resolvePickler (picklerFactoryIndex : PicklerFactoryIndex) (resolver : IPicklerResolver) (t : Type) =
 
         // check if type is supported
-        if isUnSupportedType t then raise <| new NonSerializableTypeException(t)
+        if isUnSupportedType t then raise <| NonSerializableTypeException t
 
         // subtype resolution
         let result =
@@ -102,27 +102,18 @@
                 if FSharpType.IsUnion(t, allMembers) then
                     Some <| FsUnionPickler.CreateUntyped(t, resolver)
                 elif FSharpType.IsRecord(t, allMembers) then
-                    Some <| FsRecordPickler.CreateUntyped(t, resolver, isExceptionType = false)
+                    Some <| FsRecordPickler.CreateUntyped(t, resolver)
                 elif FSharpType.IsExceptionRepresentation(t, allMembers) then
-                    Some <| FsRecordPickler.CreateUntyped(t, resolver, isExceptionType = true)
+                    Some <| FsExceptionPickler.CreateUntyped(t, resolver)
                 else None
 
-        // .NET serialization interfaces
+        // .NET serialization resolution
         let result =
             match result with
-            | Some _ -> result
             | None ->
                 if t.IsAbstract then 
-                    Some <| AbstractPickler.CreateUntyped t
-                elif typeof<ISerializable>.IsAssignableFrom t then
-                    ISerializablePickler.TryCreateUntyped(t, resolver)
-                else None
-
-        // .NET reflection serialization
-        let result =
-            match result with
-            | None ->
-                if t.IsEnum then 
+                    AbstractPickler.CreateUntyped t
+                elif t.IsEnum then 
                     EnumPickler.CreateUntyped(t, resolver)
                 elif isNullableType t then
                     NullablePickler.CreateUntyped(t, resolver) 
@@ -132,8 +123,10 @@
                     ArrayPickler.CreateUntyped(t, resolver)
                 elif typeof<System.Delegate>.IsAssignableFrom t then
                     DelegatePickler.CreateUntyped(t, resolver)
+                elif isISerializable t then
+                    ISerializablePickler.CreateUntyped(t, resolver)
                 elif not t.IsSerializable then 
-                    raise <| new NonSerializableTypeException(t)
+                    raise <| NonSerializableTypeException t
                 else
                     ClassPickler.CreateUntyped(t, resolver)
             | Some r -> r

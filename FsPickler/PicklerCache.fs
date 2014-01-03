@@ -119,7 +119,13 @@
             for p in customPicklers do
                 cache.Commit p.Type p |> ignore
 
-        let resolver (t : Type) = YParametric cache (resolvePickler customPicklerFactories) t
+        let resolver (t : Type) = 
+            try YParametric cache (resolvePickler customPicklerFactories) t
+            with :? NonSerializableTypeException as e ->
+                if e.UnsupportedType = t then reraise ()
+                else
+                    let msg = sprintf "graph contains nonserializable field '%O'." e.UnsupportedType
+                    raise <| new NonSerializableTypeException(t, msg)
 
         // default cache instance
         static let singleton =
