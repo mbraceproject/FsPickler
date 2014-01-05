@@ -10,42 +10,7 @@
     open FsPickler.Utils
     open FsPickler.PicklerUtils
 
-    module DynamicMethod =
-
-        type private Marker = class end
-
-        let private voidType = Type.GetType("System.Void")
-
-        let compile<'Dele when 'Dele :> Delegate> (name : string) (argTypes : Type []) (returnType : Type) (builderF : ILGenerator -> unit) =
-
-            let dMeth = new DynamicMethod(name, MethodAttributes.Static ||| MethodAttributes.Public, 
-                            CallingConventions.Standard, returnType, argTypes, typeof<Marker>, skipVisibility = true)
-
-            let ilGen = dMeth.GetILGenerator()
-            do builderF ilGen
-            dMeth.CreateDelegate(typeof<'Dele>) :?> 'Dele
-
-        let compileFunc<'T> (name : string) (builderF : ILGenerator -> unit) =
-            compile<Func<'T>> name [| |] typeof<'T> builderF
-
-        let compileFunc1<'U,'V> (name : string) (builderF : ILGenerator -> unit) =
-            compile<Func<'U,'V>> name [| typeof<'U> |] typeof<'V> builderF
-
-        let compileFunc2<'U1,'U2,'V> (name : string) (builderF : ILGenerator -> unit) =
-            compile<Func<'U1,'U2,'V>> name [| typeof<'U1> ; typeof<'U2> |] typeof<'V> builderF
-
-        let compileFunc3<'U1,'U2,'U3,'V> (name : string) (builderF : ILGenerator -> unit) =
-            compile<Func<'U1,'U2,'U3,'V>> name [| typeof<'U1> ; typeof<'U2> ; typeof<'U3> |] typeof<'V> builderF
-
-        let compileAction1<'U> (name : string) (builderF : ILGenerator -> unit) =
-            compile<Action<'U>> name [| typeof<'U> |] voidType builderF
-
-        let compileAction2<'U1,'U2> (name : string) (builderF : ILGenerator -> unit) =
-            compile<Action<'U1,'U2>> name [| typeof<'U1> ; typeof<'U2> |] voidType builderF
-
-        let compileAction3<'U1,'U2,'U3> (name : string) (builderF : ILGenerator -> unit) =
-            compile<Action<'U1,'U2,'U3>> name [| typeof<'U1> ; typeof<'U2> ; typeof<'U3> |] voidType builderF
-
+    /// a descriptor for local variables or parameters in emitted IL
 
     type EnvItem<'T> =
         | Arg0
@@ -87,6 +52,57 @@
             let t = defaultArg reflectedType typeof<'T>
             let v = ilGen.DeclareLocal t
             EnvItem<'T>.LocalVar v
+
+    module DynamicMethod =
+
+        type private Marker = class end
+
+        let private voidType = Type.GetType("System.Void")
+
+        let compile<'Dele when 'Dele :> Delegate> (name : string) (argTypes : Type []) (returnType : Type) (builderF : ILGenerator -> unit) =
+
+            let dMeth = new DynamicMethod(name, MethodAttributes.Static ||| MethodAttributes.Public, 
+                            CallingConventions.Standard, returnType, argTypes, typeof<Marker>, skipVisibility = true)
+
+            let ilGen = dMeth.GetILGenerator()
+            do builderF ilGen
+            dMeth.CreateDelegate(typeof<'Dele>) :?> 'Dele
+
+        let compileFunc<'T> (name : string) (builderF : ILGenerator -> unit) =
+            compile<Func<'T>> name [| |] typeof<'T> builderF
+
+        let compileFunc1<'U,'V> (name : string) (builderF : EnvItem<'U> -> ILGenerator -> unit) =
+            let arg0 = EnvItem<'U>.Arg0
+            compile<Func<'U,'V>> name [| typeof<'U> |] typeof<'V> <| builderF arg0
+
+        let compileFunc2<'U1,'U2,'V> (name : string) (builderF : EnvItem<'U1> -> EnvItem<'U2> -> ILGenerator -> unit) =
+            let arg0 = EnvItem<'U1>.Arg0
+            let arg1 = EnvItem<'U2>.Arg1
+            compile<Func<'U1,'U2,'V>> name [| typeof<'U1> ; typeof<'U2> |] typeof<'V> <| builderF arg0 arg1
+
+        let compileFunc3<'U1,'U2,'U3,'V> (name : string) (builderF : EnvItem<'U1> -> EnvItem<'U2> -> EnvItem<'U3> -> ILGenerator -> unit) =
+            let arg0 = EnvItem<'U1>.Arg0
+            let arg1 = EnvItem<'U2>.Arg1
+            let arg2 = EnvItem<'U3>.Arg2
+            compile<Func<'U1,'U2,'U3,'V>> name [| typeof<'U1> ; typeof<'U2> ; typeof<'U3> |] typeof<'V> <| builderF arg0 arg1 arg2
+
+        let compileAction1<'U> (name : string) (builderF : EnvItem<'U> -> ILGenerator -> unit) =
+            let arg0 = EnvItem<'U>.Arg0
+            compile<Action<'U>> name [| typeof<'U> |] voidType <| builderF arg0
+
+        let compileAction2<'U1,'U2> (name : string) (builderF : EnvItem<'U1> -> EnvItem<'U2> -> ILGenerator -> unit) =
+            let arg0 = EnvItem<'U1>.Arg0
+            let arg1 = EnvItem<'U2>.Arg1
+            compile<Action<'U1,'U2>> name [| typeof<'U1> ; typeof<'U2> |] voidType <| builderF arg0 arg1
+
+        let compileAction3<'U1,'U2,'U3> (name : string) (builderF : EnvItem<'U1> -> EnvItem<'U2> -> EnvItem<'U3> -> ILGenerator -> unit) =
+            let arg0 = EnvItem<'U1>.Arg0
+            let arg1 = EnvItem<'U2>.Arg1
+            let arg2 = EnvItem<'U3>.Arg2
+            compile<Action<'U1,'U2,'U3>> name [| typeof<'U1> ; typeof<'U2> ; typeof<'U3> |] voidType <| builderF arg0 arg1 arg2
+
+
+
             
 
     [<AutoOpen>]
@@ -248,9 +264,9 @@
 
     /// wraps call to ISerializable constructor in a dynamic method
     let wrapISerializableConstructor<'T> (ctor : ConstructorInfo) =
-        DynamicMethod.compileFunc2<SerializationInfo, StreamingContext, 'T> "ISerializableCtor" (fun ilGen ->
-            ilGen.Emit OpCodes.Ldarg_0
-            ilGen.Emit OpCodes.Ldarg_1
+        DynamicMethod.compileFunc2<SerializationInfo, StreamingContext, 'T> "ISerializableCtor" (fun sI sC ilGen ->
+            sI.Load ilGen
+            sC.Load ilGen
 
             ilGen.Emit(OpCodes.Newobj, ctor)
             ilGen.Emit OpCodes.Ret

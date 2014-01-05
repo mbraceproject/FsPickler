@@ -57,10 +57,7 @@
             let picklerss = caseInfo |> Array.map (fun (_,_,_,picklers) -> picklers)
 
             let writerDele =
-                DynamicMethod.compileAction3<Pickler [] [], Writer, 'Union> "unionSerializer" (fun ilGen ->
-                    let picklerss = EnvItem<Pickler [] []>.Arg0
-                    let writer = EnvItem<Writer>.Arg1
-                    let union = EnvItem<'Union>.Arg2
+                DynamicMethod.compileAction3<Pickler [] [], Writer, 'Union> "unionSerializer" (fun picklerss writer union ilGen ->
                     let tag = EnvItem<int>.InitVar ilGen
                     let picklers = EnvItem<Pickler []>.InitVar ilGen
 
@@ -95,9 +92,8 @@
                 )
 
             let readerDele =
-                DynamicMethod.compileFunc2<Pickler [] [], Reader, 'Union> "unionDeserializer" (fun ilGen ->
-                    let picklerss = EnvItem<Pickler [] []>.Arg0
-                    let reader = EnvItem<Reader>.Arg1
+                DynamicMethod.compileFunc2<Pickler [] [], Reader, 'Union> "unionDeserializer" (fun picklerss reader ilGen ->
+
                     let tag = EnvItem<int>.InitVar ilGen
                     let picklers = EnvItem<Pickler []>.InitVar ilGen
 
@@ -183,10 +179,7 @@
                 if fields.Length = 0 then fun _ _ -> ()
                 else
                     let writerDele =
-                        DynamicMethod.compileAction3<Pickler [], Writer, 'Record> "recordSerializer" (fun ilGen ->
-                            let picklers = EnvItem<Pickler []>.Arg0
-                            let writer = EnvItem<Writer>.Arg1
-                            let record = EnvItem<'Record>.Arg2
+                        DynamicMethod.compileAction3<Pickler [], Writer, 'Record> "recordSerializer" (fun picklers writer record ilGen ->
 
                             emitSerializeProperties fields writer picklers record ilGen
                             
@@ -195,9 +188,7 @@
                     fun w t -> writerDele.Invoke(picklers, w,t)
 
             let readerDele =
-                DynamicMethod.compileFunc2<Pickler [], Reader, 'Record> "recordDeserializer" (fun ilGen ->
-                    let picklers = EnvItem<Pickler []>.Arg0
-                    let reader = EnvItem<Reader>.Arg1
+                DynamicMethod.compileFunc2<Pickler [], Reader, 'Record> "recordDeserializer" (fun picklers reader ilGen ->
 
                     emitDeserializeAndConstruct (Choice2Of2 ctor) (ctor.GetParameterTypes()) reader picklers ilGen
 
@@ -245,10 +236,7 @@
             let writerDele = 
                 if fields.Length = 0 then None
                 else
-                    DynamicMethod.compileAction3<Pickler [], Writer, 'Exception> "exceptionSerializer" (fun ilGen ->
-                        let picklers = EnvItem<Pickler []>.Arg0
-                        let writer = EnvItem<Writer>.Arg1
-                        let value = EnvItem<'Exception>.Arg2
+                    DynamicMethod.compileAction3<Pickler [], Writer, 'Exception> "exceptionSerializer" (fun picklers writer value ilGen ->
 
                         emitSerializeFields fields writer picklers value ilGen
 
@@ -258,11 +246,8 @@
             let readerDele =
                 if fields.Length = 0 then None
                 else
-                    DynamicMethod.compileAction3<Pickler [], Reader, 'Exception> "exceptionDeserializer" (fun ilGen ->
-                        let picklers = EnvItem<Pickler []>.Arg0
-                        let reader = EnvItem<Reader>.Arg1
-                        let value = EnvItem<'Exception>.Arg2
-                        
+                    DynamicMethod.compileAction3<Pickler [], Reader, 'Exception> "exceptionDeserializer" (fun picklers reader value ilGen ->
+
                         emitDeserializeFields fields reader picklers value ilGen
 
                         ilGen.Emit OpCodes.Ret

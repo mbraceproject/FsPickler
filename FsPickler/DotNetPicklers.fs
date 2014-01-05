@@ -144,10 +144,7 @@
 
 #if EMIT_IL
             let writerDele =
-                DynamicMethod.compileAction3<Pickler [], Writer, 'T> "structSerializer" (fun ilGen ->
-                    let picklers = EnvItem<Pickler []>.Arg0
-                    let writer = EnvItem<Writer>.Arg1
-                    let parent = EnvItem<'T>.Arg2
+                DynamicMethod.compileAction3<Pickler [], Writer, 'T> "structSerializer" (fun picklers writer parent ilGen ->
 
                     emitSerializeFields fields writer picklers parent ilGen
 
@@ -155,9 +152,7 @@
                 )
 
             let readerDele =
-                DynamicMethod.compileFunc2<Pickler [], Reader, 'T> "structDeserializer" (fun ilGen ->
-                    let picklers = EnvItem<Pickler []>.Arg0
-                    let reader = EnvItem<Reader>.Arg1
+                DynamicMethod.compileFunc2<Pickler [], Reader, 'T> "structDeserializer" (fun picklers reader ilGen ->
                     
                     // initialize empty value type
                     let value = EnvItem<'T>.InitVar ilGen
@@ -224,10 +219,7 @@
                     fun _ _ -> ()
                 else
                     let writerDele =
-                        DynamicMethod.compileAction3<Pickler [], Writer, 'T> "classSerializer" (fun ilGen ->
-                            let picklers = EnvItem<Pickler []>.Arg0
-                            let writer = EnvItem<Writer>.Arg1
-                            let value = EnvItem<'T>.Arg2
+                        DynamicMethod.compileAction3<Pickler [], Writer, 'T> "classSerializer" (fun picklers writer value ilGen ->
 
                             emitSerializationMethodCalls onSerializing (Choice1Of2 writer) value ilGen
 
@@ -240,9 +232,7 @@
                     fun w t -> writerDele.Invoke(picklers, w, t)
 
             let readerDele =
-                DynamicMethod.compileFunc2<Pickler [], Reader, 'T> "classDeserializer" (fun ilGen ->
-                    let picklers = EnvItem<Pickler []>.Arg0
-                    let reader = EnvItem<Reader>.Arg1
+                DynamicMethod.compileFunc2<Pickler [], Reader, 'T> "classDeserializer" (fun picklers reader ilGen ->
 
                     // get uninitialized object and store locally
                     let value = EnvItem<'T>.InitVar ilGen
