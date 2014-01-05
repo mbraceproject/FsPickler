@@ -51,7 +51,7 @@
                             | dt when dt <> uci.DeclaringType -> Some dt
                             | _ -> None
                     let ctor = FSharpValue.PreComputeUnionConstructorInfo(uci, allMembers)
-                    let picklers = uci.GetFields() |> Array.map (fun f -> resolver.Resolve f.PropertyType)
+                    let picklers = fields |> Array.map (fun f -> resolver.Resolve f.PropertyType)
                     caseType, ctor, fields, picklers)
 
             let picklerss = caseInfo |> Array.map (fun (_,_,_,picklers) -> picklers)
