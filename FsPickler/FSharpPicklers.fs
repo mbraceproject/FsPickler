@@ -58,27 +58,27 @@
 
             let writerDele =
                 DynamicMethod.compileAction3<Pickler [] [], Writer, 'Union> "unionSerializer" (fun picklerss writer union ilGen ->
-                    let tag = EnvItem<int>.InitVar ilGen
-                    let picklers = EnvItem<Pickler []>.InitVar ilGen
+                    let tag = EnvItem<int>(ilGen)
+                    let picklers = EnvItem<Pickler []>(ilGen)
 
                     let labels = Array.init caseInfo.Length (fun _ -> ilGen.DefineLabel())
 
                     // read union tag & store to local value
-                    union.Load ilGen
+                    union.Load ()
                     ilGen.EmitCall(OpCodes.Call, tagReaderMethod, null)
-                    tag.Store ilGen
+                    tag.Store ()
 
                     // select appropriate picklers & store
-                    picklerss.Load ilGen
-                    tag.Load ilGen
+                    picklerss.Load ()
+                    tag.Load ()
                     ilGen.Emit OpCodes.Ldelem_Ref
-                    picklers.Store ilGen
+                    picklers.Store ()
 
                     // write tag to stream
                     writeInt writer tag ilGen
 
                     // make jump table
-                    tag.Load ilGen
+                    tag.Load ()
                     ilGen.Emit(OpCodes.Switch, labels)
 
                     // emit cases
@@ -94,23 +94,23 @@
             let readerDele =
                 DynamicMethod.compileFunc2<Pickler [] [], Reader, 'Union> "unionDeserializer" (fun picklerss reader ilGen ->
 
-                    let tag = EnvItem<int>.InitVar ilGen
-                    let picklers = EnvItem<Pickler []>.InitVar ilGen
+                    let tag = EnvItem<int>(ilGen)
+                    let picklers = EnvItem<Pickler []>(ilGen)
 
                     let labels = Array.init caseInfo.Length (fun _ -> ilGen.DefineLabel())
 
                     // read tag from stream & store
                     readInt reader ilGen
-                    tag.Store ilGen
+                    tag.Store ()
 
                     // select appropriate picklers & store
-                    picklerss.Load ilGen
-                    tag.Load ilGen
+                    picklerss.Load ()
+                    tag.Load ()
                     ilGen.Emit OpCodes.Ldelem_Ref
-                    picklers.Store ilGen
+                    picklers.Store ()
 
                     // make jump table
-                    tag.Load ilGen
+                    tag.Load ()
                     ilGen.Emit(OpCodes.Switch, labels)
 
                     // emit cases

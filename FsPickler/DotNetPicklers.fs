@@ -155,13 +155,13 @@
                 DynamicMethod.compileFunc2<Pickler [], Reader, 'T> "structDeserializer" (fun picklers reader ilGen ->
                     
                     // initialize empty value type
-                    let value = EnvItem<'T>.InitVar ilGen
+                    let value = EnvItem<'T>(ilGen)
                     emitObjectInitializer typeof<'T> ilGen
-                    value.Store ilGen
+                    value.Store ()
 
                     emitDeserializeFields fields reader picklers value ilGen
 
-                    value.Load ilGen
+                    value.Load ()
                     ilGen.Emit OpCodes.Ret
                 )
 
@@ -235,9 +235,9 @@
                 DynamicMethod.compileFunc2<Pickler [], Reader, 'T> "classDeserializer" (fun picklers reader ilGen ->
 
                     // get uninitialized object and store locally
-                    let value = EnvItem<'T>.InitVar ilGen
+                    let value = EnvItem<'T>(ilGen)
                     emitObjectInitializer typeof<'T> ilGen
-                    value.Store ilGen
+                    value.Store ()
 
                     emitSerializationMethodCalls onDeserializing (Choice2Of2 reader) value ilGen
 
@@ -247,7 +247,7 @@
 
                     if isDeserializationCallback then emitDeserializationCallback value ilGen
 
-                    value.Load ilGen
+                    value.Load ()
                     ilGen.Emit OpCodes.Ret
                 )
 

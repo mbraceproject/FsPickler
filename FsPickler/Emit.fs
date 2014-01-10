@@ -12,46 +12,48 @@
 
     /// a descriptor for local variables or parameters in emitted IL
 
-    type EnvItem<'T> =
-        | Arg0
-        | Arg1
-        | Arg2
-        | Arg3
-        | Arg of int16
-        | LocalVar of LocalBuilder
-    with
-        member e.Load (ilGen : ILGenerator) =
-            match e with
-            | Arg0 -> ilGen.Emit OpCodes.Ldarg_0
-            | Arg1 -> ilGen.Emit OpCodes.Ldarg_1
-            | Arg2 -> ilGen.Emit OpCodes.Ldarg_2
-            | Arg3 -> ilGen.Emit OpCodes.Ldarg_3
+    type EnvItem<'T>(ilGen : ILGenerator, ?argument : int16) = 
+        inherit EnvItem(typeof<'T>, ilGen, ?argument = argument)
+
+    and EnvItem(ty : Type, ilGen : ILGenerator, ?argument : int16) =
+
+        let env = 
+            match argument with
+            | Some argId -> Arg argId
+            | None -> LocalVar <| ilGen.DeclareLocal ty
+
+        member __.Type = ty
+
+        member e.Load () =
+            match env with
+            | Arg 0s -> ilGen.Emit OpCodes.Ldarg_0
+            | Arg 1s -> ilGen.Emit OpCodes.Ldarg_1
+            | Arg 2s -> ilGen.Emit OpCodes.Ldarg_2
+            | Arg 3s -> ilGen.Emit OpCodes.Ldarg_3
             | Arg i -> ilGen.Emit (OpCodes.Ldarg_S, i)
             | LocalVar v -> ilGen.Emit(OpCodes.Ldloc, v)
 
-        member e.LoadAddress (ilGen : ILGenerator) =
-            match e with
-            | Arg0 -> ilGen.Emit(OpCodes.Ldarga_S, 0s)
-            | Arg1 -> ilGen.Emit(OpCodes.Ldarga_S, 1s)
-            | Arg2 -> ilGen.Emit(OpCodes.Ldarga_S, 2s)
-            | Arg3 -> ilGen.Emit(OpCodes.Ldarga_S, 3s)
+        member e.LoadAddress () =
+            match env with
             | Arg i -> ilGen.Emit (OpCodes.Ldarg_S, i)
             | LocalVar v -> ilGen.Emit(OpCodes.Ldloca, v)
 
-        member e.Store (ilGen : ILGenerator) =
-            match e with
+        member e.Store () =
+            match env with
             | LocalVar v -> ilGen.Emit(OpCodes.Stloc, v)
             | _ -> invalidOp "cannot store to arg param."
 
         member e.LocalBuilder =
-            match e with
+            match env with
             | LocalVar v -> v
             | _ -> invalidArg "EnvItem" "is not a local variable."
 
-        static member InitVar (ilGen : ILGenerator, ?reflectedType : Type) =
-            let t = defaultArg reflectedType typeof<'T>
-            let v = ilGen.DeclareLocal t
-            EnvItem<'T>.LocalVar v
+    and EnvDescriptor =
+        | Arg of int16
+        | LocalVar of LocalBuilder
+
+
+    // wrappers for defining dynamic methods
 
     module DynamicMethod =
 
@@ -59,51 +61,64 @@
 
         let private voidType = Type.GetType("System.Void")
 
-        let compile<'Dele when 'Dele :> Delegate> (name : string) (argTypes : Type []) (returnType : Type) (builderF : ILGenerator -> unit) =
+        let private createDynamicMethod (name : string) (argTypes : Type []) (returnType : Type) =
+            let dyn =
+                new DynamicMethod(name, 
+                    MethodAttributes.Static ||| MethodAttributes.Public, CallingConventions.Standard, 
+                    returnType, argTypes, typeof<Marker>, skipVisibility = true)
 
-            let dMeth = new DynamicMethod(name, MethodAttributes.Static ||| MethodAttributes.Public, 
-                            CallingConventions.Standard, returnType, argTypes, typeof<Marker>, skipVisibility = true)
+            dyn, dyn.GetILGenerator()
 
-            let ilGen = dMeth.GetILGenerator()
-            do builderF ilGen
-            dMeth.CreateDelegate(typeof<'Dele>) :?> 'Dele
+        let private compileDynamicMethod<'Dele when 'Dele :> Delegate> (dyn : DynamicMethod) =
+            dyn.CreateDelegate(typeof<'Dele>) :?> 'Dele
 
         let compileFunc<'T> (name : string) (builderF : ILGenerator -> unit) =
-            compile<Func<'T>> name [| |] typeof<'T> builderF
+            let dyn, ilGen = createDynamicMethod name [| |] typeof<'T>
+            do builderF ilGen
+            compileDynamicMethod<Func<'T>> dyn
 
-        let compileFunc1<'U,'V> (name : string) (builderF : EnvItem<'U> -> ILGenerator -> unit) =
-            let arg0 = EnvItem<'U>.Arg0
-            compile<Func<'U,'V>> name [| typeof<'U> |] typeof<'V> <| builderF arg0
+        let compileFunc1<'U1,'V> (name : string) (builderF : EnvItem<'U1> -> ILGenerator -> unit) =
+            let dyn, ilGen = createDynamicMethod name [| typeof<'U1> |] typeof<'V>
+            let arg0 = EnvItem<'U1>(ilGen, 0s)
+            do builderF arg0 ilGen
+            compileDynamicMethod<Func<'U1,'V>> dyn
 
         let compileFunc2<'U1,'U2,'V> (name : string) (builderF : EnvItem<'U1> -> EnvItem<'U2> -> ILGenerator -> unit) =
-            let arg0 = EnvItem<'U1>.Arg0
-            let arg1 = EnvItem<'U2>.Arg1
-            compile<Func<'U1,'U2,'V>> name [| typeof<'U1> ; typeof<'U2> |] typeof<'V> <| builderF arg0 arg1
+            let dyn, ilGen = createDynamicMethod name [| typeof<'U1> ; typeof<'U2> |] typeof<'V>
+            let arg0 = EnvItem<'U1>(ilGen, 0s)
+            let arg1 = EnvItem<'U2>(ilGen, 1s)
+            do builderF arg0 arg1 ilGen
+            compileDynamicMethod<Func<'U1,'U2,'V>> dyn
 
         let compileFunc3<'U1,'U2,'U3,'V> (name : string) (builderF : EnvItem<'U1> -> EnvItem<'U2> -> EnvItem<'U3> -> ILGenerator -> unit) =
-            let arg0 = EnvItem<'U1>.Arg0
-            let arg1 = EnvItem<'U2>.Arg1
-            let arg2 = EnvItem<'U3>.Arg2
-            compile<Func<'U1,'U2,'U3,'V>> name [| typeof<'U1> ; typeof<'U2> ; typeof<'U3> |] typeof<'V> <| builderF arg0 arg1 arg2
+            let dyn, ilGen = createDynamicMethod name [| typeof<'U1> ; typeof<'U2> ; typeof<'U3> |] typeof<'V>
+            let arg0 = EnvItem<'U1>(ilGen, 0s)
+            let arg1 = EnvItem<'U2>(ilGen, 1s)
+            let arg2 = EnvItem<'U3>(ilGen, 2s)
+            do builderF arg0 arg1 arg2 ilGen
+            compileDynamicMethod<Func<'U1,'U2,'U3,'V>> dyn
 
-        let compileAction1<'U> (name : string) (builderF : EnvItem<'U> -> ILGenerator -> unit) =
-            let arg0 = EnvItem<'U>.Arg0
-            compile<Action<'U>> name [| typeof<'U> |] voidType <| builderF arg0
+        let compileAction1<'U1> (name : string) (builderF : EnvItem<'U1> -> ILGenerator -> unit) =
+            let dyn, ilGen = createDynamicMethod name [| typeof<'U1> |] voidType
+            let arg0 = EnvItem<'U1>(ilGen, 0s)
+            do builderF arg0 ilGen
+            compileDynamicMethod<Action<'U1>> dyn
 
         let compileAction2<'U1,'U2> (name : string) (builderF : EnvItem<'U1> -> EnvItem<'U2> -> ILGenerator -> unit) =
-            let arg0 = EnvItem<'U1>.Arg0
-            let arg1 = EnvItem<'U2>.Arg1
-            compile<Action<'U1,'U2>> name [| typeof<'U1> ; typeof<'U2> |] voidType <| builderF arg0 arg1
+            let dyn, ilGen = createDynamicMethod name [| typeof<'U1> ; typeof<'U2> |] voidType
+            let arg0 = EnvItem<'U1>(ilGen, 0s)
+            let arg1 = EnvItem<'U2>(ilGen, 1s)
+            do builderF arg0 arg1 ilGen
+            compileDynamicMethod<Action<'U1,'U2>> dyn
 
         let compileAction3<'U1,'U2,'U3> (name : string) (builderF : EnvItem<'U1> -> EnvItem<'U2> -> EnvItem<'U3> -> ILGenerator -> unit) =
-            let arg0 = EnvItem<'U1>.Arg0
-            let arg1 = EnvItem<'U2>.Arg1
-            let arg2 = EnvItem<'U3>.Arg2
-            compile<Action<'U1,'U2,'U3>> name [| typeof<'U1> ; typeof<'U2> ; typeof<'U3> |] voidType <| builderF arg0 arg1 arg2
-
-
-
-            
+            let dyn, ilGen = createDynamicMethod name [| typeof<'U1> ; typeof<'U2> ; typeof<'U3> |] voidType
+            let arg0 = EnvItem<'U1>(ilGen, 0s)
+            let arg1 = EnvItem<'U2>(ilGen, 1s)
+            let arg2 = EnvItem<'U3>(ilGen, 2s)
+            do builderF arg0 arg1 arg2 ilGen
+            compileDynamicMethod<Action<'U1,'U2,'U3>> dyn
+ 
 
     [<AutoOpen>]
     module private ReflectedPicklerAPI =
@@ -123,7 +138,7 @@
 
     /// emits typed pickler from array of untyped picklers
     let emitLoadPickler (picklers : EnvItem<Pickler []>) (t : Type) (idx : int) (ilGen : ILGenerator) =
-        picklers.Load ilGen
+        picklers.Load ()
         ilGen.Emit(OpCodes.Ldc_I4, idx)
         ilGen.Emit(OpCodes.Ldelem_Ref)
         ilGen.Emit(OpCodes.Castclass, picklerT.MakeGenericType [| t |])
@@ -149,11 +164,11 @@
         for i = 0 to fields.Length - 1 do
             let f = fields.[i]
             // load writer to the stack
-            writer.Load ilGen
+            writer.Load ()
             // load typed pickler to the stack
             emitLoadPickler picklers f.FieldType i ilGen
             // load field value to the stack
-            parent.Load ilGen
+            parent.Load ()
             ilGen.Emit(OpCodes.Ldfld, f)
             // perform serialization
             emitSerialize f.FieldType ilGen
@@ -169,11 +184,11 @@
         for i = 0 to fields.Length - 1 do
             let f = fields.[i]
             // load parent object to the stack
-            if isStruct then parent.LoadAddress ilGen
+            if isStruct then parent.LoadAddress ()
             else
-                parent.Load ilGen
+                parent.Load ()
             // load reader to the stack
-            reader.Load ilGen
+            reader.Load ()
             // load typed pickler to the stack
             emitLoadPickler picklers f.FieldType i ilGen
             // deserialize and load to the stack
@@ -190,11 +205,11 @@
         for i = 0 to properties.Length - 1 do
             let m = properties.[i].GetGetMethod(true)
             // load writer to the stack
-            writer.Load ilGen
+            writer.Load ()
             // load typed pickler to the stack
             emitLoadPickler picklers m.ReturnType i ilGen
             // load property value to the stack
-            parent.Load ilGen
+            parent.Load ()
             ilGen.EmitCall(OpCodes.Call, m, null)
             // perform serialization
             emitSerialize m.ReturnType ilGen
@@ -209,7 +224,7 @@
         for i = 0 to fparams.Length - 1 do
             let p = fparams.[i]
             // load reader to the stack
-            reader.Load ilGen
+            reader.Load ()
             // load typed pickler to the stack
             emitLoadPickler picklers p i ilGen
             // perform deserialization and push to the stack
@@ -241,23 +256,23 @@
         if methods.Length = 0 then () else
 
         // evaluate the streaming context
-        let ctx = EnvItem<StreamingContext>.InitVar ilGen
+        let ctx = EnvItem<StreamingContext>(ilGen)
 
         match wOr with
-        | Choice1Of2 w -> w.Load ilGen ; ilGen.EmitCall(OpCodes.Call, writerCtx, null)
-        | Choice2Of2 r -> r.Load ilGen ; ilGen.EmitCall(OpCodes.Call, readerCtx, null)
+        | Choice1Of2 w -> w.Load () ; ilGen.EmitCall(OpCodes.Call, writerCtx, null)
+        | Choice2Of2 r -> r.Load () ; ilGen.EmitCall(OpCodes.Call, readerCtx, null)
 
-        ctx.Store ilGen
+        ctx.Store ()
 
         // call the methods
         for m in methods do
-            value.Load ilGen
-            ctx.Load ilGen
+            value.Load ()
+            ctx.Load ()
             ilGen.EmitCall(OpCodes.Call, m, null)
 
     /// emit a call to the 'OnDeserialization' method on given value
     let emitDeserializationCallback (value : EnvItem<'T>) (ilGen : ILGenerator) =
-        value.Load ilGen
+        value.Load ()
         ilGen.Emit(OpCodes.Castclass, typeof<IDeserializationCallback>)
         ilGen.Emit OpCodes.Ldnull
         ilGen.EmitCall(OpCodes.Callvirt, deserializationCallBack, null)
@@ -265,8 +280,8 @@
     /// wraps call to ISerializable constructor in a dynamic method
     let wrapISerializableConstructor<'T> (ctor : ConstructorInfo) =
         DynamicMethod.compileFunc2<SerializationInfo, StreamingContext, 'T> "ISerializableCtor" (fun sI sC ilGen ->
-            sI.Load ilGen
-            sC.Load ilGen
+            sI.Load ()
+            sC.Load ()
 
             ilGen.Emit(OpCodes.Newobj, ctor)
             ilGen.Emit OpCodes.Ret
@@ -274,14 +289,14 @@
 
     /// writes and integer
     let writeInt (writer : EnvItem<Writer>) (n : EnvItem<int>) (ilGen : ILGenerator) =
-        writer.Load ilGen
+        writer.Load ()
         ilGen.EmitCall(OpCodes.Call, bw, null) // load BinaryWriter
-        n.Load ilGen
+        n.Load ()
         ilGen.EmitCall(OpCodes.Call, bwIntWriter, null) // perform write
 
     /// reads an integer and push to stack
     let readInt (reader : EnvItem<Reader>) (ilGen : ILGenerator) =
-        reader.Load ilGen
+        reader.Load ()
         ilGen.EmitCall(OpCodes.Call, br, null) // load BinaryReader
         ilGen.EmitCall(OpCodes.Call, brIntReader, null) // perform read, push to stacks
         
