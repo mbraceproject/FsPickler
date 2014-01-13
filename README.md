@@ -130,7 +130,7 @@ The types involved in the examples are not fit for human consumption, but thankf
 F# infers them automatically. The implementation is total and purely functional,
 see this [gist][nway] for some Coq code used to model these combinators.
 
-[nway]: https://gist.github.com/toyvo/6834822
+[nway]: https://gist.github.com/t0yv0/6834822
 
 #### Records / Product Types
  
