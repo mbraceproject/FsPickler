@@ -226,6 +226,22 @@
         let containsAttr<'T when 'T :> Attribute> (m : MemberInfo) =
             m.GetCustomAttributes(typeof<'T>, true) |> Seq.isEmpty |> not
 
+        /// checks if instances of given type can be arrays
+        let isAssignableFromArray =
+            let getCanonicalType (t:Type) = 
+                if t.IsGenericType then t.GetGenericTypeDefinition() 
+                else t
+
+            let arrayIfs =  typeof<int []>.GetInterfaces() |> Array.map getCanonicalType
+
+            fun (t : Type) ->
+                if t.IsAssignableFrom typeof<Array> then true
+                elif t.IsArray then true
+                elif not t.IsInterface then false
+                else
+                    // check interface compatibility
+                    Array.exists ((=) (getCanonicalType t)) arrayIfs
+
 
         module SerializationInfo =
             let inline write (sI : SerializationInfo) (name : string) (x : 'T) =

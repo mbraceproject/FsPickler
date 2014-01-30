@@ -85,6 +85,12 @@
             x.Value |> should equal 42
 
 
+        [<Test>]
+        member __.``Should correctly deserialize boxed arrays`` () =
+            let boxed = { A = [| 1 .. 10|] ; B = [| 1 .. 4 |] }
+            testEquals boxed
+
+
         [<Test>] 
         member __.``Combinator-based Peano`` () =
             let pp = 

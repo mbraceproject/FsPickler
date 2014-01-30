@@ -14,7 +14,7 @@
         | Sealed = 4
         | NonSealed = 5
         | Abstract = 6
-        | Object = 7
+        | ArrayCompatible = 7
 
     type PicklerInfo =
         | Atomic = 0
@@ -38,8 +38,8 @@
             elif t.IsEnum then TypeKind.Enum
             elif t.IsValueType then TypeKind.Value
             elif t.IsArray then TypeKind.Array
+            elif Utils.isAssignableFromArray t then TypeKind.ArrayCompatible
             elif t.IsSealed then TypeKind.Sealed
-            elif t = typeof<obj> then TypeKind.Object
             elif t.IsAbstract then TypeKind.Abstract
             else TypeKind.NonSealed
 

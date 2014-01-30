@@ -131,6 +131,8 @@
 
         type Rec = { Rec : Rec }
 
+        type BoxedArrays = { A : seq<int> ; B : seq<int> }
+
         type NonGenericType = NGValue of int
 
         type ExternalTypePickler () =

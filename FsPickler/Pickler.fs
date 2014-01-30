@@ -495,7 +495,7 @@
 
             elif ObjHeader.hasFlag flags ObjHeader.isNewCachedInstance then
                 let id = counter
-                if fmt.TypeKind = TypeKind.Array || fmt.TypeKind = TypeKind.Object then
+                if fmt.TypeKind = TypeKind.Array || fmt.TypeKind = TypeKind.ArrayCompatible then
                     currentDeserializedArrayId <- id
                 counter <- counter + 1L
 
