@@ -305,61 +305,66 @@
                         writeHeader header
                         fmt.Write w x
 
-            if fmt.TypeKind <= TypeKind.Value then 
-                writeHeader ObjHeader.empty
-                fmt.Write w x
+            try
+                if fmt.TypeKind <= TypeKind.Value then 
+                    writeHeader ObjHeader.empty
+                    fmt.Write w x
 
-            elif obj.ReferenceEquals(x, null) then writeHeader ObjHeader.isNull else
+                elif obj.ReferenceEquals(x, null) then writeHeader ObjHeader.isNull else
 
 #if PROTECT_STACK_OVERFLOWS
-            do RuntimeHelpers.EnsureSufficientExecutionStack()
+                do RuntimeHelpers.EnsureSufficientExecutionStack()
 #endif
 
-            if fmt.IsCacheByRef || fmt.IsCyclicType then
-                let id, firstOccurence = idGen.GetId x
+                if fmt.IsCacheByRef || fmt.IsCyclicType then
+                    let id, firstOccurence = idGen.GetId x
 
-                if firstOccurence then
-                    if fmt.IsCyclicType then 
-                        // push id to the symbolic stack to detect cyclic objects during traversal
-                        objStack.Push id
+                    if firstOccurence then
+                        if fmt.IsCyclicType then 
+                            // push id to the symbolic stack to detect cyclic objects during traversal
+                            objStack.Push id
 
-                        write ObjHeader.isNewCachedInstance
+                            write ObjHeader.isNewCachedInstance
 
-                        objStack.Pop () |> ignore
-                        cyclicObjects.Remove id |> ignore
-                    else
-                        write ObjHeader.isNewCachedInstance
+                            objStack.Pop () |> ignore
+                            cyclicObjects.Remove id |> ignore
+                        else
+                            write ObjHeader.isNewCachedInstance
 
-                elif fmt.IsCyclicType && objStack.Contains id && not <| cyclicObjects.Contains id then
-                    // came across cyclic object, record fixup-related data
-                    // cyclic objects are handled once per instance
-                    // instances of cyclic arrays are handled differently than other reference types
+                    elif fmt.IsCyclicType && objStack.Contains id && not <| cyclicObjects.Contains id then
+                        // came across cyclic object, record fixup-related data
+                        // cyclic objects are handled once per instance
+                        // instances of cyclic arrays are handled differently than other reference types
 
-                    do cyclicObjects.Add(id) |> ignore
+                        do cyclicObjects.Add(id) |> ignore
                     
-                    if fmt.TypeKind <= TypeKind.Sealed || fmt.UseWithSubtypes then
-                        if fmt.TypeKind = TypeKind.Array then
-                            writeHeader ObjHeader.isOldCachedInstance
+                        if fmt.TypeKind <= TypeKind.Sealed || fmt.UseWithSubtypes then
+                            if fmt.TypeKind = TypeKind.Array then
+                                writeHeader ObjHeader.isOldCachedInstance
+                            else
+                                writeHeader ObjHeader.isCyclicInstance
                         else
-                            writeHeader ObjHeader.isCyclicInstance
+                            let t = x.GetType()
+
+                            if t.IsArray then
+                                writeHeader ObjHeader.isOldCachedInstance
+                            elif t <> fmt.Type then
+                                writeHeader (ObjHeader.isCyclicInstance ||| ObjHeader.isProperSubtype)
+                                writeType t
+                            else
+                                writeHeader ObjHeader.isCyclicInstance
+
+                        bw.Write id
                     else
-                        let t = x.GetType()
+                        writeHeader ObjHeader.isOldCachedInstance
+                        bw.Write id
 
-                        if t.IsArray then
-                            writeHeader ObjHeader.isOldCachedInstance
-                        elif t <> fmt.Type then
-                            writeHeader (ObjHeader.isCyclicInstance ||| ObjHeader.isProperSubtype)
-                            writeType t
-                        else
-                            writeHeader ObjHeader.isCyclicInstance
-
-                    bw.Write id
                 else
-                    writeHeader ObjHeader.isOldCachedInstance
-                    bw.Write id
+                    write ObjHeader.empty
 
-            else
-                write ObjHeader.empty
+            with 
+            | :? SerializationException -> reraise ()
+            | e -> raise <| new SerializationException(sprintf "Error serializing instance of type '%O'." typeof<'T>, e)
 
         member internal w.WriteRootObject(f : Pickler<'T>, id : string, x : 'T) =
             bw.Write id
@@ -471,54 +476,59 @@
                 else
                     fmt.Read r
 
-            let flags = ObjHeader.read fmt.Type fmt.PicklerFlags (br.ReadUInt32())
+            try
+                let flags = ObjHeader.read fmt.Type fmt.PicklerFlags (br.ReadUInt32())
 
-            if ObjHeader.hasFlag flags ObjHeader.isNull then fastUnbox<'T> null
-            elif fmt.TypeKind <= TypeKind.Value then fmt.Read r
-            elif ObjHeader.hasFlag flags ObjHeader.isCyclicInstance then
-                // came across a nested instance of a cyclic object
-                // add an uninitialized object to the cache and schedule
-                // reflection-based fixup at the root level.
-                let t =
-                    if ObjHeader.hasFlag flags ObjHeader.isProperSubtype then readType ()
-                    else fmt.Type
+                if ObjHeader.hasFlag flags ObjHeader.isNull then fastUnbox<'T> null
+                elif fmt.TypeKind <= TypeKind.Value then fmt.Read r
+                elif ObjHeader.hasFlag flags ObjHeader.isCyclicInstance then
+                    // came across a nested instance of a cyclic object
+                    // add an uninitialized object to the cache and schedule
+                    // reflection-based fixup at the root level.
+                    let t =
+                        if ObjHeader.hasFlag flags ObjHeader.isProperSubtype then readType ()
+                        else fmt.Type
 
-                let id = br.ReadInt64()
+                    let id = br.ReadInt64()
 
-                let x = FormatterServices.GetUninitializedObject(t)
+                    let x = FormatterServices.GetUninitializedObject(t)
 
-                // register a fixup operation & cache
-                fixupIndex.Add(id, (t,x))
-                objCache.Add(id, x)
+                    // register a fixup operation & cache
+                    fixupIndex.Add(id, (t,x))
+                    objCache.Add(id, x)
 
-                fastUnbox<'T> x
+                    fastUnbox<'T> x
 
-            elif ObjHeader.hasFlag flags ObjHeader.isNewCachedInstance then
-                let id = counter
-                if fmt.TypeKind = TypeKind.Array || fmt.TypeKind = TypeKind.ArrayCompatible then
-                    currentDeserializedArrayId <- id
-                counter <- counter + 1L
+                elif ObjHeader.hasFlag flags ObjHeader.isNewCachedInstance then
+                    let id = counter
+                    if fmt.TypeKind = TypeKind.Array || fmt.TypeKind = TypeKind.ArrayCompatible then
+                        currentDeserializedArrayId <- id
+                    counter <- counter + 1L
 
-                let x = read flags
+                    let x = read flags
 
-                if fmt.IsCyclicType then 
-                    let found, contents = fixupIndex.TryGetValue id
+                    if fmt.IsCyclicType then 
+                        let found, contents = fixupIndex.TryGetValue id
 
-                    if found then
-                        // deserialization reached root level of a cyclic object
-                        // perform fixup by doing reflection-based field copying
-                        let t,o = contents
-                        do shallowCopy t x o
-                        fastUnbox<'T> o
+                        if found then
+                            // deserialization reached root level of a cyclic object
+                            // perform fixup by doing reflection-based field copying
+                            let t,o = contents
+                            do shallowCopy t x o
+                            fastUnbox<'T> o
+                        else
+                            objCache.[id] <- x ; x
                     else
                         objCache.[id] <- x ; x
-                else
-                    objCache.[id] <- x ; x
 
-            elif ObjHeader.hasFlag flags ObjHeader.isOldCachedInstance then
-                let id = br.ReadInt64() in objCache.[id] |> fastUnbox<'T>
-            else
-                read flags
+                elif ObjHeader.hasFlag flags ObjHeader.isOldCachedInstance then
+                    let id = br.ReadInt64() in objCache.[id] |> fastUnbox<'T>
+                else
+                    read flags
+
+            with 
+            | :? SerializationException -> reraise ()
+            | e -> raise <| new SerializationException(sprintf "Error deserializing instance of type '%O'." typeof<'T>, e)
 
         member internal r.ReadRootObject(f : Pickler<'T>, id : string) =
             let id' = br.ReadString()
