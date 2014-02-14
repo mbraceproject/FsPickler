@@ -90,9 +90,9 @@ Finally, ``Pickler.func<'a,'b>`` : ``Pickler<('a -> 'b)>`` instantiates picklers
 When it comes to generic types, picklers can be defined using user-defined combinators:
 
 ```fsharp
-type BinTree<'T> = Leaf | Node of 'T * BinTree<'T> list
+type Tree<'T> = Leaf | Node of 'T * Tree<'T> list
 
-let binTree (ep : Pickler<'T>) =
+let tree (ep : Pickler<'T>) =
     Pickler.fix(fun tree ->
         tree
         |> Pickler.list
@@ -101,12 +101,12 @@ let binTree (ep : Pickler<'T>) =
         |> Pickler.wrap (function None -> Leaf | Some (t,c) -> Node(t,c))
                         (function Leaf -> None | Node (t,c) -> Some(t,c)))
                         
-Node(2,[]) |> pickle (binTree Pickler.int)
+Node(2,[]) |> pickle (tree Pickler.int)
 ```
 or it could be done using automatic resolution of type parameters:
 
 ```fsharp
-let binTree<'T> =
+let tree<'T> =
     Pickler.fix(fun tree ->
         tree
         |> Pickler.list
@@ -116,7 +116,7 @@ let binTree<'T> =
                         (function Leaf -> None | Node (t,c) -> Some(t,c)))
 
 
-Node([1],[Leaf ; Leaf]) |> pickle binTree
+Node([1],[Leaf ; Leaf]) |> pickle tree
 ```
 
 ### Experimental N-way Sum and Product Combinators
