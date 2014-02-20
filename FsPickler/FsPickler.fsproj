@@ -41,6 +41,7 @@
     <Compile Include="assemblyInfo.fs" />
     <Compile Include="Utils.fs" />
     <Compile Include="Hashing.fs" />
+    <Compile Include="PickleFormat.fs" />
     <Compile Include="Header.fs" />
     <Compile Include="Pickler.fsi" />
     <Compile Include="Pickler.fs" />
