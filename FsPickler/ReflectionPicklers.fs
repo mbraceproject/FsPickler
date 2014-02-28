@@ -478,15 +478,15 @@
         and typePickler = mkPickler PicklerInfo.ReflectionType true true (memberInfoReader >> fastUnbox<Type>) memberInfoWriter
         and methodInfoPickler = mkPickler PicklerInfo.ReflectionType true true (memberInfoReader >> fastUnbox<MethodInfo>) memberInfoWriter
 
-        let assemblyPickler =
-            mkPickler PicklerInfo.ReflectionType true true
-                (fun r -> let aI = r.Read assemblyInfoPickler in cache.LoadAssembly aI)
-                (fun w a -> let aI = cache.GetAssemblyInfo a in w.Write(assemblyInfoPickler, aI))
+//        let assemblyPickler =
+//            mkPickler PicklerInfo.ReflectionType true true
+//                (fun r -> let aI = r.Read assemblyInfoPickler in cache.LoadAssembly aI)
+//                (fun w a -> let aI = cache.GetAssemblyInfo a in w.Write(assemblyInfoPickler, aI))
 
         member __.ReflectionPicklers =
             [|
-                assemblyPickler :> Pickler
-                methodInfoPickler :> _
+//                assemblyPickler :> Pickler
+                methodInfoPickler :> Pickler
                 memberInfoPickler :> _
                 typePickler :> _
             |]
