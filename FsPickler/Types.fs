@@ -154,6 +154,25 @@
             PublicKeyToken : byte []
         }
     with
+        member t.AssemblyQualifiedName = 
+            let sb = new System.Text.StringBuilder()
+            let inline add (x:string) = sb.Append x |> ignore
+            add t.Name
+            add ", Version="
+            add (if String.IsNullOrEmpty t.Version then "0.0.0.0" else t.Version)
+            add ", Culture="
+            add (if String.IsNullOrEmpty t.Culture then "neutral" else t.Culture)
+            add ", PublicKeyToken="
+            if t.PublicKeyToken.Length = 0 then add "null"
+            else
+                for b in t.PublicKeyToken do
+                    add <| sprintf "%02x" b
+
+            sb.ToString()
+
+        member t.FullName = sprintf "%s, %s" t.Name t.AssemblyQualifiedName
+
+
         member internal tI.Assembly : AssemblyInfo =
             {
                 Name = tI.AssemblyName
