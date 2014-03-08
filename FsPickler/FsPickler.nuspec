@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
     <metadata>
         <id>FsPickler</id>
-        <version>0.8.5.1</version>
+        <version>0.8.5.3</version>
         <title>FsPickler</title>
         <authors>Eirik Tsarpalis</authors>
         <owners>Eirik Tsarpalis</owners>
@@ -23,7 +23,7 @@ Provided "as is" with no express or implied warranty.
 
 For more information, see https://github.com/eiriktsarpalis/FsPickler</description>
         <summary>A fast, general-purpose binary serializer for .NET written in F# that doubles as a pickler combinator library.</summary>
-        <releaseNotes>* Fix array deserialization issue.</releaseNotes>
+        <releaseNotes>* Minor corrections.</releaseNotes>
         <tags>F#, serializer, pickler combinators</tags>
     </metadata>
 </package>

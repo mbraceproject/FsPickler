@@ -47,8 +47,8 @@
         let an = a.GetName()
         {
             Name = an.Name
-            Version = match an.Version.ToString() with null | "" -> "0.0.0.0" | v -> v
-            Culture = match an.CultureName with null | "" -> "neutral" | c -> c
+            Version = an.Version.ToString()
+            Culture = an.CultureName
             PublicKeyToken = an.GetPublicKeyToken()
         }
 
@@ -60,7 +60,7 @@
         if useStrongNames then
 
             match aI.Version with
-            | null -> ()
+            | null | "" -> ()
             | version -> an.Version <- new Version(version)
                 
             match aI.Culture with

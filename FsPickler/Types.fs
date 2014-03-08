@@ -159,9 +159,9 @@
             let inline add (x:string) = sb.Append x |> ignore
             add t.AssemblyName
             add ", Version="
-            add t.Version
+            add (match t.Version with null | "" -> "0.0.0.0" | c -> c)
             add ", Culture="
-            add t.Culture
+            add (match t.Culture with null | "" -> "neutral" | c -> c)
             add ", PublicKeyToken="
             if t.PublicKeyToken.Length = 0 then add "null"
             else
