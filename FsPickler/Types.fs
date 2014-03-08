@@ -157,11 +157,11 @@
         member t.AssemblyQualifiedName = 
             let sb = new System.Text.StringBuilder()
             let inline add (x:string) = sb.Append x |> ignore
-            add t.Name
+            add t.AssemblyName
             add ", Version="
-            add (if String.IsNullOrEmpty t.Version then "0.0.0.0" else t.Version)
+            add t.Version
             add ", Culture="
-            add (if String.IsNullOrEmpty t.Culture then "neutral" else t.Culture)
+            add t.Culture
             add ", PublicKeyToken="
             if t.PublicKeyToken.Length = 0 then add "null"
             else

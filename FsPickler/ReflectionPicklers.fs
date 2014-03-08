@@ -47,8 +47,8 @@
         let an = a.GetName()
         {
             Name = an.Name
-            Version = an.Version.ToString()
-            Culture = an.CultureInfo.ToString()
+            Version = match an.Version.ToString() with null | "" -> "0.0.0.0" | v -> v
+            Culture = match an.CultureName with null | "" -> "neutral" | c -> c
             PublicKeyToken = an.GetPublicKeyToken()
         }
 
@@ -478,9 +478,15 @@
         and typePickler = mkPickler PicklerInfo.ReflectionType true true (memberInfoReader >> fastUnbox<Type>) memberInfoWriter
         and methodInfoPickler = mkPickler PicklerInfo.ReflectionType true true (memberInfoReader >> fastUnbox<MethodInfo>) memberInfoWriter
 
+        let assemblyPickler =
+            mkPickler PicklerInfo.ReflectionType true true
+                (fun r -> let aI = r.Read assemblyInfoPickler in cache.LoadAssembly aI)
+                (fun w a -> let aI = cache.GetAssemblyInfo a in w.Write(assemblyInfoPickler, aI))
+
         member __.ReflectionPicklers =
             [|
-                methodInfoPickler :> Pickler
+                assemblyPickler :> Pickler
+                methodInfoPickler :> _
                 memberInfoPickler :> _
                 typePickler :> _
             |]
