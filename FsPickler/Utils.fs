@@ -268,11 +268,11 @@
                     Array.exists ((=) (getCanonicalType t)) arrayIfs
 
 
-        module SerializationInfo =
-            let inline write (sI : SerializationInfo) (name : string) (x : 'T) =
+        type SerializationInfo with
+            member sI.Write<'T> (name : string, x : 'T) =
                 sI.AddValue(name, x, typeof<'T>)
 
-            let inline read<'T> (sI : SerializationInfo) (name : string) =
+            member sI.Read<'T>(name : string) =
                 sI.GetValue(name, typeof<'T>) :?> 'T
 
         type Delegate with
