@@ -20,17 +20,17 @@
     open FsPickler.CombinatorImpls
 
     /// Y combinator with parametric recursion support
-    let YParametric (externalCache : ICache<Type,Pickler>)
+    let YParametric (globalCache : ICache<Type, Exn<Pickler>>)
                     (resolverF : IPicklerResolver -> Type -> Pickler) (t : Type) =
 
         // use internal cache to avoid corruption in event of exceptions being raised
-        let internalCache = new Dictionary<Type, Pickler> ()
+        let localCache = new Dictionary<Type, Pickler> ()
 
         let rec lookup (t : Type) =
-            match externalCache.Lookup t with
-            | Some f -> f
+            match globalCache.Lookup t with
+            | Some f -> f.Value
             | None ->
-                match internalCache.TryFind t with
+                match localCache.TryFind t with
                 | Some f -> f
                 | None ->
                     // while stack overflows are unlikely here (this is a type-level traversal)
@@ -40,17 +40,27 @@
                         raise <| PicklerGenerationException(t, "insufficient execution stack.")
 
                     // start pickler construction
-                    let f = UninitializedPickler.CreateUntyped t
-                    internalCache.Add(t, f)
+                    let pickler =
+                        try
+                            let f = UninitializedPickler.CreateUntyped t
+                            localCache.Add(t, f)
 
-                    // perform recursive resolution
-                    let f' = resolverF resolver t
+                            // perform recursive resolution
+                            let f' = resolverF resolver t
                     
-                    // complete the recursive binding
-                    f.InitializeFrom f'
+                            // complete the recursive binding
+                            f.InitializeFrom f'
 
-                    // pickler construction successful, commit to external cache
-                    externalCache.Commit t f
+                            Success f
+
+                        // all pickler generations that fail due to the type being deemed
+                        // non-serializable, are to be stored in the cache as exceptions
+                        with :? NonSerializableTypeException as e -> Error e
+
+                    // pickler generation complete, commit to cache
+                    let commited = globalCache.Commit t pickler
+                    
+                    commited.Value
 
         and resolver =
             {

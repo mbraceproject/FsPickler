@@ -15,6 +15,8 @@
     open FsPickler.PicklerUtils
     open FsPickler.BasePicklers
 
+
+    let private canon = Type.GetType("System.__Canon")
     let isUnSupportedType (t : Type) =
         t.IsPointer 
         || t = typeof<System.Reflection.Pointer>
@@ -25,7 +27,7 @@
         || t.IsGenericParameter
         || t.IsGenericTypeDefinition
         || t.IsPrimitive // supported primitives should be already stored in the pickler cache        
-        || t = Type.GetType("System.__Canon")
+        || t = canon
 
 
     // creates a placeholder pickler instance
