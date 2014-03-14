@@ -1,4 +1,4 @@
-﻿namespace FsPickler.Tests
+﻿namespace Nessos.FsPickler.Tests
 
     open System
     open System.Diagnostics
@@ -8,7 +8,7 @@
     open System.Threading
     open System.Threading.Tasks
 
-    open FsPickler
+    open Nessos.FsPickler
 
     open NUnit.Framework
 

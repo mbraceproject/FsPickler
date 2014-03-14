@@ -1,9 +1,9 @@
-﻿module internal FsPickler.TuplePicklers
+﻿module internal Nessos.FsPickler.TuplePicklers
 
     open System
 
-    open FsPickler
-    open FsPickler.PicklerUtils
+    open Nessos.FsPickler
+    open Nessos.FsPickler.PicklerUtils
 
     type Tuple1Pickler () =
         static member Create(p1 : Pickler<'T1>) =

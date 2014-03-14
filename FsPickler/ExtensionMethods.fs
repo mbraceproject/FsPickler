@@ -1,7 +1,7 @@
-﻿namespace FsPickler
+﻿namespace Nessos.FsPickler
 
-    open FsPickler.PicklerUtils
-    open FsPickler.CombinatorImpls
+    open Nessos.FsPickler.PicklerUtils
+    open Nessos.FsPickler.CombinatorImpls
 
     [<AutoOpen>]
     module ExtensionMethods =

@@ -1,17 +1,17 @@
-﻿namespace FsPickler
+﻿namespace Nessos.FsPickler
 
     open System
     open System.Collections.Generic
     open System.Collections.Concurrent
 
-    open FsPickler.Utils
-    open FsPickler.TypeShape
-    open FsPickler.PicklerUtils
-    open FsPickler.BasePicklers
-    open FsPickler.ReflectionPicklers
-    open FsPickler.CombinatorImpls
-    open FsPickler.TuplePicklers
-    open FsPickler.PicklerResolution
+    open Nessos.FsPickler.Utils
+    open Nessos.FsPickler.TypeShape
+    open Nessos.FsPickler.PicklerUtils
+    open Nessos.FsPickler.BasePicklers
+    open Nessos.FsPickler.ReflectionPicklers
+    open Nessos.FsPickler.CombinatorImpls
+    open Nessos.FsPickler.TuplePicklers
+    open Nessos.FsPickler.PicklerResolution
 
     [<Sealed>]
     type CustomPicklerRegistry (name : string) =

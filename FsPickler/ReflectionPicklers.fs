@@ -1,4 +1,4 @@
-﻿module internal FsPickler.ReflectionPicklers
+﻿module internal Nessos.FsPickler.ReflectionPicklers
 
     open System
     open System.Globalization
@@ -9,9 +9,9 @@
     open System.Collections.Generic
     open System.Collections.Concurrent
 
-    open FsPickler
-    open FsPickler.Utils
-    open FsPickler.PicklerUtils
+    open Nessos.FsPickler
+    open Nessos.FsPickler.Utils
+    open Nessos.FsPickler.PicklerUtils
 
 
     /// Contains breakdown information for a MemberInfo instance

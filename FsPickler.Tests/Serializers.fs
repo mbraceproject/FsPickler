@@ -1,4 +1,4 @@
-﻿namespace FsPickler.Tests
+﻿namespace Nessos.FsPickler.Tests
     
     open System
     open System.IO
@@ -9,7 +9,7 @@
     open Newtonsoft.Json
     open ProtoBuf
 
-    open FsPickler
+    open Nessos.FsPickler
     open PerfUtil
 
     open FsUnit

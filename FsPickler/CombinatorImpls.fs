@@ -1,4 +1,4 @@
-﻿module internal FsPickler.CombinatorImpls
+﻿module internal Nessos.FsPickler.CombinatorImpls
 
     open System
     open System.Reflection
@@ -6,10 +6,10 @@
 
     open Microsoft.FSharp.Reflection
 
-    open FsPickler
-    open FsPickler.Utils
-    open FsPickler.PicklerUtils
-    open FsPickler.BasePicklers
+    open Nessos.FsPickler
+    open Nessos.FsPickler.Utils
+    open Nessos.FsPickler.PicklerUtils
+    open Nessos.FsPickler.BasePicklers
 
     //
     //  Pickler combinator Implementations

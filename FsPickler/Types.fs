@@ -1,11 +1,11 @@
-﻿namespace FsPickler
+﻿namespace Nessos.FsPickler
 
     open System
     open System.Globalization
     open System.IO
     open System.Runtime.Serialization
 
-    open FsPickler.Utils
+    open Nessos.FsPickler.Utils
 
     /// Marks a type that uses a pickler generated from a static factory method.
     type CustomPicklerAttribute () = inherit System.Attribute()

@@ -1,4 +1,4 @@
-﻿namespace FsPickler
+﻿namespace Nessos.FsPickler
 
     open System
     open System.IO
@@ -8,8 +8,8 @@
     open System.Runtime.CompilerServices
     open System.Runtime.Serialization
 
-    open FsPickler.Utils
-    open FsPickler.Header
+    open Nessos.FsPickler.Utils
+    open Nessos.FsPickler.Header
 
 
     [<AutoSerializable(false)>]

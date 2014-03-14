@@ -1,4 +1,4 @@
-﻿module internal FsPickler.PicklerResolution
+﻿module internal Nessos.FsPickler.PicklerResolution
 
     open System
     open System.Reflection
@@ -9,15 +9,15 @@
 
     open Microsoft.FSharp.Reflection
 
-    open FsPickler
-    open FsPickler.Utils
-    open FsPickler.TypeShape
-    open FsPickler.PicklerUtils
-    open FsPickler.ReflectionPicklers
-    open FsPickler.DotNetPicklers
-    open FsPickler.ArrayPickler
-    open FsPickler.FSharpPicklers
-    open FsPickler.CombinatorImpls
+    open Nessos.FsPickler
+    open Nessos.FsPickler.Utils
+    open Nessos.FsPickler.TypeShape
+    open Nessos.FsPickler.PicklerUtils
+    open Nessos.FsPickler.ReflectionPicklers
+    open Nessos.FsPickler.DotNetPicklers
+    open Nessos.FsPickler.ArrayPickler
+    open Nessos.FsPickler.FSharpPicklers
+    open Nessos.FsPickler.CombinatorImpls
 
     /// Y combinator with parametric recursion support
     let YParametric (globalCache : ICache<Type, Exn<Pickler>>)

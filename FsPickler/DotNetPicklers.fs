@@ -1,4 +1,4 @@
-﻿module internal FsPickler.DotNetPicklers
+﻿module internal Nessos.FsPickler.DotNetPicklers
 
     open System
     open System.IO
@@ -6,14 +6,14 @@
     open System.Threading
 #if EMIT_IL
     open System.Reflection.Emit
-    open FsPickler.Emit
+    open Nessos.FsPickler.Emit
 #endif
     open System.Runtime.Serialization
 
-    open FsPickler
-    open FsPickler.Utils
-    open FsPickler.PicklerUtils
-    open FsPickler.BasePicklers
+    open Nessos.FsPickler
+    open Nessos.FsPickler.Utils
+    open Nessos.FsPickler.PicklerUtils
+    open Nessos.FsPickler.BasePicklers
 
 
     let private canon = Type.GetType("System.__Canon")

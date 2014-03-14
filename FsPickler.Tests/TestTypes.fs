@@ -1,4 +1,4 @@
-﻿namespace FsPickler.Tests
+﻿namespace Nessos.FsPickler.Tests
 
     #nowarn "346"
 
@@ -7,8 +7,8 @@
     open System.Reflection
     open System.Runtime.Serialization
 
-    open FsPickler
-    open FsPickler.Combinators
+    open Nessos.FsPickler
+    open Nessos.FsPickler.Combinators
 
     module TestTypes =
 

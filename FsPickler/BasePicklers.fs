@@ -1,13 +1,13 @@
-﻿module internal FsPickler.BasePicklers
+﻿module internal Nessos.FsPickler.BasePicklers
 
     open System
     open System.Reflection
     open System.Collections.Generic
     open System.Runtime.Serialization
 
-    open FsPickler
-    open FsPickler.Utils
-    open FsPickler.PicklerUtils
+    open Nessos.FsPickler
+    open Nessos.FsPickler.Utils
+    open Nessos.FsPickler.PicklerUtils
 
     // primitive picklers : nativeint & unativeint excluded
 

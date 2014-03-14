@@ -1,4 +1,4 @@
-﻿module internal FsPickler.TypeShape
+﻿module internal Nessos.FsPickler.TypeShape
 
     // The following provides management logic for IPicklerFactory implementations.
     // Since generic types come with multiple combinations of type variables and constraints,
@@ -19,8 +19,8 @@
     open System.Reflection
     open System.Runtime.Serialization
 
-    open FsPickler
-    open FsPickler.Utils
+    open Nessos.FsPickler
+    open Nessos.FsPickler.Utils
 
     // embed peano arithmetic in System.Type
     type Peano =

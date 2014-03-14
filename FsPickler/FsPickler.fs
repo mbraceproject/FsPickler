@@ -1,4 +1,4 @@
-﻿namespace FsPickler
+﻿namespace Nessos.FsPickler
     
     open System
     open System.IO
@@ -6,9 +6,9 @@
     open System.Collections.Generic
     open System.Runtime.Serialization
 
-    open FsPickler.Utils
-    open FsPickler.Hashing
-    open FsPickler.PicklerUtils
+    open Nessos.FsPickler.Utils
+    open Nessos.FsPickler.Hashing
+    open Nessos.FsPickler.PicklerUtils
 
     type private OAttribute = System.Runtime.InteropServices.OptionalAttribute
     type private DAttribute = System.Runtime.InteropServices.DefaultParameterValueAttribute

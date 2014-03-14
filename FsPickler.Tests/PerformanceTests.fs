@@ -1,4 +1,4 @@
-﻿namespace FsPickler.Tests
+﻿namespace Nessos.FsPickler.Tests
 
     open System
 
@@ -7,9 +7,9 @@
 
     open PerfUtil
 
-    open FsPickler
-    open FsPickler.Tests.Serializer
-    open FsPickler.Tests.TestTypes
+    open Nessos.FsPickler
+    open Nessos.FsPickler.Tests.Serializer
+    open Nessos.FsPickler.Tests.TestTypes
 
 
     module PerformanceTests =

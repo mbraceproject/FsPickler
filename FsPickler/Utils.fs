@@ -1,4 +1,4 @@
-﻿namespace FsPickler
+﻿namespace Nessos.FsPickler
 
     #nowarn "1204"
     #nowarn "42"

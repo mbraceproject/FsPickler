@@ -1,11 +1,11 @@
-﻿module internal FsPickler.ArrayPickler
+﻿module internal Nessos.FsPickler.ArrayPickler
 
     open System
     open System.Reflection
 
-    open FsPickler
-    open FsPickler.Utils
-    open FsPickler.PicklerUtils
+    open Nessos.FsPickler
+    open Nessos.FsPickler.Utils
+    open Nessos.FsPickler.PicklerUtils
 
     // Array pickler combinator
 
