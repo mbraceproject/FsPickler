@@ -19,7 +19,7 @@ Get the NuGet package [here](https://www.nuget.org/packages/FsPickler/).
 The following snippet presents the basic serialization/deserialization API for FsPickler:
 
 ```fsharp
-open FsPickler
+open Nessos.FsPickler
 
 let fsp = new FsPickler()
 
@@ -53,8 +53,8 @@ and expression trees that are aggressively cached for future use.
 FsPickler offers experimental support for generating user-defined picklers using combinators:
 
 ```fsharp
-open FsPickler
-open FsPickler.Combinators
+open Nessos.FsPickler
+open Nessos.FsPickler.Combinators
 
 let p : Pickler<int * string option> = 
     Pickler.string 
