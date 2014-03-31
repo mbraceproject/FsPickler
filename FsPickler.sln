@@ -1,13 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Express 2013 for Web
-VisualStudioVersion = 12.0.21005.1
-MinimumVisualStudioVersion = 10.0.40219.1
+# Visual Studio 2012
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FsPickler", "FsPickler\FsPickler.fsproj", "{3AD987BF-F0FA-40BD-9DAE-4AF3A5FE9CC7}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FsPickler.Tests", "FsPickler.Tests\FsPickler.Tests.fsproj", "{BA81B7DB-5759-433E-A6BF-5CDA81C3BDAA}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_", "_", "{87846678-C0AD-48CD-8D7D-4224116EEB73}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{87846678-C0AD-48CD-8D7D-4224116EEB73}"
 	ProjectSection(SolutionItems) = preProject
 		build.cmd = build.cmd
 	EndProjectSection

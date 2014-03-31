@@ -18,6 +18,11 @@
 
         let runsOnMono = System.Type.GetType("Mono.Runtime") <> null
 
+        // Detect current core library version at runtime
+        // as suggested in http://stackoverflow.com/a/8543850
+        let isDotNet45OrNewer =
+            Type.GetType("System.Reflection.ReflectionContext") <> null
+
         // TODO: include in serialization header
         let versionTag = 
             let version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version
@@ -454,20 +459,12 @@
                 |> Seq.distinct
                 |> Seq.forall (fun f -> isOfFixedSize f.FieldType)
 
-    [<AutoOpen>]
-    module internal Extensions =
-        open System
-        open System.IO
-        open System.Reflection
-        open System.Text
 
-        #if NET40
 
-        type AssemblyName with
-            member this.CultureName = this.CultureInfo.Name
+        // .NET 4.0 backwards compatibility
 
         [<Sealed>]
-        type private NonClosingStreamWrapper(s: Stream) =
+        type NonClosingStreamWrapper(s: Stream) =
             inherit Stream()
 
             let mutable closed = false
@@ -475,7 +472,7 @@
 
             let cc () =
                 if closed then
-                    failwith "NonClosingStreamWrapper has been closed or disposed"
+                    raise <| ObjectDisposedException("Stream has been closed or disposed")
 
             override w.BeginRead(a, b, c, d, e) = cc (); s.BeginRead(a, b, c, d, e)
             override w.BeginWrite(a, b, c, d, e) = cc (); s.BeginWrite(a, b, c, d, e)
@@ -511,6 +508,12 @@
 
         type BinaryWriter with
             static member Create(output: Stream, encoding: Encoding, leaveOpen: bool) =
+#if NET40
+#else
+                if isDotNet45OrNewer then
+                    new BinaryWriter(output, encoding, leaveOpen)
+                else
+#endif
                 if leaveOpen then
                     new BinaryWriter(new NonClosingStreamWrapper(output), encoding)
                 else
@@ -518,19 +521,13 @@
 
         type BinaryReader with
             static member Create(output: Stream, encoding: Encoding, leaveOpen: bool) =
+#if NET40
+#else
+                if isDotNet45OrNewer then
+                    new BinaryReader(output, encoding, leaveOpen)
+                else
+#endif
                 if leaveOpen then
                     new BinaryReader(new NonClosingStreamWrapper(output), encoding)
                 else
                     new BinaryReader(output, encoding)
-
-        #else
-
-        type BinaryWriter with
-            static member Create(output: Stream, encoding: Encoding, leaveOpen: bool) =
-                new BinaryWriter(output, encoding, leaveOpen)
-
-        type BinaryReader with
-            static member Create(output: Stream, encoding: Encoding, leaveOpen: bool) =
-                new BinaryReader(output, encoding, leaveOpen)
-
-        #endif

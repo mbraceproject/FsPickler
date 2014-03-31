@@ -21,7 +21,8 @@
     <DefineConstants>TRACE;DEBUG;OPTIMIZE_FSHARP;EMIT_IL</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\Debug\FsPickler.xml</DocumentationFile>
-    <OtherFlags></OtherFlags>
+    <OtherFlags>
+    </OtherFlags>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <TargetFrameworkProfile />
   </PropertyGroup>

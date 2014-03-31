@@ -48,7 +48,7 @@
         {
             Name = an.Name
             Version = an.Version.ToString()
-            Culture = an.CultureName
+            Culture = an.CultureInfo.Name
             PublicKeyToken = an.GetPublicKeyToken()
         }
 
