@@ -1,0 +1,14 @@
+﻿<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <Target Name="Build">
+    <MSBuild Projects="../FsPickler/FsPickler.fsproj" Properties="Configuration=Rel40" />
+    <MSBuild Projects="../FsPickler/FsPickler.fsproj" Properties="Configuration=Rel45" />
+  </Target>
+  <Target Name="Clean">
+    <MSBuild Projects="../FsPickler/FsPickler.fsproj" Properties="Configuration=Rel40" Targets="Clean" />
+    <MSBuild Projects="../FsPickler/FsPickler.fsproj" Properties="Configuration=Rel45" Targets="Clean" />
+    <ItemGroup>
+      <BuildFiles Include="../build/**/*.*" />
+    </ItemGroup>
+    <Delete Files="@(BuildFiles)" />
+  </Target>
+</Project>
