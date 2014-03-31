@@ -159,6 +159,7 @@
                     cache'.TryAdd(s,t) |> ignore
                     t
 
+
         // produces a structural hashcode out of a byte array
         let getByteHashCode (bs : byte []) =
             let n = bs.Length
