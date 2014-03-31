@@ -38,7 +38,6 @@
         | Event of Type * (* name *) string * (* isStatic *) bool
         | Unknown of Type * string
 
-
     //
     //  Assembly Loading Code
     //
@@ -48,7 +47,7 @@
         {
             Name = an.Name
             Version = an.Version.ToString()
-            Culture = an.CultureName
+            Culture = an.CultureInfo.Name
             PublicKeyToken = an.GetPublicKeyToken()
         }
 

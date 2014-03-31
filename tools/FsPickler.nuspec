@@ -29,7 +29,7 @@ For more information, see https://github.com/eiriktsarpalis/FsPickler</descripti
    <files>
      <file src="..\build\net40\FsPickler.dll" target="lib\net40" />
      <file src="..\build\net40\FsPickler.xml" target="lib\net40" />
-     <file src="..\build\net45\FsPickler.dll" target="lib\net45" />
-     <file src="..\build\net45\FsPickler.xml" target="lib\net45" />
+     <!--<file src="..\build\net45\FsPickler.dll" target="lib\net45" />
+     <file src="..\build\net45\FsPickler.xml" target="lib\net45" />-->
    </files>
 </package>

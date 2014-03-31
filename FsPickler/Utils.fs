@@ -459,12 +459,9 @@
         open System
         open System.IO
         open System.Reflection
+        open System.Linq
+        open System.Linq.Expressions
         open System.Text
-
-        #if NET40
-
-        type AssemblyName with
-            member this.CultureName = this.CultureInfo.Name
 
         [<Sealed>]
         type private NonClosingStreamWrapper(s: Stream) =
@@ -509,28 +506,31 @@
             override w.ReadTimeout = cc (); s.ReadTimeout
             override w.WriteTimeout = cc (); s.WriteTimeout
 
-        type BinaryWriter with
-            static member Create(output: Stream, encoding: Encoding, leaveOpen: bool) =
-                if leaveOpen then
-                    new BinaryWriter(new NonClosingStreamWrapper(output), encoding)
-                else
-                    new BinaryWriter(output, encoding)
+        type private BinaryPortFactory<'T> =
+            delegate of Stream * Encoding * bool -> 'T
+
+        let inline private getBinaryPortFactory<'T> (make: Stream -> Encoding -> 'T) =
+            let types = [| typeof<Stream>; typeof<Encoding>; typeof<bool> |]
+            match typeof<'T>.GetConstructor(types) with
+            | null ->
+                BinaryPortFactory<'T>(fun s e o ->
+                    if o then
+                        make (new NonClosingStreamWrapper(s)) e
+                    else
+                        make s e)
+            | ctor ->
+                let parameters = [for t in types -> Expression.Parameter(t)]
+                let ctor = typeof<'T>.GetConstructor(types)
+                let body = Expression.New(ctor, [for p in parameters -> p :> Expression])
+                Expression.Lambda<BinaryPortFactory<'T>>(body, parameters).Compile()
+
+        let private binaryReaderFactory = getBinaryPortFactory (fun s e -> new BinaryReader(s, e))
+        let private binaryWriterFactory = getBinaryPortFactory (fun s e -> new BinaryWriter(s, e))
 
         type BinaryReader with
-            static member Create(output: Stream, encoding: Encoding, leaveOpen: bool) =
-                if leaveOpen then
-                    new BinaryReader(new NonClosingStreamWrapper(output), encoding)
-                else
-                    new BinaryReader(output, encoding)
-
-        #else
+            static member Create(stream, encoding, leaveOpen) =
+                binaryReaderFactory.Invoke(stream, encoding, leaveOpen)
 
         type BinaryWriter with
-            static member Create(output: Stream, encoding: Encoding, leaveOpen: bool) =
-                new BinaryWriter(output, encoding, leaveOpen)
-
-        type BinaryReader with
-            static member Create(output: Stream, encoding: Encoding, leaveOpen: bool) =
-                new BinaryReader(output, encoding, leaveOpen)
-
-        #endif
+            static member Create(stream, encoding, leaveOpen) =
+                binaryWriterFactory.Invoke(stream, encoding, leaveOpen)
