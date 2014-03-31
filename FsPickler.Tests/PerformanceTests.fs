@@ -242,6 +242,8 @@
             roundtrips 1000 quotationLarge s
 
 
+#if PERFTESTS
+
     type ``Serializer Comparison`` () =
         inherit NUnitPerf<ISerializer>()
 
@@ -282,3 +284,5 @@
         [<TestFixtureTearDown>]
         member __.Persist() =
             if persistResults then tester.PersistCurrentResults ()
+
+#endif

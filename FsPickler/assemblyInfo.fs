@@ -1,10 +1,9 @@
-﻿namespace Nessos.FsPickler
+﻿namespace System
+open System.Reflection
 
-    open System.Reflection
+[<assembly: AssemblyVersionAttribute("0.8.7")>]
+[<assembly: AssemblyFileVersionAttribute("0.8.7")>]
+do ()
 
-    [<assembly:AssemblyVersion("0.8.5.*")>]
-    do ()
-
-    module internal Config =
-        [<Literal>]
-        let optimizeForLittleEndian = true
+module internal AssemblyVersionInformation =
+    let [<Literal>] Version = "0.8.7"

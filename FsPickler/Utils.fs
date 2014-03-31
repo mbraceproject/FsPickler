@@ -3,6 +3,10 @@
     #nowarn "1204"
     #nowarn "42"
 
+    module internal Config =
+        [<Literal>]
+        let optimizeForLittleEndian = true
+
     module internal Utils =
         
         open System
