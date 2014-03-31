@@ -9,7 +9,7 @@
         <copyright>Eirik Tsarpalis</copyright>
         <projectUrl>https://github.com/eiriktsarpalis/FsPickler/</projectUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
-		<iconUrl>http://www.m-brace.net/media/pickler.jpg</iconUrl>
+        <iconUrl>http://www.m-brace.net/media/pickler.jpg</iconUrl>
         <licenseUrl>https://github.com/eiriktsarpalis/FsPickler/blob/master/License.md</licenseUrl>
         <description>* Based on the notion of pickler combinators.
 * Provides an automated, strongly typed, pickler generation framework.
@@ -26,4 +26,10 @@ For more information, see https://github.com/eiriktsarpalis/FsPickler</descripti
         <releaseNotes>* Minor corrections.</releaseNotes>
         <tags>F#, serializer, pickler combinators</tags>
     </metadata>
+   <files>
+     <file src="..\build\net40\FsPickler.dll" target="lib\net40" />
+     <file src="..\build\net40\FsPickler.xml" target="lib\net40" />
+     <file src="..\build\net45\FsPickler.dll" target="lib\net45" />
+     <file src="..\build\net45\FsPickler.xml" target="lib\net45" />
+   </files>
 </package>
