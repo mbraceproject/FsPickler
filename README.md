@@ -306,12 +306,10 @@ If a hashcode is not required, the size of an object alone can be computed as fo
 val it : int64 = 4000008L
 ```
 
-
 ### Future work
 
 * Support for multiple pickle formats.
 * A C# friendly API.
-
 
 ### Build Status
 
