@@ -315,4 +315,4 @@ val it : int64 = 4000008L
 
 ### Build Status
 
-Head (branch ``master``), Mono 3.x, OSX, build & unit tests (Travis) [![Build Status](https://travis-ci.org/nessos/FsPickler?branch=master)](https://travis-ci.org/nessos/FsPickler/branches)
+Head (branch ``master``), Mono 3.x, OSX, build & unit tests (Travis) [![Build Status](https://travis-ci.org/nessos/FsPickler.png?branch=master)](https://travis-ci.org/nessos/FsPickler/branches)
