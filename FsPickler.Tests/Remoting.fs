@@ -145,13 +145,7 @@
 
             let psi = new ProcessStartInfo()
 
-            if runsOnMono && System.IO.File.Exists "/usr/bin/env" then
-                // http://www.youtube.com/watch?v=dFUlAQZB9Ng
-                psi.FileName <- "/usr/bin/env"
-                psi.Arguments <- sprintf "xterm -e /usr/bin/env mono \"%s\"" thisExe
-            else
-                psi.FileName <- thisExe
-                
+            psi.FileName <- thisExe    
             psi.WorkingDirectory <- Path.GetDirectoryName thisExe
 
             let p = Process.Start psi

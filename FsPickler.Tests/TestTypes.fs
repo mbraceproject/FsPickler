@@ -240,8 +240,8 @@
             let fscs = testSerializer.FSCS
 
             let filterType (t : Type) =
-                try fscs.IsSerializableType t
-                with _ -> true
+                try not <| t.Namespace.StartsWith "System.Reflection" && fscs.IsSerializableType t
+                with _ -> false
 
             let tryActivate (t : Type) =
                 try Some (t, Activator.CreateInstance t)
