@@ -14,6 +14,10 @@ that doubles as a pickler combinator library.
 
 Get the NuGet package [here](https://www.nuget.org/packages/FsPickler/).
 
+### Build Status
+
+Head (branch ``master``), Mono 3.x, OSX, build & unit tests (Travis) [![Build Status](https://travis-ci.org/nessos/FsPickler.png?branch=master)](https://travis-ci.org/nessos/FsPickler/branches)
+
 ### Basic Usage
 
 The following snippet presents the basic serialization/deserialization API for FsPickler:
@@ -310,7 +314,3 @@ val it : int64 = 4000008L
 
 * Support for multiple pickle formats.
 * A C# friendly API.
-
-### Build Status
-
-Head (branch ``master``), Mono 3.x, OSX, build & unit tests (Travis) [![Build Status](https://travis-ci.org/nessos/FsPickler.png?branch=master)](https://travis-ci.org/nessos/FsPickler/branches)
