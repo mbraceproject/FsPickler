@@ -23,6 +23,16 @@
             member __.Bind(f : Task<'T>, g : 'T -> Async<'S>) = __.Bind(Async.AwaitTask f, g)
             member __.Bind(f : Task, g : unit -> Async<'S>) = __.Bind(f.ContinueWith ignore |> Async.AwaitTask, g)
 
+        module Disposable =
+            let combine (components : seq<IDisposable>) =
+                let components = Seq.toList components
+                {
+                    new IDisposable with
+                        member __.Dispose () =
+                            for d in components do
+                                d.Dispose()
+                }
+
         type Stream with
             member s.AsyncWriteBytes (bytes : byte []) =
                 async {

@@ -131,26 +131,39 @@
 
     type ServerManager(testedSerializer : ISerializer, ?port : int) =
         let port = defaultArg port ServerDefaults.port
-        let mutable proc = None : Process option
+        let proc : (Process * IDisposable) option ref = ref None 
 
         let isActive () = 
-            match proc with
-            | Some p when not p.HasExited -> true
+            match !proc with
+            | Some (p,_) when not p.HasExited -> true
             | _ -> false
         
         member __.Start() =
-            if isActive () then failwith "server already running"
+            lock proc (fun () ->
+                if isActive () then failwith "server already running"
 
-            let thisExe = System.IO.Path.GetFullPath("FsPickler.Tests.exe")
+                let thisExe = System.IO.Path.GetFullPath("FsPickler.Tests.exe")
 
-            let psi = new ProcessStartInfo()
+                let psi = new ProcessStartInfo()
 
-            psi.FileName <- thisExe    
-            psi.WorkingDirectory <- Path.GetDirectoryName thisExe
+                psi.FileName <- thisExe    
+                psi.WorkingDirectory <- Path.GetDirectoryName thisExe
+                psi.UseShellExecute <- false
+                psi.CreateNoWindow <- true
+                psi.RedirectStandardOutput <- true
+                psi.RedirectStandardError <- true
 
-            let p = Process.Start psi
+                let p = Process.Start psi
 
-            proc <- Some p
+                let d1 = p.OutputDataReceived.Subscribe(fun args -> Console.WriteLine args.Data)
+                let d2 = p.ErrorDataReceived.Subscribe(fun args -> Console.Error.WriteLine args.Data)
+                let d = Disposable.combine [d1 ; d2]
+
+                p.EnableRaisingEvents <- true
+                p.BeginOutputReadLine()
+                p.BeginErrorReadLine()
+
+                proc := Some (p,d))
 
         member __.GetClient() =
             if isActive() then new SerializationClient(testedSerializer, port = port)
@@ -158,7 +171,11 @@
                 failwith "server is not running"
 
         member __.Stop () =
-            if isActive() then
-                proc <- None
-            else
-                failwith "server is not running"
+            lock proc (fun () ->
+                match !proc with
+                | Some (p,d) ->
+                    if not p.HasExited then p.Kill()
+                    d.Dispose()
+                    proc := None
+                | None ->
+                    failwith "server is not running")
