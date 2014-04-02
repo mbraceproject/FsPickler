@@ -25,7 +25,7 @@
 
         module Disposable =
             let combine (components : seq<IDisposable>) =
-                let components = Seq.toList components
+                let components = Seq.toArray components
                 {
                     new IDisposable with
                         member __.Dispose () =

@@ -155,8 +155,8 @@
 
                 let p = Process.Start psi
 
-                let d1 = p.OutputDataReceived.Subscribe(fun args -> Console.WriteLine args.Data)
-                let d2 = p.ErrorDataReceived.Subscribe(fun args -> Console.Error.WriteLine args.Data)
+                let d1 = p.OutputDataReceived.Subscribe(fun (args : DataReceivedEventArgs) -> Console.WriteLine args.Data)
+                let d2 = p.ErrorDataReceived.Subscribe(fun (args : DataReceivedEventArgs) -> Console.Error.WriteLine args.Data)
                 let d = Disposable.combine [d1 ; d2]
 
                 p.EnableRaisingEvents <- true
