@@ -240,8 +240,9 @@
             let fscs = testSerializer.FSCS
 
             let filterType (t : Type) =
-                if t.Namespace.StartsWith "System.Reflection" then false
-                else
+                match t.Namespace with
+                | "System.Reflection" -> false // System.Reflection.Assembly.ToString() in mono may cause runtime to die
+                | _ ->
                     try fscs.IsSerializableType t with _ -> true
 
             let tryActivate (t : Type) =
