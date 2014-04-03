@@ -240,7 +240,7 @@
             let fscs = testSerializer.FSCS
 
             let filterType (t : Type) =
-                if t.Name.StartsWith "System.Reflection" then false
+                if t.Namespace.StartsWith "System.Reflection" then false
                 else
                     try fscs.IsSerializableType t with _ -> true
 
