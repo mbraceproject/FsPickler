@@ -59,9 +59,21 @@
   <PropertyGroup Condition="'$(VisualStudioVersion)' == '11.0' Or $(OS) != 'Windows_NT'">
     <FSharpTargetsPath>$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets</FSharpTargetsPath>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'NoEmit|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <Tailcalls>true</Tailcalls>
+    <DefineConstants>TRACE;PROTECT_STACK_OVERFLOWS;OPTIMIZE_FSHARP;SERIALIZE_STRONG_NAMES</DefineConstants>
+    <WarningLevel>3</WarningLevel>
+    <DocumentationFile>bin\Release\FsPickler.xml</DocumentationFile>
+    <KeyOriginatorFile Condition="Exists('../../Lib/key.snk')">../../Lib/key.snk</KeyOriginatorFile>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkProfile />
+    <OutputPath>bin\Release\</OutputPath>
+  </PropertyGroup>
   <Import Project="$(FSharpTargetsPath)" Condition="Exists('$(FSharpTargetsPath)')" />
   <ItemGroup>
-	<Compile Include="assemblyInfo.fs" />
+    <Compile Include="assemblyInfo.fs" />
     <Compile Include="Utils.fs" />
     <Compile Include="Hashing.fs" />
     <Compile Include="Header.fs" />

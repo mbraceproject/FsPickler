@@ -83,12 +83,14 @@ Target "Clean" (fun _ ->
 //// --------------------------------------------------------------------------------------
 //// Build library & test project
 
+let configuration = environVarOrDefault "Configuration" "Release"
+
 Target "Build" (fun _ ->
     // Build the rest of the project
     { BaseDirectory = __SOURCE_DIRECTORY__
       Includes = [ project + ".sln" ]
       Excludes = [] } 
-    |> MSBuildRelease "" "Build"
+    |> MSBuild "" "Build" ["Configuration", configuration]
     |> Log "AppBuild-Output: "
 )
 
