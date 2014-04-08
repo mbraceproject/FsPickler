@@ -86,7 +86,7 @@
         let write (s : ISerializer) (x : 'T) =
             use m = new MemoryStream()
             s.Serialize(m, x)
-            m.ToArray()
+            m.GetBuffer()
 
         let read (s : ISerializer) (bytes : byte []) =
             use m = new MemoryStream(bytes)
@@ -94,7 +94,6 @@
 
         type ImmortalMemoryStream() =
             inherit MemoryStream()
-
             override __.Close() = ()
 
         let roundtrip (x : 'T) (s : ISerializer) =
