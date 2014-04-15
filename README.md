@@ -16,7 +16,11 @@ Get the NuGet package [here](https://www.nuget.org/packages/FsPickler/).
 
 ### Build Status
 
-Head (branch ``master``), Mono 3.x, OSX, build & unit tests (Travis) [![Build Status](https://travis-ci.org/nessos/FsPickler.png?branch=master)](https://travis-ci.org/nessos/FsPickler/branches)
+Head (branch `master`), Build & Unit tests
+
+Windows/.NET [![Build status](https://ci.appveyor.com/api/projects/status/wqhmeo9bgipg92ew)](https://ci.appveyor.com/project/nessos/vagrant)
+
+Mac OS X/Mono 3.2 [![Build Status](https://travis-ci.org/nessos/FsPickler.png?branch=master)](https://travis-ci.org/nessos/FsPickler/branches)
 
 ### Basic Usage
 
