@@ -76,7 +76,7 @@
     type ProtoBufSerializer () =
         
         interface ISerializer with
-            member __.Name = "ProtoBuf.Net"
+            member __.Name = "ProtoBuf-Net"
             member __.Serialize(stream : Stream, x : 'T) = ProtoBuf.Serializer.Serialize(stream, x)
             member __.Deserialize(stream : Stream) = ProtoBuf.Serializer.Deserialize<'T>(stream)
 
