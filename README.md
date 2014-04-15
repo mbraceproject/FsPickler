@@ -18,7 +18,7 @@ Get the NuGet package [here](https://www.nuget.org/packages/FsPickler/).
 
 Head (branch `master`), Build & Unit tests
 
-Windows/.NET [![Build status](https://ci.appveyor.com/api/projects/status/wqhmeo9bgipg92ew)](https://ci.appveyor.com/project/nessos/vagrant)
+Windows/.NET [![Build status](https://ci.appveyor.com/api/projects/status/vwthnxgal50ua8ej)](https://ci.appveyor.com/project/nessos/fspickler)
 
 Mac OS X/Mono 3.2 [![Build Status](https://travis-ci.org/nessos/FsPickler.png?branch=master)](https://travis-ci.org/nessos/FsPickler/branches)
 
