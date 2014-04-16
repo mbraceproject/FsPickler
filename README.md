@@ -5,14 +5,10 @@ that doubles as a pickler combinator library.
 
 * Based on the notion of pickler combinators.
 * Provides an automated, strongly typed, pickler generation framework.
-* Full support for .NET types, including classes and open hierarchies.
-* Fully backwards compatible with .Net serialization, including the ``ISerializable`` interface.
+* Full support for .NET serialization, including classes and open hierarchies.
 * Highly optimized for F# core types.
-* Performance about 5-100x faster than the default .NET serializers.
+* One of the [fastest serializers](https://github.com/eiriktsarpalis/FsPickler/wiki/Performance) for the .NET framework.
 * Full support for the mono framework.
-* It is [*fast*](https://github.com/eiriktsarpalis/FsPickler/wiki/Performance).
-
-Get the NuGet package [here](https://www.nuget.org/packages/FsPickler/).
 
 ### Build Status
 
