@@ -1,3 +1,6 @@
+#### 0.8.6.2
+* Add StreamingContext option to Pickle/Unpickle methods
+
 #### 0.8.6.1
 * Support .NET 4.0 runtimes
 * Add FAKE support
