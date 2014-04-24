@@ -100,7 +100,11 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="PerfUtil">
-      <HintPath>..\packages\PerfUtil.0.1.4\lib\net45\PerfUtil.dll</HintPath>
+      <HintPath>..\packages\PerfUtil.0.1.5\lib\net40\PerfUtil.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="PerfUtil.NUnit">
+      <HintPath>..\packages\PerfUtil.NUnit.0.1.5\lib\net40\PerfUtil.NUnit.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="protobuf-net">
