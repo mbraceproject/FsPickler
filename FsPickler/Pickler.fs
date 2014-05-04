@@ -515,7 +515,7 @@
                             // deserialization reached root level of a cyclic object
                             // perform fixup by doing reflection-based field copying
                             let t,o = contents
-                            do shallowCopy t x o
+                            do ShallowObjectCopier.Copy t x o
                             fastUnbox<'T> o
                         else
                             objCache.[id] <- x ; x

@@ -74,6 +74,7 @@
   <Import Project="$(FSharpTargetsPath)" Condition="Exists('$(FSharpTargetsPath)')" />
   <ItemGroup>
     <Compile Include="assemblyInfo.fs" />
+    <Compile Include="Emit.fs" />
     <Compile Include="Utils.fs" />
     <Compile Include="Hashing.fs" />
     <Compile Include="Header.fs" />
@@ -81,7 +82,6 @@
     <Compile Include="Pickler.fs" />
     <Compile Include="Types.fs" />
     <Compile Include="PicklerUtils.fs" />
-    <Compile Include="Emit.fs" />
     <Compile Include="BasePicklers.fs" />
     <Compile Include="ReflectionPicklers.fs" />
     <Compile Include="DotNetPicklers.fs" />
