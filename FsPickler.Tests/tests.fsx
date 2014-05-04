@@ -6,7 +6,7 @@
 #r "bin/Release/FsPickler.dll"
 #r "bin/Release/FsPickler.Tests.exe"
 
-#load "../packages/FSharp.Charting.0.90.5/FSharp.Charting.fsx"
+#load "../packages/FSharp.Charting.0.90.6/FSharp.Charting.fsx"
 
 open System
 open System.Drawing
