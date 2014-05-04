@@ -274,10 +274,10 @@
         member internal w.Resolver = resolver
 
         // the primary serialization routine; handles all the caching, subtype resolution logic, etc
-        member w.Write<'T> (fmt : Pickler<'T>, x : 'T) =
+        member w.Write<'T> (pickler : Pickler<'T>, x : 'T) =
 
             let inline writeHeader (flags : byte) =
-                bw.Write(ObjHeader.create fmt.PicklerFlags flags)
+                bw.Write(ObjHeader.create pickler.PicklerFlags flags)
 
             // ad-hoc System.Type caching
             let inline writeType (t : Type) =
@@ -290,25 +290,25 @@
                     bw.Write id
 
             let inline write header =
-                if fmt.TypeKind <= TypeKind.Sealed || fmt.UseWithSubtypes then
+                if pickler.TypeKind <= TypeKind.Sealed || pickler.UseWithSubtypes then
                     writeHeader header
-                    fmt.Write w x
+                    pickler.Write w x
                 else
                     // object might be of proper subtype, perform reflection resolution
                     let t0 = x.GetType()
-                    if t0 <> fmt.Type then
-                        let fmt' = resolver.Resolve t0
+                    if t0 <> pickler.Type then
+                        let pickler' = resolver.Resolve t0
                         writeHeader (header ||| ObjHeader.isProperSubtype)
                         writeType t0
-                        fmt'.UntypedWrite(w, x, managed = false)
+                        pickler'.UntypedWrite(w, x, managed = false)
                     else
                         writeHeader header
-                        fmt.Write w x
+                        pickler.Write w x
 
             try
-                if fmt.TypeKind <= TypeKind.Value then 
+                if pickler.TypeKind <= TypeKind.Value then 
                     writeHeader ObjHeader.empty
-                    fmt.Write w x
+                    pickler.Write w x
 
                 elif obj.ReferenceEquals(x, null) then writeHeader ObjHeader.isNull else
 
@@ -316,11 +316,11 @@
                 do RuntimeHelpers.EnsureSufficientExecutionStack()
 #endif
 
-                if fmt.IsCacheByRef || fmt.IsCyclicType then
+                if pickler.IsCacheByRef || pickler.IsCyclicType then
                     let id, firstOccurence = idGen.GetId x
 
                     if firstOccurence then
-                        if fmt.IsCyclicType then 
+                        if pickler.IsCyclicType then 
                             // push id to the symbolic stack to detect cyclic objects during traversal
                             objStack.Push id
 
@@ -331,15 +331,15 @@
                         else
                             write ObjHeader.isNewCachedInstance
 
-                    elif fmt.IsCyclicType && objStack.Contains id && not <| cyclicObjects.Contains id then
+                    elif pickler.IsCyclicType && objStack.Contains id && not <| cyclicObjects.Contains id then
                         // came across cyclic object, record fixup-related data
                         // cyclic objects are handled once per instance
                         // instances of cyclic arrays are handled differently than other reference types
 
                         do cyclicObjects.Add(id) |> ignore
                     
-                        if fmt.TypeKind <= TypeKind.Sealed || fmt.UseWithSubtypes then
-                            if fmt.TypeKind = TypeKind.Array then
+                        if pickler.TypeKind <= TypeKind.Sealed || pickler.UseWithSubtypes then
+                            if pickler.TypeKind = TypeKind.Array then
                                 writeHeader ObjHeader.isOldCachedInstance
                             else
                                 writeHeader ObjHeader.isCyclicInstance
@@ -348,7 +348,7 @@
 
                             if t.IsArray then
                                 writeHeader ObjHeader.isOldCachedInstance
-                            elif t <> fmt.Type then
+                            elif t <> pickler.Type then
                                 writeHeader (ObjHeader.isCyclicInstance ||| ObjHeader.isProperSubtype)
                                 writeType t
                             else
@@ -367,33 +367,34 @@
             | e -> raise <| new SerializationException(sprintf "Error serializing instance of type '%O'." typeof<'T>, e)
 
         member internal w.WriteRootObject(f : Pickler<'T>, id : string, x : 'T) =
+            bw.Write ObjHeader.initByte
             bw.Write id
             w.Write(f, x)
 
         // efficient sequence serialization; must be used as top-level operation only
-        member internal w.WriteSequence<'T>(f : Pickler<'T>, id : string, xs : seq<'T>) : int =
+        member internal w.WriteSequence<'T>(pickler : Pickler<'T>, id : string, xs : seq<'T>) : int =
             let inline flushState () =
                 idGen <- new ObjectIDGenerator()
                 
-            let isPrimitive = f.TypeKind = TypeKind.Primitive
-            let isNonAtomic = f.PicklerInfo <> PicklerInfo.Atomic
+            let isPrimitive = pickler.TypeKind = TypeKind.Primitive
+            let isNonAtomic = pickler.PicklerInfo <> PicklerInfo.Atomic
 
             let inline write idx (x : 'T) =
-                if isPrimitive then f.Write w x
+                if isPrimitive then pickler.Write w x
                 elif isNonAtomic then
                     if idx % sequenceCounterResetThreshold = 0 then
                         flushState ()
-                    w.Write(f, x)
+                    w.Write(pickler, x)
                 elif obj.ReferenceEquals(x, null) then
                     bw.Write true
                 else
                     bw.Write false 
-                    f.Write w x
+                    pickler.Write w x
 
             // write id
             bw.Write id
             // write sequence header
-            bw.Write(ObjHeader.create f.PicklerFlags ObjHeader.isSequenceHeader)
+            bw.Write(ObjHeader.create pickler.PicklerFlags ObjHeader.isSequenceHeader)
             
             // specialize enumeration
             match xs with
@@ -454,7 +455,7 @@
 
 
         // the primary deserialization routine; handles all the caching, subtype resolution logic, etc
-        member r.Read(fmt : Pickler<'T>) : 'T =
+        member r.Read(pickler : Pickler<'T>) : 'T =
 
             // ad-hoc System.Type caching
             let inline readType () =
@@ -471,23 +472,23 @@
             let inline read flags =
                 if ObjHeader.hasFlag flags ObjHeader.isProperSubtype then
                     let t = readType ()
-                    let fmt' = resolver.Resolve t
-                    fmt'.UntypedRead(r, managed = false) |> fastUnbox<'T>
+                    let pickler' = resolver.Resolve t
+                    pickler'.UntypedRead(r, managed = false) |> fastUnbox<'T>
                 else
-                    fmt.Read r
+                    pickler.Read r
 
             try
-                let flags = ObjHeader.read fmt.Type fmt.PicklerFlags (br.ReadUInt32())
+                let flags = ObjHeader.read pickler.Type pickler.PicklerFlags (br.ReadUInt32())
 
                 if ObjHeader.hasFlag flags ObjHeader.isNull then fastUnbox<'T> null
-                elif fmt.TypeKind <= TypeKind.Value then fmt.Read r
+                elif pickler.TypeKind <= TypeKind.Value then pickler.Read r
                 elif ObjHeader.hasFlag flags ObjHeader.isCyclicInstance then
                     // came across a nested instance of a cyclic object
                     // add an uninitialized object to the cache and schedule
                     // reflection-based fixup at the root level.
                     let t =
                         if ObjHeader.hasFlag flags ObjHeader.isProperSubtype then readType ()
-                        else fmt.Type
+                        else pickler.Type
 
                     let id = br.ReadInt64()
 
@@ -501,13 +502,13 @@
 
                 elif ObjHeader.hasFlag flags ObjHeader.isNewCachedInstance then
                     let id = counter
-                    if fmt.TypeKind = TypeKind.Array || fmt.TypeKind = TypeKind.ArrayCompatible then
+                    if pickler.TypeKind = TypeKind.Array || pickler.TypeKind = TypeKind.ArrayCompatible then
                         currentDeserializedArrayId <- id
                     counter <- counter + 1L
 
                     let x = read flags
 
-                    if fmt.IsCyclicType then 
+                    if pickler.IsCyclicType then 
                         let found, contents = fixupIndex.TryGetValue id
 
                         if found then
@@ -531,30 +532,34 @@
             | e -> raise <| new SerializationException(sprintf "Error deserializing instance of type '%O'." typeof<'T>, e)
 
         member internal r.ReadRootObject(f : Pickler<'T>, id : string) =
+            if br.ReadByte() <> ObjHeader.initByte then
+                raise <| new SerializationException ("FsPickler: invalid stream data.")
+
             let id' = br.ReadString()
             if id <> id' then
                 let msg = sprintf "FsPickler: Root object is of type '%s', expected '%s'." id' id
                 raise <| new SerializationException(msg)
+
             r.Read f
 
         // efficient sequence deserialization; must be used as top-level operation only
-        member internal r.ReadSequence<'T> (f : Pickler<'T>, id : string, length : int) =
+        member internal r.ReadSequence<'T> (pickler : Pickler<'T>, id : string, length : int) =
             let inline flushState () =
                 objCache.Clear ()
                 counter <- 1L
 
-            let isPrimitive = f.TypeKind = TypeKind.Primitive
-            let isNonAtomic = f.PicklerInfo <> PicklerInfo.Atomic
+            let isPrimitive = pickler.TypeKind = TypeKind.Primitive
+            let isNonAtomic = pickler.PicklerInfo <> PicklerInfo.Atomic
 
             let read idx =
-                if isPrimitive then f.Read r
+                if isPrimitive then pickler.Read r
                 elif isNonAtomic then
                     if idx % sequenceCounterResetThreshold = 0 then
                         flushState ()
-                    r.Read f
+                    r.Read pickler
                 elif br.ReadBoolean () then fastUnbox<'T> null
                 else
-                    f.Read r
+                    pickler.Read r
 
             // read id
             let id' = br.ReadString()
@@ -563,7 +568,7 @@
                 raise <| new SerializationException(msg)
             
             // read object header
-            match ObjHeader.read f.Type f.PicklerFlags (br.ReadUInt32()) with
+            match ObjHeader.read pickler.Type pickler.PicklerFlags (br.ReadUInt32()) with
             | ObjHeader.isSequenceHeader -> ()
             | _ -> 
                 let msg = "FsPickler: invalid stream data; expected sequence serialization."
