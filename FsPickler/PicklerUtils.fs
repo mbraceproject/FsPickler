@@ -79,71 +79,74 @@
         //  internal read/write combinators
         //
 
-        let inline isValue (f : Pickler) = f.TypeKind <= TypeKind.Value
+        let inline isPrimitive (f : Pickler) = f.TypeKind <= TypeKind.String
 
-        let inline write bypass (w : Writer) (f : Pickler<'T>) (x : 'T) =
-            if bypass then f.Write w x
-            else w.Write(f, x)
+        let inline write bypass (w : Writer) (p : Pickler<'T>) tag (x : 'T) =
+            if bypass then p.Write w x
+            else w.Write(p, tag, x)
 
-        let inline read bypass (r : Reader) (f : Pickler<'T>) =
-            if bypass then f.Read r
-            else r.Read f
+        let inline read bypass (r : Reader) (p : Pickler<'T>) tag =
+            if bypass then p.Read r
+            else r.Read (p, tag)
 
-        /// safely serialize strings, including nulls
-        let inline writeStringSafe (bw : BinaryWriter) (x : string) =
-            if obj.ReferenceEquals(x, null) then bw.Write true
-            else
-                bw.Write false ; bw.Write x
+//        /// safely serialize strings, including nulls
+//        let inline writeStringSafe (bw : BinaryWriter) (x : string) =
+//            if obj.ReferenceEquals(x, null) then bw.Write true
+//            else
+//                bw.Write false ; bw.Write x
+//
+//        /// safely deserialize strings, including nulls
+//        let inline readStringSafe (br : BinaryReader) =
+//            if br.ReadBoolean() then null
+//            else
+//                br.ReadString()
 
-        /// safely deserialize strings, including nulls
-        let inline readStringSafe (br : BinaryReader) =
-            if br.ReadBoolean() then null
-            else
-                br.ReadString()
-
-        let inline writeArray (w : Writer) (p : Pickler<'T>) (xs : 'T []) =
-            w.BinaryWriter.Write xs.Length
-            for x in xs do w.Write(p, x)
+        let inline writeArray (w : Writer) (p : Pickler<'T>) (ts : 'T []) =
+            let isPrimitive = isPrimitive p
+            w.Formatter.WriteInt32 "length" ts.Length
+            for t in ts do write isPrimitive w p "item" t
 
         let inline readArray (r : Reader) (p : Pickler<'T>) =
-            let n = r.BinaryReader.ReadInt32 ()
+            let isPrimitive = isPrimitive p
+            let n = r.Formatter.ReadInt32 "length"
             let arr = Array.zeroCreate<'T> n
             for i = 0 to n - 1 do
-                arr.[i] <- r.Read p
+                arr.[i] <- read isPrimitive r p "item"
             arr
 
         // length passed as argument to avoid unecessary evaluations of sequence
-        let inline writeSeq (w : Writer) (ef : Pickler<'T>) (length : int) (xs : seq<'T>) =
-            let isValue = isValue ef
-            w.BinaryWriter.Write length
-            for x in xs do write isValue w ef x
+        let inline writeSeq (w : Writer) (p : Pickler<'T>) (length : int) (ts : seq<'T>) =
+            let isPrimitive = isPrimitive p
+            w.Formatter.WriteInt32 "length" length
+            for t in ts do write isPrimitive w p "item" t
 
         // TODO : value types should probably be block deserialized
-        let inline readSeq (r : Reader) (ef : Pickler<'T>) =
-            let isValue = isValue ef
-            let length = r.BinaryReader.ReadInt32()
-            let xs = Array.zeroCreate<'T> length
+        let inline readSeq (r : Reader) (p : Pickler<'T>) =
+            let isPrimitive = isPrimitive p
+            let length = r.Formatter.ReadInt32 "length"
+            let ts = Array.zeroCreate<'T> length
             for i = 0 to length - 1 do
-                xs.[i] <- read isValue r ef
-            xs
+                ts.[i] <- read isPrimitive r p "item"
+            ts
 
         // length passed as argument to avoid unecessary evaluations of sequence
-        let inline writeKVPairs (w : Writer) (kf : Pickler<'K>) (vf : Pickler<'V>) (length : int) (xs : ('K * 'V) seq) =
-            let kIsValue = isValue kf
-            let vIsValue = isValue vf
-            w.BinaryWriter.Write length
+        let inline writeKVPairs (w : Writer) (kp : Pickler<'K>) (vp : Pickler<'V>) (length : int) (xs : ('K * 'V) seq) =
+            let kIsPrim = isPrimitive kp
+            let vIsPrim = isPrimitive vp
+            w.Formatter.WriteInt32 "length" length
             for k,v in xs do
-                write kIsValue w kf k
-                write vIsValue w vf v
+                write kIsPrim w kp "key" k
+                write vIsPrim w vp "val" v
 
         let inline readKVPairs (r : Reader) (kf : Pickler<'K>) (vf : Pickler<'V>) =
-            let kIsValue = isValue kf
-            let vIsValue = isValue vf
-            let length = r.BinaryReader.ReadInt32()
+            let kIsPrim = isPrimitive kf
+            let vIsPrim = isPrimitive vf
+            let length = r.Formatter.ReadInt32 "length"
             let xs = Array.zeroCreate<'K * 'V> length
+
             for i = 0 to length - 1 do
-                let k = read kIsValue r kf
-                let v = read vIsValue r vf
+                let k = read kIsPrim r kf "key"
+                let v = read vIsPrim r vf "val"
                 xs.[i] <- k,v
 
             xs
@@ -151,104 +154,111 @@
 
         // equivalent implementations for client facade
 
-        let writeSeq' (ef : Pickler<'T>) (w : Writer) (xs : 'T seq) : unit =
-            let isValue = isValue ef
-            match xs with
+        let writeSeq' (p : Pickler<'T>) (w : Writer) (ts : 'T seq) : unit =
+            let isPrimitive = isPrimitive p
+            match ts with
             | :? ('T []) as arr ->
-                w.BinaryWriter.Write true
-                w.BinaryWriter.Write arr.Length
+                w.Formatter.WriteBoolean "isMaterialized" true
+                w.Formatter.WriteInt32 "length" arr.Length
                 for i = 0 to arr.Length - 1 do
-                    write isValue w ef (arr.[i])
+                    write isPrimitive w p "item" arr.[i]
+
             | :? ('T list) as list ->
-                w.BinaryWriter.Write true
-                w.BinaryWriter.Write list.Length
+                w.Formatter.WriteBoolean "isMaterialized" true
+                w.Formatter.WriteInt32 "length" list.Length
+
                 let rec iter rest =
                     match rest with
                     | [] -> ()
-                    | hd :: tl ->
-                        write isValue w ef hd
+                    | t :: tl ->
+                        write isPrimitive w p "item" t
                         iter tl
 
                 iter list
             | _ ->
-                w.BinaryWriter.Write false
-                use e = xs.GetEnumerator()
+                w.Formatter.WriteBoolean "isMaterialized" false
+                use e = ts.GetEnumerator()
                 while e.MoveNext() do
-                    w.BinaryWriter.Write true
-                    write isValue w ef e.Current
+                    w.Formatter.WriteBoolean "done" false
+                    write isPrimitive w p "item" e.Current
 
-                w.BinaryWriter.Write false
+                w.Formatter.WriteBoolean "done" true
 
-        let readSeq' (ef : Pickler<'T>) (r : Reader) : 'T seq =
-            let isValue = isValue ef
+        let readSeq' (p : Pickler<'T>) (r : Reader) : 'T seq =
+            let isPrimitive = isPrimitive p
 
-            if r.BinaryReader.ReadBoolean() then
-                let length = r.BinaryReader.ReadInt32()
-                let arr = Array.zeroCreate<'T> length
+            if r.Formatter.ReadBoolean "isMaterialied" then
+                let length = r.Formatter.ReadInt32 "length"
+                let array = Array.zeroCreate<'T> length
                 for i = 0 to length - 1 do
-                    arr.[i] <- read isValue r ef
-                arr :> _
+                    array.[i] <- read isPrimitive r p "item"
+                array :> _
             else
                 let ra = new ResizeArray<'T> ()
-                while r.BinaryReader.ReadBoolean() do
-                    let next = read isValue r ef
+                while not <| r.Formatter.ReadBoolean "done" do
+                    let next = read isPrimitive r p "item"
                     ra.Add next
 
                 ra :> _
 
-        let writeKVPairs' (kf : Pickler<'K>) (vf : Pickler<'V>) (w : Writer) (xs : ('K * 'V) seq) : unit =
-            let kIsValue = isValue kf
-            let vIsValue = isValue vf
+        let writeKVPairs' (kp : Pickler<'K>) (vp : Pickler<'V>) (w : Writer) (xs : ('K * 'V) seq) : unit =
+            let kIsPrim = isPrimitive kp
+            let vIsPrim = isPrimitive vp
             match xs with
             | :? (('K * 'V) []) as arr ->
-                w.BinaryWriter.Write true
-                w.BinaryWriter.Write arr.Length
+                w.Formatter.WriteBoolean "isMaterialized" true
+                w.Formatter.WriteInt32 "length" arr.Length
+
                 for i = 0 to arr.Length - 1 do
                     let k,v = arr.[i]
-                    write kIsValue w kf k
-                    write vIsValue w vf v
+                    write kIsPrim w kp "key" k
+                    write vIsPrim w vp "val" v
+
             | :? (('K * 'V) list) as list ->
-                w.BinaryWriter.Write true
-                w.BinaryWriter.Write list.Length
+                w.Formatter.WriteBoolean "isMaterialized" true
+                w.Formatter.WriteInt32 "length" list.Length
+
                 let rec iter rest =
                     match rest with
                     | [] -> ()
                     | (k,v) :: tl ->
-                        write kIsValue w kf k
-                        write vIsValue w vf v
+                        write kIsPrim w kp "key" k
+                        write vIsPrim w vp "val" v
                         iter tl
 
                 iter list
-            | _ ->
-                w.BinaryWriter.Write false
-                let e = xs.GetEnumerator()
-                while e.MoveNext() do
-                    w.BinaryWriter.Write true
-                    let k,v = e.Current
-                    write kIsValue w kf k
-                    write vIsValue w vf v
 
-                w.BinaryWriter.Write false
+            | _ ->
+                w.Formatter.WriteBoolean "isMaterialized" false
+                let e = xs.GetEnumerator()
+
+                while e.MoveNext() do
+                    w.Formatter.WriteBoolean "done" false
+                    let k,v = e.Current
+                    write kIsPrim w kp "key" k
+                    write vIsPrim w vp "val" v
+
+                w.Formatter.WriteBoolean "done" true
 
 
         /// Deserializes a sequence of key/value pairs from the underlying stream
-        let readKVPairs' (kf : Pickler<'K>) (vf : Pickler<'V>) (r : Reader) =
-            let kIsValue = isValue kf
-            let vIsValue = isValue vf
+        let readKVPairs' (kp : Pickler<'K>) (vp : Pickler<'V>) (r : Reader) =
+            let kIsPrim = isPrimitive kp
+            let vIsPrim = isPrimitive vp
 
-            if r.BinaryReader.ReadBoolean() then
-                let length = r.BinaryReader.ReadInt32()
+            if r.Formatter.ReadBoolean "isMaterialied" then
+                let length = r.Formatter.ReadInt32 "length"
                 let arr = Array.zeroCreate<'K * 'V> length
                 for i = 0 to length - 1 do
-                    let k = read kIsValue r kf
-                    let v = read vIsValue r vf
+                    let k = read kIsPrim r kp "key"
+                    let v = read vIsPrim r vp "val"
                     arr.[i] <- k,v
                 arr :> seq<'K * 'V>
             else
                 let ra = new ResizeArray<'K * 'V> ()
-                while r.BinaryReader.ReadBoolean() do
-                    let k = read kIsValue r kf
-                    let v = read vIsValue r vf
+                while not <| r.Formatter.ReadBoolean "done" do
+                    let k = read kIsPrim r kp "key"
+                    let v = read vIsPrim r vp "val"
                     ra.Add (k,v)
 
                 ra :> seq<'K * 'V>

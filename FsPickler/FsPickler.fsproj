@@ -78,7 +78,7 @@
     <Compile Include="Hashing.fs" />
     <Compile Include="PickleFormat.fs" />
     <Compile Include="Header.fs" />
-    <Compile Include="Pickler.fsi" />
+    <None Include="Pickler.fsi" />
     <Compile Include="Pickler.fs" />
     <Compile Include="Types.fs" />
     <Compile Include="PicklerUtils.fs" />

@@ -299,27 +299,27 @@
 
         let assemblyInfoPickler =
             let writer (w : Writer) (aI : AssemblyInfo) =
-                let bw = w.BinaryWriter
-                writeStringSafe bw aI.Name
-                writeStringSafe bw aI.Version
-                writeStringSafe bw aI.Culture
+                let formatter = w.Formatter
+                formatter.WriteString "name" aI.Name
+                formatter.WriteString "version" aI.Version
+                formatter.WriteString "culture" aI.Culture
             
                 match aI.PublicKeyToken with
-                | null | [||] -> bw.Write true
+                | null | [||] -> formatter.WriteBoolean "strong" false
                 | bytes ->
-                    bw.Write false
-                    bw.Write bytes
+                    formatter.WriteBoolean "strong" true
+                    formatter.WriteBytesFixed "pkt" bytes
 
             let reader (r : Reader) =
-                let br = r.BinaryReader
-                let name = readStringSafe br
-                let version = readStringSafe br
-                let culture = readStringSafe br
+                let formatter = r.Formatter
+                let name = formatter.ReadString "name"
+                let version = formatter.ReadString "version"
+                let culture = formatter.ReadString "culture" 
 
                 let pkt =
-                    if br.ReadBoolean() then [||]
+                    if formatter.ReadBoolean "strong" then [||]
                     else
-                        br.ReadBytes(8)
+                        formatter.ReadBytesFixed "pkt" 8
 
                 {
                     Name = name
@@ -331,143 +331,157 @@
             mkPickler PicklerInfo.ReflectionType true true reader writer
 
         let rec memberInfoWriter (w : Writer) (m : MemberInfo) =
+            let formatter = w.Formatter
+
             match cache.GetMemberInfo m with
             | NamedType (name, aI) ->
-                w.BinaryWriter.Write 0uy
-                w.BinaryWriter.Write name
-                w.Write(assemblyInfoPickler, aI)
+                formatter.WriteByte "memberType" 0uy
+                formatter.WriteString "name" name
+                w.Write(assemblyInfoPickler, "assembly", aI)
 
             | ArrayType (et, rk) ->
-                w.BinaryWriter.Write 1uy
-                w.Write(typePickler, et)
+                formatter.WriteByte "memberType" 1uy
+                w.Write(typePickler, "elementType", et)
+
                 match rk with
                 | None ->
-                    w.BinaryWriter.Write true
+                    formatter.WriteInt32 "rank" 0
                 | Some r ->
-                    w.BinaryWriter.Write false
-                    w.BinaryWriter.Write r
+                    formatter.WriteInt32 "rank" r
 
             | GenericType(dt, tyParams) ->
-                w.BinaryWriter.Write 2uy
-                w.Write(typePickler, dt)
+                formatter.WriteByte "memberType" 2uy
+                w.Write(typePickler, "genericType", dt)
                 writeArray w typePickler tyParams
 
             | GenericTypeParam(dt, idx) ->
-                w.BinaryWriter.Write 3uy
-                w.Write(typePickler, dt)
-                w.BinaryWriter.Write idx
+                formatter.WriteByte "memberType" 3uy
+                w.Write(typePickler, "declaringType", dt)
+                formatter.WriteInt32 "idx" idx
 
             | GenericMethodParam(dm, idx) ->
-                w.BinaryWriter.Write 4uy
-                w.Write(methodInfoPickler, dm)
-                w.BinaryWriter.Write idx
+                formatter.WriteByte "memberType" 4uy
+                w.Write(methodInfoPickler, "declaringMethod", dm)
+                formatter.WriteInt32 "idx" idx
 
             | Method(dt, name, isStatic, mParams) ->
-                w.BinaryWriter.Write 5uy
-                w.Write(typePickler, dt)
-                w.BinaryWriter.Write name
-                w.BinaryWriter.Write isStatic
+                formatter.WriteByte "memberType" 5uy
+                w.Write(typePickler, "declaringType", dt)
+                formatter.WriteString "name" name
+                formatter.WriteBoolean "isStatic" isStatic
                 writeArray w typePickler mParams
 
             | GenericMethod(gm, mParams) ->
-                w.BinaryWriter.Write 6uy
-                w.Write(methodInfoPickler, gm)
+                formatter.WriteByte "memberType" 6uy
+                w.Write(methodInfoPickler, "genericMethod", gm)
                 writeArray w typePickler mParams
 
             | GenericMethodDefinition(dt, name, isStatic, signature) ->
-                w.BinaryWriter.Write 7uy
-                w.Write(typePickler, dt)
-                w.BinaryWriter.Write name
-                w.BinaryWriter.Write isStatic
-                w.BinaryWriter.Write signature
+                formatter.WriteByte "memberType" 7uy
+                w.Write(typePickler, "declaringType", dt)
+                formatter.WriteString "name" name
+                formatter.WriteBoolean "isStatic" isStatic
+                formatter.WriteString "signature" signature
 
             | Constructor(dt, cParams) ->
-                w.BinaryWriter.Write 8uy
-                w.Write (typePickler, dt)
+                formatter.WriteByte "memberType" 8uy
+                w.Write (typePickler, "declaringType", dt)
                 writeArray w typePickler cParams
 
             | Property(dt, name, isStatic) ->
-                w.BinaryWriter.Write 9uy
-                w.Write (typePickler, dt)
-                w.BinaryWriter.Write name
-                w.BinaryWriter.Write isStatic
+                formatter.WriteByte "memberType" 9uy
+                w.Write (typePickler, "declaringType", dt)
+                formatter.WriteString "name" name
+                formatter.WriteBoolean "isStatic" isStatic
 
             | Field(dt, name, isStatic) ->
-                w.BinaryWriter.Write 10uy
-                w.Write (typePickler, dt)
-                w.BinaryWriter.Write name
-                w.BinaryWriter.Write isStatic
+                formatter.WriteByte "memberType" 10uy
+                w.Write (typePickler, "declaringType", dt)
+                formatter.WriteString "name" name
+                formatter.WriteBoolean "isStatic" isStatic
 
             | Event(dt, name, isStatic) ->
-                w.BinaryWriter.Write 11uy
-                w.Write (typePickler, dt)
-                w.BinaryWriter.Write name
-                w.BinaryWriter.Write isStatic
+                formatter.WriteByte "memberType" 11uy
+                w.Write (typePickler, "declaringType", dt)
+                formatter.WriteString "name" name
+                formatter.WriteBoolean "isStatic" isStatic
 
             | Unknown(t, name) ->
                 raise <| new NonSerializableTypeException(t, sprintf "could not serialize '%s'." name)
 
         and memberInfoReader (r : Reader) =
+            let formatter = r.Formatter
+
             let cMemberInfo =
-                match r.BinaryReader.ReadByte() with
+                match formatter.ReadByte "memberType" with
                 | 0uy ->
-                    let name = r.BinaryReader.ReadString()
-                    let assembly = r.Read assemblyInfoPickler
+                    let name = formatter.ReadString "name"
+                    let assembly = r.Read(assemblyInfoPickler, "assembly")
                     NamedType(name, assembly)
+
                 | 1uy ->
-                    let et = r.Read typePickler
-                    if r.BinaryReader.ReadBoolean() then
-                        ArrayType(et, None)
-                    else
-                        let rk = r.BinaryReader.ReadInt32()
-                        ArrayType(et, Some rk)
+                    let et = r.Read(typePickler, "elementType")
+                    match formatter.ReadInt32 "rank" with
+                    | 0 -> ArrayType(et, None)
+                    | rk -> ArrayType(et, Some rk)
+
                 | 2uy ->
-                    let gt = r.Read typePickler
+                    let gt = r.Read (typePickler, "genericType")
                     let tyParams = readArray r typePickler
                     GenericType(gt, tyParams)
+
                 | 3uy ->
-                    let dt = r.Read typePickler
-                    let idx = r.BinaryReader.ReadInt32()
+                    let dt = r.Read (typePickler, "declaringType")
+                    let idx = formatter.ReadInt32 "idx"
                     GenericTypeParam(dt, idx)
+
                 | 4uy ->
-                    let dm = r.Read methodInfoPickler
-                    let idx = r.BinaryReader.ReadInt32()
+                    let dm = r.Read (methodInfoPickler, "declaringMethod")
+                    let idx = formatter.ReadInt32 "idx"
                     GenericMethodParam(dm, idx)
+
                 | 5uy ->
-                    let dm = r.Read typePickler
-                    let name = r.BinaryReader.ReadString()
-                    let isStatic = r.BinaryReader.ReadBoolean()
+                    let dt = r.Read (typePickler, "declaringType")
+                    let name = formatter.ReadString "name"
+                    let isStatic = formatter.ReadBoolean "isStatic"
                     let tyParams = readArray r typePickler
-                    Method(dm, name, isStatic, tyParams)
+                    Method(dt, name, isStatic, tyParams)
+
                 | 6uy ->
-                   let gm = r.Read methodInfoPickler
+                   let gm = r.Read (methodInfoPickler, "genericMethod")
                    let tparams = readArray r typePickler 
                    GenericMethod(gm, tparams)
+
                 | 7uy ->
-                    let dt = r.Read typePickler
-                    let name = r.BinaryReader.ReadString()
-                    let isStatic = r.BinaryReader.ReadBoolean()
-                    let signature = r.BinaryReader.ReadString()
+                    let dt = r.Read (typePickler, "declaringType")
+                    let name = formatter.ReadString "name"
+                    let isStatic = formatter.ReadBoolean "isStatic"
+                    let signature = formatter.ReadString "signature"
                     GenericMethodDefinition(dt, name, isStatic, signature)
+
                 | 8uy ->
-                    let dt = r.Read typePickler
+                    let dt = r.Read (typePickler, "declaringType")
                     let cParams = readArray r typePickler
                     Constructor(dt, cParams)
+
                 | 9uy ->
-                    let dt = r.Read typePickler
-                    let name = r.BinaryReader.ReadString()
-                    let isStatic = r.BinaryReader.ReadBoolean()
+                    let dt = r.Read (typePickler, "declaringType")
+                    let name = formatter.ReadString "name"
+                    let isStatic = formatter.ReadBoolean "isStatic"
                     Property(dt, name, isStatic)
+
                 | 10uy ->
-                    let dt = r.Read typePickler
-                    let name = r.BinaryReader.ReadString()
-                    let isStatic = r.BinaryReader.ReadBoolean()
+                    let dt = r.Read (typePickler, "declaringType")
+                    let name = formatter.ReadString "name"
+                    let isStatic = formatter.ReadBoolean "isStatic"
                     Field(dt, name, isStatic)
+
                 | 11uy ->
-                    let dt = r.Read typePickler
-                    let name = r.BinaryReader.ReadString()
-                    let isStatic = r.BinaryReader.ReadBoolean()
+                    let dt = r.Read (typePickler, "declaringType")
+                    let name = formatter.ReadString "name"
+                    let isStatic = formatter.ReadBoolean "isStatic"
                     Event(dt, name, isStatic)
+
                 // 'Unknown' cases never get serialized, so treat as stream error.
                 | _ ->
                     raise <| new SerializationException("Stream error.")
@@ -480,8 +494,8 @@
 
         let assemblyPickler =
             mkPickler PicklerInfo.ReflectionType true true
-                (fun r -> let aI = r.Read assemblyInfoPickler in cache.LoadAssembly aI)
-                (fun w a -> let aI = cache.GetAssemblyInfo a in w.Write(assemblyInfoPickler, aI))
+                (fun r -> let aI = r.Read(assemblyInfoPickler, null) in cache.LoadAssembly aI)
+                (fun w a -> let aI = cache.GetAssemblyInfo a in w.Write(assemblyInfoPickler, null, aI))
 
         member __.ReflectionPicklers =
             [|

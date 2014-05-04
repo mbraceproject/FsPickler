@@ -8,13 +8,14 @@
 
     type TypeKind =
         | Primitive = 0
-        | Enum = 1
-        | Value = 2
-        | Array = 3
-        | Sealed = 4
-        | NonSealed = 5
-        | Abstract = 6
-        | ArrayCompatible = 7
+        | String = 1
+        | Enum = 2
+        | Value = 3
+        | Array = 4
+        | Sealed = 5
+        | NonSealed = 6
+        | Abstract = 7
+        | ArrayCompatible = 8
 
     type PicklerInfo =
         | Atomic = 0
@@ -35,6 +36,7 @@
         /// builds type info enumeration out of reflection info
         let computeTypeKind (t : Type) =
             if t.IsPrimitive then TypeKind.Primitive
+            elif t = typeof<string> then TypeKind.String
             elif t.IsEnum then TypeKind.Enum
             elif t.IsValueType then TypeKind.Value
             elif t.IsArray then TypeKind.Array
@@ -66,49 +68,49 @@
             uint16 byte1 ||| (uint16 byte2 <<< 8)
 
 
-        // each reference type is serialized with a 32 bit header
-        //   1. the first byte is a fixed identifier
-        //   2. the next two bytes identify the used pickler
-        //   3. the third byte conveys object-specific switches
-        //
-
-        module ObjHeader =
-
-            [<Literal>]
-            let initByte = 130uy
-
-            // control bits
-            [<Literal>]
-            let empty               = 0uy
-            [<Literal>]
-            let isNull              = 1uy
-            [<Literal>]
-            let isProperSubtype     = 2uy
-            [<Literal>]
-            let isNewCachedInstance = 4uy
-            [<Literal>]
-            let isOldCachedInstance = 8uy
-            [<Literal>]
-            let isCyclicInstance    = 16uy
-            [<Literal>]
-            let isSequenceHeader    = 32uy
-
-            let inline hasFlag (h : byte) (flag : byte) = h &&& flag = flag
-        
-            let inline create (hash : PicklerFlags) (flags : byte) =
-                uint32 initByte ||| (uint32 hash <<< 8) ||| (uint32 flags <<< 24)
-
-            let inline read (t : Type) (pflags : PicklerFlags) (header : uint32) =
-                if byte header <> initByte then
-                    raise <| new SerializationException ("FsPickler: invalid stream data.")
-                else 
-                    let pflags' = uint16 (header >>> 8)
-                    if pflags' <> pflags then
-                        if byte pflags <> byte pflags' then
-                            let msg = sprintf "FsPickler: next object is of unexpected type (anticipated %O)." t
-                            raise <| new SerializationException(msg)
-                        else
-                            let msg = sprintf "FsPickler: object of type '%O' was serialized with incompatible pickler." t
-                            raise <| new SerializationException(msg)
-                    else 
-                        byte (header >>> 24)
+//        // each reference type is serialized with a 32 bit header
+//        //   1. the first byte is a fixed identifier
+//        //   2. the next two bytes identify the used pickler
+//        //   3. the third byte conveys object-specific switches
+//        //
+//
+//        module ObjHeader =
+//
+//            [<Literal>]
+//            let initByte = 130uy
+//
+//            // control bits
+//            [<Literal>]
+//            let empty               = 0uy
+//            [<Literal>]
+//            let isNull              = 1uy
+//            [<Literal>]
+//            let isProperSubtype     = 2uy
+//            [<Literal>]
+//            let isNewCachedInstance = 4uy
+//            [<Literal>]
+//            let isOldCachedInstance = 8uy
+//            [<Literal>]
+//            let isCyclicInstance    = 16uy
+//            [<Literal>]
+//            let isSequenceHeader    = 32uy
+//
+//            let inline hasFlag (h : byte) (flag : byte) = h &&& flag = flag
+//        
+//            let inline create (hash : PicklerFlags) (flags : byte) =
+//                uint32 initByte ||| (uint32 hash <<< 8) ||| (uint32 flags <<< 24)
+//
+//            let inline read (t : Type) (pflags : PicklerFlags) (header : uint32) =
+//                if byte header <> initByte then
+//                    raise <| new SerializationException ("FsPickler: invalid stream data.")
+//                else 
+//                    let pflags' = uint16 (header >>> 8)
+//                    if pflags' <> pflags then
+//                        if byte pflags <> byte pflags' then
+//                            let msg = sprintf "FsPickler: next object is of unexpected type (anticipated %O)." t
+//                            raise <| new SerializationException(msg)
+//                        else
+//                            let msg = sprintf "FsPickler: object of type '%O' was serialized with incompatible pickler." t
+//                            raise <| new SerializationException(msg)
+//                    else 
+//                        byte (header >>> 24)

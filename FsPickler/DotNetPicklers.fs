@@ -114,17 +114,17 @@
 
             let writer (w : Writer) (x : Nullable<'T>) =
                 if x.HasValue then 
-                    w.BinaryWriter.Write true
+                    w.Formatter.WriteBoolean "isNull" false
                     writer_func w x.Value
                 else
-                    w.BinaryWriter.Write false
+                    w.Formatter.WriteBoolean "isNull" true
 
             let reader (r : Reader) =
-                if r.BinaryReader.ReadBoolean () then
+                if r.Formatter.ReadBoolean "isNull" then
+                    Nullable<'T> ()
+                else
                     let value = reader_func r
                     Nullable<'T>(value)
-                else
-                    Nullable<'T> ()
 
             new Pickler<_>(reader, writer, PicklerInfo.ReflectionDerived, cacheByRef = false, useWithSubtypes = false)
 
@@ -304,27 +304,27 @@
             let writer (w : Writer) (dele : 'Delegate) =
                 match dele.GetInvocationList() with
                 | [| _ |] ->
-                    w.BinaryWriter.Write true
-                    w.Write(memberInfoPickler, dele.Method)
-                    if not dele.Method.IsStatic then w.Write(objPickler, dele.Target)
+                    w.Formatter.WriteBoolean "isLinked" false
+                    w.Write(memberInfoPickler, "method", dele.Method)
+                    if not dele.Method.IsStatic then w.Write(objPickler, "target", dele.Target)
                 | deleList ->
-                    w.BinaryWriter.Write false
-                    w.BinaryWriter.Write deleList.Length
+                    w.Formatter.WriteBoolean "isLinked" true
+                    w.Formatter.WriteInt32 "length" deleList.Length
                     for i = 0 to deleList.Length - 1 do
-                        w.Write<System.Delegate> (delePickler, deleList.[i])
+                        w.Write<System.Delegate> (delePickler, "linked", deleList.[i])
 
             let reader (r : Reader) =
-                if r.BinaryReader.ReadBoolean() then
-                    let meth = r.Read memberInfoPickler
+                if not <| r.Formatter.ReadBoolean "isLinked" then
+                    let meth = r.Read (memberInfoPickler, "method")
                     if not meth.IsStatic then
-                        let target = r.Read objPickler
+                        let target = r.Read (objPickler, "target")
                         Delegate.CreateDelegate(typeof<'Delegate>, target, meth, throwOnBindFailure = true) |> fastUnbox<'Delegate>
                     else
                         Delegate.CreateDelegate(typeof<'Delegate>, meth, throwOnBindFailure = true) |> fastUnbox<'Delegate>
                 else
-                    let n = r.BinaryReader.ReadInt32()
+                    let n = r.Formatter.ReadInt32 "length"
                     let deleList = Array.zeroCreate<System.Delegate> n
-                    for i = 0 to n - 1 do deleList.[i] <- r.Read delePickler
+                    for i = 0 to n - 1 do deleList.[i] <- r.Read (delePickler, "linked")
                     Delegate.Combine deleList |> fastUnbox<'Delegate>
 
             new Pickler<'Delegate>(reader, writer, PicklerInfo.Delegate, cacheByRef = true, useWithSubtypes = false)
@@ -370,20 +370,20 @@
                     run onSerializing w x
                     let sI = new SerializationInfo(typeof<'T>, new FormatterConverter())
                     x.GetObjectData(sI, w.StreamingContext)
-                    w.BinaryWriter.Write sI.MemberCount
+                    w.Formatter.WriteInt32 "memberCount" sI.MemberCount
                     let enum = sI.GetEnumerator()
                     while enum.MoveNext() do
-                        w.BinaryWriter.Write enum.Current.Name
-                        w.Write(objPickler, enum.Current.Value)
+                        w.Formatter.WriteString "name" enum.Current.Name
+                        w.Write(objPickler, "value", enum.Current.Value)
 
                     run onSerialized w x
 
                 let reader (r : Reader) =
                     let sI = new SerializationInfo(typeof<'T>, new FormatterConverter())
-                    let memberCount = r.BinaryReader.ReadInt32()
+                    let memberCount = r.Formatter.ReadInt32 "memberCount"
                     for i = 1 to memberCount do
-                        let name = r.BinaryReader.ReadString()
-                        let v = r.Read objPickler
+                        let name = r.Formatter.ReadString "name"
+                        let v = r.Read (objPickler, "value")
                         sI.AddValue(name, v)
 
                     let x = create sI r.StreamingContext
