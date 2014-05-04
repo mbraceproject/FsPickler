@@ -131,7 +131,7 @@ let pbn = new ProtoBufSerializer() :> ISerializer
 let ssj = new ServiceStackJsonSerializer() :> ISerializer
 let sst = new ServiceStackTypeSerializer() :> ISerializer
 
-let mkTester () = new ImplemantationComparer<ISerializer>(fsp, [bfs;ndc;jdn;pbn;ssj;sst]) :> PerformanceTester<ISerializer>
+let mkTester () = new ImplementationComparer<ISerializer>(fsp, [bfs;ndc;jdn;pbn;ssj;sst]) :> PerformanceTester<ISerializer>
 
 
 let dashGrid = ChartTypes.Grid(LineColor = Color.Gainsboro, LineDashStyle = ChartDashStyle.Dash)
