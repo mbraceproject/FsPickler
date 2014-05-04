@@ -371,7 +371,7 @@
 
                 fun (src : obj) (tgt : obj) -> dele.Invoke(src,tgt)
 #else
-                fun src tgt ->
+                fun src dst ->
                     for f in fields do
                         let v = f.GetValue(src)
                         f.SetValue(dst, v)
