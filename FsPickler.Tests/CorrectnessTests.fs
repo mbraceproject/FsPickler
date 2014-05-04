@@ -1,12 +1,12 @@
-﻿namespace FsPickler.Tests
+﻿namespace Nessos.FsPickler.Tests
 
     open System
     open System.Reflection
     open System.Runtime.Serialization
 
     open FsUnit
-    open FsPickler
-    open FsPickler.Combinators
+    open Nessos.FsPickler
+    open Nessos.FsPickler.Combinators
 
     open NUnit.Framework
 

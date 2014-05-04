@@ -1,7 +1,11 @@
-﻿namespace FsPickler
+﻿namespace Nessos.FsPickler
 
     #nowarn "1204"
     #nowarn "42"
+
+    module internal Config =
+        [<Literal>]
+        let optimizeForLittleEndian = true
 
     module internal Utils =
         
@@ -17,6 +21,11 @@
         open Microsoft.FSharp.Reflection
 
         let runsOnMono = System.Type.GetType("Mono.Runtime") <> null
+
+        // Detect current core library version at runtime
+        // as suggested in http://stackoverflow.com/a/8543850
+        let isDotNet45OrNewer =
+            Type.GetType("System.Reflection.ReflectionContext") <> null
 
         // TODO: include in serialization header
         let versionTag = 
@@ -39,6 +48,31 @@
                 | null -> failwith "Could not locate RemoteStackTrace field for System.Exception."
                 | f -> f
             | f -> f
+
+        /// Value or exception
+        type Exn<'T> =
+            | Success of 'T
+            | Error of exn
+        with
+            /// evaluate, re-raising the exception if failed
+            member e.Value =
+                match e with
+                | Success t -> t
+                | Error e -> raise e
+
+        module Exn =
+            let catch (f : unit -> 'T) =
+                try f () |> Success with e -> Error e
+
+            let map (f : 'T -> 'S) (x : Exn<'T>) =
+                match x with
+                | Success x -> Success (f x)
+                | Error e -> Error e
+
+            let bind (f : 'T -> 'S) (x : Exn<'T>) =
+                match x with
+                | Success x -> try Success <| f x with e -> Error e
+                | Error e -> Error e 
 
         type Atom<'T when 'T : not struct>(value : 'T) =
             let refCell = ref value
@@ -124,6 +158,7 @@
                     cache.TryAdd(t,s) |> ignore
                     cache'.TryAdd(s,t) |> ignore
                     t
+
 
         // produces a structural hashcode out of a byte array
         let getByteHashCode (bs : byte []) =
@@ -243,11 +278,11 @@
                     Array.exists ((=) (getCanonicalType t)) arrayIfs
 
 
-        module SerializationInfo =
-            let inline write (sI : SerializationInfo) (name : string) (x : 'T) =
+        type SerializationInfo with
+            member sI.Write<'T> (name : string, x : 'T) =
                 sI.AddValue(name, x, typeof<'T>)
 
-            let inline read<'T> (sI : SerializationInfo) (name : string) =
+            member sI.Read<'T>(name : string) =
                 sI.GetValue(name, typeof<'T>) :?> 'T
 
         type Delegate with
@@ -287,7 +322,7 @@
         let inline pickle (f : Stream -> 'T -> unit) (x : 'T) : byte [] =
             use mem = new MemoryStream()
             f mem x
-            mem.ToArray()
+            mem.GetBuffer()
 
         let inline unpickle (f : Stream -> 'T) (data : byte []) : 'T =
             use mem = new MemoryStream(data)
@@ -428,3 +463,76 @@
                 gatherFields t
                 |> Seq.distinct
                 |> Seq.forall (fun f -> isOfFixedSize f.FieldType)
+
+
+
+        // .NET 4.0 backwards compatibility
+
+        [<Sealed>]
+        type NonClosingStreamWrapper(s: Stream) =
+            inherit Stream()
+
+            let mutable closed = false
+            let ns () = raise (NotSupportedException())
+
+            let cc () =
+                if closed then
+                    raise <| ObjectDisposedException("Stream has been closed or disposed")
+
+            override w.BeginRead(a, b, c, d, e) = cc (); s.BeginRead(a, b, c, d, e)
+            override w.BeginWrite(a, b, c, d, e) = cc (); s.BeginWrite(a, b, c, d, e)
+
+            override w.Close() =
+                if not closed then
+                    s.Flush()
+                    closed <- true
+
+            override w.CreateObjRef(t) = ns ()
+            override w.EndRead(x) = cc (); s.EndRead(x)
+            override w.EndWrite(x) = cc (); s.EndWrite(x)
+            override w.Flush() = cc (); s.Flush()
+            override w.InitializeLifetimeService() = ns ()
+            override w.Read(a, b, c) = cc (); s.Read(a, b, c)
+            override w.ReadByte() = cc (); s.ReadByte()
+            override w.Seek(a, b) = cc (); s.Seek(a, b)
+            override w.SetLength(a) = cc (); s.SetLength(a)
+            override w.Write(a, b, c) = cc (); s.Write(a, b, c)
+            override w.WriteByte(a) = cc (); s.WriteByte(a)
+            override w.CanRead = if closed then false else s.CanRead
+            override w.CanSeek = if closed then false else s.CanSeek
+            override w.CanTimeout = if closed then false else s.CanTimeout
+            override w.CanWrite = if closed then false else s.CanWrite
+            override w.Length = cc (); s.Length
+
+            override w.Position
+                with get () = cc (); s.Position
+                and set x = cc (); s.Position <- x
+
+            override w.ReadTimeout = cc (); s.ReadTimeout
+            override w.WriteTimeout = cc (); s.WriteTimeout
+
+        type BinaryWriter with
+            static member Create(output: Stream, encoding: Encoding, leaveOpen: bool) =
+#if NET40
+#else
+                if isDotNet45OrNewer then
+                    new BinaryWriter(output, encoding, leaveOpen)
+                else
+#endif
+                if leaveOpen then
+                    new BinaryWriter(new NonClosingStreamWrapper(output), encoding)
+                else
+                    new BinaryWriter(output, encoding)
+
+        type BinaryReader with
+            static member Create(output: Stream, encoding: Encoding, leaveOpen: bool) =
+#if NET40
+#else
+                if isDotNet45OrNewer then
+                    new BinaryReader(output, encoding, leaveOpen)
+                else
+#endif
+                if leaveOpen then
+                    new BinaryReader(new NonClosingStreamWrapper(output), encoding)
+                else
+                    new BinaryReader(output, encoding)

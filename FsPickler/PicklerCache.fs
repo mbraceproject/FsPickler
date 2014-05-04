@@ -1,17 +1,17 @@
-﻿namespace FsPickler
+﻿namespace Nessos.FsPickler
 
     open System
     open System.Collections.Generic
     open System.Collections.Concurrent
 
-    open FsPickler.Utils
-    open FsPickler.TypeShape
-    open FsPickler.PicklerUtils
-    open FsPickler.BasePicklers
-    open FsPickler.ReflectionPicklers
-    open FsPickler.CombinatorImpls
-    open FsPickler.TuplePicklers
-    open FsPickler.PicklerResolution
+    open Nessos.FsPickler.Utils
+    open Nessos.FsPickler.TypeShape
+    open Nessos.FsPickler.PicklerUtils
+    open Nessos.FsPickler.BasePicklers
+    open Nessos.FsPickler.ReflectionPicklers
+    open Nessos.FsPickler.CombinatorImpls
+    open Nessos.FsPickler.TuplePicklers
+    open Nessos.FsPickler.PicklerResolution
 
     [<Sealed>]
     type CustomPicklerRegistry (name : string) =
@@ -48,27 +48,32 @@
 
 
     type private PicklerDictionary(cacheId : string) =
-        let dict = new ConcurrentDictionary<Type, Pickler> ()
+        let dict = new ConcurrentDictionary<Type, Exn<Pickler>> ()
 
-        interface ICache<Type, Pickler> with
+        interface ICache<Type, Exn<Pickler>> with
             member __.Lookup(t : Type) =
                 let found, p = dict.TryGetValue t
                 if found then Some p
                 else None
 
-            member __.Commit (t : Type) (p : Pickler) =
-                // create a shallow copy of pickler to contain mutation effects
-                let p = p.ClonePickler()
+            member __.Commit (t : Type) (p : Exn<Pickler>) =
+                let clone (p : Pickler) =
+                    // first, create a shallow copy of pickler to contain mutation effects
+                    let p = p.ClonePickler()
 
-                // check cache id for compatibility
-                match p.CacheId with
-                | null -> ()
-                | id when id <> cacheId ->
-                    raise <| new PicklerGenerationException(p.PicklerType, "pickler generated using an incompatible cache.")
-                | _ -> ()
+                    // check cache id for compatibility
+                    match p.CacheId with
+                    | null -> ()
+                    | id when id <> cacheId ->
+                        raise <| new PicklerGenerationException(p.PicklerType, "pickler generated using an incompatible cache.")
+                    | _ -> ()
 
-                // label pickler with current cache id
-                p.CacheId <- cacheId
+                    // label pickler with current cache id
+                    p.CacheId <- cacheId
+
+                    p
+
+                let p = Exn.map clone p
 
                 // commit
                 if dict.TryAdd(t, p) then p
@@ -103,7 +108,7 @@
 #else
             new ReflectionManager(false, tyConv)
 #endif
-        let cache = new PicklerDictionary(uuid) :> ICache<Type, Pickler>
+        let cache = new PicklerDictionary(uuid) :> ICache<Type, Exn<Pickler>>
         
         // populate the cache
         do
@@ -113,11 +118,11 @@
                 reflection.ReflectionPicklers
             |]
             |> Seq.concat
-            |> Seq.iter (fun p -> cache.Commit p.Type p |> ignore)
+            |> Seq.iter (fun p -> cache.Commit p.Type (Success p) |> ignore)
 
             // add custom picklers
             for p in customPicklers do
-                cache.Commit p.Type p |> ignore
+                cache.Commit p.Type (Success p) |> ignore
 
         let resolver (t : Type) = 
             try YParametric cache (resolvePickler customPicklerFactories) t

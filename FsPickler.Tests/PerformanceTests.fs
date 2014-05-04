@@ -1,4 +1,4 @@
-﻿namespace FsPickler.Tests
+﻿namespace Nessos.FsPickler.Tests
 
     open System
 
@@ -6,10 +6,11 @@
     open FsUnit
 
     open PerfUtil
+    open PerfUtil.NUnit
 
-    open FsPickler
-    open FsPickler.Tests.Serializer
-    open FsPickler.Tests.TestTypes
+    open Nessos.FsPickler
+    open Nessos.FsPickler.Tests.Serializer
+    open Nessos.FsPickler.Tests.TestTypes
 
 
     module PerformanceTests =
@@ -242,6 +243,8 @@
             roundtrips 1000 quotationLarge s
 
 
+#if PERFTESTS
+
     type ``Serializer Comparison`` () =
         inherit NUnitPerf<ISerializer>()
 
@@ -253,9 +256,9 @@
         let ssj = new ServiceStackJsonSerializer() :> ISerializer
         let sst = new ServiceStackTypeSerializer() :> ISerializer
 
-        let comparer = new MeanComparer(spaceFactor = 0.2, leastAcceptableImprovementFactor = 1.)
+        let comparer = new WeightedComparer(spaceFactor = 0.2, leastAcceptableImprovementFactor = 1.)
 
-        let tester = new ImplemantationComparer<_>(fsp, [bfs;ndc;jdn;pbn;ssj;sst], throwOnError = true, comparer = comparer)
+        let tester = new ImplementationComparer<_>(fsp, [bfs;ndc;jdn;pbn;ssj;sst], throwOnError = true, comparer = comparer)
         let tests = PerfTest.OfModuleMarker<PerformanceTests.Marker> ()
 
         override __.PerfTester = tester :> _
@@ -270,7 +273,7 @@
 
         let fsp = testSerializer :> ISerializer
         let version = typeof<FsPickler>.Assembly.GetName().Version
-        let comparer = new MeanComparer(spaceFactor = 0.2, leastAcceptableImprovementFactor = 0.8)
+        let comparer = new WeightedComparer(spaceFactor = 0.2, leastAcceptableImprovementFactor = 0.8)
         let tests = PerfTest.OfModuleMarker<PerformanceTests.Marker> ()
         let tester = 
             new PastImplementationComparer<ISerializer>(
@@ -282,3 +285,5 @@
         [<TestFixtureTearDown>]
         member __.Persist() =
             if persistResults then tester.PersistCurrentResults ()
+
+#endif

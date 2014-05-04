@@ -1,7 +1,7 @@
 ﻿#r "bin/Release/FsPickler.dll"
 
-open FsPickler
-open FsPickler.Combinators
+open Nessos.FsPickler
+open Nessos.FsPickler.Combinators
 
 
 let bench loops (value : 'T) (pickler : Pickler<'T>) =

@@ -1,4 +1,4 @@
-﻿namespace FsPickler.Tests
+﻿namespace Nessos.FsPickler.Tests
     
     open System
     open System.IO
@@ -9,7 +9,7 @@
     open Newtonsoft.Json
     open ProtoBuf
 
-    open FsPickler
+    open Nessos.FsPickler
     open PerfUtil
 
     open FsUnit
@@ -76,7 +76,7 @@
     type ProtoBufSerializer () =
         
         interface ISerializer with
-            member __.Name = "ProtoBuf.Net"
+            member __.Name = "ProtoBuf-Net"
             member __.Serialize(stream : Stream, x : 'T) = ProtoBuf.Serializer.Serialize(stream, x)
             member __.Deserialize(stream : Stream) = ProtoBuf.Serializer.Deserialize<'T>(stream)
 
@@ -86,7 +86,7 @@
         let write (s : ISerializer) (x : 'T) =
             use m = new MemoryStream()
             s.Serialize(m, x)
-            m.ToArray()
+            m.GetBuffer()
 
         let read (s : ISerializer) (bytes : byte []) =
             use m = new MemoryStream(bytes)
@@ -94,7 +94,6 @@
 
         type ImmortalMemoryStream() =
             inherit MemoryStream()
-
             override __.Close() = ()
 
         let roundtrip (x : 'T) (s : ISerializer) =

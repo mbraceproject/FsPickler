@@ -1,4 +1,4 @@
-﻿namespace FsPickler
+﻿namespace Nessos.FsPickler
 
     open System
     open System.IO
@@ -8,8 +8,8 @@
     open System.Runtime.CompilerServices
     open System.Runtime.Serialization
 
-    open FsPickler.Utils
-    open FsPickler.Header
+    open Nessos.FsPickler.Utils
+    open Nessos.FsPickler.Header
 
 
     [<AutoSerializable(false)>]
@@ -259,7 +259,7 @@
         // using UTF8 gives an observed performance improvement ~200%
         let encoding = defaultArg encoding Encoding.UTF8
 
-        let bw = new BinaryWriter(stream, encoding, defaultArg leaveOpen true)
+        let bw = BinaryWriter.Create(stream, encoding, defaultArg leaveOpen true)
         let sc = match streamingContext with None -> new StreamingContext() | Some sc -> sc
         let mutable idGen = new ObjectIDGenerator()
         let objStack = new Stack<int64> ()
@@ -427,7 +427,7 @@
         // using UTF8 gives an observed performance improvement ~200%
         let encoding = defaultArg encoding Encoding.UTF8
 
-        let br = new BinaryReader(stream, encoding, defaultArg leaveOpen true)
+        let br = BinaryReader.Create(stream, encoding, defaultArg leaveOpen true)
         let sc = match streamingContext with None -> new StreamingContext() | Some sc -> sc
         let objCache = new Dictionary<int64, obj> ()
         let fixupIndex = new Dictionary<int64, Type * obj> ()

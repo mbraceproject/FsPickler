@@ -1,4 +1,4 @@
-﻿namespace FsPickler.Tests
+﻿namespace Nessos.FsPickler.Tests
 
     #nowarn "346"
 
@@ -7,8 +7,8 @@
     open System.Reflection
     open System.Runtime.Serialization
 
-    open FsPickler
-    open FsPickler.Combinators
+    open Nessos.FsPickler
+    open Nessos.FsPickler.Combinators
 
     module TestTypes =
 
@@ -240,8 +240,10 @@
             let fscs = testSerializer.FSCS
 
             let filterType (t : Type) =
-                try fscs.IsSerializableType t
-                with _ -> true
+                match t.Namespace with
+                | "System.Reflection" -> false // System.Reflection.Assembly.ToString() in mono may cause runtime to die
+                | _ ->
+                    try fscs.IsSerializableType t with _ -> true
 
             let tryActivate (t : Type) =
                 try Some (t, Activator.CreateInstance t)

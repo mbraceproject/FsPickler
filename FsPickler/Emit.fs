@@ -1,4 +1,4 @@
-﻿module internal FsPickler.Emit
+﻿module internal Nessos.FsPickler.Emit
 
 #if EMIT_IL
 
@@ -7,8 +7,8 @@
     open System.Reflection.Emit
     open System.Runtime.Serialization
 
-    open FsPickler.Utils
-    open FsPickler.PicklerUtils
+    open Nessos.FsPickler.Utils
+    open Nessos.FsPickler.PicklerUtils
 
     /// a descriptor for local variables or parameters in emitted IL
 

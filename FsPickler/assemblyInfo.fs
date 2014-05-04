@@ -1,15 +1,9 @@
-﻿namespace FsPickler
+﻿namespace System
+open System.Reflection
 
-    open System.Reflection
+[<assembly: AssemblyVersionAttribute("0.8.6.2")>]
+[<assembly: AssemblyFileVersionAttribute("0.8.6.2")>]
+do ()
 
-#if BUILD_STRONG_NAME
-    [<assembly:AssemblyKeyFile("../../Lib/key.snk")>]
-#endif
-    [<assembly:AssemblyVersion("0.8.5.*")>]
-    do()
-
-
-    module internal Config =
-        
-        [<Literal>]
-        let optimizeForLittleEndian = true
+module internal AssemblyVersionInformation =
+    let [<Literal>] Version = "0.8.6.2"

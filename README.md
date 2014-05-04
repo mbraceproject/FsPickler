@@ -5,21 +5,24 @@ that doubles as a pickler combinator library.
 
 * Based on the notion of pickler combinators.
 * Provides an automated, strongly typed, pickler generation framework.
-* Full support for .NET types, including classes and open hierarchies.
-* Fully backwards compatible with .Net serialization, including the ``ISerializable`` interface.
+* Full support for .NET serialization, including classes and open hierarchies.
 * Highly optimized for F# core types.
-* Performance about 5-100x faster than the default .NET serializers.
+* One of the [fastest serializers](https://github.com/eiriktsarpalis/FsPickler/wiki/Performance) for the .NET framework.
 * Full support for the mono framework.
-* It is [*fast*](https://github.com/eiriktsarpalis/FsPickler/wiki/Performance).
 
-Get the NuGet package [here](https://www.nuget.org/packages/FsPickler/).
+### Build Status
+
+Head (branch `master`), Build & Unit tests
+
+* Windows/.NET [![Build status](https://ci.appveyor.com/api/projects/status/vwthnxgal50ua8ej/branch/master)](https://ci.appveyor.com/project/nessos/fspickler)
+* Mac OS X/Mono 3.2 [![Build Status](https://travis-ci.org/nessos/FsPickler.png?branch=master)](https://travis-ci.org/nessos/FsPickler/branches)
 
 ### Basic Usage
 
 The following snippet presents the basic serialization/deserialization API for FsPickler:
 
 ```fsharp
-open FsPickler
+open Nessos.FsPickler
 
 let fsp = new FsPickler()
 
@@ -53,8 +56,8 @@ and expression trees that are aggressively cached for future use.
 FsPickler offers experimental support for generating user-defined picklers using combinators:
 
 ```fsharp
-open FsPickler
-open FsPickler.Combinators
+open Nessos.FsPickler
+open Nessos.FsPickler.Combinators
 
 let p : Pickler<int * string option> = 
     Pickler.string 
@@ -305,7 +308,6 @@ If a hashcode is not required, the size of an object alone can be computed as fo
 > fsp.ComputeSize [1 .. 1000000] ;;
 val it : int64 = 4000008L
 ```
-
 
 ### Future work
 

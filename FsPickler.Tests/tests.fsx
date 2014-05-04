@@ -14,8 +14,8 @@ open System.Windows.Forms.DataVisualization.Charting
 
 open PerfUtil
 
-open FsPickler
-open FsPickler.Tests
+open Nessos.FsPickler
+open Nessos.FsPickler.Tests
 
 open FSharp.Charting
 

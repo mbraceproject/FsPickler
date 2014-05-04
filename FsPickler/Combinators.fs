@@ -1,14 +1,14 @@
-﻿namespace FsPickler
+﻿namespace Nessos.FsPickler
 
     open System
     open System.IO
 
-    open FsPickler.PicklerUtils
-    open FsPickler.BasePicklers
-    open FsPickler.DotNetPicklers
-    open FsPickler.ArrayPickler
-    open FsPickler.TuplePicklers
-    open FsPickler.CombinatorImpls
+    open Nessos.FsPickler.PicklerUtils
+    open Nessos.FsPickler.BasePicklers
+    open Nessos.FsPickler.DotNetPicklers
+    open Nessos.FsPickler.ArrayPickler
+    open Nessos.FsPickler.TuplePicklers
+    open Nessos.FsPickler.CombinatorImpls
 
     module Combinators =
 

@@ -1,4 +1,4 @@
-﻿module internal FsPickler.FSharpPicklers
+﻿module internal Nessos.FsPickler.FSharpPicklers
 
     open System
     open System.IO
@@ -6,15 +6,15 @@
     open System.Threading
 #if EMIT_IL
     open System.Reflection.Emit
-    open FsPickler.Emit
+    open Nessos.FsPickler.Emit
 #endif
     open System.Runtime.Serialization
 
     open Microsoft.FSharp.Reflection
 
-    open FsPickler
-    open FsPickler.Utils
-    open FsPickler.PicklerUtils
+    open Nessos.FsPickler
+    open Nessos.FsPickler.Utils
+    open Nessos.FsPickler.PicklerUtils
 
 
     // F# union types

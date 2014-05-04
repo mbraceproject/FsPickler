@@ -1,10 +1,10 @@
-﻿namespace FsPickler.Tests
+﻿namespace Nessos.FsPickler.Tests
 
     module Main =
 
         open System
 
-        open FsPickler
+        open Nessos.FsPickler
 
         [<EntryPoint>]
         let main (args : string []) =

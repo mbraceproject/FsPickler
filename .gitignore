@@ -1,6 +1,5 @@
 Thumbs.db
 *.obj
-*.exe
 *.pdb
 *.user
 *.aps
@@ -27,3 +26,5 @@ _ReSharper*/
 [Tt]est[Rr]esult*
 *.vssscc
 $tf*/
+build/
+packages/

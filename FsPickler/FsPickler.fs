@@ -1,4 +1,4 @@
-﻿namespace FsPickler
+﻿namespace Nessos.FsPickler
     
     open System
     open System.IO
@@ -6,9 +6,9 @@
     open System.Collections.Generic
     open System.Runtime.Serialization
 
-    open FsPickler.Utils
-    open FsPickler.Hashing
-    open FsPickler.PicklerUtils
+    open Nessos.FsPickler.Utils
+    open Nessos.FsPickler.Hashing
+    open Nessos.FsPickler.PicklerUtils
 
     type private OAttribute = System.Runtime.InteropServices.OptionalAttribute
     type private DAttribute = System.Runtime.InteropServices.DefaultParameterValueAttribute
@@ -186,21 +186,43 @@
             let qn = cache.GetQualifiedName pickler.Type
             pickler.ReadSequence(reader, qn, length)
 
-        /// creates a byte array pickle out of given pickler and value
-        member f.Pickle (pickler : Pickler<'T>, value : 'T) : byte [] =
-            pickle (fun m v -> f.Serialize(pickler, m, v)) value
+        /// <summary>
+        ///     Pickles given value to byte array.
+        /// </summary>
+        /// <param name="pickler">Pickler to use.</param>
+        /// <param name="value">Value to pickle.</param>
+        /// <param name="streamingContext">streaming context.</param>
+        /// <param name="encoding">encoding passed to the binary writer.</param>
+        member f.Pickle (pickler : Pickler<'T>, value : 'T, [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding) : byte [] =
+            pickle (fun m v -> f.Serialize(pickler, m, v, ?streamingContext = streamingContext, ?encoding = encoding)) value
 
-        /// creates a byte array pickle out of a given value
-        member f.Pickle (value : 'T) : byte [] =
-            pickle (fun m v -> f.Serialize(m, v)) value
+        /// <summary>
+        ///     Pickles given value to byte array.
+        /// </summary>
+        /// <param name="value">Value to pickle.</param>
+        /// <param name="streamingContext">streaming context.</param>
+        /// <param name="encoding">encoding passed to the binary writer.</param>
+        member f.Pickle (value : 'T, [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding) : byte [] =
+            pickle (fun m v -> f.Serialize(m, v, ?streamingContext = streamingContext, ?encoding = encoding)) value
 
-        /// deserializes value out of given byte array using given pickler
-        member f.UnPickle (pickler : Pickler<'T>, data : byte []) =
-            unpickle (fun m -> f.Deserialize(pickler, m)) data
+        /// <summary>
+        ///     Unpickles value using given pickler.
+        /// </summary>
+        /// <param name="pickler">Pickler to use.</param>
+        /// <param name="data">Pickle.</param>
+        /// <param name="streamingContext">streaming context.</param>
+        /// <param name="encoding">encoding passed to the binary reader.</param>
+        member f.UnPickle (pickler : Pickler<'T>, data : byte [], [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding) : 'T =
+            unpickle (fun m -> f.Deserialize(pickler, m, ?streamingContext = streamingContext, ?encoding = encoding)) data
 
-        /// deserializes value out of a given byte array
-        member f.UnPickle<'T> (data : byte []) =
-            unpickle (fun m -> f.Deserialize<'T> m) data
+        /// <summary>
+        ///     Unpickle value to given type.
+        /// </summary>
+        /// <param name="data">Pickle.</param>
+        /// <param name="streamingContext">streaming context.</param>
+        /// <param name="encoding">encoding passed to the binary reader.</param>
+        member f.UnPickle<'T> (data : byte [], [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding) : 'T =
+            unpickle (fun m -> f.Deserialize<'T>(m, ?streamingContext = streamingContext, ?encoding = encoding)) data
 
         /// <summary>Compute size and hashcode for given input.</summary>
         /// <param name="value">input value.</param>

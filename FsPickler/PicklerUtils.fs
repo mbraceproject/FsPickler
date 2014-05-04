@@ -1,12 +1,12 @@
-﻿namespace FsPickler
+﻿namespace Nessos.FsPickler
 
     open System
     open System.IO
     open System.Reflection
     open System.Runtime.Serialization
     
-    open FsPickler
-    open FsPickler.Utils
+    open Nessos.FsPickler
+    open Nessos.FsPickler.Utils
 
     module internal PicklerUtils =
 
