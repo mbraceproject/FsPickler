@@ -71,7 +71,7 @@
     <Compile Include="CorrectnessTests.fs" />
     <Compile Include="PerformanceTests.fs" />
     <Compile Include="main.fs" />
-    <None Include="tests.fsx" />
+    <None Include="perfTests.fsx" />
     <None Include="App.config" />
     <None Include="packages.config" />
     <Content Include="fspPerf.xml">
