@@ -279,7 +279,7 @@
 //            let (*inline*) writeHeader tag (flags : byte) =
 //                let header = ObjHeader.create pickler.PicklerFlags flags
 //                formatter.BeginWriteObject tag header
-            let inline beginWriteObject (pickler : Pickler) tag objFlags =
+            let (*inline*) beginWriteObject (pickler : Pickler) tag objFlags =
                 formatter.BeginWriteObject tag pickler.PicklerFlags objFlags
 
             // ad-hoc System.Type caching
@@ -476,7 +476,7 @@
         // the primary deserialization routine; handles all the caching, subtype resolution logic, etc
         member r.Read(pickler : Pickler<'T>, tag : string) : 'T =
 
-            let inline beginReadObject (pickler : Pickler) tag =
+            let (*inline*) beginReadObject (pickler : Pickler) tag =
                 let mutable picklerFlags = 0us
                 let objFlags = formatter.BeginReadObject(tag, &picklerFlags)
                 if picklerFlags <> pickler.PicklerFlags then
