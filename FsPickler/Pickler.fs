@@ -338,11 +338,10 @@
 
                         do cyclicObjects.Add(id) |> ignore
                     
-                        if pickler.TypeKind <= TypeKind.Sealed || pickler.UseWithSubtypes then
-                            if pickler.TypeKind = TypeKind.Array then
-                                writeHeader ObjHeader.isOldCachedInstance
-                            else
-                                writeHeader ObjHeader.isCyclicInstance
+                        if pickler.TypeKind = TypeKind.Array then
+                            writeHeader ObjHeader.isOldCachedInstance
+                        elif pickler.TypeKind <= TypeKind.Sealed || pickler.UseWithSubtypes then
+                            writeHeader ObjHeader.isCyclicInstance
                         else
                             let t = x.GetType()
 
