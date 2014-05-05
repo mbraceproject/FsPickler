@@ -304,7 +304,7 @@
                     let t0 = x.GetType()
                     if t0 <> pickler.Type then
                         let pickler' = resolver.Resolve t0
-                        beginWriteObject pickler' tag (header ||| ObjectFlags.IsProperSubtype)
+                        beginWriteObject pickler tag (header ||| ObjectFlags.IsProperSubtype)
                         writeType t0
                         pickler'.UntypedWrite(w, x)
                         formatter.EndWriteObject ()
