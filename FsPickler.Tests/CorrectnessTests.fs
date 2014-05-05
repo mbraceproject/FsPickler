@@ -129,7 +129,7 @@
 
         [<Test>]
         member __.``Random Object Graph`` () =
-            let g = createRandomGraph 0.2 50
+            let g = createRandomGraph 0.2 10
 
             let g' = testLoop g
 
