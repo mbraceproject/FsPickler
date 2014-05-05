@@ -4,7 +4,7 @@
     open System.Reflection
     open System.Runtime.Serialization
 
-    type PicklerFlags = uint16
+    
 
     type TypeKind =
         | Primitive = 0
@@ -97,20 +97,3 @@
 //
 //            let inline hasFlag (h : byte) (flag : byte) = h &&& flag = flag
 //        
-//            let inline create (hash : PicklerFlags) (flags : byte) =
-//                uint32 initByte ||| (uint32 hash <<< 8) ||| (uint32 flags <<< 24)
-//
-//            let inline read (t : Type) (pflags : PicklerFlags) (header : uint32) =
-//                if byte header <> initByte then
-//                    raise <| new SerializationException ("FsPickler: invalid stream data.")
-//                else 
-//                    let pflags' = uint16 (header >>> 8)
-//                    if pflags' <> pflags then
-//                        if byte pflags <> byte pflags' then
-//                            let msg = sprintf "FsPickler: next object is of unexpected type (anticipated %O)." t
-//                            raise <| new SerializationException(msg)
-//                        else
-//                            let msg = sprintf "FsPickler: object of type '%O' was serialized with incompatible pickler." t
-//                            raise <| new SerializationException(msg)
-//                    else 
-//                        byte (header >>> 24)

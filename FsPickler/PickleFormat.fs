@@ -4,6 +4,8 @@
     open System.Text
     open System.IO
 
+    type PicklerFlags = uint16
+
     type ObjectFlags = 
         | Zero                   = 0uy
         | IsPrimitive            = 1uy
@@ -27,7 +29,7 @@
         abstract BeginWriteRoot : string -> unit
         abstract EndWriteRoot : unit -> unit
 
-        abstract BeginWriteObject : tag:string -> info:ObjectFlags -> unit
+        abstract BeginWriteObject : tag:string -> pickler:PicklerFlags -> obj:ObjectFlags -> unit
         abstract EndWriteObject : unit -> unit
         
         abstract WriteBoolean : tag:string -> value:bool -> unit
@@ -47,12 +49,11 @@
         abstract WriteDecimal : tag:string -> value:decimal -> unit
 
         abstract WriteChar : tag:string -> value : char -> unit
-        abstract WriteChars : tag:string -> value : char [] -> unit
         abstract WriteString : tag:string -> value:string -> unit
 
         abstract WriteBytes : tag:string -> value:byte [] -> unit
         abstract WriteBytesFixed : tag:string -> value:byte [] -> unit
-        abstract WritePrimitiveArray<'T when 'T : struct> : tag:string -> value:'T [] -> unit
+        abstract WritePrimitiveArray : tag:string -> value:Array -> unit
 
 
     and IPickleFormatReader =
@@ -61,7 +62,7 @@
         abstract BeginReadRoot : unit -> string
         abstract EndReadRoot : unit -> unit
 
-        abstract BeginReadObject : tag:string -> ObjectFlags
+        abstract BeginReadObject : tag:string * pickler:byref<PicklerFlags> -> ObjectFlags
         abstract EndReadObject : unit -> unit
         
         abstract ReadBoolean : tag:string -> bool
@@ -81,12 +82,11 @@
         abstract ReadDouble : tag:string -> float
 
         abstract ReadChar : tag:string -> char
-        abstract ReadChars : tag:string -> char []
         abstract ReadString : tag:string -> string
 
         abstract ReadBytes : tag:string -> byte []
         abstract ReadBytesFixed : tag:string -> length:int -> byte []
-        abstract ReadPrimitiveArray<'T when 'T : struct> : tag:string -> 'T []
+        abstract ReadToPrimitiveArray : tag:string -> Array -> unit
 
     and IPickleFormatProvider =
         abstract CreateWriter : Stream -> IPickleFormatWriter

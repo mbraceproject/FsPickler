@@ -31,7 +31,7 @@
     <Optimize>true</Optimize>
     <Tailcalls>true</Tailcalls>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE;PROTECT_STACK_OVERFLOWS;OPTIMIZE_FSHARP;SERIALIZE_STRONG_NAMES;EMIT_IL</DefineConstants>
+    <DefineConstants>TRACE;PROTECT_STACK_OVERFLOWS;OPTIMIZE_FSHARP;SERIALIZE_STRONG_NAMES;</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\Release\FsPickler.xml</DocumentationFile>
     <KeyOriginatorFile Condition="Exists('../../Lib/key.snk')">../../Lib/key.snk</KeyOriginatorFile>
@@ -79,6 +79,7 @@
     <Compile Include="Hashing.fs" />
     <Compile Include="PickleFormat.fs" />
     <Compile Include="Header.fs" />
+    <Compile Include="BinaryFormatter.fs" />
     <None Include="Pickler.fsi" />
     <Compile Include="Pickler.fs" />
     <Compile Include="Types.fs" />

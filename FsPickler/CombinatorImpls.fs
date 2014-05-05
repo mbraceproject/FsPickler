@@ -21,32 +21,33 @@
         static member Create (ef : Pickler<'T>) =
             let writer (w : Writer) (l : 'T list) =
 
-                if ef.TypeKind = TypeKind.Primitive && keepEndianness then
+                if ef.TypeKind = TypeKind.Primitive then //&& keepEndianness then
                     let arr = List.toArray l
-                    w.BinaryWriter.Write arr.Length
-                    do Stream.ReadFromArray(w.BinaryWriter.BaseStream, arr)
+                    w.Formatter.WriteInt32 "length" arr.Length
+                    w.Formatter.WritePrimitiveArray "data" arr
+//                    do Stream.ReadFromArray(w.Formatter.BaseStream, arr)
                 else
-                    let isValue = ef.TypeKind <= TypeKind.Value
+                    let isPrimitive = isPrimitive ef
                     let rec writeL (xs : 'T list) =
                         match xs with
-                        | hd :: tl -> write isValue w ef hd ; writeL tl
+                        | hd :: tl -> write isPrimitive w ef "item" hd ; writeL tl
                         | [] -> ()
 
-                    w.BinaryWriter.Write l.Length
+                    w.Formatter.WriteInt32 "length" l.Length
                     writeL l
 
             let reader (r : Reader) =
-                let length = r.BinaryReader.ReadInt32 ()
+                let length = r.Formatter.ReadInt32 "length"
 
-                if ef.TypeKind = TypeKind.Primitive && keepEndianness then
+                if ef.TypeKind = TypeKind.Primitive then //&& keepEndianness then
                     let array = Array.zeroCreate<'T> length
-                    Stream.WriteToArray(r.BinaryReader.BaseStream, array)
+                    r.Formatter.ReadToPrimitiveArray "data" array
                     Array.toList array
                 else
-                    let isValue = ef.TypeKind <= TypeKind.Value
+                    let isPrimitive = isPrimitive ef
                     let array = Array.zeroCreate<'T> length
                     for i = 0 to length - 1 do
-                        array.[i] <- read isValue r ef
+                        array.[i] <- read isPrimitive r ef "item"
                                     
                     Array.toList array
 
@@ -64,13 +65,13 @@
         static member Create (ef : Pickler<'T>) =
             let writer (w : Writer) (x : 'T option) =
                 match x with
-                | None -> w.BinaryWriter.Write true
-                | Some v -> w.BinaryWriter.Write false ; write (isValue ef) w ef v
+                | None -> w.Formatter.WriteBoolean "isNone" true
+                | Some v -> w.Formatter.WriteBoolean "isNone" false ; write (isPrimitive ef) w ef "value" v
 
             let reader (r : Reader) =
-                if r.BinaryReader.ReadBoolean() then None
+                if r.Formatter.ReadBoolean "isNone" then None
                 else
-                    Some(read (isValue ef) r ef)
+                    Some(read (isPrimitive ef) r ef "value")
 
             new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
 
@@ -85,16 +86,16 @@
             let writer (w : Writer) (c : Choice<'T1, 'T2>) =
                 match c with
                 | Choice1Of2 t1 -> 
-                    w.BinaryWriter.Write 0uy
-                    write (isValue f1) w f1 t1
+                    w.Formatter.WriteByte "tag" 0uy
+                    write (isPrimitive f1) w f1 "value" t1
                 | Choice2Of2 t2 -> 
-                    w.BinaryWriter.Write 1uy
-                    write (isValue f2) w f2 t2
+                    w.Formatter.WriteByte "tag" 1uy
+                    write (isPrimitive f2) w f2 "value" t2
 
             let reader (r : Reader) =
-                match r.BinaryReader.ReadByte() with
-                | 0uy -> read (isValue f1) r f1 |> Choice1Of2
-                | _ -> read (isValue f2) r f2 |> Choice2Of2
+                match r.Formatter.ReadByte "tag" with
+                | 0uy -> read (isPrimitive f1) r f1 "value" |> Choice1Of2
+                | _ -> read (isPrimitive f2) r f2 "value" |> Choice2Of2
 
             new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
 
@@ -109,20 +110,20 @@
             let writer (w : Writer) (c : Choice<'T1, 'T2, 'T3>) =
                 match c with
                 | Choice1Of3 t1 -> 
-                    w.BinaryWriter.Write 0uy
-                    write (isValue f1) w f1 t1
+                    w.Formatter.WriteByte "tag" 0uy
+                    write (isPrimitive f1) w f1 "value" t1
                 | Choice2Of3 t2 -> 
-                    w.BinaryWriter.Write 1uy
-                    write (isValue f2) w f2 t2
+                    w.Formatter.WriteByte "tag" 1uy
+                    write (isPrimitive f2) w f2 "value" t2
                 | Choice3Of3 t3 -> 
-                    w.BinaryWriter.Write 2uy
-                    write (isValue f3) w f3 t3
+                    w.Formatter.WriteByte "tag" 2uy
+                    write (isPrimitive f3) w f3 "value" t3
 
             let reader (r : Reader) =
-                match r.BinaryReader.ReadByte() with
-                | 0uy -> read (isValue f1) r f1 |> Choice1Of3
-                | 1uy -> read (isValue f2) r f2 |> Choice2Of3
-                | _   -> read (isValue f3) r f3 |> Choice3Of3
+                match r.Formatter.ReadByte "tag" with
+                | 0uy -> read (isPrimitive f1) r f1 "value" |> Choice1Of3
+                | 1uy -> read (isPrimitive f2) r f2 "value" |> Choice2Of3
+                | _   -> read (isPrimitive f3) r f3 "value" |> Choice3Of3
 
             new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
 
@@ -137,24 +138,24 @@
             let writer (w : Writer) (c : Choice<'T1, 'T2, 'T3, 'T4>) =
                 match c with
                 | Choice1Of4 t1 -> 
-                    w.BinaryWriter.Write 0uy
-                    write (isValue f1) w f1 t1
+                    w.Formatter.WriteByte "tag" 0uy
+                    write (isPrimitive f1) w f1 "value" t1
                 | Choice2Of4 t2 -> 
-                    w.BinaryWriter.Write 1uy
-                    write (isValue f2) w f2 t2
+                    w.Formatter.WriteByte "tag" 1uy
+                    write (isPrimitive f2) w f2 "value" t2
                 | Choice3Of4 t3 -> 
-                    w.BinaryWriter.Write 2uy
-                    write (isValue f3) w f3 t3
+                    w.Formatter.WriteByte "tag" 2uy
+                    write (isPrimitive f3) w f3 "value" t3
                 | Choice4Of4 t4 -> 
-                    w.BinaryWriter.Write 3uy
-                    write (isValue f4) w f4 t4
+                    w.Formatter.WriteByte "tag" 3uy
+                    write (isPrimitive f4) w f4 "value" t4
 
             let reader (r : Reader) =
-                match r.BinaryReader.ReadByte() with
-                | 0uy -> read (isValue f1) r f1 |> Choice1Of4
-                | 1uy -> read (isValue f2) r f2 |> Choice2Of4
-                | 2uy -> read (isValue f3) r f3 |> Choice3Of4
-                | _   -> read (isValue f4) r f4 |> Choice4Of4
+                match r.Formatter.ReadByte "tag" with
+                | 0uy -> read (isPrimitive f1) r f1 "value" |> Choice1Of4
+                | 1uy -> read (isPrimitive f2) r f2 "value" |> Choice2Of4
+                | 2uy -> read (isPrimitive f3) r f3 "value" |> Choice3Of4
+                | _   -> read (isPrimitive f4) r f4 "value" |> Choice4Of4
 
             new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
 
@@ -168,10 +169,10 @@
     type FSharpRefPickler () =
         static member Create (ef : Pickler<'T>) =
             let writer (w : Writer) (r : 'T ref) =
-                write (isValue ef) w ef r.Value
+                write (isPrimitive ef) w ef "contents" r.Value
 
             let reader (r : Reader) =
-                read (isValue ef) r ef |> ref
+                { contents = read (isPrimitive ef) r ef "contents" }
 
             // do not cache for performance
             new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = false)
@@ -246,11 +247,11 @@
 
             let writer (w : Writer) (t : 'T) =
                 let tag = tagReader t
-                do w.BinaryWriter.Write tag
+                do w.Formatter.WriteInt32 "tag" tag
                 picklers.[tag].Write w t
 
             let reader (r : Reader) =
-                let tag = r.BinaryReader.ReadInt32()
+                let tag = r.Formatter.ReadInt32 "tag"
                 picklers.[tag].Read r
 
             new Pickler<_>(reader, writer, PicklerInfo.Combinator, 

@@ -173,14 +173,16 @@
 #else
             let writer (w : Writer) (t : 'T) =
                 for i = 0 to fields.Length - 1 do
-                    let o = fields.[i].GetValue(t)
-                    picklers.[i].UntypedWrite(w, o, managed = true)
+                    let f = fields.[i]
+                    let o = f.GetValue(t)
+                    picklers.[i].ManagedWrite(w, f.Name, o)
 
             let reader (r : Reader) =
                 let t = FormatterServices.GetUninitializedObject(typeof<'T>)
                 for i = 0 to fields.Length - 1 do
-                    let o = picklers.[i].UntypedRead(r, managed = true)
-                    fields.[i].SetValue(t, o)
+                    let f = fields.[i]
+                    let o = picklers.[i].ManagedRead(r, f.Name)
+                    f.SetValue(t, o)
                 
                 fastUnbox<'T> t
 #endif
@@ -263,8 +265,9 @@
                 run onSerializing t w
 
                 for i = 0 to fields.Length - 1 do
-                    let o = fields.[i].GetValue(t)
-                    picklers.[i].UntypedWrite(w, o, managed = true)
+                    let f = fields.[i]
+                    let o = f.GetValue(t)
+                    picklers.[i].ManagedWrite(w, f.Name, o)
 
                 run onSerialized t w
 
@@ -273,8 +276,9 @@
                 run onDeserializing t r
 
                 for i = 0 to fields.Length - 1 do
-                    let o = picklers.[i].UntypedRead(r, managed = true)
-                    fields.[i].SetValue(t, o)
+                    let f = fields.[i]
+                    let o = picklers.[i].ManagedRead(r, f.Name)
+                    f.SetValue(t, o)
 
                 run onDeserialized t r
                 if isDeserializationCallback then (fastUnbox<IDeserializationCallback> t).OnDeserialization null

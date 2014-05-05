@@ -250,8 +250,9 @@
         abstract Resolve : Type -> Pickler
         abstract Resolve<'T> : unit -> Pickler<'T>
 
-    and [<AutoSerializable(false)>]
-        Writer internal (formatter : IPickleFormatWriter, resolver : IPicklerResolver, ?streamingContext) =
+    and [<AutoSerializable(false)>] Writer internal (stream : Stream, formatP : IPickleFormatProvider, resolver : IPicklerResolver, ?streamingContext) =
+
+        let formatter = formatP.CreateWriter stream
         
 //        do if not stream.CanWrite then invalidOp "Cannot write to stream."
 
@@ -278,22 +279,24 @@
 //            let (*inline*) writeHeader tag (flags : byte) =
 //                let header = ObjHeader.create pickler.PicklerFlags flags
 //                formatter.BeginWriteObject tag header
+            let inline beginWriteObject (pickler : Pickler) tag objFlags =
+                formatter.BeginWriteObject tag pickler.PicklerFlags objFlags
 
             // ad-hoc System.Type caching
             let (*inline*) writeType (t : Type) =
                 let id, firstOccurence = idGen.GetId t
                 if firstOccurence then
-                    formatter.BeginWriteObject "subtype" ObjectFlags.IsNewCachedInstance
+                    beginWriteObject tyPickler "subtype" ObjectFlags.IsNewCachedInstance
                     tyPickler.Write w t
                     formatter.EndWriteObject ()
                 else
-                    formatter.BeginWriteObject "subtype" ObjectFlags.IsOldCachedInstance
+                    beginWriteObject tyPickler "subtype" ObjectFlags.IsOldCachedInstance
                     formatter.WriteInt64 "id" id
                     formatter.EndWriteObject ()
 
             let (*inline*) writeObject header =
                 if pickler.TypeKind <= TypeKind.Sealed || pickler.UseWithSubtypes then
-                    formatter.BeginWriteObject tag header
+                    beginWriteObject pickler tag header
                     pickler.Write w x
                     formatter.EndWriteObject ()
                 else
@@ -301,28 +304,28 @@
                     let t0 = x.GetType()
                     if t0 <> pickler.Type then
                         let pickler' = resolver.Resolve t0
-                        formatter.BeginWriteObject tag (header ||| ObjectFlags.IsProperSubtype)
+                        beginWriteObject pickler' tag (header ||| ObjectFlags.IsProperSubtype)
                         writeType t0
                         pickler'.UntypedWrite(w, x)
                         formatter.EndWriteObject ()
                     else
-                        formatter.BeginWriteObject tag header
+                        beginWriteObject pickler tag header
                         pickler.Write w x
                         formatter.EndWriteObject ()
 
             try
                 if pickler.TypeKind <= TypeKind.String then
-                    formatter.BeginWriteObject tag ObjectFlags.IsPrimitive
+                    beginWriteObject pickler tag ObjectFlags.IsPrimitive
                     pickler.Write w x
                     formatter.EndWriteObject ()
 
                 if pickler.TypeKind <= TypeKind.Value then
-                    formatter.BeginWriteObject tag ObjectFlags.IsValue
+                    beginWriteObject pickler tag ObjectFlags.IsValue
                     pickler.Write w x
                     formatter.EndWriteObject ()
 
                 elif obj.ReferenceEquals(x, null) then
-                    formatter.BeginWriteObject tag ObjectFlags.IsNull
+                    beginWriteObject pickler tag ObjectFlags.IsNull
                     pickler.Write w x
                     formatter.EndWriteObject ()
 
@@ -355,24 +358,24 @@
                         do cyclicObjects.Add(id) |> ignore
                     
                         if pickler.TypeKind = TypeKind.Array then
-                              formatter.BeginWriteObject tag ObjectFlags.IsOldCachedInstance
+                            beginWriteObject pickler tag ObjectFlags.IsOldCachedInstance
                         elif pickler.TypeKind <= TypeKind.Sealed || pickler.UseWithSubtypes then
-                            formatter.BeginWriteObject tag ObjectFlags.IsCyclicInstance
+                            beginWriteObject pickler tag ObjectFlags.IsCyclicInstance
                         else
                             let t = x.GetType()
 
                             if t.IsArray then
-                                formatter.BeginWriteObject tag ObjectFlags.IsOldCachedInstance
+                                beginWriteObject pickler tag ObjectFlags.IsOldCachedInstance
                             elif t <> pickler.Type then
-                                formatter.BeginWriteObject tag (ObjectFlags.IsCyclicInstance ||| ObjectFlags.IsProperSubtype)
+                                beginWriteObject pickler tag (ObjectFlags.IsCyclicInstance ||| ObjectFlags.IsProperSubtype)
                                 writeType t
                             else
-                                formatter.BeginWriteObject tag ObjectFlags.IsCyclicInstance
+                                beginWriteObject pickler tag ObjectFlags.IsCyclicInstance
 
                         formatter.WriteInt64 "id" id
                         formatter.EndWriteObject()
                     else
-                        formatter.BeginWriteObject tag ObjectFlags.IsOldCachedInstance
+                        beginWriteObject pickler tag ObjectFlags.IsOldCachedInstance
                         formatter.WriteInt64 "id" id
                         formatter.EndWriteObject()
                 else
@@ -433,11 +436,10 @@
 //                    i <- i + 1
 //                i
 //
-//        interface IDisposable with
-//            member __.Dispose () = bw.Dispose ()
+        interface IDisposable with
+            member __.Dispose () = formatter.Dispose()
 
-    and [<AutoSerializable(false)>] 
-        Reader internal (formatter : IPickleFormatReader, resolver : IPicklerResolver, ?streamingContext) =
+    and [<AutoSerializable(false)>] Reader internal (stream : Stream, formatP : IPickleFormatProvider, resolver : IPicklerResolver, ?streamingContext) =
 
 //        do if not stream.CanRead then invalidOp "Cannot read from stream."
 
@@ -445,6 +447,7 @@
 //        let encoding = defaultArg encoding Encoding.UTF8
 
 //        let br = BinaryReader.Create(stream, encoding, defaultArg leaveOpen true)
+        let formatter = formatP.CreateReader stream
         let sc = match streamingContext with None -> new StreamingContext() | Some sc -> sc
         let objCache = new Dictionary<int64, obj> ()
         let fixupIndex = new Dictionary<int64, Type * obj> ()
@@ -473,9 +476,22 @@
         // the primary deserialization routine; handles all the caching, subtype resolution logic, etc
         member r.Read(pickler : Pickler<'T>, tag : string) : 'T =
 
+            let inline beginReadObject (pickler : Pickler) tag =
+                let mutable picklerFlags = 0us
+                let objFlags = formatter.BeginReadObject(tag, &picklerFlags)
+                if picklerFlags <> pickler.PicklerFlags then
+                    if byte picklerFlags <> byte pickler.PicklerFlags then
+                        let msg = sprintf "FsPickler: next object is of unexpected type (anticipated %O)." pickler.Type
+                        raise <| new SerializationException(msg)
+                    else
+                        let msg = sprintf "FsPickler: object of type '%O' was serialized with incompatible pickler." pickler.Type
+                        raise <| new SerializationException(msg)
+                else
+                    objFlags
+
             // ad-hoc System.Type caching
             let (*inline*) readType () =
-                let flags = formatter.BeginReadObject "subtype"
+                let flags = beginReadObject tyPickler "subtype"
                 if ObjectFlags.hasFlag flags ObjectFlags.IsNewCachedInstance then
                     let id = counter
                     counter <- counter + 1L
@@ -497,7 +513,7 @@
                     pickler.Read r
 
             try
-                let flags = formatter.BeginReadObject tag
+                let flags = beginReadObject pickler tag
 
                 if ObjectFlags.hasFlag flags ObjectFlags.IsNull then 
                     formatter.EndReadObject ()
@@ -631,5 +647,5 @@
 //                        do flushState ()
 //            }
 //
-//        interface IDisposable with
-//            member __.Dispose () = br.Dispose ()
+        interface IDisposable with
+            member __.Dispose () = formatter.Dispose ()

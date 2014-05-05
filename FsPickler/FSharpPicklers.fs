@@ -138,18 +138,18 @@
 
             let writer (w : Writer) (x : 'Union) =
                 let tag = tagReader.Invoke x
-                w.BinaryWriter.Write (byte tag)
+                w.Formatter.WriteByte "tag" (byte tag)
                 let _,reader,picklers = caseInfo.[tag]
                 let values = reader x
                 for i = 0 to values.Length - 1 do
-                    picklers.[i].UntypedWrite(w, values.[i], managed = true)
+                    picklers.[i].ManagedWrite(w, string i, values.[i])
 
             let reader (r : Reader) =
-                let tag = int (r.BinaryReader.ReadByte())
+                let tag = int (r.Formatter.ReadByte "tag")
                 let ctor,_,picklers = caseInfo.[tag]
                 let values = Array.zeroCreate<obj> picklers.Length
                 for i = 0 to picklers.Length - 1 do
-                    values.[i] <- picklers.[i].UntypedRead(r, managed = true)
+                    values.[i] <- picklers.[i].ManagedRead(r, string i)
 
                 ctor values |> fastUnbox<'Union>
 #endif
@@ -198,13 +198,14 @@
 #else
             let writer (w : Writer) (x : 'Record) =
                 for i = 0 to fields.Length - 1 do
-                    let o = fields.[i].GetValue x
-                    picklers.[i].UntypedWrite(w, o, managed = true)
+                    let f = fields.[i]
+                    let o = f.GetValue x
+                    picklers.[i].ManagedWrite(w, f.Name, o)
             
             let reader (r : Reader) =
                 let values = Array.zeroCreate<obj> fields.Length
                 for i = 0 to fields.Length - 1 do
-                    values.[i] <- picklers.[i].UntypedRead(r, managed = true)
+                    values.[i] <- picklers.[i].ManagedRead(r, fields.[i].Name)
 
                 ctor.Invoke values |> fastUnbox<'Record>
 #endif
@@ -269,14 +270,16 @@
             let writer (w : Writer) (e : 'Exception) =
                 defPickler.Write w e
                 for i = 0 to fields.Length - 1 do
-                    let o = fields.[i].GetValue e
-                    fpicklers.[i].UntypedWrite(w, o, managed = true)
+                    let f = fields.[i]
+                    let o = f.GetValue e
+                    fpicklers.[i].ManagedWrite(w, f.Name, o)
 
             let reader (r : Reader) =
                 let e = defPickler.Read r
                 for i = 0 to fields.Length - 1 do
-                    let o = fpicklers.[i].UntypedRead(r, managed = true)
-                    fields.[i].SetValue(e, o)
+                    let f = fields.[i]
+                    let o = fpicklers.[i].ManagedRead(r, f.Name)
+                    f.SetValue(e, o)
                 e
 #endif
             new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = true, useWithSubtypes = true)

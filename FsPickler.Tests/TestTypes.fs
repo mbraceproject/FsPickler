@@ -151,10 +151,10 @@
                 let valueFmt = resolver.Resolve<'T> ()
 
                 let writer (w : Writer) (g : GenericType<'T>) =
-                    w.Write(valueFmt, g.Value)
+                    w.Write(valueFmt, "value", g.Value)
 
                 let reader (r : Reader) =
-                    let value = r.Read valueFmt
+                    let value = r.Read (valueFmt, "value")
                     new GenericType<'T>(Unchecked.defaultof<'T>)
 
                 Pickler.FromPrimitives(reader, writer) :> Pickler
