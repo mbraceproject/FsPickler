@@ -263,7 +263,7 @@
         let sc = match streamingContext with None -> new StreamingContext() | Some sc -> sc
         let mutable idGen = new ObjectIDGenerator()
         let objStack = new Stack<int64> ()
-        let cyclicObjects = new SortedSet<int64> ()
+        let cyclicObjects = new HashSet<int64> ()
 
         let tyPickler = resolver.Resolve<Type> ()
 

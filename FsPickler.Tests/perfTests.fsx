@@ -118,6 +118,11 @@ module PerfTests =
 
     [<PerfTest>]
     let ``System.Type`` s = Serializer.roundtrips 10000 tyArray s
+
+//    let graph = Nessos.FsPickler.Tests.TestTypes.createRandomGraph 0.2 500
+//
+//    [<PerfTest>]
+//    let ``Random cyclic graph (n=500,P=20%)`` s = Serializer.roundtrips 1 graph s
         
 
 
@@ -132,6 +137,7 @@ let ssj = new ServiceStackJsonSerializer() :> ISerializer
 let sst = new ServiceStackTypeSerializer() :> ISerializer
 
 let mkTester () = new ImplementationComparer<ISerializer>(fsp, [bfs;ndc;jdn;pbn;ssj;sst]) :> PerformanceTester<ISerializer>
+let mkCyclicGraphTester () = new ImplementationComparer<ISerializer>(fsp, [bfs]) :> PerformanceTester<ISerializer>
 
 
 let dashGrid = ChartTypes.Grid(LineColor = Color.Gainsboro, LineDashStyle = ChartDashStyle.Dash)
@@ -144,14 +150,21 @@ let plot yaxis (metric : PerfResult -> float) (results : PerfResult list) =
     |> Chart.WithXAxis(MajorGrid = dashGrid) 
     |> fun ch -> ch.ShowChart()
 
-let plotMS (results : TestSession list) = 
+let plotTime (results : TestSession list) = 
     results 
     |> TestSession.groupByTest
-    |> Map.iter (fun _ rs -> plot "milliseconds" (fun r -> r.Elapsed.TotalMilliseconds) rs)
+    |> Map.iter (fun _ rs -> plot "miliseconds" (fun r -> r.Elapsed.TotalMilliseconds) rs)
+
+let plotGC (results : TestSession list) =
+    results
+    |> TestSession.groupByTest
+    |> Map.iter (fun _ rs -> plot "GC Collections (gen0)" (fun r -> float r.GcDelta.[0]) rs)
 
 
 let results = PerfTest.run mkTester tests
+//let results = PerfTest.run mkCyclicGraphTester tests
 
 TestSession.toFile "/mbrace/perftests.xml" results
 
-plotMS results
+plotTime results
+plotGC results
