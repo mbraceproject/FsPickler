@@ -42,10 +42,10 @@
         let testSerializer (Serialize (t,o)) =
             try 
                 let result = Success <| Serializer.write testedSerializer o
-                sprintf "Successfully serialized %A : %s" o t.Name |> logF
+                sprintf "Successfully serialized %O : %s" o t.Name |> logF
                 result
             with e -> 
-                sprintf "Failed to serialize %A : %s with error:\n %O" o t.Name e |> logF
+                sprintf "Failed to serialize %O : %s with error:\n %O" o t.Name e |> logF
                 Error e
 
         let loop () =
