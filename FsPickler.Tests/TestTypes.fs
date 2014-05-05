@@ -205,6 +205,25 @@
                     sI.AddValue("z", z)
 
 
+        type Node<'T> = { Value : 'T ; mutable Neigh : Node<'T> list }
+        and Graph<'T> = { Nodes : Node<'T> list }
+
+        let createRandomGraph (probability : float) (size : int) =
+            let r = new System.Random()
+            let nodes = [1..size] |> List.map (fun i -> { Value = i ; Neigh = []})
+            for n in nodes do
+                let neigh = nodes |> List.filter (fun _ -> r.NextDouble() < probability)
+                n.Neigh <- neigh
+            { Nodes = nodes }
+
+        let areEqualGraphs<'T when 'T : comparison> (g1 : Graph<'T>) (g2 : Graph<'T>) =
+            let toAdjacencyMap (g : Graph<'T>) = 
+                g.Nodes 
+                |> Seq.map (fun n -> n.Value, n.Neigh |> List.map (fun n -> n.Value) )
+                |> Map.ofSeq
+
+            toAdjacencyMap g1 = toAdjacencyMap g2
+
         let stringValue = 
             "Lorem ipsum dolor sit amet, consectetur adipisicing elit, 
                 sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."

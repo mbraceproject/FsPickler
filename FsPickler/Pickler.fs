@@ -262,7 +262,7 @@
         let sc = match streamingContext with None -> new StreamingContext() | Some sc -> sc
         let mutable idGen = new ObjectIDGenerator()
         let objStack = new Stack<int64> ()
-        let cyclicObjects = new SortedSet<int64> ()
+        let cyclicObjects = new HashSet<int64> ()
 
         let tyPickler = resolver.Resolve<Type> ()
 
@@ -546,7 +546,7 @@
                             // deserialization reached root level of a cyclic object
                             // perform fixup by doing reflection-based field copying
                             let t,o = contents
-                            do shallowCopy t x o
+                            do ShallowObjectCopier.Copy t x o
                             fastUnbox<'T> o
                         else
                             objCache.[id] <- x ; x

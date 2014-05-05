@@ -18,6 +18,11 @@
         open System.Text
         open System.Runtime.Serialization
 
+#if EMIT_IL
+        open Nessos.FsPickler.Emit
+        open System.Reflection.Emit
+#endif
+
         open Microsoft.FSharp.Reflection
 
         let runsOnMono = System.Type.GetType("Mono.Runtime") <> null
@@ -127,13 +132,7 @@
         /// thread safe memo operator
         let memoize (f : 'T -> 'S) =
             let cache = new ConcurrentDictionary<'T,'S> ()
-            fun t ->
-                let found, s = cache.TryGetValue t
-                if found then s
-                else
-                    let s = f t
-                    cache.TryAdd(t,s) |> ignore
-                    s
+            fun t -> cache.GetOrAdd(t, f)
 
         /// takes an isomorphic function and its inverse as inputs
         /// memoizes output in both directions
@@ -351,12 +350,36 @@
             gathered.Value |> Map.toArray |> Array.map snd
 
 
-        // perform a shallow copy of the contents of given reference type
-        let shallowCopy (t : Type) (src : obj) (dst : obj) =
-            let fields = gatherFields t
-            for f in fields do
-                let v = f.GetValue(src)
-                f.SetValue(dst, v)
+
+        type ShallowObjectCopier private () =
+            
+            static let mkCopier (t : Type) =
+                if t.IsValueType then invalidOp t.FullName "not a class."
+
+                let fields = gatherFields t
+#if EMIT_IL
+                let dele =
+                    DynamicMethod.compileAction2<obj, obj> "shallowCopier" (fun source target ilGen ->
+                        for f in fields do
+                            target.Load()
+                            source.Load()
+                            ilGen.Emit(OpCodes.Ldfld, f)
+                            ilGen.Emit(OpCodes.Stfld, f)
+
+                        ilGen.Emit OpCodes.Ret
+                    )
+
+                fun (src : obj) (tgt : obj) -> dele.Invoke(src,tgt)
+#else
+                fun src dst ->
+                    for f in fields do
+                        let v = f.GetValue(src)
+                        f.SetValue(dst, v)
+#endif
+            static let mkCopierMemoized = memoize mkCopier
+
+            static member Copy (t : Type) (source : obj) (target : obj) = 
+                mkCopierMemoized t source target
 
         //
         // Let 't1 -> t2' be the binary relation between types that denotes the statement 't1 contans a field of type t2'.
