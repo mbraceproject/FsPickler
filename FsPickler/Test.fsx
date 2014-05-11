@@ -24,13 +24,3 @@ for i = 0 to 100 do
     fsp.ComputeHash(value, hashFactory = fnv) |> ignore
 for i = 0 to 100 do
     value.GetHashCode() |> ignore
-
-
-
-
-type foo =
-    static member bar (x : int) (y : int) = x + y
-
-let m = typeof<foo>.GetMethod("bar")
-
-m.Invoke(null, [| 42 :> obj ; 12 :> obj |])
