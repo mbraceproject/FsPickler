@@ -13,15 +13,15 @@
 
         static member CreateUntyped(t : Type, resolver : IPicklerResolver) =
             let et = t.GetElementType()
-            let ef = resolver.Resolve et
+            let ep = resolver.Resolve et
             let m =
                 typeof<ArrayPickler>
                     .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
                     .MakeGenericMethod [| et ; t |]
 
-            m.GuardedInvoke(null, [| ef :> obj |]) :?> Pickler
+            m.GuardedInvoke(null, [| ep :> obj |]) :?> Pickler
 
-        static member Create<'T, 'Array when 'Array :> Array> (ef : Pickler<'T>) : Pickler<'Array> =
+        static member Create<'T, 'Array when 'Array :> Array> (ep : Pickler<'T>) : Pickler<'Array> =
             assert(typeof<'T> = typeof<'Array>.GetElementType())
             let rank = typeof<'Array>.GetArrayRank()
 
@@ -32,36 +32,36 @@
                     lengths.[d] <- x.GetLength d
                     w.Formatter.WriteInt32 (string d) lengths.[d]
 
-                if ef.TypeKind = TypeKind.Primitive then
+                if ep.TypeKind = TypeKind.Primitive then
                     w.Formatter.WritePrimitiveArray "data" x
 //                    // block copy without bothering with endianness && keepEndianness
 //                    Stream.ReadFromArray(w.BinaryWriter.BaseStream, x)
                 else
-                    let isPrimitive = ef.TypeKind <= TypeKind.String
+                    let isPrimitive = isPrimitive ep
                              
                     match rank with
                     | 1 ->
                         let x = fastUnbox<'T []> x
                         for i = 0 to x.Length - 1 do
-                            write isPrimitive w ef "item" x.[i]
+                            write isPrimitive w ep "item" x.[i]
                     | 2 -> 
                         let x = fastUnbox<'T [,]> x
                         for i = 0 to lengths.[0] - 1 do
                             for j = 0 to lengths.[1] - 1 do
-                                write isPrimitive w ef "item" x.[i,j]
+                                write isPrimitive w ep "item" x.[i,j]
                     | 3 ->
                         let x = fastUnbox<'T [,,]> x
                         for i = 0 to lengths.[0] - 1 do
                             for j = 0 to lengths.[1] - 1 do
                                 for k = 0 to lengths.[2] - 1 do
-                                    write isPrimitive w ef "item" x.[i,j,k]
+                                    write isPrimitive w ep "item" x.[i,j,k]
                     | 4 ->
                         let x = fastUnbox<'T [,,,]> x
                         for i = 0 to lengths.[0] - 1 do
                             for j = 0 to lengths.[1] - 1 do
                                 for k = 0 to lengths.[2] - 1 do
                                     for l = 0 to lengths.[3] - 1 do
-                                        write isPrimitive w ef "item" x.[i,j,k,l]
+                                        write isPrimitive w ep "item" x.[i,j,k,l]
 
                     | _ -> failwith "impossible array rank"
 
@@ -80,26 +80,26 @@
                 // register new object with deserializer cache
                 r.EarlyRegisterArray array
 
-                if ef.TypeKind = TypeKind.Primitive then //&& keepEndianness then
+                if ep.TypeKind = TypeKind.Primitive then //&& keepEndianness then
                     r.Formatter.ReadToPrimitiveArray "data" array
 //                    Stream.WriteToArray(r.BinaryReader.BaseStream, array)
 
                     array
                 else
-                    let isPrimitive = ef.TypeKind <= TypeKind.Primitive
+                    let isPrimitive = isPrimitive ep
 
                     match rank with
                     | 1 -> 
                         let arr = fastUnbox<'T []> array
                         for i = 0 to l.[0] - 1 do
-                            arr.[i] <- read isPrimitive r ef "item"
+                            arr.[i] <- read isPrimitive r ep "item"
 
                         array
                     | 2 -> 
                         let arr = fastUnbox<'T [,]> array
                         for i = 0 to l.[0] - 1 do
                             for j = 0 to l.[1] - 1 do
-                                arr.[i,j] <- read isPrimitive r ef "item"
+                                arr.[i,j] <- read isPrimitive r ep "item"
 
                         array
                     | 3 ->
@@ -107,7 +107,7 @@
                         for i = 0 to l.[0] - 1 do
                             for j = 0 to l.[1] - 1 do
                                 for k = 0 to l.[2] - 1 do
-                                    arr.[i,j,k] <- read isPrimitive r ef "item"
+                                    arr.[i,j,k] <- read isPrimitive r ep "item"
 
                         array
                     | 4 ->
@@ -116,7 +116,7 @@
                             for j = 0 to l.[1] - 1 do
                                 for k = 0 to l.[2] - 1 do
                                     for l = 0 to l.[3] - 1 do
-                                        arr.[i,j,k,l] <- read isPrimitive r ef "item"
+                                        arr.[i,j,k,l] <- read isPrimitive r ep "item"
 
                         array
                     | _ -> failwith "impossible array rank"
