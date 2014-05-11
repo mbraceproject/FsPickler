@@ -36,7 +36,7 @@
 
     type BinaryPickleWriter (stream : Stream) =
 
-        let bw = new BinaryWriter(stream, Encoding.UTF8, true)
+        let bw = new Nessos.FsPickler.Binary.BinaryWriter(stream)
 
         interface IPickleFormatWriter with
             member __.BeginWriteRoot (id : string) =
@@ -81,12 +81,12 @@
                 bw.Write value
 
             member __.WriteBytesFixed _ value = bw.Write value
-            member __.WritePrimitiveArray _ array = Stream.ReadFromArray(stream, array)
+            member __.WritePrimitiveArray _ array = bw.Write array
 
             member __.Dispose () = bw.Dispose()
 
     and BinaryPickleReader (stream : Stream) =
-        let br = new BinaryReader(stream, Encoding.UTF8, true)
+        let br = new Nessos.FsPickler.Binary.BinaryReader(stream)
 
         interface IPickleFormatReader with
             
@@ -129,7 +129,7 @@
 
             member __.ReadBytes _ = let length = br.ReadInt32() in br.ReadBytes(length)
             member __.ReadBytesFixed _ length = br.ReadBytes(length)
-            member __.ReadToPrimitiveArray _ array = Stream.WriteToArray(stream, array)
+            member __.ReadToPrimitiveArray _ array = br.ReadArray(array)
 
 
     and BinaryFormatProvider () =

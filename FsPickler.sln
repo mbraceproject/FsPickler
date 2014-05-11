@@ -27,6 +27,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{E60ECF
 		.nuget\packages.config = .nuget\packages.config
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FsPickler.CSharp", "FsPickler.CSharp\FsPickler.CSharp.csproj", "{490F47D5-5FFA-4B2A-9A1F-039384E83B12}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -52,6 +54,14 @@ Global
 		{BA81B7DB-5759-433E-A6BF-5CDA81C3BDAA}.PerfTests|Any CPU.Deploy.0 = PerfTests|Any CPU
 		{BA81B7DB-5759-433E-A6BF-5CDA81C3BDAA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BA81B7DB-5759-433E-A6BF-5CDA81C3BDAA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{490F47D5-5FFA-4B2A-9A1F-039384E83B12}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{490F47D5-5FFA-4B2A-9A1F-039384E83B12}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{490F47D5-5FFA-4B2A-9A1F-039384E83B12}.NoEmit|Any CPU.ActiveCfg = Release|Any CPU
+		{490F47D5-5FFA-4B2A-9A1F-039384E83B12}.NoEmit|Any CPU.Build.0 = Release|Any CPU
+		{490F47D5-5FFA-4B2A-9A1F-039384E83B12}.PerfTests|Any CPU.ActiveCfg = Release|Any CPU
+		{490F47D5-5FFA-4B2A-9A1F-039384E83B12}.PerfTests|Any CPU.Build.0 = Release|Any CPU
+		{490F47D5-5FFA-4B2A-9A1F-039384E83B12}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{490F47D5-5FFA-4B2A-9A1F-039384E83B12}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
