@@ -133,8 +133,8 @@
         abstract member WriteRootObject : Writer * id : string * value : obj -> unit
         abstract member ReadRootObject : Reader * id : string -> obj
 
-//        abstract member WriteSequence : Writer * id : string * sequence : IEnumerable -> int
-//        abstract member ReadSequence : Reader * id : string * length : int -> IEnumerator
+        abstract member WriteSequence : Writer * id : string * sequence : IEnumerable -> int
+        abstract member ReadSequence : Reader * id : string * length : int -> IEnumerator
 
         abstract member Cast<'S> : unit -> Pickler<'S>
         abstract member ClonePickler : unit -> Pickler
@@ -210,8 +210,8 @@
 
         override p.WriteRootObject (w : Writer, id, o : obj) = w.WriteRootObject(p, id, o :?> 'T)
         override p.ReadRootObject (r : Reader, id) = r.ReadRootObject (p, id) :> obj
-//        override p.WriteSequence (w : Writer, id, e : IEnumerable) = w.WriteSequence(f, id, e :?> seq<'T>)
-//        override p.ReadSequence (r : Reader, id, length : int) = r.ReadSequence(f, id, length) :> IEnumerator
+        override p.WriteSequence (w : Writer, id, e : IEnumerable) = w.WriteSequence(p, id, e :?> seq<'T>)
+        override p.ReadSequence (r : Reader, id, length : int) = r.ReadSequence(p, id, length) :> IEnumerator
 
         override p.ClonePickler () =
             if p.IsInitialized then
@@ -389,52 +389,57 @@
             w.Write(pickler, "root", x)
             formatter.EndWriteRoot ()
 
-//        // efficient sequence serialization; must be used as top-level operation only
-//        member internal w.WriteSequence<'T>(pickler : Pickler<'T>, id : string, xs : seq<'T>) : int =
-//            let inline flushState () =
-//                idGen <- new ObjectIDGenerator()
-//                
-//            let isPrimitive = pickler.TypeKind = TypeKind.Primitive
-//            let isNonAtomic = pickler.PicklerInfo <> PicklerInfo.Atomic
-//
-//            let inline write idx (x : 'T) =
-//                if isPrimitive then pickler.Write w x
-//                elif isNonAtomic then
-//                    if idx % sequenceCounterResetThreshold = 0 then
-//                        flushState ()
-//                    w.Write(pickler, x)
-//                elif obj.ReferenceEquals(x, null) then
-//                    bw.Write true
-//                else
-//                    bw.Write false 
-//                    pickler.Write w x
-//
-//            // write id
-//            bw.Write id
-//            // write sequence header
+        // efficient sequence serialization; must be used as top-level operation only
+        member internal w.WriteSequence<'T>(pickler : Pickler<'T>, id : string, xs : seq<'T>) : int =
+            let inline flushState () =
+                idGen <- new ObjectIDGenerator()
+                
+            let isPrimitive = pickler.TypeKind = TypeKind.Primitive
+            let isNonAtomic = pickler.PicklerInfo <> PicklerInfo.Atomic
+
+            let inline write idx (x : 'T) =
+                if isPrimitive then pickler.Write w x
+                elif isNonAtomic then
+                    if idx % sequenceCounterResetThreshold = 0 then
+                        flushState ()
+                    w.Write(pickler, "item", x)
+                elif obj.ReferenceEquals(x, null) then
+                    formatter.WriteBoolean "isNull" true
+                else
+                    formatter.WriteBoolean "isNull" false
+                    pickler.Write w x
+
+            // write id
+//            formatter.WriteString "seqId" id
+            // write sequence header
+            formatter.BeginWriteObject id pickler.PicklerFlags ObjectFlags.IsSequenceHeader
 //            bw.Write(ObjHeader.create pickler.PicklerFlags ObjHeader.isSequenceHeader)
-//            
-//            // specialize enumeration
-//            match xs with
-//            | :? ('T []) as array ->
-//                let n = array.Length
-//                for i = 0 to n - 1 do
-//                    write i array.[i]
-//                n
-//            | :? ('T list) as list ->
-//                let rec writeLst i lst =
-//                    match lst with
-//                    | [] -> i
-//                    | hd :: tl -> write i hd ; writeLst (i+1) tl
-//
-//                writeLst 0 list
-//            | _ ->
-//                let mutable i = 0
-//                for x in xs do
-//                    write i x
-//                    i <- i + 1
-//                i
-//
+            
+            // specialize enumeration
+            let length =
+                match xs with
+                | :? ('T []) as array ->
+                    let n = array.Length
+                    for i = 0 to n - 1 do
+                        write i array.[i]
+                    n
+                | :? ('T list) as list ->
+                    let rec writeLst i lst =
+                        match lst with
+                        | [] -> i
+                        | hd :: tl -> write i hd ; writeLst (i+1) tl
+
+                    writeLst 0 list
+                | _ ->
+                    let mutable i = 0
+                    for x in xs do
+                        write i x
+                        i <- i + 1
+                    i
+
+            formatter.EndWriteObject()
+            length
+
         interface IDisposable with
             member __.Dispose () = formatter.Dispose()
 
@@ -591,60 +596,63 @@
             x
 
 
-//        // efficient sequence deserialization; must be used as top-level operation only
-//        member internal r.ReadSequence<'T> (pickler : Pickler<'T>, id : string, length : int) =
-//            let inline flushState () =
-//                objCache.Clear ()
-//                counter <- 1L
-//
-//            let isPrimitive = pickler.TypeKind = TypeKind.Primitive
-//            let isNonAtomic = pickler.PicklerInfo <> PicklerInfo.Atomic
-//
-//            let read idx =
-//                if isPrimitive then pickler.Read r
-//                elif isNonAtomic then
-//                    if idx % sequenceCounterResetThreshold = 0 then
-//                        flushState ()
-//                    r.Read pickler
-//                elif br.ReadBoolean () then fastUnbox<'T> null
-//                else
-//                    pickler.Read r
-//
-//            // read id
+        // efficient sequence deserialization; must be used as top-level operation only
+        member internal r.ReadSequence<'T> (pickler : Pickler<'T>, id : string, length : int) =
+            let inline flushState () =
+                objCache.Clear ()
+                counter <- 1L
+
+            let isPrimitive = pickler.TypeKind = TypeKind.Primitive
+            let isNonAtomic = pickler.PicklerInfo <> PicklerInfo.Atomic
+
+            let read idx =
+                if isPrimitive then pickler.Read r
+                elif isNonAtomic then
+                    if idx % sequenceCounterResetThreshold = 0 then
+                        flushState ()
+                    r.Read (pickler, "item")
+                elif formatter.ReadBoolean "isNull" then fastUnbox<'T> null
+                else
+                    pickler.Read r
+
+            // read id
+            let mutable pflags = pickler.PicklerFlags
+            let flags = formatter.BeginReadObject (id, &pflags)
 //            let id' = br.ReadString()
 //            if id <> id' then
 //                let msg = sprintf "FsPickler: Sequence is of type '%s', expected '%s'." id' id
 //                raise <| new SerializationException(msg)
-//            
-//            // read object header
+            
+            // read object header
+            if flags <> ObjectFlags.IsSequenceHeader then
 //            match ObjHeader.read pickler.Type pickler.PicklerFlags (br.ReadUInt32()) with
 //            | ObjHeader.isSequenceHeader -> ()
 //            | _ -> 
-//                let msg = "FsPickler: invalid stream data; expected sequence serialization."
-//                raise <| new SerializationException(msg)
-//
-//            let cnt = ref 0
-//            let curr = ref Unchecked.defaultof<'T>
-//            let initPos = stream.Position
-//            {
-//                new IEnumerator<'T> with
-//                    member __.Current = !curr
-//                    member __.Current = box !curr
-//                    member __.Dispose () = (r :> IDisposable).Dispose ()
-//                    member __.MoveNext () =
-//                        if !cnt < length then
-//                            curr := read !cnt
-//                            incr cnt
-//                            true
-//                        else
-//                            false
-//
-//                    member __.Reset () =
-//                        stream.Position <- initPos
-//                        curr := Unchecked.defaultof<'T>
-//                        cnt := 0
-//                        do flushState ()
-//            }
-//
+                let msg = "FsPickler: invalid stream data; expected sequence serialization."
+                raise <| new SerializationException(msg)
+
+            let cnt = ref 0
+            let curr = ref Unchecked.defaultof<'T>
+            let initPos = stream.Position
+            {
+                new IEnumerator<'T> with
+                    member __.Current = !curr
+                    member __.Current = box !curr
+                    member __.Dispose () = (r :> IDisposable).Dispose ()
+                    member __.MoveNext () =
+                        if !cnt < length then
+                            curr := read !cnt
+                            incr cnt
+                            true
+                        else
+                            false
+
+                    member __.Reset () =
+                        stream.Position <- initPos
+                        curr := Unchecked.defaultof<'T>
+                        cnt := 0
+                        do flushState ()
+            }
+
         interface IDisposable with
             member __.Dispose () = formatter.Dispose ()

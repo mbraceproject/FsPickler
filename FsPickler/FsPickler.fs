@@ -145,8 +145,7 @@
             use writer = new Writer(stream, formatP, resolver) //, ?encoding = encoding, ?leaveOpen = leaveOpen)
             let pickler = resolver.Resolve<'T> ()
             let qn = cache.GetQualifiedName pickler.Type
-            raise <| new NotImplementedException()
-//            writer.WriteSequence(pickler, qn, sequence)
+            writer.WriteSequence(pickler, qn, sequence)
 
         /// <summary>Serialize a sequence of objects to the underlying stream.</summary>
         /// <param name="elementType">element type used in sequence.</param>
@@ -160,8 +159,7 @@
             use writer = new Writer(stream, formatP, resolver) //, ?encoding = encoding, ?leaveOpen = leaveOpen)
             let pickler = resolver.Resolve elementType
             let qn = cache.GetQualifiedName pickler.Type
-            raise <| new NotImplementedException()
-//            pickler.WriteSequence(writer, qn, sequence)
+            pickler.WriteSequence(writer, qn, sequence)
 
         /// <summary>Lazily deserialize a sequence of objects from the underlying stream.</summary>
         /// <param name="stream">source stream.</param>
@@ -171,11 +169,10 @@
         /// <param name="leaveOpen">leave underlying stream open when finished. Defaults to true.</param>
         /// <returns>An IEnumerator that lazily consumes elements from the stream.</returns>
         member __.DeserializeSequence<'T>(stream : Stream, length : int, [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : IEnumerator<'T> =
-            raise <| new NotImplementedException()
-//            let reader = new Reader(stream, resolver, ?encoding = encoding, ?leaveOpen = leaveOpen)
-//            let pickler = resolver.Resolve<'T> ()
-//            let qn = cache.GetQualifiedName pickler.Type
-//            reader.ReadSequence(pickler, qn, length)
+            let reader = new Reader(stream, formatP, resolver) //, ?encoding = encoding, ?leaveOpen = leaveOpen)
+            let pickler = resolver.Resolve<'T> ()
+            let qn = cache.GetQualifiedName pickler.Type
+            reader.ReadSequence(pickler, qn, length)
 
         /// <summary>Lazily deserialize a sequence of objects from the underlying stream.</summary>
         /// <param name="elementType">element type used in sequence.</param>
@@ -186,11 +183,10 @@
         /// <param name="leaveOpen">leave underlying stream open when finished. Defaults to true.</param>
         /// <returns>An IEnumerator that lazily consumes elements from the stream.</returns>
         member __.DeserializeSequence(elementType : Type, stream : Stream, length : int, [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : IEnumerator =
-            raise <| new NotImplementedException()
-//            let reader = new Reader(stream, resolver, ?encoding = encoding, ?leaveOpen = leaveOpen)
-//            let pickler = resolver.Resolve elementType
-//            let qn = cache.GetQualifiedName pickler.Type
-//            pickler.ReadSequence(reader, qn, length)
+            let reader = new Reader(stream, formatP, resolver) //, ?encoding = encoding, ?leaveOpen = leaveOpen)
+            let pickler = resolver.Resolve elementType
+            let qn = cache.GetQualifiedName pickler.Type
+            pickler.ReadSequence(reader, qn, length)
 
         /// <summary>
         ///     Pickles given value to byte array.
