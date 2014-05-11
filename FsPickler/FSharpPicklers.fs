@@ -75,7 +75,7 @@
                     picklers.Store ()
 
                     // write tag to stream
-                    writeInt writer tag ilGen
+                    writeInt writer "tag" tag ilGen
 
                     // make jump table
                     tag.Load ()
@@ -100,7 +100,7 @@
                     let labels = Array.init caseInfo.Length (fun _ -> ilGen.DefineLabel())
 
                     // read tag from stream & store
-                    readInt reader ilGen
+                    readInt reader "tag" ilGen
                     tag.Store ()
 
                     // select appropriate picklers & store
@@ -116,10 +116,12 @@
                     // emit cases
                     for i = 0 to caseInfo.Length - 1 do
                         let label = labels.[i]
-                        let _,ctor,_,_ = caseInfo.[i]
+                        let _,ctor,fields,_ = caseInfo.[i]
+
+                        let ctorParams = fields |> Array.map (fun f -> f.PropertyType, f.Name)
 
                         ilGen.MarkLabel label
-                        emitDeserializeAndConstruct (Choice1Of2 ctor) (ctor.GetParameterTypes()) reader picklers ilGen
+                        emitDeserializeAndConstruct (Choice1Of2 ctor) ctorParams reader picklers ilGen
                         ilGen.Emit OpCodes.Ret
                 )
 
@@ -190,7 +192,9 @@
             let readerDele =
                 DynamicMethod.compileFunc2<Pickler [], Reader, 'Record> "recordDeserializer" (fun picklers reader ilGen ->
 
-                    emitDeserializeAndConstruct (Choice2Of2 ctor) (ctor.GetParameterTypes()) reader picklers ilGen
+                    let ctorParams = fields |> Array.map (fun f -> f.PropertyType, f.Name)
+
+                    emitDeserializeAndConstruct (Choice2Of2 ctor) ctorParams reader picklers ilGen
 
                     ilGen.Emit OpCodes.Ret)
             
