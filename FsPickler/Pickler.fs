@@ -279,11 +279,11 @@
 //            let (*inline*) writeHeader tag (flags : byte) =
 //                let header = ObjHeader.create pickler.PicklerFlags flags
 //                formatter.BeginWriteObject tag header
-            let (*inline*) beginWriteObject (pickler : Pickler) tag objFlags =
+            let inline beginWriteObject (pickler : Pickler) tag objFlags =
                 formatter.BeginWriteObject tag pickler.PicklerFlags objFlags
 
             // ad-hoc System.Type caching
-            let (*inline*) writeType (t : Type) =
+            let inline writeType (t : Type) =
                 let id, firstOccurence = idGen.GetId t
                 if firstOccurence then
                     beginWriteObject tyPickler "subtype" ObjectFlags.IsNewCachedInstance
@@ -294,7 +294,7 @@
                     formatter.WriteInt64 "id" id
                     formatter.EndWriteObject ()
 
-            let (*inline*) writeObject header =
+            let inline writeObject header =
                 if pickler.TypeKind <= TypeKind.Sealed || pickler.UseWithSubtypes then
                     beginWriteObject pickler tag header
                     pickler.Write w x
@@ -480,7 +480,7 @@
         // the primary deserialization routine; handles all the caching, subtype resolution logic, etc
         member r.Read(pickler : Pickler<'T>, tag : string) : 'T =
 
-            let (*inline*) beginReadObject (pickler : Pickler) tag =
+            let inline beginReadObject (pickler : Pickler) tag =
                 let mutable picklerFlags = 0us
                 let objFlags = formatter.BeginReadObject(tag, &picklerFlags)
                 if picklerFlags <> pickler.PicklerFlags then
@@ -494,7 +494,7 @@
                     objFlags
 
             // ad-hoc System.Type caching
-            let (*inline*) readType () =
+            let inline readType () =
                 let flags = beginReadObject tyPickler "subtype"
                 if ObjectFlags.hasFlag flags ObjectFlags.IsNewCachedInstance then
                     let id = counter
@@ -508,7 +508,7 @@
                     formatter.EndReadObject()
                     objCache.[id] |> fastUnbox<Type>
 
-            let (*inline*) readObject flags =
+            let inline readObject flags =
                 if ObjectFlags.hasFlag flags ObjectFlags.IsProperSubtype then
                     let t = readType ()
                     let pickler' = resolver.Resolve t

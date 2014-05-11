@@ -13,10 +13,10 @@
         [<Literal>]
         let initByte = 130uy
 
-        let (*inline*) createHeader (hash : PicklerFlags) (flags : ObjectFlags) =
+        let inline createHeader (hash : PicklerFlags) (flags : ObjectFlags) =
             uint32 initByte ||| (uint32 hash <<< 8) ||| (uint32 flags <<< 24)
 
-        let (*inline*) readHeader (pflags : byref<PicklerFlags>) (header : uint32) =
+        let inline readHeader (pflags : byref<PicklerFlags>) (header : uint32) =
             if byte header <> initByte then
                 raise <| new SerializationException ("invalid stream data.")
             else
