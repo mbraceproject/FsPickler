@@ -317,9 +317,11 @@
                 let culture = formatter.ReadString "culture" 
 
                 let pkt =
-                    if formatter.ReadBoolean "strong" then [||]
-                    else
+                    if formatter.ReadBoolean "strong" then
                         formatter.ReadBytesFixed "pkt" 8
+                    else
+                        [||]
+                        
 
                 {
                     Name = name

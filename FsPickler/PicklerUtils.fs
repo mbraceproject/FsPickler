@@ -101,12 +101,12 @@
 //            else
 //                br.ReadString()
 
-        let inline writeArray (w : Writer) (p : Pickler<'T>) (ts : 'T []) =
+        let (*inline*) writeArray (w : Writer) (p : Pickler<'T>) (ts : 'T []) =
             let isPrimitive = isPrimitive p
             w.Formatter.WriteInt32 "length" ts.Length
             for t in ts do write isPrimitive w p "item" t
 
-        let inline readArray (r : Reader) (p : Pickler<'T>) =
+        let (*inline*) readArray (r : Reader) (p : Pickler<'T>) =
             let isPrimitive = isPrimitive p
             let n = r.Formatter.ReadInt32 "length"
             let arr = Array.zeroCreate<'T> n

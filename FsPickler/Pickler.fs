@@ -319,14 +319,13 @@
                     pickler.Write w x
                     formatter.EndWriteObject ()
 
-                if pickler.TypeKind <= TypeKind.Value then
+                elif pickler.TypeKind <= TypeKind.Value then
                     beginWriteObject pickler tag ObjectFlags.IsValue
                     pickler.Write w x
                     formatter.EndWriteObject ()
 
                 elif obj.ReferenceEquals(x, null) then
                     beginWriteObject pickler tag ObjectFlags.IsNull
-                    pickler.Write w x
                     formatter.EndWriteObject ()
 
                 else
