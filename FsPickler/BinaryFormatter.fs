@@ -13,26 +13,24 @@
         [<Literal>]
         let initByte = 130uy
 
-        let inline createHeader (hash : PicklerFlags) (flags : ObjectFlags) =
-            uint32 initByte ||| (uint32 hash <<< 8) ||| (uint32 flags <<< 24)
+        let inline createHeader (pickler : Pickler) (flags : ObjectFlags) =
+            uint32 initByte ||| (uint32 pickler.PicklerFlags <<< 8) ||| (uint32 flags <<< 24)
 
-        let inline readHeader (pflags : byref<PicklerFlags>) (header : uint32) =
+        let inline readHeader (pickler : Pickler) (header : uint32) =
             if byte header <> initByte then
                 raise <| new SerializationException ("invalid stream data.")
             else
-                pflags <- uint16 (header >>> 8)
-                Core.LanguagePrimitives.EnumOfValue<byte, ObjectFlags> (byte (header >>> 24))
-
-//                let pflags' = uint16 (header >>> 8)
-//                if pflags' <> pflags then
-//                    if byte pflags <> byte pflags' then
-//                        let msg = sprintf "FsPickler: next object is of unexpected type (anticipated %O)." t
-//                        raise <| new SerializationException(msg)
-//                    else
-//                        let msg = sprintf "FsPickler: object of type '%O' was serialized with incompatible pickler." t
-//                        raise <| new SerializationException(msg)
-//                else 
-//                    
+                let flags = uint16 (header >>> 8)
+                if flags <> pickler.PicklerFlags then
+                    if byte flags <> byte pickler.PicklerFlags then
+                        let msg = sprintf "FsPickler: next object is of unexpected type (anticipated %O)." pickler.Type
+                        raise <| new SerializationException(msg)
+                    else
+                        let msg = sprintf "FsPickler: object of type '%O' was serialized with incompatible pickler." pickler.Type
+                        raise <| new SerializationException(msg)
+                else 
+                    Core.LanguagePrimitives.EnumOfValue<byte, ObjectFlags> (byte (header >>> 24))
+                    
 
     type BinaryPickleWriter (stream : Stream) =
 
@@ -45,8 +43,8 @@
 
             member __.EndWriteRoot () = ()
 
-            member __.BeginWriteObject _ picklerFlags objFlags =
-                let header = createHeader picklerFlags objFlags
+            member __.BeginWriteObject pickler _ objFlags =
+                let header = createHeader pickler objFlags
                 bw.Write header
 
             member __.EndWriteObject () = ()
@@ -99,9 +97,9 @@
 
             member __.EndReadRoot () = ()
 
-            member __.BeginReadObject (_, picklerFlags:byref<PicklerFlags>) =
+            member __.BeginReadObject (pickler : Pickler) _ =
                 let header = br.ReadUInt32()
-                readHeader &picklerFlags header
+                readHeader pickler header
 
             member __.EndReadObject () = () 
 

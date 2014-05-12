@@ -4,7 +4,19 @@
     open System.Reflection
     open System.Runtime.Serialization
 
-    
+
+    type PicklerFlags = uint16
+
+    type ObjectFlags = 
+        | Zero                   = 0uy
+        | IsPrimitive            = 1uy
+        | IsValue                = 2uy
+        | IsNull                 = 4uy
+        | IsProperSubtype        = 8uy
+        | IsNewCachedInstance    = 16uy
+        | IsOldCachedInstance    = 32uy
+        | IsCyclicInstance       = 64uy
+        | IsSequenceHeader       = 128uy
 
     type TypeKind =
         | Primitive = 0
@@ -27,6 +39,11 @@
         | Delegate = 6
         | Combinator = 7
         | UserDefined = 8
+
+    [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+    module internal ObjectFlags =
+
+        let inline hasFlag (flags : ObjectFlags) (flag : ObjectFlags) = flags &&& flag = flag
 
     module internal Header =
 
