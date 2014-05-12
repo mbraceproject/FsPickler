@@ -26,6 +26,7 @@
 
         let resolver = cache :> IPicklerResolver
 
+//        static let formatP = new XmlPickleFormatProvider(System.Text.Encoding.UTF8)
         static let formatP = new BinaryFormatProvider()
         
         /// initializes an instance that resolves picklers from a global cache

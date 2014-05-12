@@ -1,4 +1,4 @@
-﻿#r "bin/Release/FsPickler.dll"
+﻿#r "bin/Debug/FsPickler.dll"
 
 open Nessos.FsPickler
 open Nessos.FsPickler.Combinators
@@ -11,6 +11,18 @@ let value = [1..100000] |> List.map (fun i -> Some (string i, Some i))
 let loop(x : 'T) =
     let bytes = fsp.Pickle x
     fsp.UnPickle<'T> bytes
+
+let toFile (value : 'T) =
+    use fs = System.IO.File.OpenWrite("/Users/eirik/Desktop/foo.xml")
+    fsp.Serialize(fs, value)
+
+let ofFile<'T> =
+    use fs = System.IO.File.OpenRead("/Users/eirik/Desktop/foo.xml")
+    fsp.Deserialize<'T>(fs)
+
+toFile 1
+
+ofFile<int>
 
 #time
 
