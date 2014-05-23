@@ -23,11 +23,11 @@
 
         override p.UntypedWrite (state:WriteState) (tag:string) (value:obj) =
             state.NextWriteIsSubtype <- false
-            p.Write<'T> state tag (fastUnbox value)
+            p.Write state tag (fastUnbox value)
 
         override p.UntypedRead  (state:ReadState) (tag:string) =
             state.NextWriteIsSubtype <- false
-            p.Read<'T> state tag :> obj
+            p.Read state tag :> obj
 
         override self.Cast<'S> () = self :> Pickler :?> Pickler<'S>
         override self.Clone () = self :> Pickler

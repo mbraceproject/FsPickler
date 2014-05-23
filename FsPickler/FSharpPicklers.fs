@@ -260,13 +260,13 @@
 
 
             let writer (w : WriteState) (e : 'Exception) =
-                defPickler.Write w e
+                defPickler.Write w "exceptionBase" e
                 match writerDele with
                 | None -> ()
                 | Some d -> d.Invoke(fpicklers, w, e)
 
             let reader (r : ReadState) =
-                let e = defPickler.Read r
+                let e = defPickler.Read r "exceptionBase"
                 match readerDele with
                 | None -> e
                 | Some d -> d.Invoke(fpicklers, r, e) ; e

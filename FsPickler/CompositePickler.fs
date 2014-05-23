@@ -156,9 +156,9 @@
                 state.NextWriteIsSubtype <- false
                 p.m_Reader state :> obj
             else
-                p.Read<'T> state tag :> obj
+                p.Read state tag :> obj
 
-        override p.Write<'T> (state : WriteState) (tag : string) (value : 'T) =
+        override p.Write (state : WriteState) (tag : string) (value : 'T) =
 
             
             let formatter = state.Formatter

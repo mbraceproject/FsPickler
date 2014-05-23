@@ -6,7 +6,6 @@
     open System.IO
     open System.Runtime.Serialization
 
-    open Nessos.FsPickler.Utils
     open Nessos.FsPickler.Header
 
     [<AutoSerializable(false)>]
@@ -47,8 +46,8 @@
         
         override __.Type = typeof<'T>
 
-        abstract Write<'T> : state:WriteState -> tag:string -> value:'T -> unit
-        abstract Read<'T>  : state:ReadState  -> tag:string -> 'T
+        abstract Write : state:WriteState -> tag:string -> value:'T -> unit
+        abstract Read  : state:ReadState  -> tag:string -> 'T
 
         override p.Unpack unpacker = unpacker.Apply p
 
