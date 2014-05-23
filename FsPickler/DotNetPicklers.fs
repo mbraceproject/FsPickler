@@ -33,7 +33,7 @@
     // creates a placeholder pickler instance
 
     type UninitializedPickler =
-        static member Create<'T>() = new Pickler<'T>()
+        static member Create<'T>() = CompositePickler.CreateUninitialized<'T> ()
         static member CreateUntyped (t : Type) =
             if isUnSupportedType t then raise <| NonSerializableTypeException t
 
@@ -51,7 +51,7 @@
             let writer _ _ = invalidOp <| sprintf "Attempting to call abstract pickler '%O'." typeof<'T>
             let reader _ = invalidOp <| sprintf "Attempting to call abstract pickler '%O'." typeof<'T>
 
-            new Pickler<'T>(reader, writer, PicklerInfo.ReflectionDerived, true, false)
+            CompositePickler.Create<'T>(reader, writer, PicklerInfo.ReflectionDerived, true, false)
 
         static member CreateUntyped(t : Type) =
             let m = 
@@ -75,19 +75,17 @@
             m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler
 
         static member Create<'Enum, 'Underlying when 'Enum : enum<'Underlying>> (resolver : IPicklerResolver) =
-            let fmt = resolver.Resolve<'Underlying> ()
-            let writer_func = fmt.Write
-            let reader_func = fmt.Read
+            let pickler = resolver.Resolve<'Underlying> ()
 
-            let writer (w : Writer) (x : 'Enum) =
+            let writer (w : WriteState) (x : 'Enum) =
                 let value = Microsoft.FSharp.Core.LanguagePrimitives.EnumToValue<'Enum, 'Underlying> x
-                writer_func w value
+                pickler.Write w "value" value
 
-            let reader (r : Reader) =
-                let value = reader_func r
+            let reader (r : ReadState) =
+                let value = pickler.Read r "value"
                 Microsoft.FSharp.Core.LanguagePrimitives.EnumOfValue<'Underlying, 'Enum> value
 
-            new Pickler<'Enum>(reader, writer, PicklerInfo.ReflectionDerived, cacheByRef = false, useWithSubtypes = false)
+            CompositePickler.Create(reader, writer, PicklerInfo.ReflectionDerived, cacheByRef = false, useWithSubtypes = false)
 
 
     // support for nullable types
@@ -108,25 +106,23 @@
                                 'T : struct and 
                                 'T :> ValueType> (resolver : IPicklerResolver) =
 
-            let fmt = resolver.Resolve<'T> ()
-            let writer_func = fmt.Write
-            let reader_func = fmt.Read
+            let pickler = resolver.Resolve<'T> ()
 
-            let writer (w : Writer) (x : Nullable<'T>) =
+            let writer (w : WriteState) (x : Nullable<'T>) =
                 if x.HasValue then 
                     w.Formatter.WriteBoolean "isNull" false
-                    writer_func w x.Value
+                    pickler.Write w "value" x.Value
                 else
                     w.Formatter.WriteBoolean "isNull" true
 
-            let reader (r : Reader) =
+            let reader (r : ReadState) =
                 if r.Formatter.ReadBoolean "isNull" then
                     Nullable<'T> ()
                 else
-                    let value = reader_func r
+                    let value = pickler.Read r "value"
                     Nullable<'T>(value)
 
-            new Pickler<_>(reader, writer, PicklerInfo.ReflectionDerived, cacheByRef = false, useWithSubtypes = false)
+            CompositePickler.Create(reader, writer, PicklerInfo.ReflectionDerived, cacheByRef = false, useWithSubtypes = false)
 
     // pickler combinator for struct types
 
@@ -146,7 +142,7 @@
 
 #if EMIT_IL
             let writerDele =
-                DynamicMethod.compileAction3<Pickler [], Writer, 'T> "structSerializer" (fun picklers writer parent ilGen ->
+                DynamicMethod.compileAction3<Pickler [], WriteState, 'T> "structSerializer" (fun picklers writer parent ilGen ->
 
                     emitSerializeFields fields writer picklers parent ilGen
 
@@ -154,7 +150,7 @@
                 )
 
             let readerDele =
-                DynamicMethod.compileFunc2<Pickler [], Reader, 'T> "structDeserializer" (fun picklers reader ilGen ->
+                DynamicMethod.compileFunc2<Pickler [], ReadState, 'T> "structDeserializer" (fun picklers reader ilGen ->
                     
                     // initialize empty value type
                     let value = EnvItem<'T>(ilGen)
@@ -167,27 +163,27 @@
                     ilGen.Emit OpCodes.Ret
                 )
 
-            let writer (w : Writer) (t : 'T) = writerDele.Invoke(picklers, w, t)
-            let reader (r : Reader) = readerDele.Invoke(picklers, r)
+            let writer (w : WriteState) (t : 'T) = writerDele.Invoke(picklers, w, t)
+            let reader (r : ReadState) = readerDele.Invoke(picklers, r)
 
 #else
-            let writer (w : Writer) (t : 'T) =
+            let writer (w : WriteState) (t : 'T) =
                 for i = 0 to fields.Length - 1 do
                     let f = fields.[i]
                     let o = f.GetValue(t)
-                    picklers.[i].ManagedWrite(w, f.Name, o)
+                    picklers.[i].UntypedWrite w f.Name o
 
-            let reader (r : Reader) =
+            let reader (r : ReadState) =
                 let t = FormatterServices.GetUninitializedObject(typeof<'T>)
                 for i = 0 to fields.Length - 1 do
                     let f = fields.[i]
-                    let o = picklers.[i].ManagedRead(r, f.Name)
+                    let o = picklers.[i].UntypedRead r f.Name
                     f.SetValue(t, o)
                 
                 fastUnbox<'T> t
 #endif
 
-            new Pickler<'T>(reader, writer, PicklerInfo.ReflectionDerived, cacheByRef = false, useWithSubtypes = false)
+            CompositePickler.Create(reader, writer, PicklerInfo.ReflectionDerived, cacheByRef = false, useWithSubtypes = false)
                     
 
     // general-purpose pickler combinator for reference types
@@ -223,7 +219,7 @@
                     fun _ _ -> ()
                 else
                     let writerDele =
-                        DynamicMethod.compileAction3<Pickler [], Writer, 'T> "classSerializer" (fun picklers writer value ilGen ->
+                        DynamicMethod.compileAction3<Pickler [], WriteState, 'T> "classSerializer" (fun picklers writer value ilGen ->
 
                             emitSerializationMethodCalls onSerializing (Choice1Of2 writer) value ilGen
 
@@ -236,7 +232,7 @@
                     fun w t -> writerDele.Invoke(picklers, w, t)
 
             let readerDele =
-                DynamicMethod.compileFunc2<Pickler [], Reader, 'T> "classDeserializer" (fun picklers reader ilGen ->
+                DynamicMethod.compileFunc2<Pickler [], ReadState, 'T> "classDeserializer" (fun picklers reader ilGen ->
 
                     // get uninitialized object and store locally
                     let value = EnvItem<'T>(ilGen)
@@ -261,23 +257,23 @@
                 for i = 0 to ms.Length - 1 do 
                     ms.[i].Invoke(x, [| getStreamingContext w :> obj |]) |> ignore
 
-            let writer (w : Writer) (t : 'T) =
+            let writer (w : WriteState) (t : 'T) =
                 run onSerializing t w
 
                 for i = 0 to fields.Length - 1 do
                     let f = fields.[i]
                     let o = f.GetValue(t)
-                    picklers.[i].ManagedWrite(w, f.Name, o)
+                    picklers.[i].UntypedWrite w f.Name o
 
                 run onSerialized t w
 
-            let reader (r : Reader) =
+            let reader (r : ReadState) =
                 let t = FormatterServices.GetUninitializedObject(typeof<'T>) |> fastUnbox<'T>
                 run onDeserializing t r
 
                 for i = 0 to fields.Length - 1 do
                     let f = fields.[i]
-                    let o = picklers.[i].ManagedRead(r, f.Name)
+                    let o = picklers.[i].UntypedRead r f.Name
                     f.SetValue(t, o)
 
                 run onDeserialized t r
@@ -285,7 +281,7 @@
                 t
 #endif
 
-            new Pickler<'T>(reader, writer, PicklerInfo.ReflectionDerived, cacheByRef = true, useWithSubtypes = false)
+            CompositePickler.Create(reader, writer, PicklerInfo.ReflectionDerived, cacheByRef = true, useWithSubtypes = false)
 
 
     // pickler implementation for delegate types
@@ -305,33 +301,33 @@
             let memberInfoPickler = resolver.Resolve<MethodInfo> ()
             let delePickler = resolver.Resolve<System.Delegate> ()
 
-            let writer (w : Writer) (dele : 'Delegate) =
+            let writer (w : WriteState) (dele : 'Delegate) =
                 match dele.GetInvocationList() with
                 | [| _ |] ->
                     w.Formatter.WriteBoolean "isLinked" false
-                    w.Write(memberInfoPickler, "method", dele.Method)
-                    if not dele.Method.IsStatic then w.Write(objPickler, "target", dele.Target)
+                    memberInfoPickler.Write w "method" dele.Method
+                    if not dele.Method.IsStatic then objPickler.Write w "target" dele.Target
                 | deleList ->
                     w.Formatter.WriteBoolean "isLinked" true
                     w.Formatter.WriteInt32 "length" deleList.Length
                     for i = 0 to deleList.Length - 1 do
-                        w.Write<System.Delegate> (delePickler, "linked", deleList.[i])
+                        delePickler.Write w "linked" deleList.[i]
 
-            let reader (r : Reader) =
+            let reader (r : ReadState) =
                 if not <| r.Formatter.ReadBoolean "isLinked" then
-                    let meth = r.Read (memberInfoPickler, "method")
+                    let meth = memberInfoPickler.Read r "method"
                     if not meth.IsStatic then
-                        let target = r.Read (objPickler, "target")
+                        let target = objPickler.Read r "target"
                         Delegate.CreateDelegate(typeof<'Delegate>, target, meth, throwOnBindFailure = true) |> fastUnbox<'Delegate>
                     else
                         Delegate.CreateDelegate(typeof<'Delegate>, meth, throwOnBindFailure = true) |> fastUnbox<'Delegate>
                 else
                     let n = r.Formatter.ReadInt32 "length"
                     let deleList = Array.zeroCreate<System.Delegate> n
-                    for i = 0 to n - 1 do deleList.[i] <- r.Read (delePickler, "linked")
+                    for i = 0 to n - 1 do deleList.[i] <- delePickler.Read r "linked"
                     Delegate.Combine deleList |> fastUnbox<'Delegate>
 
-            new Pickler<'Delegate>(reader, writer, PicklerInfo.Delegate, cacheByRef = true, useWithSubtypes = false)
+            CompositePickler.Create(reader, writer, PicklerInfo.Delegate, cacheByRef = true, useWithSubtypes = false)
 
     // pickler combinator for ISerializable types
 
@@ -370,7 +366,7 @@
                 let inline create (si : SerializationInfo) (sc : StreamingContext) = 
                     ctorInfo.Invoke [| si :> obj ; sc :> obj |] |> fastUnbox<'T>
 #endif
-                let writer (w : Writer) (x : 'T) =
+                let writer (w : WriteState) (x : 'T) =
                     run onSerializing w x
                     let sI = new SerializationInfo(typeof<'T>, new FormatterConverter())
                     x.GetObjectData(sI, w.StreamingContext)
@@ -378,16 +374,16 @@
                     let enum = sI.GetEnumerator()
                     while enum.MoveNext() do
                         w.Formatter.WriteString "name" enum.Current.Name
-                        w.Write(objPickler, "value", enum.Current.Value)
+                        objPickler.Write w "value" enum.Current.Value
 
                     run onSerialized w x
 
-                let reader (r : Reader) =
+                let reader (r : ReadState) =
                     let sI = new SerializationInfo(typeof<'T>, new FormatterConverter())
                     let memberCount = r.Formatter.ReadInt32 "memberCount"
                     for i = 1 to memberCount do
                         let name = r.Formatter.ReadString "name"
-                        let v = r.Read (objPickler, "value")
+                        let v = objPickler.Read r "value"
                         sI.AddValue(name, v)
 
                     let x = create sI r.StreamingContext
@@ -396,7 +392,7 @@
                     if isDeserializationCallback then (fastUnbox<IDeserializationCallback> x).OnDeserialization null
                     x
 
-                new Pickler<'T>(reader, writer, PicklerInfo.ISerializable, cacheByRef = true, useWithSubtypes = false)
+                CompositePickler.Create(reader, writer, PicklerInfo.ISerializable, cacheByRef = true, useWithSubtypes = false)
 
 
     //  check if type implements a static factory method : IPicklerResolver -> Pickler<DeclaringType>

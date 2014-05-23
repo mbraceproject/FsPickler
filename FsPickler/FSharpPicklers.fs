@@ -57,7 +57,7 @@
             let picklerss = caseInfo |> Array.map (fun (_,_,_,picklers) -> picklers)
 
             let writerDele =
-                DynamicMethod.compileAction3<Pickler [] [], Writer, 'Union> "unionSerializer" (fun picklerss writer union ilGen ->
+                DynamicMethod.compileAction3<Pickler [] [], WriteState, 'Union> "unionSerializer" (fun picklerss writer union ilGen ->
                     let tag = EnvItem<int>(ilGen)
                     let picklers = EnvItem<Pickler []>(ilGen)
 
@@ -92,7 +92,7 @@
                 )
 
             let readerDele =
-                DynamicMethod.compileFunc2<Pickler [] [], Reader, 'Union> "unionDeserializer" (fun picklerss reader ilGen ->
+                DynamicMethod.compileFunc2<Pickler [] [], ReadState, 'Union> "unionDeserializer" (fun picklerss reader ilGen ->
 
                     let tag = EnvItem<int>(ilGen)
                     let picklers = EnvItem<Pickler []>(ilGen)
@@ -138,24 +138,24 @@
                     let picklers = uci.GetFields() |> Array.map (fun f -> resolver.Resolve f.PropertyType)
                     ctor, reader, picklers)
 
-            let writer (w : Writer) (x : 'Union) =
+            let writer (w : WriteState) (x : 'Union) =
                 let tag = tagReader.Invoke x
                 w.Formatter.WriteByte "tag" (byte tag)
                 let _,reader,picklers = caseInfo.[tag]
                 let values = reader x
                 for i = 0 to values.Length - 1 do
-                    picklers.[i].ManagedWrite(w, string i, values.[i])
+                    picklers.[i].UntypedWrite w (string i) (values.[i])
 
-            let reader (r : Reader) =
+            let reader (r : ReadState) =
                 let tag = int (r.Formatter.ReadByte "tag")
                 let ctor,_,picklers = caseInfo.[tag]
                 let values = Array.zeroCreate<obj> picklers.Length
                 for i = 0 to picklers.Length - 1 do
-                    values.[i] <- picklers.[i].ManagedRead(r, string i)
+                    values.[i] <- picklers.[i].UntypedRead r (string i)
 
                 ctor values |> fastUnbox<'Union>
 #endif
-            new Pickler<'Union>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
+            CompositePickler.Create(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
 
     // F# record types
 
@@ -181,7 +181,7 @@
                 if fields.Length = 0 then fun _ _ -> ()
                 else
                     let writerDele =
-                        DynamicMethod.compileAction3<Pickler [], Writer, 'Record> "recordSerializer" (fun picklers writer record ilGen ->
+                        DynamicMethod.compileAction3<Pickler [], WriteState, 'Record> "recordSerializer" (fun picklers writer record ilGen ->
 
                             emitSerializeProperties fields writer picklers record ilGen
                             
@@ -190,7 +190,7 @@
                     fun w t -> writerDele.Invoke(picklers, w,t)
 
             let readerDele =
-                DynamicMethod.compileFunc2<Pickler [], Reader, 'Record> "recordDeserializer" (fun picklers reader ilGen ->
+                DynamicMethod.compileFunc2<Pickler [], ReadState, 'Record> "recordDeserializer" (fun picklers reader ilGen ->
 
                     let ctorParams = fields |> Array.map (fun f -> f.PropertyType, f.Name)
 
@@ -200,21 +200,21 @@
             
             let reader r = readerDele.Invoke(picklers, r)
 #else
-            let writer (w : Writer) (x : 'Record) =
+            let writer (w : WriteState) (x : 'Record) =
                 for i = 0 to fields.Length - 1 do
                     let f = fields.[i]
                     let o = f.GetValue x
-                    picklers.[i].ManagedWrite(w, f.Name, o)
+                    picklers.[i].UntypedWrite w f.Name o
             
-            let reader (r : Reader) =
+            let reader (r : ReadState) =
                 let values = Array.zeroCreate<obj> fields.Length
                 for i = 0 to fields.Length - 1 do
-                    values.[i] <- picklers.[i].ManagedRead(r, fields.[i].Name)
+                    values.[i] <- picklers.[i].UntypedRead r fields.[i].Name
 
                 ctor.Invoke values |> fastUnbox<'Record>
 #endif
 
-            new Pickler<'Record>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = false)
+            CompositePickler.Create(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = false)
 
 
     // F# exception types
@@ -241,7 +241,7 @@
             let writerDele = 
                 if fields.Length = 0 then None
                 else
-                    DynamicMethod.compileAction3<Pickler [], Writer, 'Exception> "exceptionSerializer" (fun picklers writer value ilGen ->
+                    DynamicMethod.compileAction3<Pickler [], WriteState, 'Exception> "exceptionSerializer" (fun picklers writer value ilGen ->
 
                         emitSerializeFields fields writer picklers value ilGen
 
@@ -251,7 +251,7 @@
             let readerDele =
                 if fields.Length = 0 then None
                 else
-                    DynamicMethod.compileAction3<Pickler [], Reader, 'Exception> "exceptionDeserializer" (fun picklers reader value ilGen ->
+                    DynamicMethod.compileAction3<Pickler [], ReadState, 'Exception> "exceptionDeserializer" (fun picklers reader value ilGen ->
 
                         emitDeserializeFields fields reader picklers value ilGen
 
@@ -259,31 +259,31 @@
                     ) |> Some
 
 
-            let writer (w : Writer) (e : 'Exception) =
+            let writer (w : WriteState) (e : 'Exception) =
                 defPickler.Write w e
                 match writerDele with
                 | None -> ()
                 | Some d -> d.Invoke(fpicklers, w, e)
 
-            let reader (r : Reader) =
+            let reader (r : ReadState) =
                 let e = defPickler.Read r
                 match readerDele with
                 | None -> e
                 | Some d -> d.Invoke(fpicklers, r, e) ; e
 #else
-            let writer (w : Writer) (e : 'Exception) =
-                defPickler.Write w e
+            let writer (w : WriteState) (e : 'Exception) =
+                defPickler.Write w "exceptionBase" e
                 for i = 0 to fields.Length - 1 do
                     let f = fields.[i]
                     let o = f.GetValue e
-                    fpicklers.[i].ManagedWrite(w, f.Name, o)
+                    fpicklers.[i].UntypedWrite w f.Name o
 
-            let reader (r : Reader) =
-                let e = defPickler.Read r
+            let reader (r : ReadState) =
+                let e = defPickler.Read r "exceptionBase"
                 for i = 0 to fields.Length - 1 do
                     let f = fields.[i]
-                    let o = fpicklers.[i].ManagedRead(r, f.Name)
+                    let o = fpicklers.[i].UntypedRead r f.Name
                     f.SetValue(e, o)
                 e
 #endif
-            new Pickler<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = true, useWithSubtypes = true)
+            CompositePickler.Create(reader, writer, PicklerInfo.FSharpValue, cacheByRef = true, useWithSubtypes = true)

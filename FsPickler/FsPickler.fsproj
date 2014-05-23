@@ -18,7 +18,7 @@
     <Optimize>false</Optimize>
     <Tailcalls>false</Tailcalls>
     <OutputPath Condition="'$(OutputPath)' == ''">bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;OPTIMIZE_FSHARP;PROTECT_STACK_OVERFLOWS;EMIT_IL</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;OPTIMIZE_FSHARP;PROTECT_STACK_OVERFLOWS;</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\Debug\FsPickler.xml</DocumentationFile>
     <OtherFlags>
@@ -74,10 +74,11 @@
     <Compile Include="Emit.fs" />
     <Compile Include="Utils.fs" />
     <Compile Include="Hashing.fs" />
-    <Compile Include="PickleFormat.fs" />
     <Compile Include="Header.fs" />
-    <None Include="Pickler.fsi" />
+    <Compile Include="PickleFormat.fs" />
     <Compile Include="Pickler.fs" />
+    <Compile Include="PrimitivePicklers.fs" />
+    <Compile Include="CompositePickler.fs" />
     <Compile Include="BinaryFormatter.fs" />
     <Compile Include="XmlFormatter.fs" />
     <Compile Include="Types.fs" />

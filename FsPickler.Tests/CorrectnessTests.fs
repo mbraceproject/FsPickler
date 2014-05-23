@@ -64,7 +64,7 @@
         [<Test>] 
         member __.``System.Reflection.MethodInfo`` () = 
             testMembers typeof<int> ; testMembers typedefof<GenericClass<_>> ; 
-            testMembers typeof<Pickler> ; testMembers typeof<Writer>
+            testMembers typeof<Pickler> ; testMembers typeof<WriteState>
 
         [<Test>]
         member __.``Reflection: Avoid Recursion in MemberInfo values`` () =

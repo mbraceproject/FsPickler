@@ -7,6 +7,7 @@
     open Nessos.FsPickler.Utils
     open Nessos.FsPickler.TypeShape
     open Nessos.FsPickler.PicklerUtils
+    open Nessos.FsPickler.PrimitivePicklers
     open Nessos.FsPickler.BasePicklers
     open Nessos.FsPickler.ReflectionPicklers
     open Nessos.FsPickler.CombinatorImpls
@@ -59,13 +60,13 @@
             member __.Commit (t : Type) (p : Exn<Pickler>) =
                 let clone (p : Pickler) =
                     // first, create a shallow copy of pickler to contain mutation effects
-                    let p = p.ClonePickler()
+                    let p = p.Clone()
 
                     // check cache id for compatibility
                     match p.CacheId with
                     | null -> ()
                     | id when id <> cacheId ->
-                        raise <| new PicklerGenerationException(p.PicklerType, "pickler generated using an incompatible cache.")
+                        raise <| new PicklerGenerationException(p.ImplementationType, "pickler generated using an incompatible cache.")
                     | _ -> ()
 
                     // label pickler with current cache id
@@ -114,6 +115,7 @@
         do
             // add atomic/default picklers
             [|
+                mkPrimitivePicklers ()
                 mkAtomicPicklers ()
                 reflection.ReflectionPicklers
             |]

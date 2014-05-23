@@ -2,6 +2,8 @@
 
     open System
     open System.IO
+    open System.Collections
+    open System.Collections.Generic
     open System.Reflection
     open System.Runtime.Serialization
     
@@ -14,9 +16,9 @@
 
         // initialize a pickler from a typed set of lambdas
         let inline mkPickler<'T> (info:PicklerInfo) (useWithSubtypes:bool) (cache:bool) 
-                                            (reader : Reader -> 'T) (writer : Writer -> 'T -> unit) =
+                                            (reader : ReadState -> 'T) (writer : WriteState -> 'T -> unit) =
 
-            new Pickler<'T>(reader, writer, info, cacheByRef = cache, useWithSubtypes = useWithSubtypes)
+            CompositePickler.Create<'T>(reader, writer, info, cacheByRef = cache, useWithSubtypes = useWithSubtypes)
 
         /// filter a collection of methods that carry serialization attributes
         let getSerializationMethods<'Attr when 'Attr :> Attribute> (ms : MethodInfo []) =
@@ -78,16 +80,16 @@
         //
         //  internal read/write combinators
         //
-
-        let inline isPrimitive (f : Pickler) = f.TypeKind <= TypeKind.String
-
-        let inline write bypass (w : Writer) (p : Pickler<'T>) tag (x : 'T) =
-            if bypass then p.Write w x
-            else w.Write(p, tag, x)
-
-        let inline read bypass (r : Reader) (p : Pickler<'T>) tag =
-            if bypass then p.Read r
-            else r.Read (p, tag)
+//
+//        let inline isPrimitive (f : Pickler) = f.TypeKind <= TypeKind.String
+//
+//        let inline write bypass (w : Writer) (p : Pickler<'T>) tag (x : 'T) =
+//            if bypass then p.Write w x
+//            else w.Write(p, tag, x)
+//
+//        let inline read bypass (r : Reader) (p : Pickler<'T>) tag =
+//            if bypass then p.Read r
+//            else r.Read (p, tag)
 
 //        /// safely serialize strings, including nulls
 //        let inline writeStringSafe (bw : BinaryWriter) (x : string) =
@@ -100,68 +102,80 @@
 //            if br.ReadBoolean() then null
 //            else
 //                br.ReadString()
-
-        let inline writeArray (w : Writer) (p : Pickler<'T>) (ts : 'T []) =
-            let isPrimitive = isPrimitive p
+#if DEBUG
+        let writeArray (w : WriteState) (p : Pickler<'T>) (ts : 'T []) =
+#else
+        let inline writeArray (w : WriteState) (p : Pickler<'T>) (ts : 'T []) =
+#endif
             w.Formatter.WriteInt32 "length" ts.Length
-            for t in ts do write isPrimitive w p "item" t
+            for t in ts do p.Write w "item" t
 
-        let inline readArray (r : Reader) (p : Pickler<'T>) =
-            let isPrimitive = isPrimitive p
-            let n = r.Formatter.ReadInt32 "length"
-            let arr = Array.zeroCreate<'T> n
-            for i = 0 to n - 1 do
-                arr.[i] <- read isPrimitive r p "item"
-            arr
+#if DEBUG
+        let readArray (r : ReadState) (p : Pickler<'T>) =
+#else
+        let inline readArray (r : ReadState) (p : Pickler<'T>) =
+#endif
+            let length = r.Formatter.ReadInt32 "length"
+            let array = Array.zeroCreate<'T> length
+            for i = 0 to length - 1 do
+                array.[i] <- p.Read r "item"
+            array
 
         // length passed as argument to avoid unecessary evaluations of sequence
-        let inline writeSeq (w : Writer) (p : Pickler<'T>) (length : int) (ts : seq<'T>) =
-            let isPrimitive = isPrimitive p
+#if DEBUG
+        let writeSeq (w : WriteState) (p : Pickler<'T>) (length : int) (ts : seq<'T>) =
+#else
+        let inline writeSeq (w : WriteState) (p : Pickler<'T>) (length : int) (ts : seq<'T>) =
+#endif
             w.Formatter.WriteInt32 "length" length
-            for t in ts do write isPrimitive w p "item" t
+            for t in ts do p.Write w "item" t
 
-        // TODO : value types should probably be block deserialized
-        let inline readSeq (r : Reader) (p : Pickler<'T>) =
-            let isPrimitive = isPrimitive p
+#if DEBUG
+        let readSeq (r : ReadState) (p : Pickler<'T>) =
+#else
+        let inline readSeq (r : ReadState) (p : Pickler<'T>) =
+#endif
             let length = r.Formatter.ReadInt32 "length"
             let ts = Array.zeroCreate<'T> length
             for i = 0 to length - 1 do
-                ts.[i] <- read isPrimitive r p "item"
+                ts.[i] <- p.Read r "item"
             ts
 
         // length passed as argument to avoid unecessary evaluations of sequence
-        let inline writeKVPairs (w : Writer) (kp : Pickler<'K>) (vp : Pickler<'V>) (length : int) (xs : ('K * 'V) seq) =
-            let kIsPrim = isPrimitive kp
-            let vIsPrim = isPrimitive vp
+#if DEBUG
+        let writeKVPairs (w : WriteState) (kp : Pickler<'K>) (vp : Pickler<'V>) (length : int) (xs : ('K * 'V) seq) =
+#else
+        let inline writeKVPairs (w : WriteState) (kp : Pickler<'K>) (vp : Pickler<'V>) (length : int) (xs : ('K * 'V) seq) =
+#endif
             w.Formatter.WriteInt32 "length" length
             for k,v in xs do
-                write kIsPrim w kp "key" k
-                write vIsPrim w vp "val" v
+                kp.Write w "key" k
+                vp.Write w "val" v
 
-        let inline readKVPairs (r : Reader) (kf : Pickler<'K>) (vf : Pickler<'V>) =
-            let kIsPrim = isPrimitive kf
-            let vIsPrim = isPrimitive vf
+#if DEBUG
+        let readKVPairs (r : ReadState) (kp : Pickler<'K>) (vp : Pickler<'V>) =
+#else
+        let inline readKVPairs (r : ReadState) (kp : Pickler<'K>) (vp : Pickler<'V>) =
+#endif
             let length = r.Formatter.ReadInt32 "length"
             let xs = Array.zeroCreate<'K * 'V> length
 
             for i = 0 to length - 1 do
-                let k = read kIsPrim r kf "key"
-                let v = read vIsPrim r vf "val"
+                let k = kp.Read r "key"
+                let v = vp.Read r "val"
                 xs.[i] <- k,v
 
             xs
 
-
         // equivalent implementations for client facade
 
-        let writeSeq' (p : Pickler<'T>) (w : Writer) (ts : 'T seq) : unit =
-            let isPrimitive = isPrimitive p
+        let writeSeq' (p : Pickler<'T>) (w : WriteState) (ts : 'T seq) : unit =
             match ts with
             | :? ('T []) as arr ->
                 w.Formatter.WriteBoolean "isMaterialized" true
                 w.Formatter.WriteInt32 "length" arr.Length
                 for i = 0 to arr.Length - 1 do
-                    write isPrimitive w p "item" arr.[i]
+                    p.Write w "item" arr.[i]
 
             | :? ('T list) as list ->
                 w.Formatter.WriteBoolean "isMaterialized" true
@@ -171,7 +185,7 @@
                     match rest with
                     | [] -> ()
                     | t :: tl ->
-                        write isPrimitive w p "item" t
+                        p.Write w "item" t
                         iter tl
 
                 iter list
@@ -180,30 +194,27 @@
                 use e = ts.GetEnumerator()
                 while e.MoveNext() do
                     w.Formatter.WriteBoolean "done" false
-                    write isPrimitive w p "item" e.Current
+                    p.Write w "item" e.Current
 
                 w.Formatter.WriteBoolean "done" true
 
-        let readSeq' (p : Pickler<'T>) (r : Reader) : 'T seq =
-            let isPrimitive = isPrimitive p
+        let readSeq' (p : Pickler<'T>) (r : ReadState) : 'T seq =
 
             if r.Formatter.ReadBoolean "isMaterialied" then
                 let length = r.Formatter.ReadInt32 "length"
                 let array = Array.zeroCreate<'T> length
                 for i = 0 to length - 1 do
-                    array.[i] <- read isPrimitive r p "item"
+                    array.[i] <- p.Read r "item"
                 array :> _
             else
                 let ra = new ResizeArray<'T> ()
                 while not <| r.Formatter.ReadBoolean "done" do
-                    let next = read isPrimitive r p "item"
+                    let next = p.Read r "item"
                     ra.Add next
 
                 ra :> _
 
-        let writeKVPairs' (kp : Pickler<'K>) (vp : Pickler<'V>) (w : Writer) (xs : ('K * 'V) seq) : unit =
-            let kIsPrim = isPrimitive kp
-            let vIsPrim = isPrimitive vp
+        let writeKVPairs' (kp : Pickler<'K>) (vp : Pickler<'V>) (w : WriteState) (xs : ('K * 'V) seq) : unit =
             match xs with
             | :? (('K * 'V) []) as arr ->
                 w.Formatter.WriteBoolean "isMaterialized" true
@@ -211,8 +222,8 @@
 
                 for i = 0 to arr.Length - 1 do
                     let k,v = arr.[i]
-                    write kIsPrim w kp "key" k
-                    write vIsPrim w vp "val" v
+                    kp.Write w "key" k
+                    vp.Write w "val" v
 
             | :? (('K * 'V) list) as list ->
                 w.Formatter.WriteBoolean "isMaterialized" true
@@ -222,8 +233,8 @@
                     match rest with
                     | [] -> ()
                     | (k,v) :: tl ->
-                        write kIsPrim w kp "key" k
-                        write vIsPrim w vp "val" v
+                        kp.Write w "key" k
+                        vp.Write w "val" v
                         iter tl
 
                 iter list
@@ -235,33 +246,132 @@
                 while e.MoveNext() do
                     w.Formatter.WriteBoolean "done" false
                     let k,v = e.Current
-                    write kIsPrim w kp "key" k
-                    write vIsPrim w vp "val" v
+                    kp.Write w "key" k
+                    vp.Write w "val" v
 
                 w.Formatter.WriteBoolean "done" true
 
 
         /// Deserializes a sequence of key/value pairs from the underlying stream
-        let readKVPairs' (kp : Pickler<'K>) (vp : Pickler<'V>) (r : Reader) =
-            let kIsPrim = isPrimitive kp
-            let vIsPrim = isPrimitive vp
+        let readKVPairs' (kp : Pickler<'K>) (vp : Pickler<'V>) (r : ReadState) =
 
             if r.Formatter.ReadBoolean "isMaterialied" then
                 let length = r.Formatter.ReadInt32 "length"
                 let arr = Array.zeroCreate<'K * 'V> length
                 for i = 0 to length - 1 do
-                    let k = read kIsPrim r kp "key"
-                    let v = read vIsPrim r vp "val"
+                    let k = kp.Read r "key"
+                    let v = vp.Read r "val"
                     arr.[i] <- k,v
                 arr :> seq<'K * 'V>
             else
                 let ra = new ResizeArray<'K * 'V> ()
                 while not <| r.Formatter.ReadBoolean "done" do
-                    let k = read kIsPrim r kp "key"
-                    let v = read vIsPrim r vp "val"
+                    let k = kp.Read r "key"
+                    let v = vp.Read r "val"
                     ra.Add (k,v)
 
                 ra :> seq<'K * 'V>
+
+
+        let sequenceCounterResetThreshold = Nessos.FsPickler.Header.sequenceCounterResetThreshold
+
+        let writeTopLevelSequence (pickler : Pickler<'T>) (state : WriteState) (tag : string) (values : seq<'T>) : int =
+
+            let isValue = pickler.TypeKind <= TypeKind.Value
+
+#if DEBUG
+            let write idx t =
+#else
+            let inline write idx t =
+#endif
+                if isValue && idx % sequenceCounterResetThreshold = 0 then
+                    state.ResetCounters()
+
+                pickler.Write state "item" t
+
+            state.Formatter.BeginWriteObject pickler tag ObjectFlags.IsSequenceHeader
+            
+            // specialize enumeration
+            let length =
+                match values with
+                | :? ('T []) as array ->
+                    let n = array.Length
+                    for i = 0 to n - 1 do
+                        write i array.[i]
+                    n
+
+                | :? ('T list) as list ->
+                    let rec writeLst i lst =
+                        match lst with
+                        | [] -> i
+                        | t :: ts -> write i t ; writeLst (i+1) ts
+
+                    writeLst 0 list
+                | _ ->
+                    let mutable i = 0
+                    for t in values do
+                        write i t
+                        i <- i + 1
+                    i
+
+            state.Formatter.EndWriteObject()
+            length
+
+        let readTopLevelSequence (pickler : Pickler<'T>) (state : ReadState) (tag : string) (length : int) : IEnumerator<'T> =
+
+            let isValue = pickler.TypeKind <= TypeKind.Value
+
+            let read idx =
+                if isValue && idx % sequenceCounterResetThreshold = 0 then
+                    state.ResetCounters()
+                
+                pickler.Read state tag
+
+            // read id
+            let flags = state.Formatter.BeginReadObject pickler tag
+            
+            // read object header
+            if flags <> ObjectFlags.IsSequenceHeader then
+                let msg = "FsPickler: invalid stream data; expected sequence serialization."
+                raise <| new SerializationException(msg)
+
+            let cnt = ref 0
+            let curr = ref Unchecked.defaultof<'T>
+            {
+                new System.Collections.Generic.IEnumerator<'T> with
+                    member __.Current = !curr
+                    member __.Current = box !curr
+                    member __.Dispose () = (state :> IDisposable).Dispose()
+                    member __.MoveNext () =
+                        if !cnt < length then
+                            curr := read !cnt
+                            incr cnt
+                            true
+                        else
+                            false
+
+                    member __.Reset () = raise <| NotSupportedException()
+            }
+
+        let writeTopLevelSequenceUntyped (pickler : Pickler) (state : WriteState) (tag : string) (values : IEnumerable) : int =
+            let unpacker =
+                {
+                    new IPicklerUnpacker<int> with
+                        member __.Apply (p : Pickler<'T>) =
+                            writeTopLevelSequence p state tag (values :?> IEnumerable<'T>)
+                }
+
+            pickler.Unpack unpacker
+
+        let readTopLevelSequenceUntyped (pickler : Pickler) (state : ReadState) (tag : string) (length : int) : IEnumerator =
+            let unpacker =
+                {
+                    new IPicklerUnpacker<IEnumerator> with
+                        member __.Apply (p : Pickler<'T>) =
+                            readTopLevelSequence p state tag length :> _
+                }
+
+            pickler.Unpack unpacker
 
 #if EMIT_IL
 

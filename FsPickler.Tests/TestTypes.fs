@@ -150,11 +150,11 @@
             member __.Create<'T when 'T : comparison> (resolver : IPicklerResolver) =
                 let valueFmt = resolver.Resolve<'T> ()
 
-                let writer (w : Writer) (g : GenericType<'T>) =
-                    w.Write(valueFmt, "value", g.Value)
+                let writer (w : WriteState) (g : GenericType<'T>) =
+                    valueFmt.Write w "value" g.Value
 
-                let reader (r : Reader) =
-                    let value = r.Read (valueFmt, "value")
+                let reader (r : ReadState) =
+                    let value = valueFmt.Read r "value"
                     new GenericType<'T>(Unchecked.defaultof<'T>)
 
                 Pickler.FromPrimitives(reader, writer) :> Pickler

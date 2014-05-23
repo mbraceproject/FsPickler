@@ -4,6 +4,7 @@
     open System.IO
 
     open Nessos.FsPickler.PicklerUtils
+    open Nessos.FsPickler.PrimitivePicklers
     open Nessos.FsPickler.BasePicklers
     open Nessos.FsPickler.DotNetPicklers
     open Nessos.FsPickler.ArrayPickler
@@ -36,22 +37,22 @@
             // .NET primitive picklers
 
             let unit = mkUnitP ()
-            let bool = mkBoolP ()
-            let byte = mkByteP ()
-            let sbyte = mkSByteP ()
-            let char = mkCharP ()
-            let decimal = mkDecimalP ()
-            let single = mkSingleP ()
-            let float = mkFloatP ()
-            let int16 = mkInt16P ()
-            let int = mkInt32P ()
-            let int64 = mkInt64P()
-            let uint16 = mkUInt16P ()
-            let uint32 = mkUInt32P ()
-            let uint64 = mkUInt64P ()
+            let bool = new BooleanPickler() :> Pickler<bool>
+            let byte = new BytePickler() :> Pickler<byte>
+            let sbyte = new SBytePickler() :> Pickler<sbyte>
+            let char = new CharPickler() :> Pickler<char>
+            let decimal = new DecimalPickler() :> Pickler<decimal>
+            let single = new SinglePickler() :> Pickler<single>
+            let double = new DoublePickler() :> Pickler<double>
+            let int16 = new Int16Pickler () :> Pickler<int16>
+            let int = new Int32Pickler () :> Pickler<int>
+            let int64 = new Int64Pickler () :> Pickler<int64>
+            let uint16 = new UInt16Pickler () :> Pickler<uint16>
+            let uint32 = new UInt32Pickler () :> Pickler<uint32>
+            let uint64 = new UInt64Pickler () :> Pickler<uint64>
 
             // misc atomic picklers
-            let string = mkStringPickler ()
+            let string = new StringPickler () :> Pickler<string>
             let guid = mkGuidPickler ()
             let bytes = mkByteArrayPickler ()
             let bigint = mkBigIntPickler () : Pickler<bigint>
@@ -110,23 +111,23 @@
 
             /// pickler fixpoint combinator
             let fix (F : Pickler<'T> -> Pickler<'T>) =
-                let f = new Pickler<'T>()
+                let f = CompositePickler.CreateUninitialized<'T> ()
                 let f' = F f
                 f.InitializeFrom f' ; f
 
             /// pickler fixpoint combinator
             let fix2 (F : Pickler<'T> -> Pickler<'S> -> Pickler<'T> * Pickler<'S>) =
-                let f = new Pickler<'T>()
-                let g = new Pickler<'S>()
+                let f = CompositePickler.CreateUninitialized<'T> ()
+                let g = CompositePickler.CreateUninitialized<'S> ()
                 let f',g' = F f g
                 f.InitializeFrom f' ; g.InitializeFrom g'
                 f,g
 
             /// pickler fixpoint combinator
             let fix3 (F : Pickler<'T> -> Pickler<'S> -> Pickler<'U> -> Pickler<'T> * Pickler<'S> * Pickler<'U>) =
-                let f = new Pickler<'T>()
-                let g = new Pickler<'S>()
-                let h = new Pickler<'U>()
+                let f = CompositePickler.CreateUninitialized<'T> ()
+                let g = CompositePickler.CreateUninitialized<'S> ()
+                let h = CompositePickler.CreateUninitialized<'U> ()
                 let f',g',h' = F f g h
                 f.InitializeFrom f' ; g.InitializeFrom g' ; h.InitializeFrom h'
                 f,g,h
