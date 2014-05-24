@@ -281,7 +281,7 @@
             if isValue && idx % sequenceStateResetThreshold = 0 then
                 state.ResetCounters()
                 
-            pickler.Read state tag
+            pickler.Read state "item"
 
         // read id
         let flags = state.Formatter.BeginReadObject pickler.TypeInfo pickler.PicklerInfo tag
