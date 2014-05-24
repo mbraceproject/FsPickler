@@ -10,7 +10,7 @@
     open Microsoft.FSharp.Reflection
 
     open Nessos.FsPickler
-    open Nessos.FsPickler.Utils
+    open Nessos.FsPickler.Reflection
     open Nessos.FsPickler.TypeShape
     open Nessos.FsPickler.PicklerUtils
     open Nessos.FsPickler.ReflectionPicklers

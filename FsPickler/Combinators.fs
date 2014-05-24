@@ -54,7 +54,7 @@
             // misc atomic picklers
             let string = new StringPickler () :> Pickler<string>
             let guid = mkGuidPickler ()
-            let bytes = mkByteArrayPickler ()
+            let bytes = new ByteArrayPickler () :> Pickler<byte []>
             let bigint = mkBigIntPickler () : Pickler<bigint>
 
             /// the default System.Object pickler

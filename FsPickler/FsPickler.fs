@@ -183,7 +183,7 @@
             let pickler = resolver.Resolve<'T> ()
             readTopLevelSequence pickler reader "root" length
 //            let qn = cache.GetQualifiedName pickler.Type
-//            reader.ReadSequence(pickler, qn, length)
+//            reader.readSequenceNoLength(pickler, qn, length)
 
         /// <summary>Lazily deserialize a sequence of objects from the underlying stream.</summary>
         /// <param name="elementType">element type used in sequence.</param>
@@ -198,7 +198,7 @@
             let pickler = resolver.Resolve elementType
             readTopLevelSequenceUntyped pickler reader "root" length
 //            let qn = cache.GetQualifiedName pickler.Type
-//            pickler.ReadSequence(reader, qn, length)
+//            pickler.readSequenceNoLength(reader, qn, length)
 
         /// <summary>
         ///     Pickles given value to byte array.

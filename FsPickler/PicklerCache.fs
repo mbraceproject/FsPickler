@@ -26,7 +26,7 @@
 
         /// register pickler for a specific type
         member __.RegisterPickler(pickler : Pickler) =
-            if pickler.TypeKind = TypeKind.Primitive then 
+            if pickler.TypeInfo = TypeInfo.Primitive then 
                 invalidArg "pickler" "defining custom picklers for primitives not supported."
 
             customPicklers.Swap(fun fmts -> fmts.AddNoOverwrite(pickler.Type.AssemblyQualifiedName, pickler))

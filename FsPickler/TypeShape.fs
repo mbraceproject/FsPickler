@@ -20,7 +20,7 @@
     open System.Runtime.Serialization
 
     open Nessos.FsPickler
-    open Nessos.FsPickler.Utils
+    open Nessos.FsPickler.Reflection
 
     // embed peano arithmetic in System.Type
     type Peano =
@@ -290,7 +290,7 @@
 
             | [| m |] ->
                 let fmt = m.GuardedInvoke(pf, [| dummyResolver :> obj |]) :?> Pickler
-                if fmt.TypeKind = TypeKind.Primitive then
+                if fmt.TypeInfo = TypeInfo.Primitive then
                     raise <| new PicklerFactoryException(pf, "defining custom picklers for primitives not supported.")
                 let shape = TypeShape.OfType fmt.Type
 

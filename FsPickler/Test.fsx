@@ -24,6 +24,10 @@ toFile 1
 
 ofFile<int>
 
+let x = obj()
+
+loop <| (x,x)
+
 #time
 
 for i = 0 to 100 do

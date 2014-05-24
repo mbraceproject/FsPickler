@@ -4,9 +4,7 @@
     open System.Runtime.CompilerServices
     open System.Runtime.Serialization
 
-    open Nessos.FsPickler.Utils
-    open Nessos.FsPickler.Header
-
+    open Nessos.FsPickler.Reflection
 
     [<AutoSerializable(false)>]
     type internal CompositePickler<'T> =
@@ -20,29 +18,25 @@
         val mutable private m_Writer : WriteState -> 'T -> unit
         val mutable private m_Reader : ReadState -> 'T
 
-        val mutable private m_TypeKind : TypeKind
-        val mutable private m_PicklerFlags : PicklerFlags
+        val mutable private m_TypeInfo : TypeInfo
         val mutable private m_PicklerInfo : PicklerInfo
 
-        val mutable private m_IsCyclicType : bool
+        val mutable private m_IsRecursiveType : bool
         val mutable private m_IsOfFixedSize : bool
 
         val mutable private m_IsCacheByRef : bool
         val mutable private m_UseWithSubtypes : bool
 
         new (reader, writer, nested : Pickler option, picklerInfo, cacheByRef, useWithSubtypes) =
-
-            let typeKind = computeTypeKind typeof<'T>
+            let TypeInfo = TypeInfo.compute typeof<'T>
             let isFixedSize = isOfFixedSize typeof<'T>
-            let isCyclic =
+            let isRecursive =
 #if OPTIMIZE_FSHARP
-                    isCyclicType true typeof<'T>
+                isRecursiveType true typeof<'T>
 #else
-                    isCyclicType false declaredType
+                isRecursiveType false typeof<'T>
 #endif
-            let picklerFlags = computePicklerFlags picklerInfo typeKind cacheByRef useWithSubtypes isCyclic isFixedSize typeof<'T>
-
-            { 
+            {
                 inherit Pickler<'T> ()
 
                 m_IsInitialized = true
@@ -52,11 +46,10 @@
                 m_Writer = writer
                 m_Reader = reader
 
-                m_TypeKind = typeKind
-                m_PicklerFlags = picklerFlags
+                m_TypeInfo = TypeInfo
                 m_PicklerInfo = picklerInfo
 
-                m_IsCyclicType = isCyclic
+                m_IsRecursiveType = isRecursive
                 m_IsOfFixedSize = isFixedSize
 
                 m_IsCacheByRef = cacheByRef
@@ -74,11 +67,10 @@
                 m_Writer = fun _ _ -> invalidOp "Attempting to consume pickler at initialization time."
                 m_Reader = fun _ -> invalidOp "Attempting to consume pickler at initialization time."
 
-                m_TypeKind = Unchecked.defaultof<_>
-                m_PicklerFlags = Unchecked.defaultof<_>
+                m_TypeInfo = Unchecked.defaultof<_>
                 m_PicklerInfo = Unchecked.defaultof<_>
  
-                m_IsCyclicType = Unchecked.defaultof<_>
+                m_IsRecursiveType = Unchecked.defaultof<_>
                 m_IsOfFixedSize = Unchecked.defaultof<_>
 
                 m_IsCacheByRef = Unchecked.defaultof<_>
@@ -90,10 +82,10 @@
             | None -> typeof<'T> 
             | Some p -> p.Type
 
-        override p.IsCyclicType = p.m_IsCyclicType
-        override p.PicklerFlags = p.m_PicklerFlags
-        override p.TypeKind = p.m_TypeKind
-        override p.IsPrimitive = false
+        override p.TypeInfo = p.m_TypeInfo
+        override p.PicklerInfo = p.m_PicklerInfo
+
+        override p.IsRecursiveType = p.m_IsRecursiveType
         override p.IsCacheByRef = p.m_IsCacheByRef
         override p.IsOfFixedSize = p.m_IsOfFixedSize
         override p.UseWithSubtypes = p.m_UseWithSubtypes
@@ -129,12 +121,11 @@
                 elif not p'.m_IsInitialized then 
                     invalidOp "Source pickler has not been initialized."
                 else
-                    p.m_PicklerFlags <- p'.m_PicklerFlags
-                    p.m_TypeKind <- p'.m_TypeKind
+                    p.m_TypeInfo <- p'.m_TypeInfo
                     p.m_PicklerInfo <- p'.m_PicklerInfo
                     p.m_IsCacheByRef <- p'.m_IsCacheByRef
                     p.m_UseWithSubtypes <- p'.m_UseWithSubtypes
-                    p.m_IsCyclicType <- p'.m_IsCyclicType
+                    p.m_IsRecursiveType <- p'.m_IsRecursiveType
                     p.m_IsOfFixedSize <- p'.m_IsOfFixedSize
                     p.m_Writer <- p'.m_Writer
                     p.m_Reader <- p'.m_Reader
@@ -160,26 +151,19 @@
 
         override p.Write (state : WriteState) (tag : string) (value : 'T) =
 
-            
             let formatter = state.Formatter
-//            // ad-hoc System.Type caching
-//            let inline writeType (t : Type) =
-//                let id, firstOccurence = state.ObjectIdGenerator.GetId t
-//                if firstOccurence then
-//                    formatter.BeginWriteObject "subtype" ObjectFlags.IsNewCachedInstance
-//                    state.TypePickler.Write w t
-//                    formatter.EndWriteObject ()
-//                else
-//                    formatter.BeginWriteObject tyPickler "subtype" ObjectFlags.IsOldCachedInstance
-//                    formatter.WriteInt64 "id" id
-//                    formatter.EndWriteObject ()
+
+            let inline beginWriteObject tag flags =
+                formatter.BeginWriteObject p.m_TypeInfo p.m_PicklerInfo tag flags
+
+            // writes a non-null instance of a reference type
 #if DEBUG
-            let writeObject header =
+            let writeObject flags =
 #else
-            let inline writeObject header =
+            let inline writeObject flags =
 #endif
-                if p.m_TypeKind <= TypeKind.Sealed || p.m_UseWithSubtypes then
-                    formatter.BeginWriteObject p tag header
+                if p.m_TypeInfo <= TypeInfo.Sealed || p.m_UseWithSubtypes then
+                    beginWriteObject tag flags
                     p.m_Writer state value
                     formatter.EndWriteObject ()
                 else
@@ -187,29 +171,24 @@
                     let t0 = value.GetType()
                     if t0 <> typeof<'T> then
                         let subPickler = state.PicklerResolver.Resolve t0
-                        formatter.BeginWriteObject p tag (header ||| ObjectFlags.IsProperSubtype)
+                        beginWriteObject tag (flags ||| ObjectFlags.IsProperSubtype)
                         state.TypePickler.Write state "subtype" t0
                         state.NextWriteIsSubtype <- true
                         subPickler.UntypedWrite state tag value
                         formatter.EndWriteObject ()
                     else
-                        formatter.BeginWriteObject p tag header
+                        beginWriteObject tag flags
                         p.m_Writer state value
                         formatter.EndWriteObject ()
 
             try
-//                if pickler.TypeKind <= TypeKind.String then
-//                    formatter.BeginWriteObject pickler tag ObjectFlags.IsPrimitive
-//                    pickler.Write w x
-//                    formatter.EndWriteObject ()
-
-                if p.m_TypeKind = TypeKind.Value then
-                    formatter.BeginWriteObject p tag ObjectFlags.IsValue
+                if p.m_TypeInfo = TypeInfo.Value then
+                    beginWriteObject tag ObjectFlags.None
                     p.m_Writer state value
                     formatter.EndWriteObject ()
 
                 elif obj.ReferenceEquals(value, null) then
-                    formatter.BeginWriteObject p tag ObjectFlags.IsNull
+                    beginWriteObject tag ObjectFlags.IsNull
                     formatter.EndWriteObject ()
 
                 else
@@ -218,14 +197,14 @@
                 do RuntimeHelpers.EnsureSufficientExecutionStack()
 #endif
 
-                if p.m_IsCacheByRef || p.m_IsCyclicType then
+                if p.m_IsCacheByRef || p.m_IsRecursiveType then
                     let id, firstOccurence = state.ObjectIdGenerator.GetId value
 
                     let cyclicObjects = state.CyclicObjectSet
                     let objStack = state.ObjectStack
 
                     if firstOccurence then
-                        if p.m_IsCyclicType then 
+                        if p.m_IsRecursiveType then 
                             // push id to the symbolic stack to detect cyclic objects during traversal
                             objStack.Push id
 
@@ -236,36 +215,37 @@
                         else
                             writeObject ObjectFlags.IsNewCachedInstance
 
-                    elif p.m_IsCyclicType && objStack.Contains id && not <| cyclicObjects.Contains id then
+                    elif p.m_IsRecursiveType && objStack.Contains id && not <| cyclicObjects.Contains id then
                         // came across cyclic object, record fixup-related data
                         // cyclic objects are handled once per instance
                         // instances of cyclic arrays are handled differently than other reference types
 
                         do cyclicObjects.Add(id) |> ignore
                     
-                        if p.m_TypeKind = TypeKind.Array then
-                            formatter.BeginWriteObject p tag ObjectFlags.IsOldCachedInstance
-                        elif p.m_TypeKind <= TypeKind.Sealed || p.m_UseWithSubtypes then
-                            formatter.BeginWriteObject p tag ObjectFlags.IsCyclicInstance
+                        if p.m_TypeInfo = TypeInfo.Array then
+                            beginWriteObject tag ObjectFlags.IsOldCachedInstance
+
+                        elif p.m_TypeInfo <= TypeInfo.Sealed || p.m_UseWithSubtypes then
+                            beginWriteObject tag ObjectFlags.IsCyclicInstance
                         else
                             let t = value.GetType()
 
                             if t.IsArray then
-                                formatter.BeginWriteObject p tag ObjectFlags.IsOldCachedInstance
+                                beginWriteObject tag ObjectFlags.IsOldCachedInstance
                             elif t <> typeof<'T> then
-                                formatter.BeginWriteObject p tag (ObjectFlags.IsCyclicInstance ||| ObjectFlags.IsProperSubtype)
+                                beginWriteObject tag (ObjectFlags.IsCyclicInstance ||| ObjectFlags.IsProperSubtype)
                                 state.TypePickler.Write state "subtype" t
                             else
-                                formatter.BeginWriteObject p tag ObjectFlags.IsCyclicInstance
+                                beginWriteObject tag ObjectFlags.IsCyclicInstance
 
                         formatter.WriteInt64 "id" id
                         formatter.EndWriteObject()
                     else
-                        formatter.BeginWriteObject p tag ObjectFlags.IsOldCachedInstance
+                        beginWriteObject tag ObjectFlags.IsOldCachedInstance
                         formatter.WriteInt64 "id" id
                         formatter.EndWriteObject()
                 else
-                    writeObject ObjectFlags.Zero
+                    writeObject ObjectFlags.None
 
             with 
             | :? SerializationException -> reraise ()
@@ -273,33 +253,7 @@
 
 
         override p.Read (state : ReadState) (tag : string) =
-        
-//            let inline beginReadObject (pickler : Pickler) tag =
-//                let objFlags = formatter.BeginReadObject(tag, &picklerFlags)
-//                if picklerFlags <> pickler.PicklerFlags then
-//                    if byte picklerFlags <> byte pickler.PicklerFlags then
-//                        let msg = sprintf "FsPickler: next object is of unexpected type (anticipated %O)." pickler.Type
-//                        raise <| new SerializationException(msg)
-//                    else
-//                        let msg = sprintf "FsPickler: object of type '%O' was serialized with incompatible pickler." pickler.Type
-//                        raise <| new SerializationException(msg)
-//                else
-//                    objFlags
 
-//            // ad-hoc System.Type caching
-//            let inline readType () =
-//                let flags = formatter.BeginReadObject tyPickler "subtype"
-//                if ObjectFlags.hasFlag flags ObjectFlags.IsNewCachedInstance then
-//                    let id = counter
-//                    counter <- counter + 1L
-//                    let t = tyPickler.Read r
-//                    objCache.Add(id, t)
-//                    formatter.EndReadObject()
-//                    t
-//                else
-//                    let id = formatter.ReadInt64 "id"
-//                    formatter.EndReadObject()
-//                    objCache.[id] |> fastUnbox<Type>
 #if DEBUG
             let readObject flags =
 #else
@@ -316,13 +270,13 @@
             try
                 let formatter = state.Formatter
 
-                let flags = formatter.BeginReadObject p tag
+                let flags = formatter.BeginReadObject p.m_TypeInfo p.m_PicklerInfo tag
 
                 if ObjectFlags.hasFlag flags ObjectFlags.IsNull then 
                     formatter.EndReadObject ()
                     fastUnbox<'T> null
 
-                elif p.m_TypeKind = TypeKind.Value then 
+                elif p.m_TypeInfo = TypeInfo.Value then 
                     let value = p.m_Reader state
                     formatter.EndReadObject ()
                     value
@@ -331,16 +285,16 @@
                     // came across a nested instance of a cyclic object
                     // add an uninitialized object to the cache and schedule
                     // reflection-based fixup at the root level.
-                    let reflecteType =
+                    let reflectedType =
                         if ObjectFlags.hasFlag flags ObjectFlags.IsProperSubtype then state.TypePickler.Read state "subtype"
                         else typeof<'T>
 
                     let id = formatter.ReadInt64 "id"
 
-                    let value = FormatterServices.GetUninitializedObject(reflecteType)
+                    let value = FormatterServices.GetUninitializedObject(reflectedType)
 
                     // register a fixup operation & cache
-                    state.FixupIndex.Add(id, (reflecteType,value))
+                    state.FixupIndex.Add(id, (reflectedType,value))
                     state.ObjectCache.Add(id, value)
 
                     formatter.EndReadObject()
@@ -349,8 +303,8 @@
 
                 elif ObjectFlags.hasFlag flags ObjectFlags.IsNewCachedInstance then
                     let isArray = 
-                        match p.m_TypeKind with
-                        | TypeKind.Array | TypeKind.ArrayCompatible -> true
+                        match p.m_TypeInfo with
+                        | TypeInfo.Array | TypeInfo.ArrayCompatible -> true
                         | _ -> false
 
                     let id = state.GetObjectId(isArray)
@@ -359,7 +313,7 @@
 
                     formatter.EndReadObject()
 
-                    if p.m_IsCyclicType then 
+                    if p.m_IsRecursiveType then 
                         let found, contents = state.FixupIndex.TryGetValue id
 
                         if found then

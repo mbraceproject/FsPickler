@@ -24,22 +24,22 @@
 //            /// evaluates given sequence, serializing all elements to the underlying stream
 //            member w.WriteSequence(xs : seq<'T>) =
 //                let fmt = w.Resolver.Resolve<'T> ()
-//                writeSeq' fmt w xs
+//                writeSequenceNoLenght fmt w xs
 //
 //            /// evaluates given sequence of pairs, serializing all elements to the underlying stream
 //            member w.WriteKeyValueSequence(xs : seq<'K * 'V>) =
 //                let kf = w.Resolver.Resolve<'K> ()
 //                let vf = w.Resolver.Resolve<'V> ()
-//                writeKVPairs' kf vf w xs
+//                writePairSequence' kf vf w xs
 //
 //        type Reader with
 //            /// reads the underlying stream for a sequence of items of given type.
-//            member r.ReadSequence<'T> () =
+//            member r.readSequenceNoLength<'T> () =
 //                let fmt = r.Resolver.Resolve<'T> ()
-//                readSeq' fmt r
+//                readSequenceNoLength fmt r
 //
 //            /// reads the underlying stream for a sequence of pairs of given types.
 //            member r.ReadKeyValueSequence<'K, 'V> () =
 //                let kf = r.Resolver.Resolve<'K> ()
 //                let vf = r.Resolver.Resolve<'V> ()
-//                readKVPairs' kf vf r
+//                readPairSequence' kf vf r
