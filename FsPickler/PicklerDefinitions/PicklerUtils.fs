@@ -82,7 +82,7 @@
 #if DEBUG
     let readSequence (r : ReadState) (p : Pickler<'T>) =
 #else
-    let inline readSequenceNoLength (r : ReadState) (p : Pickler<'T>) =
+    let inline readSequence (r : ReadState) (p : Pickler<'T>) =
 #endif
         let length = r.Formatter.ReadInt32 "length"
         let ts = Array.zeroCreate<'T> length
