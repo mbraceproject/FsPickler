@@ -64,11 +64,9 @@
         let sc = match streamingContext with None -> new StreamingContext() | Some sc -> sc
 
         let mutable idGen = new ObjectIDGenerator()
-        let mutable nextWriteIsSubtype = false
+        let mutable nextObjectIsSubtype = false
         let objStack = new Stack<int64> ()
         let cyclicObjects = new HashSet<int64> ()
-
-        
 
         member internal __.PicklerResolver = resolver
         member __.StreamingContext = sc
@@ -81,9 +79,9 @@
         member internal __.ObjectStack = objStack
         member internal __.CyclicObjectSet = cyclicObjects
 
-        member internal __.NextWriteIsSubtype
-            with get () = nextWriteIsSubtype
-            and set b = nextWriteIsSubtype <- b
+        member internal __.NextObjectIsSubtype
+            with get () = nextObjectIsSubtype
+            and set b = nextObjectIsSubtype <- b
 
         interface IDisposable with
             member __.Dispose () = formatter.Dispose()
@@ -92,7 +90,7 @@
         
         let formatter = formatP.CreateReader stream
         let sc = match streamingContext with None -> new StreamingContext() | Some sc -> sc
-        let mutable nextWriteIsSubtype = false
+        let mutable nextObjectIsSubtype = false
         let mutable nextObjectId = 1L
         let mutable currentArrayId = 0L
         let objCache = new Dictionary<int64, obj> ()
@@ -118,9 +116,9 @@
         member internal __.RegisterUninitializedArray(array : Array) =
             objCache.Add(currentArrayId, array)
 
-        member internal __.NextWriteIsSubtype
-            with get () = nextWriteIsSubtype
-            and set b = nextWriteIsSubtype <- b
+        member internal __.NextObjectIsSubtype
+            with get () = nextObjectIsSubtype
+            and set b = nextObjectIsSubtype <- b
 
         interface IDisposable with
             member __.Dispose () = formatter.Dispose()

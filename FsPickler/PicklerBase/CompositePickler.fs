@@ -136,15 +136,15 @@
 
 
         override p.UntypedWrite (state:WriteState) (tag:string) (value:obj) =
-            if state.NextWriteIsSubtype then
-                state.NextWriteIsSubtype <- false
+            if state.NextObjectIsSubtype then
+                state.NextObjectIsSubtype <- false
                 p.m_Writer state (fastUnbox value)
             else
                 p.Write state tag (fastUnbox value)
 
         override p.UntypedRead (state:ReadState) (tag:string) =
-            if state.NextWriteIsSubtype then
-                state.NextWriteIsSubtype <- false
+            if state.NextObjectIsSubtype then
+                state.NextObjectIsSubtype <- false
                 p.m_Reader state :> obj
             else
                 p.Read state tag :> obj
@@ -173,7 +173,7 @@
                         let subPickler = state.PicklerResolver.Resolve t0
                         beginWriteObject tag (flags ||| ObjectFlags.IsProperSubtype)
                         state.TypePickler.Write state "subtype" t0
-                        state.NextWriteIsSubtype <- true
+                        state.NextObjectIsSubtype <- true
                         subPickler.UntypedWrite state tag value
                         formatter.EndWriteObject ()
                     else
@@ -262,7 +262,7 @@
                 if ObjectFlags.hasFlag flags ObjectFlags.IsProperSubtype then
                     let t = state.TypePickler.Read state "subtype"
                     let subPickler = state.PicklerResolver.Resolve t
-                    state.NextWriteIsSubtype <- true
+                    state.NextObjectIsSubtype <- true
                     subPickler.UntypedRead state tag |> fastUnbox<'T>
                 else
                     p.m_Reader state

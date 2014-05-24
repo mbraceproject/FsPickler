@@ -3,6 +3,13 @@
     open System
     open System.IO
 
+    type HashResult =
+        {
+            Algorithm : string
+            Length : int64
+            Hash : byte []
+        }
+
     /// An immutable factory interface for HashStreams
     type IHashStreamFactory =
         abstract Create : unit -> HashStream

@@ -13,13 +13,6 @@
     type private OAttribute = System.Runtime.InteropServices.OptionalAttribute
     type private DAttribute = System.Runtime.InteropServices.DefaultParameterValueAttribute
 
-    type HashResult =
-        {
-            Algorithm : string
-            Length : int64
-            Hash : byte []
-        }
-
     [<Sealed>]
     [<AutoSerializableAttribute(false)>]
     type FsPickler private (cache : PicklerCache) =
@@ -49,8 +42,6 @@
             use state = new WriteState(stream, formatP, resolver, ?streamingContext = streamingContext)
             let pickler = resolver.Resolve<'T> ()
             pickler.Write state "root" value
-//            let qn = cache.GetQualifiedName pickler.Type
-//            state.WriteRootObject<'T>(pickler, qn, value)
 
         /// <summary>Serialize value to the underlying stream using given pickler.</summary>
         /// <param name="pickler">pickler used for serialization.</param>
@@ -63,8 +54,6 @@
             do checkPicklerCompat cache.UUId pickler
             use state = new WriteState(stream, formatP, resolver, ?streamingContext = streamingContext) //, ?encoding = encoding, ?leaveOpen = leaveOpen)
             pickler.Write state "root" value
-//            let qn = cache.GetQualifiedName pickler.Type
-//            writer.WriteRootObject(pickler, qn, value)
 
         /// <summary>Serialize object of given type to the underlying stream.</summary>
         /// <param name="valueType">type of the given object.</param>
@@ -77,8 +66,6 @@
             use writer = new WriteState(stream, formatP, resolver, ?streamingContext = streamingContext) //, ?encoding = encoding, ?leaveOpen = leaveOpen)
             let pickler = resolver.Resolve valueType
             pickler.UntypedWrite writer "root" value
-//            let qn = cache.GetQualifiedName valueType
-//            pickler.WriteRootObject (writer, qn, value)
 
         /// <summary>Serialize object to the underlying stream using given pickler.</summary>
         /// <param name="pickler">untyped pickler used for serialization.</param>
@@ -90,8 +77,6 @@
         member __.Serialize(pickler : Pickler, stream : Stream, value : obj, [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : unit =
             use writer = new WriteState(stream, formatP, resolver, ?streamingContext = streamingContext) //, ?encoding = encoding, ?leaveOpen = leaveOpen)
             pickler.UntypedWrite writer "root" value
-//            let qn = cache.GetQualifiedName pickler.Type
-//            pickler.WriteRootObject (writer, qn, value)
 
         /// <summary>Deserialize value of given type from the underlying stream.</summary>
         /// <param name="stream">source stream.</param>
@@ -102,8 +87,6 @@
             use reader = new ReadState(stream, formatP, resolver, ?streamingContext = streamingContext) //, ?encoding = encoding, ?leaveOpen = leaveOpen)
             let pickler = resolver.Resolve<'T> ()
             pickler.Read reader "root"
-//            let qn = cache.GetQualifiedName pickler.Type
-//            reader.ReadRootObject<'T> (pickler, qn)
 
         /// <summary>Deserialize value of given type from the underlying stream, using given pickler.</summary>
         /// <param name="pickler">pickler used for serialization.</param>
@@ -115,8 +98,6 @@
             do checkPicklerCompat cache.UUId pickler
             use reader = new ReadState(stream, formatP, resolver, ?streamingContext = streamingContext) //, ?encoding = encoding, ?leaveOpen = leaveOpen)
             pickler.Read reader "root"
-//            let qn = cache.GetQualifiedName pickler.Type
-//            reader.ReadRootObject<'T> (pickler, qn)
 
         /// <summary>Deserialize object of given type from the underlying stream.</summary>
         /// <param name="valueType">anticipated value type.</param>
@@ -128,8 +109,6 @@
             use reader = new ReadState(stream, formatP, resolver, ?streamingContext = streamingContext) //, ?encoding = encoding, ?leaveOpen = leaveOpen)
             let pickler = resolver.Resolve valueType
             pickler.UntypedRead reader "root"
-//            let qn = cache.GetQualifiedName valueType
-//            pickler.ReadRootObject (reader, qn)
 
         /// <summary>Deserialize object from the underlying stream using given pickler.</summary>
         /// <param name="pickler">untyped pickler used for deserialization.</param>
@@ -141,8 +120,6 @@
         member __.Deserialize (pickler : Pickler, stream : Stream, [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : obj =
             use reader = new ReadState(stream, formatP, resolver, ?streamingContext = streamingContext) //, ?encoding = encoding, ?leaveOpen = leaveOpen)
             pickler.UntypedRead reader "root"
-//            let qn = cache.GetQualifiedName pickler.Type
-//            pickler.ReadRootObject (reader, qn)
 
         /// <summary>Serialize a sequence of objects to the underlying stream.</summary>
         /// <param name="stream">target stream.</param>
@@ -153,7 +130,6 @@
         member __.SerializeSequence<'T>(stream : Stream, sequence:seq<'T>, [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : int =
             use writer = new WriteState(stream, formatP, resolver) //, ?encoding = encoding, ?leaveOpen = leaveOpen)
             let pickler = resolver.Resolve<'T> ()
-//            let qn = cache.GetQualifiedName pickler.Type
             writeTopLevelSequence pickler writer "root" sequence
 
         /// <summary>Serialize a sequence of objects to the underlying stream.</summary>
