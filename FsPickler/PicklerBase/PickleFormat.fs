@@ -8,7 +8,7 @@
 
         inherit IDisposable
 
-        abstract BeginWriteRoot : string -> unit
+        abstract BeginWriteRoot : tag:string -> unit
         abstract EndWriteRoot : unit -> unit
 
         abstract BeginWriteObject : typeInfo:TypeInfo -> picklerInfo:PicklerInfo -> tag:string -> objectFlags:ObjectFlags -> unit
@@ -43,7 +43,7 @@
     and IPickleFormatReader =
         inherit IDisposable
 
-        abstract BeginReadRoot : unit -> string
+        abstract BeginReadRoot : tag:string -> unit
         abstract EndReadRoot : unit -> unit
 
         abstract BeginReadObject : typeInfo:TypeInfo -> picklerInfo:PicklerInfo -> tag:string -> ObjectFlags

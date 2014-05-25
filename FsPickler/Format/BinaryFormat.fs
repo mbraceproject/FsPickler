@@ -108,10 +108,13 @@
             
             member __.Dispose () = br.Dispose ()
 
-            member __.BeginReadRoot () =
+            member __.BeginReadRoot (tag : string) =
                 if br.ReadByte () <> initByte then
                     raise <| new SerializationException("stream error.")
-                br.ReadString()
+                let streamTag = br.ReadString()
+                if streamTag <> tag then
+                    let msg = sprintf "Expected '%s', got '%s'." tag streamTag
+                    raise <| new SerializationException(msg)
 
             member __.EndReadRoot () = ()
 

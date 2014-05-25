@@ -245,6 +245,7 @@
 
             pickler.Write state "item" t
 
+        state.Formatter.BeginWriteRoot tag
         state.Formatter.BeginWriteObject pickler.TypeInfo pickler.PicklerInfo tag ObjectFlags.IsSequenceHeader
             
         // specialize enumeration
@@ -271,6 +272,7 @@
                 i
 
         state.Formatter.EndWriteObject()
+        state.Formatter.EndWriteRoot()
         length
 
     let readTopLevelSequence (pickler : Pickler<'T>) (state : ReadState) (tag : string) (length : int) : IEnumerator<'T> =
@@ -284,6 +286,7 @@
             pickler.Read state "item"
 
         // read id
+        state.Formatter.BeginReadRoot tag
         let flags = state.Formatter.BeginReadObject pickler.TypeInfo pickler.PicklerInfo tag
             
         // read object header
@@ -297,7 +300,7 @@
             new System.Collections.Generic.IEnumerator<'T> with
                 member __.Current = !curr
                 member __.Current = box !curr
-                member __.Dispose () = (state :> IDisposable).Dispose()
+                member __.Dispose () = state.Formatter.EndReadRoot() ; (state :> IDisposable).Dispose()
                 member __.MoveNext () =
                     if !cnt < length then
                         curr := read !cnt
