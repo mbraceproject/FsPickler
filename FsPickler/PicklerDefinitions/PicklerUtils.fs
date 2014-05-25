@@ -151,7 +151,7 @@
 
     let readSequenceNoLength (p : Pickler<'T>) (r : ReadState) : 'T seq =
 
-        if r.Formatter.ReadBoolean "isMaterialied" then
+        if r.Formatter.ReadBoolean "isMaterialized" then
             let length = r.Formatter.ReadInt32 "length"
             let array = Array.zeroCreate<'T> length
             for i = 0 to length - 1 do
@@ -206,7 +206,7 @@
     /// Deserializes a sequence of key/value pairs from the underlying stream
     let readPairSequenceNoLength (kp : Pickler<'K>) (vp : Pickler<'V>) (r : ReadState) =
 
-        if r.Formatter.ReadBoolean "isMaterialied" then
+        if r.Formatter.ReadBoolean "isMaterialized" then
             let length = r.Formatter.ReadInt32 "length"
             let arr = Array.zeroCreate<'K * 'V> length
             for i = 0 to length - 1 do

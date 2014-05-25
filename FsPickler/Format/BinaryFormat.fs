@@ -8,7 +8,6 @@
     open Microsoft.FSharp.Core.LanguagePrimitives
 
     open Nessos.FsPickler
-    open Nessos.FsPickler.Utils
 
     [<AutoOpen>]
     module private BinaryFormatUtils =

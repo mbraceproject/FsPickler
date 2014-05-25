@@ -30,7 +30,7 @@
                 let lengths = Array.zeroCreate<int> rank
                 for d = 0 to rank - 1 do
                     lengths.[d] <- x.GetLength d
-                    w.Formatter.WriteInt32 (string d) lengths.[d]
+                    w.Formatter.WriteInt32 "dim" lengths.[d]
 
                 if ep.TypeInfo = TypeInfo.Primitive && w.Formatter.IsPrimitiveArraySerializationSupported then
                     w.Formatter.WritePrimitiveArray "data" x
@@ -64,7 +64,7 @@
 
             let reader (r : ReadState) =
                 let l = Array.zeroCreate<int> rank
-                for i = 0 to rank - 1 do l.[i] <- r.Formatter.ReadInt32 (string i)
+                for i = 0 to rank - 1 do l.[i] <- r.Formatter.ReadInt32 "dim"
 
                 let array =
                     match rank with
