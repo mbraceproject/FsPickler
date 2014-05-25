@@ -26,12 +26,12 @@ let ofFile<'T> =
 
 let x = obj()
 
-toFile <| value
+toFile <| ([Some (42,"12") ; None])
 
 ofFile<(string * int option) option list>
 
 
-loop ([Some (42,"12") ; None])
+loop 
 
 #time
 
@@ -45,63 +45,3 @@ for i = 0 to 100 do
     fsp.ComputeHash(value, hashFactory = fnv) |> ignore
 for i = 0 to 100 do
     value.GetHashCode() |> ignore
-
-
-#r "System.Xml"
-
-open System.IO
-open System.Xml
-
-let fs = File.OpenRead "C:/Users/eirik/Desktop/foo.xml"
-fs.Position <- 0L
-let reader = XmlReader.Create(fs)
-
-/// ROOT ELEMENT
-reader.Read()
-reader.NodeType // XmlDeclaration
-reader.Read()
-
-reader.NodeType // Element
-reader.Name // FsPickler
-reader.GetAttribute("version") // version
-reader.Read()
-
-// tuple "root"
-// BeginReadObject
-reader.NodeType // Element
-reader.GetAttribute(0) // object flags
-reader.Name // root
-reader.Value
-reader.Read()
-
-reader.ReadContentAsBase64([|1uy..10uy|], 0, 10)
-reader.ReadElementContentAsBase64([|1uy..10uy|], 0, 10)
-reader.NodeType
-reader.Read()
-
-reader
-
-// read item1
-reader.NodeType // Element
-reader.Name // item1
-reader.ReadElementContentAsInt() // 1
-//reader.Read()
-//reader.NodeType // Text
-//reader.ReadContentAsInt() // 1
-//reader.ReadEndElement()
-
-reader.Read()
-reader.ReadEndElement()
-reader
-
-reader.NodeType // Element
-reader.Name // item2
-reader.ReadElementContentAsInt() // 1
-
-reader.NodeType // EndElement
-reader.Name // root
-reader.ReadEndElement()
-
-reader.NodeType // EndElement
-reader.Name // FsPickler
-reader.ReadEndElement()

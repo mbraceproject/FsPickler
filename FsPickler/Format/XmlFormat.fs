@@ -48,11 +48,19 @@
                 writer.WriteEndElement()
                 writer.WriteEndDocument()
 
-            member __.BeginWriteObject (typeInfo : TypeInfo) (picklerInfo : PicklerInfo) (tag : string) (objectFlags : ObjectFlags) =
+            member __.BeginWriteObject (_ : TypeInfo) (_ : PicklerInfo) (tag : string) (flags : ObjectFlags) =
                 writer.WriteStartElement(tag)
-                writer.WriteAttributeString("typeInfo", string << int <| typeInfo)
-                writer.WriteAttributeString("picklerInfo", string << int <| picklerInfo)
-                writer.WriteAttributeString("objectFlags", string << int <| objectFlags)
+
+//                if ObjectFlags.hasFlag flags ObjectFlags.IsNull then 
+//                    writer.WriteAttributeString("null", "true")
+//                if ObjectFlags.hasFlag flags ObjectFlags.IsProperSubtype then 
+//                    writer.WriteAttributeString("subtype", "true")
+//                if ObjectFlags.hasFlag flags ObjectFlags.IsNewCachedInstance then 
+//                    writer.WriteAttributeString("subtype", "true")
+
+//                writer.WriteAttributeString("typeInfo", string << int <| typeInfo)
+//                writer.WriteAttributeString("picklerInfo", string << int <| picklerInfo)
+                writer.WriteAttributeString("flags", string << int <| flags)
 
             member __.EndWriteObject () = writer.WriteEndElement()
 
@@ -120,19 +128,19 @@
 
             member __.EndReadRoot () = reader.ReadEndElement()
 
-            member __.BeginReadObject (typeInfo : TypeInfo) (picklerInfo : PicklerInfo) (tag : string) =
+            member __.BeginReadObject (_ : TypeInfo) (_ : PicklerInfo) (tag : string) =
                 do readElementName reader tag
 
-                let sTypeInfo = reader.GetAttribute("typeInfo") |> byte |> EnumOfValue<byte, TypeInfo>
-                let sPicklerInfo = reader.GetAttribute("picklerInfo") |> byte |> EnumOfValue<byte, PicklerInfo>
-                let objectFlags = reader.GetAttribute("objectFlags") |> byte |> EnumOfValue<byte, ObjectFlags>
+//                let sTypeInfo = reader.GetAttribute("typeInfo") |> byte |> EnumOfValue<byte, TypeInfo>
+//                let sPicklerInfo = reader.GetAttribute("picklerInfo") |> byte |> EnumOfValue<byte, PicklerInfo>
+                let objectFlags = reader.GetAttribute("flags") |> byte |> EnumOfValue<byte, ObjectFlags>
 
-                if sTypeInfo <> typeInfo then   
-                    let message = sprintf "expected '%O', got '%O'." typeInfo sTypeInfo
-                    raise <| new SerializationException(message)
-                elif sPicklerInfo <> picklerInfo then
-                    let message = sprintf "expected '%O', got '%O'." picklerInfo sPicklerInfo
-                    raise <| new SerializationException(message)
+//                if sTypeInfo <> typeInfo then   
+//                    let message = sprintf "expected '%O', got '%O'." typeInfo sTypeInfo
+//                    raise <| new SerializationException(message)
+//                elif sPicklerInfo <> picklerInfo then
+//                    let message = sprintf "expected '%O', got '%O'." picklerInfo sPicklerInfo
+//                    raise <| new SerializationException(message)
 
                 if not reader.IsEmptyElement then
                     if not <| reader.Read() then
