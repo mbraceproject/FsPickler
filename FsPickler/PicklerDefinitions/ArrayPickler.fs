@@ -40,25 +40,25 @@
                     | 1 ->
                         let x = fastUnbox<'T []> x
                         for i = 0 to x.Length - 1 do
-                            ep.Write w "item" x.[i]
+                            ep.Write w "elem" x.[i]
                     | 2 -> 
                         let x = fastUnbox<'T [,]> x
                         for i = 0 to lengths.[0] - 1 do
                             for j = 0 to lengths.[1] - 1 do
-                                ep.Write w "item" x.[i,j]
+                                ep.Write w "elem" x.[i,j]
                     | 3 ->
                         let x = fastUnbox<'T [,,]> x
                         for i = 0 to lengths.[0] - 1 do
                             for j = 0 to lengths.[1] - 1 do
                                 for k = 0 to lengths.[2] - 1 do
-                                    ep.Write w "item" x.[i,j,k]
+                                    ep.Write w "elem" x.[i,j,k]
                     | 4 ->
                         let x = fastUnbox<'T [,,,]> x
                         for i = 0 to lengths.[0] - 1 do
                             for j = 0 to lengths.[1] - 1 do
                                 for k = 0 to lengths.[2] - 1 do
                                     for l = 0 to lengths.[3] - 1 do
-                                        ep.Write w "item" x.[i,j,k,l]
+                                        ep.Write w "elem" x.[i,j,k,l]
 
                     | _ -> failwith "impossible array rank"
 
@@ -86,14 +86,14 @@
                     | 1 -> 
                         let arr = fastUnbox<'T []> array
                         for i = 0 to l.[0] - 1 do
-                            arr.[i] <- ep.Read r "item"
+                            arr.[i] <- ep.Read r "elem"
 
                         array
                     | 2 -> 
                         let arr = fastUnbox<'T [,]> array
                         for i = 0 to l.[0] - 1 do
                             for j = 0 to l.[1] - 1 do
-                                arr.[i,j] <- ep.Read r "item"
+                                arr.[i,j] <- ep.Read r "elem"
 
                         array
                     | 3 ->
@@ -101,7 +101,7 @@
                         for i = 0 to l.[0] - 1 do
                             for j = 0 to l.[1] - 1 do
                                 for k = 0 to l.[2] - 1 do
-                                    arr.[i,j,k] <- ep.Read r "item"
+                                    arr.[i,j,k] <- ep.Read r "elem"
 
                         array
                     | 4 ->
@@ -110,7 +110,7 @@
                             for j = 0 to l.[1] - 1 do
                                 for k = 0 to l.[2] - 1 do
                                     for l = 0 to l.[3] - 1 do
-                                        arr.[i,j,k,l] <- ep.Read r "item"
+                                        arr.[i,j,k,l] <- ep.Read r "elem"
 
                         array
                     | _ -> failwith "impossible array rank"

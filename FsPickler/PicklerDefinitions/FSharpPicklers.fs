@@ -76,7 +76,7 @@
                     picklers.Store ()
 
                     // write tag to stream
-                    writeInt writer "tag" tag ilGen
+                    writeInt writer "case" tag ilGen
 
                     // make jump table
                     tag.Load ()
@@ -101,7 +101,7 @@
                     let labels = Array.init caseInfo.Length (fun _ -> ilGen.DefineLabel())
 
                     // read tag from stream & store
-                    readInt reader "tag" ilGen
+                    readInt reader "case" ilGen
                     tag.Store ()
 
                     // select appropriate picklers & store

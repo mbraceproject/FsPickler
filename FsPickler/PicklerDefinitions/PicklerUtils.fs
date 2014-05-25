@@ -45,7 +45,7 @@
         | _ -> ()
 
 
-    let private memberNameRegex = new Regex(@"[^a-zA-Z]")
+    let private memberNameRegex = new Regex(@"[^a-zA-Z0-9]")
     let getTagFromMemberInfo (m : MemberInfo) =
         memberNameRegex.Replace(m.Name, "")
 
@@ -59,7 +59,7 @@
     let inline writeArray (w : WriteState) (p : Pickler<'T>) (ts : 'T []) =
 #endif
         w.Formatter.WriteInt32 "length" ts.Length
-        for t in ts do p.Write w "item" t
+        for t in ts do p.Write w "elem" t
 
 #if DEBUG
     let readArray (r : ReadState) (p : Pickler<'T>) =
@@ -69,7 +69,7 @@
         let length = r.Formatter.ReadInt32 "length"
         let array = Array.zeroCreate<'T> length
         for i = 0 to length - 1 do
-            array.[i] <- p.Read r "item"
+            array.[i] <- p.Read r "elem"
         array
 
 
@@ -82,7 +82,7 @@
     let inline writeSequence (w : WriteState) (p : Pickler<'T>) (length : int) (ts : seq<'T>) =
 #endif
         w.Formatter.WriteInt32 "length" length
-        for t in ts do p.Write w "item" t
+        for t in ts do p.Write w "elem" t
 
 #if DEBUG
     let readSequence (r : ReadState) (p : Pickler<'T>) =
@@ -92,7 +92,7 @@
         let length = r.Formatter.ReadInt32 "length"
         let ts = Array.zeroCreate<'T> length
         for i = 0 to length - 1 do
-            ts.[i] <- p.Read r "item"
+            ts.[i] <- p.Read r "elem"
         ts
 
 
@@ -131,7 +131,7 @@
             w.Formatter.WriteBoolean "isMaterialized" true
             w.Formatter.WriteInt32 "length" arr.Length
             for i = 0 to arr.Length - 1 do
-                p.Write w "item" arr.[i]
+                p.Write w "elem" arr.[i]
 
         | :? ('T list) as list ->
             w.Formatter.WriteBoolean "isMaterialized" true
@@ -141,7 +141,7 @@
                 match rest with
                 | [] -> ()
                 | t :: tl ->
-                    p.Write w "item" t
+                    p.Write w "elem" t
                     iter tl
 
             iter list
@@ -150,7 +150,7 @@
             use e = ts.GetEnumerator()
             while e.MoveNext() do
                 w.Formatter.WriteBoolean "done" false
-                p.Write w "item" e.Current
+                p.Write w "elem" e.Current
 
             w.Formatter.WriteBoolean "done" true
 
@@ -160,12 +160,12 @@
             let length = r.Formatter.ReadInt32 "length"
             let array = Array.zeroCreate<'T> length
             for i = 0 to length - 1 do
-                array.[i] <- p.Read r "item"
+                array.[i] <- p.Read r "elem"
             array :> _
         else
             let ra = new ResizeArray<'T> ()
             while not <| r.Formatter.ReadBoolean "done" do
-                let next = p.Read r "item"
+                let next = p.Read r "elem"
                 ra.Add next
 
             ra :> _
@@ -248,7 +248,7 @@
             if isValue && idx % sequenceStateResetThreshold = 0 then
                 state.ResetCounters()
 
-            pickler.Write state "item" t
+            pickler.Write state "elem" t
 
         state.Formatter.BeginWriteRoot tag
         state.Formatter.BeginWriteObject pickler.TypeInfo pickler.PicklerInfo tag ObjectFlags.IsSequenceHeader
@@ -288,7 +288,7 @@
             if isValue && idx % sequenceStateResetThreshold = 0 then
                 state.ResetCounters()
                 
-            pickler.Read state "item"
+            pickler.Read state "elem"
 
         // read id
         state.Formatter.BeginReadRoot tag

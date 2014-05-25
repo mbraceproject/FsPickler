@@ -27,9 +27,9 @@ let ofFile<'T> name =
 
 toFile "a" <| [Some (42,"12") ; None]
 
-type Foo = A of int * int | B of string
+toFile "b" <| <@ 1 + 1 @>
 
-toFile "b" <| [A (42, 12) ; B "test" ; A (0, 1)]
+ofFile<Quotations.Expr<int>> "b"
 
 
 #time
