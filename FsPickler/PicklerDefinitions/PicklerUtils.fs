@@ -6,6 +6,7 @@
     open System.Collections.Generic
     open System.Reflection
     open System.Runtime.Serialization
+    open System.Text.RegularExpressions
     
     open Nessos.FsPickler
     open Nessos.FsPickler.Reflection
@@ -43,6 +44,10 @@
             raise <| new SerializationException(msg)
         | _ -> ()
 
+
+    let private memberNameRegex = new Regex(@"[^a-zA-Z]")
+    let getTagFromMemberInfo (m : MemberInfo) =
+        memberNameRegex.Replace(m.Name, "")
 
     //
     //  Array/IEnumerable serialization utils

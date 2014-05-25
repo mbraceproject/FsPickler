@@ -293,7 +293,7 @@
         let inline pickle (f : Stream -> 'T -> unit) (x : 'T) : byte [] =
             use mem = new MemoryStream()
             f mem x
-            mem.GetBuffer()
+            mem.ToArray()
 
         let inline unpickle (f : Stream -> 'T) (data : byte []) : 'T =
             use mem = new MemoryStream(data)

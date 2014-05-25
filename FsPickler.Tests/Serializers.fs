@@ -86,7 +86,7 @@
         let write (s : ISerializer) (x : 'T) =
             use m = new MemoryStream()
             s.Serialize(m, x)
-            m.GetBuffer()
+            m.ToArray()
 
         let read (s : ISerializer) (bytes : byte []) =
             use m = new MemoryStream(bytes)

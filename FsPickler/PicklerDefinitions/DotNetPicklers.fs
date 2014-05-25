@@ -176,13 +176,13 @@
                 for i = 0 to fields.Length - 1 do
                     let f = fields.[i]
                     let o = f.GetValue(t)
-                    picklers.[i].UntypedWrite w f.Name o
+                    picklers.[i].UntypedWrite w (getTagFromMemberInfo f) o
 
             let reader (r : ReadState) =
                 let t = FormatterServices.GetUninitializedObject(typeof<'T>)
                 for i = 0 to fields.Length - 1 do
                     let f = fields.[i]
-                    let o = picklers.[i].UntypedRead r f.Name
+                    let o = picklers.[i].UntypedRead r (getTagFromMemberInfo f)
                     f.SetValue(t, o)
                 
                 fastUnbox<'T> t
@@ -268,7 +268,7 @@
                 for i = 0 to fields.Length - 1 do
                     let f = fields.[i]
                     let o = f.GetValue(t)
-                    picklers.[i].UntypedWrite w f.Name o
+                    picklers.[i].UntypedWrite w (getTagFromMemberInfo f) o
 
                 run onSerialized t w
 
@@ -278,7 +278,7 @@
 
                 for i = 0 to fields.Length - 1 do
                     let f = fields.[i]
-                    let o = picklers.[i].UntypedRead r f.Name
+                    let o = picklers.[i].UntypedRead r (getTagFromMemberInfo f)
                     f.SetValue(t, o)
 
                 run onDeserialized t r

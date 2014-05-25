@@ -8,6 +8,7 @@
 
     open System.Reflection.Emit
 
+    open Nessos.FsPickler.PicklerUtils
     open Nessos.FsPickler.Reflection
     open Nessos.FsPickler.Emit
 
@@ -63,7 +64,7 @@
                 // load writer to the stack
                 writer.Load ()
                 // load field name
-                ilGen.Emit(OpCodes.Ldstr, f.Name)
+                ilGen.Emit(OpCodes.Ldstr, getTagFromMemberInfo f)
                 // load field value to the stack
                 parent.Load ()
                 ilGen.Emit(OpCodes.Ldfld, f)
@@ -90,7 +91,7 @@
                 // load reader to the stack
                 reader.Load ()
                 // load field name
-                ilGen.Emit(OpCodes.Ldstr, f.Name)
+                ilGen.Emit(OpCodes.Ldstr, getTagFromMemberInfo f)
                 // deserialize and load to the stack
                 emitDeserialize f.FieldType ilGen
                 // assign value to the field
@@ -110,7 +111,7 @@
                 // load writer to the stack
                 writer.Load ()
                 // load tag
-                ilGen.Emit(OpCodes.Ldstr, p.Name)
+                ilGen.Emit(OpCodes.Ldstr, getTagFromMemberInfo p)
                 // load property value to the stack
                 parent.Load ()
                 ilGen.EmitCall(OpCodes.Call, m, null)

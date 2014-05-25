@@ -119,7 +119,7 @@
                         let label = labels.[i]
                         let _,ctor,fields,_ = caseInfo.[i]
 
-                        let ctorParams = fields |> Array.map (fun f -> f.PropertyType, f.Name)
+                        let ctorParams = fields |> Array.map (fun f -> f.PropertyType, getTagFromMemberInfo f)
 
                         ilGen.MarkLabel label
                         emitDeserializeAndConstruct (Choice1Of2 ctor) ctorParams reader picklers ilGen
@@ -193,7 +193,7 @@
             let readerDele =
                 DynamicMethod.compileFunc2<Pickler [], ReadState, 'Record> "recordDeserializer" (fun picklers reader ilGen ->
 
-                    let ctorParams = fields |> Array.map (fun f -> f.PropertyType, f.Name)
+                    let ctorParams = fields |> Array.map (fun f -> f.PropertyType, getTagFromMemberInfo f)
 
                     emitDeserializeAndConstruct (Choice2Of2 ctor) ctorParams reader picklers ilGen
 
@@ -205,12 +205,12 @@
                 for i = 0 to fields.Length - 1 do
                     let f = fields.[i]
                     let o = f.GetValue x
-                    picklers.[i].UntypedWrite w f.Name o
+                    picklers.[i].UntypedWrite w (getTagFromMemberInfo f) o
             
             let reader (r : ReadState) =
                 let values = Array.zeroCreate<obj> fields.Length
                 for i = 0 to fields.Length - 1 do
-                    values.[i] <- picklers.[i].UntypedRead r fields.[i].Name
+                    values.[i] <- picklers.[i].UntypedRead r (getTagFromMemberInfo fields.[i])
 
                 ctor.Invoke values |> fastUnbox<'Record>
 #endif
@@ -277,13 +277,13 @@
                 for i = 0 to fields.Length - 1 do
                     let f = fields.[i]
                     let o = f.GetValue e
-                    fpicklers.[i].UntypedWrite w f.Name o
+                    fpicklers.[i].UntypedWrite w (getTagFromMemberInfo f) o
 
             let reader (r : ReadState) =
                 let e = defPickler.Read r "exceptionBase"
                 for i = 0 to fields.Length - 1 do
                     let f = fields.[i]
-                    let o = fpicklers.[i].UntypedRead r f.Name
+                    let o = fpicklers.[i].UntypedRead r (getTagFromMemberInfo f)
                     f.SetValue(e, o)
                 e
 #endif
