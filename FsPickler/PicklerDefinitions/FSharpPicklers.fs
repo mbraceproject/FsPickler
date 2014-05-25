@@ -136,23 +136,24 @@
                 |> Array.map (fun uci ->
                     let ctor = FSharpValue.PreComputeUnionConstructor(uci, allMembers)
                     let reader = FSharpValue.PreComputeUnionReader(uci, allMembers)
-                    let picklers = uci.GetFields() |> Array.map (fun f -> resolver.Resolve f.PropertyType)
-                    ctor, reader, picklers)
+                    let fields = uci.GetFields()
+                    let picklers = fields |> Array.map (fun f -> resolver.Resolve f.PropertyType)
+                    ctor, reader, fields, picklers)
 
             let writer (w : WriteState) (x : 'Union) =
                 let tag = tagReader.Invoke x
-                w.Formatter.WriteByte "tag" (byte tag)
-                let _,reader,picklers = caseInfo.[tag]
+                w.Formatter.WriteByte "case" (byte tag)
+                let _,reader,fields,picklers = caseInfo.[tag]
                 let values = reader x
                 for i = 0 to values.Length - 1 do
-                    picklers.[i].UntypedWrite w (string i) (values.[i])
+                    picklers.[i].UntypedWrite w (getTagFromMemberInfo fields.[i]) (values.[i])
 
             let reader (r : ReadState) =
-                let tag = int (r.Formatter.ReadByte "tag")
-                let ctor,_,picklers = caseInfo.[tag]
+                let tag = int (r.Formatter.ReadByte "case")
+                let ctor,_,fields,picklers = caseInfo.[tag]
                 let values = Array.zeroCreate<obj> picklers.Length
                 for i = 0 to picklers.Length - 1 do
-                    values.[i] <- picklers.[i].UntypedRead r (string i)
+                    values.[i] <- picklers.[i].UntypedRead r (getTagFromMemberInfo fields.[i])
 
                 ctor values |> fastUnbox<'Union>
 #endif
