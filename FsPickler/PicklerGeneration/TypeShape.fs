@@ -270,8 +270,8 @@
                     with :? System.ArgumentException & InnerExn (:? System.Security.VerificationException) ->
                         raise <| new PicklerFactoryException(pf, "contains unsupported type constraint.")
 
-                let fmt = m0.GuardedInvoke(pf, [| dummyResolver :> obj|]) :?> Pickler
-                let shape = TypeShape.OfType fmt.Type
+                let pickler = m0.GuardedInvoke(pf, [| dummyResolver :> obj|]) :?> Pickler
+                let shape = TypeShape.OfType pickler.Type
                 let fvs = shape.FreeVars
                 if fvs.Length < tyVars.Length then
                     let missingVar =
@@ -289,10 +289,10 @@
                 new PicklerFactoryIndex(shapeMap.Add(shape, (pf,m), overwrite))
 
             | [| m |] ->
-                let fmt = m.GuardedInvoke(pf, [| dummyResolver :> obj |]) :?> Pickler
-                if fmt.TypeInfo = TypeInfo.Primitive then
+                let pickler = m.GuardedInvoke(pf, [| dummyResolver :> obj |]) :?> Pickler
+                if pickler.TypeInfo = TypeInfo.Primitive then
                     raise <| new PicklerFactoryException(pf, "defining custom picklers for primitives not supported.")
-                let shape = TypeShape.OfType fmt.Type
+                let shape = TypeShape.OfType pickler.Type
 
                 new PicklerFactoryIndex(shapeMap.Add(shape, (pf, m), overwrite))
             | ms ->

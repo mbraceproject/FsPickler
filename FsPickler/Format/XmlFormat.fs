@@ -51,16 +51,16 @@
             member __.BeginWriteObject (_ : TypeInfo) (_ : PicklerInfo) (tag : string) (flags : ObjectFlags) =
                 writer.WriteStartElement(tag)
 
-//                if ObjectFlags.hasFlag flags ObjectFlags.IsNull then 
-//                    writer.WriteAttributeString("null", "true")
-//                if ObjectFlags.hasFlag flags ObjectFlags.IsProperSubtype then 
-//                    writer.WriteAttributeString("subtype", "true")
-//                if ObjectFlags.hasFlag flags ObjectFlags.IsNewCachedInstance then 
-//                    writer.WriteAttributeString("subtype", "true")
-
-//                writer.WriteAttributeString("typeInfo", string << int <| typeInfo)
-//                writer.WriteAttributeString("picklerInfo", string << int <| picklerInfo)
-                writer.WriteAttributeString("flags", string << int <| flags)
+                if ObjectFlags.hasFlag flags ObjectFlags.IsNull then 
+                    writer.WriteAttributeString("null", "true")
+                if ObjectFlags.hasFlag flags ObjectFlags.IsProperSubtype then 
+                    writer.WriteAttributeString("subtype", "true")
+                if ObjectFlags.hasFlag flags ObjectFlags.IsCachedInstance then 
+                    writer.WriteAttributeString("cached", "true")
+                if ObjectFlags.hasFlag flags ObjectFlags.IsCyclicInstance then 
+                    writer.WriteAttributeString("cyclic", "true")
+                if ObjectFlags.hasFlag flags ObjectFlags.IsSequenceHeader then 
+                    writer.WriteAttributeString("sequence", "true")
 
             member __.EndWriteObject () = writer.WriteEndElement()
 
@@ -131,22 +131,18 @@
             member __.BeginReadObject (_ : TypeInfo) (_ : PicklerInfo) (tag : string) =
                 do readElementName reader tag
 
-//                let sTypeInfo = reader.GetAttribute("typeInfo") |> byte |> EnumOfValue<byte, TypeInfo>
-//                let sPicklerInfo = reader.GetAttribute("picklerInfo") |> byte |> EnumOfValue<byte, PicklerInfo>
-                let objectFlags = reader.GetAttribute("flags") |> byte |> EnumOfValue<byte, ObjectFlags>
-
-//                if sTypeInfo <> typeInfo then   
-//                    let message = sprintf "expected '%O', got '%O'." typeInfo sTypeInfo
-//                    raise <| new SerializationException(message)
-//                elif sPicklerInfo <> picklerInfo then
-//                    let message = sprintf "expected '%O', got '%O'." picklerInfo sPicklerInfo
-//                    raise <| new SerializationException(message)
+                let mutable flags = ObjectFlags.None
+                if reader.["null"] = "true" then flags <- flags ||| ObjectFlags.IsNull
+                if reader.["subtype"] = "true" then flags <- flags ||| ObjectFlags.IsProperSubtype
+                if reader.["cached"] = "true" then flags <- flags ||| ObjectFlags.IsCachedInstance
+                if reader.["cyclic"] = "true" then flags <- flags ||| ObjectFlags.IsCyclicInstance
+                if reader.["sequence"] = "true" then flags <- flags ||| ObjectFlags.IsSequenceHeader
 
                 if not reader.IsEmptyElement then
                     if not <| reader.Read() then
                         raise <| new EndOfStreamException()
 
-                objectFlags
+                flags
 
             member __.EndReadObject() = 
                 if reader.IsEmptyElement then

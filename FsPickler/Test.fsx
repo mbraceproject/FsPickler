@@ -14,24 +14,23 @@ let loop(x : 'T) =
 
 open System.IO
 
-let file = "/Users/eirik/Desktop/foo.xml"
+let file = "C:/Users/eirik/Desktop/"
 
-let toFile (value : 'T) =
-    use fs = new FileStream(file, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)
+let toFile name (value : 'T) =
+    use fs = new FileStream(file + name + ".xml", FileMode.Create, FileAccess.Write, FileShare.ReadWrite)
     fsp.Serialize(fs, value)
 
-let ofFile<'T> =
-    use fs = File.OpenRead file
+let ofFile<'T> name =
+    use fs = File.OpenRead (file + name + ".xml")
     fsp.Deserialize<'T>(fs)
 
-let x = obj()
 
-toFile <| ([Some (42,"12") ; None])
+toFile "a" <| [Some (42,"12") ; None]
 
-ofFile<(string * int option) option list>
+type Foo = A of int * int | B of string
 
+toFile "b" <| [A (42, 12) ; B "test" ; A (0, 1)]
 
-loop 
 
 #time
 

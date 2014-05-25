@@ -83,7 +83,7 @@
         let result =
             if t.BaseType <> null then
                 match resolver.Resolve t.BaseType with
-                | fmt when fmt.UseWithSubtypes -> Some fmt
+                | p when p.UseWithSubtypes -> Some p
                 | _ -> None
             else
                 None
