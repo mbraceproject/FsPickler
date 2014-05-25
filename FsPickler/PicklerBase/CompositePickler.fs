@@ -208,12 +208,12 @@
                             // push id to the symbolic stack to detect cyclic objects during traversal
                             objStack.Push id
 
-                            writeObject ObjectFlags.IsNewCachedInstance
+                            writeObject ObjectFlags.None
 
                             objStack.Pop () |> ignore
                             cyclicObjects.Remove id |> ignore
                         else
-                            writeObject ObjectFlags.IsNewCachedInstance
+                            writeObject ObjectFlags.None
 
                     elif p.m_IsRecursiveType && objStack.Contains id && not <| cyclicObjects.Contains id then
                         // came across cyclic object, record fixup-related data
@@ -223,7 +223,7 @@
                         do cyclicObjects.Add(id) |> ignore
                     
                         if p.m_TypeInfo = TypeInfo.Array then
-                            beginWriteObject tag ObjectFlags.IsOldCachedInstance
+                            beginWriteObject tag ObjectFlags.IsCachedInstance
 
                         elif p.m_TypeInfo <= TypeInfo.Sealed || p.m_UseWithSubtypes then
                             beginWriteObject tag ObjectFlags.IsCyclicInstance
@@ -231,7 +231,7 @@
                             let t = value.GetType()
 
                             if t.IsArray then
-                                beginWriteObject tag ObjectFlags.IsOldCachedInstance
+                                beginWriteObject tag ObjectFlags.IsCachedInstance
                             elif t <> typeof<'T> then
                                 beginWriteObject tag (ObjectFlags.IsCyclicInstance ||| ObjectFlags.IsProperSubtype)
                                 state.TypePickler.Write state "subtype" t
@@ -241,7 +241,7 @@
                         formatter.WriteInt64 "id" id
                         formatter.EndWriteObject()
                     else
-                        beginWriteObject tag ObjectFlags.IsOldCachedInstance
+                        beginWriteObject tag ObjectFlags.IsCachedInstance
                         formatter.WriteInt64 "id" id
                         formatter.EndWriteObject()
                 else
@@ -301,7 +301,12 @@
 
                     fastUnbox<'T> value
 
-                elif ObjectFlags.hasFlag flags ObjectFlags.IsNewCachedInstance then
+                elif ObjectFlags.hasFlag flags ObjectFlags.IsCachedInstance then
+                    let id = formatter.ReadInt64 "id"
+                    formatter.EndReadObject ()
+                    state.ObjectCache.[id] |> fastUnbox<'T>
+
+                elif p.m_IsCacheByRef || p.m_IsRecursiveType then
                     let isArray = 
                         match p.m_TypeInfo with
                         | TypeInfo.Array | TypeInfo.ArrayCompatible -> true
@@ -326,11 +331,6 @@
                             state.ObjectCache.[id] <- value ; value
                     else
                         state.ObjectCache.[id] <- value ; value
-
-                elif ObjectFlags.hasFlag flags ObjectFlags.IsOldCachedInstance then
-                    let id = formatter.ReadInt64 "id"
-                    formatter.EndReadObject ()
-                    state.ObjectCache.[id] |> fastUnbox<'T>
                 else
                     let value = readObject flags
                     formatter.EndReadObject ()

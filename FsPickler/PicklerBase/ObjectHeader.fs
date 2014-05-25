@@ -38,10 +38,9 @@
         | None                  = 0uy
         | IsNull                = 1uy
         | IsProperSubtype       = 2uy
-        | IsNewCachedInstance   = 4uy
-        | IsOldCachedInstance   = 8uy
-        | IsCyclicInstance      = 16uy
-        | IsSequenceHeader      = 32uy
+        | IsCachedInstance      = 4uy
+        | IsCyclicInstance      = 8uy
+        | IsSequenceHeader      = 16uy
         
 
         
