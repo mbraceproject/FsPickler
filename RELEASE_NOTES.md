@@ -1,3 +1,6 @@
+#### 0.8.9-alpha
+* Formatting development
+
 #### 0.8.6.2
 * Add StreamingContext option to Pickle/Unpickle methods
 
