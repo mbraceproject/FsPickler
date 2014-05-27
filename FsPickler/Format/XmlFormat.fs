@@ -8,7 +8,6 @@
 
     open Microsoft.FSharp.Core.LanguagePrimitives
 
-    [<AutoOpen>]
     module private XmlUtils =
 
         let inline writePrimitive (w : ^XmlWriter) (tag : string) (value : ^T) =
@@ -25,6 +24,9 @@
             elif r.Name <> tag then
                 let msg = sprintf "expected '%s', was '%s'" tag r.Name
                 raise <| new InvalidDataException(msg)
+
+
+    open XmlUtils
 
 
     type XmlPickleWriter(stream : Stream, encoding : Encoding, indent : bool) =
