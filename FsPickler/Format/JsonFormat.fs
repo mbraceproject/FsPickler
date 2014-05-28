@@ -28,7 +28,7 @@
             member inline jsonReader.ValueAs<'T> () = jsonReader.Value |> fastUnbox<'T>
 
             /// returns true iff null token
-            member (*inline*) jsonReader.ReadStartObject () =
+            member inline jsonReader.ReadStartObject () =
                 if jsonReader.Read() then
                     match jsonReader.TokenType with
                     | JsonToken.Null ->
