@@ -8,6 +8,8 @@
 
     module private JsonUtils =
 
+        let inline invalidFormat () = raise <| new InvalidDataException("invalid json format.")
+
         let inline writePrimitive (jsonWriter : ^JsonWriter) (name : string) (value : ^T) =
             ( ^JsonWriter : (member WritePropertyName : string -> unit) (jsonWriter, name))
             ( ^JsonWriter : (member WriteValue : ^T -> unit) (jsonWriter, value))
@@ -25,16 +27,25 @@
 
             member inline jsonReader.ValueAs<'T> () = jsonReader.Value |> fastUnbox<'T>
 
-            member inline jsonReader.ReadStartObject () =
-                if jsonReader.Read() && jsonReader.TokenType = JsonToken.StartObject then
-                    jsonReader.Read() |> ignore
+            /// returns true iff null token
+            member (*inline*) jsonReader.ReadStartObject () =
+                if jsonReader.Read() then
+                    match jsonReader.TokenType with
+                    | JsonToken.Null ->
+                        jsonReader.Read() |> ignore
+                        true
+                    | JsonToken.StartObject ->
+                        jsonReader.Read() |> ignore
+                        false
+                    | _ ->
+                        invalidFormat ()
                 else
-                    raise <| new InvalidDataException("invalid json format.")
+                    invalidFormat ()
 
             member inline jsonReader.ReadEndObject () =
                 if jsonReader.Read() && jsonReader.TokenType = JsonToken.EndObject then ()
                 else
-                    raise <| new InvalidDataException("invalid json format.")
+                    invalidFormat ()
 
             member inline jsonReader.ReadAs<'T> () = 
                 jsonReader.Read() |> ignore
@@ -50,6 +61,8 @@
         let jsonWriter = new JsonTextWriter(sw) :> JsonWriter
         do jsonWriter.Formatting <- if indented then Formatting.Indented else Formatting.None
 
+        let mutable currentValueIsNull = false
+
         interface IPickleFormatWriter with
             
             member __.BeginWriteRoot (tag : string) =
@@ -62,20 +75,28 @@
             member __.BeginWriteObject (_ : TypeInfo) (_ : PicklerInfo) (tag : string) (flags : ObjectFlags) =
 
                 jsonWriter.WritePropertyName tag
-                jsonWriter.WriteStartObject()
 
-                if ObjectFlags.hasFlag flags ObjectFlags.IsNull then 
-                    writePrimitive jsonWriter "null" true
-                if ObjectFlags.hasFlag flags ObjectFlags.IsProperSubtype then 
-                    writePrimitive jsonWriter "isSubtype" true
-                if ObjectFlags.hasFlag flags ObjectFlags.IsCachedInstance then 
-                    writePrimitive jsonWriter "cached" true
-                if ObjectFlags.hasFlag flags ObjectFlags.IsCyclicInstance then 
-                    writePrimitive jsonWriter "cyclic" true
-                if ObjectFlags.hasFlag flags ObjectFlags.IsSequenceHeader then 
-                    writePrimitive jsonWriter "sequence" true
+                if ObjectFlags.hasFlag flags ObjectFlags.IsNull then
+                    currentValueIsNull <- true
+                    jsonWriter.WriteNull()
+                else
+                    jsonWriter.WriteStartObject()
 
-            member __.EndWriteObject () = jsonWriter.WriteEnd()
+                    if ObjectFlags.hasFlag flags ObjectFlags.IsCachedInstance then
+                        writePrimitive jsonWriter "cached" true
+                    elif ObjectFlags.hasFlag flags ObjectFlags.IsCyclicInstance then
+                        writePrimitive jsonWriter "cyclic" true
+                    elif ObjectFlags.hasFlag flags ObjectFlags.IsSequenceHeader then
+                        writePrimitive jsonWriter "sequence" true
+
+                    if ObjectFlags.hasFlag  flags ObjectFlags.IsProperSubtype then
+                        writePrimitive jsonWriter "subtype" true
+
+            member __.EndWriteObject () = 
+                if currentValueIsNull then 
+                    currentValueIsNull <- false
+                else
+                    jsonWriter.WriteEnd()
 
             member __.WriteBoolean (tag : string) value = writePrimitive jsonWriter tag value
             member __.WriteByte (tag : string) value = writePrimitive jsonWriter tag value
@@ -111,55 +132,60 @@
         let sr = new StreamReader(stream, encoding, true, 1024, leaveOpen)
         let jsonReader = new JsonTextReader(sr) :> JsonReader
 
+        let mutable currentValueIsNull = false
+
         interface IPickleFormatReader with
             
             member __.BeginReadRoot (tag : string) =
-                do jsonReader.ReadStartObject ()
+                if jsonReader.ReadStartObject () then raise <| new InvalidDataException("root json element was null.")
+                else
+                    jsonReader.ReadProperty "FsPickler"
+                    let version = jsonReader.ReadAs<string> ()
+                    if version <> AssemblyVersionInformation.Version then
+                        raise <| new InvalidDataException(sprintf "Invalid FsPickler version %s." version)
 
-                jsonReader.ReadProperty "FsPickler"
-                let version = jsonReader.ReadAs<string> ()
-                if version <> AssemblyVersionInformation.Version then
-                    raise <| new InvalidDataException(sprintf "Invalid FsPickler version %s." version)
-
-                jsonReader.ReadProperty "type"
-                let id = jsonReader.ReadAs<string> ()
-                if id <> tag then
-                    let msg = sprintf "expected '%s' but was '%s'." tag id
-                    raise <| new InvalidDataException()
+                    jsonReader.ReadProperty "type"
+                    let id = jsonReader.ReadAs<string> ()
+                    if id <> tag then
+                        let msg = sprintf "expected '%s' but was '%s'." tag id
+                        raise <| new InvalidDataException()
 
             member __.EndReadRoot () = jsonReader.Read() |> ignore
 
             member __.BeginReadObject (_ : TypeInfo) (_ : PicklerInfo) (tag : string) =
                 jsonReader.ReadProperty tag
-                jsonReader.ReadStartObject ()
-                    
-                let mutable objectFlags = ObjectFlags.None
-                // temp solution ; this is wrong
-                let mutable complete = false
 
-                while not complete do
+                if jsonReader.ReadStartObject () then 
+                    currentValueIsNull <- true
+                    ObjectFlags.IsNull
+                else
+                    let mutable objectFlags = ObjectFlags.None
+
                     match jsonReader.ValueAs<string> () with
-                    | "null" -> 
-                        if jsonReader.ReadAs<bool> () then
-                            objectFlags <- objectFlags ||| ObjectFlags.IsNull
-                    | "isSubtype" ->
-                        if jsonReader.ReadAs<bool> () then
-                            objectFlags <- objectFlags ||| ObjectFlags.IsProperSubtype
                     | "cached" ->
                         if jsonReader.ReadAs<bool> () then
-                            objectFlags <- objectFlags ||| ObjectFlags.IsCachedInstance
+                            objectFlags <- ObjectFlags.IsCachedInstance
                     | "cyclic" ->
                         if jsonReader.ReadAs<bool> () then
-                            objectFlags <- objectFlags ||| ObjectFlags.IsCyclicInstance
+                            objectFlags <- ObjectFlags.IsCyclicInstance
                     | "sequence" ->
                         if jsonReader.ReadAs<bool> () then
-                            objectFlags <- objectFlags ||| ObjectFlags.IsSequenceHeader
-                    | _ -> 
-                        complete <- true
+                            objectFlags <- ObjectFlags.IsSequenceHeader
+                    | _ -> ()
 
-                objectFlags
+                    match jsonReader.ValueAs<string> () with
+                    | "subtype" ->
+                        if jsonReader.ReadAs<bool> () then
+                            objectFlags <- ObjectFlags.IsProperSubtype
+                    | _ -> ()
 
-            member __.EndReadObject () = jsonReader.Read () |> ignore
+                    objectFlags
+
+            member __.EndReadObject () = 
+                if currentValueIsNull then 
+                    currentValueIsNull <- false
+                else 
+                    jsonReader.Read () |> ignore
 
             member __.ReadBoolean tag = jsonReader.ReadProperty tag ; jsonReader.ReadAs<bool> ()
 
