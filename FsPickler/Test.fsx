@@ -24,8 +24,8 @@ let ofFile<'T> name =
     use fs = File.OpenRead (file + name + ".json")
     fsp.Deserialize<'T>(fs)
 
-
-toFile<string> "test" null
+let xs = Array3D.init 4 4 4 (fun i j k -> i + j + k)
+toFile<int [,,]> "test" xs
 toFile "a" <@ 1 + 1 @>
 
 ofFile<string> "test"

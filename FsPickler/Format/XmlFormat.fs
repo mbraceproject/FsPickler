@@ -67,15 +67,15 @@
 
             member __.EndWriteObject () = writer.WriteEndElement()
 
-            member __.BeginWriteBoundedSequence (length : int) =
-                writer.WriteStartElement("seq")
+            member __.BeginWriteBoundedSequence tag (length : int) =
+                writer.WriteStartElement tag
                 writer.WriteAttributeString("length", string length)
 
             member __.EndWriteBoundedSequence () =
                 writer.WriteEndElement ()
 
-            member __.BeginWriteUnBoundedSequence () =
-                writer.WriteStartElement ("seq")
+            member __.BeginWriteUnBoundedSequence tag =
+                writer.WriteStartElement tag
 
             member __.WriteHasNextElement hasNext = if not hasNext then writer.WriteEndElement()
 
@@ -176,8 +176,8 @@
                 else
                     reader.ReadEndElement()
 
-            member __.BeginReadBoundedSequence () =
-                do readElementName reader "seq"
+            member __.BeginReadBoundedSequence tag =
+                do readElementName reader tag
                 let length = reader.GetAttribute("length") |> int
 
                 if not reader.IsEmptyElement then
@@ -192,8 +192,8 @@
                 else
                     reader.ReadEndElement()
 
-            member __.BeginReadUnBoundedSequence () =
-                do readElementName reader "seq"
+            member __.BeginReadUnBoundedSequence tag =
+                do readElementName reader tag
 
                 if not reader.IsEmptyElement then
                     if not <| reader.Read() then

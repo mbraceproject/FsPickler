@@ -14,10 +14,10 @@
         abstract BeginWriteObject : typeInfo:TypeInfo -> picklerInfo:PicklerInfo -> tag:string -> objectFlags:ObjectFlags -> unit
         abstract EndWriteObject : unit -> unit
 
-        abstract BeginWriteBoundedSequence : length:int -> unit
+        abstract BeginWriteBoundedSequence : tag:string -> length:int -> unit
         abstract EndWriteBoundedSequence : unit -> unit
 
-        abstract BeginWriteUnBoundedSequence : unit -> unit
+        abstract BeginWriteUnBoundedSequence : tag:string -> unit
         abstract WriteHasNextElement : hasNext:bool -> unit
         
         abstract WriteBoolean : tag:string -> value:bool -> unit
@@ -59,10 +59,10 @@
         abstract BeginReadObject : typeInfo:TypeInfo -> picklerInfo:PicklerInfo -> tag:string -> ObjectFlags
         abstract EndReadObject : unit -> unit
 
-        abstract BeginReadBoundedSequence : unit -> int
+        abstract BeginReadBoundedSequence : tag:string -> int
         abstract EndReadBoundedSequence : unit -> unit
 
-        abstract BeginReadUnBoundedSequence : unit -> unit
+        abstract BeginReadUnBoundedSequence : tag:string -> unit
         abstract ReadHasNextElement : unit -> bool
         
         abstract ReadBoolean : tag:string -> bool

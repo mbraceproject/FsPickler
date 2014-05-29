@@ -56,10 +56,10 @@
 
             member __.EndWriteRoot () = ()
 
-            member __.BeginWriteBoundedSequence length = bw.Write length
+            member __.BeginWriteBoundedSequence _ length = bw.Write length
             member __.EndWriteBoundedSequence () = ()
 
-            member __.BeginWriteUnBoundedSequence () = ()
+            member __.BeginWriteUnBoundedSequence _ = ()
             member __.WriteHasNextElement hasNext = bw.Write hasNext
 
             member __.BeginWriteObject typeFlags picklerFlags tag objectFlags =
@@ -125,10 +125,10 @@
 
             member __.EndReadObject () = () 
 
-            member __.BeginReadBoundedSequence () = br.ReadInt32 ()
+            member __.BeginReadBoundedSequence _ = br.ReadInt32 ()
             member __.EndReadBoundedSequence () = ()
 
-            member __.BeginReadUnBoundedSequence () = ()
+            member __.BeginReadUnBoundedSequence _ = ()
             member __.ReadHasNextElement () = br.ReadBoolean ()
 
             member __.ReadBoolean _ = br.ReadBoolean()

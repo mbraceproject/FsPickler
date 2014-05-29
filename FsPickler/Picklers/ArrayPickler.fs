@@ -37,7 +37,7 @@
                             w.Formatter.WriteInt32 "length" array.Length
                             null
                         else
-                            w.Formatter.BeginWriteBoundedSequence array.Length
+                            w.Formatter.BeginWriteBoundedSequence "array" array.Length
                             null
                     else
                         let lengths = Array.zeroCreate<int> rank
@@ -45,7 +45,7 @@
                             lengths.[d] <- array.GetLength d
                             w.Formatter.WriteInt32 (sprintf "length-%d" d) (lengths.[d])
 
-                        w.Formatter.BeginWriteBoundedSequence array.Length
+                        w.Formatter.BeginWriteBoundedSequence "array" array.Length
                         lengths
 
                 if isPrimitiveSerialized then
@@ -91,14 +91,14 @@
                         let length =
                             if isPrimitiveDeserialized then r.Formatter.ReadInt32 "length"
                             else
-                                r.Formatter.BeginReadBoundedSequence ()
+                                r.Formatter.BeginReadBoundedSequence "array"
 
                         [|length|]
 
                     else
                         let l = Array.zeroCreate<int> rank
                         for d = 0 to rank - 1 do l.[d] <- r.Formatter.ReadInt32 (sprintf "length-%d" d)
-                        let _ = r.Formatter.BeginReadBoundedSequence ()
+                        let _ = r.Formatter.BeginReadBoundedSequence "array"
                         l
 
                 // initialize empty array

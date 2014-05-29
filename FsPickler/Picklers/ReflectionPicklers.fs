@@ -346,10 +346,10 @@
                 | Some r ->
                     formatter.WriteInt32 "rank" r
 
-            | GenericType(dt, tyParams) ->
+            | GenericType(dt, tyArgs) ->
                 formatter.WriteByte "memberType" 2uy
                 typePickler.Write w "genericType" dt
-                writeArray w typePickler tyParams
+                writeArray w typePickler "tyArgs" tyArgs
 
             | GenericTypeParam(dt, idx) ->
                 formatter.WriteByte "memberType" 3uy
@@ -366,12 +366,12 @@
                 typePickler.Write w "declaringType" dt
                 formatter.WriteString "name" name
                 formatter.WriteBoolean "isStatic" isStatic
-                writeArray w typePickler mParams
+                writeArray w typePickler "params" mParams
 
-            | GenericMethod(gm, mParams) ->
+            | GenericMethod(gm, tyArgs) ->
                 formatter.WriteByte "memberType" 6uy
                 methodInfoPickler.Write w "genericMethod" gm
-                writeArray w typePickler mParams
+                writeArray w typePickler "tyArgs" tyArgs
 
             | GenericMethodDefinition(dt, name, isStatic, signature) ->
                 formatter.WriteByte "memberType" 7uy
@@ -383,7 +383,7 @@
             | Constructor(dt, cParams) ->
                 formatter.WriteByte "memberType" 8uy
                 typePickler.Write w "declaringType" dt
-                writeArray w typePickler cParams
+                writeArray w typePickler "params" cParams
 
             | Property(dt, name, isStatic) ->
                 formatter.WriteByte "memberType" 9uy
@@ -424,8 +424,8 @@
 
                 | 2uy ->
                     let gt = typePickler.Read r "genericType"
-                    let tyParams = readArray r typePickler
-                    GenericType(gt, tyParams)
+                    let tyArgs = readArray r typePickler "tyArgs"
+                    GenericType(gt, tyArgs)
 
                 | 3uy ->
                     let dt = typePickler.Read r "declaringType"
@@ -441,13 +441,13 @@
                     let dt = typePickler.Read r "declaringType"
                     let name = formatter.ReadString "name"
                     let isStatic = formatter.ReadBoolean "isStatic"
-                    let tyParams = readArray r typePickler
-                    Method(dt, name, isStatic, tyParams)
+                    let mParams = readArray r typePickler "params"
+                    Method(dt, name, isStatic, mParams)
 
                 | 6uy ->
                    let gm = methodInfoPickler.Read r "genericMethod"
-                   let tparams = readArray r typePickler 
-                   GenericMethod(gm, tparams)
+                   let tyArgs = readArray r typePickler "tyArgs"
+                   GenericMethod(gm, tyArgs)
 
                 | 7uy ->
                     let dt = typePickler.Read r "declaringType"
@@ -458,7 +458,7 @@
 
                 | 8uy ->
                     let dt = typePickler.Read r "declaringType"
-                    let cParams = readArray r typePickler
+                    let cParams = readArray r typePickler "params"
                     Constructor(dt, cParams)
 
                 | 9uy ->

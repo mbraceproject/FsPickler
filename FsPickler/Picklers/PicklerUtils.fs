@@ -54,20 +54,20 @@
     //
 
 #if DEBUG
-    let writeArray (w : WriteState) (p : Pickler<'T>) (ts : 'T []) =
+    let writeArray (w : WriteState) (p : Pickler<'T>) tag (ts : 'T []) =
 #else
-    let inline writeArray (w : WriteState) (p : Pickler<'T>) (ts : 'T []) =
+    let inline writeArray (w : WriteState) (p : Pickler<'T>) tag (ts : 'T []) =
 #endif
-        w.Formatter.BeginWriteBoundedSequence ts.Length
+        w.Formatter.BeginWriteBoundedSequence tag ts.Length
         for t in ts do p.Write w "elem" t
         w.Formatter.EndWriteBoundedSequence ()
 
 #if DEBUG
-    let readArray (r : ReadState) (p : Pickler<'T>) =
+    let readArray (r : ReadState) (p : Pickler<'T>) tag =
 #else
-    let inline readArray (r : ReadState) (p : Pickler<'T>) =
+    let inline readArray (r : ReadState) (p : Pickler<'T>) tag =
 #endif
-        let length = r.Formatter.BeginReadBoundedSequence ()
+        let length = r.Formatter.BeginReadBoundedSequence tag
         let array = Array.zeroCreate<'T> length
         for i = 0 to length - 1 do
             array.[i] <- p.Read r "elem"
@@ -79,20 +79,20 @@
     /// Serializes a sequence where the length is known beforehand.
 
 #if DEBUG
-    let writeBoundedSequence (w : WriteState) (p : Pickler<'T>) (length : int) (ts : seq<'T>) =
+    let writeBoundedSequence (w : WriteState) (p : Pickler<'T>) (length : int) tag (ts : seq<'T>) =
 #else
-    let inline writeBoundedSequence (w : WriteState) (p : Pickler<'T>) (length : int) (ts : seq<'T>) =
+    let inline writeBoundedSequence (w : WriteState) (p : Pickler<'T>) (length : int) tag (ts : seq<'T>) =
 #endif
-        w.Formatter.BeginWriteBoundedSequence length
+        w.Formatter.BeginWriteBoundedSequence tag length
         for t in ts do p.Write w "elem" t
         w.Formatter.EndWriteBoundedSequence ()
 
 #if DEBUG
-    let readBoundedSequence (r : ReadState) (p : Pickler<'T>) =
+    let readBoundedSequence (r : ReadState) (p : Pickler<'T>) tag =
 #else
-    let inline readBoundedSequence (r : ReadState) (p : Pickler<'T>) =
+    let inline readBoundedSequence (r : ReadState) (p : Pickler<'T>) tag =
 #endif
-        let length = r.Formatter.BeginReadBoundedSequence ()
+        let length = r.Formatter.BeginReadBoundedSequence tag
         let ts = Array.zeroCreate<'T> length
         for i = 0 to length - 1 do
             ts.[i] <- p.Read r "elem"
@@ -104,22 +104,22 @@
     /// length passed as argument to avoid unecessary evaluations of sequence
 
 #if DEBUG
-    let writeBoundedPairSequence (w : WriteState) (kp : Pickler<'K>) (vp : Pickler<'V>) (length : int) (xs : ('K * 'V) seq) =
+    let writeBoundedPairSequence (w : WriteState) (kp : Pickler<'K>) (vp : Pickler<'V>) tag (length : int) (xs : ('K * 'V) seq) =
 #else
     let inline writeBoundedPairSequence (w : WriteState) (kp : Pickler<'K>) (vp : Pickler<'V>) (length : int) (xs : ('K * 'V) seq) =
 #endif
-        w.Formatter.BeginWriteBoundedSequence length
+        w.Formatter.BeginWriteBoundedSequence tag length
         for k,v in xs do
             kp.Write w "key" k
             vp.Write w "val" v
         w.Formatter.EndWriteBoundedSequence ()
 
 #if DEBUG
-    let readBoundedPairSequence (r : ReadState) (kp : Pickler<'K>) (vp : Pickler<'V>) =
+    let readBoundedPairSequence (r : ReadState) (kp : Pickler<'K>) (vp : Pickler<'V>) tag =
 #else
     let inline readBoundedPairSequence (r : ReadState) (kp : Pickler<'K>) (vp : Pickler<'V>) =
 #endif
-        let length = r.Formatter.BeginReadBoundedSequence ()
+        let length = r.Formatter.BeginReadBoundedSequence tag
         let xs = Array.zeroCreate<'K * 'V> length
 
         for i = 0 to length - 1 do
@@ -133,12 +133,12 @@
 
     /// write a sequence where length is not known beforehand
 
-    let writeSequence (p : Pickler<'T>) (w : WriteState) (ts : 'T seq) : unit =
+    let writeSequence (p : Pickler<'T>) tag (w : WriteState) (ts : 'T seq) : unit =
         let formatter = w.Formatter
         match ts with
         | :? ('T []) as arr ->
             formatter.WriteBoolean "isBounded" true
-            formatter.BeginWriteBoundedSequence arr.Length
+            formatter.BeginWriteBoundedSequence tag arr.Length
             for i = 0 to arr.Length - 1 do
                 p.Write w "elem" arr.[i]
 
@@ -146,7 +146,7 @@
 
         | :? ('T list) as list ->
             formatter.WriteBoolean "isBounded" true
-            formatter.BeginWriteBoundedSequence list.Length
+            formatter.BeginWriteBoundedSequence tag list.Length
 
             let rec iter rest =
                 match rest with
@@ -160,7 +160,7 @@
 
         | _ ->
             formatter.WriteBoolean "isBounded" false
-            formatter.BeginWriteUnBoundedSequence ()
+            formatter.BeginWriteUnBoundedSequence tag
             use e = ts.GetEnumerator()
             while e.MoveNext() do
                 formatter.WriteHasNextElement true
@@ -168,18 +168,18 @@
 
             formatter.WriteHasNextElement false
 
-    let readSequence (p : Pickler<'T>) (r : ReadState) : 'T seq =
+    let readSequence (p : Pickler<'T>) tag (r : ReadState) : 'T seq =
         let formatter = r.Formatter
 
         if formatter.ReadBoolean "isBounded" then
-            let length = formatter.BeginReadBoundedSequence ()
+            let length = formatter.BeginReadBoundedSequence tag
             let array = Array.zeroCreate<'T> length
             for i = 0 to length - 1 do
                 array.[i] <- p.Read r "elem"
             formatter.EndReadBoundedSequence ()
             array :> _
         else
-            formatter.BeginReadUnBoundedSequence ()
+            formatter.BeginReadUnBoundedSequence tag
             let ra = new ResizeArray<'T> ()
             while formatter.ReadHasNextElement () do
                 let next = p.Read r "elem"
@@ -187,11 +187,11 @@
 
             ra :> _
 
-    let writePairSequenceNoLength (kp : Pickler<'K>) (vp : Pickler<'V>) (w : WriteState) (xs : ('K * 'V) seq) : unit =
+    let writePairSequence (kp : Pickler<'K>) (vp : Pickler<'V>) tag (w : WriteState) (xs : ('K * 'V) seq) : unit =
         match xs with
         | :? (('K * 'V) []) as arr ->
-            w.Formatter.WriteBoolean "isMaterialized" true
-            w.Formatter.WriteInt32 "length" arr.Length
+            w.Formatter.WriteBoolean "isBounded" true
+            w.Formatter.BeginWriteBoundedSequence tag arr.Length
 
             for i = 0 to arr.Length - 1 do
                 let k,v = arr.[i]
@@ -199,8 +199,8 @@
                 vp.Write w "val" v
 
         | :? (('K * 'V) list) as list ->
-            w.Formatter.WriteBoolean "isMaterialized" true
-            w.Formatter.WriteInt32 "length" list.Length
+            w.Formatter.WriteBoolean "isBounded" true
+            w.Formatter.BeginWriteBoundedSequence tag list.Length
 
             let rec iter rest =
                 match rest with
@@ -213,32 +213,38 @@
             iter list
 
         | _ ->
-            w.Formatter.WriteBoolean "isMaterialized" false
+            w.Formatter.WriteBoolean "isBounded" false
+            w.Formatter.BeginWriteUnBoundedSequence tag
+
             let e = xs.GetEnumerator()
 
             while e.MoveNext() do
-                w.Formatter.WriteBoolean "done" false
+                w.Formatter.WriteHasNextElement true
                 let k,v = e.Current
                 kp.Write w "key" k
                 vp.Write w "val" v
 
-            w.Formatter.WriteBoolean "done" true
+            w.Formatter.WriteHasNextElement false
 
 
     /// Deserializes a sequence of key/value pairs from the underlying stream
-    let readPairSequenceNoLength (kp : Pickler<'K>) (vp : Pickler<'V>) (r : ReadState) =
+    let readPairSequence (kp : Pickler<'K>) (vp : Pickler<'V>) tag (r : ReadState) =
 
-        if r.Formatter.ReadBoolean "isMaterialized" then
-            let length = r.Formatter.ReadInt32 "length"
+        if r.Formatter.ReadBoolean "isBounded" then
+            let length = r.Formatter.BeginReadBoundedSequence tag
             let arr = Array.zeroCreate<'K * 'V> length
             for i = 0 to length - 1 do
                 let k = kp.Read r "key"
                 let v = vp.Read r "val"
                 arr.[i] <- k,v
+
+            r.Formatter.EndReadBoundedSequence ()
+
             arr :> seq<'K * 'V>
         else
+            do r.Formatter.BeginReadUnBoundedSequence tag
             let ra = new ResizeArray<'K * 'V> ()
-            while not <| r.Formatter.ReadBoolean "done" do
+            while r.Formatter.ReadHasNextElement () do
                 let k = kp.Read r "key"
                 let v = vp.Read r "val"
                 ra.Add (k,v)
