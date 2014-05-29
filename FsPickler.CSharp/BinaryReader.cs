@@ -98,7 +98,7 @@
         }
 
         // adapted from Microsoft's BCL source code
-        private uint Read7BitEncodedLength()
+        private int Read7BitEncodedLength()
         {
             // Read out an Int32 7 bits at a time.  The high bit
             // of the byte when on means to continue reading more bytes. 
@@ -114,7 +114,8 @@
                 count |= ((uint)(0x7F & b)) << shift;
                 shift += 7;
             } while ((b & 0x80) != 0);
-            return count;
+            
+            return (int)count;
         }
 
         public byte ReadByte()
@@ -275,10 +276,42 @@
             return value;
         }
 
-        public byte[] ReadBytes(int length)
+        public unsafe Guid ReadGuid()
         {
-            if (length < 0) 
-                throw new ArgumentException("argument must be non-negative.", "length");
+            TryFillBuffer();
+            Guid value;
+            var i = idx;
+
+            *(ulong*)&value =
+                (ulong)buffer[i] |
+                (ulong)buffer[i + 1] << 8 |
+                (ulong)buffer[i + 2] << 16 |
+                (ulong)buffer[i + 3] << 24 |
+                (ulong)buffer[i + 4] << 32 |
+                (ulong)buffer[i + 5] << 40 |
+                (ulong)buffer[i + 6] << 48 |
+                (ulong)buffer[i + 7] << 56;
+
+            *(1 + (ulong*)&value) =
+                (ulong)buffer[i + 8] |
+                (ulong)buffer[i + 9] << 8 |
+                (ulong)buffer[i + 10] << 16 |
+                (ulong)buffer[i + 11] << 24 |
+                (ulong)buffer[i + 12] << 32 |
+                (ulong)buffer[i + 13] << 40 |
+                (ulong)buffer[i + 14] << 48 |
+                (ulong)buffer[i + 15] << 56;
+
+            idx = i + 16;
+
+            return value;
+        }
+
+        public byte[] ReadBytes()
+        {
+            var length = Read7BitEncodedLength();
+
+            if (length < 0) return null;
 
             TryFillBuffer();
 
@@ -307,9 +340,9 @@
 
         public unsafe string ReadString()
         {
-            var length = (int)Read7BitEncodedLength() - 1;
+            var length = Read7BitEncodedLength();
 
-            if (length == -1) return null;
+            if (length < 0) return null;
             if (length == 0) return String.Empty;
 
             var value = new String(' ', length);

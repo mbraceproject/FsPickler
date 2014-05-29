@@ -5,7 +5,6 @@
 
     open Nessos.FsPickler.PicklerUtils
     open Nessos.FsPickler.PrimitivePicklers
-    open Nessos.FsPickler.BasePicklers
     open Nessos.FsPickler.DotNetPicklers
     open Nessos.FsPickler.ArrayPickler
     open Nessos.FsPickler.TuplePicklers
@@ -36,29 +35,31 @@
 
             // .NET primitive picklers
 
-            let unit = mkUnitP ()
-            let bool = new BooleanPickler() :> Pickler<bool>
-            let byte = new BytePickler() :> Pickler<byte>
-            let sbyte = new SBytePickler() :> Pickler<sbyte>
-            let char = new CharPickler() :> Pickler<char>
-            let decimal = new DecimalPickler() :> Pickler<decimal>
-            let single = new SinglePickler() :> Pickler<single>
-            let double = new DoublePickler() :> Pickler<double>
-            let int16 = new Int16Pickler () :> Pickler<int16>
-            let int = new Int32Pickler () :> Pickler<int>
-            let int64 = new Int64Pickler () :> Pickler<int64>
-            let uint16 = new UInt16Pickler () :> Pickler<uint16>
-            let uint32 = new UInt32Pickler () :> Pickler<uint32>
-            let uint64 = new UInt64Pickler () :> Pickler<uint64>
+            let unit = PrimitivePicklers.mkUnit ()
+            let bool = PrimitivePicklers.mkBoolean()
+            let byte = PrimitivePicklers.mkByte ()
+            let sbyte = PrimitivePicklers.mkSByte ()
+            let char = PrimitivePicklers.mkChar ()
+            let decimal = PrimitivePicklers.mkDecimal ()
+            let single = PrimitivePicklers.mkSingle ()
+            let double = PrimitivePicklers.mkDouble ()
+            let int16 = PrimitivePicklers.mkInt16 ()
+            let int = PrimitivePicklers.mkInt32 ()
+            let int64 = PrimitivePicklers.mkInt64 ()
+            let uint16 = PrimitivePicklers.mkUInt16 ()
+            let uint32 = PrimitivePicklers.mkUInt32 ()
+            let uint64 = PrimitivePicklers.mkUInt64 ()
 
             // misc atomic picklers
-            let string = new StringPickler () :> Pickler<string>
-            let guid = mkGuidPickler ()
-            let bytes = new ByteArrayPickler () :> Pickler<byte []>
-            let bigint = mkBigIntPickler () : Pickler<bigint>
+            let string = PrimitivePicklers.mkString ()
+            let guid = PrimitivePicklers.mkGuid ()
+            let dateTime = PrimitivePicklers.mkDate ()
+            let timeSpan = PrimitivePicklers.mkTimeSpan ()
+            let bytes = PrimitivePicklers.mkBytes ()
+            let bigint = PrimitivePicklers.mkBigInt ()
 
             /// the default System.Object pickler
-            let obj = mkObjPickler () : Pickler<obj>
+            let obj = CompositePickler.ObjectPickler
 
             /// auto generate a pickler
             let auto<'T> = defaultSerializer.Value.GeneratePickler<'T> ()

@@ -20,8 +20,8 @@
         let resolver = cache :> IPicklerResolver
 
 //        static let formatP = new XmlPickleFormatProvider(System.Text.Encoding.UTF8, indent = true)
-        static let formatP = new JsonPickleFormatProvider(indented = true)
-//        static let formatP = new BinaryFormatProvider()
+//        static let formatP = new JsonPickleFormatProvider(indented = true)
+        static let formatP = new BinaryFormatProvider()
         
         /// initializes an instance that resolves picklers from a global cache
         new () = new FsPickler(PicklerCache.GetDefaultInstance())

@@ -304,25 +304,14 @@
                 formatter.WriteString "name" aI.Name
                 formatter.WriteString "version" aI.Version
                 formatter.WriteString "culture" aI.Culture
-            
-                match aI.PublicKeyToken with
-                | null | [||] -> formatter.WriteBoolean "strong" false
-                | bytes ->
-                    formatter.WriteBoolean "strong" true
-                    formatter.WriteBytesFixed "pkt" bytes
+                formatter.WriteBytes "pkt" aI.PublicKeyToken
 
             let reader (r : ReadState) =
                 let formatter = r.Formatter
                 let name = formatter.ReadString "name"
                 let version = formatter.ReadString "version"
                 let culture = formatter.ReadString "culture" 
-
-                let pkt =
-                    if formatter.ReadBoolean "strong" then
-                        formatter.ReadBytesFixed "pkt" 8
-                    else
-                        [||]
-                        
+                let pkt = formatter.ReadBytes "pkt"
 
                 {
                     Name = name

@@ -9,7 +9,6 @@
     open Nessos.FsPickler
     open Nessos.FsPickler.Reflection
     open Nessos.FsPickler.PicklerUtils
-    open Nessos.FsPickler.BasePicklers
 
 #if EMIT_IL
     open System.Reflection.Emit

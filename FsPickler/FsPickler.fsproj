@@ -81,15 +81,14 @@
     <Compile Include="Format\ObjectHeader.fs" />
     <Compile Include="Format\PickleFormat.fs" />
     <Compile Include="Format\BinaryFormat.fs" />
-    <Compile Include="Format\XmlFormat.fs" />
-    <Compile Include="Format\JsonFormat.fs" />
+    <None Include="Format\XmlFormat.fs" />
+    <None Include="Format\JsonFormat.fs" />
     <Compile Include="Picklers\Pickler.fs" />
     <Compile Include="Picklers\PrimitivePicklers.fs" />
     <Compile Include="Picklers\CompositePickler.fs" />
     <Compile Include="Picklers\Types.fs" />
     <Compile Include="Picklers\PicklerUtils.fs" />
     <Compile Include="Picklers\PicklerEmit.fs" />
-    <Compile Include="Picklers\AtomicPicklers.fs" />
     <Compile Include="Picklers\ReflectionPicklers.fs" />
     <Compile Include="Picklers\DotNetPicklers.fs" />
     <Compile Include="Picklers\ArrayPickler.fs" />

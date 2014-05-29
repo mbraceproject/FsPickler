@@ -22,7 +22,7 @@
 
     type PicklerInfo =
         | Primitive             = 0uy
-        | Atomic                = 1uy
+        | Object                = 1uy
         | ReflectionType        = 2uy
         | FieldSerialization    = 3uy
         | ISerializable         = 4uy
@@ -45,11 +45,11 @@
 
         
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-    module ObjectFlags =
+    module internal ObjectFlags =
         let inline hasFlag (flags : ObjectFlags) (flag : ObjectFlags) = flags &&& flag = flag
 
     [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-    module TypeInfo =
+    module internal TypeInfo =
         /// builds type info enumeration out of reflection info
         let compute (t : Type) =
             if t.IsPrimitive then TypeInfo.Primitive

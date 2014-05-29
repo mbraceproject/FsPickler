@@ -1,10 +1,10 @@
 ﻿#r "bin/Debug/FsPickler.CSharp.dll"
-#r "../packages/FsCheck.0.9.2.0/lib/net40-Client/FsCheck.dll"
+//#r "../packages/FsCheck.0.9.2.0/lib/net40-Client/FsCheck.dll"
 
 open System.IO
 open Nessos.FsPickler.Binary
 
-open FsCheck
+//open FsCheck
 
 
 type TestCase =
@@ -36,11 +36,10 @@ let read (br : BinaryReader) =
     function
     | Bool b -> let b' = br.ReadBoolean() in check b b'
     | Byte b -> let b' = br.ReadByte() in check b b'
-    | Bytes bs -> let bs' = br.ReadBytes(bs.Length) in check bs bs'
+    | Bytes bs -> let bs' = br.ReadBytes() in check bs bs'
     | Char c -> let c' = br.ReadChar() in check c c'
     | Int32 n -> let n' = br.ReadInt32() in check n n'
     | Int64 n -> let n' = br.ReadInt64() in check n n'
-//    | UInt64 n -> let n' = br.ReadUInt64() in check n n'
     | String s -> let s' = br.ReadString() in check s s'
 
 let test (inputs : TestCase list) =
@@ -58,4 +57,20 @@ let huge = [1..100] |> List.collect (fun _ -> case)
 
 test case
 test huge
-Check.Quick test
+
+
+#time
+
+let getValue value () = value
+let getDefault<'T> = fun () -> Unchecked.defaultof<'T>
+    
+
+let clo1 = getValue ()
+
+for i = 1 to 1000000000 do
+    clo1 ()
+
+let clo2 = getDefault<unit>
+
+for i = 1 to 1000000000 do
+    clo2 ()

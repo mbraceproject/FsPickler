@@ -8,7 +8,6 @@
     open Nessos.FsPickler.TypeShape
     open Nessos.FsPickler.PicklerUtils
     open Nessos.FsPickler.PrimitivePicklers
-    open Nessos.FsPickler.BasePicklers
     open Nessos.FsPickler.ReflectionPicklers
     open Nessos.FsPickler.CombinatorImpls
     open Nessos.FsPickler.TuplePicklers
@@ -114,9 +113,9 @@
         // populate the cache
         do
             // add atomic/default picklers
-            [|
-                mkPrimitivePicklers ()
-                mkAtomicPicklers ()
+            [|  
+                [| CompositePickler.ObjectPickler :> Pickler |]
+                PrimitivePicklers.mkAll ()
                 reflection.ReflectionPicklers
             |]
             |> Seq.concat

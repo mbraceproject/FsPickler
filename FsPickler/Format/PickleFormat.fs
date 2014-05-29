@@ -13,6 +13,9 @@
 
         abstract BeginWriteObject : typeInfo:TypeInfo -> picklerInfo:PicklerInfo -> tag:string -> objectFlags:ObjectFlags -> unit
         abstract EndWriteObject : unit -> unit
+
+        abstract BeginWriteList : tag:string -> length:int -> unit
+        abstract EndWriteList : unit-> unit
         
         abstract WriteBoolean : tag:string -> value:bool -> unit
         abstract WriteByte : tag:string -> value:byte -> unit
@@ -30,11 +33,16 @@
         abstract WriteDouble : tag:string -> value:float -> unit
         abstract WriteDecimal : tag:string -> value:decimal -> unit
 
-        abstract WriteChar : tag:string -> value : char -> unit
+        abstract WriteChar : tag:string -> value:char -> unit
         abstract WriteString : tag:string -> value:string -> unit
 
+        abstract WriteDate : tag:string -> date:DateTime -> unit
+        abstract WriteTimeSpan : tag:string -> span:TimeSpan -> unit
+        abstract WriteGuid : tag:string -> guid:Guid -> unit
+
+        abstract WriteBigInteger : tag:string -> value:bigint -> unit
         abstract WriteBytes : tag:string -> value:byte [] -> unit
-        abstract WriteBytesFixed : tag:string -> value:byte [] -> unit
+//        abstract WriteBytesFixed : tag:string -> value:byte [] -> unit
 
         abstract IsPrimitiveArraySerializationSupported : bool
         abstract WritePrimitiveArray : tag:string -> value:Array -> unit
@@ -48,6 +56,9 @@
 
         abstract BeginReadObject : typeInfo:TypeInfo -> picklerInfo:PicklerInfo -> tag:string -> ObjectFlags
         abstract EndReadObject : unit -> unit
+
+        abstract BeginReadList : tag:string -> int
+        abstract EndReadList : unit -> unit
         
         abstract ReadBoolean : tag:string -> bool
         abstract ReadByte : tag:string -> byte
@@ -67,9 +78,14 @@
 
         abstract ReadChar : tag:string -> char
         abstract ReadString : tag:string -> string
+        
+        abstract ReadDate : tag:string -> DateTime
+        abstract ReadTimeSpan : tag:string -> TimeSpan
+        abstract ReadGuid : tag:string -> Guid
 
+        abstract ReadBigInteger : tag:string -> bigint
         abstract ReadBytes : tag:string -> byte []
-        abstract ReadBytesFixed : tag:string -> length:int -> byte []
+//        abstract ReadBytesFixed : tag:string -> length:int -> byte []
 
         abstract IsPrimitiveArraySerializationSupported : bool
         abstract ReadPrimitiveArray : tag:string -> Array -> unit

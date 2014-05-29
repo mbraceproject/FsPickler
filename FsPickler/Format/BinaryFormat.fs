@@ -22,8 +22,6 @@
         [<Literal>]
         let initByte = 130uy
 
-        let binarySerializePrimitiveArrays = BitConverter.IsLittleEndian
-
         let inline createHeader (typeInfo : TypeInfo) (picklerInfo : PicklerInfo) (flags : ObjectFlags) =
             uint32 initByte 
             ||| (uint32 typeInfo <<< 8) 
@@ -58,6 +56,9 @@
 
             member __.EndWriteRoot () = ()
 
+            member __.BeginWriteList _ length = bw.Write length
+            member __.EndWriteList () = ()
+
             member __.BeginWriteObject typeFlags picklerFlags tag objectFlags =
                 let header = createHeader typeFlags picklerFlags objectFlags
                 bw.Write header
@@ -81,21 +82,19 @@
             member __.WriteDecimal _ value = bw.Write value
 
             member __.WriteChar _ value = bw.Write value
-            
-            member __.WriteString _ value = 
-                if obj.ReferenceEquals(value, null) then
-                    bw.Write true
-                else
-                    bw.Write false
-                    bw.Write value
+            member __.WriteString _ value = bw.Write value
 
-            member __.WriteBytes _ value = 
-                bw.Write value.Length
-                bw.Write value
+            member __.WriteDate _ value = bw.Write value.Ticks
+            member __.WriteTimeSpan _ value = bw.Write value.Ticks
+            member __.WriteGuid _ value = bw.Write value
 
-            member __.WriteBytesFixed _ value = bw.Write value
+            member __.WriteBigInteger _ value = 
+                let data = value.ToByteArray()
+                bw.Write data
 
-            member __.IsPrimitiveArraySerializationSupported = binarySerializePrimitiveArrays
+            member __.WriteBytes _ value = bw.Write value
+
+            member __.IsPrimitiveArraySerializationSupported = true
             member __.WritePrimitiveArray _ array = bw.Write array
 
             member __.Dispose () = bw.Dispose()
@@ -123,6 +122,9 @@
 
             member __.EndReadObject () = () 
 
+            member __.BeginReadList _ = br.ReadInt32 ()
+            member __.EndReadList () = ()
+
             member __.ReadBoolean _ = br.ReadBoolean()
             member __.ReadByte _ = br.ReadByte()
             member __.ReadSByte _ = br.ReadSByte()
@@ -140,15 +142,19 @@
             member __.ReadDouble _ = br.ReadDouble()
 
             member __.ReadChar _ = br.ReadChar()
-            member __.ReadString _ =
-                if br.ReadBoolean() then null
-                else
-                    br.ReadString()
+            member __.ReadString _ = br.ReadString()
 
-            member __.ReadBytes _ = let length = br.ReadInt32() in br.ReadBytes(length)
-            member __.ReadBytesFixed _ length = br.ReadBytes(length)
+            member __.ReadDate _ = let ticks = br.ReadInt64() in DateTime(ticks)
+            member __.ReadTimeSpan _ = let ticks = br.ReadInt64() in TimeSpan(ticks)
+            member __.ReadGuid _ = br.ReadGuid ()
 
-            member __.IsPrimitiveArraySerializationSupported = binarySerializePrimitiveArrays
+            member __.ReadBigInteger _ =
+                let data = br.ReadBytes()
+                new System.Numerics.BigInteger(data)
+
+            member __.ReadBytes _ = br.ReadBytes()
+
+            member __.IsPrimitiveArraySerializationSupported = true
             member __.ReadPrimitiveArray _ array = br.ReadArray(array)
 
 

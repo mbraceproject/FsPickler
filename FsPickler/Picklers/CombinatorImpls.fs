@@ -9,7 +9,6 @@
     open Nessos.FsPickler
     open Nessos.FsPickler.Reflection
     open Nessos.FsPickler.PicklerUtils
-    open Nessos.FsPickler.BasePicklers
 
     //
     //  Pickler combinator Implementations

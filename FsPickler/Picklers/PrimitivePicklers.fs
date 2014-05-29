@@ -1,5 +1,7 @@
 ﻿module internal Nessos.FsPickler.PrimitivePicklers
 
+    open System
+
     open Microsoft.FSharp.Core.LanguagePrimitives
 
     open Nessos.FsPickler
@@ -135,12 +137,104 @@
         override __.Write (writer : WriteState) (tag : string) (bytes : byte []) = writer.Formatter.WriteBytes tag bytes
         override __.Read (reader : ReadState) (tag : string) = reader.Formatter.ReadBytes tag
 
+    [<AutoSerializable(false)>]
+    type GuidPickler () =
+        inherit PrimitivePickler<Guid> (TypeInfo.compute typeof<Guid>, true)
 
-    let mkPrimitivePicklers () : Pickler [] =
-        [|
-            new BooleanPickler () :> Pickler ; new BytePickler () :> Pickler ; new SBytePickler () :> Pickler
-            new Int16Pickler () :> Pickler ; new Int32Pickler () :> Pickler ; new Int64Pickler () :> Pickler
-            new UInt16Pickler () :> Pickler ; new UInt32Pickler () :> Pickler ; new UInt64Pickler () :> Pickler
-            new SinglePickler () :> Pickler ; new DoublePickler () :> Pickler ; new DecimalPickler () :> Pickler
-            new StringPickler () :> Pickler ; new CharPickler () :> Pickler ; new ByteArrayPickler () :> Pickler
-        |]
+        override __.Write (writer : WriteState) (tag : string) (guid : Guid) =
+            writer.Formatter.WriteGuid tag guid
+
+        override __.Read (reader : ReadState) (tag : string) =
+            reader.Formatter.ReadGuid tag
+
+    [<AutoSerializable(false)>]
+    type DatePickler () =
+        inherit PrimitivePickler<DateTime> (TypeInfo.compute typeof<Guid>, true)
+
+        override __.Write (writer : WriteState) (tag : string) (date : DateTime) =
+            writer.Formatter.WriteDate tag date
+
+        override __.Read (reader : ReadState) (tag : string) =
+            reader.Formatter.ReadDate tag
+
+    [<AutoSerializable(false)>]
+    type TimeSpanPickler () =
+        inherit PrimitivePickler<TimeSpan> (TypeInfo.compute typeof<TimeSpan>, true)
+
+        override __.Write (writer : WriteState) (tag : string) (date : TimeSpan) =
+            writer.Formatter.WriteTimeSpan tag date
+
+        override __.Read (reader : ReadState) (tag : string) =
+            reader.Formatter.ReadTimeSpan tag
+
+    [<AutoSerializable(false)>]
+    type BigIntPickler () =
+        inherit PrimitivePickler<bigint> (TypeInfo.compute typeof<bigint>, false)
+
+        override __.Write (writer : WriteState) (tag : string) (bint : bigint) =
+            writer.Formatter.WriteBigInteger tag bint
+
+        override __.Read (reader : ReadState) (tag : string) =
+            reader.Formatter.ReadBigInteger tag
+
+    [<AutoSerializable(false)>]
+    type DBNullPickler () =
+        inherit PrimitivePickler<DBNull> (TypeInfo.Sealed, true)
+
+        override __.Write (writer : WriteState) (tag : string) (_ : DBNull) =
+            writer.Formatter.BeginWriteObject TypeInfo.Sealed PicklerInfo.Primitive tag ObjectFlags.IsNull
+            writer.Formatter.EndWriteObject ()
+
+        override __.Read (reader : ReadState) (tag : string) =
+            let _ = reader.Formatter.BeginReadObject TypeInfo.Sealed PicklerInfo.Primitive tag
+            reader.Formatter.EndReadObject ()
+            DBNull.Value
+
+    [<AutoSerializable(false)>]
+    type private UnitPickler<'T> (value : 'T) =
+        // UnitPickler generic due to a bug in F# compiler: cannot explicitly instantiate Pickler<unit>
+        inherit PrimitivePickler<'T> (TypeInfo.Sealed, true)
+
+        override __.Write (writer : WriteState) (tag : string) (_ : 'T) = 
+            writer.Formatter.BeginWriteObject TypeInfo.Sealed PicklerInfo.Primitive tag ObjectFlags.IsNull
+            writer.Formatter.EndWriteObject ()
+
+        override __.Read (reader : ReadState) (tag : string) : 'T =
+            let _ = reader.Formatter.BeginReadObject TypeInfo.Sealed PicklerInfo.Primitive tag
+            reader.Formatter.EndReadObject ()
+            value
+
+
+    module PrimitivePicklers =
+        
+        let mkBoolean () = new BooleanPickler () :> Pickler<bool>
+        let mkByte () = new BytePickler () :> Pickler<byte>
+        let mkSByte () = new SBytePickler () :> Pickler<sbyte>
+        let mkInt16 () = new Int16Pickler () :> Pickler<int16>
+        let mkInt32 () = new Int32Pickler () :> Pickler<int>
+        let mkInt64 () = new Int64Pickler () :> Pickler<int64>
+        let mkUInt16 () = new UInt16Pickler () :> Pickler<uint16>
+        let mkUInt32 () = new UInt32Pickler () :> Pickler<uint32>
+        let mkUInt64 () = new UInt64Pickler () :> Pickler<uint64>
+        let mkSingle () = new SinglePickler () :> Pickler<single>
+        let mkDouble () = new DoublePickler () :> Pickler<double>
+        let mkDecimal () = new DecimalPickler () :> Pickler<decimal>
+        let mkString () = new StringPickler () :> Pickler<string>
+        let mkChar () = new CharPickler () :> Pickler<char>
+        let mkBytes () = new ByteArrayPickler () :> Pickler<byte []>
+        let mkGuid () = new GuidPickler () :> Pickler<Guid>
+        let mkDate () = new DatePickler () :> Pickler<DateTime>
+        let mkTimeSpan () = new TimeSpanPickler () :> Pickler<TimeSpan>
+        let mkBigInt () = new BigIntPickler () :> Pickler<bigint>
+        let mkDBNull () = new DBNullPickler () :> Pickler<DBNull>
+        let mkUnit () = new UnitPickler<unit>(()) :> Pickler<unit>
+
+
+        let mkAll () : Pickler [] =
+            let inline uc (factory : unit -> Pickler<'T>) = factory () :> Pickler
+            [|
+                uc mkBoolean ; uc mkByte ; uc mkSByte ; uc mkInt16 ; uc mkInt32 ; uc mkInt64
+                uc mkUInt16 ; uc mkUInt32 ; uc mkUInt64 ; uc mkSingle ; uc mkDouble ; uc mkDecimal
+                uc mkString ; uc mkChar ; uc mkBytes ; uc mkGuid ; uc mkDate ; uc mkTimeSpan
+                uc mkBigInt ; uc mkDBNull ; uc mkUnit
+            |]

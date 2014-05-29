@@ -345,3 +345,6 @@
         static member CreateUninitialized<'T>() = new CompositePickler<'T> () :> Pickler<'T>
         static member Create<'T>(reader, writer, picklerInfo, cacheByRef : bool, useWithSubtypes : bool) =
             new CompositePickler<'T>(reader, writer, None, picklerInfo, cacheByRef, useWithSubtypes) :> Pickler<'T>
+
+        static member ObjectPickler =
+            CompositePickler.Create<obj>((fun _ -> obj ()), (fun _ _ -> ()), PicklerInfo.Object, true, false)

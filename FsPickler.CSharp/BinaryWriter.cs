@@ -66,8 +66,8 @@ namespace Nessos.FsPickler.Binary
 
         public void Write(Array array)
         {
-            var count = Buffer.ByteLength(array);
-            Write7BitEncodedLength((uint)count);
+            int count = Buffer.ByteLength(array);
+            Write7BitEncodedLength(count);
 
             var j = 0;
 
@@ -85,8 +85,9 @@ namespace Nessos.FsPickler.Binary
             idx = idx + count;
         }
 
-        public void Write7BitEncodedLength(uint value)
+        private void Write7BitEncodedLength(int length)
         {
+            uint value = (uint)length;
             // Write out an int 7 bits at a time.  The high bit of the byte,
             // when on, tells reader to continue reading more bytes.
             while (value >= 0x80)
@@ -118,7 +119,12 @@ namespace Nessos.FsPickler.Binary
         public void Write(byte[] bytes)
         {
             if (bytes == null)
-                throw new ArgumentNullException("buffer");
+            {
+                Write7BitEncodedLength(-1);
+                return;
+            }
+
+            Write7BitEncodedLength(bytes.Length);
 
             if (idx + bytes.Length < bufsize)
             {
@@ -175,6 +181,35 @@ namespace Nessos.FsPickler.Binary
             buffer[i + 6] = (byte)(v1 >> 48);
             buffer[i + 7] = (byte)(v1 >> 56);
             
+            buffer[i + 8] = (byte)v2;
+            buffer[i + 9] = (byte)(v2 >> 8);
+            buffer[i + 10] = (byte)(v2 >> 16);
+            buffer[i + 11] = (byte)(v2 >> 24);
+            buffer[i + 12] = (byte)(v2 >> 32);
+            buffer[i + 13] = (byte)(v2 >> 40);
+            buffer[i + 14] = (byte)(v2 >> 48);
+            buffer[i + 15] = (byte)(v2 >> 56);
+
+            idx = i + 16;
+        }
+
+        public unsafe void Write(Guid value)
+        {
+            FlushBufferIfNotEnoughSpace(16);
+            var addr = (ulong*)&value;
+            var i = idx;
+            ulong v1 = *addr;
+            ulong v2 = *(addr + 1);
+
+            buffer[i] = (byte)v1;
+            buffer[i + 1] = (byte)(v1 >> 8);
+            buffer[i + 2] = (byte)(v1 >> 16);
+            buffer[i + 3] = (byte)(v1 >> 24);
+            buffer[i + 4] = (byte)(v1 >> 32);
+            buffer[i + 5] = (byte)(v1 >> 40);
+            buffer[i + 6] = (byte)(v1 >> 48);
+            buffer[i + 7] = (byte)(v1 >> 56);
+
             buffer[i + 8] = (byte)v2;
             buffer[i + 9] = (byte)(v2 >> 8);
             buffer[i + 10] = (byte)(v2 >> 16);
@@ -276,13 +311,13 @@ namespace Nessos.FsPickler.Binary
         {
             if (value == null)
             {
-                Write7BitEncodedLength(0);
+                Write7BitEncodedLength(-1);
                 return;
             }
 
             var length = value.Length;
 
-            Write7BitEncodedLength(1 + (uint)length);
+            Write7BitEncodedLength(length);
 
             if (length == 0) return;
 
