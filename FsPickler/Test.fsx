@@ -24,11 +24,10 @@ let ofFile<'T> name =
     use fs = File.OpenRead (file + name + ".json")
     fsp.Deserialize<'T>(fs)
 
-let xs = Array3D.init 4 4 4 (fun i j k -> i + j + k)
-toFile<int [,,]> "test" xs
+toFile<int list> "test" [1..100]
 toFile "a" <@ 1 + 1 @>
 
-ofFile<string> "test"
+ofFile<int> "test"
 
 ofFile<Quotations.Expr<int>> "b"
 
