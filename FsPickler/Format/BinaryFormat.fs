@@ -60,7 +60,7 @@
             member __.EndWriteBoundedSequence () = ()
 
             member __.BeginWriteUnBoundedSequence () = ()
-            member __.WriteHasNextElement hasNext = bw.Write true
+            member __.WriteHasNextElement hasNext = bw.Write hasNext
 
             member __.BeginWriteObject typeFlags picklerFlags tag objectFlags =
                 let header = createHeader typeFlags picklerFlags objectFlags

@@ -25,94 +25,128 @@
             assert(typeof<'T> = typeof<'Array>.GetElementType())
             let rank = typeof<'Array>.GetArrayRank()
 
-            let writer (w : WriteState) (x : 'Array) =
+            let writer (w : WriteState) (array : 'Array) =
+                // check if array is to be serialized using formatter support
+                let isPrimitiveSerialized = 
+                    ep.TypeInfo = TypeInfo.Primitive && w.Formatter.IsPrimitiveArraySerializationSupported
 
-                let lengths = Array.zeroCreate<int> rank
-                for d = 0 to rank - 1 do
-                    lengths.[d] <- x.GetLength d
-                    w.Formatter.WriteInt32 "dim" lengths.[d]
+                // write initial array data
+                let lengths =
+                    if rank = 1 then
+                        if isPrimitiveSerialized then
+                            w.Formatter.WriteInt32 "length" array.Length
+                            null
+                        else
+                            w.Formatter.BeginWriteBoundedSequence array.Length
+                            null
+                    else
+                        let lengths = Array.zeroCreate<int> rank
+                        for d = 0 to rank - 1 do 
+                            lengths.[d] <- array.GetLength d
+                            w.Formatter.WriteInt32 (sprintf "length-%d" d) (lengths.[d])
 
-                if ep.TypeInfo = TypeInfo.Primitive && w.Formatter.IsPrimitiveArraySerializationSupported then
-                    w.Formatter.WritePrimitiveArray "data" x
+                        w.Formatter.BeginWriteBoundedSequence array.Length
+                        lengths
+
+                if isPrimitiveSerialized then
+                    w.Formatter.WritePrimitiveArray "data" array
 
                 else
                     match rank with
                     | 1 ->
-                        let x = fastUnbox<'T []> x
-                        for i = 0 to x.Length - 1 do
-                            ep.Write w "elem" x.[i]
+                        let array = fastUnbox<'T []> array
+                        for i = 0 to array.Length - 1 do
+                            ep.Write w "elem" array.[i]
                     | 2 -> 
-                        let x = fastUnbox<'T [,]> x
+                        let array = fastUnbox<'T [,]> array
                         for i = 0 to lengths.[0] - 1 do
                             for j = 0 to lengths.[1] - 1 do
-                                ep.Write w "elem" x.[i,j]
+                                ep.Write w "elem" array.[i,j]
                     | 3 ->
-                        let x = fastUnbox<'T [,,]> x
+                        let array = fastUnbox<'T [,,]> array
                         for i = 0 to lengths.[0] - 1 do
                             for j = 0 to lengths.[1] - 1 do
                                 for k = 0 to lengths.[2] - 1 do
-                                    ep.Write w "elem" x.[i,j,k]
+                                    ep.Write w "elem" array.[i,j,k]
                     | 4 ->
-                        let x = fastUnbox<'T [,,,]> x
+                        let array = fastUnbox<'T [,,,]> array
                         for i = 0 to lengths.[0] - 1 do
                             for j = 0 to lengths.[1] - 1 do
                                 for k = 0 to lengths.[2] - 1 do
                                     for l = 0 to lengths.[3] - 1 do
-                                        ep.Write w "elem" x.[i,j,k,l]
+                                        ep.Write w "elem" array.[i,j,k,l]
 
                     | _ -> failwith "impossible array rank"
+
+                    w.Formatter.EndWriteBoundedSequence ()
 
             let reader (r : ReadState) =
-                let l = Array.zeroCreate<int> rank
-                for i = 0 to rank - 1 do l.[i] <- r.Formatter.ReadInt32 "dim"
+                // check if array is to be deserialized using formatter support
+                let isPrimitiveDeserialized = 
+                    ep.TypeInfo = TypeInfo.Primitive && r.Formatter.IsPrimitiveArraySerializationSupported
+                
+                // read initial array data
+                let lengths =
+                    if rank = 1 then
+                        let length =
+                            if isPrimitiveDeserialized then r.Formatter.ReadInt32 "length"
+                            else
+                                r.Formatter.BeginReadBoundedSequence ()
 
+                        [|length|]
+
+                    else
+                        let l = Array.zeroCreate<int> rank
+                        for d = 0 to rank - 1 do l.[d] <- r.Formatter.ReadInt32 (sprintf "length-%d" d)
+                        let _ = r.Formatter.BeginReadBoundedSequence ()
+                        l
+
+                // initialize empty array
                 let array =
                     match rank with
-                    | 1 -> Array.zeroCreate<'T> l.[0] |> fastUnbox<'Array>
-                    | 2 -> Array2D.zeroCreate<'T> l.[0] l.[1] |> fastUnbox<'Array>
-                    | 3 -> Array3D.zeroCreate<'T> l.[0] l.[1] l.[2] |> fastUnbox<'Array>
-                    | 4 -> Array4D.zeroCreate<'T> l.[0] l.[1] l.[2] l.[3] |> fastUnbox<'Array>
+                    | 1 -> Array.zeroCreate<'T> lengths.[0] |> fastUnbox<'Array>
+                    | 2 -> Array2D.zeroCreate<'T> lengths.[0] lengths.[1] |> fastUnbox<'Array>
+                    | 3 -> Array3D.zeroCreate<'T> lengths.[0] lengths.[1] lengths.[2] |> fastUnbox<'Array>
+                    | 4 -> Array4D.zeroCreate<'T> lengths.[0] lengths.[1] lengths.[2] lengths.[3] |> fastUnbox<'Array>
                     | _ -> failwith "impossible array rank"
 
-                // register new object with deserializer cache
+                // register new array with deserializer cache
                 r.RegisterUninitializedArray array
 
-                if ep.TypeInfo = TypeInfo.Primitive && r.Formatter.IsPrimitiveArraySerializationSupported then
+                if isPrimitiveDeserialized then
                     do r.Formatter.ReadPrimitiveArray "data" array
-                    array
                 else
-
                     match rank with
                     | 1 -> 
                         let arr = fastUnbox<'T []> array
-                        for i = 0 to l.[0] - 1 do
+                        for i = 0 to lengths.[0] - 1 do
                             arr.[i] <- ep.Read r "elem"
 
-                        array
                     | 2 -> 
                         let arr = fastUnbox<'T [,]> array
-                        for i = 0 to l.[0] - 1 do
-                            for j = 0 to l.[1] - 1 do
+                        for i = 0 to lengths.[0] - 1 do
+                            for j = 0 to lengths.[1] - 1 do
                                 arr.[i,j] <- ep.Read r "elem"
 
-                        array
                     | 3 ->
                         let arr = fastUnbox<'T [,,]> array
-                        for i = 0 to l.[0] - 1 do
-                            for j = 0 to l.[1] - 1 do
-                                for k = 0 to l.[2] - 1 do
+                        for i = 0 to lengths.[0] - 1 do
+                            for j = 0 to lengths.[1] - 1 do
+                                for k = 0 to lengths.[2] - 1 do
                                     arr.[i,j,k] <- ep.Read r "elem"
 
-                        array
                     | 4 ->
                         let arr = fastUnbox<'T [,,,]> array
-                        for i = 0 to l.[0] - 1 do
-                            for j = 0 to l.[1] - 1 do
-                                for k = 0 to l.[2] - 1 do
-                                    for l = 0 to l.[3] - 1 do
+                        for i = 0 to lengths.[0] - 1 do
+                            for j = 0 to lengths.[1] - 1 do
+                                for k = 0 to lengths.[2] - 1 do
+                                    for l = 0 to lengths.[3] - 1 do
                                         arr.[i,j,k,l] <- ep.Read r "elem"
 
-                        array
                     | _ -> failwith "impossible array rank"
+
+                    r.Formatter.EndReadBoundedSequence ()
+
+                array
 
             CompositePickler.Create<'Array>(reader, writer, PicklerInfo.Array, cacheByRef = true, useWithSubtypes = false)

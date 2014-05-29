@@ -58,18 +58,20 @@
 #else
     let inline writeArray (w : WriteState) (p : Pickler<'T>) (ts : 'T []) =
 #endif
-        w.Formatter.WriteInt32 "length" ts.Length
+        w.Formatter.BeginWriteBoundedSequence ts.Length
         for t in ts do p.Write w "elem" t
+        w.Formatter.EndWriteBoundedSequence ()
 
 #if DEBUG
     let readArray (r : ReadState) (p : Pickler<'T>) =
 #else
     let inline readArray (r : ReadState) (p : Pickler<'T>) =
 #endif
-        let length = r.Formatter.ReadInt32 "length"
+        let length = r.Formatter.BeginReadBoundedSequence ()
         let array = Array.zeroCreate<'T> length
         for i = 0 to length - 1 do
             array.[i] <- p.Read r "elem"
+        r.Formatter.EndReadBoundedSequence ()
         array
 
 
@@ -77,43 +79,47 @@
     /// Serializes a sequence where the length is known beforehand.
 
 #if DEBUG
-    let writeSequence (w : WriteState) (p : Pickler<'T>) (length : int) (ts : seq<'T>) =
+    let writeBoundedSequence (w : WriteState) (p : Pickler<'T>) (length : int) (ts : seq<'T>) =
 #else
-    let inline writeSequence (w : WriteState) (p : Pickler<'T>) (length : int) (ts : seq<'T>) =
+    let inline writeBoundedSequence (w : WriteState) (p : Pickler<'T>) (length : int) (ts : seq<'T>) =
 #endif
-        w.Formatter.WriteInt32 "length" length
+        w.Formatter.BeginWriteBoundedSequence length
         for t in ts do p.Write w "elem" t
+        w.Formatter.EndWriteBoundedSequence ()
 
 #if DEBUG
-    let readSequence (r : ReadState) (p : Pickler<'T>) =
+    let readBoundedSequence (r : ReadState) (p : Pickler<'T>) =
 #else
-    let inline readSequence (r : ReadState) (p : Pickler<'T>) =
+    let inline readBoundedSequence (r : ReadState) (p : Pickler<'T>) =
 #endif
-        let length = r.Formatter.ReadInt32 "length"
+        let length = r.Formatter.BeginReadBoundedSequence ()
         let ts = Array.zeroCreate<'T> length
         for i = 0 to length - 1 do
             ts.[i] <- p.Read r "elem"
+        r.Formatter.EndReadBoundedSequence ()
+        
         ts
 
 
     /// length passed as argument to avoid unecessary evaluations of sequence
 
 #if DEBUG
-    let writePairSequence (w : WriteState) (kp : Pickler<'K>) (vp : Pickler<'V>) (length : int) (xs : ('K * 'V) seq) =
+    let writeBoundedPairSequence (w : WriteState) (kp : Pickler<'K>) (vp : Pickler<'V>) (length : int) (xs : ('K * 'V) seq) =
 #else
-    let inline writePairSequence (w : WriteState) (kp : Pickler<'K>) (vp : Pickler<'V>) (length : int) (xs : ('K * 'V) seq) =
+    let inline writeBoundedPairSequence (w : WriteState) (kp : Pickler<'K>) (vp : Pickler<'V>) (length : int) (xs : ('K * 'V) seq) =
 #endif
-        w.Formatter.WriteInt32 "length" length
+        w.Formatter.BeginWriteBoundedSequence length
         for k,v in xs do
             kp.Write w "key" k
             vp.Write w "val" v
+        w.Formatter.EndWriteBoundedSequence ()
 
 #if DEBUG
-    let readPairSequence (r : ReadState) (kp : Pickler<'K>) (vp : Pickler<'V>) =
+    let readBoundedPairSequence (r : ReadState) (kp : Pickler<'K>) (vp : Pickler<'V>) =
 #else
-    let inline readPairSequence (r : ReadState) (kp : Pickler<'K>) (vp : Pickler<'V>) =
+    let inline readBoundedPairSequence (r : ReadState) (kp : Pickler<'K>) (vp : Pickler<'V>) =
 #endif
-        let length = r.Formatter.ReadInt32 "length"
+        let length = r.Formatter.BeginReadBoundedSequence ()
         let xs = Array.zeroCreate<'K * 'V> length
 
         for i = 0 to length - 1 do
@@ -121,21 +127,26 @@
             let v = vp.Read r "val"
             xs.[i] <- k,v
 
+        r.Formatter.EndReadBoundedSequence ()
+
         xs
 
     /// write a sequence where length is not known beforehand
 
-    let writeSequenceNoLength (p : Pickler<'T>) (w : WriteState) (ts : 'T seq) : unit =
+    let writeSequence (p : Pickler<'T>) (w : WriteState) (ts : 'T seq) : unit =
+        let formatter = w.Formatter
         match ts with
         | :? ('T []) as arr ->
-            w.Formatter.WriteBoolean "isMaterialized" true
-            w.Formatter.WriteInt32 "length" arr.Length
+            formatter.WriteBoolean "isBounded" true
+            formatter.BeginWriteBoundedSequence arr.Length
             for i = 0 to arr.Length - 1 do
                 p.Write w "elem" arr.[i]
 
+            formatter.EndWriteBoundedSequence ()
+
         | :? ('T list) as list ->
-            w.Formatter.WriteBoolean "isMaterialized" true
-            w.Formatter.WriteInt32 "length" list.Length
+            formatter.WriteBoolean "isBounded" true
+            formatter.BeginWriteBoundedSequence list.Length
 
             let rec iter rest =
                 match rest with
@@ -145,26 +156,32 @@
                     iter tl
 
             iter list
+            formatter.EndWriteBoundedSequence ()
+
         | _ ->
-            w.Formatter.WriteBoolean "isMaterialized" false
+            formatter.WriteBoolean "isBounded" false
+            formatter.BeginWriteUnBoundedSequence ()
             use e = ts.GetEnumerator()
             while e.MoveNext() do
-                w.Formatter.WriteBoolean "done" false
+                formatter.WriteHasNextElement true
                 p.Write w "elem" e.Current
 
-            w.Formatter.WriteBoolean "done" true
+            formatter.WriteHasNextElement false
 
-    let readSequenceNoLength (p : Pickler<'T>) (r : ReadState) : 'T seq =
+    let readSequence (p : Pickler<'T>) (r : ReadState) : 'T seq =
+        let formatter = r.Formatter
 
-        if r.Formatter.ReadBoolean "isMaterialized" then
-            let length = r.Formatter.ReadInt32 "length"
+        if formatter.ReadBoolean "isBounded" then
+            let length = formatter.BeginReadBoundedSequence ()
             let array = Array.zeroCreate<'T> length
             for i = 0 to length - 1 do
                 array.[i] <- p.Read r "elem"
+            formatter.EndReadBoundedSequence ()
             array :> _
         else
+            formatter.BeginReadUnBoundedSequence ()
             let ra = new ResizeArray<'T> ()
-            while not <| r.Formatter.ReadBoolean "done" do
+            while formatter.ReadHasNextElement () do
                 let next = p.Read r "elem"
                 ra.Add next
 
