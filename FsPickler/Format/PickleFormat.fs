@@ -14,8 +14,11 @@
         abstract BeginWriteObject : typeInfo:TypeInfo -> picklerInfo:PicklerInfo -> tag:string -> objectFlags:ObjectFlags -> unit
         abstract EndWriteObject : unit -> unit
 
-        abstract BeginWriteList : tag:string -> length:int -> unit
-        abstract EndWriteList : unit-> unit
+        abstract BeginWriteBoundedSequence : length:int -> unit
+        abstract EndWriteBoundedSequence : unit -> unit
+
+        abstract BeginWriteUnBoundedSequence : unit -> unit
+        abstract WriteHasNextElement : hasNext:bool -> unit
         
         abstract WriteBoolean : tag:string -> value:bool -> unit
         abstract WriteByte : tag:string -> value:byte -> unit
@@ -42,7 +45,6 @@
 
         abstract WriteBigInteger : tag:string -> value:bigint -> unit
         abstract WriteBytes : tag:string -> value:byte [] -> unit
-//        abstract WriteBytesFixed : tag:string -> value:byte [] -> unit
 
         abstract IsPrimitiveArraySerializationSupported : bool
         abstract WritePrimitiveArray : tag:string -> value:Array -> unit
@@ -57,8 +59,11 @@
         abstract BeginReadObject : typeInfo:TypeInfo -> picklerInfo:PicklerInfo -> tag:string -> ObjectFlags
         abstract EndReadObject : unit -> unit
 
-        abstract BeginReadList : tag:string -> int
-        abstract EndReadList : unit -> unit
+        abstract BeginReadBoundedSequence : unit -> int
+        abstract EndReadBoundedSequence : unit -> unit
+
+        abstract BeginReadUnBoundedSequence : unit -> unit
+        abstract ReadHasNextElement : unit -> bool
         
         abstract ReadBoolean : tag:string -> bool
         abstract ReadByte : tag:string -> byte

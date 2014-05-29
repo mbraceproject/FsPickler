@@ -279,7 +279,7 @@
         public unsafe Guid ReadGuid()
         {
             TryFillBuffer();
-            Guid value;
+            Guid value = Guid.Empty;
             var i = idx;
 
             *(ulong*)&value =

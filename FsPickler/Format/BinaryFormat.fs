@@ -56,8 +56,11 @@
 
             member __.EndWriteRoot () = ()
 
-            member __.BeginWriteList _ length = bw.Write length
-            member __.EndWriteList () = ()
+            member __.BeginWriteBoundedSequence length = bw.Write length
+            member __.EndWriteBoundedSequence () = ()
+
+            member __.BeginWriteUnBoundedSequence () = ()
+            member __.WriteHasNextElement hasNext = bw.Write true
 
             member __.BeginWriteObject typeFlags picklerFlags tag objectFlags =
                 let header = createHeader typeFlags picklerFlags objectFlags
@@ -122,8 +125,11 @@
 
             member __.EndReadObject () = () 
 
-            member __.BeginReadList _ = br.ReadInt32 ()
-            member __.EndReadList () = ()
+            member __.BeginReadBoundedSequence () = br.ReadInt32 ()
+            member __.EndReadBoundedSequence () = ()
+
+            member __.BeginReadUnBoundedSequence () = ()
+            member __.ReadHasNextElement () = br.ReadBoolean ()
 
             member __.ReadBoolean _ = br.ReadBoolean()
             member __.ReadByte _ = br.ReadByte()
