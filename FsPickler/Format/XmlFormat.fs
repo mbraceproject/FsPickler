@@ -15,7 +15,7 @@
             (^XmlWriter : (member WriteValue : ^T -> unit) (w, value))
             (^XmlWriter : (member WriteEndElement : unit -> unit) w)
 
-        let (*inline*) readElementName (r : XmlReader) (tag : string) =
+        let inline readElementName (r : XmlReader) (tag : string) =
             while r.NodeType <> XmlNodeType.Element && r.Read() do ()
 
             if r.NodeType <> XmlNodeType.Element then
@@ -55,16 +55,29 @@
 
                 if ObjectFlags.hasFlag flags ObjectFlags.IsNull then 
                     writer.WriteAttributeString("null", "true")
-                if ObjectFlags.hasFlag flags ObjectFlags.IsProperSubtype then 
-                    writer.WriteAttributeString("subtype", "true")
-                if ObjectFlags.hasFlag flags ObjectFlags.IsCachedInstance then 
+                elif ObjectFlags.hasFlag flags ObjectFlags.IsCachedInstance then 
                     writer.WriteAttributeString("cached", "true")
-                if ObjectFlags.hasFlag flags ObjectFlags.IsCyclicInstance then 
+                elif ObjectFlags.hasFlag flags ObjectFlags.IsCyclicInstance then 
                     writer.WriteAttributeString("cyclic", "true")
-                if ObjectFlags.hasFlag flags ObjectFlags.IsSequenceHeader then 
+                elif ObjectFlags.hasFlag flags ObjectFlags.IsSequenceHeader then 
                     writer.WriteAttributeString("sequence", "true")
 
+                if ObjectFlags.hasFlag flags ObjectFlags.IsProperSubtype then 
+                    writer.WriteAttributeString("subtype", "true")
+
             member __.EndWriteObject () = writer.WriteEndElement()
+
+            member __.BeginWriteBoundedSequence (length : int) =
+                writer.WriteStartElement("seq")
+                writer.WriteAttributeString("length", string length)
+
+            member __.EndWriteBoundedSequence () =
+                writer.WriteEndElement ()
+
+            member __.BeginWriteUnBoundedSequence () =
+                writer.WriteStartElement ("seq")
+
+            member __.WriteHasNextElement hasNext = if not hasNext then writer.WriteEndElement()
 
             member __.WriteBoolean (tag : string) value = writePrimitive writer tag value
             member __.WriteByte (tag : string) value = writePrimitive writer tag (int value)
@@ -83,17 +96,27 @@
             member __.WriteDecimal (tag : string) value = writePrimitive writer tag value
 
             member __.WriteChar (tag : string) value = writePrimitive writer tag (string value)
-            member __.WriteString (tag : string) value = writePrimitive writer tag value
+            member __.WriteString (tag : string) value = 
+                if obj.ReferenceEquals(value, null) then
+                    writer.WriteStartElement(tag)
+                    writer.WriteAttributeString("null", "true")
+                    writer.WriteEndElement()
+                else
+                    writePrimitive writer tag value
+
+            member __.WriteBigInteger (tag : string) value = writePrimitive writer tag (value.ToString())
+
+            member __.WriteGuid (tag : string) value = writePrimitive writer tag (value.ToString())
+            member __.WriteDate (tag : string) value = writePrimitive writer tag value
+            member __.WriteTimeSpan (tag : string) value = writePrimitive writer tag (value.ToString())
 
             member __.WriteBytes (tag : string) value = 
                 writer.WriteStartElement(tag)
-                writer.WriteAttributeString("length", string value.Length)
-                writer.WriteBase64(value, 0, value.Length)
-                writer.WriteEndElement()
-
-            member __.WriteBytesFixed (tag : string) value = 
-                writer.WriteStartElement(tag)
-                writer.WriteBase64(value, 0, value.Length)
+                if obj.ReferenceEquals(value, null) then
+                    writer.WriteAttributeString("null", "true")
+                else
+                    writer.WriteAttributeString("length", string value.Length)
+                    writer.WriteBase64(value, 0, value.Length)
                 writer.WriteEndElement()
 
             member __.IsPrimitiveArraySerializationSupported = false
@@ -135,10 +158,11 @@
 
                 let mutable flags = ObjectFlags.None
                 if reader.["null"] = "true" then flags <- flags ||| ObjectFlags.IsNull
+                elif reader.["cached"] = "true" then flags <- flags ||| ObjectFlags.IsCachedInstance
+                elif reader.["cyclic"] = "true" then flags <- flags ||| ObjectFlags.IsCyclicInstance
+                elif reader.["sequence"] = "true" then flags <- flags ||| ObjectFlags.IsSequenceHeader
+                
                 if reader.["subtype"] = "true" then flags <- flags ||| ObjectFlags.IsProperSubtype
-                if reader.["cached"] = "true" then flags <- flags ||| ObjectFlags.IsCachedInstance
-                if reader.["cyclic"] = "true" then flags <- flags ||| ObjectFlags.IsCyclicInstance
-                if reader.["sequence"] = "true" then flags <- flags ||| ObjectFlags.IsSequenceHeader
 
                 if not reader.IsEmptyElement then
                     if not <| reader.Read() then
@@ -151,6 +175,34 @@
                     let _ = reader.Read() in ()
                 else
                     reader.ReadEndElement()
+
+            member __.BeginReadBoundedSequence () =
+                do readElementName reader "seq"
+                let length = reader.GetAttribute("length") |> int
+
+                if not reader.IsEmptyElement then
+                    if not <| reader.Read() then
+                        raise <| new EndOfStreamException()
+
+                length
+
+            member __.EndReadBoundedSequence () =
+                if reader.IsEmptyElement then
+                    let _ = reader.Read() in ()
+                else
+                    reader.ReadEndElement()
+
+            member __.BeginReadUnBoundedSequence () =
+                do readElementName reader "seq"
+
+                if not reader.IsEmptyElement then
+                    if not <| reader.Read() then
+                        raise <| new EndOfStreamException()
+
+            member __.ReadHasNextElement () =
+                if reader.NodeType <> XmlNodeType.EndElement then true
+                else
+                    reader.ReadEndElement() ; false
 
             member __.ReadBoolean tag = readElementName reader tag ; reader.ReadElementContentAsBoolean()
 
@@ -170,34 +222,36 @@
             member __.ReadDouble tag = readElementName reader tag ; reader.ReadElementContentAsDouble()
 
             member __.ReadChar tag = readElementName reader tag ; reader.ReadElementContentAsString().[0]
-            member __.ReadString tag = readElementName reader tag ; reader.ReadElementContentAsString()
+            member __.ReadBigInteger tag = readElementName reader tag ; reader.ReadElementContentAsString() |> System.Numerics.BigInteger.Parse
+            member __.ReadString tag = 
+                readElementName reader tag 
+                if reader.GetAttribute("null") = "true" then
+                    reader.Read() |> ignore
+                    null
+                else
+                    reader.ReadElementContentAsString()
+
+            member __.ReadGuid tag = readElementName reader tag ; reader.ReadElementContentAsString() |> Guid.Parse
+            member __.ReadDate tag = readElementName reader tag ; reader.ReadElementContentAsDateTime()
+            member __.ReadTimeSpan tag = readElementName reader tag ; reader.ReadElementContentAsString () |> TimeSpan.Parse
 
             member __.ReadBytes tag =
                 do readElementName reader tag
-                let length = reader.GetAttribute("length") |> int
-                let bytes = Array.zeroCreate<byte> length
-                do reader.Read() |> ignore
-                let n = reader.ReadContentAsBase64(bytes, 0, length)
-                if n < length then
-                    raise <| new EndOfStreamException()
-
-                if reader.NodeType = XmlNodeType.Text then
+                if reader.GetAttribute("null") = "true" then 
                     reader.Read() |> ignore
+                    null
+                else
+                    let length = reader.GetAttribute("length") |> int
+                    let bytes = Array.zeroCreate<byte> length
+                    do reader.Read() |> ignore
+                    let n = reader.ReadContentAsBase64(bytes, 0, length)
+                    if n < length then
+                        raise <| new EndOfStreamException()
 
-                bytes
+                    if reader.NodeType = XmlNodeType.Text then
+                        reader.Read() |> ignore
 
-            member __.ReadBytesFixed tag length =
-                do readElementName reader tag
-                let bytes = Array.zeroCreate<byte> length
-                do reader.Read() |> ignore
-                let n = reader.ReadContentAsBase64(bytes, 0, length)
-                if n < length then
-                    raise <| new EndOfStreamException()
-
-                if reader.NodeType = XmlNodeType.Text then
-                    reader.Read() |> ignore
-
-                bytes
+                    bytes
 
             member __.IsPrimitiveArraySerializationSupported = false
             member __.ReadPrimitiveArray _ _ = raise <| new NotImplementedException()

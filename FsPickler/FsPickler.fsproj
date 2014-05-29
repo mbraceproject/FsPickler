@@ -81,7 +81,7 @@
     <Compile Include="Format\ObjectHeader.fs" />
     <Compile Include="Format\PickleFormat.fs" />
     <Compile Include="Format\BinaryFormat.fs" />
-    <None Include="Format\XmlFormat.fs" />
+    <Compile Include="Format\XmlFormat.fs" />
     <None Include="Format\JsonFormat.fs" />
     <Compile Include="Picklers\Pickler.fs" />
     <Compile Include="Picklers\PrimitivePicklers.fs" />

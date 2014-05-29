@@ -16,7 +16,7 @@ open System.IO
 
 let file = "C:/Users/eirik/Desktop/"
 
-let toFile name (value : 'T) =
+let toFile<'T> name (value : 'T) =
     use fs = new FileStream(file + name + ".json", FileMode.Create, FileAccess.Write, FileShare.ReadWrite)
     fsp.Serialize(fs, value)
 
@@ -25,9 +25,10 @@ let ofFile<'T> name =
     fsp.Deserialize<'T>(fs)
 
 
-toFile "test" 1
+toFile<string> "test" null
+toFile "a" <@ 1 + 1 @>
 
-ofFile<int> "test"
+ofFile<string> "test"
 
 ofFile<Quotations.Expr<int>> "b"
 
