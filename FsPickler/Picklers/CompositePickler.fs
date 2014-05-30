@@ -158,26 +158,26 @@
 
             // writes a non-null instance of a reference type
 #if DEBUG
-            let writeObject flags =
+            let writeObject () =
 #else
-            let inline writeObject flags =
+            let inline writeObject () =
 #endif
                 if p.m_TypeInfo <= TypeInfo.Sealed || p.m_UseWithSubtypes then
-                    beginWriteObject tag flags
+                    beginWriteObject tag ObjectFlags.None
                     p.m_Writer state value
                     formatter.EndWriteObject ()
                 else
                     // object might be of proper subtype, perform reflection resolution
                     let t0 = value.GetType()
-                    if t0 <> typeof<'T> then
+                    if t0 <> p.Type then
                         let subPickler = state.PicklerResolver.Resolve t0
-                        beginWriteObject tag (flags ||| ObjectFlags.IsProperSubtype)
+                        beginWriteObject tag ObjectFlags.IsProperSubtype
                         state.TypePickler.Write state "subtype" t0
                         state.NextObjectIsSubtype <- true
                         subPickler.UntypedWrite state tag value
                         formatter.EndWriteObject ()
                     else
-                        beginWriteObject tag flags
+                        beginWriteObject tag ObjectFlags.None
                         p.m_Writer state value
                         formatter.EndWriteObject ()
 
@@ -208,12 +208,12 @@
                             // push id to the symbolic stack to detect cyclic objects during traversal
                             objStack.Push id
 
-                            writeObject ObjectFlags.None
+                            writeObject ()
 
                             objStack.Pop () |> ignore
                             cyclicObjects.Remove id |> ignore
                         else
-                            writeObject ObjectFlags.None
+                            writeObject ()
 
                     elif p.m_IsRecursiveType && objStack.Contains id && not <| cyclicObjects.Contains id then
                         // came across cyclic object, record fixup-related data
@@ -232,7 +232,7 @@
 
                             if t.IsArray then
                                 beginWriteObject tag ObjectFlags.IsCachedInstance
-                            elif t <> typeof<'T> then
+                            elif t <> p.Type then
                                 beginWriteObject tag (ObjectFlags.IsCyclicInstance ||| ObjectFlags.IsProperSubtype)
                                 state.TypePickler.Write state "subtype" t
                             else
@@ -245,7 +245,7 @@
                         formatter.WriteInt64 "id" id
                         formatter.EndWriteObject()
                 else
-                    writeObject ObjectFlags.None
+                    writeObject ()
 
             with 
             | :? SerializationException -> reraise ()
