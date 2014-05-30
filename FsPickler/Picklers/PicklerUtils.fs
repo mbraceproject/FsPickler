@@ -106,7 +106,7 @@
 #if DEBUG
     let writeBoundedPairSequence (w : WriteState) (kp : Pickler<'K>) (vp : Pickler<'V>) tag (length : int) (xs : ('K * 'V) seq) =
 #else
-    let inline writeBoundedPairSequence (w : WriteState) (kp : Pickler<'K>) (vp : Pickler<'V>) (length : int) (xs : ('K * 'V) seq) =
+    let inline writeBoundedPairSequence (w : WriteState) (kp : Pickler<'K>) (vp : Pickler<'V>) tag (length : int) (xs : ('K * 'V) seq) =
 #endif
         w.Formatter.BeginWriteBoundedSequence tag length
         for k,v in xs do
@@ -117,7 +117,7 @@
 #if DEBUG
     let readBoundedPairSequence (r : ReadState) (kp : Pickler<'K>) (vp : Pickler<'V>) tag =
 #else
-    let inline readBoundedPairSequence (r : ReadState) (kp : Pickler<'K>) (vp : Pickler<'V>) =
+    let inline readBoundedPairSequence (r : ReadState) (kp : Pickler<'K>) (vp : Pickler<'V>) tag =
 #endif
         let length = r.Formatter.BeginReadBoundedSequence tag
         let xs = Array.zeroCreate<'K * 'V> length
