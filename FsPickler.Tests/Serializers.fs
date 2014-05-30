@@ -96,9 +96,26 @@
             inherit MemoryStream()
             override __.Close() = ()
 
+#if CREATE_FILE
+        open System
+        open System.IO
+
+        let desktop = Environment.GetFolderPath Environment.SpecialFolder.Desktop
+        let folder = Path.Combine(desktop, "fspickles")
+        if not <| Directory.Exists(folder) then Directory.CreateDirectory folder |> ignore
+        let pickleCount = ref 0
+        let getFile<'T> () =
+            let id = System.Threading.Interlocked.Increment pickleCount
+            Path.Combine(folder, sprintf "%s-%d.txt" (typeof<'T>.FullName.Split('`').[0]) id)
+#endif
+
         let roundtrip (x : 'T) (s : ISerializer) =
             use m = new ImmortalMemoryStream()
             s.Serialize(m, x)
+#if CREATE_FILE
+            use fs = File.OpenWrite(getFile<'T> ())
+            m.CopyTo(fs)
+#endif
             m.Position <- 0L
             s.Deserialize<'T> m
 
