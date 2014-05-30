@@ -113,6 +113,7 @@
             use m = new ImmortalMemoryStream()
             s.Serialize(m, x)
 #if CREATE_FILE
+            m.Position <- 0L
             use fs = File.OpenWrite(getFile<'T> ())
             m.CopyTo(fs)
 #endif
