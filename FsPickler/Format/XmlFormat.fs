@@ -63,7 +63,7 @@
                     writer.WriteAttributeString("sequence", "true")
 
                 if ObjectFlags.hasFlag flags ObjectFlags.IsProperSubtype then 
-                    writer.WriteAttributeString("subtype", "true")
+                    writer.WriteAttributeString("isSubtype", "true")
 
             member __.EndWriteObject () = writer.WriteEndElement()
 
@@ -157,12 +157,12 @@
                 do readElementName reader tag
 
                 let mutable flags = ObjectFlags.None
-                if reader.["null"] = "true" then flags <- flags ||| ObjectFlags.IsNull
-                elif reader.["cached"] = "true" then flags <- flags ||| ObjectFlags.IsCachedInstance
-                elif reader.["cyclic"] = "true" then flags <- flags ||| ObjectFlags.IsCyclicInstance
-                elif reader.["sequence"] = "true" then flags <- flags ||| ObjectFlags.IsSequenceHeader
+                if reader.["null"] = "true" then flags <- ObjectFlags.IsNull
+                elif reader.["cached"] = "true" then flags <- ObjectFlags.IsCachedInstance
+                elif reader.["cyclic"] = "true" then flags <- ObjectFlags.IsCyclicInstance
+                elif reader.["sequence"] = "true" then flags <- ObjectFlags.IsSequenceHeader
                 
-                if reader.["subtype"] = "true" then flags <- flags ||| ObjectFlags.IsProperSubtype
+                if reader.["isSubtype"] = "true" then flags <- flags ||| ObjectFlags.IsProperSubtype
 
                 if not reader.IsEmptyElement then
                     if not <| reader.Read() then

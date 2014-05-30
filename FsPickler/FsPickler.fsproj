@@ -20,7 +20,7 @@
     <Optimize>false</Optimize>
     <Tailcalls>false</Tailcalls>
     <OutputPath Condition="'$(OutputPath)' == ''">bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;OPTIMIZE_FSHARP;PROTECT_STACK_OVERFLOWS;EMIT_IL</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;OPTIMIZE_FSHARP;PROTECT_STACK_OVERFLOWS;</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\Debug\FsPickler.xml</DocumentationFile>
     <OtherFlags>

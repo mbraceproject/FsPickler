@@ -12,6 +12,7 @@ let loop(x : 'T) =
     let bytes = fsp.Pickle x
     fsp.UnPickle<'T> bytes
 
+open System
 open System.IO
 
 let file = "C:/Users/eirik/Desktop/"
@@ -20,16 +21,17 @@ let toFile<'T> name (value : 'T) =
     use fs = new FileStream(file + name + ".json", FileMode.Create, FileAccess.Write, FileShare.ReadWrite)
     fsp.Serialize(fs, value)
 
-let ofFile<'T> name =
+let ofFile<'T> name (value : 'T) =
     use fs = File.OpenRead (file + name + ".json")
     fsp.Deserialize<'T>(fs)
 
-toFile<int list> "test" [1..100]
+let c = Activator.CreateInstance<System.Globalization.JapaneseLunisolarCalendar>()
+
+toFile "test" c
+ofFile "test" c
+
 toFile "a" <@ 1 + 1 @>
-
-ofFile<int> "test"
-
-ofFile<Quotations.Expr<int>> "b"
+ofFile "a" <@ 1 + 1 @>
 
 #time
 
