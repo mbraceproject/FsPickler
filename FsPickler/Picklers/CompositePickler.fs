@@ -347,4 +347,4 @@
             new CompositePickler<'T>(reader, writer, None, picklerInfo, cacheByRef, useWithSubtypes) :> Pickler<'T>
 
         static member ObjectPickler =
-            CompositePickler.Create<obj>((fun _ -> obj ()), (fun _ _ -> ()), PicklerInfo.Object, true, false)
+            CompositePickler.Create<obj>((fun _ -> obj ()), (fun _ _ -> ()), PicklerInfo.Object, cacheByRef = true, useWithSubtypes = false)

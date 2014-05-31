@@ -10,6 +10,36 @@
 
     module private JsonUtils =
 
+        let inline mkFlagCsv (flags : ObjectFlags) =
+            let tokens = new ResizeArray<string>()
+            if ObjectFlags.hasFlag flags ObjectFlags.IsCachedInstance then
+                tokens.Add "cached"
+
+            if ObjectFlags.hasFlag flags ObjectFlags.IsCyclicInstance then
+                tokens.Add "cyclic"
+
+            if ObjectFlags.hasFlag flags ObjectFlags.IsProperSubtype then
+                tokens.Add "subtype"
+
+            if ObjectFlags.hasFlag flags ObjectFlags.IsSequenceHeader then
+                tokens.Add "sequence"
+
+            String.concat "," tokens
+
+        let inline parseFlagCsv (csv : string) =
+            let mutable flags = ObjectFlags.None
+            let tokens = csv.Split(',')
+            for t in tokens do
+                match t with
+                | "cached" -> flags <- flags ||| ObjectFlags.IsCachedInstance
+                | "cyclic" -> flags <- flags ||| ObjectFlags.IsCyclicInstance
+                | "subtype" -> flags <- flags ||| ObjectFlags.IsProperSubtype
+                | "sequence" -> flags <- flags ||| ObjectFlags.IsSequenceHeader
+                | _ -> raise <| new InvalidDataException(sprintf "invalid pickle flag '%s'." t)
+
+            flags
+                
+
         let inline invalidFormat () = raise <| new InvalidDataException("invalid json format.")
 
         let inline writePrimitive (jsonWriter : ^JsonWriter) ignoreName (name : string) (value : ^T) =
@@ -100,15 +130,22 @@
                     jsonWriter.WriteStartObject()
                     depth <- depth + 1
 
-                    if ObjectFlags.hasFlag flags ObjectFlags.IsCachedInstance then
-                        writePrimitive jsonWriter false "cached" true
-                    elif ObjectFlags.hasFlag flags ObjectFlags.IsCyclicInstance then
-                        writePrimitive jsonWriter false "cyclic" true
-                    elif ObjectFlags.hasFlag flags ObjectFlags.IsSequenceHeader then
-                        writePrimitive jsonWriter false "sequence" true
+                    if flags = ObjectFlags.None then ()
+                    else
+                        let flagCsv = mkFlagCsv flags
+                        writePrimitive jsonWriter false "pickle flags" flagCsv
 
-                    if ObjectFlags.hasFlag  flags ObjectFlags.IsProperSubtype then
-                        writePrimitive jsonWriter false "isSubtype" true
+
+
+//                    if ObjectFlags.hasFlag flags ObjectFlags.IsCachedInstance then
+//                        writePrimitive jsonWriter false "cached" true
+//                    elif ObjectFlags.hasFlag flags ObjectFlags.IsCyclicInstance then
+//                        writePrimitive jsonWriter false "cyclic" true
+//                    elif ObjectFlags.hasFlag flags ObjectFlags.IsSequenceHeader then
+//                        writePrimitive jsonWriter false "sequence" true
+//
+//                    if ObjectFlags.hasFlag  flags ObjectFlags.IsProperSubtype then
+//                        writePrimitive jsonWriter false "isSubtype" true
 
             member __.EndWriteObject () = 
                 if currentValueIsNull then 
@@ -224,40 +261,13 @@
                     currentValueIsNull <- true
                     ObjectFlags.IsNull
                 else
-                    let mutable objectFlags = ObjectFlags.None
-
-                    // peek next properties for object flags
-
-                    match jsonReader.ValueAs<string> () with
-                    | "cached" ->
+                    if jsonReader.ValueAs<string> () = "pickle flags" then
                         jsonReader.MoveNext()
-                        if jsonReader.ValueAs<bool> () then
-                            objectFlags <- ObjectFlags.IsCachedInstance
+                        let csvFlags = jsonReader.ValueAs<string>()
                         jsonReader.MoveNext()
-
-                    | "cyclic" ->
-                        jsonReader.MoveNext()
-                        if jsonReader.ValueAs<bool> () then
-                            objectFlags <- ObjectFlags.IsCyclicInstance
-                        jsonReader.MoveNext()
-
-                    | "sequence" ->
-                        jsonReader.MoveNext()
-                        if jsonReader.ValueAs<bool> () then
-                            objectFlags <- ObjectFlags.IsSequenceHeader
-                        jsonReader.MoveNext()
-                    | _ -> ()
-
-                    match jsonReader.ValueAs<string> () with
-                    | "isSubtype" ->
-                        jsonReader.MoveNext()
-                        if jsonReader.ValueAs<bool> () then
-                            objectFlags <- objectFlags ||| ObjectFlags.IsProperSubtype
-                        jsonReader.MoveNext()
-
-                    | _ -> ()
-
-                    objectFlags
+                        parseFlagCsv csvFlags
+                    else
+                        ObjectFlags.None
 
             member __.EndReadObject () =
                 depth <- depth - 1
