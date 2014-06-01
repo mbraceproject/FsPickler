@@ -91,7 +91,6 @@
     <Compile Include="PicklerBase\PicklerUtils.fs" />
     <Compile Include="PicklerBase\ReflectionPicklers.fs" />
     <Compile Include="PicklerGeneration\TypeShape.fs" />
-    <Compile Include="PicklerGeneration\GenerationTypes.fs" />
     <Compile Include="PicklerGeneration\PicklerEmit.fs" />
     <Compile Include="PicklerGeneration\DotNetPicklers.fs" />
     <Compile Include="PicklerGeneration\ArrayPicklers.fs" />
