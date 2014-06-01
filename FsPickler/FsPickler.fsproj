@@ -83,13 +83,15 @@
     <Compile Include="Format\BinaryFormat.fs" />
     <Compile Include="Format\XmlFormat.fs" />
     <Compile Include="Format\JsonFormat.fs" />
+    <Compile Include="Picklers\Types.fs" />
+    <Compile Include="Picklers\TypeCache.fs" />
     <Compile Include="Picklers\Pickler.fs" />
     <Compile Include="Picklers\PrimitivePicklers.fs" />
     <Compile Include="Picklers\CompositePickler.fs" />
-    <Compile Include="Picklers\Types.fs" />
     <Compile Include="Picklers\PicklerUtils.fs" />
     <Compile Include="Picklers\PicklerEmit.fs" />
     <Compile Include="Picklers\ReflectionPicklers.fs" />
+    <Compile Include="Picklers\GenerationTypes.fs" />
     <Compile Include="Picklers\DotNetPicklers.fs" />
     <Compile Include="Picklers\ArrayPickler.fs" />
     <Compile Include="Picklers\FSharpPicklers.fs" />
@@ -98,6 +100,7 @@
     <Compile Include="PicklerGeneration\TypeShape.fs" />
     <Compile Include="PicklerGeneration\PicklerResolution.fs" />
     <Compile Include="PicklerGeneration\PicklerCache.fs" />
+    <Compile Include="RootObjectSerialization.fs" />
     <Compile Include="FsPickler.fs" />
     <Compile Include="Combinators.fs" />
     <Compile Include="ExtensionMethods.fs" />

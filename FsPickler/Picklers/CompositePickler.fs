@@ -18,7 +18,7 @@
         val mutable private m_Writer : WriteState -> 'T -> unit
         val mutable private m_Reader : ReadState -> 'T
 
-        val mutable private m_TypeInfo : TypeInfo
+        val mutable private m_TypeInfo : TypeKind
         val mutable private m_PicklerInfo : PicklerInfo
 
         val mutable private m_IsRecursiveType : bool
@@ -162,7 +162,7 @@
 #else
             let inline writeObject () =
 #endif
-                if p.m_TypeInfo <= TypeInfo.Sealed || p.m_UseWithSubtypes then
+                if p.m_TypeInfo <= TypeKind.Sealed || p.m_UseWithSubtypes then
                     beginWriteObject tag ObjectFlags.None
                     p.m_Writer state value
                     formatter.EndWriteObject ()
@@ -182,7 +182,7 @@
                         formatter.EndWriteObject ()
 
             try
-                if p.m_TypeInfo = TypeInfo.Value then
+                if p.m_TypeInfo = TypeKind.Value then
                     beginWriteObject tag ObjectFlags.None
                     p.m_Writer state value
                     formatter.EndWriteObject ()
@@ -222,10 +222,10 @@
 
                         do cyclicObjects.Add(id) |> ignore
                     
-                        if p.m_TypeInfo = TypeInfo.Array then
+                        if p.m_TypeInfo = TypeKind.Array then
                             beginWriteObject tag ObjectFlags.IsCachedInstance
 
-                        elif p.m_TypeInfo <= TypeInfo.Sealed || p.m_UseWithSubtypes then
+                        elif p.m_TypeInfo <= TypeKind.Sealed || p.m_UseWithSubtypes then
                             beginWriteObject tag ObjectFlags.IsCyclicInstance
                         else
                             let t = value.GetType()
@@ -276,7 +276,7 @@
                     formatter.EndReadObject ()
                     fastUnbox<'T> null
 
-                elif p.m_TypeInfo = TypeInfo.Value then 
+                elif p.m_TypeInfo = TypeKind.Value then 
                     let value = p.m_Reader state
                     formatter.EndReadObject ()
                     value
@@ -309,7 +309,7 @@
                 elif p.m_IsCacheByRef || p.m_IsRecursiveType then
                     let isArray = 
                         match p.m_TypeInfo with
-                        | TypeInfo.Array | TypeInfo.ArrayCompatible -> true
+                        | TypeKind.Array | TypeKind.ArrayCompatible -> true
                         | _ -> false
 
                     let id = state.GetObjectId(isArray)

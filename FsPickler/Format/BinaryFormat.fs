@@ -22,17 +22,17 @@
         [<Literal>]
         let initByte = 130uy
 
-        let inline createHeader (typeInfo : TypeInfo) (picklerInfo : PicklerInfo) (flags : ObjectFlags) =
+        let inline createHeader (typeInfo : TypeKind) (picklerInfo : PicklerInfo) (flags : ObjectFlags) =
             uint32 initByte 
             ||| (uint32 typeInfo <<< 8) 
             ||| (uint32 picklerInfo <<< 16) 
             ||| (uint32 flags <<< 24)
 
-        let inline readHeader (typeInfo : TypeInfo) (picklerInfo : PicklerInfo) (header : uint32) =
+        let inline readHeader (typeInfo : TypeKind) (picklerInfo : PicklerInfo) (header : uint32) =
             if byte header <> initByte then
                 raise <| new InvalidDataException("invalid stream data.")
 
-            let streamTypeInfo = header >>> 8 |> byte |> EnumOfValue<byte, TypeInfo>
+            let streamTypeInfo = header >>> 8 |> byte |> EnumOfValue<byte, TypeKind>
             if streamTypeInfo <> typeInfo then
                 let message = sprintf "expected '%O', was '%O'." typeInfo streamTypeInfo
                 raise <| new SerializationException(message)

@@ -45,3 +45,80 @@ for i = 0 to 100 do
     fsp.ComputeHash(value, hashFactory = fnv) |> ignore
 for i = 0 to 100 do
     value.GetHashCode() |> ignore
+
+
+
+open System
+open System.Reflection
+open System.Globalization
+
+type TypeInfo =
+    {
+        Name : string
+        AssemblyInfo : AssemblyInfo
+    }
+
+and AssemblyInfo =
+    {
+        Name : string
+        Version : string
+        Culture : string
+        PublicKeyToken : byte []
+    }
+with
+    static member Copy (aI : AssemblyInfo) = { aI with Name = if true then aI.Name else "" }
+    static member OfAssemblyName(an : AssemblyName) =
+        {
+            Name = an.Name
+            Version = an.Version.ToString()
+            Culture = an.CultureInfo.Name
+            PublicKeyToken = an.GetPublicKeyToken()
+        }
+
+    static member ToAssemblyName(aI : AssemblyInfo) =
+        let an = new AssemblyName()
+
+        an.Name <- aI.Name
+
+        match aI.Version with
+        | null | "" -> ()
+        | version -> an.Version <- new Version(version)
+                
+        match aI.Culture with
+        | null -> ()
+        | culture -> an.CultureInfo <- new CultureInfo(culture)
+
+        match aI.PublicKeyToken with
+        | null -> ()
+        | pkt -> an.SetPublicKeyToken(pkt)
+
+        an
+
+#time
+
+let aI = AssemblyInfo.OfAssemblyName <| typeof<int>.Assembly.GetName()
+
+for i = 1 to 10000 do
+    aI |> AssemblyInfo.Copy |> AssemblyInfo.Copy |> ignore
+
+for i = 1 to 10000 do
+    aI |> AssemblyInfo.ToAssemblyName |> AssemblyInfo.OfAssemblyName |> ignore
+
+open System
+
+type Foo =
+    static member Test<'T>() = ()
+    static member Test<'T>(t : 'T option list) = t.ToString()
+
+let ms =
+    typeof<Foo>.GetMethods() 
+    |> Array.filter (fun m -> m.Name = "Test" && m.IsGenericMethodDefinition && m.GetGenericArguments().[0].Name = "T")
+    |> Array.sortBy (fun m -> m.ToString())
+
+ms.[0].ToString()
+
+type FooAttribute(t : Type) =
+    inherit Attribute()
+
+[<Foo(typeof<int>)>]
+type Bar() = class end

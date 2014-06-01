@@ -34,105 +34,105 @@
 
     [<AutoSerializable(false)>]
     type BooleanPickler () =
-        inherit PrimitivePickler<bool> (TypeInfo.Primitive, true)
+        inherit PrimitivePickler<bool> (TypeKind.Primitive, true)
 
         override __.Write (writer : WriteState) (tag : string) (b : bool) = writer.Formatter.WriteBoolean tag b
         override __.Read (reader : ReadState) (tag : string) = reader.Formatter.ReadBoolean tag
 
     [<AutoSerializable(false)>]
     type BytePickler () =
-        inherit PrimitivePickler<byte> (TypeInfo.Primitive, true)
+        inherit PrimitivePickler<byte> (TypeKind.Primitive, true)
 
         override __.Write (writer : WriteState) (tag : string) (b : byte) = writer.Formatter.WriteByte tag b
         override __.Read (reader : ReadState) (tag : string) = reader.Formatter.ReadByte tag
 
     [<AutoSerializable(false)>]
     type SBytePickler () =
-        inherit PrimitivePickler<sbyte> (TypeInfo.Primitive, true)
+        inherit PrimitivePickler<sbyte> (TypeKind.Primitive, true)
 
         override __.Write (writer : WriteState) (tag : string) (b : sbyte) = writer.Formatter.WriteSByte tag b
         override __.Read (reader : ReadState) (tag : string) = reader.Formatter.ReadSByte tag
 
     [<AutoSerializable(false)>]
     type Int16Pickler () =
-        inherit PrimitivePickler<int16> (TypeInfo.Primitive, true)
+        inherit PrimitivePickler<int16> (TypeKind.Primitive, true)
 
         override __.Write (writer : WriteState) (tag : string) (n : int16) = writer.Formatter.WriteInt16 tag n
         override __.Read (reader : ReadState) (tag : string) = reader.Formatter.ReadInt16 tag
 
     [<AutoSerializable(false)>]
     type Int32Pickler () =
-        inherit PrimitivePickler<int32> (TypeInfo.Primitive, true)
+        inherit PrimitivePickler<int32> (TypeKind.Primitive, true)
 
         override __.Write (writer : WriteState) (tag : string) (n : int32) = writer.Formatter.WriteInt32 tag n
         override __.Read (reader : ReadState) (tag : string) = reader.Formatter.ReadInt32 tag
 
     [<AutoSerializable(false)>]
     type Int64Pickler () =
-        inherit PrimitivePickler<int64> (TypeInfo.Primitive, true)
+        inherit PrimitivePickler<int64> (TypeKind.Primitive, true)
 
         override __.Write (writer : WriteState) (tag : string) (n : int64) = writer.Formatter.WriteInt64 tag n
         override __.Read (reader : ReadState) (tag : string) = reader.Formatter.ReadInt64 tag
 
     [<AutoSerializable(false)>]
     type UInt16Pickler () =
-        inherit PrimitivePickler<uint16> (TypeInfo.Primitive, true)
+        inherit PrimitivePickler<uint16> (TypeKind.Primitive, true)
 
         override __.Write (writer : WriteState) (tag : string) (n : uint16) = writer.Formatter.WriteUInt16 tag n
         override __.Read (reader : ReadState) (tag : string) = reader.Formatter.ReadUInt16 tag
 
     [<AutoSerializable(false)>]
     type UInt32Pickler () =
-        inherit PrimitivePickler<uint32> (TypeInfo.Primitive, true)
+        inherit PrimitivePickler<uint32> (TypeKind.Primitive, true)
 
         override __.Write (writer : WriteState) (tag : string) (n : uint32) = writer.Formatter.WriteUInt32 tag n
         override __.Read (reader : ReadState) (tag : string) = reader.Formatter.ReadUInt32 tag
 
     [<AutoSerializable(false)>]
     type UInt64Pickler () =
-        inherit PrimitivePickler<uint64> (TypeInfo.Primitive, true)
+        inherit PrimitivePickler<uint64> (TypeKind.Primitive, true)
 
         override __.Write (writer : WriteState) (tag : string) (n : uint64) = writer.Formatter.WriteUInt64 tag n
         override __.Read (reader : ReadState) (tag : string) = reader.Formatter.ReadUInt64 tag
 
     [<AutoSerializable(false)>]
     type SinglePickler () =
-        inherit PrimitivePickler<single> (TypeInfo.Primitive, true)
+        inherit PrimitivePickler<single> (TypeKind.Primitive, true)
 
         override __.Write (writer : WriteState) (tag : string) (f : single) = writer.Formatter.WriteSingle tag f
         override __.Read (reader : ReadState) (tag : string) = reader.Formatter.ReadSingle tag
 
     [<AutoSerializable(false)>]
     type DoublePickler () =
-        inherit PrimitivePickler<double> (TypeInfo.Primitive, true)
+        inherit PrimitivePickler<double> (TypeKind.Primitive, true)
 
         override __.Write (writer : WriteState) (tag : string) (f : double) = writer.Formatter.WriteDouble tag f
         override __.Read (reader : ReadState) (tag : string) = reader.Formatter.ReadDouble tag
 
     [<AutoSerializable(false)>]
     type DecimalPickler () =
-        inherit PrimitivePickler<decimal> (TypeInfo.Primitive, true)
+        inherit PrimitivePickler<decimal> (TypeKind.Primitive, true)
 
         override __.Write (writer : WriteState) (tag : string) (d : decimal) = writer.Formatter.WriteDecimal tag d
         override __.Read (reader : ReadState) (tag : string) = reader.Formatter.ReadDecimal tag
 
     [<AutoSerializable(false)>]
     type CharPickler () =
-        inherit PrimitivePickler<char> (TypeInfo.Primitive, true)
+        inherit PrimitivePickler<char> (TypeKind.Primitive, true)
 
         override __.Write (writer : WriteState) (tag : string) (c : char) = writer.Formatter.WriteChar tag c
         override __.Read (reader : ReadState) (tag : string) = reader.Formatter.ReadChar tag
 
     [<AutoSerializable(false)>]
     type StringPickler () =
-        inherit PrimitivePickler<string> (TypeInfo.String, false)
+        inherit PrimitivePickler<string> (TypeKind.String, false)
 
         override __.Write (writer : WriteState) (tag : string) (s : string) = writer.Formatter.WriteString tag s
         override __.Read (reader : ReadState) (tag : string) = reader.Formatter.ReadString tag
 
     [<AutoSerializable(false)>]
     type ByteArrayPickler () =
-        inherit PrimitivePickler<byte []> (TypeInfo.Array, false)
+        inherit PrimitivePickler<byte []> (TypeKind.Array, false)
 
         override __.Write (writer : WriteState) (tag : string) (bytes : byte []) = writer.Formatter.WriteBytes tag bytes
         override __.Read (reader : ReadState) (tag : string) = reader.Formatter.ReadBytes tag
@@ -179,28 +179,28 @@
 
     [<AutoSerializable(false)>]
     type DBNullPickler () =
-        inherit PrimitivePickler<DBNull> (TypeInfo.Sealed, true)
+        inherit PrimitivePickler<DBNull> (TypeKind.Sealed, true)
 
         override __.Write (writer : WriteState) (tag : string) (_ : DBNull) =
-            writer.Formatter.BeginWriteObject TypeInfo.Sealed PicklerInfo.Primitive tag ObjectFlags.IsNull
+            writer.Formatter.BeginWriteObject TypeKind.Sealed PicklerInfo.Primitive tag ObjectFlags.IsNull
             writer.Formatter.EndWriteObject ()
 
         override __.Read (reader : ReadState) (tag : string) =
-            let _ = reader.Formatter.BeginReadObject TypeInfo.Sealed PicklerInfo.Primitive tag
+            let _ = reader.Formatter.BeginReadObject TypeKind.Sealed PicklerInfo.Primitive tag
             reader.Formatter.EndReadObject ()
             DBNull.Value
 
     [<AutoSerializable(false)>]
     type private UnitPickler<'T> (value : 'T) =
         // UnitPickler generic due to a bug in F# compiler: cannot explicitly instantiate Pickler<unit>
-        inherit PrimitivePickler<'T> (TypeInfo.Sealed, true)
+        inherit PrimitivePickler<'T> (TypeKind.Sealed, true)
 
         override __.Write (writer : WriteState) (tag : string) (_ : 'T) = 
-            writer.Formatter.BeginWriteObject TypeInfo.Sealed PicklerInfo.Primitive tag ObjectFlags.IsNull
+            writer.Formatter.BeginWriteObject TypeKind.Sealed PicklerInfo.Primitive tag ObjectFlags.IsNull
             writer.Formatter.EndWriteObject ()
 
         override __.Read (reader : ReadState) (tag : string) : 'T =
-            let _ = reader.Formatter.BeginReadObject TypeInfo.Sealed PicklerInfo.Primitive tag
+            let _ = reader.Formatter.BeginReadObject TypeKind.Sealed PicklerInfo.Primitive tag
             reader.Formatter.EndReadObject ()
             value
 

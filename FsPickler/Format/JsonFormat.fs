@@ -118,7 +118,7 @@
 
             member __.EndWriteRoot () = jsonWriter.WriteEnd()
 
-            member __.BeginWriteObject (_ : TypeInfo) (_ : PicklerInfo) (tag : string) (flags : ObjectFlags) =
+            member __.BeginWriteObject (_ : TypeKind) (_ : PicklerInfo) (tag : string) (flags : ObjectFlags) =
 
                 if not <| isArrayElement () then
                     jsonWriter.WritePropertyName tag
@@ -134,18 +134,6 @@
                     else
                         let flagCsv = mkFlagCsv flags
                         writePrimitive jsonWriter false "pickle flags" flagCsv
-
-
-
-//                    if ObjectFlags.hasFlag flags ObjectFlags.IsCachedInstance then
-//                        writePrimitive jsonWriter false "cached" true
-//                    elif ObjectFlags.hasFlag flags ObjectFlags.IsCyclicInstance then
-//                        writePrimitive jsonWriter false "cyclic" true
-//                    elif ObjectFlags.hasFlag flags ObjectFlags.IsSequenceHeader then
-//                        writePrimitive jsonWriter false "sequence" true
-//
-//                    if ObjectFlags.hasFlag  flags ObjectFlags.IsProperSubtype then
-//                        writePrimitive jsonWriter false "isSubtype" true
 
             member __.EndWriteObject () = 
                 if currentValueIsNull then 
@@ -249,7 +237,7 @@
 
             member __.EndReadRoot () = jsonReader.Read() |> ignore
 
-            member __.BeginReadObject (_ : TypeInfo) (_ : PicklerInfo) (tag : string) =
+            member __.BeginReadObject (_ : TypeKind) (_ : PicklerInfo) (tag : string) =
                 
                 if not <| isArrayElement () then
                     jsonReader.ReadProperty tag

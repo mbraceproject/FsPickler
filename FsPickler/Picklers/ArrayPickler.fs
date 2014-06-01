@@ -28,7 +28,7 @@
             let writer (w : WriteState) (array : 'Array) =
                 // check if array is to be serialized using formatter support
                 let isPrimitiveSerialized = 
-                    ep.TypeInfo = TypeInfo.Primitive && w.Formatter.IsPrimitiveArraySerializationSupported
+                    ep.TypeInfo = TypeKind.Primitive && w.Formatter.IsPrimitiveArraySerializationSupported
 
                 // write initial array data
                 let lengths =
@@ -83,7 +83,7 @@
             let reader (r : ReadState) =
                 // check if array is to be deserialized using formatter support
                 let isPrimitiveDeserialized = 
-                    ep.TypeInfo = TypeInfo.Primitive && r.Formatter.IsPrimitiveArraySerializationSupported
+                    ep.TypeInfo = TypeKind.Primitive && r.Formatter.IsPrimitiveArraySerializationSupported
                 
                 // read initial array data
                 let lengths =

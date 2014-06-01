@@ -290,7 +290,7 @@
 
             | [| m |] ->
                 let pickler = m.GuardedInvoke(pf, [| dummyResolver :> obj |]) :?> Pickler
-                if pickler.TypeInfo = TypeInfo.Primitive then
+                if pickler.TypeInfo = TypeKind.Primitive then
                     raise <| new PicklerFactoryException(pf, "defining custom picklers for primitives not supported.")
                 let shape = TypeShape.OfType pickler.Type
 

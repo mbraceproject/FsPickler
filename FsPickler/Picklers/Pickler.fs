@@ -6,6 +6,8 @@
     open System.IO
     open System.Runtime.Serialization
 
+    open Nessos.FsPickler.TypeCache
+
     [<AutoSerializable(false)>]
     [<AbstractClass>]
     type Pickler internal () =
@@ -15,7 +17,7 @@
         abstract Type : Type
         abstract ImplementationType : Type
 
-        abstract TypeInfo : TypeInfo
+        abstract TypeInfo : TypeKind
         abstract PicklerInfo : PicklerInfo
 
         abstract IsRecursiveType : bool
@@ -56,9 +58,10 @@
         abstract Resolve : Type -> Pickler
         abstract Resolve<'T> : unit -> Pickler<'T>
 
-    and [<AutoSerializable(false)>] WriteState internal (stream : Stream, formatP : IPickleFormatProvider, resolver : IPicklerResolver, ?streamingContext) =
+    and [<AutoSerializable(false)>] 
+        WriteState internal (formatter : IPickleFormatWriter, resolver : IPicklerResolver, 
+                                reflectionCache : ReflectionCache, ?streamingContext) =
 
-        let formatter = formatP.CreateWriter stream
         let tyPickler = resolver.Resolve<Type> ()
 
         let sc = match streamingContext with None -> new StreamingContext() | Some sc -> sc
@@ -71,6 +74,7 @@
         member internal __.PicklerResolver = resolver
         member __.StreamingContext = sc
         member internal __.Formatter = formatter
+        member internal __.ReflectionCache = reflectionCache
         member internal __.TypePickler = tyPickler
         member internal __.ObjectIdGenerator = idGen
         member internal __.ResetCounters () = 
@@ -86,9 +90,10 @@
         interface IDisposable with
             member __.Dispose () = formatter.Dispose()
 
-    and [<AutoSerializable(false)>] ReadState internal (stream : Stream, formatP : IPickleFormatProvider, resolver : IPicklerResolver, ?streamingContext) =
+    and [<AutoSerializable(false)>] 
+        ReadState internal (formatter : IPickleFormatReader, resolver : IPicklerResolver, 
+                                reflectionCache : ReflectionCache, ?streamingContext) =
         
-        let formatter = formatP.CreateReader stream
         let sc = match streamingContext with None -> new StreamingContext() | Some sc -> sc
         let mutable nextObjectIsSubtype = false
         let mutable nextObjectId = 1L
@@ -100,6 +105,7 @@
         member internal __.PicklerResolver = resolver
         member internal __.Formatter = formatter
         member internal __.TypePickler = tyPickler
+        member internal __.ReflectionCache = reflectionCache
         member __.StreamingContext = sc
         member internal __.ObjectCache = objCache
         member internal __.FixupIndex = fixupIndex

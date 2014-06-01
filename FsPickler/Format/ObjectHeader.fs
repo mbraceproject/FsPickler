@@ -6,7 +6,7 @@
 
     /// Type information
 
-    type TypeInfo =
+    type TypeKind =
         | Primitive             = 0uy
         | String                = 1uy
         | Enum                  = 2uy
@@ -52,12 +52,12 @@
     module internal TypeInfo =
         /// builds type info enumeration out of reflection info
         let compute (t : Type) =
-            if t.IsPrimitive then TypeInfo.Primitive
-            elif t = typeof<string> then TypeInfo.String
-            elif t.IsEnum then TypeInfo.Enum
-            elif t.IsValueType then TypeInfo.Value
-            elif t.IsArray then TypeInfo.Array
-            elif isAssignableFromArray t then TypeInfo.ArrayCompatible
-            elif t.IsSealed then TypeInfo.Sealed
-            elif t.IsAbstract then TypeInfo.Abstract
-            else TypeInfo.NonSealed
+            if t.IsPrimitive then TypeKind.Primitive
+            elif t = typeof<string> then TypeKind.String
+            elif t.IsEnum then TypeKind.Enum
+            elif t.IsValueType then TypeKind.Value
+            elif t.IsArray then TypeKind.Array
+            elif isAssignableFromArray t then TypeKind.ArrayCompatible
+            elif t.IsSealed then TypeKind.Sealed
+            elif t.IsAbstract then TypeKind.Abstract
+            else TypeKind.NonSealed

@@ -50,7 +50,7 @@
                 writer.WriteEndElement()
                 writer.WriteEndDocument()
 
-            member __.BeginWriteObject (_ : TypeInfo) (_ : PicklerInfo) (tag : string) (flags : ObjectFlags) =
+            member __.BeginWriteObject (_ : TypeKind) (_ : PicklerInfo) (tag : string) (flags : ObjectFlags) =
                 writer.WriteStartElement(tag)
 
                 if ObjectFlags.hasFlag flags ObjectFlags.IsNull then 
@@ -153,7 +153,7 @@
 
             member __.EndReadRoot () = reader.ReadEndElement()
 
-            member __.BeginReadObject (_ : TypeInfo) (_ : PicklerInfo) (tag : string) =
+            member __.BeginReadObject (_ : TypeKind) (_ : PicklerInfo) (tag : string) =
                 do readElementName reader tag
 
                 let mutable flags = ObjectFlags.None

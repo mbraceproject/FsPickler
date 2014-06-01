@@ -6,6 +6,7 @@
 
     open Nessos.FsPickler.Utils
     open Nessos.FsPickler.TypeShape
+    open Nessos.FsPickler.TypeCache
     open Nessos.FsPickler.PicklerUtils
     open Nessos.FsPickler.PrimitivePicklers
     open Nessos.FsPickler.ReflectionPicklers
@@ -25,7 +26,7 @@
 
         /// register pickler for a specific type
         member __.RegisterPickler(pickler : Pickler) =
-            if pickler.TypeInfo = TypeInfo.Primitive then 
+            if pickler.TypeInfo = TypeKind.Primitive then 
                 invalidArg "pickler" "defining custom picklers for primitives not supported."
 
             customPicklers.Swap(fun fmts -> fmts.AddNoOverwrite(pickler.Type.AssemblyQualifiedName, pickler))
@@ -102,12 +103,12 @@
             let tupleFactories = getTuplePicklerFactories ()
             customPicklerFactories.AddPicklerFactories(defaultFactories @ tupleFactories, Discard)
 
-        let reflection = 
-#if SERIALIZE_STRONG_NAMES
-            new ReflectionManager(true, tyConv)
-#else
-            new ReflectionManager(false, tyConv)
-#endif
+//        let reflection = 
+//#if SERIALIZE_STRONG_NAMES
+//            new ReflectionManager(true, tyConv)
+//#else
+//            new ReflectionManager(false, tyConv)
+//#endif
         let cache = new PicklerDictionary(uuid) :> ICache<Type, Exn<Pickler>>
         
         // populate the cache
@@ -116,7 +117,7 @@
             [|  
                 [| CompositePickler.ObjectPickler :> Pickler |]
                 PrimitivePicklers.mkAll ()
-                reflection.ReflectionPicklers
+                mkReflectionPicklers ()
             |]
             |> Seq.concat
             |> Seq.iter (fun p -> cache.Commit p.Type (Success p) |> ignore)
@@ -124,6 +125,8 @@
             // add custom picklers
             for p in customPicklers do
                 cache.Commit p.Type (Success p) |> ignore
+
+        let reflectionCache = new ReflectionCache(?tyConv = tyConv)
 
         let resolver (t : Type) = 
             try YParametric cache (resolvePickler customPicklerFactories) t
@@ -139,8 +142,9 @@
 
         member __.Name = name
         member __.UUId = uuid
+        member __.ReflectionCache = reflectionCache
 
-        member __.GetQualifiedName(t : Type) = reflection.GetQualifiedName t
+//        member __.GetQualifiedName(t : Type) = reflection.GetQualifiedName t
 
         interface IPicklerResolver with
             member r.Resolve<'T> () = resolver typeof<'T> :?> Pickler<'T>
