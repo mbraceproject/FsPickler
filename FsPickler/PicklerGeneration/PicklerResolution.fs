@@ -50,14 +50,15 @@
 
                             Success p
 
-                        // all pickler generations that fail due to the type being deemed
-                        // non-serializable, are to be stored in the cache as exceptions
                         with 
+                        // Store all NonSerializableTypeException's in cache
                         | :? NonSerializableTypeException as e when e.UnsupportedType <> t ->
                             let msg = sprintf "contains nonserializable field '%O'." e.UnsupportedType
                             raise <| new NonSerializableTypeException(t, msg)
-
                         | :? NonSerializableTypeException as e -> Exn.Error e
+                        // wrap/reraise everything else
+                        | :? PicklerGenerationException as e -> reraise ()
+                        | e -> raise <| new PicklerGenerationException(t, inner = e)
 
                     // pickler generation complete, commit to cache
                     let commited = globalCache.Commit t pickler
