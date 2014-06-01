@@ -27,10 +27,10 @@
         /// initializes an instance that resolves picklers from a global cache
         new () = new FsPickler(PicklerCache.GetDefaultInstance())
         /// initializes a new pickler cache that resolves picklers using custom rules
-        new (registry : CustomPicklerRegistry) = new FsPickler(PicklerCache.FromPicklerRegistry registry)
+//        new (registry : CustomPicklerRegistry) = new FsPickler(PicklerCache.FromPicklerRegistry registry)
 
         /// Name for the pickler cache
-        member __.Name = cache.Name
+//        member __.Name = cache.Name
         /// Identifier of the cache instance used by the serializer.
         member __.UUId = cache.UUId
 

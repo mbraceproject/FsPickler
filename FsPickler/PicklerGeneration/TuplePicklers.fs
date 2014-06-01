@@ -5,7 +5,8 @@
     open Nessos.FsPickler
     open Nessos.FsPickler.PicklerUtils
 
-    type Tuple1Pickler () =
+    type TuplePickler =
+
         static member Create(p1 : Pickler<'T1>) =
             let writer (w : WriteState) (t : Tuple<'T1>) =
                 p1.Write w "item1" t.Item1
@@ -20,14 +21,12 @@
 #else
             CompositePickler.Create<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = true, useWithSubtypes = false)
 #endif
-            
-        interface IGenericPicklerFactory1 with
-            member __.Create<'T1> (resolver : IPicklerResolver) =
-                let p1 = resolver.Resolve<'T1> ()
-                
-                Tuple1Pickler.Create(p1) :> Pickler
 
-    type Tuple2Pickler () =
+        static member Create<'T1> (resolver : IPicklerResolver) =
+            let p1 = resolver.Resolve<'T1> ()
+            TuplePickler.Create p1
+
+
         static member Create(p1 : Pickler<'T1>, p2 : Pickler<'T2>) =
             let writer (w : WriteState) ((t1,t2) : 'T1 * 'T2) =
                 p1.Write w "item1" t1
@@ -44,15 +43,13 @@
 #else
             CompositePickler.Create<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = true, useWithSubtypes = false)
 #endif
-            
-        interface IGenericPicklerFactory2 with
-            member __.Create<'T1, 'T2> (resolver : IPicklerResolver) =
-                let p1 = resolver.Resolve<'T1> ()
-                let p2 = resolver.Resolve<'T2> ()
-                
-                Tuple2Pickler.Create(p1, p2) :> Pickler
 
-    type Tuple3Pickler () =
+        static member Create<'T1, 'T2> (resolver : IPicklerResolver) =
+            let p1 = resolver.Resolve<'T1> ()
+            let p2 = resolver.Resolve<'T2> ()
+                
+            TuplePickler.Create(p1, p2)
+
         static member Create(p1 : Pickler<'T1>, p2 : Pickler<'T2>, p3 : Pickler<'T3>) =
             let writer (w : WriteState) ((t1,t2,t3) : 'T1 * 'T2 * 'T3) =
                 p1.Write w "item1" t1
@@ -71,16 +68,15 @@
 #else
             CompositePickler.Create<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = true, useWithSubtypes = false)
 #endif
-            
-        interface IGenericPicklerFactory3 with
-            member __.Create<'T1, 'T2, 'T3> (resolver : IPicklerResolver) =
-                let p1 = resolver.Resolve<'T1> ()
-                let p2 = resolver.Resolve<'T2> ()
-                let p3 = resolver.Resolve<'T3> ()
-                
-                Tuple3Pickler.Create(p1, p2, p3) :> Pickler
 
-    type Tuple4Pickler () =
+        static member Create<'T1, 'T2, 'T3> (resolver : IPicklerResolver) =
+            let p1 = resolver.Resolve<'T1> ()
+            let p2 = resolver.Resolve<'T2> ()
+            let p3 = resolver.Resolve<'T3> ()
+                
+            TuplePickler.Create(p1, p2, p3)
+
+
         static member Create(p1 : Pickler<'T1>, p2 : Pickler<'T2>, p3 : Pickler<'T3>, p4 : Pickler<'T4>) =
             let writer (w : WriteState) ((t1,t2,t3,t4) : 'T1 * 'T2 * 'T3 * 'T4) =
                 p1.Write w "item1" t1
@@ -101,18 +97,16 @@
 #else
             CompositePickler.Create<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = true, useWithSubtypes = false)
 #endif
-            
-        interface IGenericPicklerFactory4 with
-            member __.Create<'T1, 'T2, 'T3, 'T4> (resolver : IPicklerResolver) =
-                let p1 = resolver.Resolve<'T1> ()
-                let p2 = resolver.Resolve<'T2> ()
-                let p3 = resolver.Resolve<'T3> ()
-                let p4 = resolver.Resolve<'T4> ()
+
+        static member Create<'T1, 'T2, 'T3, 'T4> (resolver : IPicklerResolver) =
+            let p1 = resolver.Resolve<'T1> ()
+            let p2 = resolver.Resolve<'T2> ()
+            let p3 = resolver.Resolve<'T3> ()
+            let p4 = resolver.Resolve<'T4> ()
                 
-                Tuple4Pickler.Create(p1, p2, p3, p4) :> Pickler
+            TuplePickler.Create(p1, p2, p3, p4)
 
 
-    type Tuple5Pickler () =
         static member Create(p1 : Pickler<'T1>, p2 : Pickler<'T2>, p3 : Pickler<'T3>, p4 : Pickler<'T4>, p5 : Pickler<'T5>) =
             let writer (w : WriteState) ((t1,t2,t3,t4,t5) : 'T1 * 'T2 * 'T3 * 'T4 * 'T5) =
                 p1.Write w "item1" t1
@@ -135,18 +129,17 @@
 #else
             CompositePickler.Create<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = true, useWithSubtypes = false)
 #endif
-            
-        interface IGenericPicklerFactory5 with
-            member __.Create<'T1, 'T2, 'T3, 'T4, 'T5> (resolver : IPicklerResolver) =
-                let p1 = resolver.Resolve<'T1> ()
-                let p2 = resolver.Resolve<'T2> ()
-                let p3 = resolver.Resolve<'T3> ()
-                let p4 = resolver.Resolve<'T4> ()
-                let p5 = resolver.Resolve<'T5> ()
-                
-                Tuple5Pickler.Create(p1, p2, p3, p4, p5) :> Pickler
 
-    type Tuple6Pickler () =
+        static member Create<'T1, 'T2, 'T3, 'T4, 'T5> (resolver : IPicklerResolver) =
+            let p1 = resolver.Resolve<'T1> ()
+            let p2 = resolver.Resolve<'T2> ()
+            let p3 = resolver.Resolve<'T3> ()
+            let p4 = resolver.Resolve<'T4> ()
+            let p5 = resolver.Resolve<'T5> ()
+                
+            TuplePickler.Create(p1, p2, p3, p4, p5)
+
+
         static member Create(p1 : Pickler<'T1>, p2 : Pickler<'T2>, p3 : Pickler<'T3>, p4 : Pickler<'T4>, p5 : Pickler<'T5>, p6 : Pickler<'T6>) =
             let writer (w : WriteState) ((t1,t2,t3,t4,t5,t6) : 'T1 * 'T2 * 'T3 * 'T4 * 'T5 * 'T6) =
                 p1.Write w "item1" t1
@@ -171,21 +164,21 @@
 #else
             CompositePickler.Create<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = true, useWithSubtypes = false)
 #endif
-            
-        interface IGenericPicklerFactory6 with
-            member __.Create<'T1, 'T2, 'T3, 'T4, 'T5, 'T6> (resolver : IPicklerResolver) =
-                let p1 = resolver.Resolve<'T1> ()
-                let p2 = resolver.Resolve<'T2> ()
-                let p3 = resolver.Resolve<'T3> ()
-                let p4 = resolver.Resolve<'T4> ()
-                let p5 = resolver.Resolve<'T5> ()
-                let p6 = resolver.Resolve<'T6> ()
-                
-                Tuple6Pickler.Create(p1, p2, p3, p4, p5, p6) :> Pickler
 
-    type Tuple7Pickler () =
+        static member Create<'T1, 'T2, 'T3, 'T4, 'T5, 'T6> (resolver : IPicklerResolver) =
+            let p1 = resolver.Resolve<'T1> ()
+            let p2 = resolver.Resolve<'T2> ()
+            let p3 = resolver.Resolve<'T3> ()
+            let p4 = resolver.Resolve<'T4> ()
+            let p5 = resolver.Resolve<'T5> ()
+            let p6 = resolver.Resolve<'T6> ()
+                
+            TuplePickler.Create(p1, p2, p3, p4, p5, p6)
+
+
         static member Create(p1 : Pickler<'T1>, p2 : Pickler<'T2>, p3 : Pickler<'T3>, 
-                                p4 : Pickler<'T4>, p5 : Pickler<'T5>, p6 : Pickler<'T6>, p7 : Pickler<'T7>) =
+                                p4 : Pickler<'T4>, p5 : Pickler<'T5>, p6 : Pickler<'T6>, 
+                                p7 : Pickler<'T7>) =
 
             let writer (w : WriteState) ((t1,t2,t3,t4,t5,t6,t7) : 'T1 * 'T2 * 'T3 * 'T4 * 'T5 * 'T6 * 'T7) =
                 p1.Write w "item1" t1
@@ -212,20 +205,19 @@
 #else
             CompositePickler.Create<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = true, useWithSubtypes = false)
 #endif
-            
-        interface IGenericPicklerFactory7 with
-            member __.Create<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7> (resolver : IPicklerResolver) =
-                let p1 = resolver.Resolve<'T1> ()
-                let p2 = resolver.Resolve<'T2> ()
-                let p3 = resolver.Resolve<'T3> ()
-                let p4 = resolver.Resolve<'T4> ()
-                let p5 = resolver.Resolve<'T5> ()
-                let p6 = resolver.Resolve<'T6> ()
-                let p7 = resolver.Resolve<'T7> ()
-                
-                Tuple7Pickler.Create(p1, p2, p3, p4, p5, p6, p7) :> Pickler
 
-    type Tuple8Pickler () =
+        static member Create<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7> (resolver : IPicklerResolver) =
+            let p1 = resolver.Resolve<'T1> ()
+            let p2 = resolver.Resolve<'T2> ()
+            let p3 = resolver.Resolve<'T3> ()
+            let p4 = resolver.Resolve<'T4> ()
+            let p5 = resolver.Resolve<'T5> ()
+            let p6 = resolver.Resolve<'T6> ()
+            let p7 = resolver.Resolve<'T7> ()
+                
+            TuplePickler.Create(p1, p2, p3, p4, p5, p6, p7)
+
+
         static member Create(p1 : Pickler<'T1>, p2 : Pickler<'T2>, p3 : Pickler<'T3>, p4 : Pickler<'T4>,
                                 p5 : Pickler<'T5>, p6 : Pickler<'T6>, p7 : Pickler<'T7>, pr : Pickler<'TRest>) =
 
@@ -256,29 +248,15 @@
 #else
             CompositePickler.Create<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = true, useWithSubtypes = false)
 #endif
-            
-        interface IGenericPicklerFactory8 with
-            member __.Create<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'TRest> (resolver : IPicklerResolver) =
-                let p1 = resolver.Resolve<'T1> ()
-                let p2 = resolver.Resolve<'T2> ()
-                let p3 = resolver.Resolve<'T3> ()
-                let p4 = resolver.Resolve<'T4> ()
-                let p5 = resolver.Resolve<'T5> ()
-                let p6 = resolver.Resolve<'T6> ()
-                let p7 = resolver.Resolve<'T7> ()
-                let pr = resolver.Resolve<'TRest> ()
+
+        static member Create<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'TRest> (resolver : IPicklerResolver) =
+            let p1 = resolver.Resolve<'T1> ()
+            let p2 = resolver.Resolve<'T2> ()
+            let p3 = resolver.Resolve<'T3> ()
+            let p4 = resolver.Resolve<'T4> ()
+            let p5 = resolver.Resolve<'T5> ()
+            let p6 = resolver.Resolve<'T6> ()
+            let p7 = resolver.Resolve<'T7> ()
+            let pr = resolver.Resolve<'TRest> ()
                 
-                Tuple8Pickler.Create(p1, p2, p3, p4, p5, p6, p7, pr) :> Pickler
-
-
-    let getTuplePicklerFactories () =
-        [
-            new Tuple1Pickler() :> IPicklerFactory
-            new Tuple2Pickler() :> _
-            new Tuple3Pickler() :> _
-            new Tuple4Pickler() :> _
-            new Tuple5Pickler() :> _
-            new Tuple6Pickler() :> _
-            new Tuple7Pickler() :> _
-            new Tuple8Pickler() :> _
-        ]   
+            TuplePickler.Create(p1, p2, p3, p4, p5, p6, p7, pr)

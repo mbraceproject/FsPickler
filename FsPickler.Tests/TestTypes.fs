@@ -135,29 +135,29 @@
 
         type NonGenericType = NGValue of int
 
-        type ExternalTypePickler () =
-            interface IPicklerFactory
-
-            member __.Create (resolver : IPicklerResolver) =
-                Pickler.FromPrimitives((fun _ -> NGValue 42), fun _ _ -> ())
+//        type ExternalTypePickler () =
+//            interface IPicklerFactory
+//
+//            member __.Create (resolver : IPicklerResolver) =
+//                Pickler.FromPrimitives((fun _ -> NGValue 42), fun _ _ -> ())
 
         type GenericType<'T when 'T : comparison>(x : 'T) =
             member __.Value = x
 
-        type ExternalGenericTypePickler () =
-            interface IPicklerFactory
-
-            member __.Create<'T when 'T : comparison> (resolver : IPicklerResolver) =
-                let valueFmt = resolver.Resolve<'T> ()
-
-                let writer (w : WriteState) (g : GenericType<'T>) =
-                    valueFmt.Write w "value" g.Value
-
-                let reader (r : ReadState) =
-                    let value = valueFmt.Read r "value"
-                    new GenericType<'T>(Unchecked.defaultof<'T>)
-
-                Pickler.FromPrimitives(reader, writer) :> Pickler
+//        type ExternalGenericTypePickler () =
+//            interface IPicklerFactory
+//
+//            member __.Create<'T when 'T : comparison> (resolver : IPicklerResolver) =
+//                let valueFmt = resolver.Resolve<'T> ()
+//
+//                let writer (w : WriteState) (g : GenericType<'T>) =
+//                    valueFmt.Write w "value" g.Value
+//
+//                let reader (r : ReadState) =
+//                    let value = valueFmt.Read r "value"
+//                    new GenericType<'T>(Unchecked.defaultof<'T>)
+//
+//                Pickler.FromPrimitives(reader, writer) :> Pickler
 
         type TestDelegate = delegate of unit -> unit
 
@@ -230,13 +230,13 @@
 
 
         // create serializer
-        let testSerializer =
-            let registry = new CustomPicklerRegistry("unit test cache")
-            do
-                registry.RegisterPicklerFactory(new ExternalTypePickler())
-                registry.RegisterPicklerFactory(new ExternalGenericTypePickler())
-
-            new FsPicklerSerializer(registry)
+        let testSerializer = new FsPicklerSerializer()
+//            let registry = new CustomPicklerRegistry("unit test cache")
+//            do
+//                registry.RegisterPicklerFactory(new ExternalTypePickler())
+//                registry.RegisterPicklerFactory(new ExternalGenericTypePickler())
+//
+//            new FsPicklerSerializer(registry)
 
 
         // test provision for top-level sequence serialization

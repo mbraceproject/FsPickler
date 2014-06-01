@@ -6,7 +6,7 @@
     open Nessos.FsPickler.PicklerUtils
     open Nessos.FsPickler.PrimitivePicklers
     open Nessos.FsPickler.DotNetPicklers
-    open Nessos.FsPickler.ArrayPickler
+    open Nessos.FsPickler.ArrayPicklers
     open Nessos.FsPickler.TuplePicklers
     open Nessos.FsPickler.CombinatorImpls
 
@@ -67,36 +67,36 @@
             let inline private uc (p : Pickler<'T>) = p :> Pickler
 
             /// pair pickler combinator
-            let pair f g = Tuple2Pickler.Create(f,g) |> setPicklerId [uc f; uc g]
+            let pair f g = TuplePickler.Create(f,g) |> setPicklerId [uc f; uc g]
             /// triple pickler combinator
-            let triple f g h = Tuple3Pickler.Create(f,g,h) |> setPicklerId [uc f; uc g; uc h]
+            let triple f g h = TuplePickler.Create(f,g,h) |> setPicklerId [uc f; uc g; uc h]
             /// quad pickler combinator
-            let quad f g h i = Tuple4Pickler.Create(f,g,h,i) |> setPicklerId [uc f; uc g; uc h; uc i]
+            let quad f g h i = TuplePickler.Create(f,g,h,i) |> setPicklerId [uc f; uc g; uc h; uc i]
             /// option pickler combinator
-            let option f = OptionPickler.Create f |> setPicklerId [uc f]
+            let option (f : Pickler<'T>) = OptionPickler.Create f |> setPicklerId [uc f]
             /// Choice<_,_> pickler combinator
-            let choice2 f g = Choice2Pickler.Create(f,g) |> setPicklerId [uc f; uc g]
+            let choice2 f g = ChoicePickler.Create(f,g) |> setPicklerId [uc f; uc g]
             /// Choice<_,_,_> pickler combinator
-            let choice3 f g h = Choice3Pickler.Create(f,g,h) |> setPicklerId [uc f; uc g; uc h]
+            let choice3 f g h = ChoicePickler.Create(f,g,h) |> setPicklerId [uc f; uc g; uc h]
             /// Choice<_,_,_,_> pickler combinator
-            let choice4 f g h i = Choice4Pickler.Create(f,g,h,i) |> setPicklerId [uc f; uc g; uc h; uc i]
+            let choice4 f g h i = ChoicePickler.Create(f,g,h,i) |> setPicklerId [uc f; uc g; uc h; uc i]
 
             /// FSharp ref pickler combinator
-            let ref f = FSharpRefPickler.Create f |> setPicklerId [uc f]
+            let ref (f : Pickler<'T>) = FSharpRefPickler.Create f |> setPicklerId [uc f]
             /// FSharp list pickler combinator
-            let list f = ListPickler.Create f |> setPicklerId [uc f]
+            let list (f : Pickler<'T>) = ListPickler.Create f |> setPicklerId [uc f]
             /// FSharp map pickler combinator
             let map kp vp = FSharpMapPickler.Create(kp,vp) |> setPicklerId [uc kp; uc kp]
             /// FSharp set pickler combinator
-            let set f = FSharpSetPickler.Create f |> setPicklerId [uc f]
+            let set (f : Pickler<'T>) = FSharpSetPickler.Create f |> setPicklerId [uc f]
             /// array pickler combinator
-            let array f = ArrayPickler.Create<'T, 'T []> f |> setPicklerId [uc f]
+            let array (f : Pickler<'T>) = ArrayPickler.Create<'T> f |> setPicklerId [uc f]
             /// array2D pickler combinator
-            let array2D f = ArrayPickler.Create<'T, 'T [,]> f |> setPicklerId [uc f]
+            let array2D (f : Pickler<'T>) = ArrayPickler.Create2D<'T> f |> setPicklerId [uc f]
             /// array3D pickler combinator
-            let array3D f = ArrayPickler.Create<'T, 'T [,,]> f |> setPicklerId [uc f]
+            let array3D (f : Pickler<'T>) = ArrayPickler.Create3D<'T> f |> setPicklerId [uc f]
             /// array4D pickler combinator
-            let array4D f = ArrayPickler.Create<'T, 'T [,,,]> f |> setPicklerId [uc f]
+            let array4D (f : Pickler<'T>) = ArrayPickler.Create4D<'T> f |> setPicklerId [uc f]
             /// sequence pickler combinator ; uses eager evaluation
             let seq f = SeqPickler.Create f |> setPicklerId [uc f]
             /// sequence of pairs pickler combinator ; uses eager evaluation

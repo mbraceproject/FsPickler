@@ -12,26 +12,22 @@
     open Nessos.FsPickler
     open Nessos.FsPickler.Reflection
     open Nessos.FsPickler.TypeShape
-    open Nessos.FsPickler.PicklerUtils
-    open Nessos.FsPickler.ReflectionPicklers
+    open Nessos.FsPickler.PicklerFactory
     open Nessos.FsPickler.DotNetPicklers
-    open Nessos.FsPickler.ArrayPickler
-    open Nessos.FsPickler.FSharpPicklers
-    open Nessos.FsPickler.CombinatorImpls
 
     /// Y combinator with parametric recursion support
     let YParametric (globalCache : ICache<Type, Exn<Pickler>>)
-                    (resolverF : IPicklerResolver -> Type -> Pickler) (t : Type) =
+                    (resolverF : IPicklerResolver -> TypeShape -> Pickler) (t : Type) =
 
         // use internal cache to avoid corruption in event of exceptions being raised
         let localCache = new Dictionary<Type, Pickler> ()
 
         let rec lookup (t : Type) =
             match globalCache.Lookup t with
-            | Some f -> f.Value
+            | Some p -> p.Value
             | None ->
                 match localCache.TryFind t with
-                | Some f -> f
+                | Some p -> p
                 | None ->
                     // while stack overflows are unlikely here (this is a type-level traversal)
                     // it can be useful in catching a certain class of user errors when declaring custom picklers.
@@ -42,16 +38,17 @@
                     // start pickler construction
                     let pickler =
                         try
-                            let f = UninitializedPickler.CreateUntyped t
-                            localCache.Add(t, f)
+                            let typeShape, p = PicklerInitializer.Create t
+
+                            localCache.Add(t, p)
 
                             // perform recursive resolution
-                            let f' = resolverF resolver t
+                            let p' = resolverF resolver typeShape
                     
                             // complete the recursive binding
-                            f.InitializeFrom f'
+                            p.InitializeFrom p'
 
-                            Success f
+                            Success p
 
                         // all pickler generations that fail due to the type being deemed
                         // non-serializable, are to be stored in the cache as exceptions
@@ -74,10 +71,9 @@
 
     // reflection - based pickler resolution
 
-    let resolvePickler (picklerFactoryIndex : PicklerFactoryIndex) (resolver : IPicklerResolver) (t : Type) =
+    let resolvePickler (resolver : IPicklerResolver) (shape : TypeShape) =
 
-        // check if type is supported
-        if isUnSupportedType t then raise <| NonSerializableTypeException t
+        let t = shape.Type
 
         // subtype resolution
         let result =
@@ -88,7 +84,7 @@
             else
                 None
 
-        // pickler factories
+        // custom pickler attribute resolution
         let result =
             match result with
             | Some _ -> result
@@ -98,47 +94,56 @@
                 else
                     None
 
-        // pluggable pickler factories, resolved by type shape
-        let result =
-            match result with
-            | Some _ -> result
-            | None -> picklerFactoryIndex.TryResolvePicklerFactory(t, resolver)
+        // consult the pickler factory
+        match result with
+        | Some r -> r
+        | None ->
+            let factory = new PicklerFactory(resolver)
+            shape.Accept factory
 
-        // FSharp Values
-        let result =
-            match result with
-            | Some _ -> result
-            | None ->
-                if FSharpType.IsUnion(t, allMembers) then
-                    Some <| FsUnionPickler.CreateUntyped(t, resolver)
-                elif FSharpType.IsRecord(t, allMembers) then
-                    Some <| FsRecordPickler.CreateUntyped(t, resolver)
-                elif FSharpType.IsExceptionRepresentation(t, allMembers) then
-                    Some <| FsExceptionPickler.CreateUntyped(t, resolver)
-                else None
-
-        // .NET serialization resolution
-        let result =
-            match result with
-            | None ->
-                if t.IsAbstract then 
-                    AbstractPickler.CreateUntyped t
-                elif t.IsEnum then 
-                    EnumPickler.CreateUntyped(t, resolver)
-                elif isNullableType t then
-                    NullablePickler.CreateUntyped(t, resolver) 
-                elif t.IsValueType then 
-                    StructPickler.CreateUntyped(t, resolver)
-                elif t.IsArray then 
-                    ArrayPickler.CreateUntyped(t, resolver)
-                elif typeof<System.Delegate>.IsAssignableFrom t then
-                    DelegatePickler.CreateUntyped(t, resolver)
-                elif isISerializable t then
-                    ISerializablePickler.CreateUntyped(t, resolver)
-                elif not t.IsSerializable then 
-                    raise <| NonSerializableTypeException t
-                else
-                    ClassPickler.CreateUntyped(t, resolver)
-            | Some r -> r
-
-        result
+//        let pf = new PicklerFactory(resolver)
+//
+//        // pluggable pickler factories, resolved by type shape
+//        let result =
+//            match result with
+//            | Some _ -> result
+//            | None -> picklerFactoryIndex.TryResolvePicklerFactory(t, resolver)
+//
+//        // FSharp Values
+//        let result =
+//            match result with
+//            | Some _ -> result
+//            | None ->
+//                if FSharpType.IsUnion(t, allMembers) then
+//                    Some <| FsUnionPickler.CreateUntyped(t, resolver)
+//                elif FSharpType.IsRecord(t, allMembers) then
+//                    Some <| FsRecordPickler.CreateUntyped(t, resolver)
+//                elif FSharpType.IsExceptionRepresentation(t, allMembers) then
+//                    Some <| FsExceptionPickler.CreateUntyped(t, resolver)
+//                else None
+//
+//        // .NET serialization resolution
+//        let result =
+//            match result with
+//            | None ->
+//                if t.IsAbstract then 
+//                    AbstractPickler.CreateUntyped t
+//                elif t.IsEnum then 
+//                    EnumPickler.CreateUntyped(t, resolver)
+//                elif isNullableType t then
+//                    NullablePickler.CreateUntyped(t, resolver) 
+//                elif t.IsValueType then 
+//                    StructPickler.CreateUntyped(t, resolver)
+//                elif t.IsArray then 
+//                    ArrayPickler.CreateUntyped(t, resolver)
+//                elif typeof<System.Delegate>.IsAssignableFrom t then
+//                    DelegatePickler.CreateUntyped(t, resolver)
+//                elif isISerializable t then
+//                    ISerializablePickler.CreateUntyped(t, resolver)
+//                elif not t.IsSerializable then 
+//                    raise <| NonSerializableTypeException t
+//                else
+//                    ClassPickler.CreateUntyped(t, resolver)
+//            | Some r -> r
+//
+//        result

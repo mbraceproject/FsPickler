@@ -20,7 +20,7 @@
         abstract Deserialize : Stream -> 'T
 
     type FsPicklerSerializer (?registry : CustomPicklerRegistry) =
-        let fsc = match registry with None -> new FsPickler() | Some r -> new FsPickler(r)
+        let fsc = match registry with None -> new FsPickler() | Some r -> new FsPickler()
 
         member __.FSCS = fsc
 

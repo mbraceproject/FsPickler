@@ -1,326 +1,356 @@
-﻿module internal Nessos.FsPickler.TypeShape
-
-    // The following provides management logic for IPicklerFactory implementations.
-    // Since generic types come with multiple combinations of type variables and constraints,
-    // specifying a predetermined set of generic pickler interfaces is simply not practical.
-    //
-    // All that is required of input picklers is to implement the IPicklerFactory interface
-    // (which contains no methods) and to contain an implementation of an instance method
-    //
-    //         Create<'T1,..,'Tn | [constraints] > : IPicklerResolver -> Pickler
-    //
-    // The method is determined and executed through reflection, hence the possibility of runtime errors is real.
-    //
-    // A type shape scheme is used by the pickler resolver to decide on the best matching IPicklerFactory for a
-    // given instance type. For example, given input (int * int) [] , the resolver will determine that a generic pickler of 
-    // shape ('X * 'X) [] is more suitable than one of shape 'X []
+﻿namespace Nessos.FsPickler.TypeShape
 
     open System
-    open System.Reflection
     open System.Runtime.Serialization
 
-    open Nessos.FsPickler
-    open Nessos.FsPickler.Reflection
+    type Shape =
+        | Abstract = 0
+        | Struct = 1
+        | Primitive = 2
+        | Class = 3
+        | ISerializable = 4
+        | Delegate = 5
+        | Enum = 6
+        | Nullable = 7
+        | Array = 8
+        | Tuple = 9
+        | FSharpType = 10
+        | Dictionary = 11
 
-    // embed peano arithmetic in System.Type
-    type Peano =
-        abstract Value : int
-    and Zero () = 
-        interface Peano with
-            member __.Value = 0
-    and Succ<'T when 'T :> Peano> () =
-        static let value = 1 + Activator.CreateInstance<'T>().Value
-        interface Peano with
-            member __.Value = value
+    [<AbstractClass>]
+    type TypeShape internal () =
+        abstract Type : Type
+        abstract Shape : Shape
+        abstract Accept : ITypeVisitor<'R> -> 'R
+        abstract Accept : ITypeShapeVisitor<'R> -> 'R
 
-    let zero = typeof<Zero>
-    let succ (t : Type) = typedefof<Succ<_>>.MakeGenericType [| t |]
+    and [<AbstractClass>] TypeShape<'T> internal () =
+        inherit TypeShape()
+        override __.Type = typeof<'T>
+        override __.Accept (v : ITypeVisitor<'R>) = v.Visit<'T>()
 
-    let getPeanoVars (n : int) =
-        [|
-            let current = ref zero
-            for i = 0 to n-1 do
-                yield !current
-                current := succ !current
-        |]
+    and ShapeAbstract<'T> internal () =
+        inherit TypeShape<'T> ()
+        override __.Shape = Shape.Abstract
+        override __.Accept(v : ITypeShapeVisitor<'R>) = v.Abstract<'T> ()
 
-    let (|PeanoType|_|) t =
-        if typeof<Peano>.IsAssignableFrom t then 
-            Some (Activator.CreateInstance t :?> Peano).Value
-        else
-            None
+    and ShapeStruct<'T when 'T : struct> () =
+        inherit TypeShape<'T>()
+        override __.Shape = Shape.Struct
+        override __.Accept (v : ITypeShapeVisitor<'R>) = v.Struct<'T> ()
 
-    let (|GenericType|_|) (t : Type) =
-        if t.IsGenericType then Some(t.GetGenericTypeDefinition(), t.GetGenericArguments())
-        else None
+    and ShapePrimitive<'T> internal () =
+        inherit TypeShape<'T> ()
+        override __.Shape = Shape.Primitive
+        override __.Accept (v : ITypeShapeVisitor<'R>) = v.Primitive<'T> ()
 
-    type TypeShape =
-        | Var of int
-        | Named of Type
-        | Array of int * TypeShape * Type
-        | Ref of (* byRef *) bool * TypeShape * Type
-        | Generic of Type * TypeShape list * Type
-    with
-        override s.ToString () =
-            let rec print s =
-                match s with
-                | Var i -> sprintf "'T%d" i
-                | Named t -> t.Name
-                | Array (rank, nested, _) -> 
-                    let name = print nested
-                    match rank with
-                    | 1 -> name + " []"
-                    | 2 -> name + " [,]"
-                    | 3 -> name + " [,,]"
-                    | 4 -> name + " [,,,]"
-                    | _ -> name + " array"
-                | Ref (true, nested, _) -> print nested + "&"
-                | Ref (false, nested, _) -> print nested + "*"
-                | Generic (t, tyArgs, _) ->
-                    let name = t.Name.Split('`').[0]
-                    let args = Seq.map print tyArgs |> String.concat ", "
-                    name + "<" + args + ">"
+    and ShapeClass<'T when 'T : not struct> internal () =
+        inherit TypeShape<'T>()
+        override __.Shape = Shape.Class
+        override __.Accept (v : ITypeShapeVisitor<'R>) = v.Class<'T> ()
 
-            print s
+    and ShapeISerializable<'T when 'T :> ISerializable> () =
+        inherit TypeShape<'T>()
+        override __.Shape = Shape.ISerializable
+        override __.Accept (v : ITypeShapeVisitor<'R>) = v.ISerializable<'T> ()
 
-        member s.Type =
-            match s with
-            | Var _ -> invalidOp "cannot reify variables."
-            | Named t -> t
-            | Array(_,_,t) -> t
-            | Ref(_,_,t) -> t
-            | Generic(_,_,t) -> t
+    and ShapeDelegate<'T when 'T :> Delegate> () =
+        inherit TypeShape<'T>()
+        override __.Shape = Shape.Delegate
+        override __.Accept (v : ITypeShapeVisitor<'R>) = v.Delegate<'T> ()
 
-        member s.Size =
-            let rec getSize s =
-                match s with
-                | Var _ -> 0
-                | Named _ -> 1
-                | Array(_,s,_) -> 1 + getSize s
-                | Ref(_,s,_) -> 1 + getSize s
-                | Generic(_,ss,_) -> 1 + List.sumBy getSize ss
+    and ShapeEnum<'Enum, 'Underlying when 'Enum : enum<'Underlying>> () =
+        inherit TypeShape<'Enum>()
+        override __.Shape = Shape.Enum
+        override __.Accept (v : ITypeShapeVisitor<'R>) = v.Enum<'Enum, 'Underlying> ()
 
-            getSize s
+    and ShapeNullable<'T when    
+                    'T : (new : unit -> 'T) and 
+                    'T : struct and 
+                    'T :> ValueType> () =
 
-        member s.FreeVars =
-            let rec gather gathered ss =
-                match ss with
-                | Var i :: rest -> gather (i :: gathered) rest
-                | Named _ :: rest -> gather gathered rest
-                | Array(_,s,_) :: rest -> gather gathered (s :: rest)
-                | Ref(_,s,_) :: rest -> gather gathered (s :: rest)
-                | Generic(_,ss,_) :: rest -> gather gathered (ss @ rest)
-                | [] -> gathered
+        inherit TypeShape<Nullable<'T>>()
+        override __.Shape = Shape.Nullable
+        override __.Accept (v : ITypeShapeVisitor<'R>) = v.Nullable<'T> ()
 
-            // pass to set to sort and distinct
-            gather [] [s] |> set |> Set.toList
+    and ShapeArray<'T> () =
+        inherit TypeShape<'T []>()
+        override __.Shape = Shape.Array
+        override __.Accept (v : ITypeShapeVisitor<'R>) = v.Array<'T> ()
 
-        static member OfType (t : Type) =
-            let rec unfold (t : Type) =
+    and ShapeArray2D<'T> () =
+        inherit TypeShape<'T [,]>()
+        override __.Shape = Shape.Array
+        override __.Accept (v : ITypeShapeVisitor<'R>) = v.Array2D<'T> ()
+
+    and ShapeArray3D<'T> () =
+        inherit TypeShape<'T [,,]>()
+        override __.Shape = Shape.Array
+        override __.Accept (v : ITypeShapeVisitor<'R>) = v.Array3D<'T> ()
+
+    and ShapeArray4D<'T> () =
+        inherit TypeShape<'T [,,,]>()
+        override __.Shape = Shape.Array
+        override __.Accept (v : ITypeShapeVisitor<'R>) = v.Array4D<'T> ()
+
+    and ShapeTuple<'T> () =
+        inherit TypeShape<Tuple<'T>> ()
+        override __.Shape = Shape.Array
+        override __.Accept (v : ITypeShapeVisitor<'R>) = v.Tuple<'T> ()
+
+    and ShapeTuple<'T1,'T2> () =
+        inherit TypeShape<'T1 * 'T2> ()
+        override __.Shape = Shape.Tuple
+        override __.Accept (v : ITypeShapeVisitor<'R>) = v.Tuple<'T1,'T2> ()
+
+    and ShapeTuple<'T1,'T2,'T3> () =
+        inherit TypeShape<'T1 * 'T2 * 'T3> ()
+        override __.Shape = Shape.Tuple
+        override __.Accept (v : ITypeShapeVisitor<'R>) = v.Tuple<'T1,'T2,'T3> ()
+
+    and ShapeTuple<'T1,'T2,'T3,'T4> () =
+        inherit TypeShape<'T1 * 'T2 * 'T3 * 'T4> ()
+        override __.Shape = Shape.Tuple
+        override __.Accept (v : ITypeShapeVisitor<'R>) = v.Tuple<'T1,'T2,'T3,'T4> ()
+
+    and ShapeTuple<'T1,'T2,'T3,'T4,'T5> () =
+        inherit TypeShape<'T1 * 'T2 * 'T3 * 'T4 * 'T5> ()
+        override __.Shape = Shape.Tuple
+        override __.Accept (v : ITypeShapeVisitor<'R>) = v.Tuple<'T1,'T2,'T3,'T4,'T5> ()
+
+    and ShapeTuple<'T1,'T2,'T3,'T4,'T5,'T6> () =
+        inherit TypeShape<'T1 * 'T2 * 'T3 * 'T4 * 'T5 * 'T6> ()
+        override __.Shape = Shape.Tuple
+        override __.Accept (v : ITypeShapeVisitor<'R>) = v.Tuple<'T1,'T2,'T3,'T4,'T5,'T6> ()
+
+    and ShapeTuple<'T1,'T2,'T3,'T4,'T5,'T6,'T7> () =
+        inherit TypeShape<'T1 * 'T2 * 'T3 * 'T4 * 'T5 * 'T6 * 'T7> ()
+        override __.Shape = Shape.Tuple
+        override __.Accept (v : ITypeShapeVisitor<'R>) = v.Tuple<'T1,'T2,'T3,'T4,'T5,'T6,'T7> ()
+
+    and ShapeTuple<'T1,'T2,'T3,'T4,'T5,'T6,'T7,'TRest> () =
+        inherit TypeShape<Tuple<'T1,'T2,'T3,'T4,'T5,'T6,'T7,'TRest>> ()
+        override __.Shape = Shape.Tuple
+        override __.Accept (v : ITypeShapeVisitor<'R>) = v.Tuple<'T1,'T2,'T3,'T4,'T5,'T6,'T7,'TRest> ()
+
+    and ShapeDictionary<'K,'V when 'K : equality> () =
+        inherit TypeShape<System.Collections.Generic.Dictionary<'K,'V>> ()
+        override __.Shape = Shape.Dictionary
+        override __.Accept (v : ITypeShapeVisitor<'R>) = v.Dictionary<'K,'V> ()
+
+    and ShapeFSharpUnion<'Union> internal () =
+        inherit TypeShape<'Union> ()
+        override __.Shape = Shape.FSharpType
+        override __.Accept (v : ITypeShapeVisitor<'R>) = v.FSharpUnion<'Union> ()
+
+    and ShapeFSharpRecord<'Record> internal () =
+        inherit TypeShape<'Record> ()
+        override __.Shape = Shape.FSharpType
+        override __.Accept (v : ITypeShapeVisitor<'R>) = v.FSharpRecord<'Record> ()
+
+    and ShapeFSharpException<'Exception when 'Exception :> exn> internal () =
+        inherit TypeShape<'Exception> ()
+        override __.Shape = Shape.FSharpType
+        override __.Accept (v : ITypeShapeVisitor<'R>) = v.FSharpException<'Exception> ()
+
+    and ShapeFSharpList<'T> () =
+        inherit TypeShape<'T list>()
+        override __.Shape = Shape.FSharpType
+        override __.Accept (v : ITypeShapeVisitor<'R>) = v.FSharpList<'T> ()
+
+    and ShapeFSharpSet<'T when 'T : comparison> () =
+        inherit TypeShape<Set<'T>> ()
+        override __.Shape = Shape.FSharpType
+        override __.Accept (v : ITypeShapeVisitor<'R>) = v.FSharpSet<'T> ()
+
+    and ShapeFSharpMap<'K,'V when 'K : comparison> () =
+        inherit TypeShape<Map<'K,'V>> ()
+        override __.Shape = Shape.FSharpType
+        override __.Accept (v : ITypeShapeVisitor<'R>) = v.FSharpMap<'K,'V> ()
+
+    and ShapeFSharpOption<'T> () =
+        inherit TypeShape<'T option> ()
+        override __.Shape = Shape.FSharpType
+        override __.Accept (v : ITypeShapeVisitor<'R>) = v.FSharpOption<'T> ()
+
+    and ShapeFSharpRef<'T> () =
+        inherit TypeShape<'T ref> ()
+        override __.Shape = Shape.FSharpType
+        override __.Accept (v : ITypeShapeVisitor<'R>) = v.FSharpRef<'T> ()
+
+    and ShapeChoice<'T1,'T2> () =
+        inherit TypeShape<Choice<'T1,'T2>> ()
+        override __.Shape = Shape.FSharpType
+        override __.Accept (v : ITypeShapeVisitor<'R>) = v.Choice<'T1,'T2> ()
+
+    and ShapeChoice<'T1,'T2,'T3> () =
+        inherit TypeShape<Choice<'T1,'T2, 'T3>> ()
+        override __.Shape = Shape.FSharpType
+        override __.Accept (v : ITypeShapeVisitor<'R>) = v.Choice<'T1,'T2,'T3> ()
+
+    and ShapeChoice<'T1,'T2,'T3,'T4> () =
+        inherit TypeShape<Choice<'T1,'T2,'T3,'T4>> ()
+        override __.Shape = Shape.FSharpType
+        override __.Accept (v : ITypeShapeVisitor<'R>) = v.Choice<'T1,'T2,'T3,'T4> ()
+
+    and ShapeChoice<'T1,'T2,'T3,'T4,'T5> () =
+        inherit TypeShape<Choice<'T1,'T2,'T3,'T4,'T5>> ()
+        override __.Shape = Shape.FSharpType
+        override __.Accept (v : ITypeShapeVisitor<'R>) = v.Choice<'T1,'T2,'T3,'T4,'T5> ()
+
+    and ShapeChoice<'T1,'T2,'T3,'T4,'T5,'T6> () =
+        inherit TypeShape<Choice<'T1,'T2,'T3,'T4,'T5,'T6>> ()
+        override __.Shape = Shape.FSharpType
+        override __.Accept (v : ITypeShapeVisitor<'R>) = v.Choice<'T1,'T2,'T3,'T4,'T5,'T6> ()
+
+    and ShapeChoice<'T1,'T2,'T3,'T4,'T5,'T6,'T7> () =
+        inherit TypeShape<Choice<'T1,'T2,'T3,'T4,'T5,'T6,'T7>> ()
+        override __.Shape = Shape.FSharpType
+        override __.Accept (v : ITypeShapeVisitor<'R>) = v.Choice<'T1,'T2,'T3,'T4,'T5,'T6,'T7> ()
+
+    and ITypeVisitor<'R> =
+        abstract Visit<'T> : unit -> 'R
+
+    and ITypeShapeVisitor<'R> =
+        abstract Primitive<'T> : unit -> 'R
+        abstract Struct<'T when 'T : struct> : unit -> 'R
+        abstract Abstract<'T> : unit -> 'R
+        abstract Class<'T when 'T : not struct> : unit -> 'R
+        abstract ISerializable<'T when 'T :> ISerializable> : unit -> 'R
+        abstract Delegate<'D when 'D :> Delegate> : unit -> 'R
+        abstract Enum<'Enum, 'Underlying when 'Enum : enum<'Underlying>> : unit -> 'R
+
+        abstract Nullable<'T when   
+                                'T : (new : unit -> 'T) and 
+                                'T : struct and 
+                                'T :> ValueType> : unit -> 'R
+
+        abstract Array<'T> : unit -> 'R
+        abstract Array2D<'T> : unit -> 'R
+        abstract Array3D<'T> : unit -> 'R
+        abstract Array4D<'T> : unit -> 'R
+
+        abstract Tuple<'T> : unit -> 'R
+        abstract Tuple<'T1,'T2> : unit -> 'R
+        abstract Tuple<'T1,'T2,'T3> : unit -> 'R
+        abstract Tuple<'T1,'T2,'T3,'T4> : unit -> 'R
+        abstract Tuple<'T1,'T2,'T3,'T4,'T5> : unit -> 'R
+        abstract Tuple<'T1,'T2,'T3,'T4,'T5,'T6> : unit -> 'R
+        abstract Tuple<'T1,'T2,'T3,'T4,'T5,'T6,'T7> : unit -> 'R
+        abstract Tuple<'T1,'T2,'T3,'T4,'T5,'T6,'T7,'TRest> : unit -> 'R
+
+        abstract Dictionary<'K, 'V when 'K : equality> : unit -> 'R
+        
+        abstract FSharpUnion<'Union> : unit -> 'R
+        abstract FSharpRecord<'Record> : unit -> 'R
+        abstract FSharpException<'Exception when 'Exception :> exn> : unit -> 'R
+        abstract FSharpList<'T> : unit -> 'R
+        abstract FSharpRef<'T> : unit -> 'R
+        abstract FSharpSet<'T when 'T : comparison> : unit -> 'R
+        abstract FSharpMap<'K,'V when 'K : comparison> : unit -> 'R
+        abstract FSharpOption<'T> : unit -> 'R
+        
+        abstract Choice<'T1,'T2> : unit -> 'R
+        abstract Choice<'T1,'T2,'T3> : unit -> 'R
+        abstract Choice<'T1,'T2,'T3,'T4> : unit -> 'R
+        abstract Choice<'T1,'T2,'T3,'T4,'T5> : unit -> 'R
+        abstract Choice<'T1,'T2,'T3,'T4,'T5,'T6> : unit -> 'R
+        abstract Choice<'T1,'T2,'T3,'T4,'T5,'T6,'T7> : unit -> 'R
+
+
+    exception UnSupportedShape
+
+    [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+    [<RequireQualifiedAccess>]
+    module TypeShape =
+
+        open System.Reflection
+
+        open Microsoft.FSharp.Reflection
+
+        open Nessos.FsPickler.Reflection
+
+        // typedefof does not work properly with 'enum' constraints
+        let private getGenericEnumType () = 
+            typeof<ShapeEnum<BindingFlags,int>>.GetGenericTypeDefinition()
+
+        let private activate (gt : Type) (tp : Type []) =
+            let ti = gt.MakeGenericType tp
+            let ctor = ti.GetConstructor(allConstructors, null, CallingConventions.Standard, [||], [||])
+            ctor.Invoke [||] :?> TypeShape
+
+        let private activate1 (gt : Type) (tp : Type) =
+            activate gt [|tp|]
+
+        let private activate2 (gt : Type) (p1 : Type) (p2 : Type) =
+            activate gt [|p1 ; p2|]
+
+        let private canon = Type.GetType("System.__Canon")
+        let private isIntrinsicType (t : Type) =
+            t.IsPointer 
+            || t = typeof<System.Reflection.Pointer>
+            || t.IsByRef
+            || t.IsCOMObject
+            || t.IsImport
+            || t.IsMarshalByRef
+            || t = canon
+        
+        let resolve (t : Type) =
+            if t.IsGenericTypeDefinition then raise <| UnSupportedShape
+            elif t.IsGenericParameter then raise <| UnSupportedShape
+            elif isIntrinsicType t then raise <| UnSupportedShape
+            elif t.IsPrimitive then activate1 typedefof<ShapePrimitive<_>> t
+            elif FSharpType.IsUnion(t, allMembers) then
                 match t with
-                | PeanoType i -> Var i
-                | GenericType (gt, gas) -> Generic(gt, Seq.map unfold gas |> Seq.toList, t)
-                | _ when t.IsArray -> Array(t.GetArrayRank(), unfold <| t.GetElementType(), t)
-                | _ when t.IsByRef -> Ref(true, unfold <| t.GetElementType(), t)
-                | _ when t.IsPointer -> Ref(false, unfold <| t.GetElementType(), t)
-                | _ -> Named t
+                | List et -> activate1 typedefof<ShapeFSharpList<_>> et
+                | Option et -> activate1 typedefof<ShapeFSharpOption<_>> et
+                | Union -> activate1 typedefof<ShapeFSharpUnion<_>> t
+                | Choice args -> 
+                    match args.Length with
+                    | 2 -> activate typedefof<ShapeChoice<_,_>> args
+                    | 3 -> activate typedefof<ShapeChoice<_,_,_>> args
+                    | 4 -> activate typedefof<ShapeChoice<_,_,_,_>> args
+                    | 5 -> activate typedefof<ShapeChoice<_,_,_,_,_>> args
+                    | 6 -> activate typedefof<ShapeChoice<_,_,_,_,_,_>> args
+                    | 7 -> activate typedefof<ShapeChoice<_,_,_,_,_,_,_>> args
+                    | _ -> invalidOp "invalid parameter size"
 
-            unfold t
-
-        // matches a type pattern against a given shape
-        // if matching, will return collection of subshapes that correspond to substituted variables in pattern
-        // in other words,
-        //    Some [t1; .. ; tn] = tryMatch p t  iff  p[ti/xi] = t
-
-        static member TryMatch (pattern : TypeShape) (target : TypeShape) =
-            let rec traverse (varIdx : Map<int, TypeShape> option) (pat : TypeShape) (tgt : TypeShape) =
-                match varIdx with 
-                | None -> None 
-                | Some map ->
-                    match pat, tgt with
-                    | _, Var _ -> failwith "target shape cannot contain variables."
-                    | Var i, tgt ->
-                        match map.TryFind i with
-                        | Some tgt' when tgt = tgt' -> varIdx
-                        | Some _ -> None // variable matches to different shapes in target, incompatible
-                        | None -> Some <| map.Add(i, tgt)
-                    | Named t, Named t' when t = t' -> varIdx
-                    | Array(i,x,_), Array(j,y,_) when i = j -> traverse varIdx x y
-                    | Ref(b,x,_), Ref(b',y,_) when b = b' -> traverse varIdx x y
-                    | Generic(x, xargs, _), Generic(y, yargs, _) when x = y ->
-                        (xargs, yargs)
-                        ||> Seq.zip
-                        |> Seq.fold (fun varIdx (x,y) -> traverse varIdx x y) varIdx
-                    | _ -> 
-                        None
-
-            match traverse (Some Map.empty) pattern target with
-            | None -> None
-            | Some map ->
-                map |> Map.toSeq |> Seq.sortBy fst |> Seq.map snd |> Seq.toArray |> Some
-
-
-
-    type OverwriteBehavior = Overwrite | Discard | Fail
-
-    // an immutable dictionary implementation that returns the best matching shape entry given a type
-    // a best match is determined by minimizing the distance w.r.t. a naturally occuring 1-norm
-    // over shape trees.
-    type ShapeMap<'T> private (map : Map<string, (TypeShape * 'T) list>) =
-
-        static let topLevelId =
-            function
-            | Var _ -> "0"
-            | Array _ -> "1"
-            | Ref(true,_,_) -> "2"
-            | Ref(false,_,_) -> "3"
-            | Named t -> t.AssemblyQualifiedName
-            | Generic(t,_,_) -> t.AssemblyQualifiedName
-
-        // lookup a typeshape that matches input type, 
-        // returning an array of typeshapes that correspond to the shape's holes
-        member __.TryFind (t : Type) =
-            let shape = TypeShape.OfType t
-
-            // lookup based on top level shape
-            match map.TryFind <| topLevelId shape with
-            | None ->
-                // handle top level patterns
-                match map.TryFind <| topLevelId (Var 0) with
-                | None | Some [] -> None
-                | Some ((_,t) :: _) -> Some([|shape|], t)
-            | Some candidates ->
-                // make linear search on found pairs
-                let matches =
-                    candidates
-                    |> List.choose (fun (s,t) -> TypeShape.TryMatch s shape |> Option.map (fun m -> m,t))
-
-                if Seq.isEmpty matches then None
+            elif FSharpType.IsRecord(t, allMembers) then
+                if t.IsGenericType && t.GetGenericTypeDefinition () = typedefof<_ ref> then
+                    let et = t.GetGenericArguments().[0]
+                    activate1 typedefof<ShapeFSharpRef<_>> et
                 else
-                    // select by minimizing wrt to 1-distance
-                    matches |> List.minBy (fun (m,_) -> m |> Array.sumBy (fun s -> s.Size)) |> Some
+                    activate1 typedefof<ShapeFSharpRecord<_>> t
 
-        member m.Add (shape : TypeShape, value : 'T, overwrite) =
-            let shapeId = topLevelId shape
-            let content = defaultArg (map.TryFind shapeId) []
-            let updated = (shape, value) :: (content |> List.filter (fun (s,_) -> s <> shape))
-            let isRegisteredShape = updated.Length = content.Length
-            
-            match overwrite with
-            | Discard when isRegisteredShape -> m
-            | Fail when isRegisteredShape ->
-                invalidOp "A pickler factory of equivalent type shape already exists."
-            | _ ->
-                ShapeMap<_>(map.Add(shapeId, updated))
+            elif FSharpType.IsExceptionRepresentation(t, allMembers) then
+                activate1 typedefof<ShapeFSharpException<_>> t
 
-        member __.Add (t : Type, value : 'T, overwrite) = __.Add(TypeShape.OfType t, value, overwrite)
-        member __.Remove (shape : TypeShape) =
-            let shapeId = topLevelId shape
-            let content = defaultArg (map.TryFind shapeId) []
-            let updated = (content |> List.filter (fun (s,_) -> s <> shape))
+            else
+                match t with
+                | Dictionary(k,v) -> activate2 typedefof<ShapeDictionary<_,_>> k v
+                | FSharpMap(k,v) -> activate2 typedefof<ShapeFSharpMap<_,_>> k v
+                | FSharpSet k -> activate1 typedefof<ShapeFSharpSet<_>> k
+                | NotACollection ->
 
-            ShapeMap<_>(map.Add(shapeId, updated))
+                if t.IsAbstract then activate1 typedefof<ShapeAbstract<_>> t
+                elif t.IsEnum then activate2 (getGenericEnumType()) t <| t.GetEnumUnderlyingType()
+                elif isNullableType t then
+                    let et = t.GetGenericArguments().[0]
+                    activate1 typedefof<ShapeNullable<_>> et
 
-        member __.ToList () = map |> Map.toSeq |> Seq.map snd |> Seq.concat |> Seq.toList
+                elif t.IsValueType then activate1 typedefof<ShapeStruct<_>> t
+                elif t.IsArray then
+                    let et = t.GetElementType()
+                    match t.GetArrayRank() with
+                    | 1 -> activate1 typedefof<ShapeArray<_>> et
+                    | 2 -> activate1 typedefof<ShapeArray2D<_>> et
+                    | 3 -> activate1 typedefof<ShapeArray3D<_>> et
+                    | 4 -> activate1 typedefof<ShapeArray4D<_>> et
+                    | rk -> invalidOp <| sprintf "unsupported array rank '%d'" rk
 
-        static member Empty = ShapeMap<'T>(Map.empty)
-
-    /// an immutable index for generic picklers
-    type PicklerFactoryIndex internal (shapeMap : ShapeMap<IPicklerFactory * MethodInfo>) =
-
-        static let dummyResolver =
-            {
-                new IPicklerResolver with
-                    member __.Resolve (t : Type) = DotNetPicklers.AbstractPickler.CreateUntyped(t)
-                    member __.Resolve<'T> () = DotNetPicklers.AbstractPickler.Create<'T> ()
-            }
-
-        static member Empty = new PicklerFactoryIndex(ShapeMap.Empty)
-
-        member i.AddPicklerFactory(pf : IPicklerFactory, overwrite) =
-            let t = pf.GetType()
-            let getCreateMethods (t : Type) =
-                t.GetMethods(BindingFlags.Instance ||| BindingFlags.Public ||| BindingFlags.NonPublic)
-                |> Array.filter(fun m -> 
-                        m.Name = "Create"
-                        &&
-                            m.GetParameterTypes() = [| typeof<IPicklerResolver> |]
-                        &&
-                            typeof<Pickler>.IsAssignableFrom m.ReturnType)
-
-            // 'Create' method may be hidden in intermediate interfaces
-            let createMethods = 
-                t.GetInterfaces() 
-                |> Seq.filter (fun i -> typeof<IPicklerFactory>.IsAssignableFrom i)
-                |> Seq.append [| t |]
-                |> Seq.collect getCreateMethods
-                |> Seq.toArray
-
-            match createMethods with
-            | [||] ->
-                PicklerFactoryException(pf, "does not implement a factory method 'Create<..> : IPicklerResolver -> Pickler'.")
-                |> raise
-
-            | [| m |] when m.IsGenericMethodDefinition ->
-                // apply Peano type variables to pickler in order to extrapolate the type shape
-                let tyVars = getPeanoVars (m.GetGenericArguments().Length)
-
-                let m0 =
-                    try m.MakeGenericMethod tyVars
-                    with :? System.ArgumentException & InnerExn (:? System.Security.VerificationException) ->
-                        raise <| new PicklerFactoryException(pf, "contains unsupported type constraint.")
-
-                let pickler = m0.GuardedInvoke(pf, [| dummyResolver :> obj|]) :?> Pickler
-                let shape = TypeShape.OfType pickler.Type
-                let fvs = shape.FreeVars
-                if fvs.Length < tyVars.Length then
-                    let missingVar =
-                        match fvs |> Seq.mapi (fun i n -> (i,n)) |> Seq.tryPick (fun (i,j) -> if i <> j then Some i else None) with
-                        | None -> fvs.Length
-                        | Some i -> i
-
-                    raise <| new PicklerFactoryException(pf, sprintf "type variable #%d is not used in pattern." missingVar)
-
-                match shape with
-                | Var _ ->
-                    raise <| new PicklerFactoryException(pf, "pattern has type variable at root level.")
-                | _ -> ()
-
-                new PicklerFactoryIndex(shapeMap.Add(shape, (pf,m), overwrite))
-
-            | [| m |] ->
-                let pickler = m.GuardedInvoke(pf, [| dummyResolver :> obj |]) :?> Pickler
-                if pickler.TypeInfo = TypeKind.Primitive then
-                    raise <| new PicklerFactoryException(pf, "defining custom picklers for primitives not supported.")
-                let shape = TypeShape.OfType pickler.Type
-
-                new PicklerFactoryIndex(shapeMap.Add(shape, (pf, m), overwrite))
-            | ms ->
-                raise <| new PicklerFactoryException(pf, "ambiguous declarations of 'Create' methods found.")
-                
-
-        member i.AddPicklerFactories(gfs : seq<IPicklerFactory>, overwrite) =
-            (i,gfs) ||> Seq.fold (fun i gf -> i.AddPicklerFactory(gf,overwrite))
-
-        member i.TryResolvePicklerFactory(t : Type, resolver : IPicklerResolver) : Pickler option =
-            match shapeMap.TryFind t with
-            | None -> None
-            | Some (shapes, (pf,m)) ->
-                // get hole instances that match given pattern
-                let types = shapes |> Array.map (fun s -> s.Type)
-                let m0 =
-                    if types.Length = 0 then m
-                    else
-                        m.MakeGenericMethod types
-                
-                let pickler = m0.GuardedInvoke(pf, [| resolver :> obj |]) :?> Pickler
-
-                if pickler.Type <> t then
-                    let msg = sprintf "factory yielded pickler of incompatible of type '%O'." pickler.Type
-                    raise <| new PicklerGenerationException(t, msg)
-
-                Some pickler
-
-        member __.GetEntries() =
-            shapeMap.ToList()
-            |> List.map (fun (shape,(gf,_)) -> gf.GetType(), shape.ToString())
+                elif typeof<Delegate>.IsAssignableFrom t then
+                    activate1 typedefof<ShapeDelegate<_>> t
+                elif isISerializable t then
+                    activate1 typedefof<ShapeISerializable<_>> t
+                else
+                    activate1 typedefof<ShapeClass<_>> t

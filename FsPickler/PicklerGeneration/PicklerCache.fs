@@ -6,12 +6,13 @@
 
     open Nessos.FsPickler.Utils
     open Nessos.FsPickler.TypeShape
+//    open Nessos.FsPickler.TypeShapeOld
     open Nessos.FsPickler.TypeCache
-    open Nessos.FsPickler.PicklerUtils
+//    open Nessos.FsPickler.PicklerUtils
     open Nessos.FsPickler.PrimitivePicklers
     open Nessos.FsPickler.ReflectionPicklers
-    open Nessos.FsPickler.CombinatorImpls
-    open Nessos.FsPickler.TuplePicklers
+//    open Nessos.FsPickler.CombinatorImpls
+//    open Nessos.FsPickler.TuplePicklers
     open Nessos.FsPickler.PicklerResolution
 
     [<Sealed>]
@@ -19,7 +20,7 @@
 
         let typeNameConverter = ref None : ITypeNameConverter option ref
         let customPicklers = Atom.atom Map.empty<string, Pickler>
-        let customPicklerFactories = Atom.atom PicklerFactoryIndex.Empty
+//        let customPicklerFactories = Atom.atom PicklerFactoryIndex.Empty
 
         /// register custom type serialization rules; useful for FSI type serializations.
         member __.SetTypeNameConverter tc = typeNameConverter := Some tc
@@ -31,11 +32,11 @@
 
             customPicklers.Swap(fun fmts -> fmts.AddNoOverwrite(pickler.Type.AssemblyQualifiedName, pickler))
 
-        /// register pluggable pickler factories
-        member __.RegisterPicklerFactory(pf : IPicklerFactory) =
-            customPicklerFactories.Swap(fun factories -> factories.AddPicklerFactory(pf, Fail))
-
-        member internal __.CustomPicklerFactories = customPicklerFactories.Value
+//        /// register pluggable pickler factories
+//        member __.RegisterPicklerFactory(pf : IPicklerFactory) =
+//            customPicklerFactories.Swap(fun factories -> factories.AddPicklerFactory(pf, Fail))
+//
+//        member internal __.CustomPicklerFactories = customPicklerFactories.Value
 
         /// Identifier for the custom registry
         member __.Name = name
@@ -44,7 +45,7 @@
         /// list of currently registered custom picklers
         member __.Picklers = customPicklers.Value |> Map.toSeq |> Seq.map snd |> List.ofSeq
         /// list of currently registered custom pickler factories
-        member __.PicklerFactories = customPicklerFactories.Value.GetEntries()
+//        member __.PicklerFactories = customPicklerFactories.Value.GetEntries()
 
 
 
@@ -82,26 +83,27 @@
                     dict.[t]
 
 
-    type internal PicklerCache private (uuid : string, name : string,
-                                            tyConv : ITypeNameConverter option, 
-                                            customPicklers : seq<Pickler>, 
-                                            customPicklerFactories : PicklerFactoryIndex) =
+//    type internal PicklerCache private (uuid : string, name : string,
+//                                            tyConv : ITypeNameConverter option) =
+//                                            customPicklers : seq<Pickler>, 
+//                                            customPicklerFactories : PicklerFactoryIndex) =
+//
+//        // keep a record of all PicklerCache instances.
+//        static let caches = Atom.atom Set.empty<string>
+//        do
+//            caches.Swap(fun s ->
+//                if caches.Value.Contains name then
+//                    invalidOp <| sprintf "A pickler cache with id '%s' has already been initialized." name
+//                else
+//                    s.Add name)
+    type internal PicklerCache private (uuid, ?tyConv) =
 
-        // keep a record of all PicklerCache instances.
-        static let caches = Atom.atom Set.empty<string>
-        do
-            caches.Swap(fun s ->
-                if caches.Value.Contains name then
-                    invalidOp <| sprintf "A pickler cache with id '%s' has already been initialized." name
-                else
-                    s.Add name)
 
-
-        // include default pickler factories
-        let customPicklerFactories =
-            let defaultFactories = getDefaultPicklerFactories ()
-            let tupleFactories = getTuplePicklerFactories ()
-            customPicklerFactories.AddPicklerFactories(defaultFactories @ tupleFactories, Discard)
+//        // include default pickler factories
+//        let customPicklerFactories =
+//            let defaultFactories = getDefaultPicklerFactories ()
+//            let tupleFactories = getTuplePicklerFactories ()
+//            customPicklerFactories.AddPicklerFactories(defaultFactories @ tupleFactories, Discard)
 
 //        let reflection = 
 //#if SERIALIZE_STRONG_NAMES
@@ -122,14 +124,14 @@
             |> Seq.concat
             |> Seq.iter (fun p -> cache.Commit p.Type (Success p) |> ignore)
 
-            // add custom picklers
-            for p in customPicklers do
-                cache.Commit p.Type (Success p) |> ignore
+//            // add custom picklers
+//            for p in customPicklers do
+//                cache.Commit p.Type (Success p) |> ignore
 
         let reflectionCache = new ReflectionCache(?tyConv = tyConv)
 
         let resolver (t : Type) = 
-            try YParametric cache (resolvePickler customPicklerFactories) t
+            try YParametric cache resolvePickler t
             with :? NonSerializableTypeException as e ->
                 if e.UnsupportedType = t then reraise ()
                 else
@@ -138,9 +140,10 @@
 
         // default cache instance
         static let singleton =
-            lazy(new PicklerCache(string Guid.Empty, "default cache instance", None, [], PicklerFactoryIndex.Empty))
+            lazy(new PicklerCache(string Guid.Empty, ?tyConv = None))
+//            lazy(new PicklerCache(string Guid.Empty, "default cache instance", None, [], PicklerFactoryIndex.Empty))
 
-        member __.Name = name
+//        member __.Name = name
         member __.UUId = uuid
         member __.ReflectionCache = reflectionCache
 
@@ -150,8 +153,8 @@
             member r.Resolve<'T> () = resolver typeof<'T> :?> Pickler<'T>
             member r.Resolve (t : Type) = resolver t
         
-        static member FromPicklerRegistry(pr : CustomPicklerRegistry) =
-            let uuid = string <| Guid.NewGuid()
-            new PicklerCache(uuid, pr.Name, pr.TypeNameConverter, pr.Picklers, pr.CustomPicklerFactories)
+//        static member FromPicklerRegistry(pr : CustomPicklerRegistry) =
+//            let uuid = string <| Guid.NewGuid()
+//            new PicklerCache(uuid, pr.Name, pr.TypeNameConverter, pr.Picklers, pr.CustomPicklerFactories)
 
         static member GetDefaultInstance () = singleton.Value

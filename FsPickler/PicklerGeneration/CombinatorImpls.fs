@@ -1,6 +1,7 @@
 ﻿module internal Nessos.FsPickler.CombinatorImpls
 
     open System
+    open System.IO
     open System.Reflection
     open System.Collections.Generic
 
@@ -16,7 +17,7 @@
 
     // F# list pickler combinator
 
-    type ListPickler () =
+    type ListPickler =
         static member Create (ep : Pickler<'T>) =
             let writer (w : WriteState) (list : 'T list) =
 
@@ -51,15 +52,13 @@
                     Array.toList array
 
             CompositePickler.Create<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = true, useWithSubtypes = true)
-            
 
-        interface IGenericPicklerFactory1 with
-            member __.Create<'T1> (resolver : IPicklerResolver) =
-                let p1 = resolver.Resolve<'T1> ()
-                ListPickler.Create p1 :> Pickler
+        static member Create<'T>(resolver : IPicklerResolver) =
+            let ep = resolver.Resolve<'T> ()
+            ListPickler.Create<'T> ep
 
 
-    type OptionPickler () =
+    type OptionPickler =
 
         static member Create (ep : Pickler<'T>) =
             // Composite pickler filters None values by default
@@ -71,98 +70,95 @@
 
             CompositePickler.Create<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
 
-        interface IGenericPicklerFactory1 with
-            member __.Create<'T> (resolver : IPicklerResolver) =
-                let ep = resolver.Resolve<'T> ()
-                OptionPickler.Create ep :> Pickler
+        static member Create<'T> (resolver : IPicklerResolver) =
+            let ep = resolver.Resolve<'T> ()
+            OptionPickler.Create ep
 
 
-    type Choice2Pickler () =
+    type ChoicePickler =
         static member Create(p1 : Pickler<'T1>, p2 : Pickler<'T2>) =
             let writer (w : WriteState) (c : Choice<'T1, 'T2>) =
                 match c with
                 | Choice1Of2 t1 -> 
                     w.Formatter.WriteByte "case" 0uy
-                    p1.Write w "value" t1
+                    p1.Write w "Item" t1
                 | Choice2Of2 t2 -> 
                     w.Formatter.WriteByte "case" 1uy
-                    p2.Write w "value" t2
+                    p2.Write w "Item" t2
 
             let reader (r : ReadState) =
                 match r.Formatter.ReadByte "case" with
-                | 0uy -> p1.Read r "value" |> Choice1Of2
-                | _ -> p2.Read r "value" |> Choice2Of2
+                | 0uy -> p1.Read r "Item" |> Choice1Of2
+                | 1uy -> p2.Read r "Item" |> Choice2Of2
+                | _ -> raise <| new InvalidDataException()
 
             CompositePickler.Create<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
 
-        interface IGenericPicklerFactory2 with
-            member __.Create<'T1, 'T2> (resolver : IPicklerResolver) =
-                let p1, p2 = resolver.Resolve<'T1> (), resolver.Resolve<'T2> ()
-                Choice2Pickler.Create(p1, p2) :> Pickler
 
+        static member Create<'T1, 'T2> (resolver : IPicklerResolver) =
+            let p1, p2 = resolver.Resolve<'T1> (), resolver.Resolve<'T2> ()
+            ChoicePickler.Create(p1, p2)
 
-    type Choice3Pickler () =
         static member Create(p1 : Pickler<'T1>, p2 : Pickler<'T2>, p3 : Pickler<'T3>) =
             let writer (w : WriteState) (c : Choice<'T1, 'T2, 'T3>) =
                 match c with
                 | Choice1Of3 t1 -> 
                     w.Formatter.WriteByte "case" 0uy
-                    p1.Write w "value" t1
+                    p1.Write w "Item" t1
                 | Choice2Of3 t2 -> 
                     w.Formatter.WriteByte "case" 1uy
-                    p2.Write w "value" t2
+                    p2.Write w "Item" t2
                 | Choice3Of3 t3 -> 
                     w.Formatter.WriteByte "case" 2uy
-                    p3.Write w "value" t3
+                    p3.Write w "Item" t3
 
             let reader (r : ReadState) =
                 match r.Formatter.ReadByte "case" with
-                | 0uy -> p1.Read r "value" |> Choice1Of3
-                | 1uy -> p2.Read r "value" |> Choice2Of3
-                | _   -> p3.Read r "value" |> Choice3Of3
+                | 0uy -> p1.Read r "Item" |> Choice1Of3
+                | 1uy -> p2.Read r "Item" |> Choice2Of3
+                | 2uy -> p3.Read r "Item" |> Choice3Of3
+                | _ -> raise <| new InvalidDataException()
 
             CompositePickler.Create<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
 
-        interface IGenericPicklerFactory3 with
-            member __.Create<'T1, 'T2, 'T3> (resolver : IPicklerResolver) =
-                let p1, p2, p3 = resolver.Resolve<'T1> (), resolver.Resolve<'T2> (), resolver.Resolve<'T3> ()
-                Choice3Pickler.Create(p1, p2, p3) :> Pickler
 
+        static member Create<'T1, 'T2, 'T3> (resolver : IPicklerResolver) =
+            let p1, p2, p3 = resolver.Resolve<'T1> (), resolver.Resolve<'T2> (), resolver.Resolve<'T3> ()
+            ChoicePickler.Create(p1, p2, p3)
 
-    type Choice4Pickler () =
         static member Create(p1 : Pickler<'T1>, p2 : Pickler<'T2>, p3 : Pickler<'T3>, p4 : Pickler<'T4>) =
             let writer (w : WriteState) (c : Choice<'T1, 'T2, 'T3, 'T4>) =
                 match c with
                 | Choice1Of4 t1 -> 
                     w.Formatter.WriteByte "case" 0uy
-                    p1.Write w "value" t1
+                    p1.Write w "Item" t1
                 | Choice2Of4 t2 -> 
                     w.Formatter.WriteByte "case" 1uy
-                    p2.Write w "value" t2
+                    p2.Write w "Item" t2
                 | Choice3Of4 t3 -> 
                     w.Formatter.WriteByte "case" 2uy
-                    p3.Write w "value" t3
+                    p3.Write w "Item" t3
                 | Choice4Of4 t4 -> 
                     w.Formatter.WriteByte "case" 3uy
-                    p4.Write w "value" t4
+                    p4.Write w "Item" t4
 
             let reader (r : ReadState) =
                 match r.Formatter.ReadByte "case" with
-                | 0uy -> p1.Read r "value" |> Choice1Of4
-                | 1uy -> p2.Read r "value" |> Choice2Of4
-                | 2uy -> p3.Read r "value" |> Choice3Of4
-                | _   -> p4.Read r "value" |> Choice4Of4
+                | 0uy -> p1.Read r "Item" |> Choice1Of4
+                | 1uy -> p2.Read r "Item" |> Choice2Of4
+                | 2uy -> p3.Read r "Item" |> Choice3Of4
+                | 3uy -> p4.Read r "Item" |> Choice4Of4
+                | _ -> raise <| new InvalidDataException()
 
             CompositePickler.Create<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
 
-        interface IGenericPicklerFactory4 with
-            member __.Create<'T1, 'T2, 'T3, 'T4> (resolver : IPicklerResolver) =
-                let p1, p2 = resolver.Resolve<'T1> (), resolver.Resolve<'T2> ()
-                let p3, p4 = resolver.Resolve<'T3> (), resolver.Resolve<'T4> ()
-                Choice4Pickler.Create(p1, p2, p3, p4) :> Pickler
+        static member Create<'T1, 'T2, 'T3, 'T4> (resolver : IPicklerResolver) =
+            let p1, p2 = resolver.Resolve<'T1> (), resolver.Resolve<'T2> ()
+            let p3, p4 = resolver.Resolve<'T3> (), resolver.Resolve<'T4> ()
+            ChoicePickler.Create(p1, p2, p3, p4)
 
 
-    type FSharpRefPickler () =
+    type FSharpRefPickler =
         static member Create (ep : Pickler<'T>) =
             let writer (w : WriteState) (r : 'T ref) =
                 ep.Write w "contents" r.Value
@@ -173,12 +169,11 @@
             // do not cache for performance
             CompositePickler.Create<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = false)
             
-        interface IGenericPicklerFactory1 with
-            member __.Create<'T> (resolver : IPicklerResolver) =
-                let ep = resolver.Resolve<'T> ()
-                FSharpRefPickler.Create ep :> Pickler
+        static member Create<'T> (resolver : IPicklerResolver) =
+            let ep = resolver.Resolve<'T> ()
+            FSharpRefPickler.Create ep
 
-    type FSharpSetPickler () =
+    type FSharpSetPickler =
         static member Create<'T when 'T : comparison>(ep : Pickler<'T>) =
             let writer (w : WriteState) (s : Set<'T>) = 
                 writeBoundedSequence w ep s.Count "set" s
@@ -188,12 +183,11 @@
 
             CompositePickler.Create<_>(reader, writer, PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = false)
             
-        interface IPicklerFactory
-        member __.Create<'T when 'T : comparison> (resolver : IPicklerResolver) =
+        static member Create<'T when 'T : comparison> (resolver : IPicklerResolver) =
             let ep = resolver.Resolve<'T>()
-            FSharpSetPickler.Create ep :> Pickler
+            FSharpSetPickler.Create ep
 
-    type FSharpMapPickler () =
+    type FSharpMapPickler =
         static member Create<'K, 'V when 'K : comparison> (kp : Pickler<'K>, vp : Pickler<'V>) =
             
             let writer (w : WriteState) (m : Map<'K,'V>) =
@@ -203,15 +197,14 @@
                 readBoundedPairSequence r kp vp "map" |> Map.ofArray
 
             CompositePickler.Create<_>(reader, writer, PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = false)
-            
-        interface IPicklerFactory
-        member __.Create<'K, 'V when 'K : comparison> (resolver : IPicklerResolver) =
+
+        static member Create<'K, 'V when 'K : comparison> (resolver : IPicklerResolver) =
             let kp, vp = resolver.Resolve<'K> (), resolver.Resolve<'V> ()
-            FSharpMapPickler.Create(kp, vp) :> Pickler
+            FSharpMapPickler.Create(kp, vp)
 
 
-    type DictionaryPickler () =
-        static member Create<'K, 'V when 'K : comparison> (kp : Pickler<'K>, vp : Pickler<'V>) =
+    type DictionaryPickler =
+        static member Create<'K, 'V when 'K : equality> (kp : Pickler<'K>, vp : Pickler<'V>) =
 
             let writer (w : WriteState) (d : Dictionary<'K,'V>) =
                 let kvs = Seq.map (fun (KeyValue (k,v)) -> k,v) d
@@ -226,11 +219,10 @@
                 d
 
             CompositePickler.Create<_>(reader, writer, PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = false)
-            
-        interface IPicklerFactory
-        member __.Create<'K, 'V when 'K : comparison> (resolver : IPicklerResolver) =
+
+        static member Create<'K, 'V when 'K : equality> (resolver : IPicklerResolver) =
             let kp, vp = resolver.Resolve<'K>(), resolver.Resolve<'V>()
-            DictionaryPickler.Create (kp, vp) :> Pickler
+            DictionaryPickler.Create (kp, vp)
 
 
     type AltPickler =
@@ -279,18 +271,3 @@
     type KeyValueSeqPickler =
         static member Create(kp : Pickler<'K>, vp : Pickler<'V>) =
             CompositePickler.Create<_>(readPairSequence kp vp "seq", writePairSequence kp vp "seq", PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = true)
-
-                
-
-    let getDefaultPicklerFactories () =
-        [
-            new ListPickler() :> IPicklerFactory
-            new OptionPickler() :> _
-            new Choice2Pickler() :> _
-            new Choice3Pickler() :> _
-            new Choice4Pickler() :> _
-            new FSharpRefPickler() :> _
-            new DictionaryPickler() :> _
-            new FSharpSetPickler() :> _
-            new FSharpMapPickler() :> _
-        ]

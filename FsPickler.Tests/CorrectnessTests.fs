@@ -322,15 +322,15 @@
 
             test quot
 
-        [<Test>]
-        member __.``Pluggable Pickler Factory`` () =
-            let (NGValue x) = testLoop (NGValue 0)
-            x |> should equal 42
-
-        [<Test>]
-        member __.``Pluggable Generic Pickler Factory`` () =
-            let x = testLoop (GenericType<int>(42))
-            x.Value |> should equal 0  
+//        [<Test>]
+//        member __.``Pluggable Pickler Factory`` () =
+//            let (NGValue x) = testLoop (NGValue 0)
+//            x |> should equal 42
+//
+//        [<Test>]
+//        member __.``Pluggable Generic Pickler Factory`` () =
+//            let x = testLoop (GenericType<int>(42))
+//            x.Value |> should equal 0  
 
         [<Test>]
         member __.``Nullable type support`` () =

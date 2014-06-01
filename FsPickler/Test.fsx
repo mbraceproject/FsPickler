@@ -12,6 +12,11 @@ let loop(x : 'T) =
     let bytes = fsp.Pickle x
     fsp.UnPickle<'T> bytes
 
+let t = System.Type.GetType "System.__Canon"
+let i = System.Activator.CreateInstance t
+
+loop i
+
 open System
 open System.IO
 
