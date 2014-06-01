@@ -19,8 +19,8 @@
         abstract Serialize : Stream * 'T -> unit
         abstract Deserialize : Stream -> 'T
 
-    type FsPicklerSerializer (?registry : CustomPicklerRegistry) =
-        let fsc = match registry with None -> new FsPickler() | Some r -> new FsPickler()
+    type FsPicklerSerializer () =
+        let fsc = FsPickler.CreateBinary()
 
         member __.FSCS = fsc
 

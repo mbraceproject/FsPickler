@@ -90,12 +90,13 @@
 
         abstract ReadBigInteger : tag:string -> bigint
         abstract ReadBytes : tag:string -> byte []
-//        abstract ReadBytesFixed : tag:string -> length:int -> byte []
 
         abstract IsPrimitiveArraySerializationSupported : bool
         abstract ReadPrimitiveArray : tag:string -> Array -> unit
 
     and IPickleFormatProvider =
+
+        abstract Name : string
 
         abstract CreateWriter : Stream -> IPickleFormatWriter
         abstract CreateReader : Stream -> IPickleFormatReader

@@ -22,14 +22,6 @@
 
     type FsUnionPickler =
 
-//        static member CreateUntyped(unionType : Type, resolver : IPicklerResolver) =
-//            let m =
-//                typeof<FsUnionPickler>
-//                    .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
-//                    .MakeGenericMethod [| unionType |]
-//
-//            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler
-
         static member Create<'Union> (resolver : IPicklerResolver) =
             // resolve tag reader methodInfo
             let tagReaderMethod =
@@ -162,14 +154,6 @@
     // F# record types
 
     type FsRecordPickler =
-
-//        static member CreateUntyped(t : Type, resolver : IPicklerResolver) =
-//            let m =
-//                typeof<FsRecordPickler>
-//                    .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
-//                    .MakeGenericMethod [| t |]
-//
-//            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler
         
         static member Create<'Record>(resolver : IPicklerResolver) =
 
@@ -223,14 +207,6 @@
     // Exception serialization is broken in F#; while types are ISerializable, added fields will not be serialized properly
     // Use a combination of ISerializable resolution and reflection to derive correct logic
     type FsExceptionPickler =
-
-//        static member CreateUntyped(t : Type, resolver : IPicklerResolver) =
-//            let m =
-//                typeof<FsExceptionPickler>
-//                    .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
-//                    .MakeGenericMethod [| t |]
-//
-//            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler
         
         static member Create<'Exception when 'Exception :> exn>(resolver : IPicklerResolver) =
             // the default ISerializable pickler that handles exception metadata serialization

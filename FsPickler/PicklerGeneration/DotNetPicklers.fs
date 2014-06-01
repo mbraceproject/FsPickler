@@ -36,21 +36,6 @@
 
             let pickler = typeShape.Accept visitor
             typeShape, pickler
-            
-
-//    type PicklerInitializer () =
-//        static member Create<'T>() = CompositePickler.CreateUninitialized<'T> ()
-//        
-//        interface ITypeVisitor<Pickler> with
-//            member __.Visit<'T> () = PicklerInitializer.Create<'T> () :> Pickler
-
-//        static member CreateUntyped (t : Type) =
-//            let m =
-//                typeof<UninitializedPickler>
-//                    .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
-//                    .MakeGenericMethod [| t |]
-//
-//            m.GuardedInvoke(null, null) :?> Pickler
 
     // abstract type pickler factory
 
@@ -61,26 +46,9 @@
 
             CompositePickler.Create<'T>(reader, writer, PicklerInfo.FieldSerialization, true, false)
 
-//        static member CreateUntyped(t : Type) =
-//            let m = 
-//                typeof<AbstractPickler>
-//                    .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
-//                    .MakeGenericMethod [| t |]
-//
-//            m.GuardedInvoke(null, null) :?> Pickler
-
     // pickler combinator for enum types
 
     type EnumPickler =
-//        static member CreateUntyped(enum : Type, resolver : IPicklerResolver) =
-//            let underlying = enum.GetEnumUnderlyingType()
-//            // reflection call typed method
-//            let m = 
-//                typeof<EnumPickler>
-//                    .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
-//                    .MakeGenericMethod [| enum ; underlying |]
-//
-//            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler
 
         static member Create<'Enum, 'Underlying when 'Enum : enum<'Underlying>> (resolver : IPicklerResolver) =
             let pickler = resolver.Resolve<'Underlying> ()
@@ -99,15 +67,6 @@
     // support for nullable types
 
     type NullablePickler =
-//        static member CreateUntyped(t : Type, resolver : IPicklerResolver) =
-//            let underlying = t.GetGenericArguments().[0]
-//            // reflection call typed method
-//            let m = 
-//                typeof<NullablePickler>
-//                    .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
-//                    .MakeGenericMethod [| underlying |]
-//
-//            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler
 
         static member Create<'T when 
                                 'T : (new : unit -> 'T) and 
@@ -135,13 +94,6 @@
     // pickler combinator for struct types
 
     type StructPickler =
-//        static member CreateUntyped(t : Type, resolver : IPicklerResolver) =
-//            let m = 
-//                typeof<StructPickler>
-//                    .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
-//                    .MakeGenericMethod [| t |]
-//
-//            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler
 
         static member Create<'T when 'T : struct>(resolver : IPicklerResolver) =
 
@@ -197,14 +149,6 @@
     // general-purpose pickler combinator for reference types
 
     type ClassFieldPickler =
-
-//        static member CreateUntyped(t : Type, resolver : IPicklerResolver) =
-//            let m =
-//                typeof<ClassPickler>
-//                    .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
-//                    .MakeGenericMethod [| t |]
-//
-//            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler
 
         static member Create<'T when 'T : not struct>(resolver : IPicklerResolver) =
             if not typeof<'T>.IsSerializable then
@@ -299,14 +243,6 @@
 
     type DelegatePickler =
 
-//        static member CreateUntyped(t : Type, resolver : IPicklerResolver) =
-//            let m =
-//                typeof<DelegatePickler>
-//                    .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
-//                    .MakeGenericMethod [| t |]
-//
-//            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler
-
         static member Create<'Delegate when 'Delegate :> Delegate> (resolver : IPicklerResolver) =
             let objPickler = resolver.Resolve<obj> ()
             let memberInfoPickler = resolver.Resolve<MethodInfo> ()
@@ -343,14 +279,6 @@
     // pickler combinator for ISerializable types
 
     type ISerializablePickler =
-
-//        static member CreateUntyped(t : Type, resolver : IPicklerResolver) =
-//            let m =
-//                typeof<ISerializablePickler>
-//                    .GetMethod("Create", BindingFlags.NonPublic ||| BindingFlags.Static)
-//                    .MakeGenericMethod [| t |]
-//
-//            m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler
 
         static member Create<'T when 'T :> ISerializable>(resolver : IPicklerResolver) =
             match typeof<'T>.TryGetConstructor [| typeof<SerializationInfo> ; typeof<StreamingContext> |] with
@@ -411,7 +339,7 @@
     type CustomPickler =
         static member Create(t : Type, resolver : IPicklerResolver) =
             let factoryMethod =
-                match t.GetMethod("CreatePickler", BindingFlags.Public ||| BindingFlags.Static) with
+                match t.GetMethod("CreatePickler", allStatic) with
                 | null -> None
                 | m when    not m.IsGenericMethod &&
                             m.GetParameterTypes() = [| typeof<IPicklerResolver> |] && 

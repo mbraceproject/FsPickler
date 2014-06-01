@@ -20,26 +20,26 @@
                 let useWithSubtypes = defaultArg useWithSubtypes false
                 mkPickler PicklerInfo.UserDefined useWithSubtypes cache reader writer
 
-//        type Writer with
-//            /// evaluates given sequence, serializing all elements to the underlying stream
-//            member w.WriteSequence(xs : seq<'T>) =
-//                let fmt = w.Resolver.Resolve<'T> ()
-//                writeSequenceNoLenght fmt w xs
-//
-//            /// evaluates given sequence of pairs, serializing all elements to the underlying stream
-//            member w.WriteKeyValueSequence(xs : seq<'K * 'V>) =
-//                let kf = w.Resolver.Resolve<'K> ()
-//                let vf = w.Resolver.Resolve<'V> ()
-//                writePairSequence' kf vf w xs
-//
-//        type Reader with
-//            /// reads the underlying stream for a sequence of items of given type.
-//            member r.readSequenceNoLength<'T> () =
-//                let fmt = r.Resolver.Resolve<'T> ()
-//                readSequenceNoLength fmt r
-//
-//            /// reads the underlying stream for a sequence of pairs of given types.
-//            member r.ReadKeyValueSequence<'K, 'V> () =
-//                let kf = r.Resolver.Resolve<'K> ()
-//                let vf = r.Resolver.Resolve<'V> ()
-//                readPairSequence' kf vf r
+        type WriteState with
+            /// evaluates given sequence, serializing all elements to the underlying stream
+            member w.WriteSequence (tag : string) (xs : seq<'T>) =
+                let p = w.PicklerResolver.Resolve<'T> ()
+                writeSequence p tag w xs
+
+            /// evaluates given sequence of pairs, serializing all elements to the underlying stream
+            member w.WriteKeyValueSequence (tag : string) (xs : seq<'K * 'V>) =
+                let kp = w.PicklerResolver.Resolve<'K> ()
+                let vp = w.PicklerResolver.Resolve<'V> ()
+                writePairSequence kp vp tag w xs
+
+        type ReadState with
+            /// reads the underlying stream for a sequence of items of given type.
+            member r.readSequence<'T> (tag : string) =
+                let p = r.PicklerResolver.Resolve<'T> ()
+                readSequence p tag r
+
+            /// reads the underlying stream for a sequence of pairs of given types.
+            member r.ReadKeyValueSequence<'K, 'V> (tag : string) =
+                let kp = r.PicklerResolver.Resolve<'K> ()
+                let vp = r.PicklerResolver.Resolve<'V> ()
+                readPairSequence kp vp tag r

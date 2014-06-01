@@ -29,7 +29,6 @@
             p.Read state tag :> obj
 
         override self.Cast<'S> () = self :> Pickler :?> Pickler<'S>
-        override self.Clone () = self :> Pickler
         override self.InitializeFrom _ = raise <| System.NotSupportedException("Primitive pickler late initialization not supported.")
 
     [<AutoSerializable(false)>]

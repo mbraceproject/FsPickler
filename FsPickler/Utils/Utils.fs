@@ -70,6 +70,8 @@
             let catch (f : unit -> 'T) =
                 try f () |> Success with e -> Error e
 
+            let error (e : #exn) = Error e
+
             let map (f : 'T -> 'S) (x : Exn<'T>) =
                 match x with
                 | Success x -> Success (f x)
@@ -78,7 +80,7 @@
             let bind (f : 'T -> 'S) (x : Exn<'T>) =
                 match x with
                 | Success x -> try Success <| f x with e -> Error e
-                | Error e -> Error e 
+                | Error e -> Error e
 
         type Atom<'T when 'T : not struct>(value : 'T) =
             let refCell = ref value

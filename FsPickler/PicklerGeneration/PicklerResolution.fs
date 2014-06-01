@@ -52,7 +52,12 @@
 
                         // all pickler generations that fail due to the type being deemed
                         // non-serializable, are to be stored in the cache as exceptions
-                        with :? NonSerializableTypeException as e -> Error e
+                        with 
+                        | :? NonSerializableTypeException as e when e.UnsupportedType <> t ->
+                            let msg = sprintf "contains nonserializable field '%O'." e.UnsupportedType
+                            raise <| new NonSerializableTypeException(t, msg)
+
+                        | :? NonSerializableTypeException as e -> Exn.Error e
 
                     // pickler generation complete, commit to cache
                     let commited = globalCache.Commit t pickler
@@ -100,50 +105,3 @@
         | None ->
             let factory = new PicklerFactory(resolver)
             shape.Accept factory
-
-//        let pf = new PicklerFactory(resolver)
-//
-//        // pluggable pickler factories, resolved by type shape
-//        let result =
-//            match result with
-//            | Some _ -> result
-//            | None -> picklerFactoryIndex.TryResolvePicklerFactory(t, resolver)
-//
-//        // FSharp Values
-//        let result =
-//            match result with
-//            | Some _ -> result
-//            | None ->
-//                if FSharpType.IsUnion(t, allMembers) then
-//                    Some <| FsUnionPickler.CreateUntyped(t, resolver)
-//                elif FSharpType.IsRecord(t, allMembers) then
-//                    Some <| FsRecordPickler.CreateUntyped(t, resolver)
-//                elif FSharpType.IsExceptionRepresentation(t, allMembers) then
-//                    Some <| FsExceptionPickler.CreateUntyped(t, resolver)
-//                else None
-//
-//        // .NET serialization resolution
-//        let result =
-//            match result with
-//            | None ->
-//                if t.IsAbstract then 
-//                    AbstractPickler.CreateUntyped t
-//                elif t.IsEnum then 
-//                    EnumPickler.CreateUntyped(t, resolver)
-//                elif isNullableType t then
-//                    NullablePickler.CreateUntyped(t, resolver) 
-//                elif t.IsValueType then 
-//                    StructPickler.CreateUntyped(t, resolver)
-//                elif t.IsArray then 
-//                    ArrayPickler.CreateUntyped(t, resolver)
-//                elif typeof<System.Delegate>.IsAssignableFrom t then
-//                    DelegatePickler.CreateUntyped(t, resolver)
-//                elif isISerializable t then
-//                    ISerializablePickler.CreateUntyped(t, resolver)
-//                elif not t.IsSerializable then 
-//                    raise <| NonSerializableTypeException t
-//                else
-//                    ClassPickler.CreateUntyped(t, resolver)
-//            | Some r -> r
-//
-//        result

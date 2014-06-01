@@ -18,31 +18,31 @@
         CompositePickler.Create<'T>(reader, writer, info, cacheByRef = cache, useWithSubtypes = useWithSubtypes)
 
 
-    /// set pickler id based on set of source picklers
-    /// will result in error if source picklers have conflicting source ids
-    /// used with external combinator library
-    let setPicklerId<'T when 'T :> Pickler> (sourcePicklers : seq<Pickler>) (targetPickler : ^T) =
-        let mutable current = null
-        for p in sourcePicklers do
-            match p.CacheId with
-            | null -> ()
-            | source when current = null -> current <- source
-            | source when current = source -> ()
-            | source -> 
-                let msg = "attempting to generate pickler using incompatible sources."
-                raise <| new PicklerGenerationException(p.Type, msg)
+//    /// set pickler id based on set of source picklers
+//    /// will result in error if source picklers have conflicting source ids
+//    /// used with external combinator library
+//    let setPicklerId<'T when 'T :> Pickler> (sourcePicklers : seq<Pickler>) (targetPickler : ^T) =
+//        let mutable current = null
+//        for p in sourcePicklers do
+//            match p.CacheId with
+//            | null -> ()
+//            | source when current = null -> current <- source
+//            | source when current = source -> ()
+//            | source -> 
+//                let msg = "attempting to generate pickler using incompatible sources."
+//                raise <| new PicklerGenerationException(p.Type, msg)
+//
+//        targetPickler.CacheId <- current
+//        targetPickler
 
-        targetPickler.CacheId <- current
-        targetPickler
-
-    // checks pickler compatibility at runtime
-    let checkPicklerCompat (uuid : string) (p : Pickler) =
-        match p.CacheId with
-        | null -> ()
-        | id when id <> uuid ->
-            let msg = sprintf "Attempting to use pickler of type '%O' generated from incompatible cache." p.Type
-            raise <| new SerializationException(msg)
-        | _ -> ()
+//    // checks pickler compatibility at runtime
+//    let checkPicklerCompat (uuid : string) (p : Pickler) =
+//        match p.CacheId with
+//        | null -> ()
+//        | id when id <> uuid ->
+//            let msg = sprintf "Attempting to use pickler of type '%O' generated from incompatible cache." p.Type
+//            raise <| new SerializationException(msg)
+//        | _ -> ()
 
 
     let private memberNameRegex = new Regex(@"[^a-zA-Z0-9]")

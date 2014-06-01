@@ -164,7 +164,8 @@
             member __.ReadPrimitiveArray _ array = br.ReadArray(array)
 
 
-    and BinaryFormatProvider () =
+    and BinaryPickleFormatProvider () =
         interface IPickleFormatProvider with
+            member __.Name = "Binary"
             member __.CreateWriter (stream : Stream) = new BinaryPickleWriter(stream) :> _
             member __.CreateReader (stream : Stream) = new BinaryPickleReader(stream) :> _

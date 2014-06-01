@@ -363,5 +363,6 @@
         let indented = defaultArg indented false
 
         interface IPickleFormatProvider with
+            member __.Name = "Json"
             member __.CreateWriter(stream) = new JsonPickleWriter(stream, encoding, indented, leaveOpen) :> _
             member __.CreateReader(stream) = new JsonPickleReader(stream, encoding, leaveOpen) :> _

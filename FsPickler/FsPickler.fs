@@ -9,6 +9,7 @@
     open Nessos.FsPickler.Utils
     open Nessos.FsPickler.Hashing
     open Nessos.FsPickler.PicklerUtils
+    open Nessos.FsPickler.TypeCache
     open Nessos.FsPickler.RootObjectSerialization
 
     type private OAttribute = System.Runtime.InteropServices.OptionalAttribute
@@ -16,23 +17,17 @@
 
     [<Sealed>]
     [<AutoSerializableAttribute(false)>]
-    type FsPickler private (cache : PicklerCache) =
+    type FsPickler private (formatP : IPickleFormatProvider, ?tyConv) =
 
-        let resolver = cache :> IPicklerResolver
+        let resolver = PicklerCache.Instance :> IPicklerResolver
+        let reflectionCache = new ReflectionCache(?tyConv = tyConv)
 
-//        static let formatP = new XmlPickleFormatProvider(System.Text.Encoding.UTF8, indent = true)
-//        static let formatP = new JsonPickleFormatProvider(indented = true)
-        static let formatP = new BinaryFormatProvider()
-        
-        /// initializes an instance that resolves picklers from a global cache
-        new () = new FsPickler(PicklerCache.GetDefaultInstance())
-        /// initializes a new pickler cache that resolves picklers using custom rules
-//        new (registry : CustomPicklerRegistry) = new FsPickler(PicklerCache.FromPicklerRegistry registry)
+        // TODO : tyConv
+        static member CreateBinary () = new FsPickler(BinaryPickleFormatProvider())
+        static member CreateJson () = new FsPickler(JsonPickleFormatProvider())
+        static member CreateXml () = new FsPickler(XmlPickleFormatProvider())
 
-        /// Name for the pickler cache
-//        member __.Name = cache.Name
-        /// Identifier of the cache instance used by the serializer.
-        member __.UUId = cache.UUId
+        member __.PickleFormat = formatP.Name
 
         /// <summary>Serialize value to the underlying stream.</summary>
         /// <param name="stream">target stream.</param>
@@ -40,174 +35,102 @@
         /// <param name="streamingContext">streaming context.</param>
         /// <param name="encoding">encoding passed to the binary writer.</param>
         /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to true.</param>
-        member __.Serialize<'T>(stream : Stream, value : 'T, [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : unit =
+        member __.Serialize<'T>(stream : Stream, value : 'T, [<O;D(null)>]?streamingContext) : unit =
             let pickler = resolver.Resolve<'T> ()
-            writeRootObject formatP resolver cache.ReflectionCache streamingContext stream pickler value
+            writeRootObject formatP resolver reflectionCache streamingContext stream pickler value
 
         /// <summary>Serialize value to the underlying stream using given pickler.</summary>
         /// <param name="pickler">pickler used for serialization.</param>
         /// <param name="stream">target stream.</param>
         /// <param name="value">value to be serialized.</param>
         /// <param name="streamingContext">streaming context.</param>
-        /// <param name="encoding">encoding passed to the binary reader.</param>
-        /// <param name="leaveOpen">leave underlying stream open when finished. Defaults to true.</param>
-        member __.Serialize<'T>(pickler : Pickler<'T>, stream : Stream, value : 'T, [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : unit =
-            do checkPicklerCompat cache.UUId pickler
-            writeRootObject formatP resolver cache.ReflectionCache streamingContext stream pickler value
+        member __.Serialize<'T>(pickler : Pickler<'T>, stream : Stream, value : 'T, [<O;D(null)>]?streamingContext) : unit =
+            writeRootObject formatP resolver reflectionCache streamingContext stream pickler value
 
         /// <summary>Serialize object of given type to the underlying stream.</summary>
         /// <param name="valueType">type of the given object.</param>
         /// <param name="stream">target stream.</param>
         /// <param name="value">value to be serialized.</param>
         /// <param name="streamingContext">streaming context.</param>
-        /// <param name="encoding">encoding passed to the binary reader.</param>
-        /// <param name="leaveOpen">leave underlying stream open when finished. Defaults to true.</param>
-        member __.Serialize(valueType : Type, stream : Stream, value : obj, [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : unit =
+        member __.Serialize(valueType : Type, stream : Stream, value : obj, [<O;D(null)>]?streamingContext) : unit =
             let pickler = resolver.Resolve valueType
-            writeRootObjectUntyped formatP resolver cache.ReflectionCache streamingContext stream pickler value
+            writeRootObjectUntyped formatP resolver reflectionCache streamingContext stream pickler value
 
         /// <summary>Serialize object to the underlying stream using given pickler.</summary>
         /// <param name="pickler">untyped pickler used for serialization.</param>
         /// <param name="stream">target stream.</param>
         /// <param name="value">value to be serialized.</param>
         /// <param name="streamingContext">streaming context.</param>
-        /// <param name="encoding">encoding passed to the binary reader.</param>
-        /// <param name="leaveOpen">leave underlying stream open when finished. Defaults to true.</param>
-        member __.Serialize(pickler : Pickler, stream : Stream, value : obj, [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : unit =
-            writeRootObjectUntyped formatP resolver cache.ReflectionCache streamingContext stream pickler value
-//            use state = new WriteState(stream, formatP, resolver, ?streamingContext = streamingContext) //, ?encoding = encoding, ?leaveOpen = leaveOpen)
-//            let qualifiedName = cache.GetQualifiedName pickler.Type
-//            state.Formatter.BeginWriteRoot qualifiedName
-//            pickler.UntypedWrite state "object" value
-//            state.Formatter.EndWriteRoot ()
+        member __.Serialize(pickler : Pickler, stream : Stream, value : obj, [<O;D(null)>]?streamingContext) : unit =
+            writeRootObjectUntyped formatP resolver reflectionCache streamingContext stream pickler value
 
         /// <summary>Deserialize value of given type from the underlying stream.</summary>
         /// <param name="stream">source stream.</param>
         /// <param name="streamingContext">streaming context.</param>
-        /// <param name="encoding">encoding passed to the binary reader.</param>
-        /// <param name="leaveOpen">leave underlying stream open when finished. Defaults to true.</param>
-        member __.Deserialize<'T> (stream : Stream, [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : 'T =
+        member __.Deserialize<'T> (stream : Stream, [<O;D(null)>]?streamingContext) : 'T =
             let pickler = resolver.Resolve<'T> ()
-            readRootObject formatP resolver cache.ReflectionCache streamingContext stream pickler
-//            use state = new ReadState(stream, formatP, resolver, ?streamingContext = streamingContext) //, ?encoding = encoding, ?leaveOpen = leaveOpen)
-//            let pickler = resolver.Resolve<'T> ()
-//            let qualifiedName = cache.GetQualifiedName pickler.Type
-//            state.Formatter.BeginReadRoot qualifiedName
-//            let v = pickler.Read state "object"
-//            state.Formatter.EndReadRoot ()
-//            v
+            readRootObject formatP resolver reflectionCache streamingContext stream pickler
 
         /// <summary>Deserialize value of given type from the underlying stream, using given pickler.</summary>
         /// <param name="pickler">pickler used for serialization.</param>
         /// <param name="stream">source stream.</param>
-        /// <param name="streamingContext"> streaming context.</param>
-        /// <param name="encoding">encoding passed to the binary reader.</param>
-        /// <param name="leaveOpen">leave underlying stream open when finished. Defaults to true.</param>
-        member __.Deserialize<'T> (pickler : Pickler<'T>, stream : Stream, [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : 'T =
-            do checkPicklerCompat cache.UUId pickler
-            readRootObject formatP resolver cache.ReflectionCache streamingContext stream pickler
-//            use state = new ReadState(stream, formatP, resolver, ?streamingContext = streamingContext) //, ?encoding = encoding, ?leaveOpen = leaveOpen)
-//            let qualifiedName = cache.GetQualifiedName pickler.Type
-//            state.Formatter.BeginReadRoot qualifiedName
-//            let v = pickler.Read state "object"
-//            state.Formatter.EndReadRoot ()
-//            v
+        /// <param name="streamingContext">streaming context.</param>
+        member __.Deserialize<'T> (pickler : Pickler<'T>, stream : Stream, [<O;D(null)>]?streamingContext) : 'T =
+            readRootObject formatP resolver reflectionCache streamingContext stream pickler
 
         /// <summary>Deserialize object of given type from the underlying stream.</summary>
         /// <param name="valueType">anticipated value type.</param>
         /// <param name="stream">source stream.</param>
         /// <param name="streamingContext">streaming context.</param>
-        /// <param name="encoding">encoding passed to the binary reader.</param>
-        /// <param name="leaveOpen">leave underlying stream open when finished. Defaults to true.</param>
-        member __.Deserialize (valueType : Type, stream : Stream, [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : obj =
+        member __.Deserialize (valueType : Type, stream : Stream, [<O;D(null)>]?streamingContext) : obj =
             let pickler = resolver.Resolve valueType
-            readRootObjectUntyped formatP resolver cache.ReflectionCache streamingContext stream pickler
-//            use state = new ReadState(stream, formatP, resolver, ?streamingContext = streamingContext) //, ?encoding = encoding, ?leaveOpen = leaveOpen)
-//            let pickler = resolver.Resolve valueType
-//            let qualifiedName = cache.GetQualifiedName pickler.Type
-//            state.Formatter.BeginReadRoot qualifiedName
-//            let v = pickler.UntypedRead state "object"
-//            state.Formatter.EndReadRoot ()
-//            v
+            readRootObjectUntyped formatP resolver reflectionCache streamingContext stream pickler
 
         /// <summary>Deserialize object from the underlying stream using given pickler.</summary>
         /// <param name="pickler">untyped pickler used for deserialization.</param>
         /// <param name="stream">source stream.</param>
         /// <param name="streamingContext">streaming context.</param>
-        /// <param name="encoding">encoding passed to the binary reader.</param>
-        /// <param name="leaveOpen">leave underlying stream open when finished. Defaults to true.</param>
         /// <return>number of elements written to the stream.</return>
-        member __.Deserialize (pickler : Pickler, stream : Stream, [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : obj =
-            readRootObjectUntyped formatP resolver cache.ReflectionCache streamingContext stream pickler
-//            use state = new ReadState(stream, formatP, resolver, ?streamingContext = streamingContext)
-//            let qualifiedName = cache.GetQualifiedName pickler.Type
-//            state.Formatter.BeginReadRoot qualifiedName
-//            let v = pickler.UntypedRead state "object"
-//            state.Formatter.EndReadRoot ()
-//            v
+        member __.Deserialize (pickler : Pickler, stream : Stream, [<O;D(null)>]?streamingContext) : obj =
+            readRootObjectUntyped formatP resolver reflectionCache streamingContext stream pickler
 
         /// <summary>Serialize a sequence of objects to the underlying stream.</summary>
         /// <param name="stream">target stream.</param>
         /// <param name="sequence">input sequence.</param>
         /// <param name="streamingContext">streaming context.</param>
-        /// <param name="encoding">encoding passed to the binary reader.</param>
-        /// <param name="leaveOpen">leave underlying stream open when finished. Defaults to true.</param>
-        member __.SerializeSequence<'T>(stream : Stream, sequence:seq<'T>, [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : int =
+        /// <return>number of elements written to the stream.</return>
+        member __.SerializeSequence<'T>(stream : Stream, sequence:seq<'T>, [<O;D(null)>]?streamingContext) : int =
             let pickler = resolver.Resolve<'T> ()
-            writeTopLevelSequence formatP resolver cache.ReflectionCache streamingContext stream pickler sequence
-//            use writer = new WriteState(stream, formatP, resolver) //, ?encoding = encoding, ?leaveOpen = leaveOpen)
-//            let pickler = resolver.Resolve<'T> ()
-//            writeTopLevelSequence pickler writer "object" sequence
+            writeTopLevelSequence formatP resolver reflectionCache streamingContext stream pickler sequence
 
         /// <summary>Serialize a sequence of objects to the underlying stream.</summary>
         /// <param name="elementType">element type used in sequence.</param>
         /// <param name="stream">target stream.</param>
         /// <param name="sequence">input sequence.</param>
         /// <param name="streamingContext">streaming context.</param>
-        /// <param name="encoding">encoding passed to the binary reader.</param>
-        /// <param name="leaveOpen">leave underlying stream open when finished. Defaults to true.</param>
         /// <return>number of elements written to the stream.</return>
-        member __.SerializeSequence(elementType : Type, stream : Stream, sequence : IEnumerable, [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : int =
+        member __.SerializeSequence(elementType : Type, stream : Stream, sequence : IEnumerable, [<O;D(null)>]?streamingContext) : int =
             let pickler = resolver.Resolve elementType
-            writeTopLevelSequenceUntyped formatP resolver cache.ReflectionCache streamingContext stream pickler sequence
-//            use writer = new WriteState(stream, formatP, resolver) //, ?encoding = encoding, ?leaveOpen = leaveOpen)
-//            let pickler = resolver.Resolve elementType
-//            writeTopLevelSequenceUntyped pickler writer "object" sequence
-//            let qn = cache.GetQualifiedName pickler.Type
-//            pickler.WriteSequence(writer, qn, sequence)
+            writeTopLevelSequenceUntyped formatP resolver reflectionCache streamingContext stream pickler sequence
 
         /// <summary>Lazily deserialize a sequence of objects from the underlying stream.</summary>
         /// <param name="stream">source stream.</param>
         /// <param name="length">number of elements to be deserialized.</param>
         /// <param name="streamingContext">streaming context.</param>
-        /// <param name="encoding">encoding passed to the binary reader.</param>
-        /// <param name="leaveOpen">leave underlying stream open when finished. Defaults to true.</param>
         /// <returns>An IEnumerator that lazily consumes elements from the stream.</returns>
-        member __.DeserializeSequence<'T>(stream : Stream, length : int, [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : IEnumerator<'T> =
+        member __.DeserializeSequence<'T>(stream : Stream, length : int, [<O;D(null)>]?streamingContext) : IEnumerator<'T> =
             let pickler = resolver.Resolve<'T> ()
-            readTopLevelSequence formatP resolver cache.ReflectionCache streamingContext stream pickler length
-//            let reader = new ReadState(stream, formatP, resolver) //, ?encoding = encoding, ?leaveOpen = leaveOpen)
-//            let pickler = resolver.Resolve<'T> ()
-//            readTopLevelSequence pickler reader "object" length
-//            let qn = cache.GetQualifiedName pickler.Type
-//            reader.readSequenceNoLength(pickler, qn, length)
+            readTopLevelSequence formatP resolver reflectionCache streamingContext stream pickler length
 
         /// <summary>Lazily deserialize a sequence of objects from the underlying stream.</summary>
         /// <param name="elementType">element type used in sequence.</param>
         /// <param name="stream">source stream.</param>
         /// <param name="length">number of elements to be deserialized.</param>
         /// <param name="streamingContext">streaming context.</param>
-        /// <param name="encoding">encoding passed to the binary reader.</param>
-        /// <param name="leaveOpen">leave underlying stream open when finished. Defaults to true.</param>
         /// <returns>An IEnumerator that lazily consumes elements from the stream.</returns>
-        member __.DeserializeSequence(elementType : Type, stream : Stream, length : int, [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : IEnumerator =
+        member __.DeserializeSequence(elementType : Type, stream : Stream, length : int, [<O;D(null)>]?streamingContext) : IEnumerator =
             let pickler = resolver.Resolve elementType
-            readTopLevelSequenceUntyped formatP resolver cache.ReflectionCache streamingContext stream pickler length
-//            let reader = new ReadState(stream, formatP, resolver) //, ?encoding = encoding, ?leaveOpen = leaveOpen)
-//            let pickler = resolver.Resolve elementType
-//            readTopLevelSequenceUntyped pickler reader "object" length
-//            let qn = cache.GetQualifiedName pickler.Type
-//            pickler.readSequenceNoLength(reader, qn, length)
+            readTopLevelSequenceUntyped formatP resolver reflectionCache streamingContext stream pickler length
 
         /// <summary>
         ///     Pickles given value to byte array.
@@ -215,18 +138,16 @@
         /// <param name="pickler">Pickler to use.</param>
         /// <param name="value">Value to pickle.</param>
         /// <param name="streamingContext">streaming context.</param>
-        /// <param name="encoding">encoding passed to the binary writer.</param>
-        member f.Pickle (pickler : Pickler<'T>, value : 'T, [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding) : byte [] =
-            pickle (fun m v -> f.Serialize(pickler, m, v, ?streamingContext = streamingContext, ?encoding = encoding)) value
+        member f.Pickle (pickler : Pickler<'T>, value : 'T, [<O;D(null)>]?streamingContext) : byte [] =
+            pickle (fun m v -> f.Serialize(pickler, m, v, ?streamingContext = streamingContext)) value
 
         /// <summary>
         ///     Pickles given value to byte array.
         /// </summary>
         /// <param name="value">Value to pickle.</param>
         /// <param name="streamingContext">streaming context.</param>
-        /// <param name="encoding">encoding passed to the binary writer.</param>
-        member f.Pickle (value : 'T, [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding) : byte [] =
-            pickle (fun m v -> f.Serialize(m, v, ?streamingContext = streamingContext, ?encoding = encoding)) value
+        member f.Pickle (value : 'T, [<O;D(null)>]?streamingContext) : byte [] =
+            pickle (fun m v -> f.Serialize(m, v, ?streamingContext = streamingContext)) value
 
         /// <summary>
         ///     Unpickles value using given pickler.
@@ -234,9 +155,8 @@
         /// <param name="pickler">Pickler to use.</param>
         /// <param name="data">Pickle.</param>
         /// <param name="streamingContext">streaming context.</param>
-        /// <param name="encoding">encoding passed to the binary reader.</param>
-        member f.UnPickle (pickler : Pickler<'T>, data : byte [], [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding) : 'T =
-            unpickle (fun m -> f.Deserialize(pickler, m, ?streamingContext = streamingContext, ?encoding = encoding)) data
+        member f.UnPickle (pickler : Pickler<'T>, data : byte [], [<O;D(null)>]?streamingContext) : 'T =
+            unpickle (fun m -> f.Deserialize(pickler, m, ?streamingContext = streamingContext)) data
 
         /// <summary>
         ///     Unpickle value to given type.
@@ -244,8 +164,8 @@
         /// <param name="data">Pickle.</param>
         /// <param name="streamingContext">streaming context.</param>
         /// <param name="encoding">encoding passed to the binary reader.</param>
-        member f.UnPickle<'T> (data : byte [], [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding) : 'T =
-            unpickle (fun m -> f.Deserialize<'T>(m, ?streamingContext = streamingContext, ?encoding = encoding)) data
+        member f.UnPickle<'T> (data : byte [], [<O;D(null)>]?streamingContext) : 'T =
+            unpickle (fun m -> f.Deserialize<'T>(m, ?streamingContext = streamingContext)) data
 
         /// <summary>Compute size and hashcode for given input.</summary>
         /// <param name="value">input value.</param>

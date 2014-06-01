@@ -19,6 +19,10 @@
                 BindingFlags.FlattenHierarchy
 
     [<Literal>]
+    let allStatic =
+        BindingFlags.NonPublic ||| BindingFlags.Public ||| BindingFlags.Static
+
+    [<Literal>]
     let allConstructors = BindingFlags.Instance ||| BindingFlags.NonPublic ||| BindingFlags.Public
 
 

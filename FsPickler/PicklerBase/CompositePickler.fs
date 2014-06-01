@@ -90,11 +90,11 @@
         override p.IsOfFixedSize = p.m_IsOfFixedSize
         override p.UseWithSubtypes = p.m_UseWithSubtypes
 
-        override p.Clone () =
-            if p.m_IsInitialized then
-                new CompositePickler<'T>(p.m_Reader, p.m_Writer, p.m_NestedPickler, p.m_PicklerInfo, p.IsCacheByRef, p.m_UseWithSubtypes) :> Pickler
-            else
-                invalidOp "Attempting to consume pickler at initialization time."
+//        override p.Clone () =
+//            if p.m_IsInitialized then
+//                new CompositePickler<'T>(p.m_Reader, p.m_Writer, p.m_NestedPickler, p.m_PicklerInfo, p.IsCacheByRef, p.m_UseWithSubtypes) :> Pickler
+//            else
+//                invalidOp "Attempting to consume pickler at initialization time."
 
         override p.Cast<'S> () =
             match p.m_NestedPickler with

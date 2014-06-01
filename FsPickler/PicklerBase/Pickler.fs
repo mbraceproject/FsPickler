@@ -12,7 +12,7 @@
     [<AbstractClass>]
     type Pickler internal () =
 
-        let mutable cacheId : string = null
+//        let mutable cacheId : string = null
         
         abstract Type : Type
         abstract ImplementationType : Type
@@ -31,12 +31,12 @@
         abstract Unpack : IPicklerUnpacker<'U> -> 'U
 
         abstract Cast<'S> : unit -> Pickler<'S>
-        abstract Clone : unit -> Pickler
+//        abstract Clone : unit -> Pickler
         abstract InitializeFrom : other:Pickler -> unit
 
-        member __.CacheId
-            with get () = cacheId
-            and internal set id = cacheId <- id
+//        member __.CacheId
+//            with get () = cacheId
+//            and internal set id = cacheId <- id
 
     and
      [<AutoSerializable(false)>]

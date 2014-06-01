@@ -259,9 +259,11 @@
             member __.Dispose () = reader.Dispose()
 
 
-        type XmlPickleFormatProvider(encoding : Encoding, ?indent) =
+        type XmlPickleFormatProvider(?encoding : Encoding, ?indent) =
+            let encoding = defaultArg encoding Encoding.UTF8
             let indent = defaultArg indent false
             
             interface IPickleFormatProvider with
+                member __.Name = "Xml"
                 member __.CreateWriter(stream) = new XmlPickleWriter(stream, encoding, indent) :> _
                 member __.CreateReader(stream) = new XmlPickleReader(stream, encoding) :> _
