@@ -55,6 +55,9 @@
         abstract Apply : Pickler<'T> -> 'U
 
     and IPicklerResolver =
+        abstract IsSerializable : Type -> bool
+        abstract IsSerializable<'T> : unit -> bool
+
         abstract Resolve : Type -> Pickler
         abstract Resolve<'T> : unit -> Pickler<'T>
 

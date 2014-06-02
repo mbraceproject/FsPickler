@@ -1,7 +1,7 @@
 ﻿namespace Nessos.FsPickler
 
-//    #nowarn "1204"
-//    #nowarn "42"
+    #nowarn "1204"
+    #nowarn "42"
 
     [<AutoOpen>]
     module internal Utils =
@@ -16,8 +16,6 @@
         open System.Runtime.Serialization
 
         open Microsoft.FSharp.Reflection
-
-        let runsOnMono = lazy(System.Type.GetType("Mono.Runtime") <> null)
 
         // Detect current core library version at runtime
         // as suggested in http://stackoverflow.com/a/8543850
@@ -52,11 +50,17 @@
                 | Success t -> t
                 | Error e -> raise e
 
+            member e.IsValue =
+                match e with Success _ -> true | Error _ -> false
+
+            member e.IsException =
+                match e with Error _ -> true | Success _ -> false
+
         module Exn =
             let catch (f : unit -> 'T) =
                 try f () |> Success with e -> Error e
 
-            let error (e : #exn) = Error e
+            let error (e : exn) = Error e
 
             let map (f : 'T -> 'S) (x : Exn<'T>) =
                 match x with

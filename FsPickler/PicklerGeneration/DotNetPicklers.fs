@@ -17,10 +17,9 @@
     open Nessos.FsPickler.PicklerEmit
 #endif
 
-
     // creates a placeholder pickler instance
 
-    type PicklerInitializer private () =
+    type UninitializedPickler private () =
 
         static let visitor =
             {
@@ -28,14 +27,7 @@
                     member __.Visit<'T> () = CompositePickler.CreateUninitialized<'T> () :> Pickler
             }
 
-        static member Create(t : Type) =
-            let typeShape = 
-                try TypeShape.resolve t
-                with UnSupportedShape ->
-                    raise <| NonSerializableTypeException t
-
-            let pickler = typeShape.Accept visitor
-            typeShape, pickler
+        static member Create(shape : TypeShape) = shape.Accept visitor
 
     // abstract type pickler factory
 

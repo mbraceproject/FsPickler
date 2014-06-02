@@ -205,11 +205,7 @@
 
 
         /// Decides if given type is serializable by FsPickler
-        member __.IsSerializableType (t : Type) =
-            try resolver.Resolve t |> ignore ; true
-            with :? NonSerializableTypeException -> false
+        member __.IsSerializableType (t : Type) = resolver.IsSerializable t
 
         /// Decides if given type is serializable by FsPickler
-        member __.IsSerializableType<'T> () =
-            try resolver.Resolve<'T> () |> ignore ; true
-            with :? NonSerializableTypeException -> false
+        member __.IsSerializableType<'T> () = resolver.IsSerializable<'T> ()

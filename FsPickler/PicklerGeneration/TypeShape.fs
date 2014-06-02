@@ -285,6 +285,39 @@
         let private activate2 (gt : Type) (p1 : Type) (p2 : Type) =
             activate gt [|p1 ; p2|]
 
+        let private (|List|Option|Choice|Union|) (t : Type) =
+            if t.IsGenericType then
+                let gt = t.GetGenericTypeDefinition()
+                let gas = t.GetGenericArguments()
+                if gt = typedefof<_ list> then List (gas.[0])
+                elif gt = typedefof<_ option> then Option (gas.[0])
+                elif 
+                    gt.Name.StartsWith "FSharpChoice" && 
+                    gt.Namespace = "Microsoft.FSharp.Core" && 
+                    gt.Assembly = typeof<int option>.Assembly then
+
+                    Choice gas
+
+                else
+                    Union
+            else
+                Union
+
+        let private (|Dictionary|FSharpMap|FSharpSet|NotACollection|) (t : Type) =
+            if t.IsGenericType then
+                let gt = t.GetGenericTypeDefinition()
+                let gas = t.GetGenericArguments()
+                if gt = typedefof<System.Collections.Generic.Dictionary<_,_>> then
+                    Dictionary(gas.[0], gas.[1])
+                elif gt = typedefof<Map<_,_>> then
+                    FSharpMap(gas.[0], gas.[1])
+                elif gt = typedefof<Set<_>> then
+                    FSharpSet(gas.[0])
+                else
+                    NotACollection
+            else
+                NotACollection
+
         let private canon = Type.GetType("System.__Canon")
         let private isIntrinsicType (t : Type) =
             t.IsPointer 
@@ -295,6 +328,7 @@
             || t.IsMarshalByRef
             || t = canon
         
+        /// use reflection to bootstrap a shape instance
         let resolve (t : Type) =
             if t.IsGenericTypeDefinition then raise <| UnSupportedShape
             elif t.IsGenericParameter then raise <| UnSupportedShape

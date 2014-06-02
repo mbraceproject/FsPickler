@@ -128,39 +128,6 @@
                 // check interface compatibility
                 Array.exists ((=) (getCanonicalType t)) arrayIfs
 
-    let (|List|Option|Choice|Union|) (t : Type) =
-        if t.IsGenericType then
-            let gt = t.GetGenericTypeDefinition()
-            let gas = t.GetGenericArguments()
-            if gt = typedefof<_ list> then List (gas.[0])
-            elif gt = typedefof<_ option> then Option (gas.[0])
-            elif 
-                gt.Name.StartsWith "FSharpChoice" && 
-                gt.Namespace = "Microsoft.FSharp.Core" && 
-                gt.Assembly = typeof<int option>.Assembly then
-
-                Choice gas
-
-            else
-                Union
-        else
-            Union
-
-    let (|Dictionary|FSharpMap|FSharpSet|NotACollection|) (t : Type) =
-        if t.IsGenericType then
-            let gt = t.GetGenericTypeDefinition()
-            let gas = t.GetGenericArguments()
-            if gt = typedefof<System.Collections.Generic.Dictionary<_,_>> then
-                Dictionary(gas.[0], gas.[1])
-            elif gt = typedefof<Map<_,_>> then
-                FSharpMap(gas.[0], gas.[1])
-            elif gt = typedefof<Set<_>> then
-                FSharpSet(gas.[0])
-            else
-                NotACollection
-        else
-            NotACollection
-
     // Recursive type detection
     // ========================
     // Let 't1 -> t2' be the binary relation between types that denotes the statement 't1 contans a field of type t2'.

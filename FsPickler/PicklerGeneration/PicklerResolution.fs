@@ -12,97 +12,98 @@
     open Nessos.FsPickler
     open Nessos.FsPickler.Reflection
     open Nessos.FsPickler.TypeShape
-    open Nessos.FsPickler.PicklerFactory
     open Nessos.FsPickler.DotNetPicklers
+    open Nessos.FsPickler.PicklerFactory
 
-    /// Y combinator with parametric recursion support
-    let YParametric (globalCache : ICache<Type, Exn<Pickler>>)
-                    (resolverF : IPicklerResolver -> TypeShape -> Pickler) (t : Type) =
+    /// <summary>
+    ///     Y combinator for parametric recursion.
+    /// </summary>
+    /// <param name="external">External cache for memoization.</param>
+    /// <param name="F">Recursive operation functional; first parameter is an early registration operation.</param>
+    /// <param name="t">Initial input.</param>
+    let YParametric (external : ICache<'T,'S>) (F : ('T -> 'S -> unit) -> ('T -> 'S) -> ('T -> 'S)) (t : 'T) =
 
-        // use internal cache to avoid corruption in event of exceptions being raised
-        let localCache = new Dictionary<Type, Pickler> ()
+        // a temporary local cache is used to store early, unitialized instances
+        // this keeps the global cache from being contaminated with partial state
+        let local = new Dictionary<'T, 'S> ()
 
-        let rec lookup (t : Type) =
-            match globalCache.Lookup t with
-            | Some p -> p.Value
+        let rec recurse (t : 'T) =
+            match external.Lookup t with
+            | Some s -> s
             | None ->
-                match localCache.TryFind t with
-                | Some p -> p
+                match local.TryFind t with
+                | Some s -> s
                 | None ->
-                    // while stack overflows are unlikely here (this is a type-level traversal)
-                    // it can be useful in catching a certain class of user errors when declaring custom picklers.
-                    try RuntimeHelpers.EnsureSufficientExecutionStack()
-                    with :? InsufficientExecutionStackException -> 
-                        raise <| PicklerGenerationException(t, "insufficient execution stack.")
+                    let s = F (fun t s -> local.Add(t,s)) recurse t
+                    external.Commit t s
 
-                    // start pickler construction
-                    let pickler =
-                        try
-                            let typeShape, p = PicklerInitializer.Create t
+        recurse t
 
-                            localCache.Add(t, p)
+    /// reflection - based pickler resolution
+    let resolvePickler (registerUninitializedPickler : Type -> Exn<Pickler> -> unit) (self : Type -> Exn<Pickler>) (t : Type) =
 
-                            // perform recursive resolution
-                            let p' = resolverF resolver typeShape
-                    
-                            // complete the recursive binding
-                            p.InitializeFrom p'
-
-                            Success p
-
-                        with 
-                        // Store all NonSerializableTypeException's in cache
-                        | :? NonSerializableTypeException as e when e.UnsupportedType <> t ->
-                            let msg = sprintf "contains nonserializable field '%O'." e.UnsupportedType
-                            raise <| new NonSerializableTypeException(t, msg)
-                        | :? NonSerializableTypeException as e -> Exn.Error e
-                        // wrap/reraise everything else
-                        | :? PicklerGenerationException as e -> reraise ()
-                        | e -> raise <| new PicklerGenerationException(t, inner = e)
-
-                    // pickler generation complete, commit to cache
-                    let commited = globalCache.Commit t pickler
-                    
-                    commited.Value
-
-        and resolver =
+        let mkResolver () =
             {
                 new IPicklerResolver with
-                    member __.Resolve<'T> () = lookup typeof<'T> :?> Pickler<'T>
-                    member __.Resolve (t : Type) = lookup t
+                    member __.IsSerializable t = (self t).IsValue
+                    member __.IsSerializable<'T> () = (self typeof<'T>).IsValue
+
+                    member __.Resolve t = (self t).Value
+                    member __.Resolve<'T> () = (self typeof<'T>).Value :?> Pickler<'T>
             }
 
-        lookup t
+        try
+            // resolve shape of given type
+            let shape = 
+                try TypeShape.resolve t
+                with UnSupportedShape -> raise <| NonSerializableTypeException(t)
 
+            // create an uninitialized pickler instance and register to the local cache
+            let p0 = UninitializedPickler.Create shape
+            do registerUninitializedPickler t (Success p0)
 
-    // reflection - based pickler resolution
+            // initialize a local pickler resolver instance
+            let resolver = mkResolver ()
 
-    let resolvePickler (resolver : IPicklerResolver) (shape : TypeShape) =
-
-        let t = shape.Type
-
-        // subtype resolution
-        let result =
-            if t.BaseType <> null then
-                match resolver.Resolve t.BaseType with
-                | p when p.UseWithSubtypes -> Some p
-                | _ -> None
-            else
-                None
-
-        // custom pickler attribute resolution
-        let result =
-            match result with
-            | Some _ -> result
-            | None ->
-                if containsAttr<CustomPicklerAttribute> t then
-                    Some <| CustomPickler.Create(t, resolver)
+            // step 1: subtype pickler resolution
+            let result =
+                if t.BaseType <> null then
+                    match resolver.Resolve t.BaseType with
+                    | p when p.UseWithSubtypes -> Some p
+                    | _ -> None
                 else
                     None
 
-        // consult the pickler factory
-        match result with
-        | Some r -> r
-        | None ->
-            let factory = new PicklerFactory(resolver)
-            shape.Accept factory
+            // step 2: check for [<CustomPickler>] attributes
+            let result =
+                match result with
+                | Some _ -> result
+                | None ->
+                    if containsAttr<CustomPicklerAttribute> t then
+                        Some <| CustomPickler.Create(t, resolver)
+                    else
+                        None
+
+            // step 3: consult the pickler factory.
+            let pickler =
+                match result with
+                | Some r -> r
+                | None ->
+                    let factory = new PicklerFactory(resolver)
+                    shape.Accept factory
+
+            // pickler generation complete, copy data to uninitialized binding and return it
+            p0.InitializeFrom pickler
+            Success p0
+
+        with 
+        // Store all NonSerializableTypeException's in cache
+        | :? NonSerializableTypeException as e when e.UnsupportedType <> t ->
+            let msg = sprintf "contains nonserializable field '%O'." e.UnsupportedType
+            Exn.error <| NonSerializableTypeException(t, msg)
+
+        | :? NonSerializableTypeException as e -> Exn.Error e
+
+        // wrap/reraise everything else
+        | :? PicklerGenerationException as e -> reraise ()
+        | e -> raise <| new PicklerGenerationException(t, inner = e) 

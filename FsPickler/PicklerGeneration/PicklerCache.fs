@@ -33,10 +33,17 @@
                     member __.Commit (t : Type) (p : Exn<Pickler>) = dict.GetOrAdd(t, p)
             }
 
-        let resolve (t : Type) = YParametric cache resolvePickler t
+        let resolve (t : Type) = 
+            let ok, p = dict.TryGetValue t
+            if ok then p
+            else
+                YParametric cache resolvePickler t
 
         interface IPicklerResolver with
-            member r.Resolve<'T> () = resolve typeof<'T> :?> Pickler<'T>
-            member r.Resolve (t : Type) = resolve t
+            member r.IsSerializable (t : Type) = (resolve t).IsValue
+            member r.IsSerializable<'T> () = (resolve typeof<'T>).IsValue
+
+            member r.Resolve (t : Type) = (resolve t).Value
+            member r.Resolve<'T> () = (resolve typeof<'T>).Value :?> Pickler<'T>
 
         static member Instance = instance.Value
