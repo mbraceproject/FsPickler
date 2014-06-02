@@ -122,8 +122,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\FsPickler.CSharp\FsPickler.CSharp.csproj">
-      <Name>FsPickler.CSharp</Name>
+    <ProjectReference Include="..\FsPickler.Binary\FsPickler.Binary.csproj">
+      <Name>FsPickler.Binary</Name>
       <Project>{490f47d5-5ffa-4b2a-9a1f-039384e83b12}</Project>
       <Private>True</Private>
     </ProjectReference>
