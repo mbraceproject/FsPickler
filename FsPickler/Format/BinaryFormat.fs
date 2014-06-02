@@ -115,7 +115,7 @@
                 let streamTag = br.ReadString()
                 if streamTag <> tag then
                     let msg = sprintf "Expected type '%s' but was '%s'." tag streamTag
-                    raise <| new InvalidDataException(msg)
+                    raise <| new FsPicklerException(msg)
 
             member __.EndReadRoot () = ()
 

@@ -78,13 +78,9 @@
     <Compile Include="Utils\Reflection.fs" />
     <Compile Include="Utils\ShallowCopy.fs" />
     <Compile Include="Utils\Hashing.fs" />
-    <Compile Include="Format\ObjectHeader.fs" />
-    <Compile Include="Format\PickleFormat.fs" />
-    <Compile Include="Format\BinaryFormat.fs" />
-    <Compile Include="Format\XmlFormat.fs" />
-    <Compile Include="Format\JsonFormat.fs" />
     <Compile Include="PicklerBase\Types.fs" />
     <Compile Include="PicklerBase\ReflectionCache.fs" />
+    <Compile Include="PicklerBase\PickleFormat.fs" />
     <Compile Include="PicklerBase\Pickler.fs" />
     <Compile Include="PicklerBase\PrimitivePicklers.fs" />
     <Compile Include="PicklerBase\CompositePickler.fs" />
@@ -100,6 +96,9 @@
     <Compile Include="PicklerGeneration\PicklerFactory.fs" />
     <Compile Include="PicklerGeneration\PicklerResolution.fs" />
     <Compile Include="PicklerGeneration\PicklerCache.fs" />
+    <Compile Include="Format\BinaryFormat.fs" />
+    <Compile Include="Format\XmlFormat.fs" />
+    <Compile Include="Format\JsonFormat.fs" />
     <Compile Include="RootObjectSerialization.fs" />
     <Compile Include="FsPickler.fs" />
     <Compile Include="Combinators.fs" />

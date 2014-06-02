@@ -21,7 +21,7 @@
         static member Create (ep : Pickler<'T>) =
             let writer (w : WriteState) (list : 'T list) =
 
-                if ep.TypeInfo = TypeKind.Primitive && w.Formatter.IsPrimitiveArraySerializationSupported then
+                if ep.TypeKind = TypeKind.Primitive && w.Formatter.IsPrimitiveArraySerializationSupported then
                     let arr = List.toArray list
                     w.Formatter.WriteInt32 "length" arr.Length
                     w.Formatter.WritePrimitiveArray "data" arr
@@ -36,7 +36,7 @@
                     w.Formatter.EndWriteBoundedSequence ()
 
             let reader (r : ReadState) =
-                if ep.TypeInfo = TypeKind.Primitive && r.Formatter.IsPrimitiveArraySerializationSupported then
+                if ep.TypeKind = TypeKind.Primitive && r.Formatter.IsPrimitiveArraySerializationSupported then
                     let length = r.Formatter.ReadInt32 "length"
                     let array = Array.zeroCreate<'T> length
                     r.Formatter.ReadPrimitiveArray "data" array

@@ -10,7 +10,7 @@
     module private ArrayPicklerUtils =
         
         let inline isPrimitiveSerialized (fmt : ^Formatter) (ep : Pickler) =
-            ep.TypeInfo = TypeKind.Primitive && 
+            ep.TypeKind = TypeKind.Primitive && 
                 (^Formatter : (member IsPrimitiveArraySerializationSupported : bool) fmt)
 
         let lengthTags = [|0..10|] |> Array.map (sprintf "length-%d")

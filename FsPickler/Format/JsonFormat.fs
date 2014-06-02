@@ -52,10 +52,10 @@
                 if jsonReader.TokenType = JsonToken.PropertyName then
                     let jsonName = jsonReader.Value |> fastUnbox<string>
                     if name <> jsonName then
-                        let msg = sprintf "expected '%s' but was '%s'." name jsonName
+                        let msg = sprintf "expected property '%s' but was '%s'." name jsonName
                         raise <| new InvalidDataException(msg)
                 else
-                    let msg = sprintf "expected '%O' but was '%O'." JsonToken.PropertyName jsonReader.TokenType
+                    let msg = sprintf "expected token '%O' but was '%O'." JsonToken.PropertyName jsonReader.TokenType
                     raise <| new InvalidDataException(msg)
 
             member inline jsonReader.ValueAs<'T> () = jsonReader.Value |> fastUnbox<'T>
@@ -224,7 +224,7 @@
             member __.BeginReadRoot (tag : string) =
                 do jsonReader.MoveNext()
 
-                if jsonReader.ReadStartObject () then raise <| new InvalidDataException("root json element was null.")
+                if jsonReader.ReadStartObject () then raise <| new InvalidDataException("invalid json root object.")
                 else
                     let version = jsonReader.ReadPrimitiveAs<string> false "FsPickler"
                     if version <> AssemblyVersionInformation.Version then

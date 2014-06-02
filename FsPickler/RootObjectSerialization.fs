@@ -69,10 +69,8 @@
         let qn = reflectionCache.GetQualifiedName pickler.Type
 
         state.Formatter.BeginWriteRoot <| sprintf "%s sequence" qn
-//        state.Formatter.BeginWriteUnBoundedSequence "values"
-//        state.Formatter.BeginWriteObject pickler.TypeInfo pickler.PicklerInfo tag ObjectFlags.IsSequenceHeader
 
-        let isObject = pickler.TypeInfo > TypeKind.Value
+        let isObject = pickler.TypeKind > TypeKind.Value
 
 #if DEBUG
         let write idx t =
@@ -107,7 +105,6 @@
                     i <- i + 1
                 i
 
-//        state.Formatter.EndWriteObject()
         state.Formatter.EndWriteRoot()
         length
 
@@ -124,7 +121,7 @@
         // read stream header
         formatter.BeginReadRoot <| sprintf "%s sequence" qn
 
-        let isObject = pickler.TypeInfo > TypeKind.Value
+        let isObject = pickler.TypeKind > TypeKind.Value
 
         let read idx =
             if isObject && idx % sequenceStateResetThreshold = 0 then

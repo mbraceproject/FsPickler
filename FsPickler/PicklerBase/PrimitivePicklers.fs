@@ -8,11 +8,11 @@
 
     [<AbstractClass>]
     [<AutoSerializable(false)>]
-    type PrimitivePickler<'T> (TypeInfo, isOfFixedSize) =
+    type PrimitivePickler<'T> (typeKind, isOfFixedSize) =
         inherit Pickler<'T>()
 
         override p.ImplementationType = typeof<'T>
-        override p.TypeInfo = TypeInfo
+        override p.TypeKind = typeKind
         override p.PicklerInfo = PicklerInfo.Primitive
 
         override p.IsRecursiveType = false
@@ -138,7 +138,7 @@
 
     [<AutoSerializable(false)>]
     type GuidPickler () =
-        inherit PrimitivePickler<Guid> (TypeInfo.compute typeof<Guid>, true)
+        inherit PrimitivePickler<Guid> (TypeKind.compute typeof<Guid>, true)
 
         override __.Write (writer : WriteState) (tag : string) (guid : Guid) =
             writer.Formatter.WriteGuid tag guid
@@ -148,7 +148,7 @@
 
     [<AutoSerializable(false)>]
     type DatePickler () =
-        inherit PrimitivePickler<DateTime> (TypeInfo.compute typeof<Guid>, true)
+        inherit PrimitivePickler<DateTime> (TypeKind.compute typeof<Guid>, true)
 
         override __.Write (writer : WriteState) (tag : string) (date : DateTime) =
             writer.Formatter.WriteDate tag date
@@ -158,7 +158,7 @@
 
     [<AutoSerializable(false)>]
     type TimeSpanPickler () =
-        inherit PrimitivePickler<TimeSpan> (TypeInfo.compute typeof<TimeSpan>, true)
+        inherit PrimitivePickler<TimeSpan> (TypeKind.compute typeof<TimeSpan>, true)
 
         override __.Write (writer : WriteState) (tag : string) (date : TimeSpan) =
             writer.Formatter.WriteTimeSpan tag date
@@ -168,7 +168,7 @@
 
     [<AutoSerializable(false)>]
     type BigIntPickler () =
-        inherit PrimitivePickler<bigint> (TypeInfo.compute typeof<bigint>, false)
+        inherit PrimitivePickler<bigint> (TypeKind.compute typeof<bigint>, false)
 
         override __.Write (writer : WriteState) (tag : string) (bint : bigint) =
             writer.Formatter.WriteBigInteger tag bint

@@ -22,8 +22,8 @@
                 raise <| new InvalidDataException()
 
             elif r.Name <> tag then
-                let msg = sprintf "expected '%s', was '%s'" tag r.Name
-                raise <| new InvalidDataException(msg)
+                let msg = sprintf "expected type '%s' but was '%s'" tag r.Name
+                raise <| new FsPicklerException(msg)
 
 
     open XmlUtils

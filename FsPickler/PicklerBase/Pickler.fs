@@ -15,7 +15,7 @@
         abstract Type : Type
         abstract ImplementationType : Type
 
-        abstract TypeInfo : TypeKind
+        abstract TypeKind : TypeKind
         abstract PicklerInfo : PicklerInfo
 
         abstract IsRecursiveType : bool

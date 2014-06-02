@@ -18,7 +18,7 @@
         val mutable private m_Writer : WriteState -> 'T -> unit
         val mutable private m_Reader : ReadState -> 'T
 
-        val mutable private m_TypeInfo : TypeKind
+        val mutable private m_TypeKind : TypeKind
         val mutable private m_PicklerInfo : PicklerInfo
 
         val mutable private m_IsRecursiveType : bool
@@ -28,7 +28,7 @@
         val mutable private m_UseWithSubtypes : bool
 
         new (reader, writer, nested : Pickler option, picklerInfo, cacheByRef, useWithSubtypes) =
-            let TypeInfo = TypeInfo.compute typeof<'T>
+            let typeKind = TypeKind.compute typeof<'T>
             let isFixedSize = isOfFixedSize typeof<'T>
             let isRecursive =
 #if OPTIMIZE_FSHARP
@@ -46,7 +46,7 @@
                 m_Writer = writer
                 m_Reader = reader
 
-                m_TypeInfo = TypeInfo
+                m_TypeKind = typeKind
                 m_PicklerInfo = picklerInfo
 
                 m_IsRecursiveType = isRecursive
@@ -67,7 +67,7 @@
                 m_Writer = fun _ _ -> invalidOp "Attempting to consume pickler at initialization time."
                 m_Reader = fun _ -> invalidOp "Attempting to consume pickler at initialization time."
 
-                m_TypeInfo = Unchecked.defaultof<_>
+                m_TypeKind = Unchecked.defaultof<_>
                 m_PicklerInfo = Unchecked.defaultof<_>
  
                 m_IsRecursiveType = Unchecked.defaultof<_>
@@ -82,7 +82,7 @@
             | None -> typeof<'T> 
             | Some p -> p.Type
 
-        override p.TypeInfo = p.m_TypeInfo
+        override p.TypeKind = p.m_TypeKind
         override p.PicklerInfo = p.m_PicklerInfo
 
         override p.IsRecursiveType = p.m_IsRecursiveType
@@ -115,7 +115,7 @@
                 elif not p'.m_IsInitialized then 
                     invalidOp "Source pickler has not been initialized."
                 else
-                    p.m_TypeInfo <- p'.m_TypeInfo
+                    p.m_TypeKind <- p'.m_TypeKind
                     p.m_PicklerInfo <- p'.m_PicklerInfo
                     p.m_IsCacheByRef <- p'.m_IsCacheByRef
                     p.m_UseWithSubtypes <- p'.m_UseWithSubtypes
@@ -148,7 +148,7 @@
             let formatter = state.Formatter
 
             let inline beginWriteObject tag flags =
-                formatter.BeginWriteObject p.m_TypeInfo p.m_PicklerInfo tag flags
+                formatter.BeginWriteObject p.m_TypeKind p.m_PicklerInfo tag flags
 
             // writes a non-null instance of a reference type
 #if DEBUG
@@ -156,7 +156,7 @@
 #else
             let inline writeObject () =
 #endif
-                if p.m_TypeInfo <= TypeKind.Sealed || p.m_UseWithSubtypes then
+                if p.m_TypeKind <= TypeKind.Sealed || p.m_UseWithSubtypes then
                     beginWriteObject tag ObjectFlags.None
                     p.m_Writer state value
                     formatter.EndWriteObject ()
@@ -176,7 +176,7 @@
                         formatter.EndWriteObject ()
 
             try
-                if p.m_TypeInfo = TypeKind.Value then
+                if p.m_TypeKind = TypeKind.Value then
                     beginWriteObject tag ObjectFlags.None
                     p.m_Writer state value
                     formatter.EndWriteObject ()
@@ -216,10 +216,10 @@
 
                         do cyclicObjects.Add(id) |> ignore
                     
-                        if p.m_TypeInfo = TypeKind.Array then
+                        if p.m_TypeKind = TypeKind.Array then
                             beginWriteObject tag ObjectFlags.IsCachedInstance
 
-                        elif p.m_TypeInfo <= TypeKind.Sealed || p.m_UseWithSubtypes then
+                        elif p.m_TypeKind <= TypeKind.Sealed || p.m_UseWithSubtypes then
                             beginWriteObject tag ObjectFlags.IsCyclicInstance
                         else
                             let t = value.GetType()
@@ -264,13 +264,13 @@
             try
                 let formatter = state.Formatter
 
-                let flags = formatter.BeginReadObject p.m_TypeInfo p.m_PicklerInfo tag
+                let flags = formatter.BeginReadObject p.m_TypeKind p.m_PicklerInfo tag
 
                 if ObjectFlags.hasFlag flags ObjectFlags.IsNull then 
                     formatter.EndReadObject ()
                     fastUnbox<'T> null
 
-                elif p.m_TypeInfo = TypeKind.Value then 
+                elif p.m_TypeKind = TypeKind.Value then 
                     let value = p.m_Reader state
                     formatter.EndReadObject ()
                     value
@@ -302,7 +302,7 @@
 
                 elif p.m_IsCacheByRef || p.m_IsRecursiveType then
                     let isArray = 
-                        match p.m_TypeInfo with
+                        match p.m_TypeKind with
                         | TypeKind.Array | TypeKind.ArrayCompatible -> true
                         | _ -> false
 
