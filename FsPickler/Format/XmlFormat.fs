@@ -29,7 +29,7 @@
     open XmlUtils
 
 
-    type XmlPickleWriter(textWriter : TextWriter, indent : bool) =
+    type XmlPickleWriter internal (textWriter : TextWriter, indent : bool) =
 
         let settings = new XmlWriterSettings()
         do 
@@ -124,7 +124,7 @@
             member __.Dispose () = writer.Flush () ; writer.Dispose()
 
 
-    type XmlPickleReader(textReader : TextReader) =
+    type XmlPickleReader internal (textReader : TextReader) =
 
         let settings = new XmlReaderSettings()
         do

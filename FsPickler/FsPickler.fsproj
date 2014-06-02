@@ -97,6 +97,7 @@
     <Compile Include="PicklerGeneration\PicklerResolution.fs" />
     <Compile Include="PicklerGeneration\PicklerCache.fs" />
     <Compile Include="Format\BinaryFormat.fs" />
+    <Compile Include="Format\BclBinaryFormat.fs" />
     <Compile Include="Format\XmlFormat.fs" />
     <Compile Include="Format\JsonFormat.fs" />
     <Compile Include="FsPickler\RootObjectSerialization.fs" />

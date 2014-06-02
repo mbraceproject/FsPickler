@@ -30,11 +30,13 @@
         static member Activate (name : string) =
             match name with
             | "FsPickler.Binary" -> new FsPicklerBinary () :> FsPicklerSerializer
+            | "FsPickler.BclBinary" -> new FsPicklerBclBinary () :> FsPicklerSerializer
             | "FsPickler.Json" -> new FsPicklerJson () :> FsPicklerSerializer
             | "FsPickler.Xml" -> new FsPicklerXml () :> FsPicklerSerializer
             | _ -> invalidArg "name" <| sprintf "'%s' is not a valid pickler format." name
 
     and FsPicklerBinary () = inherit FsPicklerSerializer("FsPickler.Binary", FsPickler.CreateBinary())
+    and FsPicklerBclBinary () = inherit FsPicklerSerializer("FsPickler.BclBinary", new BinaryPickler(new BclBinaryPickleFormatProvider()))
     and FsPicklerXml () = inherit FsPicklerSerializer("FsPickler.Xml", FsPickler.CreateXml())
     and FsPicklerJson () = inherit FsPicklerSerializer("FsPickler.Json", FsPickler.CreateJson())
 
