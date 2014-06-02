@@ -29,12 +29,12 @@
 
         static member Create (name : string) =
             match name with
-            | "FsPickler.Binary" -> new FsPicklerBinary () :> FsPicklerSerializer
+            | "FsPickler" -> new FsPicklerBinary () :> FsPicklerSerializer
             | "FsPickler.Json" -> new FsPicklerJson () :> FsPicklerSerializer
             | "FsPickler.Xml" -> new FsPicklerXml () :> FsPicklerSerializer
             | _ -> invalidArg "name" "not a pickler format."
 
-    and FsPicklerBinary () = inherit FsPicklerSerializer("FsPickler.Binary", FsPickler.CreateBinary())
+    and FsPicklerBinary () = inherit FsPicklerSerializer("FsPickler", FsPickler.CreateBinary())
     and FsPicklerXml () = inherit FsPicklerSerializer("FsPickler.Xml", FsPickler.CreateXml())
     and FsPicklerJson () = inherit FsPicklerSerializer("FsPickler.Json", FsPickler.CreateJson())
 

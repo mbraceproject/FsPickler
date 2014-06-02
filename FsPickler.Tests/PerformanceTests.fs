@@ -248,7 +248,7 @@
     type ``Serializer Comparison`` () =
         inherit NUnitPerf<ISerializer>()
 
-        let fsp = testSerializer :> ISerializer
+        let fsp = new FsPicklerBinary() :> ISerializer
         let bfs = new BinaryFormatterSerializer() :> ISerializer
         let ndc = new NetDataContractSerializer() :> ISerializer
         let jdn = new JsonDotNetSerializer() :> ISerializer
@@ -271,7 +271,7 @@
         let persistResults = true
         let persistenceFile = "fspPerf.xml"
 
-        let fsp = testSerializer :> ISerializer
+        let fsp = new FsPicklerBinary() :> ISerializer
         let version = typeof<FsPickler>.Assembly.GetName().Version
         let comparer = new WeightedComparer(spaceFactor = 0.2, leastAcceptableImprovementFactor = 0.8)
         let tests = PerfTest.OfModuleMarker<PerformanceTests.Marker> ()
