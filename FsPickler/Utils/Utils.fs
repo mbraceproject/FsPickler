@@ -230,3 +230,13 @@
         let inline unpickle (f : Stream -> 'T) (data : byte []) : 'T =
             use mem = new MemoryStream(data)
             f mem
+
+
+        [<NoComparison>]
+        type ReferenceEqualityContainer<'T when 'T : not struct>(value : 'T) =
+            member __.Value = value
+            override __.GetHashCode() = System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode value
+            override __.Equals o =
+                match o with
+                | :? ReferenceEqualityContainer<'T> as c -> obj.ReferenceEquals(value, c.Value)
+                | _ -> false

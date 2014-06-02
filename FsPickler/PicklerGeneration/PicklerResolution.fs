@@ -39,6 +39,8 @@
 
         recurse t
 
+
+
     /// reflection - based pickler resolution
     let resolvePickler (registerUninitializedPickler : Type -> Exn<Pickler> -> unit) (self : Type -> Exn<Pickler>) (t : Type) =
 
@@ -53,6 +55,12 @@
             }
 
         try
+            // while stack overflows are unlikely here (this is type-level traversal)
+            // it can be useful in catching a certain class of user errors when declaring custom picklers.
+            try RuntimeHelpers.EnsureSufficientExecutionStack ()
+            with :? InsufficientExecutionStackException ->
+                raise <| new PicklerGenerationException(t, "insufficient execution stack.")
+
             // resolve shape of given type
             let shape = 
                 try TypeShape.resolve t
@@ -103,5 +111,5 @@
             Exn.error <| NonSerializableTypeException(t, e.NonSerializableType)
 
         // wrap/reraise everything else as PicklerGenerationExceptions
-        | :? PicklerGenerationException as e -> reraise ()
+        | :? PicklerGenerationException -> reraise ()
         | e -> raise <| new PicklerGenerationException(t, inner = e) 

@@ -20,7 +20,7 @@
     type FsPickler private (formatP : IPickleFormatProvider, ?tyConv) =
 
         let resolver = PicklerCache.Instance :> IPicklerResolver
-        let reflectionCache = new ReflectionCache(?tyConv = tyConv)
+        let reflectionCache = ReflectionCache.Create(?tyConv = tyConv)
 
         // TODO : tyConv
         static member CreateBinary () = new FsPickler(BinaryPickleFormatProvider())

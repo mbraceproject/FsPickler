@@ -239,7 +239,11 @@
 
     #nowarn "40"
 
-    type ReflectionCache (?tyConv : ITypeNameConverter) =
+    
+
+    type ReflectionCache private (?tyConv : ITypeNameConverter) =
+
+        static let defaultInstance = lazy (new ReflectionCache())
 
         let loadAssembly = memoize loadAssembly
         let getAssemblyInfo = memoize AssemblyInfo.OfAssembly
@@ -254,3 +258,8 @@
         member __.GetCompositeMemberInfo(m : MemberInfo) = memberInfoCache.F m
         member __.LoadMemberInfo(m : CompositeMemberInfo) = memberInfoCache.G m
         member __.GetQualifiedName(t : Type) = getQualifiedName t
+
+        static member Create(?tyConv : ITypeNameConverter) =
+            match tyConv with
+            | None -> defaultInstance.Value
+            | Some tc -> new ReflectionCache(tc)
