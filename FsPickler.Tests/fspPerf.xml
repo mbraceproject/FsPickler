@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<testSuite suiteName="FsPickler">
+<testSuite suiteName="FsPickler.Binary">
   <testRun id="FsPickler v.0.7.0.24468" date="2013-12-03T13:58:12.562113+02:00">
     <testResult testId="PerformanceTests.Value: Int" testDate="2013-12-03T13:58:12.753037+02:00">
       <elapsedTime>340696</elapsedTime>

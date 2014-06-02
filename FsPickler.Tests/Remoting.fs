@@ -147,7 +147,7 @@
                 let psi = new ProcessStartInfo()
 
                 psi.FileName <- thisExe
-                psi.Arguments <- testedSerializer.Name
+                psi.Arguments <- sprintf "\"%s\" \"%d\"" testedSerializer.Name port
                 psi.WorkingDirectory <- Path.GetDirectoryName thisExe
                 psi.UseShellExecute <- false
                 psi.CreateNoWindow <- true

@@ -27,14 +27,14 @@
             member __.Serialize(stream : Stream, x : 'T) = fsp.Serialize(stream, x)
             member __.Deserialize(stream : Stream) = fsp.Deserialize<'T> stream
 
-        static member Create (name : string) =
+        static member Activate (name : string) =
             match name with
-            | "FsPickler" -> new FsPicklerBinary () :> FsPicklerSerializer
+            | "FsPickler.Binary" -> new FsPicklerBinary () :> FsPicklerSerializer
             | "FsPickler.Json" -> new FsPicklerJson () :> FsPicklerSerializer
             | "FsPickler.Xml" -> new FsPicklerXml () :> FsPicklerSerializer
-            | _ -> invalidArg "name" "not a pickler format."
+            | _ -> invalidArg "name" <| sprintf "'%s' is not a valid pickler format." name
 
-    and FsPicklerBinary () = inherit FsPicklerSerializer("FsPickler", FsPickler.CreateBinary())
+    and FsPicklerBinary () = inherit FsPicklerSerializer("FsPickler.Binary", FsPickler.CreateBinary())
     and FsPicklerXml () = inherit FsPicklerSerializer("FsPickler.Xml", FsPickler.CreateXml())
     and FsPicklerJson () = inherit FsPicklerSerializer("FsPickler.Json", FsPickler.CreateJson())
 
