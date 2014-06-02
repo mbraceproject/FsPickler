@@ -64,9 +64,3 @@
                     return! s.AsyncReadBytes length
                 }
 
-        let shouldFailWith<'Exn when 'Exn :> exn> (f : unit -> unit) =
-            try
-                let v = f ()
-                let msg = sprintf "Expected exception of type %O, got value %A." typeof<'Exn> v
-                raise <| new AssertionException(msg)
-            with :? 'Exn -> ()

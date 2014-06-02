@@ -4,21 +4,30 @@
     open System.Reflection
     open System.Runtime.Serialization
 
-    open FsUnit
     open Nessos.FsPickler
     open Nessos.FsPickler.Combinators
 
+    open Nessos.FsPickler.Tests.TestTypes
+
     open NUnit.Framework
 
-    open TestTypes
+    module FsUnit =
+        let shouldFailWith<'Exn when 'Exn :> exn> (f : unit -> unit) =
+            try
+                let v = f ()
+                let msg = sprintf "Expected exception of type %O, got value %A." typeof<'Exn> v
+                raise <| new AssertionException(msg)
+            with :? 'Exn -> ()
+
+    open FsUnit
 
     [<TestFixture>]
     [<AbstractClass>]
     type ``Serializer Correctness Tests`` (pickler : FsPicklerSerializer) as self =
 
-        let test x = 
-            try self.TestLoop x |> ignore
-            with :? ProtocolError -> ()
+        let test x = self.TestLoop x |> ignore
+//            try 
+//            with :? ProtocolError -> ()
 
         let testLoop x = self.TestLoop x
         let testEquals x = self.TestLoop x |> should equal x
@@ -70,16 +79,16 @@
 
         [<Test>]
         member __.``Reflection: Avoid Recursion in MemberInfo values`` () =
-            try
-                let ms = typeof<OverLoaded>.GetMethods() 
-                let m0 = ms |> Seq.find(fun x -> x.Name = "A" && x.GetParameters().Length = 1) |> fun m -> m.MakeGenericMethod(typeof<int>)
-                testEquals m0
-                for m in ms do
-                    testEquals m
+//            try
+            let ms = typeof<OverLoaded>.GetMethods() 
+            let m0 = ms |> Seq.find(fun x -> x.Name = "A" && x.GetParameters().Length = 1) |> fun m -> m.MakeGenericMethod(typeof<int>)
+            testEquals m0
+            for m in ms do
+                testEquals m
 
             // deserialization fails with binaryformatter,
             // catch protocol error in remoted tests
-            with :? ProtocolError -> ()            
+//            with :? ProtocolError -> ()            
         
         [<Test>] 
         member __.``Pickler Factory Class`` () = 
@@ -355,7 +364,7 @@
             let test (t : Type, x : obj) =
                 try testLoop x |> ignore ; None
                 with 
-                | :? ProtocolError -> None
+//                | :? ProtocolError -> None
                 | e ->
                     printfn "Serializing '%O' failed with error: %O" t e
                     Some e
@@ -435,50 +444,50 @@
         inherit ``In-memory Correctness Tests``(new FsPicklerJson())
 
 
-    [<AbstractClass>]
-    type ``Remoted Corectness Tests`` (pickler : FsPicklerSerializer) =
-        inherit ``Serializer Correctness Tests`` (pickler)
-
-        let mutable state = None : (ServerManager * SerializationClient) option
-
-        override __.IsRemoted = true
-
-        override __.TestSerializer(x : 'T) = 
-            match state with
-            | Some (_,client) -> Serializer.write client.Serializer x
-            | None -> failwith "remote server has not been set up."
-            
-        override __.TestDeserializer(bytes : byte []) =
-            match state with
-            | Some (_,client) -> Serializer.read client.Serializer bytes
-            | None -> failwith "remote server has not been set up."
-
-        override __.TestLoop(x : 'T) =
-            match state with
-            | Some (_,client) -> client.Test x
-            | None -> failwith "remote server has not been set up."
-
-        override __.Init () =
-            match state with
-            | Some _ -> failwith "remote server appears to be running."
-            | None ->
-                let mgr = new ServerManager(__.Pickler)
-                do mgr.Start()
-                do System.Threading.Thread.Sleep 2000
-                let client = mgr.GetClient()
-                state <- Some(mgr, client)
-
-        override __.Fini () =
-            match state with
-            | None -> failwith "no remote server appears to be running."
-            | Some (mgr,_) -> mgr.Stop() ; state <- None
-
-
-    type ``Binary Pickler Remoted Tests`` () =
-        inherit ``Remoted Corectness Tests``(new FsPicklerBinary())
-
-    type ``Xml Pickler Remoted Tests`` () =
-        inherit ``Remoted Corectness Tests``(new FsPicklerXml())
-
-    type ``Json Pickler Remoted Tests`` () =
-        inherit ``Remoted Corectness Tests``(new FsPicklerJson())
+//    [<AbstractClass>]
+//    type ``Remoted Corectness Tests`` (pickler : FsPicklerSerializer) =
+//        inherit ``Serializer Correctness Tests`` (pickler)
+//
+//        let mutable state = None : (ServerManager * SerializationClient) option
+//
+//        override __.IsRemoted = true
+//
+//        override __.TestSerializer(x : 'T) = 
+//            match state with
+//            | Some (_,client) -> Serializer.write client.Serializer x
+//            | None -> failwith "remote server has not been set up."
+//            
+//        override __.TestDeserializer(bytes : byte []) =
+//            match state with
+//            | Some (_,client) -> Serializer.read client.Serializer bytes
+//            | None -> failwith "remote server has not been set up."
+//
+//        override __.TestLoop(x : 'T) =
+//            match state with
+//            | Some (_,client) -> client.Test x
+//            | None -> failwith "remote server has not been set up."
+//
+//        override __.Init () =
+//            match state with
+//            | Some _ -> failwith "remote server appears to be running."
+//            | None ->
+//                let mgr = new ServerManager(__.Pickler)
+//                do mgr.Start()
+//                do System.Threading.Thread.Sleep 2000
+//                let client = mgr.GetClient()
+//                state <- Some(mgr, client)
+//
+//        override __.Fini () =
+//            match state with
+//            | None -> failwith "no remote server appears to be running."
+//            | Some (mgr,_) -> mgr.Stop() ; state <- None
+//
+//
+//    type ``Binary Pickler Remoted Tests`` () =
+//        inherit ``Remoted Corectness Tests``(new FsPicklerBinary())
+//
+//    type ``Xml Pickler Remoted Tests`` () =
+//        inherit ``Remoted Corectness Tests``(new FsPicklerXml())
+//
+//    type ``Json Pickler Remoted Tests`` () =
+//        inherit ``Remoted Corectness Tests``(new FsPicklerJson())

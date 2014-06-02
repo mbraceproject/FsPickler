@@ -1,10 +1,12 @@
-﻿#r "bin/Release/Newtonsoft.Json.dll"
-#r "bin/Release/PerfUtil.dll"
-#r "bin/Release/ProtoBuf-Net.dll"
-#r "bin/Release/ServiceStack.Text.dll"
-#r "bin/Release/nunit.framework.dll"
-#r "bin/Release/FsPickler.dll"
-#r "bin/Release/FsPickler.Tests.exe"
+﻿#I "../../bin"
+
+#r "Newtonsoft.Json.dll"
+#r "PerfUtil.dll"
+#r "ProtoBuf-Net.dll"
+#r "ServiceStack.Text.dll"
+#r "nunit.framework.dll"
+#r "FsPickler.dll"
+#r "FsPickler.PerfTests.dll"
 
 #load "../packages/FSharp.Charting.0.90.6/FSharp.Charting.fsx"
 

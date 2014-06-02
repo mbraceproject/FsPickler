@@ -6,7 +6,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>ba81b7db-5759-433e-a6bf-5cda81c3bdaa</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <OutputType>Library</OutputType>
     <RootNamespace>Nessos.FsPickler.Tests</RootNamespace>
     <AssemblyName>FsPickler.Tests</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
@@ -42,19 +42,6 @@
     <OtherFlags>
     </OtherFlags>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'PerfTests|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <Tailcalls>true</Tailcalls>
-    <DefineConstants>PERFTESTS</DefineConstants>
-    <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\Release\FsPickler.Tests.xml</DocumentationFile>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <TargetFrameworkProfile />
-    <OutputPath>bin\Release\</OutputPath>
-    <OtherFlags>
-    </OtherFlags>
-  </PropertyGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
   </PropertyGroup>
@@ -66,28 +53,20 @@
   </PropertyGroup>
   <Import Project="$(FSharpTargetsPath)" Condition="Exists('$(FSharpTargetsPath)')" />
   <ItemGroup>
-    <Compile Include="Utils.fs" />
+    <None Include="Utils.fs" />
     <Compile Include="Serializers.fs" />
     <Compile Include="BinaryTests.fs" />
-    <Compile Include="Remoting.fs" />
+    <None Include="Remoting.fs" />
     <Compile Include="TestTypes.fs" />
     <Compile Include="CorrectnessTests.fs" />
-    <Compile Include="PerformanceTests.fs" />
-    <Compile Include="main.fs" />
-    <None Include="perfTests.fsx" />
+    <None Include="PerformanceTests.fs" />
+    <None Include="main.fs" />
     <None Include="App.config" />
     <None Include="packages.config" />
-    <Content Include="fspPerf.xml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FsCheck">
       <HintPath>..\..\packages\FsCheck.0.9.4.0\lib\net40-Client\FsCheck.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="FSharp.Charting">
-      <HintPath>..\..\packages\FSharp.Charting.0.90.6\lib\net40\FSharp.Charting.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="FSharp.Core, Version=$(TargetFSharpCoreVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
@@ -98,35 +77,12 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="mscorlib" />
-    <Reference Include="Newtonsoft.Json">
-      <HintPath>..\..\packages\Newtonsoft.Json.6.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="nunit.framework">
       <HintPath>..\..\packages\NUnit.2.6.3\lib\nunit.framework.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="PerfUtil">
-      <HintPath>..\..\packages\PerfUtil.0.1.5\lib\net40\PerfUtil.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="PerfUtil.NUnit">
-      <HintPath>..\..\packages\PerfUtil.NUnit.0.1.5\lib\net40\PerfUtil.NUnit.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="protobuf-net">
-      <HintPath>..\..\packages\protobuf-net.2.0.0.668\lib\net40\protobuf-net.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="ServiceStack.Text">
-      <HintPath>..\..\packages\ServiceStack.Text.4.0.20\lib\net40\ServiceStack.Text.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Numerics" />
-    <Reference Include="System.Runtime.Serialization" />
-    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\FsPickler.Binary\FsPickler.Binary.csproj">
@@ -143,18 +99,6 @@
   <PropertyGroup>
     <PreBuildEvent>
     </PreBuildEvent>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'PerfTests|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <Tailcalls>true</Tailcalls>
-    <DefineConstants>TRACE;PERFTESTS</DefineConstants>
-    <WarningLevel>3</WarningLevel>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DocumentationFile>bin\Release\FsPickler.Tests.XML</DocumentationFile>
-    <Prefer32Bit>true</Prefer32Bit>
-    <OtherFlags />
-    <OutputPath>bin\Release\</OutputPath>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'NoEmit|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
