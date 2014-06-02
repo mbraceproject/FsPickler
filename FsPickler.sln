@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.30501.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FsPickler", "FsPickler\FsPickler.fsproj", "{3AD987BF-F0FA-40BD-9DAE-4AF3A5FE9CC7}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FsPickler", "src\FsPickler\FsPickler.fsproj", "{3AD987BF-F0FA-40BD-9DAE-4AF3A5FE9CC7}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FsPickler.Tests", "FsPickler.Tests\FsPickler.Tests.fsproj", "{BA81B7DB-5759-433E-A6BF-5CDA81C3BDAA}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FsPickler.Tests", "tests\FsPickler.Tests\FsPickler.Tests.fsproj", "{BA81B7DB-5759-433E-A6BF-5CDA81C3BDAA}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "project", "project", "{87846678-C0AD-48CD-8D7D-4224116EEB73}"
 	ProjectSection(SolutionItems) = preProject
@@ -27,7 +27,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{E60ECF
 		.nuget\packages.config = .nuget\packages.config
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FsPickler.Binary", "FsPickler.Binary\FsPickler.Binary.csproj", "{490F47D5-5FFA-4B2A-9A1F-039384E83B12}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FsPickler.Binary", "src\FsPickler.Binary\FsPickler.Binary.csproj", "{490F47D5-5FFA-4B2A-9A1F-039384E83B12}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{109340B6-EAF7-4DDC-9D6C-F51A3E6E747F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{23BFC6E5-8581-44C7-B9C6-A42F06DCD6A6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -65,5 +69,10 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{3AD987BF-F0FA-40BD-9DAE-4AF3A5FE9CC7} = {23BFC6E5-8581-44C7-B9C6-A42F06DCD6A6}
+		{BA81B7DB-5759-433E-A6BF-5CDA81C3BDAA} = {109340B6-EAF7-4DDC-9D6C-F51A3E6E747F}
+		{490F47D5-5FFA-4B2A-9A1F-039384E83B12} = {23BFC6E5-8581-44C7-B9C6-A42F06DCD6A6}
 	EndGlobalSection
 EndGlobal
