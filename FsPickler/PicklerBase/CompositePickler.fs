@@ -90,12 +90,6 @@
         override p.IsOfFixedSize = p.m_IsOfFixedSize
         override p.UseWithSubtypes = p.m_UseWithSubtypes
 
-//        override p.Clone () =
-//            if p.m_IsInitialized then
-//                new CompositePickler<'T>(p.m_Reader, p.m_Writer, p.m_NestedPickler, p.m_PicklerInfo, p.IsCacheByRef, p.m_UseWithSubtypes) :> Pickler
-//            else
-//                invalidOp "Attempting to consume pickler at initialization time."
-
         override p.Cast<'S> () =
             match p.m_NestedPickler with
             | Some nested -> nested.Cast<'S> ()
@@ -248,8 +242,8 @@
                     writeObject ()
 
             with 
-            | :? SerializationException -> reraise ()
-            | e -> raise <| new SerializationException(sprintf "Error serializing instance of type '%O'." typeof<'T>, e)
+            | :? FsPicklerException -> reraise ()
+            | e -> raise <| new FsPicklerException(sprintf "Error serializing instance of type '%O'." typeof<'T>, e)
 
 
         override p.Read (state : ReadState) (tag : string) =
@@ -337,8 +331,8 @@
                     value
 
             with 
-            | :? SerializationException -> reraise ()
-            | e -> raise <| new SerializationException(sprintf "Error deserializing instance of type '%O'." typeof<'T>, e)
+            | :? FsPicklerException -> reraise ()
+            | e -> raise <| new FsPicklerException(sprintf "Error deserializing instance of type '%O'." typeof<'T>, e)
 
     and internal CompositePickler =
         

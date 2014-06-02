@@ -115,7 +115,7 @@
         [<Test>]
         member __.``NonSerializable Type`` () =
             let fs = new System.IO.FileStream(System.IO.Path.GetTempFileName(), System.IO.FileMode.Open)
-            shouldFailWith<SerializationException>(fun () -> self.TestSerializer fs |> ignore)
+            shouldFailWith<FsPicklerException>(fun () -> self.TestSerializer fs |> ignore)
         
         [<Test>] 
         member __.``Cyclic Array`` () = 

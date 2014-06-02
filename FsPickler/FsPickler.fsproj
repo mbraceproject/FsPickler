@@ -84,7 +84,7 @@
     <Compile Include="Format\XmlFormat.fs" />
     <Compile Include="Format\JsonFormat.fs" />
     <Compile Include="PicklerBase\Types.fs" />
-    <Compile Include="PicklerBase\TypeCache.fs" />
+    <Compile Include="PicklerBase\ReflectionCache.fs" />
     <Compile Include="PicklerBase\Pickler.fs" />
     <Compile Include="PicklerBase\PrimitivePicklers.fs" />
     <Compile Include="PicklerBase\CompositePickler.fs" />

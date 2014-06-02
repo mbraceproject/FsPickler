@@ -98,12 +98,10 @@
 
         with 
         // Store all NonSerializableTypeException's in cache
-        | :? NonSerializableTypeException as e when e.UnsupportedType <> t ->
-            let msg = sprintf "contains nonserializable field '%O'." e.UnsupportedType
-            Exn.error <| NonSerializableTypeException(t, msg)
+        | :? NonSerializableTypeException as e when e.Type = t -> Exn.Error e
+        | :? NonSerializableTypeException as e ->
+            Exn.error <| NonSerializableTypeException(t, e.NonSerializableType)
 
-        | :? NonSerializableTypeException as e -> Exn.Error e
-
-        // wrap/reraise everything else
+        // wrap/reraise everything else as PicklerGenerationExceptions
         | :? PicklerGenerationException as e -> reraise ()
         | e -> raise <| new PicklerGenerationException(t, inner = e) 

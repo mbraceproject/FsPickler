@@ -67,27 +67,13 @@
 
         try Assembly.Load an
         with :? FileNotFoundException | :? FileLoadException as e ->
-            
-            // Assembly.Load fails in certain cases where assemblies are loaded at runtime
-            // attempt to resolve this by performing a direct query on the AppDomain 
-//                
-//                let isMatch (an : AssemblyName) (a : Assembly) =
-//                    match System.AppDomain.CurrentDomain
-//                    let an' = a.GetName()
-//                    if an.Name <> an'.Name then false
-//                    elif an.Version <> null && an.Version <> an'.Version then false
-//                    elif an.CultureInfo <> null && an.CultureInfo <> an'.CultureInfo then false
-//                    else
-//                        match an.GetPublicKeyToken() with
-//                        | null | [||] -> true
-//                        | pkt -> pkt = an'.GetPublicKeyToken()
 
             let result =
                 System.AppDomain.CurrentDomain.GetAssemblies()
                 |> Array.tryFind (fun a -> a.FullName = an.FullName)
 
             match result with
-            | None -> raise <| new SerializationException("FsPickler: Assembly load exception.", e)
+            | None -> raise <| new FsPicklerException("FsPickler: Assembly load error.", e)
             | Some a -> a
 
 
@@ -187,7 +173,7 @@
             let assembly = loadAssembly tI'.AssemblyInfo
             try assembly.GetType(tI'.Name, throwOnError = true) |> fastUnbox<MemberInfo>
             with e ->
-                raise <| new SerializationException("FsPickler: Type load exception.", e)
+                raise <| new FsPicklerException("FsPickler: Type load error.", e)
 
         | ArrayType(et, rk) -> 
             match rk with
@@ -209,7 +195,7 @@
             try dt.GetMethods(getFlags isStatic) |> Array.find isMatchingGenericMethod |> fastUnbox<MemberInfo>
             with :? KeyNotFoundException -> 
                 let msg = sprintf "Cloud not load method '%s' from type '%O'." name dt
-                raise <| new SerializationException(msg)
+                raise <| new FsPicklerException(msg)
 
         | Constructor (dt, cParams) -> dt.GetConstructor(getFlags false, null, cParams, [||]) |> fastUnbox<MemberInfo>
         | Property (dt, name, isStatic) -> dt.GetProperty(name, getFlags isStatic) |> fastUnbox<MemberInfo>

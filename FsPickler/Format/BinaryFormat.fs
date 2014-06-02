@@ -34,13 +34,13 @@
 
             let streamTypeInfo = header >>> 8 |> byte |> EnumOfValue<byte, TypeKind>
             if streamTypeInfo <> typeInfo then
-                let message = sprintf "expected '%O', was '%O'." typeInfo streamTypeInfo
-                raise <| new SerializationException(message)
+                let message = sprintf "expected type '%O', was '%O'." typeInfo streamTypeInfo
+                raise <| new InvalidDataException(message)
 
             let streamPicklerInfo = header >>> 16 |> byte |> EnumOfValue<byte, PicklerInfo>
             if streamPicklerInfo <> picklerInfo then
-                let message = sprintf "expected '%O, was '%O'." picklerInfo streamPicklerInfo
-                raise <| new SerializationException(message)
+                let message = sprintf "expected pickler '%O, was '%O'." picklerInfo streamPicklerInfo
+                raise <| new InvalidDataException(message)
 
             header >>> 24 |> byte |> EnumOfValue<byte, ObjectFlags>
   
@@ -111,11 +111,11 @@
 
             member __.BeginReadRoot (tag : string) =
                 if br.ReadByte () <> initByte then
-                    raise <| new SerializationException("stream error.")
+                    raise <| new InvalidDataException("invalid initialization byte.")
                 let streamTag = br.ReadString()
                 if streamTag <> tag then
-                    let msg = sprintf "Expected '%s', got '%s'." tag streamTag
-                    raise <| new SerializationException(msg)
+                    let msg = sprintf "Expected type '%s' but was '%s'." tag streamTag
+                    raise <| new InvalidDataException(msg)
 
             member __.EndReadRoot () = ()
 

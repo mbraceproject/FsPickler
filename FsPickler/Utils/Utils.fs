@@ -216,10 +216,10 @@
                     Buffer.BlockCopy(buf, 0, array, d * bufferSize, r)
 
         type SerializationInfo with
-            member sI.Write<'T> (name : string, x : 'T) =
+            member internal sI.Write<'T> (name : string, x : 'T) =
                 sI.AddValue(name, x, typeof<'T>)
 
-            member sI.Read<'T>(name : string) =
+            member internal sI.Read<'T>(name : string) =
                 sI.GetValue(name, typeof<'T>) :?> 'T
 
         let inline pickle (f : Stream -> 'T -> unit) (x : 'T) : byte [] =
