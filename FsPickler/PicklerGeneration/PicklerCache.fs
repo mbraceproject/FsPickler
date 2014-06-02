@@ -9,6 +9,7 @@
     open Nessos.FsPickler.ReflectionPicklers
     open Nessos.FsPickler.PicklerResolution
 
+    [<AutoSerializable(false)>]
     type internal PicklerCache private () =
 
         static let instance = lazy(new PicklerCache())

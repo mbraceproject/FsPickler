@@ -146,7 +146,8 @@
 
                 let psi = new ProcessStartInfo()
 
-                psi.FileName <- thisExe    
+                psi.FileName <- thisExe
+                psi.Arguments <- testedSerializer.Name
                 psi.WorkingDirectory <- Path.GetDirectoryName thisExe
                 psi.UseShellExecute <- false
                 psi.CreateNoWindow <- true

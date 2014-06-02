@@ -93,10 +93,9 @@
 
     open JsonUtils
 
-    type JsonPickleWriter internal (stream : Stream, encoding : Encoding, indented, leaveOpen) =
+    type JsonPickleWriter internal (textWriter : TextWriter, indented) =
         
-        let sw = new StreamWriter(stream, encoding, 1024, leaveOpen)
-        let jsonWriter = new JsonTextWriter(sw) :> JsonWriter
+        let jsonWriter = new JsonTextWriter(textWriter) :> JsonWriter
         do jsonWriter.Formatting <- if indented then Formatting.Indented else Formatting.None
 
         let mutable currentValueIsNull = false
@@ -204,10 +203,9 @@
                 jsonWriter.Flush () ; (jsonWriter :> IDisposable).Dispose()
 
 
-    type JsonPickleReader internal (stream : Stream, encoding : Encoding, leaveOpen) =
-        
-        let sr = new StreamReader(stream, encoding, true, 1024, leaveOpen)
-        let jsonReader = new JsonTextReader(sr) :> JsonReader
+    type JsonPickleReader internal (textReader : TextReader) =
+
+        let jsonReader = new JsonTextReader(textReader) :> JsonReader
 
         let mutable currentValueIsNull = false
 
@@ -355,14 +353,21 @@
             member __.IsPrimitiveArraySerializationSupported = false
             member __.ReadPrimitiveArray _ _ = raise <| new NotImplementedException()
 
-            member __.Dispose () = (jsonReader :> IDisposable).Dispose() ; sr.Dispose()
+            member __.Dispose () = (jsonReader :> IDisposable).Dispose()
 
-    type JsonPickleFormatProvider (?encoding : Encoding, ?indented, ?leaveOpen) =
-        let encoding = defaultArg encoding Encoding.UTF8
-        let leaveOpen = defaultArg leaveOpen true
-        let indented = defaultArg indented false
+    type JsonPickleFormatProvider (?indent) =
+        let indent = defaultArg indent false
 
-        interface IPickleFormatProvider with
-            member __.Name = "Json"
-            member __.CreateWriter(stream) = new JsonPickleWriter(stream, encoding, indented, leaveOpen) :> _
-            member __.CreateReader(stream) = new JsonPickleReader(stream, encoding, leaveOpen) :> _
+        interface IStringPickleFormatProvider with
+            member __.Name = "Xml"
+
+            member __.CreateWriter (stream, encoding, leaveOpen) =
+                use sw = new StreamWriter(stream, encoding, 1024, leaveOpen)
+                new JsonPickleWriter(sw, indent) :> _
+
+            member __.CreateReader (stream, encoding, leaveOpen) =
+                use sr = new StreamReader(stream, encoding, true, 1024, leaveOpen)
+                new JsonPickleReader(sr) :> _
+
+            member __.CreateWriter textWriter = new JsonPickleWriter(textWriter, indent) :> _
+            member __.CreateReader textReader = new JsonPickleReader(textReader) :> _

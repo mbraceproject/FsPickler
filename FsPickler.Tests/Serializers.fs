@@ -19,15 +19,24 @@
         abstract Serialize : Stream * 'T -> unit
         abstract Deserialize : Stream -> 'T
 
-    type FsPicklerSerializer () =
-        let fsc = FsPickler.CreateBinary()
-
-        member __.FSCS = fsc
+    type FsPicklerSerializer (name : string, fsp : FsPickler) =
+        member __.Pickler = fsp
 
         interface ISerializer with
-            member __.Name = "FsPickler"
-            member __.Serialize(stream : Stream, x : 'T) = fsc.Serialize(stream, x)
-            member __.Deserialize(stream : Stream) = fsc.Deserialize<'T> stream
+            member __.Name = name
+            member __.Serialize(stream : Stream, x : 'T) = fsp.Serialize(stream, x)
+            member __.Deserialize(stream : Stream) = fsp.Deserialize<'T> stream
+
+        static member Create (name : string) =
+            match name with
+            | "FsPickler.Binary" -> new FsPicklerBinary () :> FsPicklerSerializer
+            | "FsPickler.Json" -> new FsPicklerJson () :> FsPicklerSerializer
+            | "FsPickler.Xml" -> new FsPicklerXml () :> FsPicklerSerializer
+            | _ -> invalidArg "name" "not a pickler format."
+
+    and FsPicklerBinary () = inherit FsPicklerSerializer("FsPickler.Binary", FsPickler.CreateBinary())
+    and FsPicklerXml () = inherit FsPicklerSerializer("FsPickler.Xml", FsPickler.CreateXml())
+    and FsPicklerJson () = inherit FsPicklerSerializer("FsPickler.Json", FsPickler.CreateJson())
 
     type BinaryFormatterSerializer () =
         let bfs = new BinaryFormatter()

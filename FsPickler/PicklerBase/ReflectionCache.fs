@@ -240,7 +240,7 @@
     #nowarn "40"
 
     
-
+    [<AutoSerializable(false)>]
     type ReflectionCache private (?tyConv : ITypeNameConverter) =
 
         static let defaultInstance = lazy (new ReflectionCache())

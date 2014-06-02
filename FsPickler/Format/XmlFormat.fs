@@ -29,14 +29,13 @@
     open XmlUtils
 
 
-    type XmlPickleWriter(stream : Stream, encoding : Encoding, indent : bool) =
+    type XmlPickleWriter(textWriter : TextWriter, indent : bool) =
 
         let settings = new XmlWriterSettings()
         do 
-            settings.Encoding <- encoding
             settings.Indent <- indent
 
-        let writer = XmlWriter.Create(stream, settings)
+        let writer = XmlWriter.Create(textWriter, settings)
         
         interface IPickleFormatWriter with
 
@@ -125,13 +124,13 @@
             member __.Dispose () = writer.Flush () ; writer.Dispose()
 
 
-    type XmlPickleReader(stream : Stream, encoding : Encoding) =
+    type XmlPickleReader(textReader : TextReader) =
 
         let settings = new XmlReaderSettings()
         do
             settings.IgnoreWhitespace <- true
 
-        let reader = XmlReader.Create(stream, settings)
+        let reader = XmlReader.Create(textReader, settings)
 
         interface IPickleFormatReader with
             
@@ -259,11 +258,19 @@
             member __.Dispose () = reader.Dispose()
 
 
-        type XmlPickleFormatProvider(?encoding : Encoding, ?indent) =
-            let encoding = defaultArg encoding Encoding.UTF8
-            let indent = defaultArg indent false
+    type XmlPickleFormatProvider(?indent) =
+        let indent = defaultArg indent false
             
-            interface IPickleFormatProvider with
-                member __.Name = "Xml"
-                member __.CreateWriter(stream) = new XmlPickleWriter(stream, encoding, indent) :> _
-                member __.CreateReader(stream) = new XmlPickleReader(stream, encoding) :> _
+        interface IStringPickleFormatProvider with
+            member __.Name = "Xml"
+
+            member __.CreateWriter (stream, encoding, leaveOpen) =
+                use sw = new StreamWriter(stream, encoding, 1024, leaveOpen)
+                new XmlPickleWriter(sw, indent) :> _
+
+            member __.CreateReader (stream, encoding, leaveOpen) =
+                use sr = new StreamReader(stream, encoding, true, 1024, leaveOpen)
+                new XmlPickleReader(sr) :> _
+
+            member __.CreateWriter textWriter = new XmlPickleWriter(textWriter, indent) :> _
+            member __.CreateReader textReader = new XmlPickleReader(textReader) :> _

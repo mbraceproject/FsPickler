@@ -135,29 +135,8 @@
 
         type NonGenericType = NGValue of int
 
-//        type ExternalTypePickler () =
-//            interface IPicklerFactory
-//
-//            member __.Create (resolver : IPicklerResolver) =
-//                Pickler.FromPrimitives((fun _ -> NGValue 42), fun _ _ -> ())
-
         type GenericType<'T when 'T : comparison>(x : 'T) =
             member __.Value = x
-
-//        type ExternalGenericTypePickler () =
-//            interface IPicklerFactory
-//
-//            member __.Create<'T when 'T : comparison> (resolver : IPicklerResolver) =
-//                let valueFmt = resolver.Resolve<'T> ()
-//
-//                let writer (w : WriteState) (g : GenericType<'T>) =
-//                    valueFmt.Write w "value" g.Value
-//
-//                let reader (r : ReadState) =
-//                    let value = valueFmt.Read r "value"
-//                    new GenericType<'T>(Unchecked.defaultof<'T>)
-//
-//                Pickler.FromPrimitives(reader, writer) :> Pickler
 
         type TestDelegate = delegate of unit -> unit
 
@@ -228,24 +207,13 @@
             "Lorem ipsum dolor sit amet, consectetur adipisicing elit, 
                 sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
 
-
-        // create serializer
-        let testSerializer = new FsPicklerSerializer()
-//            let registry = new CustomPicklerRegistry("unit test cache")
-//            do
-//                registry.RegisterPicklerFactory(new ExternalTypePickler())
-//                registry.RegisterPicklerFactory(new ExternalGenericTypePickler())
-//
-//            new FsPicklerSerializer(registry)
-
-
         // test provision for top-level sequence serialization
-        let testSequence<'T when 'T : equality> (xs : seq<'T>) =
+        let testSequence<'T when 'T : equality> (fsp : FsPicklerSerializer) (xs : seq<'T>) =
             use m = new MemoryStream()
-            let length = testSerializer.FSCS.SerializeSequence(m, xs)
+            let length = fsp.Pickler.SerializeSequence(m, xs)
             m.Position <- 0L
             use enum = xs.GetEnumerator()
-            use enum' = testSerializer.FSCS.DeserializeSequence<'T>(m, length)
+            use enum' = fsp.Pickler.DeserializeSequence<'T>(m, length)
             let mutable success = true
             while success && enum.MoveNext() do 
                 if enum'.MoveNext() && enum.Current = enum'.Current then ()
@@ -256,13 +224,11 @@
 
         // automated large-scale object generation
         let generateSerializableObjects (assembly : Assembly) =
-            let fscs = testSerializer.FSCS
-
             let filterType (t : Type) =
                 match t.Namespace with
                 | "System.Reflection" -> false // System.Reflection.Assembly.ToString() in mono may cause runtime to die
                 | _ ->
-                    try fscs.IsSerializableType t with _ -> true
+                    try FsPickler.IsSerializableType t with _ -> true
 
             let tryActivate (t : Type) =
                 try Some (t, Activator.CreateInstance t)

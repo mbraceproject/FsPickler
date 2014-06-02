@@ -222,15 +222,23 @@
             member internal sI.Read<'T>(name : string) =
                 sI.GetValue(name, typeof<'T>) :?> 'T
 
-        let inline pickle (f : Stream -> 'T -> unit) (x : 'T) : byte [] =
+        let inline pickleBinary (f : Stream -> 'T -> unit) (x : 'T) : byte [] =
             use mem = new MemoryStream()
             f mem x
             mem.ToArray()
 
-        let inline unpickle (f : Stream -> 'T) (data : byte []) : 'T =
-            use mem = new MemoryStream(data)
+        let inline unpickleBinary (f : Stream -> 'T) (pickle : byte []) : 'T =
+            use mem = new MemoryStream(pickle)
             f mem
 
+        let inline pickleString (f : TextWriter -> 'T -> unit) (x : 'T) : string =
+            use sw = new StringWriter()
+            f sw x
+            sw.ToString()
+
+        let inline unpickleString (f : TextReader -> 'T) (pickle : string) : 'T =
+            use sr = new StringReader(pickle)
+            f sr
 
         [<NoComparison>]
         type ReferenceEqualityContainer<'T when 'T : not struct>(value : 'T) =

@@ -45,7 +45,7 @@
             header >>> 24 |> byte |> EnumOfValue<byte, ObjectFlags>
   
 
-    type BinaryPickleWriter (stream : Stream) =
+    type BinaryPickleWriter internal (stream : Stream) =
 
         let bw = new Nessos.FsPickler.Binary.BinaryWriter(stream)
 
@@ -165,7 +165,9 @@
 
 
     and BinaryPickleFormatProvider () =
-        interface IPickleFormatProvider with
+
+        interface IBinaryPickleFormatProvider with
             member __.Name = "Binary"
-            member __.CreateWriter (stream : Stream) = new BinaryPickleWriter(stream) :> _
-            member __.CreateReader (stream : Stream) = new BinaryPickleReader(stream) :> _
+
+            member __.CreateWriter (stream : Stream, _, _) = new BinaryPickleWriter(stream) :> _
+            member __.CreateReader (stream : Stream, _, _) = new BinaryPickleReader(stream) :> _

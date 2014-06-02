@@ -94,9 +94,17 @@
         abstract IsPrimitiveArraySerializationSupported : bool
         abstract ReadPrimitiveArray : tag:string -> Array -> unit
 
-    and IPickleFormatProvider =
-
+    type IPickleFormatProvider =
         abstract Name : string
 
-        abstract CreateWriter : Stream -> IPickleFormatWriter
-        abstract CreateReader : Stream -> IPickleFormatReader
+        abstract CreateWriter : Stream * Encoding * leaveOpen:bool -> IPickleFormatWriter
+        abstract CreateReader : Stream * Encoding * leaveOpen:bool -> IPickleFormatReader
+
+    and IBinaryPickleFormatProvider =
+        inherit IPickleFormatProvider
+
+    and IStringPickleFormatProvider =
+        inherit IPickleFormatProvider
+
+        abstract CreateWriter : TextWriter -> IPickleFormatWriter
+        abstract CreateReader : TextReader -> IPickleFormatReader

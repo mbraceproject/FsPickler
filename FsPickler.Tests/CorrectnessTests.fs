@@ -14,7 +14,7 @@
 
     [<TestFixture>]
     [<AbstractClass>]
-    type ``Serializer Correctness Tests`` () as self =
+    type ``Serializer Correctness Tests`` (pickler : FsPicklerSerializer) as self =
 
         let test x = 
             try self.TestLoop x |> ignore
@@ -30,6 +30,8 @@
             let members = t.GetMembers(BindingFlags.Public ||| BindingFlags.NonPublic ||| BindingFlags.Instance ||| BindingFlags.Static)
             for m in members do
                 testEquals m
+
+        member __.Pickler = pickler
 
         abstract IsRemoted : bool
         abstract TestSerializer : 'T -> byte []
@@ -103,14 +105,14 @@
 
             let p = int2Peano 100
 
-            p |> pickle pp |> unpickle pp |> should equal p
+            p |> Binary.pickle pp |> Binary.unpickle pp |> should equal p
 
         [<Test>] 
         member __.``Combinator-based Mutual Recursion`` () =
             let tp,_ = getTreeForestPicklers Pickler.int
             let t = nTree 6
 
-            t |> pickle tp |> unpickle tp |> should equal t
+            t |> Binary.pickle tp |> Binary.unpickle tp |> should equal t
 
         [<Test>]
         member __.``NonSerializable Type`` () =
@@ -159,7 +161,7 @@
                         incr state
                 }
             
-            let sequence' = sequence |> pickle seqPickler |> unpickle seqPickler
+            let sequence' = sequence |> Binary.pickle seqPickler |> Binary.unpickle seqPickler
 
             // check that sequence has been evaluated
             !state |> should equal 100
@@ -370,8 +372,8 @@
 
         [<Test>]
         member __.``Int Sequence Serialization`` () =
-            testSequence [1 .. 10000] |> should equal true
-            testSequence [|1 .. 10000|] |> should equal true
+            testSequence __.Pickler [1 .. 10000] |> should equal true
+            testSequence __.Pickler [|1 .. 10000|] |> should equal true
             
             let customSeq =
                 seq {
@@ -381,12 +383,12 @@
                         incr cnt
                 }
 
-            testSequence customSeq |> should equal true
+            testSequence __.Pickler customSeq |> should equal true
 
         [<Test>]
         member __.``String Sequence Serialization`` () =
-            testSequence (List.map string [1 .. 10000]) |> should equal true
-            testSequence (Array.map string [|1 .. 10000|]) |> should equal true
+            testSequence __.Pickler (List.map string [1 .. 10000]) |> should equal true
+            testSequence __.Pickler (Array.map string [|1 .. 10000|]) |> should equal true
 
             let customSeq =
                 seq {
@@ -395,11 +397,11 @@
                         yield sprintf "string%d" i
                 }
 
-            testSequence customSeq |> should equal true
+            testSequence __.Pickler customSeq |> should equal true
 
         [<Test>]
         member __.``Pair Sequence Serialization`` () =
-            testSequence ([1..10000] |> List.map (fun i -> string i, i)) |> should equal true
+            testSequence __.Pickler ([1..10000] |> List.map (fun i -> string i, i)) |> should equal true
             
             let customSeq =
                 seq {
@@ -407,27 +409,35 @@
                         yield (string i, i)
                 }
 
-            testSequence customSeq |> should equal true
+            testSequence __.Pickler customSeq |> should equal true
 
 
 
-    [<TestFixture>]
-    type ``In-memory Correctness Tests`` () =
-        inherit ``Serializer Correctness Tests`` ()
+    [<AbstractClass>]
+    type ``In-memory Correctness Tests`` (pickler : FsPicklerSerializer) =
+        inherit ``Serializer Correctness Tests`` (pickler)
 
         override __.IsRemoted = false
-
-        override __.TestSerializer (x : 'T) = Serializer.write testSerializer x
-        override __.TestDeserializer (bytes : byte []) = Serializer.read testSerializer bytes
-        override __.TestLoop(x : 'T) = Serializer.roundtrip x testSerializer
+        override __.TestSerializer (x : 'T) = Serializer.write __.Pickler x
+        override __.TestDeserializer (bytes : byte []) = Serializer.read __.Pickler bytes
+        override __.TestLoop(x : 'T) = Serializer.roundtrip x __.Pickler
 
         override __.Init () = ()
         override __.Fini () = ()
 
+    type ``Binary Pickler In-Memory Tests`` () =
+        inherit ``In-memory Correctness Tests``(new FsPicklerBinary())
 
-    [<TestFixture>]
-    type ``Remoted Corectness Tests`` () =
-        inherit ``Serializer Correctness Tests`` ()
+    type ``Xml Pickler In-Memory Tests`` () =
+        inherit ``In-memory Correctness Tests``(new FsPicklerXml())
+
+    type ``Json Pickler In-Memory Tests`` () =
+        inherit ``In-memory Correctness Tests``(new FsPicklerJson())
+
+
+    [<AbstractClass>]
+    type ``Remoted Corectness Tests`` (pickler : FsPicklerSerializer) =
+        inherit ``Serializer Correctness Tests`` (pickler)
 
         let mutable state = None : (ServerManager * SerializationClient) option
 
@@ -452,7 +462,7 @@
             match state with
             | Some _ -> failwith "remote server appears to be running."
             | None ->
-                let mgr = new ServerManager(testSerializer)
+                let mgr = new ServerManager(__.Pickler)
                 do mgr.Start()
                 do System.Threading.Thread.Sleep 2000
                 let client = mgr.GetClient()
@@ -462,3 +472,13 @@
             match state with
             | None -> failwith "no remote server appears to be running."
             | Some (mgr,_) -> mgr.Stop() ; state <- None
+
+
+    type ``Binary Pickler Remoted Tests`` () =
+        inherit ``Remoted Corectness Tests``(new FsPicklerBinary())
+
+    type ``Xml Pickler Remoted Tests`` () =
+        inherit ``Remoted Corectness Tests``(new FsPicklerXml())
+
+    type ``Json Pickler Remoted Tests`` () =
+        inherit ``Remoted Corectness Tests``(new FsPicklerJson())
