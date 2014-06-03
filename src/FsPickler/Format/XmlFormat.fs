@@ -4,7 +4,7 @@
     open System.IO
     open System.Text
     open System.Xml
-    open System.Runtime.Serialization
+    open System.Security
 
     open Microsoft.FSharp.Core.LanguagePrimitives
 
@@ -25,15 +25,23 @@
                 let msg = sprintf "expected type '%s' but was '%s'" tag r.Name
                 raise <| new FsPicklerException(msg)
 
+        let inline escapeString (value : string) = SecurityElement.Escape value
+        let inline unEscapeString (value : string) =
+            let e = new SecurityElement("", value)
+            e.Text
+
 
     open XmlUtils
 
 
-    type XmlPickleWriter internal (textWriter : TextWriter, indent : bool) =
+    type XmlPickleWriter internal (textWriter : TextWriter, indent : bool, leaveOpen) =
 
         let settings = new XmlWriterSettings()
         do 
+            settings.NewLineHandling <- NewLineHandling.Entitize
+            settings.CloseOutput <- not leaveOpen
             settings.Indent <- indent
+            settings.CheckCharacters <- false
 
         let writer = XmlWriter.Create(textWriter, settings)
         
@@ -94,14 +102,15 @@
             member __.WriteDouble (tag : string) value = writePrimitive writer tag value
             member __.WriteDecimal (tag : string) value = writePrimitive writer tag value
 
-            member __.WriteChar (tag : string) value = writePrimitive writer tag (string value)
+            member __.WriteChar (tag : string) value = writePrimitive writer tag <| escapeString (string value)
+
             member __.WriteString (tag : string) value = 
                 if obj.ReferenceEquals(value, null) then
                     writer.WriteStartElement(tag)
                     writer.WriteAttributeString("null", "true")
                     writer.WriteEndElement()
                 else
-                    writePrimitive writer tag value
+                    writePrimitive writer tag <| escapeString value
 
             member __.WriteBigInteger (tag : string) value = writePrimitive writer tag (value.ToString())
 
@@ -124,11 +133,13 @@
             member __.Dispose () = writer.Flush () ; writer.Dispose()
 
 
-    type XmlPickleReader internal (textReader : TextReader) =
+    type XmlPickleReader internal (textReader : TextReader, leaveOpen) =
 
         let settings = new XmlReaderSettings()
         do
-            settings.IgnoreWhitespace <- true
+            settings.IgnoreWhitespace <- false
+            settings.CloseInput <- not leaveOpen
+            settings.CheckCharacters <- false
 
         let reader = XmlReader.Create(textReader, settings)
 
@@ -220,7 +231,7 @@
             member __.ReadSingle tag = readElementName reader tag ; reader.ReadElementContentAsFloat()
             member __.ReadDouble tag = readElementName reader tag ; reader.ReadElementContentAsDouble()
 
-            member __.ReadChar tag = readElementName reader tag ; reader.ReadElementContentAsString().[0]
+            member __.ReadChar tag = readElementName reader tag ; reader.ReadElementContentAsString() |> unEscapeString |> char
             member __.ReadBigInteger tag = readElementName reader tag ; reader.ReadElementContentAsString() |> System.Numerics.BigInteger.Parse
             member __.ReadString tag = 
                 readElementName reader tag 
@@ -228,7 +239,7 @@
                     reader.Read() |> ignore
                     null
                 else
-                    reader.ReadElementContentAsString()
+                    reader.ReadElementContentAsString() |> unEscapeString
 
             member __.ReadGuid tag = readElementName reader tag ; reader.ReadElementContentAsString() |> Guid.Parse
             member __.ReadDate tag = readElementName reader tag ; reader.ReadElementContentAsDateTime()
@@ -266,11 +277,11 @@
 
             member __.CreateWriter (stream, encoding, leaveOpen) =
                 use sw = new StreamWriter(stream, encoding, 1024, leaveOpen)
-                new XmlPickleWriter(sw, indent) :> _
+                new XmlPickleWriter(sw, indent, leaveOpen) :> _
 
             member __.CreateReader (stream, encoding, leaveOpen) =
                 use sr = new StreamReader(stream, encoding, true, 1024, leaveOpen)
-                new XmlPickleReader(sr) :> _
+                new XmlPickleReader(sr, leaveOpen) :> _
 
-            member __.CreateWriter textWriter = new XmlPickleWriter(textWriter, indent) :> _
-            member __.CreateReader textReader = new XmlPickleReader(textReader) :> _
+            member __.CreateWriter textWriter = new XmlPickleWriter(textWriter, indent, true) :> _
+            member __.CreateReader textReader = new XmlPickleReader(textReader, true) :> _
