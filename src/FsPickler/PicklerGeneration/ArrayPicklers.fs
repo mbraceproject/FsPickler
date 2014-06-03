@@ -194,7 +194,7 @@
                     for i = 0 to lengths.[0] - 1 do
                         for j = 0 to lengths.[1] - 1 do
                             for k = 0 to lengths.[2] - 1 do
-                                for l = 0 to lengths.[2] - 1 do
+                                for l = 0 to lengths.[3] - 1 do
                                     array.[i,j,k,l] <- ep.Read r "elem"
 
                     formatter.EndReadBoundedSequence ()

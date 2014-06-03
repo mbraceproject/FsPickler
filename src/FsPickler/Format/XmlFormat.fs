@@ -254,12 +254,13 @@
                     let length = reader.GetAttribute("length") |> int
                     let bytes = Array.zeroCreate<byte> length
                     do reader.Read() |> ignore
-                    let n = reader.ReadContentAsBase64(bytes, 0, length)
-                    if n < length then
-                        raise <| new EndOfStreamException()
+                    if length > 0 then
+                        let n = reader.ReadContentAsBase64(bytes, 0, length)
+                        if n < length then
+                            raise <| new EndOfStreamException()
 
-                    if reader.NodeType = XmlNodeType.Text then
-                        reader.Read() |> ignore
+                        if reader.NodeType = XmlNodeType.Text then
+                            reader.Read() |> ignore
 
                     bytes
 
