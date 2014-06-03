@@ -131,7 +131,7 @@
             try dive 20 |> ignore; invalidOp "should have failed"
             with :? 'exn as e -> e
 
-        exception FsharpException of int * string
+        exception FSharpException of int * string
 
 
         type BinTree<'T> =

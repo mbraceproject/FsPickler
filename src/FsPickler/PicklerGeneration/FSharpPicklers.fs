@@ -238,13 +238,19 @@
 
 
             let writer (w : WriteState) (e : 'Exception) =
-                defPickler.Write w "exceptionBase" e
+                // toggle subtype to prevent pickler from detecting cyclic object pattern
+                w.NextObjectIsSubtype <- true
+                defPickler.UntypedWrite w "exceptionBase" e
+
                 match writerDele with
                 | None -> ()
                 | Some d -> d.Invoke(fpicklers, w, e)
 
             let reader (r : ReadState) =
-                let e = defPickler.Read r "exceptionBase"
+                // toggle subtype to prevent pickler from detecting cyclic object pattern
+                r.NextObjectIsSubtype <- true
+                let e = defPickler.UntypedRead r "exceptionBase" |> fastUnbox<'Exception>
+
                 match readerDele with
                 | None -> e
                 | Some d -> d.Invoke(fpicklers, r, e) ; e

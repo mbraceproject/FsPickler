@@ -583,7 +583,7 @@
 
         [<Test; Category("FSharp type tests")>]
         member __.``7. FSharp: exception`` () =
-            let e = FsharpException(42, "fortyTwo") :?> FsharpException |> addStackTrace
+            let e = FSharpException(42, "fortyTwo") :?> FSharpException |> addStackTrace
             testReflected e
             let e' = testRoundtrip e
             // test exception field serialization
