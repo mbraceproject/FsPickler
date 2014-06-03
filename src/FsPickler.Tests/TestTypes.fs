@@ -26,6 +26,9 @@
 
         let rec int2Peano n = match n with 0 -> Zero | n -> Succ(int2Peano(n-1))
 
+        type ClassWithGenericMethod =
+            static member Method<'T,'S> () = Unchecked.defaultof<'T>, Unchecked.defaultof<'S>
+
         type OverLoaded () =
             member __.A<'T> () = ()
             member __.A<'T> (x : 'T) = ()

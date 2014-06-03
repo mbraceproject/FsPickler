@@ -1,6 +1,7 @@
 ﻿namespace Nessos.FsPickler.Tests
 
     open System
+    open System.Collections
     open System.Reflection
     open System.Runtime.Serialization
 
@@ -54,6 +55,9 @@
             | :? BinaryPickler as p -> let pickle = p.Pickle t in p.UnPickle pickle
             | _ -> invalidOp "unexpected pickler type."
 
+        //
+        //  Primitive Serialization tests
+        //
 
         [<Test; Category("Primitives")>]
         member __.Bool () = testEquals false ; testEquals true
@@ -112,18 +116,34 @@
         [<Test; Category("Bytes")>]
         member __.Bytes () = testEquals (null : byte []) ; Check.QuickThrowOnFail<byte []> testEquals
 
-//        [<TestFixtureSetUp>] abstract Init : unit -> unit
-//        [<TestFixtureTearDown>] abstract Fini : unit -> unit
+        //
+        //  BCL Base types
+        //
 
-//        [<Test>] member __.``Unit`` () = testEquals ()
-//        [<Test>] member __.``Boolean`` () = testEquals false
-//        [<Test>] member __.``Integer`` () = testEquals 1
-//        [<Test>] member __.``String`` () = testEquals "lorem ipsum dolor"
-//        [<Test>] member __.``Float`` () = testEquals 3.1415926
-//        [<Test>] member __.``Guid`` () = testEquals <| Guid.NewGuid()
-//        [<Test>] member __.``Decimal`` () = testEquals Decimal.MaxValue
-//        [<Test>] member __.``Byte []`` () = testEquals [|0uy .. 100uy|]
-//        [<Test>] member __.``DateTime`` () = testEquals DateTime.Now
+        [<Test; Category("BCL Types")>]
+        member __.``System.Type`` () = 
+            // base types
+            testEquals (null : Type) ; testEquals typeof<int> ; testEquals typeof<IEnumerable> ; testEquals <| Type.GetType("System.__Canon")
+            // generic types
+            testEquals typeof<int * string list option> ; testEquals typedefof<int * string option> ; testEquals typeof<Map<int, string>>
+            // array types
+            testEquals typeof<int []> ; testEquals typeof<int [,]> ; testEquals typeof<System.Array> ; testEquals typeof<(int * string) [,,,]>
+            // generic type paramaters
+            let tparams = typedefof<Map<_,_>>.GetGenericArguments() in testEquals tparams.[0] ; testEquals tparams.[1]
+            // generic method parameters
+            let mparams = typeof<ClassWithGenericMethod>.GetMethod("Method").GetGenericArguments() 
+            testEquals mparams.[0] ; testEquals mparams.[1]
+
+        [<Test; Category("BCL Types")>]
+        member __.``System.Reflection.MethodInfo`` () =
+            [| 
+                typeof<obj> ; typeof<exn> ; typeof<int> ; typeof<string> ; typeof<bool> ; typeof<int option> ; 
+                typeof<Quotations.Expr> ; typeof<System.Collections.Generic.Dictionary<int,string>> ; 
+                typeof<int list> ; typedefof<_ list> ; typedefof<_ ref> ; Pickler.auto<int * string>.GetType()
+            |]
+            |> Array.collect(fun t -> t.GetMembers(allFlags ||| BindingFlags.FlattenHierarchy))
+            |> Array.iter testEquals
+
 //
 //        [<Test>] member __.``System.Type`` () = testEquals typeof<int>
 //        [<Test>] member __.``Option types`` () = testEquals (Some 42) ; testEquals (None : obj option) ; testEquals (Some (Some "test"))

@@ -83,9 +83,15 @@
                 methodInfoPickler.Write w "declaringMethod" dm
                 formatter.WriteInt32 "idx" idx
 
-            | Method(dt, name, isStatic, mParams) ->
+            | Method(dt, rt, name, isStatic, mParams) ->
                 formatter.WriteByte "memberType" 5uy
                 typePickler.Write w "declaringType" dt
+                match rt with
+                | None -> formatter.WriteBoolean "isReflected" false
+                | Some rt ->
+                    formatter.WriteBoolean "isReflected" true
+                    typePickler.Write w "reflectedType" rt
+
                 formatter.WriteString "name" name
                 formatter.WriteBoolean "isStatic" isStatic
                 writeArray w typePickler "params" mParams
@@ -95,35 +101,60 @@
                 methodInfoPickler.Write w "genericMethod" gm
                 writeArray w typePickler "tyArgs" tyArgs
 
-            | GenericMethodDefinition(dt, name, isStatic, signature) ->
+            | GenericMethodDefinition(dt, rt, name, isStatic, signature) ->
                 formatter.WriteByte "memberType" 7uy
                 typePickler.Write w "declaringType" dt
+                match rt with
+                | None -> formatter.WriteBoolean "isReflected" false
+                | Some rt ->
+                    formatter.WriteBoolean "isReflected" true
+                    typePickler.Write w "reflectedType" rt
+
                 formatter.WriteString "name" name
                 formatter.WriteBoolean "isStatic" isStatic
                 formatter.BeginWriteBoundedSequence "params" signature.Length
                 for s in signature do formatter.WriteString "param" s
                 formatter.EndWriteBoundedSequence ()
 
-            | Constructor(dt, cParams) ->
+            | Constructor(dt, isStatic, cParams) ->
                 formatter.WriteByte "memberType" 8uy
                 typePickler.Write w "declaringType" dt
+                formatter.WriteBoolean "isStatic" isStatic
                 writeArray w typePickler "params" cParams
 
-            | Property(dt, name, isStatic) ->
+            | Property(dt, rt, name, isStatic) ->
                 formatter.WriteByte "memberType" 9uy
                 typePickler.Write w "declaringType" dt
+                match rt with
+                | None -> formatter.WriteBoolean "isReflected" false
+                | Some rt ->
+                    formatter.WriteBoolean "isReflected" true
+                    typePickler.Write w "reflectedType" rt
+
                 formatter.WriteString "name" name
                 formatter.WriteBoolean "isStatic" isStatic
 
-            | Field(dt, name, isStatic) ->
+            | Field(dt, rt, name, isStatic) ->
                 formatter.WriteByte "memberType" 10uy
                 typePickler.Write w "declaringType" dt
+                match rt with
+                | None -> formatter.WriteBoolean "isReflected" false
+                | Some rt ->
+                    formatter.WriteBoolean "isReflected" true
+                    typePickler.Write w "reflectedType" rt
+
                 formatter.WriteString "name" name
                 formatter.WriteBoolean "isStatic" isStatic
 
-            | Event(dt, name, isStatic) ->
+            | Event(dt, rt, name, isStatic) ->
                 formatter.WriteByte "memberType" 11uy
                 typePickler.Write w "declaringType" dt
+                match rt with
+                | None -> formatter.WriteBoolean "isReflected" false
+                | Some rt ->
+                    formatter.WriteBoolean "isReflected" true
+                    typePickler.Write w "reflectedType" rt
+
                 formatter.WriteString "name" name
                 formatter.WriteBoolean "isStatic" isStatic
 
@@ -163,10 +194,16 @@
 
                 | 5uy ->
                     let dt = typePickler.Read r "declaringType"
+                    let rt =
+                        if formatter.ReadBoolean "isReflected" then
+                            Some <| typePickler.Read r "reflectedType"
+                        else
+                            None
+
                     let name = formatter.ReadString "name"
                     let isStatic = formatter.ReadBoolean "isStatic"
                     let mParams = readArray r typePickler "params"
-                    Method(dt, name, isStatic, mParams)
+                    Method(dt, rt, name, isStatic, mParams)
 
                 | 6uy ->
                     let gm = methodInfoPickler.Read r "genericMethod"
@@ -175,6 +212,12 @@
 
                 | 7uy ->
                     let dt = typePickler.Read r "declaringType"
+                    let rt =
+                        if formatter.ReadBoolean "isReflected" then
+                            Some <| typePickler.Read r "reflectedType"
+                        else
+                            None
+
                     let name = formatter.ReadString "name"
                     let isStatic = formatter.ReadBoolean "isStatic"
                     let plength = formatter.BeginReadBoundedSequence "params"
@@ -182,30 +225,49 @@
                     for i = 0 to plength - 1 do
                         signature.[i] <- formatter.ReadString "param"
                     formatter.EndReadBoundedSequence ()
-                    GenericMethodDefinition(dt, name, isStatic, signature)
+                    GenericMethodDefinition(dt, rt, name, isStatic, signature)
 
                 | 8uy ->
                     let dt = typePickler.Read r "declaringType"
+                    let isStatic = formatter.ReadBoolean "isStatic"
                     let cParams = readArray r typePickler "params"
-                    Constructor(dt, cParams)
+                    Constructor(dt, isStatic, cParams)
 
                 | 9uy ->
                     let dt = typePickler.Read r "declaringType"
+                    let rt =
+                        if formatter.ReadBoolean "isReflected" then
+                            Some <| typePickler.Read r "reflectedType"
+                        else
+                            None
+
                     let name = formatter.ReadString "name"
                     let isStatic = formatter.ReadBoolean "isStatic"
-                    Property(dt, name, isStatic)
+                    Property(dt, rt, name, isStatic)
 
                 | 10uy ->
                     let dt = typePickler.Read r "declaringType"
+                    let rt =
+                        if formatter.ReadBoolean "isReflected" then
+                            Some <| typePickler.Read r "reflectedType"
+                        else
+                            None
+
                     let name = formatter.ReadString "name"
                     let isStatic = formatter.ReadBoolean "isStatic"
-                    Field(dt, name, isStatic)
+                    Field(dt, rt, name, isStatic)
 
                 | 11uy ->
                     let dt = typePickler.Read r "declaringType"
+                    let rt =
+                        if formatter.ReadBoolean "isReflected" then
+                            Some <| typePickler.Read r "reflectedType"
+                        else
+                            None
+
                     let name = formatter.ReadString "name"
                     let isStatic = formatter.ReadBoolean "isStatic"
-                    Event(dt, name, isStatic)
+                    Event(dt, rt, name, isStatic)
 
                 // 'Unknown' cases never get serialized; this is a case of invalid data
                 | _ ->

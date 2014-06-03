@@ -24,16 +24,16 @@
         | GenericTypeParam of Type * int
         | GenericMethodParam of MethodInfo * int
         // System.MethodInfo breakdown
-        | Method of Type * (* name *) string * (* isStatic *) bool * Type []
+        | Method of Type * (*reflected type*) Type option * (* name *) string * (* isStatic *) bool * Type []
         | GenericMethod of MethodInfo * Type []
         // in generic method definitions, encode as signature
         // this is to avoid recursive situations in method overload resolutions
-        | GenericMethodDefinition of Type * (* name *) string * (* isStatic *) bool * (*params*) string []
+        | GenericMethodDefinition of Type * (*reflected type*) Type option * (* name *) string * (* isStatic *) bool * (*params*) string []
         // misc MemberInfo
-        | Constructor of Type * Type []
-        | Property of Type * (* name *) string * (* isStatic *) bool
-        | Field of Type * (* name *) string * (* isStatic *) bool
-        | Event of Type * (* name *) string * (* isStatic *) bool
+        | Constructor of Type * (*isStatic*) bool * (* params *) Type []
+        | Property of Type * (*reflected type*) Type option * (* name *) string * (* isStatic *) bool
+        | Field of Type * (*reflected type*) Type option * (* name *) string * (* isStatic *) bool
+        | Event of Type * (*reflected type*) Type option * (* name *) string * (* isStatic *) bool
         | Unknown of Type * string
 
 
@@ -86,6 +86,11 @@
                         (getAssemblyInfo : Assembly -> AssemblyInfo)
                         (getQualifiedName : Type -> string) (m : MemberInfo) =
 
+        let getReflectedType (m : MemberInfo) =
+            match m.ReflectedType with
+            | rt when rt <> m.DeclaringType -> Some rt
+            | _ -> None
+
         match m with
         | :? Type as t ->
             if t.IsArray then
@@ -122,33 +127,33 @@
             if m.IsGenericMethod then
                 if m.IsGenericMethodDefinition then
                     let mParams = m.GetParameterTypes() |> Array.map getQualifiedName
-                    GenericMethodDefinition(m.ReflectedType, m.Name, m.IsStatic, mParams)
+                    GenericMethodDefinition(m.DeclaringType, getReflectedType m, m.Name, m.IsStatic, mParams)
                 else
                     let gm = m.GetGenericMethodDefinition()
                     let tyArgs = m.GetGenericArguments()
                     GenericMethod(gm, tyArgs)
             else
                 let mParams = m.GetParameters() |> Array.map (fun p -> p.ParameterType)
-                Method(m.ReflectedType, m.Name, m.IsStatic, mParams)
+                Method(m.DeclaringType, getReflectedType m, m.Name, m.IsStatic, mParams)
 
         | :? ConstructorInfo as ctor ->
             let dt = ctor.DeclaringType 
             let ps = ctor.GetParameterTypes()
-            Constructor(dt, ps)
+            Constructor(dt, ctor.IsStatic, ps)
 
         | :? PropertyInfo as p ->
             let dt = p.ReflectedType
             let isStatic = let m = p.GetGetMethod(true) in m.IsStatic
-            Property(dt, p.Name, isStatic)
+            Property(dt, getReflectedType p, p.Name, isStatic)
 
         | :? FieldInfo as f ->
             let dt = f.DeclaringType
-            Field(dt, f.Name, f.IsStatic)
+            Field(dt, getReflectedType f, f.Name, f.IsStatic)
 
         | :? EventInfo as e ->
             let dt = e.DeclaringType
-            let isStatic = let m = e.GetAddMethod() in m.IsStatic
-            Event(dt, e.Name, isStatic)
+            let isStatic = let m = e.GetAddMethod(true) in m.IsStatic
+            Event(dt, getReflectedType e, e.Name, isStatic)
 
         | _ -> Unknown (m.GetType(), m.ToString())
 
@@ -183,9 +188,19 @@
         | GenericType(dt, tyArgs) -> dt.MakeGenericType tyArgs |> fastUnbox<MemberInfo>
         | GenericTypeParam(dt, idx) -> dt.GetGenericArguments().[idx] |> fastUnbox<MemberInfo>
         | GenericMethodParam(dm, idx) -> dm.GetGenericArguments().[idx] |> fastUnbox<MemberInfo>
-        | Method(dt, name, isStatic, mParams) ->  dt.GetMethod(name, getFlags isStatic, null, mParams, [||]) |> fastUnbox<MemberInfo>
         | GenericMethod(gm, tyParams) -> gm.MakeGenericMethod tyParams |> fastUnbox<MemberInfo>
-        | GenericMethodDefinition(dt, name, isStatic, signature) ->
+        | Method(dt, None, name, isStatic, mParams) ->  dt.GetMethod(name, getFlags isStatic, null, mParams, [||]) |> fastUnbox<MemberInfo>
+        | Method(dt, Some rt, name, isStatic, mParams) ->
+            try
+                rt.GetMethods(getFlags isStatic) 
+                |> Array.find (fun m -> m.Name = name && m.DeclaringType = dt && m.GetParameterTypes() = mParams)
+                |> fastUnbox<MemberInfo>
+
+            with :? KeyNotFoundException ->
+                let msg = sprintf "Cloud not load method '%s' from type '%O'." name dt
+                raise <| new FsPicklerException(msg)
+
+        | GenericMethodDefinition(dt, None, name, isStatic, signature) ->
             let isMatchingGenericMethod (m : MethodInfo) =
                 if m.Name = name && m.IsGenericMethodDefinition then
                     let signature' = m.GetParameterTypes() |> Array.map getQualifiedName
@@ -197,10 +212,43 @@
                 let msg = sprintf "Cloud not load method '%s' from type '%O'." name dt
                 raise <| new FsPicklerException(msg)
 
-        | Constructor (dt, cParams) -> dt.GetConstructor(getFlags false, null, cParams, [||]) |> fastUnbox<MemberInfo>
-        | Property (dt, name, isStatic) -> dt.GetProperty(name, getFlags isStatic) |> fastUnbox<MemberInfo>
-        | Field(dt, name, isStatic) -> dt.GetField(name, getFlags isStatic) |> fastUnbox<MemberInfo>
-        | Event(dt, name, isStatic) -> dt.GetEvent(name, getFlags isStatic) |> fastUnbox<MemberInfo>
+        | GenericMethodDefinition(dt, Some rt, name, isStatic, signature) ->
+            let isMatchingGenericMethod (m : MethodInfo) =
+                if m.Name = name && m.IsGenericMethodDefinition && m.DeclaringType = dt then
+                    let signature' = m.GetParameterTypes() |> Array.map getQualifiedName
+                    signature = signature'
+                else false
+
+            try rt.GetMethods(getFlags isStatic) |> Array.find isMatchingGenericMethod |> fastUnbox<MemberInfo>
+            with :? KeyNotFoundException -> 
+                let msg = sprintf "Cloud not load method '%s' from type '%O'." name dt
+                raise <| new FsPicklerException(msg)
+
+        | Constructor (dt, isStatic, cParams) -> dt.GetConstructor(getFlags isStatic, null, cParams, [||]) |> fastUnbox<MemberInfo>
+        | Property (dt, None, name, isStatic) -> dt.GetProperty(name, getFlags isStatic) |> fastUnbox<MemberInfo>
+        | Field(dt, None, name, isStatic) -> dt.GetField(name, getFlags isStatic) |> fastUnbox<MemberInfo>
+        | Event(dt, None, name, isStatic) -> dt.GetEvent(name, getFlags isStatic) |> fastUnbox<MemberInfo>
+
+        | Property (dt, Some rt, name, isStatic) ->
+            try 
+                rt.GetProperties(getFlags isStatic) |> Array.find(fun p -> p.Name = name && p.DeclaringType = dt) |> fastUnbox<MemberInfo>
+            with :? KeyNotFoundException ->
+                let msg = sprintf "Cloud not load property '%s' from type '%O'." name dt
+                raise <| new FsPicklerException(msg)
+
+        | Field (dt, Some rt, name, isStatic) ->
+            try 
+                rt.GetFields(getFlags isStatic) |> Array.find(fun f -> f.Name = name && f.DeclaringType = dt) |> fastUnbox<MemberInfo>
+            with :? KeyNotFoundException ->
+                let msg = sprintf "Cloud not load field '%s' from type '%O'." name dt
+                raise <| new FsPicklerException(msg)
+
+        | Event (dt, Some rt, name, isStatic) ->
+            try 
+                rt.GetEvents(getFlags isStatic) |> Array.find(fun e -> e.Name = name && e.DeclaringType = dt) |> fastUnbox<MemberInfo>
+            with :? KeyNotFoundException ->
+                let msg = sprintf "Cloud not load event '%s' from type '%O'." name dt
+                raise <| new FsPicklerException(msg)
 
         | Unknown (t, name) -> invalidOp <| sprintf "Cannot load '%s' of type %O." name t
 
