@@ -1,4 +1,4 @@
 configuration: Release
 test:
   assemblies:
-    - FsPickler.Tests.exe
+    - FsPickler.Tests.dll
