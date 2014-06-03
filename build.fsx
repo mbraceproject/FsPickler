@@ -57,10 +57,15 @@ Target "BuildVersion" (fun _ ->
 
 // Generate assembly info files with the right version & up-to-date information
 Target "AssemblyInfo" (fun _ ->
-  let fileName = "FsPickler/assemblyInfo.fs"
-  CreateFSharpAssemblyInfo fileName
-      [ Attribute.Version release.AssemblyVersion
-        Attribute.FileVersion release.AssemblyVersion] 
+    let attrs =
+        [ 
+            Attribute.Version release.AssemblyVersion
+            Attribute.FileVersion release.AssemblyVersion
+        ] 
+
+    CreateFSharpAssemblyInfo "src/FsPickler/AssemblyInfo.fs" attrs
+    CreateCSharpAssemblyInfo "src/FsPickler.Binary/AssemblyInfo.cs" attrs
+
 )
 
 
