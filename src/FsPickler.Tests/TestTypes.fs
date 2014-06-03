@@ -121,7 +121,18 @@
                     |> Pickler.pair Pickler.int
                     |> Pickler.wrap (fun (_,y) -> new ClassWithCombinators(42,y)) (fun c -> c.Value))
 
+        
+        let addStackTrace (e : 'exn) =
+            let rec dive n =
+                if n = 0 then raise e
+                else
+                    1 + dive (n-1)
+
+            try dive 20 |> ignore; invalidOp "should have failed"
+            with :? 'exn as e -> e
+
         exception FsharpException of int * string
+
 
         type BinTree<'T> =
             | Leaf

@@ -342,8 +342,6 @@
                     | _ -> raise <| new InvalidDataException("not a float.")
                 jsonReader.MoveNext()
                 value
-            
-            //jsonReader.ReadPrimitiveAs<double> (isArrayElement ()) tag
 
             member __.ReadChar tag = let value = jsonReader.ReadPrimitiveAs<string> (isArrayElement ()) tag in value.[0]
             member __.ReadString tag = jsonReader.ReadPrimitiveAs<string> (isArrayElement ()) tag

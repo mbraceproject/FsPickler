@@ -334,6 +334,19 @@
             elif t.IsGenericParameter then raise <| UnSupportedShape
             elif isIntrinsicType t then raise <| UnSupportedShape
             elif t.IsPrimitive then activate1 typedefof<ShapePrimitive<_>> t
+            elif FSharpType.IsTuple t then
+                let gas = t.GetGenericArguments()
+                match gas.Length with
+                | 1 -> activate typedefof<ShapeTuple<_>> gas
+                | 2 -> activate typedefof<ShapeTuple<_,_>> gas
+                | 3 -> activate typedefof<ShapeTuple<_,_,_>> gas
+                | 4 -> activate typedefof<ShapeTuple<_,_,_,_>> gas
+                | 5 -> activate typedefof<ShapeTuple<_,_,_,_,_>> gas
+                | 6 -> activate typedefof<ShapeTuple<_,_,_,_,_,_>> gas
+                | 7 -> activate typedefof<ShapeTuple<_,_,_,_,_,_,_>> gas
+                | 8 -> activate typedefof<ShapeTuple<_,_,_,_,_,_,_,_>> gas
+                | _ -> invalidOp "invalid tuple type"
+
             elif FSharpType.IsUnion(t, allMembers) then
                 match t with
                 | List et -> activate1 typedefof<ShapeFSharpList<_>> et

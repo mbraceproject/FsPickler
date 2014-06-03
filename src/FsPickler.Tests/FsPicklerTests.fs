@@ -2,6 +2,7 @@
 
     open System
     open System.Collections
+    open System.Collections.Generic
     open System.Reflection
     open System.Runtime.Serialization
 
@@ -55,68 +56,68 @@
         //
 
         [<Test; Category("Primitives")>]
-        member __.Bool () = testEquals false ; testEquals true
+        member __.``Primitive: Bool`` () = testEquals false ; testEquals true
 
         [<Test; Category("Primitives")>]
-        member __.Byte () = Check.QuickThrowOnFail<byte> testEquals
+        member __.``Primitive: Byte`` () = Check.QuickThrowOnFail<byte> testEquals
 
         [<Test; Category("Primitives")>]
-        member __.SByte () = Check.QuickThrowOnFail<sbyte> testEquals
+        member __.``Primitive: SByte`` () = Check.QuickThrowOnFail<sbyte> testEquals
 
         [<Test; Category("Primitives")>]
-        member __.Int16 () = Check.QuickThrowOnFail<int16> testEquals
+        member __.``Primitive: Int16`` () = Check.QuickThrowOnFail<int16> testEquals
 
         [<Test; Category("Primitives")>]
-        member __.Int32 () = Check.QuickThrowOnFail<int32> testEquals
+        member __.``Primitive: Int32`` () = Check.QuickThrowOnFail<int32> testEquals
 
         [<Test; Category("Primitives")>]
-        member __.Int64 () = Check.QuickThrowOnFail<int64> testEquals
+        member __.``Primitive: Int64`` () = Check.QuickThrowOnFail<int64> testEquals
 
         [<Test; Category("Primitives")>]
-        member __.UInt16 () = Check.QuickThrowOnFail<uint16> testEquals
+        member __.``Primitive: UInt16`` () = Check.QuickThrowOnFail<uint16> testEquals
 
         [<Test; Category("Primitives")>]
-        member __.UInt32 () = Check.QuickThrowOnFail<uint32> testEquals
+        member __.``Primitive: UInt32`` () = Check.QuickThrowOnFail<uint32> testEquals
 
         [<Test; Category("Primitives")>]
-        member __.UInt64 () = Check.QuickThrowOnFail<uint64> testEquals
+        member __.``Primitive: UInt64`` () = Check.QuickThrowOnFail<uint64> testEquals
 
         [<Test; Category("Primitives")>]
-        member __.Single () = Check.QuickThrowOnFail<single> testEquals
+        member __.``Primitive: Single`` () = Check.QuickThrowOnFail<single> testEquals
 
         [<Test; Category("Primitives")>]
-        member __.Double () = Check.QuickThrowOnFail<double> testEquals
+        member __.``Primitive: Double`` () = Check.QuickThrowOnFail<double> testEquals
 
         [<Test; Category("Primitives")>]
-        member __.Decimal () = Check.QuickThrowOnFail<decimal> testEquals
+        member __.``Primitive: Decimal`` () = Check.QuickThrowOnFail<decimal> testEquals
 
         [<Test; Category("Primitives")>]
-        member __.Char () = Check.QuickThrowOnFail<char> testEquals
+        member __.``Primitive: Char`` () = Check.QuickThrowOnFail<char> testEquals
 
         [<Test; Category("Primitives")>]
-        member __.String () = testEquals (null : string) ; Check.QuickThrowOnFail<string> testEquals
+        member __.``Primitive: String`` () = testEquals (null : string) ; Check.QuickThrowOnFail<string> testEquals
 
         [<Test; Category("Primitives")>]
-        member __.Date () = Check.QuickThrowOnFail<DateTime> testEquals
+        member __.``Primitive: Date`` () = Check.QuickThrowOnFail<DateTime> testEquals
 
         [<Test; Category("Primitives")>]
-        member __.TimeSpan () = Check.QuickThrowOnFail<TimeSpan> testEquals
+        member __.``Primitive: TimeSpan`` () = Check.QuickThrowOnFail<TimeSpan> testEquals
 
         [<Test; Category("Primitives")>]
-        member __.Guid () = Check.QuickThrowOnFail<Guid> testEquals
+        member __.``Primitive: Guid`` () = Check.QuickThrowOnFail<Guid> testEquals
 
         [<Test; Category("Primitives")>]
-        member __.BigInteger () = Check.QuickThrowOnFail<bigint> testEquals
+        member __.``Primitive: BigInteger`` () = Check.QuickThrowOnFail<bigint> testEquals
 
         [<Test; Category("Bytes")>]
-        member __.Bytes () = testEquals (null : byte []) ; Check.QuickThrowOnFail<byte []> testEquals
+        member __.``Primitive: Bytes`` () = testEquals (null : byte []) ; Check.QuickThrowOnFail<byte []> testEquals
 
         //
         //  Reflection types
         //
 
         [<Test; Category("Reflection types")>]
-        member __.``System.Type`` () = 
+        member __.``Reflection: Type`` () = 
             // base types
             testEquals (null : Type) ; testEquals typeof<int> ; testEquals typeof<IEnumerable> ; testEquals <| Type.GetType("System.__Canon")
             // generic types
@@ -130,17 +131,18 @@
             testEquals mparams.[0] ; testEquals mparams.[1]
 
         [<Test; Category("Reflection types")>]
-        member __.``System.Reflection.MethodInfo`` () =
+        member __.``Reflection: MemberInfo`` () =
             [| 
                 typeof<obj> ; typeof<exn> ; typeof<int> ; typeof<string> ; typeof<bool> ; typeof<int option> ; 
                 typeof<Quotations.Expr> ; typeof<System.Collections.Generic.Dictionary<int,string>> ; 
-                typeof<int list> ; typedefof<_ list> ; typedefof<_ ref> ; Pickler.auto<int * string>.GetType()
+                typeof<int list> ; typedefof<_ list> ; typedefof<_ ref> ; typeof<OverLoaded> ;
+                Pickler.auto<int * string>.GetType()
             |]
             |> Array.collect(fun t -> t.GetMembers(allFlags ||| BindingFlags.FlattenHierarchy))
             |> Array.iter testEquals
 
         [<Test; Category("Reflection types")>]
-        member __.``System.Reflection.Assembly`` () =
+        member __.``Reflection: Assembly`` () =
             System.AppDomain.CurrentDomain.GetAssemblies()
             |> Array.iter testEquals
 
@@ -149,6 +151,28 @@
         //  Composite types
         //
 
+        // Tuples
+
+        [<Test; Category("Generic BCL Types")>]
+        member __.``Tuple: Simple`` () =
+            Check.QuickThrowOnFail<Tuple<string>> testEquals
+            Check.QuickThrowOnFail<string * byte> testEquals
+            Check.QuickThrowOnFail<string * byte * double> testEquals
+            Check.QuickThrowOnFail<string * byte * double * bigint> testEquals
+            Check.QuickThrowOnFail<string * byte * double * bigint * int> testEquals
+            Check.QuickThrowOnFail<string * byte * double * bigint * int * uint64> testEquals
+            Check.QuickThrowOnFail<string * byte * double * bigint * int * uint64 * decimal> testEquals
+            Check.QuickThrowOnFail<string * byte * double * bigint * int * uint64 * decimal * int> testEquals
+            Check.QuickThrowOnFail<string * byte * double * bigint * int * uint64 * decimal * int * int> testEquals
+
+        [<Test; Category("Generic BCL Types")>]
+        member __.``Tuple: Nested`` () =
+            Check.QuickThrowOnFail<int * (string * decimal)> testEquals
+            Check.QuickThrowOnFail<(int * (bool * string)) * (string * int16)> testEquals
+            Check.QuickThrowOnFail<(int * (bool * (sbyte * string * uint32) * (string * string)))> testEquals
+            
+
+        // Arrays
 
         member __.CheckArray<'T> () =
             Check.QuickThrowOnFail<'T []> testEquals
@@ -193,11 +217,72 @@
         [<Test; Category("Generic BCL Types")>]
         member __.``Array: Byte []`` () = __.CheckArray<byte []> ()
 
+        [<Test; Category("Generic BCL Types")>]
+        member __.``Array: int * string`` () = __.CheckArray<int * string> ()
+
+        [<Test; Category("Generic BCL Types")>]
+        member __.``Array: string * (int * decimal)`` () = __.CheckArray<int * string> ()
+
+
+        // exceptions
+
+        // should properly serialize stacktrace
+        member __.TestException(e : 'exn) = e |> addStackTrace |> testReflected
+
+        [<Test; Category("Generic BCL Types")>]
+        member __.``Exception: System.Exception`` () = __.TestException <| new Exception("exception message")
+
+        [<Test; Category("Generic BCL Types")>]
+        member __.``Exception: System.Exception with inner exception`` () =
+            let inner = new Exception("inner") |> addStackTrace
+            __.TestException <| new Exception("outer", inner)
+
+        [<Test; Category("Generic BCL Types")>]
+        member __.``Exception: Misc Exceptions`` () =
+            __.TestException <| new InvalidOperationException()
+            __.TestException <| new AccessViolationException()
+            __.TestException <| new InvalidTimeZoneException()
+            __.TestException <| new System.IO.EndOfStreamException()
+            __.TestException <| new System.IO.InvalidDataException()
+            __.TestException <| new System.IO.FileNotFoundException()
+
+
+        // collections
+
+        [<Test; Category("Generic BCL Types")>]
+        member __.``Collections: Dictionary`` () =
+            let testDictionary (data : seq<'K * 'V>) =
+                let data = data |> Seq.distinctBy fst |> Seq.toList
+                let d = dict data
+                let d' = testLoop d
+                let data' = d' |> Seq.map (function KeyValue(k,v) -> k,v) |> Seq.toList
+                data' |> should equal data
+
+            Check.QuickThrowOnFail<seq<int64 * (string * float)>> testDictionary
+            Check.QuickThrowOnFail<seq<(int64 * string) * string>> testDictionary
+
+
+        [<Test; Category("Generic BCL Types")>]
+        member __.``Collections: HashSet`` () =
+            let testSet (data : seq<'T>) =
+                let data = data |> Seq.distinct |> Seq.toList
+                let d = new HashSet<'T>(data)
+                let data' = testLoop d |> Seq.toList
+                data' |> should equal data
+
+            Check.QuickThrowOnFail<seq<int64>> testSet
+            Check.QuickThrowOnFail<seq<string>> testSet
+            Check.QuickThrowOnFail<seq<int * string>> testSet
+            
+
+
+
+
+
 
 //
 //        [<Test>] member __.``System.Type`` () = testEquals typeof<int>
 //        [<Test>] member __.``Option types`` () = testEquals (Some 42) ; testEquals (None : obj option) ; testEquals (Some (Some "test"))
-//        [<Test>] member __.``Tuples`` () = testEquals (2,3) ; testEquals (2, "test", Some (3, Some 2)) ; testEquals (1,2,3,4,5,(1,"test"),6,7,8,9,10)
 //        [<Test>] member __.``Simple DU`` () = testEquals A ; testEquals E ; testEquals (D(42, "42"))
 //        [<Test>] member __.``Recursive DU`` () = testEquals Zero ; testEquals (int2Peano 42)
 //        [<Test>] member __.``Mutual Recursive Unions`` () = testEquals <| nTree 6

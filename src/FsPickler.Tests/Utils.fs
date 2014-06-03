@@ -87,6 +87,8 @@
 
         module FsCheck =
 
+            open System.Collections.Generic
+
             open FsCheck
 
             type FsPicklerQCGenerators =
@@ -122,7 +124,10 @@
 
                     mkSized |> Gen.sized |> Arb.fromGen
 
-            
-            module Check =
+                static member Seq<'T> () = Arb.generate<'T []> |> Gen.map Array.toSeq |> Arb.fromGen
 
-                let QuickThrowOnFail<'T> (f : 'T -> unit) = Check.QuickThrowOnFailure f
+            
+            type Check =
+
+                static member QuickThrowOnFail<'T> (f : 'T -> unit) = Check.QuickThrowOnFailure f
+                static member QuickThrowOnFail<'T> (f : 'T -> bool) = Check.QuickThrowOnFailure f
