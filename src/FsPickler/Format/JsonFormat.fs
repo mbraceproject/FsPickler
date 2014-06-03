@@ -2,6 +2,7 @@
 
     open System
     open System.Collections.Generic
+    open System.Globalization
     open System.IO
     open System.Numerics
     open System.Text
@@ -188,7 +189,7 @@
 
             member __.WriteChar (tag : string) value = writePrimitive jsonWriter (isArrayElement ()) tag value
             member __.WriteString (tag : string) value = writePrimitive jsonWriter (isArrayElement ()) tag value
-            member __.WriteBigInteger (tag : string) value = writePrimitive jsonWriter (isArrayElement ()) tag value
+            member __.WriteBigInteger (tag : string) value = writePrimitive jsonWriter (isArrayElement ()) tag (value.ToString())
 
             member __.WriteGuid (tag : string) value = writePrimitive jsonWriter (isArrayElement ()) tag value
             member __.WriteDate (tag : string) value = writePrimitive jsonWriter (isArrayElement ()) tag value
@@ -316,8 +317,33 @@
             member __.ReadUInt32 tag = jsonReader.ReadPrimitiveAs<int64> (isArrayElement ()) tag |> uint32
             member __.ReadUInt64 tag = jsonReader.ReadPrimitiveAs<int64> (isArrayElement ()) tag |> uint64
 
-            member __.ReadSingle tag = jsonReader.ReadPrimitiveAs<double> (isArrayElement ()) tag |> single
-            member __.ReadDouble tag = jsonReader.ReadPrimitiveAs<double> (isArrayElement ()) tag
+            member __.ReadSingle tag =
+                if not <| isArrayElement () then
+                    jsonReader.ReadProperty tag
+
+                jsonReader.MoveNext()
+                let value =
+                    match jsonReader.TokenType with
+                    | JsonToken.Float -> jsonReader.ValueAs<double> () |> single
+                    | JsonToken.String -> Single.Parse(jsonReader.ValueAs<string>(), CultureInfo.InvariantCulture)
+                    | _ -> raise <| new InvalidDataException("not a float.")
+                jsonReader.MoveNext()
+                value
+                
+            member __.ReadDouble tag = 
+                if not <| isArrayElement () then
+                    jsonReader.ReadProperty tag
+
+                jsonReader.MoveNext()
+                let value =
+                    match jsonReader.TokenType with
+                    | JsonToken.Float -> jsonReader.ValueAs<double> ()
+                    | JsonToken.String -> Double.Parse(jsonReader.ValueAs<string>(), CultureInfo.InvariantCulture)
+                    | _ -> raise <| new InvalidDataException("not a float.")
+                jsonReader.MoveNext()
+                value
+            
+            //jsonReader.ReadPrimitiveAs<double> (isArrayElement ()) tag
 
             member __.ReadChar tag = let value = jsonReader.ReadPrimitiveAs<string> (isArrayElement ()) tag in value.[0]
             member __.ReadString tag = jsonReader.ReadPrimitiveAs<string> (isArrayElement ()) tag

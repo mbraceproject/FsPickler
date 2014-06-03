@@ -112,13 +112,6 @@
         [<Test; Category("Bytes")>]
         member __.Bytes () = testEquals (null : byte []) ; Check.QuickThrowOnFail<byte []> testEquals
 
-//
-//        abstract WriteBigInteger : tag:string -> value:bigint -> unit
-//        abstract WriteBytes : tag:string -> value:byte [] -> unit
-//
-//        abstract IsPrimitiveArraySerializationSupported : bool
-//        abstract WritePrimitiveArray : tag:string -> value:Array -> unit
-
 //        [<TestFixtureSetUp>] abstract Init : unit -> unit
 //        [<TestFixtureTearDown>] abstract Fini : unit -> unit
 

@@ -1,4 +1,5 @@
-﻿#r "bin/Debug/FsPickler.dll"
+﻿#I "../../bin/"
+#r "FsPickler.dll"
 
 open Nessos.FsPickler
 open Nessos.FsPickler.Combinators
