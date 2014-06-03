@@ -31,11 +31,6 @@
             y.GetType() |> should equal (x.GetType())
             y.ToString() |> should equal (x.ToString())
 
-        let testMembers (t : Type) =
-            let members = t.GetMembers(allFlags)
-            for m in members do
-                testEquals m
-
         member __.Pickler = pickler
 
         abstract IsRemoted : bool
@@ -117,10 +112,10 @@
         member __.Bytes () = testEquals (null : byte []) ; Check.QuickThrowOnFail<byte []> testEquals
 
         //
-        //  BCL Base types
+        //  Reflection types
         //
 
-        [<Test; Category("BCL Types")>]
+        [<Test; Category("Reflection types")>]
         member __.``System.Type`` () = 
             // base types
             testEquals (null : Type) ; testEquals typeof<int> ; testEquals typeof<IEnumerable> ; testEquals <| Type.GetType("System.__Canon")
@@ -134,7 +129,7 @@
             let mparams = typeof<ClassWithGenericMethod>.GetMethod("Method").GetGenericArguments() 
             testEquals mparams.[0] ; testEquals mparams.[1]
 
-        [<Test; Category("BCL Types")>]
+        [<Test; Category("Reflection types")>]
         member __.``System.Reflection.MethodInfo`` () =
             [| 
                 typeof<obj> ; typeof<exn> ; typeof<int> ; typeof<string> ; typeof<bool> ; typeof<int option> ; 
@@ -143,6 +138,61 @@
             |]
             |> Array.collect(fun t -> t.GetMembers(allFlags ||| BindingFlags.FlattenHierarchy))
             |> Array.iter testEquals
+
+        [<Test; Category("Reflection types")>]
+        member __.``System.Reflection.Assembly`` () =
+            System.AppDomain.CurrentDomain.GetAssemblies()
+            |> Array.iter testEquals
+
+
+        //
+        //  Composite types
+        //
+
+
+        member __.CheckArray<'T> () =
+            Check.QuickThrowOnFail<'T []> testEquals
+            Check.QuickThrowOnFail<'T [,]> testEquals
+            Check.QuickThrowOnFail<'T [,,]> testEquals
+            Check.QuickThrowOnFail<'T [,,,]> testEquals
+
+
+        [<Test; Category("Generic BCL Types")>]
+        member __.``Array: Bool`` () = __.CheckArray<bool> ()
+
+        [<Test; Category("Generic BCL Types")>]
+        member __.``Array: Byte`` () = __.CheckArray<byte> ()
+
+        [<Test; Category("Generic BCL Types")>]
+        member __.``Array: SByte`` () = __.CheckArray<sbyte> ()
+
+        [<Test; Category("Generic BCL Types")>]
+        member __.``Array: Int16`` () = __.CheckArray<int16> ()
+
+        [<Test; Category("Generic BCL Types")>]
+        member __.``Array: Int32`` () = __.CheckArray<int32> ()
+
+        [<Test; Category("Generic BCL Types")>]
+        member __.``Array: Int64`` () = __.CheckArray<int64> ()
+
+        [<Test; Category("Generic BCL Types")>]
+        member __.``Array: UInt16`` () = __.CheckArray<uint16> ()
+
+        [<Test; Category("Generic BCL Types")>]
+        member __.``Array: UInt32`` () = __.CheckArray<uint32> ()
+
+        [<Test; Category("Generic BCL Types")>]
+        member __.``Array: UInt64`` () = __.CheckArray<uint64> ()
+
+        [<Test; Category("Generic BCL Types")>]
+        member __.``Array: String`` () = __.CheckArray<string> ()
+
+        [<Test; Category("Generic BCL Types")>]
+        member __.``Array: Decimal`` () = __.CheckArray<decimal> ()
+
+        [<Test; Category("Generic BCL Types")>]
+        member __.``Array: Byte []`` () = __.CheckArray<byte []> ()
+
 
 //
 //        [<Test>] member __.``System.Type`` () = testEquals typeof<int>

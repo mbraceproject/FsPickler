@@ -51,7 +51,7 @@
                 writer.WriteStartDocument()
                 writer.WriteStartElement("FsPickler")
                 writer.WriteAttributeString("version", AssemblyVersionInformation.Version)
-                writer.WriteAttributeString("id", tag)
+                writer.WriteAttributeString("type", tag)
 
             member __.EndWriteRoot () = 
                 writer.WriteEndElement()
@@ -153,7 +153,7 @@
                     let msg = sprintf "Invalid FsPickler version %s (expected %s)." version AssemblyVersionInformation.Version
                     raise <| new InvalidDataException(msg)
 
-                let sTag = reader.["id"]
+                let sTag = reader.["type"]
                 if sTag <> tag then
                     let msg = sprintf "Expected type '%s' but was '%s'." tag sTag
                     raise <| new InvalidDataException(msg)

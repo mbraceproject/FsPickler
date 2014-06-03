@@ -128,7 +128,11 @@
             member __.WriteDecimal _ value = bw.Write value
 
             member __.WriteChar _ value = bw.Write value
-            member __.WriteString _ value = bw.Write value
+            member __.WriteString _ value = 
+                if obj.ReferenceEquals(value, null) then bw.Write true
+                else
+                    bw.Write false
+                    bw.Write value
 
             member __.WriteDate _ value = bw.Write value.Ticks
             member __.WriteTimeSpan _ value = bw.Write value.Ticks
@@ -139,15 +143,19 @@
                 bw.Write data.Length
                 bw.Write data
 
-            member __.WriteBytes _ value = bw.Write value.Length ; bw.Write value
+            member __.WriteBytes _ value = 
+                if obj.ReferenceEquals(value, null) then bw.Write -1
+                else
+                    bw.Write value.Length
+                    bw.Write value
 
             member __.IsPrimitiveArraySerializationSupported = true
             member __.WritePrimitiveArray _ array = bw.Flush() ; blockCopy(array, stream) ; stream.Flush()
 
             member __.Dispose () = bw.Dispose()
 
-    and BclBinaryPickleReader internal (stream : Stream) =
-        let br = new BinaryReader(stream)
+    and BclBinaryPickleReader internal (stream : Stream, encoding, leaveOpen) =
+        let br = new BinaryReader(stream, encoding, leaveOpen)
 
         interface IPickleFormatReader with
             
@@ -192,7 +200,10 @@
             member __.ReadDouble _ = br.ReadDouble()
 
             member __.ReadChar _ = br.ReadChar()
-            member __.ReadString _ = br.ReadString()
+            member __.ReadString _ = 
+                if br.ReadBoolean() then null
+                else
+                    br.ReadString()
 
             member __.ReadDate _ = let ticks = br.ReadInt64() in DateTime(ticks)
             member __.ReadTimeSpan _ = let ticks = br.ReadInt64() in TimeSpan(ticks)
@@ -203,7 +214,10 @@
                 let data = br.ReadBytes(length)
                 new System.Numerics.BigInteger(data)
 
-            member __.ReadBytes _ = let length = br.ReadInt32() in br.ReadBytes(length)
+            member __.ReadBytes _ = 
+                let length = br.ReadInt32() 
+                if length < 0 then null
+                else br.ReadBytes(length)
 
             member __.IsPrimitiveArraySerializationSupported = true
             member __.ReadPrimitiveArray _ array = blockRead(stream, array)
@@ -214,5 +228,5 @@
         interface IBinaryPickleFormatProvider with
             member __.Name = "BclBinary"
 
-            member __.CreateWriter (stream : Stream, _, _) = new BinaryPickleWriter(stream) :> _
-            member __.CreateReader (stream : Stream, _, _) = new BinaryPickleReader(stream) :> _
+            member __.CreateWriter (stream, encoding, leaveOpen) = new BclBinaryPickleWriter(stream, encoding, leaveOpen) :> _
+            member __.CreateReader (stream, encoding, leaveOpen) = new BclBinaryPickleReader(stream, encoding, leaveOpen) :> _

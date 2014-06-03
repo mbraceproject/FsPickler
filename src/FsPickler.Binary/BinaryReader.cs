@@ -66,8 +66,10 @@
         public void ReadArray(Array array)
         {
             var count = (int)Read7BitEncodedLength();
-            if (count > Buffer.ByteLength(array))
-                throw new InvalidOperationException("incoming length exceeds array size.");
+            if (count != Buffer.ByteLength(array))
+                throw new InvalidOperationException("unexpected array length.");
+
+            if (count == 0) return;
 
             TryFillBuffer();
 

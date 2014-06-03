@@ -117,7 +117,7 @@ namespace Nessos.FsPickler.Binary
 
         public void Write(byte[] bytes)
         {
-            if (bytes == null)
+            if (Object.ReferenceEquals(bytes, null))
             {
                 Write7BitEncodedLength(-1);
                 return;
@@ -308,7 +308,7 @@ namespace Nessos.FsPickler.Binary
 
         public unsafe void Write(string value)
         {
-            if (value == null)
+            if (Object.ReferenceEquals(value,null))
             {
                 Write7BitEncodedLength(-1);
                 return;

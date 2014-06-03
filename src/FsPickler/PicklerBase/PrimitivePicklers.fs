@@ -110,7 +110,7 @@
 
     [<AutoSerializable(false)>]
     type DecimalPickler () =
-        inherit PrimitivePickler<decimal> (TypeKind.Primitive, true)
+        inherit PrimitivePickler<decimal> (TypeKind.Value, true)
 
         override __.Write (writer : WriteState) (tag : string) (d : decimal) = writer.Formatter.WriteDecimal tag d
         override __.Read (reader : ReadState) (tag : string) = reader.Formatter.ReadDecimal tag
