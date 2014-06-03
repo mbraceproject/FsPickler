@@ -221,19 +221,7 @@
             "Lorem ipsum dolor sit amet, consectetur adipisicing elit, 
                 sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
 
-        // test provision for top-level sequence serialization
-        let testSequence<'T when 'T : equality> (fsp : FsPicklerSerializer) (xs : seq<'T>) =
-            use m = new MemoryStream()
-            let length = fsp.Pickler.SerializeSequence(m, xs)
-            m.Position <- 0L
-            use enum = xs.GetEnumerator()
-            use enum' = fsp.Pickler.DeserializeSequence<'T>(m, length)
-            let mutable success = true
-            while success && enum.MoveNext() do 
-                if enum'.MoveNext() && enum.Current = enum'.Current then ()
-                else
-                    success <- false
-            success
+
 
 
         // automated large-scale object generation
@@ -242,12 +230,15 @@
                 match t.Namespace with
                 | "System.Reflection" -> false // System.Reflection.Assembly.ToString() in mono may cause runtime to die
                 | _ ->
+                    // types that cause .IsSerializable to fail
+                    // should be included in the testing
                     try FsPickler.IsSerializableType t with _ -> true
 
             let tryActivate (t : Type) =
                 try Some (t, Activator.CreateInstance t)
                 with _ -> None
 
+            // only test things that are successfully serialized by BinaryFormatter
             let bfs = new BinaryFormatterSerializer()
             let filterObject (t : Type, o : obj) =
                 try Serializer.roundtrip o bfs |> ignore ; true
