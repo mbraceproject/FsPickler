@@ -1,4 +1,4 @@
-﻿namespace Nessos.FsPickler
+﻿namespace Nessos.FsPickler.Binary.Tests
 
     open System
     open System.IO
@@ -94,7 +94,3 @@
         [<Test; Repeat(10)>]
         let ``Quick check Writes/Reads`` () =
             Check.QuickThrowOnFailure testWriteRead
-
-        [<Test>]
-        let ``Quick check enlarged Writes/Reads`` () =
-            Check.QuickThrowOnFailure (fun inputs -> testWriteRead [| for i in 1 .. 100 do yield! inputs |])
