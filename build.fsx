@@ -39,7 +39,7 @@ let gitName = "FsPickler"
 let gitRaw = environVarOrDefault "gitRaw" "https://raw.github.com/nessos"
 
 
-let testAssemblies = ["FsPickler.Tests/bin/Release/FsPickler.Tests.exe"]
+let testAssemblies = ["bin/FsPickler.Tests.dll"]
 
 //
 //// --------------------------------------------------------------------------------------
@@ -73,7 +73,7 @@ Target "RestorePackages" (fun _ ->
 )
 
 Target "Clean" (fun _ ->
-    CleanDirs ["FsPickler/bin" ; "FsPickler.Tests/bin" ]
+    CleanDirs <| !! "./**/bin/"
 )
 
 //
