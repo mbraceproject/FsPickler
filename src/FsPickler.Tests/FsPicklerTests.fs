@@ -80,61 +80,61 @@
         //
 
         [<Test; Category("Primitives")>]
-        member __.``1. Primitive: Bool`` () = testEquals false ; testEquals true
+        member __.``1. Primitive: bool`` () = testEquals false ; testEquals true
 
         [<Test; Category("Primitives")>]
-        member __.``1. Primitive: Byte`` () = Check.QuickThrowOnFail<byte> testEquals
+        member __.``1. Primitive: byte`` () = Check.QuickThrowOnFail<byte> testEquals
 
         [<Test; Category("Primitives")>]
-        member __.``1. Primitive: SByte`` () = Check.QuickThrowOnFail<sbyte> testEquals
+        member __.``1. Primitive: sbyte`` () = Check.QuickThrowOnFail<sbyte> testEquals
 
         [<Test; Category("Primitives")>]
-        member __.``1. Primitive: Int16`` () = Check.QuickThrowOnFail<int16> testEquals
+        member __.``1. Primitive: int16`` () = Check.QuickThrowOnFail<int16> testEquals
 
         [<Test; Category("Primitives")>]
-        member __.``1. Primitive: Int32`` () = Check.QuickThrowOnFail<int32> testEquals
+        member __.``1. Primitive: int32`` () = Check.QuickThrowOnFail<int32> testEquals
 
         [<Test; Category("Primitives")>]
-        member __.``1. Primitive: Int64`` () = Check.QuickThrowOnFail<int64> testEquals
+        member __.``1. Primitive: int64`` () = Check.QuickThrowOnFail<int64> testEquals
 
         [<Test; Category("Primitives")>]
-        member __.``1. Primitive: UInt16`` () = Check.QuickThrowOnFail<uint16> testEquals
+        member __.``1. Primitive: uint16`` () = Check.QuickThrowOnFail<uint16> testEquals
 
         [<Test; Category("Primitives")>]
-        member __.``1. Primitive: UInt32`` () = Check.QuickThrowOnFail<uint32> testEquals
+        member __.``1. Primitive: uint32`` () = Check.QuickThrowOnFail<uint32> testEquals
 
         [<Test; Category("Primitives")>]
-        member __.``1. Primitive: UInt64`` () = Check.QuickThrowOnFail<uint64> testEquals
+        member __.``1. Primitive: uint64`` () = Check.QuickThrowOnFail<uint64> testEquals
 
         [<Test; Category("Primitives")>]
-        member __.``1. Primitive: Single`` () = Check.QuickThrowOnFail<single> testEquals
+        member __.``1. Primitive: single`` () = Check.QuickThrowOnFail<single> testEquals
 
         [<Test; Category("Primitives")>]
-        member __.``1. Primitive: Double`` () = Check.QuickThrowOnFail<double> testEquals
+        member __.``1. Primitive: double`` () = Check.QuickThrowOnFail<double> testEquals
 
         [<Test; Category("Primitives")>]
-        member __.``1. Primitive: Decimal`` () = Check.QuickThrowOnFail<decimal> testEquals
+        member __.``1. Primitive: decimal`` () = Check.QuickThrowOnFail<decimal> testEquals
 
         [<Test; Category("Primitives")>]
-        member __.``1. Primitive: Char`` () = Check.QuickThrowOnFail<char> testEquals
+        member __.``1. Primitive: char`` () = Check.QuickThrowOnFail<char> testEquals
 
         [<Test; Category("Primitives")>]
-        member __.``1. Primitive: String`` () = testEquals (null : string) ; Check.QuickThrowOnFail<string> testEquals
+        member __.``1. Primitive: string`` () = testEquals (null : string) ; Check.QuickThrowOnFail<string> testEquals
 
         [<Test; Category("Primitives")>]
-        member __.``1. Primitive: Date`` () = Check.QuickThrowOnFail<DateTime> testEquals
+        member __.``1. Primitive: date`` () = Check.QuickThrowOnFail<DateTime> testEquals
 
         [<Test; Category("Primitives")>]
-        member __.``1. Primitive: TimeSpan`` () = Check.QuickThrowOnFail<TimeSpan> testEquals
+        member __.``1. Primitive: System.TimeSpan`` () = Check.QuickThrowOnFail<TimeSpan> testEquals
 
         [<Test; Category("Primitives")>]
-        member __.``1. Primitive: Guid`` () = Check.QuickThrowOnFail<Guid> testEquals
+        member __.``1. Primitive: System.Guid`` () = Check.QuickThrowOnFail<Guid> testEquals
 
         [<Test; Category("Primitives")>]
-        member __.``1. Primitive: BigInteger`` () = Check.QuickThrowOnFail<bigint> testEquals
+        member __.``1. Primitive: bigint`` () = Check.QuickThrowOnFail<bigint> testEquals
 
         [<Test; Category("Bytes")>]
-        member __.``1. Primitive: Bytes`` () = testEquals (null : byte []) ; Check.QuickThrowOnFail<byte []> testEquals
+        member __.``1. Primitive: byte []`` () = testEquals (null : byte []) ; Check.QuickThrowOnFail<byte []> testEquals
 
         //
         //  Reflection types
@@ -182,49 +182,55 @@
 
 
         [<Test; Category("Generic BCL Types")>]
-        member __.``3. Array: Bool`` () = __.CheckArray<bool> ()
+        member __.``3. Array: bool`` () = __.CheckArray<bool> ()
 
         [<Test; Category("Generic BCL Types")>]
-        member __.``3. Array: Byte`` () = __.CheckArray<byte> ()
+        member __.``3. Array: byte`` () = __.CheckArray<byte> ()
 
         [<Test; Category("Generic BCL Types")>]
-        member __.``3. Array: SByte`` () = __.CheckArray<sbyte> ()
+        member __.``3. Array: sbyte`` () = __.CheckArray<sbyte> ()
 
         [<Test; Category("Generic BCL Types")>]
-        member __.``3. Array: Int16`` () = __.CheckArray<int16> ()
+        member __.``3. Array: int16`` () = __.CheckArray<int16> ()
 
         [<Test; Category("Generic BCL Types")>]
-        member __.``3. Array: Int32`` () = __.CheckArray<int32> ()
+        member __.``3. Array: int32`` () = __.CheckArray<int32> ()
 
         [<Test; Category("Generic BCL Types")>]
-        member __.``3. Array: Int64`` () = __.CheckArray<int64> ()
+        member __.``3. Array: int64`` () = __.CheckArray<int64> ()
 
         [<Test; Category("Generic BCL Types")>]
-        member __.``3. Array: UInt16`` () = __.CheckArray<uint16> ()
+        member __.``3. Array: uint16`` () = __.CheckArray<uint16> ()
 
         [<Test; Category("Generic BCL Types")>]
-        member __.``3. Array: UInt32`` () = __.CheckArray<uint32> ()
+        member __.``3. Array: uint32`` () = __.CheckArray<uint32> ()
 
         [<Test; Category("Generic BCL Types")>]
-        member __.``3. Array: UInt64`` () = __.CheckArray<uint64> ()
+        member __.``3. Array: uint64`` () = __.CheckArray<uint64> ()
 
         [<Test; Category("Generic BCL Types")>]
-        member __.``3. Array: String`` () = __.CheckArray<string> ()
+        member __.``3. Array: string`` () = __.CheckArray<string> ()
 
         [<Test; Category("Generic BCL Types")>]
-        member __.``3. Array: Decimal`` () = __.CheckArray<decimal> ()
+        member __.``3. Array: single`` () = __.CheckArray<single> ()
 
         [<Test; Category("Generic BCL Types")>]
-        member __.``3. Array: Guid`` () = __.CheckArray<Guid> ()
+        member __.``3. Array: double`` () = __.CheckArray<double> ()
 
         [<Test; Category("Generic BCL Types")>]
-        member __.``3. Array: DateTime`` () = __.CheckArray<DateTime> ()
+        member __.``3. Array: decimal`` () = __.CheckArray<decimal> ()
 
         [<Test; Category("Generic BCL Types")>]
-        member __.``3. Array: TimeSpan`` () = __.CheckArray<TimeSpan> ()
+        member __.``3. Array: System.Guid`` () = __.CheckArray<Guid> ()
 
         [<Test; Category("Generic BCL Types")>]
-        member __.``3. Array: Byte []`` () = __.CheckArray<byte []> ()
+        member __.``3. Array: System.DateTime`` () = __.CheckArray<DateTime> ()
+
+        [<Test; Category("Generic BCL Types")>]
+        member __.``3. Array: System.TimeSpan`` () = __.CheckArray<TimeSpan> ()
+
+        [<Test; Category("Generic BCL Types")>]
+        member __.``3. Array: byte []`` () = __.CheckArray<byte []> ()
 
         [<Test; Category("Generic BCL Types")>]
         member __.``3. Array: int * string`` () = __.CheckArray<int * string> ()
