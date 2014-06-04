@@ -23,6 +23,12 @@
         [<Literal>]
         let initByte = 130uy
 
+        // this binary format uses Buffer.BlockCopy for performance
+        // and thus does little to handle endianness issues.
+        // To avoid silent data corruption, record the serializer's
+        // endianness setting at the beginning of the serialization stream.
+        let isLittleEndian = BitConverter.IsLittleEndian
+
         let inline createHeader (typeInfo : TypeKind) (picklerInfo : PicklerInfo) (flags : ObjectFlags) =
             uint32 initByte 
             ||| (uint32 typeInfo <<< 8) 
@@ -95,6 +101,7 @@
         interface IPickleFormatWriter with
             member __.BeginWriteRoot (id : string) =
                 bw.Write initByte
+                bw.Write isLittleEndian
                 bw.Write id
 
             member __.EndWriteRoot () = ()
@@ -164,6 +171,13 @@
             member __.BeginReadRoot () =
                 if br.ReadByte () <> initByte then
                     raise <| new InvalidDataException("invalid initialization byte.")
+
+                if br.ReadBoolean () <> isLittleEndian then
+                    if isLittleEndian then
+                        raise <| new InvalidDataException("serialized data is big-endian.")
+                    else
+                        raise <| new InvalidDataException("serialized data is little-endian.")
+
                 br.ReadString()
 
             member __.EndReadRoot () = ()
