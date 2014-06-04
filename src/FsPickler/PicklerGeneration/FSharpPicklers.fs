@@ -45,9 +45,10 @@
                             | _ -> None
                     let ctor = FSharpValue.PreComputeUnionConstructorInfo(uci, allMembers)
                     let picklers = fields |> Array.map (fun f -> resolver.Resolve f.PropertyType)
-                    caseType, ctor, fields, picklers)
+                    let tags = fields |> Array.map getTagFromMemberInfo
+                    caseType, ctor, fields, tags, picklers)
 
-            let picklerss = caseInfo |> Array.map (fun (_,_,_,picklers) -> picklers)
+            let picklerss = caseInfo |> Array.map (fun (_,_,_,_,picklers) -> picklers)
 
             let writerDele =
                 DynamicMethod.compileAction3<Pickler [] [], WriteState, 'Union> "unionSerializer" (fun picklerss writer union ilGen ->
@@ -77,10 +78,10 @@
                     // emit cases
                     for i = 0 to caseInfo.Length - 1 do
                         let label = labels.[i]
-                        let caseType,_,fields,_ = caseInfo.[i]
+                        let caseType,_,fields,tags,_ = caseInfo.[i]
 
                         ilGen.MarkLabel label
-                        emitSerializeProperties fields writer picklers union ilGen
+                        emitSerializeProperties fields tags writer picklers union ilGen
                         ilGen.Emit OpCodes.Ret
                 )
 
@@ -109,12 +110,12 @@
                     // emit cases
                     for i = 0 to caseInfo.Length - 1 do
                         let label = labels.[i]
-                        let _,ctor,fields,_ = caseInfo.[i]
+                        let _,ctor,fields,tags,_ = caseInfo.[i]
 
-                        let ctorParams = fields |> Array.map (fun f -> f.PropertyType, getTagFromMemberInfo f)
+                        let ctorParams = fields |> Array.map (fun f -> f.PropertyType)
 
                         ilGen.MarkLabel label
-                        emitDeserializeAndConstruct (Choice1Of2 ctor) ctorParams reader picklers ilGen
+                        emitDeserializeAndConstruct (Choice1Of2 ctor) ctorParams tags reader picklers ilGen
                         ilGen.Emit OpCodes.Ret
                 )
 
@@ -130,22 +131,23 @@
                     let reader = FSharpValue.PreComputeUnionReader(uci, allMembers)
                     let fields = uci.GetFields()
                     let picklers = fields |> Array.map (fun f -> resolver.Resolve f.PropertyType)
-                    ctor, reader, fields, picklers)
+                    let tags = fields |> Array.map getTagFromMemberInfo
+                    ctor, reader, fields, tags, picklers)
 
             let writer (w : WriteState) (x : 'Union) =
                 let tag = tagReader.Invoke x
                 w.Formatter.WriteByte "case" (byte tag)
-                let _,reader,fields,picklers = caseInfo.[tag]
+                let _,reader,fields,tags,picklers = caseInfo.[tag]
                 let values = reader x
                 for i = 0 to values.Length - 1 do
-                    picklers.[i].UntypedWrite w (getTagFromMemberInfo fields.[i]) (values.[i])
+                    picklers.[i].UntypedWrite w tags.[i] (values.[i])
 
             let reader (r : ReadState) =
                 let tag = int (r.Formatter.ReadByte "case")
-                let ctor,_,fields,picklers = caseInfo.[tag]
+                let ctor,_,fields,tags,picklers = caseInfo.[tag]
                 let values = Array.zeroCreate<obj> picklers.Length
                 for i = 0 to picklers.Length - 1 do
-                    values.[i] <- picklers.[i].UntypedRead r (getTagFromMemberInfo fields.[i])
+                    values.[i] <- picklers.[i].UntypedRead r tags.[i]
 
                 ctor values |> fastUnbox<'Union>
 #endif
@@ -161,6 +163,7 @@
             let ctor = FSharpValue.PreComputeRecordConstructorInfo(typeof<'Record>, allMembers)
 
             let picklers = fields |> Array.map (fun f -> resolver.Resolve f.PropertyType)
+            let tags = fields |> Array.map getTagFromMemberInfo
 
 #if EMIT_IL
             let writer =
@@ -169,7 +172,7 @@
                     let writerDele =
                         DynamicMethod.compileAction3<Pickler [], WriteState, 'Record> "recordSerializer" (fun picklers writer record ilGen ->
 
-                            emitSerializeProperties fields writer picklers record ilGen
+                            emitSerializeProperties fields tags writer picklers record ilGen
                             
                             ilGen.Emit OpCodes.Ret)
 
@@ -178,9 +181,9 @@
             let readerDele =
                 DynamicMethod.compileFunc2<Pickler [], ReadState, 'Record> "recordDeserializer" (fun picklers reader ilGen ->
 
-                    let ctorParams = fields |> Array.map (fun f -> f.PropertyType, getTagFromMemberInfo f)
+                    let ctorParams = fields |> Array.map (fun f -> f.PropertyType)
 
-                    emitDeserializeAndConstruct (Choice2Of2 ctor) ctorParams reader picklers ilGen
+                    emitDeserializeAndConstruct (Choice2Of2 ctor) ctorParams tags reader picklers ilGen
 
                     ilGen.Emit OpCodes.Ret)
             
@@ -190,12 +193,12 @@
                 for i = 0 to fields.Length - 1 do
                     let f = fields.[i]
                     let o = f.GetValue x
-                    picklers.[i].UntypedWrite w (getTagFromMemberInfo f) o
+                    picklers.[i].UntypedWrite w tags.[i] o
             
             let reader (r : ReadState) =
                 let values = Array.zeroCreate<obj> fields.Length
                 for i = 0 to fields.Length - 1 do
-                    values.[i] <- picklers.[i].UntypedRead r (getTagFromMemberInfo fields.[i])
+                    values.[i] <- picklers.[i].UntypedRead r tags.[i]
 
                 ctor.Invoke values |> fastUnbox<'Record>
 #endif
@@ -214,6 +217,8 @@
             // separately serialize exception fields
             let fields = gatherFields typeof<'Exception> |> Array.filter(fun f -> f.DeclaringType = typeof<'Exception>)
             let fpicklers = fields |> Array.map (fun f -> resolver.Resolve f.FieldType)
+            // extract tag names from properties, not fields
+            let tags = FSharpType.GetExceptionFields(typeof<'Exception>, allMembers) |> Array.map (fun p -> p.Name)
 
 #if EMIT_IL
             let writerDele = 
@@ -221,7 +226,7 @@
                 else
                     DynamicMethod.compileAction3<Pickler [], WriteState, 'Exception> "exceptionSerializer" (fun picklers writer value ilGen ->
 
-                        emitSerializeFields fields writer picklers value ilGen
+                        emitSerializeFields fields tags writer picklers value ilGen
 
                         ilGen.Emit OpCodes.Ret
                     ) |> Some
@@ -231,7 +236,7 @@
                 else
                     DynamicMethod.compileAction3<Pickler [], ReadState, 'Exception> "exceptionDeserializer" (fun picklers reader value ilGen ->
 
-                        emitDeserializeFields fields reader picklers value ilGen
+                        emitDeserializeFields fields tags reader picklers value ilGen
 
                         ilGen.Emit OpCodes.Ret
                     ) |> Some
@@ -241,7 +246,7 @@
                 // toggle subtype to prevent pickler from detecting cyclic object pattern
                 w.NextObjectIsSubtype <- true
                 defPickler.UntypedWrite w "exceptionBase" e
-
+ 
                 match writerDele with
                 | None -> ()
                 | Some d -> d.Invoke(fpicklers, w, e)
@@ -256,17 +261,23 @@
                 | Some d -> d.Invoke(fpicklers, r, e) ; e
 #else
             let writer (w : WriteState) (e : 'Exception) =
-                defPickler.Write w "exceptionBase" e
+                // toggle subtype to prevent pickler from detecting cyclic object pattern
+                w.NextObjectIsSubtype <- true
+                defPickler.UntypedWrite w "exceptionBase" e
+
                 for i = 0 to fields.Length - 1 do
                     let f = fields.[i]
                     let o = f.GetValue e
-                    fpicklers.[i].UntypedWrite w (getTagFromMemberInfo f) o
+                    fpicklers.[i].UntypedWrite w tags.[i] o
 
             let reader (r : ReadState) =
-                let e = defPickler.Read r "exceptionBase"
+                // toggle subtype to prevent pickler from detecting cyclic object pattern
+                r.NextObjectIsSubtype <- true
+                let e = defPickler.UntypedRead r "exceptionBase" |> fastUnbox<'Exception>
+
                 for i = 0 to fields.Length - 1 do
                     let f = fields.[i]
-                    let o = fpicklers.[i].UntypedRead r (getTagFromMemberInfo f)
+                    let o = fpicklers.[i].UntypedRead r tags.[i]
                     f.SetValue(e, o)
                 e
 #endif

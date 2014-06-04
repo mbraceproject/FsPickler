@@ -91,12 +91,13 @@
 
             let fields = gatherFields typeof<'T>
             let picklers = fields |> Array.map (fun f -> resolver.Resolve f.FieldType)
+            let tags = fields |> Array.map getTagFromMemberInfo
 
 #if EMIT_IL
             let writerDele =
                 DynamicMethod.compileAction3<Pickler [], WriteState, 'T> "structSerializer" (fun picklers writer parent ilGen ->
 
-                    emitSerializeFields fields writer picklers parent ilGen
+                    emitSerializeFields fields tags writer picklers parent ilGen
 
                     ilGen.Emit OpCodes.Ret
                 )
@@ -109,7 +110,7 @@
                     emitObjectInitializer typeof<'T> ilGen
                     value.Store ()
 
-                    emitDeserializeFields fields reader picklers value ilGen
+                    emitDeserializeFields fields tags reader picklers value ilGen
 
                     value.Load ()
                     ilGen.Emit OpCodes.Ret
@@ -123,13 +124,13 @@
                 for i = 0 to fields.Length - 1 do
                     let f = fields.[i]
                     let o = f.GetValue(t)
-                    picklers.[i].UntypedWrite w (getTagFromMemberInfo f) o
+                    picklers.[i].UntypedWrite w tags.[i] o
 
             let reader (r : ReadState) =
                 let t = FormatterServices.GetUninitializedObject(typeof<'T>)
                 for i = 0 to fields.Length - 1 do
                     let f = fields.[i]
-                    let o = picklers.[i].UntypedRead r (getTagFromMemberInfo f)
+                    let o = picklers.[i].UntypedRead r tags.[i]
                     f.SetValue(t, o)
                 
                 fastUnbox<'T> t
@@ -151,6 +152,7 @@
                 |> Array.filter (not << containsAttr<NonSerializedAttribute>)
 
             let picklers = fields |> Array.map (fun f -> resolver.Resolve f.FieldType)
+            let tags = fields |> Array.map getTagFromMemberInfo
 
             let isDeserializationCallback = typeof<IDeserializationCallback>.IsAssignableFrom typeof<'T>
 
@@ -170,7 +172,7 @@
 
                             emitSerializationMethodCalls onSerializing (Choice1Of2 writer) value ilGen
 
-                            emitSerializeFields fields writer picklers value ilGen
+                            emitSerializeFields fields tags writer picklers value ilGen
 
                             emitSerializationMethodCalls onSerialized (Choice1Of2 writer) value ilGen
                             
@@ -188,7 +190,7 @@
 
                     emitSerializationMethodCalls onDeserializing (Choice2Of2 reader) value ilGen
 
-                    emitDeserializeFields fields reader picklers value ilGen
+                    emitDeserializeFields fields tags reader picklers value ilGen
 
                     emitSerializationMethodCalls onDeserialized (Choice2Of2 reader) value ilGen
 
@@ -210,7 +212,7 @@
                 for i = 0 to fields.Length - 1 do
                     let f = fields.[i]
                     let o = f.GetValue(t)
-                    picklers.[i].UntypedWrite w (getTagFromMemberInfo f) o
+                    picklers.[i].UntypedWrite w tags.[i] o
 
                 run onSerialized t w
 
@@ -220,7 +222,7 @@
 
                 for i = 0 to fields.Length - 1 do
                     let f = fields.[i]
-                    let o = picklers.[i].UntypedRead r (getTagFromMemberInfo f)
+                    let o = picklers.[i].UntypedRead r tags.[i]
                     f.SetValue(t, o)
 
                 run onDeserialized t r

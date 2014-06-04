@@ -52,7 +52,8 @@
             ilGen.EmitCall(OpCodes.Callvirt, reader, null)
 
         /// emits IL that serializes a collection of fields
-        let emitSerializeFields (fields : FieldInfo []) 
+        let emitSerializeFields (fields : FieldInfo [])
+                                (tags : string [])
                                 (writer : EnvItem<WriteState>) 
                                 (picklers : EnvItem<Pickler []>) 
                                 (parent : EnvItem<'T>) (ilGen : ILGenerator) =
@@ -64,7 +65,7 @@
                 // load writer to the stack
                 writer.Load ()
                 // load field name
-                ilGen.Emit(OpCodes.Ldstr, getTagFromMemberInfo f)
+                ilGen.Emit(OpCodes.Ldstr, tags.[i])
                 // load field value to the stack
                 parent.Load ()
                 ilGen.Emit(OpCodes.Ldfld, f)
@@ -73,6 +74,7 @@
 
         /// deserialize a collection of fields and store to parent object
         let emitDeserializeFields (fields : FieldInfo [])
+                                    (tags : string [])
                                     (reader : EnvItem<ReadState>)
                                     (picklers : EnvItem<Pickler []>)
                                     (parent : EnvItem<'T>) (ilGen : ILGenerator) =
@@ -91,7 +93,7 @@
                 // load reader to the stack
                 reader.Load ()
                 // load field name
-                ilGen.Emit(OpCodes.Ldstr, getTagFromMemberInfo f)
+                ilGen.Emit(OpCodes.Ldstr, tags.[i])
                 // deserialize and load to the stack
                 emitDeserialize f.FieldType ilGen
                 // assign value to the field
@@ -99,6 +101,7 @@
 
         /// serialize properties to the underlying stack
         let emitSerializeProperties (properties : PropertyInfo [])
+                                    (tags : string [])
                                     (writer : EnvItem<WriteState>)
                                     (picklers : EnvItem<Pickler []>)
                                     (parent : EnvItem<'T>) (ilGen : ILGenerator) =
@@ -111,7 +114,7 @@
                 // load writer to the stack
                 writer.Load ()
                 // load tag
-                ilGen.Emit(OpCodes.Ldstr, getTagFromMemberInfo p)
+                ilGen.Emit(OpCodes.Ldstr, tags.[i])
                 // load property value to the stack
                 parent.Load ()
                 ilGen.EmitCall(OpCodes.Call, m, null)
@@ -120,21 +123,22 @@
 
         /// deserialize fields, pass to factory method and push to stack
         let emitDeserializeAndConstruct (factory : Choice<MethodInfo,ConstructorInfo>)
-                                        (fparams : (Type * string) [])
+                                        (fparams : Type [])
+                                        (tags : string [])
                                         (reader : EnvItem<ReadState>)
                                         (picklers : EnvItem<Pickler []>)
                                         (ilGen : ILGenerator) =
 
             for i = 0 to fparams.Length - 1 do
-                let p,tag = fparams.[i]
+                let t = fparams.[i]
                 // load typed pickler to the stack
-                emitLoadPickler picklers p i ilGen
+                emitLoadPickler picklers t i ilGen
                 // load reader to the stack
                 reader.Load ()
                 // load tag
-                ilGen.Emit(OpCodes.Ldstr, tag)
+                ilGen.Emit(OpCodes.Ldstr, tags.[i])
                 // perform deserialization and push to the stack
-                emitDeserialize p ilGen
+                emitDeserialize t ilGen
 
             // call factory method
             match factory with
