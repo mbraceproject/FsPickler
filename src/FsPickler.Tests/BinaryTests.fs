@@ -96,6 +96,8 @@
 
             inputs |> Array.forall testCase
 
+        // make invalid reads to binary stream; should either succeed (such a possibility exists)
+        // or fail with any of the prescribed exceptions
         let testInvalidReads (writes : TestCase [], reads : TestCase []) =
             use m = new MemoryStream()
             do
