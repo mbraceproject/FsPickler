@@ -671,7 +671,12 @@
 
             testReflected quot
 
-        [<Test>]
+
+        //
+        //  Stress tests
+        //
+
+        [<Test; Category("Stress tests")>]
         member __.``8. Stress test: massively auto-generated objects`` () =
             // generate serializable objects that reside in mscorlib and FSharp.Core
             let inputData = 
@@ -697,3 +702,19 @@
                 raise <| new AssertionException(msg)
             else
                 printfn "Failed Serializations: %d out of %d." failedResults results.Length
+
+
+        member t.TestTypeMismatch<'In, 'Out> (v : 'In) = 
+            fun () ->
+                t.TestPickle<'In> Pickler.auto<'In> v 
+                |> t.TestUnPickle<'Out> Pickler.auto<'Out>
+                |> ignore
+
+            |> shouldFailwith<InvalidPickleTypeException>
+
+        [<Test; Category("Stress tests")>]
+        member t.``8. Stress test: deserialization type mismatch`` () =
+            t.TestTypeMismatch<int, string> 42
+            t.TestTypeMismatch<string, int> "forty-two"
+            t.TestTypeMismatch<obj, int>(obj())
+            t.TestTypeMismatch<int * int64, int * int> (1,1L)

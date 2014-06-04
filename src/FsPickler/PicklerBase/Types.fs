@@ -124,6 +124,17 @@
             { inherit Exception(si, sc) }
 
 
+    type InvalidPickleTypeException =
+        inherit FsPicklerException
+
+        internal new (expectedType : string, actualType : string) =
+            let message = sprintf "Expected pickle of type '%s' but was '%s'." expectedType actualType
+            { inherit FsPicklerException(message) }
+
+        internal new (si : SerializationInfo, sc : StreamingContext) =
+            { inherit FsPicklerException(si, sc) }
+
+
     /// raised by pickler generator whenever an unexpected error is encountered.
     type PicklerGenerationException =
         inherit FsPicklerException

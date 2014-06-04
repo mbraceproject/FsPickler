@@ -231,8 +231,7 @@
 
                     let id = jsonReader.ReadPrimitiveAs<string> false "type"
                     if id <> tag then
-                        let msg = sprintf "expected '%s' but was '%s'." tag id
-                        raise <| new InvalidDataException(msg)
+                        raise <| new InvalidPickleTypeException(tag, id)
 
             member __.EndReadRoot () = jsonReader.Read() |> ignore
 

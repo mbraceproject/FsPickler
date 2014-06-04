@@ -155,8 +155,7 @@
 
                 let sTag = reader.["type"]
                 if sTag <> tag then
-                    let msg = sprintf "Expected type '%s' but was '%s'." tag sTag
-                    raise <| new InvalidDataException(msg)
+                    raise <| new InvalidPickleTypeException(tag, sTag)
 
                 if not reader.IsEmptyElement then
                     if not <| reader.Read() then

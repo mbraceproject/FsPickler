@@ -166,8 +166,7 @@
                     raise <| new InvalidDataException("invalid initialization byte.")
                 let streamTag = br.ReadString()
                 if streamTag <> tag then
-                    let msg = sprintf "Expected type '%s' but was '%s'." tag streamTag
-                    raise <| new FsPicklerException(msg)
+                    raise <| new InvalidPickleTypeException(tag, streamTag)
 
             member __.EndReadRoot () = ()
 
