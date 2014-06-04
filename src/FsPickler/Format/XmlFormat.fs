@@ -158,10 +158,15 @@
                     let msg = sprintf "Expected type '%s' but was '%s'." tag sTag
                     raise <| new InvalidDataException(msg)
 
-                if not <| reader.Read() then
-                    raise <| new EndOfStreamException()
+                if not reader.IsEmptyElement then
+                    if not <| reader.Read() then
+                        raise <| new EndOfStreamException()
 
-            member __.EndReadRoot () = reader.ReadEndElement()
+            member __.EndReadRoot () =
+                if reader.IsEmptyElement then
+                    let _ = reader.Read() in ()
+                else
+                    reader.ReadEndElement()
 
             member __.BeginReadObject (_ : TypeKind) (_ : PicklerInfo) (tag : string) =
                 do readElementName reader tag
