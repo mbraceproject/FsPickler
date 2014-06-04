@@ -220,7 +220,7 @@
 
         interface IPickleFormatReader with
             
-            member __.BeginReadRoot (tag : string) =
+            member __.BeginReadRoot () =
                 do jsonReader.MoveNext()
 
                 if jsonReader.ReadStartObject () then raise <| new InvalidDataException("invalid json root object.")
@@ -229,9 +229,7 @@
                     if version <> AssemblyVersionInformation.Version then
                         raise <| new InvalidDataException(sprintf "Invalid FsPickler version %s." version)
 
-                    let id = jsonReader.ReadPrimitiveAs<string> false "type"
-                    if id <> tag then
-                        raise <| new InvalidPickleTypeException(tag, id)
+                    jsonReader.ReadPrimitiveAs<string> false "type"
 
             member __.EndReadRoot () = jsonReader.Read() |> ignore
 

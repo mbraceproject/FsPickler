@@ -30,7 +30,10 @@
     let readRootObject resolver reflectionCache formatter streamingContext (pickler : Pickler<'T>) =
         use readState = new ReadState(formatter, resolver, reflectionCache, ?streamingContext = streamingContext)
         let qualifiedName = reflectionCache.GetQualifiedName pickler.Type
-        formatter.BeginReadRoot qualifiedName
+        let rootName = formatter.BeginReadRoot ()
+        if rootName <> qualifiedName then
+            raise <| new InvalidPickleTypeException(qualifiedName, rootName)
+
         let value = pickler.Read readState "value"
         formatter.EndReadRoot ()
         value
@@ -45,7 +48,10 @@
     let readRootObjectUntyped resolver reflectionCache formatter streamingContext (pickler : Pickler) =
         use readState = new ReadState(formatter, resolver, reflectionCache, ?streamingContext = streamingContext)
         let qualifiedName = reflectionCache.GetQualifiedName pickler.Type
-        formatter.BeginReadRoot qualifiedName
+        let rootName = formatter.BeginReadRoot ()
+        if rootName <> qualifiedName then
+            raise <| new InvalidPickleTypeException(qualifiedName, rootName)
+
         let value = pickler.UntypedRead readState "value"
         formatter.EndReadRoot ()
         value
@@ -62,9 +68,9 @@
     let writeTopLevelSequence resolver reflectionCache formatter streamingContext (pickler : Pickler<'T>) (values : seq<'T>) : int =
         // write state initialization
         use state = new WriteState(formatter, resolver, reflectionCache, ?streamingContext = streamingContext)
-        let qn = reflectionCache.GetQualifiedName pickler.Type
+        let qn = sprintf "%s[]" <| reflectionCache.GetQualifiedName pickler.Type
 
-        state.Formatter.BeginWriteRoot <| sprintf "%s sequence" qn
+        state.Formatter.BeginWriteRoot qn
 
         let isObject = pickler.TypeKind > TypeKind.Value
 
@@ -110,10 +116,12 @@
         
         // read state initialization
         let state = new ReadState(formatter, resolver, reflectionCache, ?streamingContext = streamingContext)
-        let qn = reflectionCache.GetQualifiedName pickler.Type
+        let qn = sprintf "%s[]" <| reflectionCache.GetQualifiedName pickler.Type
 
         // read stream header
-        formatter.BeginReadRoot <| sprintf "%s sequence" qn
+        let rootName = formatter.BeginReadRoot ()
+        if rootName <> qn then
+            raise <| new InvalidPickleTypeException(qn, rootName)
 
         let isObject = pickler.TypeKind > TypeKind.Value
 

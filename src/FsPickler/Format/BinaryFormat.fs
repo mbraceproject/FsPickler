@@ -109,12 +109,10 @@
             
             member __.Dispose () = br.Dispose ()
 
-            member __.BeginReadRoot (tag : string) =
+            member __.BeginReadRoot () =
                 if br.ReadByte () <> initByte then
                     raise <| new InvalidDataException("invalid initialization byte.")
-                let streamTag = br.ReadString()
-                if streamTag <> tag then
-                    raise <| new InvalidPickleTypeException(tag, streamTag)
+                br.ReadString()
 
             member __.EndReadRoot () = ()
 
