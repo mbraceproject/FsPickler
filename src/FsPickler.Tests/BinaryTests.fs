@@ -108,8 +108,7 @@
             with 
             | :? InvalidDataException
             | :? FormatException
-            | :? EndOfStreamException 
-            | :? OutOfMemoryException -> ()
+            | :? EndOfStreamException -> ()
 
         [<Test; Repeat(10)>]
         let ``Binary writes/reads`` () =

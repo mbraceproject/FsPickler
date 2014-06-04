@@ -91,9 +91,11 @@ namespace Nessos.FsPickler.Binary
             // when on, tells reader to continue reading more bytes.
             while (value >= 0x80)
             {
-                Write((byte)(value | 0x80));
+                var b = (byte)(value | 0x80);
+                Write(b); Write(b);
                 value >>= 7;
             }
+            Write((byte)value);
             Write((byte)value);
         } 
 

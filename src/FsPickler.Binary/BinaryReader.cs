@@ -108,6 +108,8 @@
                     throw new FormatException("invalid 7-bit integer format.");
 
                 b = ReadByte();
+                if (b != ReadByte()) throw new FormatException("invalid 7-bit integer format.");
+
                 count |= ((uint)(0x7F & b)) << shift;
                 shift += 7;
             } while ((b & 0x80) != 0);
