@@ -19,9 +19,10 @@
             stream = InputStream;
         }
 
-        private bool TryFillBuffer()
+        private bool TryFillBuffer(int minExpectedSize)
         {
-            if (idx < bufferedDataSize) return false;
+            if (bufferedDataSize - idx >= minExpectedSize) return false;
+            if (idx != bufferedDataSize) throw new InvalidDataException();
 
             var bytesRead = 0;
             var bytesToRead = 1 + stream.ReadByte();
@@ -32,18 +33,22 @@
             do
             {
                 var read = stream.Read(buffer, bytesRead, bytesToRead);
+                if (read == 0) throw new EndOfStreamException();
                 bytesRead += read;
                 bytesToRead -= read;
             } while (bytesToRead > 0);
 
             bufferedDataSize = bytesRead;
             idx = 0;
+
+            if (bytesRead < minExpectedSize) throw new InvalidDataException();
+
             return true;
         }
 
         private unsafe void BlockRead(byte* dest, int size)
         {
-            TryFillBuffer();
+            TryFillBuffer(1);
 
             fixed (byte* bp = buffer)
             {
@@ -55,7 +60,7 @@
                     idx = bufferedDataSize;
                     dest += count;
                     size -= count;
-                    TryFillBuffer();
+                    TryFillBuffer(1);
                 }
 
                 Utils.Memcpy(dest, bp + idx, size);
@@ -71,7 +76,7 @@
 
             if (count == 0) return;
 
-            TryFillBuffer();
+            TryFillBuffer(1);
 
             var j = 0;
 
@@ -82,7 +87,7 @@
                 idx = bufferedDataSize;
                 j += copied;
                 count -= copied;
-                TryFillBuffer();
+                TryFillBuffer(1);
             }
 
             Buffer.BlockCopy(buffer, idx, array, j, count);
@@ -112,25 +117,25 @@
 
         public byte ReadByte()
         {
-            TryFillBuffer();
+            TryFillBuffer(1);
             return buffer[idx++];
         }
 
         public bool ReadBoolean()
         {
-            TryFillBuffer();
+            TryFillBuffer(1);
             return (buffer[idx++] != 0);
         }
 
         public sbyte ReadSByte()
         {
-            TryFillBuffer();
+            TryFillBuffer(1);
             return (sbyte)(buffer[idx++]);
         }
 
         public char ReadChar()
         {
-            TryFillBuffer();
+            TryFillBuffer(2);
             var i = idx;
             var value = (char)(buffer[i] | buffer[i + 1] << 8);
             idx = i + 2;
@@ -139,7 +144,7 @@
 
         public short ReadInt16()
         {
-            TryFillBuffer();
+            TryFillBuffer(2);
             var i = idx;
             var value = (short)(buffer[i] | buffer[i + 1] << 8);
             idx = i + 2;
@@ -148,7 +153,7 @@
 
         public ushort ReadUInt16()
         {
-            TryFillBuffer();
+            TryFillBuffer(2);
             var i = idx;
             var value = (ushort)(buffer[i] | buffer[i + 1] << 8);
             idx = i + 2;
@@ -157,7 +162,7 @@
 
         public int ReadInt32()
         {
-            TryFillBuffer();
+            TryFillBuffer(4);
             var i = idx;
             var value = (int)(buffer[i] | buffer[i + 1] << 8 | buffer[i + 2] << 16 | buffer[i + 3] << 24);
             idx = i + 4;
@@ -166,7 +171,7 @@
 
         public uint ReadUInt32()
         {
-            TryFillBuffer();
+            TryFillBuffer(4);
             var i = idx;
             var value = (uint)(buffer[i] | buffer[i + 1] << 8 | buffer[i + 2] << 16 | buffer[i + 3] << 24);
             idx = i + 4;
@@ -175,7 +180,7 @@
 
         public long ReadInt64()
         {
-            TryFillBuffer();
+            TryFillBuffer(8);
             var i = idx;
             var value =
                 (ulong)buffer[i] |
@@ -193,7 +198,7 @@
 
         public ulong ReadUInt64()
         {
-            TryFillBuffer();
+            TryFillBuffer(8);
             var i = idx;
             var value =
                 (ulong)buffer[i] |
@@ -211,7 +216,7 @@
 
         public unsafe float ReadSingle()
         {
-            TryFillBuffer();
+            TryFillBuffer(4);
             var i = idx;
             uint tmpBuffer = (uint)(buffer[i] | buffer[i + 1] << 8 | buffer[i + 2] << 16 | buffer[i + 3] << 24);
             idx = i + 4;
@@ -220,7 +225,7 @@
 
         public unsafe double ReadDouble()
         {
-            TryFillBuffer();
+            TryFillBuffer(8);
             var i = idx;
             var tmpBuffer =
                 (ulong)buffer[i] |
@@ -239,7 +244,7 @@
 
         public unsafe decimal ReadDecimal()
         {
-            TryFillBuffer();
+            TryFillBuffer(16);
             decimal value = 0;
             var i = idx;
 
@@ -270,7 +275,7 @@
 
         public unsafe Guid ReadGuid()
         {
-            TryFillBuffer();
+            TryFillBuffer(16);
             Guid value = Guid.Empty;
             var i = idx;
 
@@ -305,24 +310,28 @@
 
             if (length < 0) return null;
 
-            TryFillBuffer();
+            TryFillBuffer(1);
 
             var bytes = new byte[length];
 
             if (ReadBoolean()) // byte array contained in current buffer
             {
-                Debug.Assert(idx + length <= bufferedDataSize);
+                if (idx + length > bufferedDataSize)
+                    throw new InvalidDataException("invalid stream data.");
+
                 Buffer.BlockCopy(buffer, idx, bytes, 0, length);
                 idx += length;
                 return bytes;
             }
 
-            Debug.Assert(idx == bufferedDataSize);
+            if (idx != bufferedDataSize)
+                throw new InvalidDataException("invalid stream data.");
 
             var readBytes = 0;
             while (length > 0)
             {
                 var read = stream.Read(bytes, readBytes, length);
+                if (read == 0) throw new EndOfStreamException();
                 readBytes += read;
                 length -= read;
             }

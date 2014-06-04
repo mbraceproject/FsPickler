@@ -123,19 +123,21 @@ namespace Nessos.FsPickler.Binary
                 return;
             }
 
-            Write7BitEncodedLength(bytes.Length);
+            var length = bytes.Length;
 
-            if (idx + bytes.Length < bufsize)
+            Write7BitEncodedLength(length);
+
+            if (idx + length < bufsize)
             {
                 Write(true);
-                Buffer.BlockCopy(bytes, 0, buffer, idx, bytes.Length);
-                idx += bytes.Length;
+                Buffer.BlockCopy(bytes, 0, buffer, idx, length);
+                idx += length;
                 return;
             }
 
             Write(false);
             FlushBuffer();
-            stream.Write(bytes, 0, bytes.Length);
+            stream.Write(bytes, 0, length);
         }
 
         public void Write(char ch)
@@ -326,7 +328,7 @@ namespace Nessos.FsPickler.Binary
             }
         }
 
-        public void Dispose() { FlushBuffer(); }
-        public void Flush() { FlushBuffer(); }
+        public void Dispose() { FlushBuffer(); stream.Flush(); }
+        public void Flush() { FlushBuffer(); stream.Flush(); }
     }
 }

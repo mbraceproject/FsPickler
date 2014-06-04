@@ -1,8 +1,10 @@
-﻿namespace Nessos.FsPickler.Binary.Tests
+﻿namespace Nessos.FsPickler.Tests.Binary
 
     open System
     open System.IO
+    open System.Threading
 
+    open Nessos.FsPickler.Tests
     open Nessos.FsPickler.Binary
 
     open NUnit.Framework
@@ -91,6 +93,28 @@
 
             inputs |> Array.forall testCase
 
+        let testInvalidReads (writes : TestCase [], reads : TestCase []) =
+            use m = new MemoryStream()
+            do
+                use bw = new BinaryWriter(m)
+                for case in writes do case.Write bw
+
+            m.Position <- 0L
+            let br = new BinaryReader(m)
+
+            try
+                for case in reads do
+                    case.Read br |> ignore
+            with 
+            | :? InvalidDataException
+            | :? FormatException
+            | :? EndOfStreamException 
+            | :? OutOfMemoryException -> ()
+
         [<Test; Repeat(10)>]
-        let ``Quick check Writes/Reads`` () =
+        let ``Binary writes/reads`` () =
             Check.QuickThrowOnFailure testWriteRead
+
+        [<Test; Repeat(10)>]
+        let ``invalid reads stress test`` () =
+            Check.QuickThrowOnFailure testInvalidReads
