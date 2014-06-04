@@ -123,6 +123,14 @@
         internal new (si : SerializationInfo, sc : StreamingContext) =
             { inherit Exception(si, sc) }
 
+    type InvalidPickleException =
+        inherit FsPicklerException
+
+        internal new (message, ?inner) =
+            { inherit FsPicklerException(message, ?inner = inner) }
+
+        internal new (si : SerializationInfo, sc : StreamingContext) =
+            { inherit FsPicklerException(si, sc) }
 
     type InvalidPickleTypeException =
         inherit FsPicklerException

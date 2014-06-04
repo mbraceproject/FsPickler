@@ -676,6 +676,36 @@
         //  Stress tests
         //
 
+        member t.TestTypeMismatch<'In, 'Out> (v : 'In) = 
+            fun () ->
+                t.TestPickle<'In> Pickler.auto<'In> v 
+                |> t.TestUnPickle<'Out> Pickler.auto<'Out>
+                |> ignore
+
+            |> shouldFailwith<InvalidPickleTypeException>
+
+        [<Test; Category("Stress tests")>]
+        member t.``8. Stress test: deserialization type mismatch`` () =
+            t.TestTypeMismatch<int, string> 42
+            t.TestTypeMismatch<string, int> "forty-two"
+            t.TestTypeMismatch<obj, int>(obj())
+            t.TestTypeMismatch<int * int64, int * int> (1,1L)
+
+        member t.TestDeserializeInvalidData<'T> (bytes : byte []) =
+            try
+                use m = new MemoryStream(bytes)
+                let t' = pickler.Deserialize<'T>(m)
+                ()
+            with
+            | :? InvalidPickleException -> ()
+
+        [<Test; Category("Stress tests")>]
+        member t.``8. Stress test: arbitrary data deserialization`` () =
+            Check.QuickThrowOnFail (fun bs -> t.TestDeserializeInvalidData<int> bs)
+            Check.QuickThrowOnFail (fun bs -> t.TestDeserializeInvalidData<string> bs)
+            Check.QuickThrowOnFail (fun bs -> t.TestDeserializeInvalidData<byte []> bs)
+            Check.QuickThrowOnFail (fun bs -> t.TestDeserializeInvalidData<int * string option> bs)
+
         [<Test; Category("Stress tests")>]
         member __.``8. Stress test: massively auto-generated objects`` () =
             // generate serializable objects that reside in mscorlib and FSharp.Core
@@ -704,17 +734,3 @@
                 printfn "Failed Serializations: %d out of %d." failedResults results.Length
 
 
-        member t.TestTypeMismatch<'In, 'Out> (v : 'In) = 
-            fun () ->
-                t.TestPickle<'In> Pickler.auto<'In> v 
-                |> t.TestUnPickle<'Out> Pickler.auto<'Out>
-                |> ignore
-
-            |> shouldFailwith<InvalidPickleTypeException>
-
-        [<Test; Category("Stress tests")>]
-        member t.``8. Stress test: deserialization type mismatch`` () =
-            t.TestTypeMismatch<int, string> 42
-            t.TestTypeMismatch<string, int> "forty-two"
-            t.TestTypeMismatch<obj, int>(obj())
-            t.TestTypeMismatch<int * int64, int * int> (1,1L)

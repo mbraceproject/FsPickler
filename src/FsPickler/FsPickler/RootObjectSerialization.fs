@@ -30,7 +30,10 @@
     let readRootObject resolver reflectionCache formatter streamingContext (pickler : Pickler<'T>) =
         use readState = new ReadState(formatter, resolver, reflectionCache, ?streamingContext = streamingContext)
         let qualifiedName = reflectionCache.GetQualifiedName pickler.Type
-        let rootName = formatter.BeginReadRoot ()
+        let rootName = 
+            try formatter.BeginReadRoot ()
+            with e -> raise <| new InvalidPickleException("error reading from pickle.", e)
+
         if rootName <> qualifiedName then
             raise <| new InvalidPickleTypeException(qualifiedName, rootName)
 
@@ -48,7 +51,10 @@
     let readRootObjectUntyped resolver reflectionCache formatter streamingContext (pickler : Pickler) =
         use readState = new ReadState(formatter, resolver, reflectionCache, ?streamingContext = streamingContext)
         let qualifiedName = reflectionCache.GetQualifiedName pickler.Type
-        let rootName = formatter.BeginReadRoot ()
+        let rootName = 
+            try formatter.BeginReadRoot ()
+            with e -> raise <| new InvalidPickleException("error reading from pickle.", e)
+
         if rootName <> qualifiedName then
             raise <| new InvalidPickleTypeException(qualifiedName, rootName)
 
@@ -119,7 +125,10 @@
         let qn = sprintf "%s[]" <| reflectionCache.GetQualifiedName pickler.Type
 
         // read stream header
-        let rootName = formatter.BeginReadRoot ()
+        let rootName = 
+            try formatter.BeginReadRoot ()
+            with e -> raise <| new InvalidPickleException("error reading from pickle.", e)
+
         if rootName <> qn then
             raise <| new InvalidPickleTypeException(qn, rootName)
 
