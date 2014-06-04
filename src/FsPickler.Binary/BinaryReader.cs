@@ -72,7 +72,7 @@
         {
             var count = (int)Read7BitEncodedLength();
             if (count != Buffer.ByteLength(array))
-                throw new InvalidOperationException("unexpected array length.");
+                throw new ArgumentException("array length mismatch.");
 
             if (count == 0) return;
 
@@ -105,10 +105,10 @@
             do
             {
                 if (shift == 5 * 7)  // 5 bytes max per Int32, shift += 7 
-                    throw new FormatException("invalid 7-bit integer format.");
+                    throw new InvalidDataException("invalid 7-bit integer format.");
 
                 b = ReadByte();
-                if (b != ReadByte()) throw new FormatException("invalid 7-bit integer format.");
+                if (b != ReadByte()) throw new InvalidDataException("invalid 7-bit integer format.");
 
                 count |= ((uint)(0x7F & b)) << shift;
                 shift += 7;

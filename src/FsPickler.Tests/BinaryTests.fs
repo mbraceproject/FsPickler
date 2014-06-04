@@ -20,6 +20,7 @@
             | Byte of byte
             | SByte of sbyte
             | Bytes of byte []
+            | Array of int64 []
             | Char of char
             | Single of single
             | Double of double
@@ -51,6 +52,7 @@
                 | UInt32 n -> bw.Write n
                 | UInt64 n -> bw.Write n
                 | Bytes bs -> bw.Write bs
+                | Array fs -> bw.Write(fs)
                 | Char c -> bw.Write c
                 | Single s -> bw.Write s
                 | Double d -> bw.Write d
@@ -70,6 +72,7 @@
                 | UInt32 n -> UInt32 <| br.ReadUInt32()
                 | UInt64 n -> UInt64 <| br.ReadUInt64()
                 | Bytes bs -> Bytes <| br.ReadBytes()
+                | Array ns -> let ns' = Array.zeroCreate<int64> ns.Length in br.ReadArray(ns') ; Array(ns')
                 | Char c -> Char <| br.ReadChar()
                 | Single s -> Single <| br.ReadSingle()
                 | Double d -> Double <| br.ReadDouble()
@@ -107,7 +110,7 @@
                     case.Read br |> ignore
             with 
             | :? InvalidDataException
-            | :? FormatException
+            | :? ArgumentException
             | :? EndOfStreamException -> ()
 
         [<Test; Repeat(10)>]
