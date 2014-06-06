@@ -317,8 +317,8 @@
             member __.ReadSingle tag =
                 if not <| isArrayElement () then
                     jsonReader.ReadProperty tag
+                    jsonReader.MoveNext()
 
-                jsonReader.MoveNext()
                 let value =
                     match jsonReader.TokenType with
                     | JsonToken.Float -> jsonReader.ValueAs<double> () |> single
@@ -330,8 +330,8 @@
             member __.ReadDouble tag = 
                 if not <| isArrayElement () then
                     jsonReader.ReadProperty tag
+                    jsonReader.MoveNext()
 
-                jsonReader.MoveNext()
                 let value =
                     match jsonReader.TokenType with
                     | JsonToken.Float -> jsonReader.ValueAs<double> ()
