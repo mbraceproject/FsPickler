@@ -22,3 +22,26 @@ let jp' = Json.pickle fPickler (fun x -> x + 1)
 Binary.unpickle fPickler bp' 41
 Xml.unpickle fPickler xp' 41
 Json.unpickle fPickler jp' 41
+
+
+#r "Newtonsoft.Json.dll"
+
+open Newtonsoft.Json
+open System.IO
+
+let sw = new StringWriter()
+let jw = new JsonTextWriter(sw)
+
+jw.WriteValue 129381029381230981231M
+
+jw.Flush()
+
+let text = sw.ToString()
+
+let sr = new StringReader(text)
+let jr = new JsonTextReader(sr)
+
+jr.Read()
+jr.ReadAsString()
+jr.TokenType
+jr.Value

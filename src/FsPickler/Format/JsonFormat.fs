@@ -185,7 +185,7 @@
 
             member __.WriteSingle (tag : string) value = writePrimitive jsonWriter (isArrayElement ()) tag value
             member __.WriteDouble (tag : string) value = writePrimitive jsonWriter (isArrayElement ()) tag value
-            member __.WriteDecimal (tag : string) value = writePrimitive jsonWriter (isArrayElement ()) tag value
+            member __.WriteDecimal (tag : string) value = writePrimitive jsonWriter (isArrayElement ()) tag <| string value
 
             member __.WriteChar (tag : string) value = writePrimitive jsonWriter (isArrayElement ()) tag value
             member __.WriteString (tag : string) value = writePrimitive jsonWriter (isArrayElement ()) tag value
@@ -346,30 +346,14 @@
 
             member __.ReadGuid tag = jsonReader.ReadPrimitiveAs<string> (isArrayElement ()) tag |> Guid.Parse
             member __.ReadTimeSpan tag = jsonReader.ReadPrimitiveAs<string> (isArrayElement ()) tag |> TimeSpan.Parse
-            
-            member __.ReadDate tag = 
-                if not <| isArrayElement () then
-                    jsonReader.ReadProperty tag
+            member __.ReadDate tag = jsonReader.ReadPrimitiveAs<DateTime> (isArrayElement ()) tag
 
-                let d = jsonReader.ReadAsDateTime().Value
-                jsonReader.MoveNext()
-                d
-
-            member __.ReadDecimal tag =
-                if not <| isArrayElement () then
-                    jsonReader.ReadProperty tag
-                    
-                let d = jsonReader.ReadAsDecimal().Value
-                jsonReader.MoveNext()
-                d
+            member __.ReadDecimal tag = jsonReader.ReadPrimitiveAs<string> (isArrayElement ()) tag |> decimal
 
             member __.ReadBytes tag = 
-                if not <| isArrayElement () then
-                    jsonReader.ReadProperty tag
-                   
-                let bytes = jsonReader.ReadAsBytes() 
-                jsonReader.MoveNext()
-                bytes
+                match jsonReader.ReadPrimitiveAs<string> (isArrayElement ()) tag with
+                | null -> null
+                | value -> Convert.FromBase64String value
 
             member __.IsPrimitiveArraySerializationSupported = false
             member __.ReadPrimitiveArray _ _ = raise <| new NotImplementedException()
@@ -380,7 +364,7 @@
         let indent = defaultArg indent false
 
         interface IStringPickleFormatProvider with
-            member __.Name = "Xml"
+            member __.Name = "Json"
 
             member __.CreateWriter (stream, encoding, leaveOpen) =
                 use sw = new StreamWriter(stream, encoding, 1024, leaveOpen)
