@@ -221,9 +221,10 @@
         // automated large-scale object generation
         let generateSerializableObjects (assembly : Assembly) =
             let filterType (t : Type) =
-                match t.Namespace with
-                | "System.Reflection" -> false // System.Reflection.Assembly.ToString() in mono may cause runtime to die
-                | _ ->
+                if runsOnMono && t.Namespace = "System.Reflection" then false // mono bug that kills the runtime
+                elif runsOnMono && t = typeof<System.Collections.CaseInsensitiveComparer> then false // mono bug in NoEmit build
+                elif runsOnMono && t = typeof<System.Globalization.DateTimeFormatInfo> then false // mono bug in NoEmit build
+                else
                     // types that cause .IsSerializable to fail
                     // should be included in the testing
                     try FsPickler.IsSerializableType t with _ -> true
