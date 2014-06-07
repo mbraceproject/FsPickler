@@ -63,7 +63,7 @@
                                     [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : unit =
 
             let pickler = resolver.Resolve valueType
-            let writer = initStreamWriter formatP stream encoding leaveOpen
+            use writer = initStreamWriter formatP stream encoding leaveOpen
             writeRootObjectUntyped resolver reflectionCache writer streamingContext pickler value
 
         /// <summary>Serialize object to the underlying stream using given pickler.</summary>
@@ -87,7 +87,7 @@
         member __.Deserialize<'T> (stream : Stream, [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : 'T =
 
             let pickler = resolver.Resolve<'T> ()
-            let reader = initStreamReader formatP stream encoding leaveOpen
+            use reader = initStreamReader formatP stream encoding leaveOpen
             readRootObject resolver reflectionCache reader streamingContext pickler
 
         /// <summary>Deserialize value of given type from the underlying stream, using given pickler.</summary>
@@ -112,7 +112,7 @@
                                     [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : obj =
 
             let pickler = resolver.Resolve valueType
-            let reader = initStreamReader formatP stream encoding leaveOpen
+            use reader = initStreamReader formatP stream encoding leaveOpen
             readRootObjectUntyped resolver reflectionCache reader streamingContext pickler
 
         /// <summary>Deserialize object from the underlying stream using given pickler.</summary>
