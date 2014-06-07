@@ -83,8 +83,8 @@
             with get () = nextObjectIsSubtype
             and set b = nextObjectIsSubtype <- b
 
-        interface IDisposable with
-            member __.Dispose () = formatter.Dispose()
+//        interface IDisposable with
+//            member __.Dispose () = formatter.Dispose()
 
     and [<AutoSerializable(false)>] 
         ReadState internal (formatter : IPickleFormatReader, resolver : IPicklerResolver, 
@@ -122,5 +122,5 @@
             with get () = nextObjectIsSubtype
             and set b = nextObjectIsSubtype <- b
 
-        interface IDisposable with
-            member __.Dispose () = formatter.Dispose()
+//        interface IDisposable with
+//            member __.Dispose () = formatter.Dispose()

@@ -130,7 +130,7 @@
             member __.IsPrimitiveArraySerializationSupported = false
             member __.WritePrimitiveArray _ _ = raise <| new NotSupportedException()
 
-            member __.Dispose () = writer.Flush () ; writer.Dispose()
+            member __.Dispose () = writer.Flush () ; textWriter.Flush () ; writer.Dispose()
 
 
     type XmlPickleReader internal (textReader : TextReader, leaveOpen) =
@@ -281,11 +281,11 @@
             member __.Name = "Xml"
 
             member __.CreateWriter (stream, encoding, leaveOpen) =
-                use sw = new StreamWriter(stream, encoding, 1024, leaveOpen)
+                let sw = new StreamWriter(stream, encoding, 1024, leaveOpen)
                 new XmlPickleWriter(sw, indent, leaveOpen) :> _
 
             member __.CreateReader (stream, encoding, leaveOpen) =
-                use sr = new StreamReader(stream, encoding, true, 1024, leaveOpen)
+                let sr = new StreamReader(stream, encoding, true, 1024, leaveOpen)
                 new XmlPickleReader(sr, leaveOpen) :> _
 
             member __.CreateWriter textWriter = new XmlPickleWriter(textWriter, indent, true) :> _

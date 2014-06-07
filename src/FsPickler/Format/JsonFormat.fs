@@ -201,7 +201,7 @@
             member __.WritePrimitiveArray _ _ = raise <| NotSupportedException()
 
             member __.Dispose () = 
-                jsonWriter.Flush () ; (jsonWriter :> IDisposable).Dispose()
+                jsonWriter.Flush () ; textWriter.Flush () ; (jsonWriter :> IDisposable).Dispose()
 
 
     type JsonPickleReader internal (textReader : TextReader) =
@@ -367,11 +367,11 @@
             member __.Name = "Json"
 
             member __.CreateWriter (stream, encoding, leaveOpen) =
-                use sw = new StreamWriter(stream, encoding, 1024, leaveOpen)
+                let sw = new StreamWriter(stream, encoding, 1024, leaveOpen)
                 new JsonPickleWriter(sw, indent) :> _
 
             member __.CreateReader (stream, encoding, leaveOpen) =
-                use sr = new StreamReader(stream, encoding, true, 1024, leaveOpen)
+                let sr = new StreamReader(stream, encoding, true, 1024, leaveOpen)
                 new JsonPickleReader(sr) :> _
 
             member __.CreateWriter textWriter = new JsonPickleWriter(textWriter, indent) :> _
