@@ -217,12 +217,6 @@
 
             toAdjacencyMap g1 = toAdjacencyMap g2
 
-        let stringValue = 
-            "Lorem ipsum dolor sit amet, consectetur adipisicing elit, 
-                sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
-
-
-
 
         // automated large-scale object generation
         let generateSerializableObjects (assembly : Assembly) =
