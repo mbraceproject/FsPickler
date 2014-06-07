@@ -267,13 +267,13 @@
         member __.``4. BCL: tuple simple`` () =
             Check.QuickThrowOnFail<Tuple<string>> testEquals
             Check.QuickThrowOnFail<string * byte> testEquals
-            Check.QuickThrowOnFail<string * byte * DateTime> testEquals
-            Check.QuickThrowOnFail<string * byte * DateTime * Guid> testEquals
-            Check.QuickThrowOnFail<string * byte * DateTime * Guid * int> testEquals
-            Check.QuickThrowOnFail<string * byte * DateTime * Guid * int * uint64> testEquals
-            Check.QuickThrowOnFail<string * byte * DateTime * Guid * int * uint64 * decimal> testEquals
-            Check.QuickThrowOnFail<string * byte * DateTime * Guid * int * uint64 * decimal * int> testEquals
-            Check.QuickThrowOnFail<string * byte * DateTime * Guid * int * uint64 * decimal * int * int> testEquals
+            Check.QuickThrowOnFail<string * byte * TimeSpan> testEquals
+            Check.QuickThrowOnFail<string * byte * TimeSpan * Guid> testEquals
+            Check.QuickThrowOnFail<string * byte * TimeSpan * Guid * int> testEquals
+            Check.QuickThrowOnFail<string * byte * TimeSpan * Guid * int * uint64> testEquals
+            Check.QuickThrowOnFail<string * byte * TimeSpan * Guid * int * uint64 * decimal> testEquals
+            Check.QuickThrowOnFail<string * byte * TimeSpan * Guid * int * uint64 * decimal * int> testEquals
+            Check.QuickThrowOnFail<string * byte * TimeSpan * Guid * int * uint64 * decimal * int * int> testEquals
 
         [<Test; Category("Generic BCL Types")>]
         member __.``4. BCL: tuple nested`` () =
