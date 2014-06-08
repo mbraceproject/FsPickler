@@ -30,6 +30,43 @@
             let e = new SecurityElement("", value)
             e.Text
 
+        let inline mkFlagCsv (flags : ObjectFlags) =
+            let tokens = new ResizeArray<string>()
+
+            if ObjectFlags.hasFlag flags ObjectFlags.IsNull then
+                tokens.Add "null"
+
+            if ObjectFlags.hasFlag flags ObjectFlags.IsCachedInstance then
+                tokens.Add "cached"
+
+            if ObjectFlags.hasFlag flags ObjectFlags.IsCyclicInstance then
+                tokens.Add "cyclic"
+
+            if ObjectFlags.hasFlag flags ObjectFlags.IsProperSubtype then
+                tokens.Add "subtype"
+
+            if ObjectFlags.hasFlag flags ObjectFlags.IsSequenceHeader then
+                tokens.Add "sequence"
+
+            String.concat "," tokens
+
+        let inline parseFlagCsv (csv : string) =
+            if String.IsNullOrEmpty csv then ObjectFlags.None else
+
+            let mutable flags = ObjectFlags.None
+            let tokens = csv.Split(',')
+            
+            for t in tokens do
+                match t with
+                | "null" -> flags <- flags ||| ObjectFlags.IsNull
+                | "cached" -> flags <- flags ||| ObjectFlags.IsCachedInstance
+                | "cyclic" -> flags <- flags ||| ObjectFlags.IsCyclicInstance
+                | "subtype" -> flags <- flags ||| ObjectFlags.IsProperSubtype
+                | "sequence" -> flags <- flags ||| ObjectFlags.IsSequenceHeader
+                | _ -> raise <| new InvalidDataException(sprintf "invalid pickle flag '%s'." t)
+
+            flags
+
 
     open XmlUtils
 
@@ -60,17 +97,8 @@
             member __.BeginWriteObject (_ : TypeKind) (_ : PicklerInfo) (tag : string) (flags : ObjectFlags) =
                 writer.WriteStartElement(tag)
 
-                if ObjectFlags.hasFlag flags ObjectFlags.IsNull then 
-                    writer.WriteAttributeString("null", "true")
-                elif ObjectFlags.hasFlag flags ObjectFlags.IsCachedInstance then 
-                    writer.WriteAttributeString("cached", "true")
-                elif ObjectFlags.hasFlag flags ObjectFlags.IsCyclicInstance then 
-                    writer.WriteAttributeString("cyclic", "true")
-                elif ObjectFlags.hasFlag flags ObjectFlags.IsSequenceHeader then 
-                    writer.WriteAttributeString("sequence", "true")
-
-                if ObjectFlags.hasFlag flags ObjectFlags.IsProperSubtype then 
-                    writer.WriteAttributeString("isSubtype", "true")
+                if flags <> ObjectFlags.None then
+                    writer.WriteAttributeString("flags", mkFlagCsv flags)
 
             member __.EndWriteObject () = writer.WriteEndElement()
 
@@ -170,13 +198,7 @@
             member __.BeginReadObject (_ : TypeKind) (_ : PicklerInfo) (tag : string) =
                 do readElementName reader tag
 
-                let mutable flags = ObjectFlags.None
-                if reader.["null"] = "true" then flags <- ObjectFlags.IsNull
-                elif reader.["cached"] = "true" then flags <- ObjectFlags.IsCachedInstance
-                elif reader.["cyclic"] = "true" then flags <- ObjectFlags.IsCyclicInstance
-                elif reader.["sequence"] = "true" then flags <- ObjectFlags.IsSequenceHeader
-                
-                if reader.["isSubtype"] = "true" then flags <- flags ||| ObjectFlags.IsProperSubtype
+                let flags = parseFlagCsv <| reader.["flags"]
 
                 if not reader.IsEmptyElement then
                     if not <| reader.Read() then
