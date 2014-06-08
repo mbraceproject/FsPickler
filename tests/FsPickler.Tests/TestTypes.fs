@@ -26,6 +26,9 @@
 
         let rec int2Peano n = match n with 0 -> Zero | n -> Succ(int2Peano(n-1))
 
+        type ClassWithGenericMethod =
+            static member Method<'T,'S> () = Unchecked.defaultof<'T>, Unchecked.defaultof<'S>
+
         type OverLoaded () =
             member __.A<'T> () = ()
             member __.A<'T> (x : 'T) = ()
@@ -118,7 +121,18 @@
                     |> Pickler.pair Pickler.int
                     |> Pickler.wrap (fun (_,y) -> new ClassWithCombinators(42,y)) (fun c -> c.Value))
 
-        exception FsharpException of int * string
+        
+        let addStackTrace (e : 'exn) =
+            let rec dive n =
+                if n = 0 then raise e
+                else
+                    1 + dive (n-1)
+
+            try dive 20 |> ignore; invalidOp "should have failed"
+            with :? 'exn as e -> e
+
+        exception FSharpException of int * string
+
 
         type BinTree<'T> =
             | Leaf
@@ -203,37 +217,23 @@
 
             toAdjacencyMap g1 = toAdjacencyMap g2
 
-        let stringValue = 
-            "Lorem ipsum dolor sit amet, consectetur adipisicing elit, 
-                sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
-
-        // test provision for top-level sequence serialization
-        let testSequence<'T when 'T : equality> (fsp : FsPicklerSerializer) (xs : seq<'T>) =
-            use m = new MemoryStream()
-            let length = fsp.Pickler.SerializeSequence(m, xs)
-            m.Position <- 0L
-            use enum = xs.GetEnumerator()
-            use enum' = fsp.Pickler.DeserializeSequence<'T>(m, length)
-            let mutable success = true
-            while success && enum.MoveNext() do 
-                if enum'.MoveNext() && enum.Current = enum'.Current then ()
-                else
-                    success <- false
-            success
-
 
         // automated large-scale object generation
         let generateSerializableObjects (assembly : Assembly) =
             let filterType (t : Type) =
-                match t.Namespace with
-                | "System.Reflection" -> false // System.Reflection.Assembly.ToString() in mono may cause runtime to die
-                | _ ->
+                if runsOnMono && t.Namespace = "System.Reflection" then false // mono bug that kills the runtime
+                elif runsOnMono && t = typeof<System.Collections.CaseInsensitiveComparer> then false // mono bug in NoEmit build
+                elif runsOnMono && t = typeof<System.Globalization.DateTimeFormatInfo> then false // mono bug in NoEmit build
+                else
+                    // types that cause .IsSerializable to fail
+                    // should be included in the testing
                     try FsPickler.IsSerializableType t with _ -> true
 
             let tryActivate (t : Type) =
                 try Some (t, Activator.CreateInstance t)
                 with _ -> None
 
+            // only test things that are successfully serialized by BinaryFormatter
             let bfs = new BinaryFormatterSerializer()
             let filterObject (t : Type, o : obj) =
                 try Serializer.roundtrip o bfs |> ignore ; true

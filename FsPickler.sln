@@ -33,7 +33,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{23BFC6E5-858
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FsPickler.PerfTests", "tests\FsPickler.PerfTests\FsPickler.PerfTests.fsproj", "{50CBCEEF-24DD-454F-A3A3-AC1759883311}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FsPickler.Tests", "src\FsPickler.Tests\FsPickler.Tests.fsproj", "{EC89A90F-5EBF-40FB-B4F3-1A8F2D224A20}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FsPickler.Tests", "tests\FsPickler.Tests\FsPickler.Tests.fsproj", "{EC89A90F-5EBF-40FB-B4F3-1A8F2D224A20}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

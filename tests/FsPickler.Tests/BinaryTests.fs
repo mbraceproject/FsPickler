@@ -1,8 +1,10 @@
-﻿namespace Nessos.FsPickler
+﻿namespace Nessos.FsPickler.Tests.Binary
 
     open System
     open System.IO
+    open System.Threading
 
+    open Nessos.FsPickler.Tests
     open Nessos.FsPickler.Binary
 
     open NUnit.Framework
@@ -18,6 +20,7 @@
             | Byte of byte
             | SByte of sbyte
             | Bytes of byte []
+            | Array of int64 []
             | Char of char
             | Single of single
             | Double of double
@@ -49,6 +52,7 @@
                 | UInt32 n -> bw.Write n
                 | UInt64 n -> bw.Write n
                 | Bytes bs -> bw.Write bs
+                | Array fs -> bw.Write(fs)
                 | Char c -> bw.Write c
                 | Single s -> bw.Write s
                 | Double d -> bw.Write d
@@ -68,6 +72,7 @@
                 | UInt32 n -> UInt32 <| br.ReadUInt32()
                 | UInt64 n -> UInt64 <| br.ReadUInt64()
                 | Bytes bs -> Bytes <| br.ReadBytes()
+                | Array ns -> let ns' = Array.zeroCreate<int64> ns.Length in br.ReadArray(ns') ; Array(ns')
                 | Char c -> Char <| br.ReadChar()
                 | Single s -> Single <| br.ReadSingle()
                 | Double d -> Double <| br.ReadDouble()
@@ -91,10 +96,29 @@
 
             inputs |> Array.forall testCase
 
+        // make invalid reads to binary stream; should either succeed (such a possibility exists)
+        // or fail with any of the prescribed exceptions
+        let testInvalidReads (writes : TestCase [], reads : TestCase []) =
+            use m = new MemoryStream()
+            do
+                use bw = new BinaryWriter(m)
+                for case in writes do case.Write bw
+
+            m.Position <- 0L
+            let br = new BinaryReader(m)
+
+            try
+                for case in reads do
+                    case.Read br |> ignore
+            with 
+            | :? InvalidDataException
+            | :? ArgumentException
+            | :? EndOfStreamException -> ()
+
         [<Test; Repeat(10)>]
-        let ``Quick check Writes/Reads`` () =
+        let ``Binary writes/reads`` () =
             Check.QuickThrowOnFailure testWriteRead
 
-        [<Test>]
-        let ``Quick check enlarged Writes/Reads`` () =
-            Check.QuickThrowOnFailure (fun inputs -> testWriteRead [| for i in 1 .. 100 do yield! inputs |])
+        [<Test; Repeat(10)>]
+        let ``invalid reads stress test`` () =
+            Check.QuickThrowOnFailure testInvalidReads

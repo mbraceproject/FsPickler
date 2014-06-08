@@ -15,6 +15,8 @@
 
         let runsOnMono = System.Type.GetType("Mono.Runtime") <> null
 
+        let allFlags = BindingFlags.Public ||| BindingFlags.NonPublic ||| BindingFlags.Instance ||| BindingFlags.Static
+
         let runOnce (f : unit -> 'T) : unit -> 'T = let x = lazy (f ()) in fun () -> x.Value
 
         let defaultArg' (x : 'T option) (def : unit -> 'T) = match x with Some x -> x | None -> def ()
@@ -64,3 +66,68 @@
                     return! s.AsyncReadBytes length
                 }
 
+        module FsUnit =
+
+            let shouldFailwith<'Exception when 'Exception :> exn>(f : unit -> unit) =
+                let result =
+                    try f () ; Choice1Of3 ()
+                    with
+                    | :? 'Exception -> Choice2Of3 ()
+                    | e -> Choice3Of3 e
+
+                match result with
+                | Choice1Of3 () ->
+                    let msg = sprintf "Expected exception '%s', but was successful." typeof<'Exception>.Name
+                    raise <| new AssertionException(msg)
+                | Choice2Of3 () -> ()
+                | Choice3Of3 e ->
+                    let msg = sprintf "An unexpected exception type was thrown\nExpected: '%s'\n but was: '%s'." (e.GetType().Name) typeof<'Exception>.Name
+                    raise <| new AssertionException(msg)
+
+
+        module FsCheck =
+
+            open System.Collections.Generic
+
+            open FsCheck
+
+            type FsPicklerQCGenerators =
+                static member BigInt = Arb.generate<byte []> |> Gen.map (fun bs -> System.Numerics.BigInteger(bs)) |> Arb.fromGen
+                static member Array2D<'T> () = Arb.generate<'T> |> Gen.array2DOf |> Arb.fromGen
+                static member Array3D<'T> () =
+                    let mkSized (n : int) =
+                        gen {
+                            // Sqrt good enough estimate
+                            let chooseSqrtOfSize = Gen.choose(0, n |> float |> sqrt |> int)
+                            let! N = chooseSqrtOfSize
+                            let! M = chooseSqrtOfSize
+                            let! K = chooseSqrtOfSize
+                            let g = Arb.generate<'T>
+                            let! seed = Gen.arrayOfLength (N*M*K) g
+                            return Array3D.init N M K (fun n m k -> seed.[n + m * N + k * N * M])
+                        }
+
+                    mkSized |> Gen.sized |> Arb.fromGen
+
+                static member Array4D<'T> () =
+                    let mkSized (n : int) =
+                        gen {
+                            let chooseSqrtOfSize = Gen.choose(0, n |> float |> sqrt |> sqrt |> int)
+                            let! N = chooseSqrtOfSize
+                            let! M = chooseSqrtOfSize
+                            let! K = chooseSqrtOfSize
+                            let! L = chooseSqrtOfSize
+                            let g = Arb.generate<'T>
+                            let! seed = Gen.arrayOfLength (N*M*K*L) g
+                            return Array4D.init N M K L (fun n m k l -> seed.[n + m * N + k * N * M + l * N * M * K])
+                        }
+
+                    mkSized |> Gen.sized |> Arb.fromGen
+
+                static member Seq<'T> () = Arb.generate<'T []> |> Gen.map Array.toSeq |> Arb.fromGen
+
+            
+            type Check =
+
+                static member QuickThrowOnFail<'T> (f : 'T -> unit) = Check.QuickThrowOnFailure f
+                static member QuickThrowOnFail<'T> (f : 'T -> bool) = Check.QuickThrowOnFailure f
