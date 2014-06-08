@@ -239,9 +239,6 @@
 
             roundtrips 1000 quotationLarge s
 
-
-#if PERFTESTS
-
     type ``Serializer Comparison`` () =
         inherit NUnitPerf<ISerializer>()
 
@@ -256,6 +253,20 @@
         let comparer = new WeightedComparer(spaceFactor = 0.2, leastAcceptableImprovementFactor = 1.)
 
         let tester = new ImplementationComparer<_>(fsp, [bfs;ndc;jdn;pbn;ssj;sst], throwOnError = true, comparer = comparer)
+        let tests = PerfTest.OfModuleMarker<PerformanceTests.Marker> ()
+
+        override __.PerfTester = tester :> _
+        override __.PerfTests = tests
+
+    type ``FsPickler Formats Comparison`` () =
+        inherit NUnitPerf<ISerializer> ()
+
+        let binary = new FsPicklerBinary() :> ISerializer
+        let bclBinary = new FsPicklerBclBinary() :> ISerializer
+        let json = new FsPicklerJson() :> ISerializer
+        let xml = new FsPicklerXml() :> ISerializer
+
+        let tester = new ImplementationComparer<_>(binary, [bclBinary ; json ; xml], throwOnError = false)
         let tests = PerfTest.OfModuleMarker<PerformanceTests.Marker> ()
 
         override __.PerfTester = tester :> _
@@ -282,5 +293,3 @@
         [<TestFixtureTearDown>]
         member __.Persist() =
             if persistResults then tester.PersistCurrentResults ()
-
-#endif

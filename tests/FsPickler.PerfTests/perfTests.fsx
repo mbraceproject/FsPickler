@@ -121,16 +121,25 @@ module PerfTests =
     [<PerfTest>]
     let ``System.Type`` s = Serializer.roundtrips 10000 tyArray s
 
-//    let graph = Nessos.FsPickler.Tests.TestTypes.createRandomGraph 0.2 500
-//
-//    [<PerfTest>]
-//    let ``Random cyclic graph (n=500,P=20%)`` s = Serializer.roundtrips 1 graph s
+
+
+module RandomGraph =
+    type Marker = class end
+
+    let graph = Nessos.FsPickler.Tests.TestTypes.createRandomGraph 0.2 500
+
+    [<PerfTest>]
+    let ``Random cyclic graph (n=500,P=20%)`` s = Serializer.roundtrips 1 graph s
         
 
 
 let tests = PerfTest<ISerializer>.OfModuleMarker<PerfTests.Entry> ()
+let cyclic = PerfTest<ISerializer>.OfModuleMarker<RandomGraph.Marker> ()
 
-let fsp = TestTypes.testSerializer :> ISerializer
+let fspBinary = new FsPicklerBinary() :> ISerializer
+let fspBclBinary = new FsPicklerBclBinary() :> ISerializer
+let fspXml = new FsPicklerXml() :> ISerializer
+let fspJson = new FsPicklerJson() :> ISerializer
 let bfs = new BinaryFormatterSerializer() :> ISerializer
 let ndc = new NetDataContractSerializer() :> ISerializer
 let jdn = new JsonDotNetSerializer() :> ISerializer
@@ -138,8 +147,11 @@ let pbn = new ProtoBufSerializer() :> ISerializer
 let ssj = new ServiceStackJsonSerializer() :> ISerializer
 let sst = new ServiceStackTypeSerializer() :> ISerializer
 
-let mkTester () = new ImplementationComparer<ISerializer>(fsp, [bfs;ndc;jdn;pbn;ssj;sst]) :> PerformanceTester<ISerializer>
-let mkCyclicGraphTester () = new ImplementationComparer<ISerializer>(fsp, [bfs]) :> PerformanceTester<ISerializer>
+let allSerializers = [fspXml;fspBclBinary;fspJson;bfs;ndc;jdn;pbn;ssj;sst]
+let cyclicOnly = [fspBclBinary;fspXml;fspJson;bfs]
+
+let mkTester () = new ImplementationComparer<ISerializer>(fspBinary, allSerializers) :> PerformanceTester<ISerializer>
+let mkCyclicGraphTester () = new ImplementationComparer<ISerializer>(fspBinary, cyclicOnly) :> PerformanceTester<ISerializer>
 
 
 let dashGrid = ChartTypes.Grid(LineColor = Color.Gainsboro, LineDashStyle = ChartDashStyle.Dash)
@@ -164,9 +176,12 @@ let plotGC (results : TestSession list) =
 
 
 let results = PerfTest.run mkTester tests
-//let results = PerfTest.run mkCyclicGraphTester tests
+let cyclicResults = PerfTest.run mkCyclicGraphTester cyclic
 
 TestSession.toFile "/mbrace/perftests.xml" results
+TestSession.toFile "/mbrace/perftests-cyclic.xml" cyclicResults
 
 plotTime results
 plotGC results
+plotTime cyclicResults
+plotGC cyclicResults
