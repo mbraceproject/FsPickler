@@ -45,9 +45,6 @@
             if ObjectFlags.hasFlag flags ObjectFlags.IsProperSubtype then
                 tokens.Add "subtype"
 
-            if ObjectFlags.hasFlag flags ObjectFlags.IsSequenceHeader then
-                tokens.Add "sequence"
-
             String.concat "," tokens
 
         let inline parseFlagCsv (csv : string) =
@@ -62,7 +59,6 @@
                 | "cached" -> flags <- flags ||| ObjectFlags.IsCachedInstance
                 | "cyclic" -> flags <- flags ||| ObjectFlags.IsCyclicInstance
                 | "subtype" -> flags <- flags ||| ObjectFlags.IsProperSubtype
-                | "sequence" -> flags <- flags ||| ObjectFlags.IsSequenceHeader
                 | _ -> raise <| new InvalidDataException(sprintf "invalid pickle flag '%s'." t)
 
             flags

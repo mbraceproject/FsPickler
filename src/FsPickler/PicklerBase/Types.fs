@@ -36,7 +36,7 @@
         | Combinator            = 8uy
         | UserDefined           = 9uy
 
-    /// flags that specify runtime properties of instances
+    /// flags that specify runtime properties of serialized objects
 
     type ObjectFlags = 
         | None                  = 0uy
@@ -44,7 +44,6 @@
         | IsProperSubtype       = 2uy
         | IsCachedInstance      = 4uy
         | IsCyclicInstance      = 8uy
-        | IsSequenceHeader      = 16uy
         
 
         
