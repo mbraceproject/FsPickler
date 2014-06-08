@@ -87,17 +87,39 @@
             member x.Value = s
             member x.Value' = t
 
-        type SerializableClass(x : int, y : string) =
+        type SimpleISerializableClass(x : int, y : string) =
             new(s : SerializationInfo, _ : StreamingContext) =
-                new SerializableClass(s.GetInt32 "integer", s.GetString "string")
+                new SimpleISerializableClass(s.GetInt32 "integer", s.GetString "string")
 
             member __.Value = y + string x
-            override __.Equals y = match y with :? SerializableClass as y -> y.Value = __.Value | _ -> false
+            override __.Equals y = 
+                match y with 
+                | :? SimpleISerializableClass as y -> y.Value = __.Value 
+                | _ -> false
 
             interface ISerializable with
                 member __.GetObjectData(s : SerializationInfo, _ : StreamingContext) =
                     s.AddValue("string", y)
                     s.AddValue("integer", x)
+
+        type GenericISerializableClass<'T>(x : int, y : string, z : 'T) =
+            member __.X = x
+            member __.Y = y
+            member __.Z = z
+
+            new (sI : SerializationInfo, _ : StreamingContext) =
+                new GenericISerializableClass<'T>(sI.GetInt32("x"), sI.GetString("y"), sI.GetValue("z", typeof<'T>) :?> 'T)
+
+            interface ISerializable with
+                member __.GetObjectData (sI : SerializationInfo, _ : StreamingContext) =
+                    sI.AddValue("x", x)
+                    sI.AddValue("y", y)
+                    sI.AddValue("z", z)
+
+            override x.Equals y =
+                match y with
+                | :? GenericISerializableClass<'T> as y -> x.X = y.X && x.Y = y.Y
+                | _ -> false
 
         [<CustomPickler>]
         type ClassWithPicklerFactory (x : int) =
@@ -182,21 +204,6 @@
             member __.X = x
             member __.Y = y
 
-        type SerializableClass<'T>(x : int, y : string, z : 'T) =
-            member __.X = x
-            member __.Y = y
-            member __.Z = z
-
-            new (sI : SerializationInfo, _ : StreamingContext) =
-                new SerializableClass<'T>(sI.GetInt32("x"), sI.GetString("y"), sI.GetValue("z", typeof<'T>) :?> 'T)
-
-
-            interface ISerializable with
-                member __.GetObjectData (sI : SerializationInfo, _ : StreamingContext) =
-                    sI.AddValue("x", x)
-                    sI.AddValue("y", y)
-                    sI.AddValue("z", z)
-
 
         type Node<'T> = { Value : 'T ; mutable Neigh : Node<'T> list }
         and Graph<'T> = { Nodes : Node<'T> list }
@@ -234,9 +241,8 @@
                 with _ -> None
 
             // only test things that are successfully serialized by BinaryFormatter
-            let bfs = new BinaryFormatterSerializer()
             let filterObject (t : Type, o : obj) =
-                try Serializer.roundtrip o bfs |> ignore ; true
+                try cloneObject o |> ignore ; true
                 with _ -> false
             
             assembly.GetTypes()

@@ -66,9 +66,9 @@
   </Target>
   <ItemGroup>
     <Compile Include="Utils.fs" />
-    <Compile Include="BinaryTests.fs" />
-    <Compile Include="Serializers.fs" />
+    <Compile Include="FsCheck.fs" />
     <Compile Include="TestTypes.fs" />
+    <Compile Include="BinaryTests.fs" />
     <Compile Include="FsPicklerTests.fs" />
     <None Include="packages.config" />
     <None Include="app.config" />

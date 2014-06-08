@@ -22,9 +22,15 @@
     [<TestFixture("FsPickler.Json")>]
     type ``FsPickler Tests`` (picklerName : string) as self =
 
-        let pickler = FsPicklerSerializer.Activate(picklerName).Pickler
+        let pickler =
+            match picklerName with
+            | "FsPickler.Binary" -> FsPickler.CreateBinary() :> FsPickler
+            | "FsPickler.BclBinary" -> FsPickler.CreateBclBinary() :> FsPickler
+            | "FsPickler.Json" -> FsPickler.CreateJson() :> FsPickler
+            | "FsPickler.Xml" -> FsPickler.CreateXml() :> FsPickler
+            | _ -> invalidArg "name" <| sprintf "unexpected pickler format '%s'." picklerName
 
-        let _ = Arb.register<FsPicklerQCGenerators> ()
+        let _ = Arb.register<FsPicklerGenerators> ()
 
         let testRoundtrip x = self.TestRoundtrip x
         let testEquals x = self.TestRoundtrip x |> should equal x
@@ -493,7 +499,10 @@
         member __.``6. Custom: recursive class`` () = testEquals <| RecursiveClass(Some (RecursiveClass(None)))
 
         [<Test ; Category("Custom types")>] 
-        member __.``6. Custom: ISerializable class`` () = testEquals <| SerializableClass(42, "fortyTwo")
+        member __.``6. Custom: Simple ISerializable class`` () = testEquals <| SimpleISerializableClass(42, "fortyTwo")
+
+        [<Test ; Category("Custom types")>] 
+        member __.``6. Custom: Generic ISerializable class`` () = testEquals <| GenericISerializableClass<int * string>(42, "fortyTwo", (42, "fortyTwo"))
 
         [<Test ; Category("Custom types")>] 
         member __.``6. Custom: struct`` () =

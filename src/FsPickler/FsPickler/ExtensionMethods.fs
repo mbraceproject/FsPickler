@@ -8,6 +8,7 @@
 
         type FsPickler with
             static member CreateBinary(?tyConv) = new BinaryPickler(?tyConv = tyConv)
+            static member CreateBclBinary(?tyConv) = new BinaryPickler(new BclBinaryPickleFormatProvider(), ?tyConv = tyConv)
             static member CreateXml(?tyConv) = new XmlPickler(?tyConv = tyConv)
             static member CreateJson(?tyConv) = new JsonPickler(?tyConv = tyConv)
 
