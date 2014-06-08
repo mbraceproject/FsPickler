@@ -13,15 +13,18 @@
     [<AutoOpen>]
     module private BclBinaryFormatUtils =
 
-        // each object is serialized with a 32 bit header
-        //
-        //   1. the first byte is a fixed identifier
-        //   2. the second byte contains TypeInfo
-        //   3. the third byte contains PicklerInfo
-        //   3. the fourth byte contains ObjectFlags
+        // each object is serialized with a 32 bit header 
+        // of which the first 24 are a fixed identifier
+        // and the final 8 encode the object flags.
         
         [<Literal>]
-        let initByte = 130uy
+        let initValue = 0xf591ce00u
+
+        [<Literal>]
+        let initMask  = 0xffffff00u
+
+        [<Literal>]
+        let flagMask  = 0x000000ffu
 
         // this binary format uses Buffer.BlockCopy for performance
         // and thus does little to handle endianness issues.
@@ -29,27 +32,13 @@
         // endianness setting at the beginning of the serialization stream.
         let isLittleEndian = BitConverter.IsLittleEndian
 
-        let inline createHeader (typeInfo : TypeKind) (picklerInfo : PicklerInfo) (flags : ObjectFlags) =
-            uint32 initByte 
-            ||| (uint32 typeInfo <<< 8) 
-            ||| (uint32 picklerInfo <<< 16) 
-            ||| (uint32 flags <<< 24)
+        let inline createHeader (flags : ObjectFlags) = initValue ||| uint32 flags
 
-        let inline readHeader (typeInfo : TypeKind) (picklerInfo : PicklerInfo) (header : uint32) =
-            if byte header <> initByte then
-                raise <| new InvalidDataException("invalid stream data.")
+        let inline readHeader (header : uint32) =
+            if header &&& initMask <> initValue then
+                raise <| new InvalidDataException("expected a new object header.")
 
-            let streamTypeInfo = header >>> 8 |> byte |> EnumOfValue<byte, TypeKind>
-            if streamTypeInfo <> typeInfo then
-                let message = sprintf "expected type '%O', was '%O'." typeInfo streamTypeInfo
-                raise <| new InvalidDataException(message)
-
-            let streamPicklerInfo = header >>> 16 |> byte |> EnumOfValue<byte, PicklerInfo>
-            if streamPicklerInfo <> picklerInfo then
-                let message = sprintf "expected pickler '%O, was '%O'." picklerInfo streamPicklerInfo
-                raise <| new InvalidDataException(message)
-
-            header >>> 24 |> byte |> EnumOfValue<byte, ObjectFlags>
+            flagMask &&& header |> byte |> EnumOfValue<byte, ObjectFlags>
 
         [<Literal>]
         let bufferSize = 256    
@@ -100,7 +89,7 @@
 
         interface IPickleFormatWriter with
             member __.BeginWriteRoot (id : string) =
-                bw.Write initByte
+                bw.Write initValue
                 bw.Write isLittleEndian
                 bw.Write id
 
@@ -112,8 +101,8 @@
             member __.BeginWriteUnBoundedSequence _ = ()
             member __.WriteHasNextElement hasNext = bw.Write hasNext
 
-            member __.BeginWriteObject typeFlags picklerFlags tag objectFlags =
-                let header = createHeader typeFlags picklerFlags objectFlags
+            member __.BeginWriteObject tag objectFlags =
+                let header = createHeader objectFlags
                 bw.Write header
 
             member __.EndWriteObject () = ()
@@ -169,8 +158,8 @@
             member __.Dispose () = br.Dispose ()
 
             member __.BeginReadRoot () =
-                if br.ReadByte () <> initByte then
-                    raise <| new InvalidDataException("invalid initialization byte.")
+                if br.ReadUInt32 () <> initValue then
+                    raise <| new InvalidDataException("invalid stream initialization.")
 
                 if br.ReadBoolean () <> isLittleEndian then
                     if isLittleEndian then
@@ -182,9 +171,9 @@
 
             member __.EndReadRoot () = ()
 
-            member __.BeginReadObject typeFlags picklerFlags tag =
+            member __.BeginReadObject tag =
                 let header = br.ReadUInt32()
-                readHeader typeFlags picklerFlags header
+                readHeader header
 
             member __.EndReadObject () = () 
 

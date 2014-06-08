@@ -114,7 +114,7 @@
 
             member __.EndWriteRoot () = jsonWriter.WriteEnd()
 
-            member __.BeginWriteObject (_ : TypeKind) (_ : PicklerInfo) (tag : string) (flags : ObjectFlags) =
+            member __.BeginWriteObject (tag : string) (flags : ObjectFlags) =
 
                 if not <| isArrayElement () then
                     jsonWriter.WritePropertyName tag
@@ -229,7 +229,7 @@
 
             member __.EndReadRoot () = jsonReader.Read() |> ignore
 
-            member __.BeginReadObject (_ : TypeKind) (_ : PicklerInfo) (tag : string) =
+            member __.BeginReadObject (tag : string) =
                 
                 if not <| isArrayElement () then
                     jsonReader.ReadProperty tag

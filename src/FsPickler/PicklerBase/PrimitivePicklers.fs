@@ -181,11 +181,11 @@
         inherit PrimitivePickler<DBNull> (TypeKind.Sealed, true)
 
         override __.Write (writer : WriteState) (tag : string) (_ : DBNull) =
-            writer.Formatter.BeginWriteObject TypeKind.Sealed PicklerInfo.Primitive tag ObjectFlags.IsNull
+            writer.Formatter.BeginWriteObject tag ObjectFlags.IsNull
             writer.Formatter.EndWriteObject ()
 
         override __.Read (reader : ReadState) (tag : string) =
-            let _ = reader.Formatter.BeginReadObject TypeKind.Sealed PicklerInfo.Primitive tag
+            let _ = reader.Formatter.BeginReadObject tag
             reader.Formatter.EndReadObject ()
             DBNull.Value
 
@@ -195,11 +195,11 @@
         inherit PrimitivePickler<'T> (TypeKind.Sealed, true)
 
         override __.Write (writer : WriteState) (tag : string) (_ : 'T) = 
-            writer.Formatter.BeginWriteObject TypeKind.Sealed PicklerInfo.Primitive tag ObjectFlags.IsNull
+            writer.Formatter.BeginWriteObject tag ObjectFlags.IsNull
             writer.Formatter.EndWriteObject ()
 
         override __.Read (reader : ReadState) (tag : string) : 'T =
-            let _ = reader.Formatter.BeginReadObject TypeKind.Sealed PicklerInfo.Primitive tag
+            let _ = reader.Formatter.BeginReadObject tag
             reader.Formatter.EndReadObject ()
             value
 

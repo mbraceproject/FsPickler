@@ -147,9 +147,6 @@
 
             let formatter = state.Formatter
 
-            let inline beginWriteObject tag flags =
-                formatter.BeginWriteObject p.m_TypeKind p.m_PicklerInfo tag flags
-
             // writes a non-null instance of a reference type
 #if DEBUG
             let writeObject () =
@@ -157,7 +154,7 @@
             let inline writeObject () =
 #endif
                 if p.m_TypeKind <= TypeKind.Sealed || p.m_UseWithSubtypes then
-                    beginWriteObject tag ObjectFlags.None
+                    formatter.BeginWriteObject tag ObjectFlags.None
                     p.m_Writer state value
                     formatter.EndWriteObject ()
                 else
@@ -165,24 +162,24 @@
                     let t0 = value.GetType()
                     if t0 <> p.Type then
                         let subPickler = state.PicklerResolver.Resolve t0
-                        beginWriteObject tag ObjectFlags.IsProperSubtype
+                        formatter.BeginWriteObject tag ObjectFlags.IsProperSubtype
                         state.TypePickler.Write state "subtype" t0
                         state.NextObjectIsSubtype <- true
                         subPickler.UntypedWrite state tag value
                         formatter.EndWriteObject ()
                     else
-                        beginWriteObject tag ObjectFlags.None
+                        formatter.BeginWriteObject tag ObjectFlags.None
                         p.m_Writer state value
                         formatter.EndWriteObject ()
 
             try
                 if p.m_TypeKind = TypeKind.Value then
-                    beginWriteObject tag ObjectFlags.None
+                    formatter.BeginWriteObject tag ObjectFlags.None
                     p.m_Writer state value
                     formatter.EndWriteObject ()
 
                 elif obj.ReferenceEquals(value, null) then
-                    beginWriteObject tag ObjectFlags.IsNull
+                    formatter.BeginWriteObject tag ObjectFlags.IsNull
                     formatter.EndWriteObject ()
 
                 else
@@ -217,25 +214,25 @@
                         do cyclicObjects.Add(id) |> ignore
                     
                         if p.m_TypeKind = TypeKind.Array then
-                            beginWriteObject tag ObjectFlags.IsCachedInstance
+                            formatter.BeginWriteObject tag ObjectFlags.IsCachedInstance
 
                         elif p.m_TypeKind <= TypeKind.Sealed || p.m_UseWithSubtypes then
-                            beginWriteObject tag ObjectFlags.IsCyclicInstance
+                            formatter.BeginWriteObject tag ObjectFlags.IsCyclicInstance
                         else
                             let t = value.GetType()
 
                             if t.IsArray then
-                                beginWriteObject tag ObjectFlags.IsCachedInstance
+                                formatter.BeginWriteObject tag ObjectFlags.IsCachedInstance
                             elif t <> p.Type then
-                                beginWriteObject tag (ObjectFlags.IsCyclicInstance ||| ObjectFlags.IsProperSubtype)
+                                formatter.BeginWriteObject tag (ObjectFlags.IsCyclicInstance ||| ObjectFlags.IsProperSubtype)
                                 state.TypePickler.Write state "subtype" t
                             else
-                                beginWriteObject tag ObjectFlags.IsCyclicInstance
+                                formatter.BeginWriteObject tag ObjectFlags.IsCyclicInstance
 
                         formatter.WriteInt64 "id" id
                         formatter.EndWriteObject()
                     else
-                        beginWriteObject tag ObjectFlags.IsCachedInstance
+                        formatter.BeginWriteObject tag ObjectFlags.IsCachedInstance
                         formatter.WriteInt64 "id" id
                         formatter.EndWriteObject()
                 else
@@ -264,7 +261,7 @@
             try
                 let formatter = state.Formatter
 
-                let flags = formatter.BeginReadObject p.m_TypeKind p.m_PicklerInfo tag
+                let flags = formatter.BeginReadObject tag
 
                 if ObjectFlags.hasFlag flags ObjectFlags.IsNull then 
                     formatter.EndReadObject ()

@@ -11,7 +11,7 @@
         abstract BeginWriteRoot : tag:string -> unit
         abstract EndWriteRoot : unit -> unit
 
-        abstract BeginWriteObject : typeInfo:TypeKind -> picklerInfo:PicklerInfo -> tag:string -> objectFlags:ObjectFlags -> unit
+        abstract BeginWriteObject : tag:string -> objectFlags:ObjectFlags -> unit
         abstract EndWriteObject : unit -> unit
 
         abstract BeginWriteBoundedSequence : tag:string -> length:int -> unit
@@ -56,7 +56,7 @@
         abstract BeginReadRoot : unit -> string
         abstract EndReadRoot : unit -> unit
 
-        abstract BeginReadObject : typeInfo:TypeKind -> picklerInfo:PicklerInfo -> tag:string -> ObjectFlags
+        abstract BeginReadObject : tag:string -> ObjectFlags
         abstract EndReadObject : unit -> unit
 
         abstract BeginReadBoundedSequence : tag:string -> int

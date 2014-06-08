@@ -90,7 +90,7 @@
                 writer.WriteEndElement()
                 writer.WriteEndDocument()
 
-            member __.BeginWriteObject (_ : TypeKind) (_ : PicklerInfo) (tag : string) (flags : ObjectFlags) =
+            member __.BeginWriteObject (tag : string) (flags : ObjectFlags) =
                 writer.WriteStartElement(tag)
 
                 if flags <> ObjectFlags.None then
@@ -191,7 +191,7 @@
                 else
                     reader.ReadEndElement()
 
-            member __.BeginReadObject (_ : TypeKind) (_ : PicklerInfo) (tag : string) =
+            member __.BeginReadObject (tag : string) =
                 do readElementName reader tag
 
                 let flags = parseFlagCsv <| reader.["flags"]
