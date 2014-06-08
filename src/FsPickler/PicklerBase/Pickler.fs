@@ -32,9 +32,9 @@
         abstract InitializeFrom : other:Pickler -> unit
 
     and
-     [<AutoSerializable(false)>]
-     [<AbstractClass>]
-     Pickler<'T> internal () =
+      [<AutoSerializable(false)>]
+      [<AbstractClass>]
+      Pickler<'T> internal () =
         inherit Pickler ()
         
         override __.Type = typeof<'T>
@@ -55,7 +55,7 @@
         abstract Resolve<'T> : unit -> Pickler<'T>
 
     and [<AutoSerializable(false)>] 
-        WriteState internal (formatter : IPickleFormatWriter, resolver : IPicklerResolver, 
+      WriteState internal (formatter : IPickleFormatWriter, resolver : IPicklerResolver, 
                                 reflectionCache : ReflectionCache, ?streamingContext) =
 
         let tyPickler = resolver.Resolve<Type> ()
@@ -83,11 +83,8 @@
             with get () = nextObjectIsSubtype
             and set b = nextObjectIsSubtype <- b
 
-//        interface IDisposable with
-//            member __.Dispose () = formatter.Dispose()
-
     and [<AutoSerializable(false)>] 
-        ReadState internal (formatter : IPickleFormatReader, resolver : IPicklerResolver, 
+      ReadState internal (formatter : IPickleFormatReader, resolver : IPicklerResolver, 
                                 reflectionCache : ReflectionCache, ?streamingContext) =
         
         let sc = match streamingContext with None -> new StreamingContext() | Some sc -> sc
@@ -121,6 +118,3 @@
         member internal __.NextObjectIsSubtype
             with get () = nextObjectIsSubtype
             and set b = nextObjectIsSubtype <- b
-
-//        interface IDisposable with
-//            member __.Dispose () = formatter.Dispose()

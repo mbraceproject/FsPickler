@@ -39,6 +39,8 @@
     <DocumentationFile>..\..\bin\FsPickler.xml</DocumentationFile>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <TargetFrameworkProfile />
+    <OtherFlags>
+    </OtherFlags>
   </PropertyGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
@@ -82,6 +84,7 @@
     <Compile Include="PicklerBase\Types.fs" />
     <Compile Include="PicklerBase\ReflectionCache.fs" />
     <Compile Include="PicklerBase\PickleFormat.fs" />
+    <Compile Include="PicklerBase\Pickler.fsi" />
     <Compile Include="PicklerBase\Pickler.fs" />
     <Compile Include="PicklerBase\PrimitivePicklers.fs" />
     <Compile Include="PicklerBase\CompositePickler.fs" />
