@@ -106,5 +106,5 @@
     and IStringPickleFormatProvider =
         inherit IPickleFormatProvider
 
-        abstract CreateWriter : TextWriter -> IPickleFormatWriter
-        abstract CreateReader : TextReader -> IPickleFormatReader
+        abstract CreateWriter : TextWriter * leaveOpen:bool -> IPickleFormatWriter
+        abstract CreateReader : TextReader * leaveOpen:bool -> IPickleFormatReader

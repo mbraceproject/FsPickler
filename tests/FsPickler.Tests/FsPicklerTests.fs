@@ -61,7 +61,7 @@
         abstract TestSequenceRoundtrip<'T when 'T : equality> : seq<'T> -> unit
         default __.TestSequenceRoundtrip (xs : seq<'T>) =
             use m = new MemoryStream()
-            let length = pickler.SerializeSequence(m, xs)
+            let length = pickler.SerializeSequence(m, xs, leaveOpen = true)
             m.Position <- 0L
             let xs' = pickler.DeserializeSequence<'T>(m, length)
             use enum = xs'.GetEnumerator()

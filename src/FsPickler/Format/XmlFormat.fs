@@ -306,5 +306,5 @@
                 let sr = new StreamReader(stream, encoding, true, 1024, leaveOpen)
                 new XmlPickleReader(sr, leaveOpen) :> _
 
-            member __.CreateWriter textWriter = new XmlPickleWriter(textWriter, indent, true) :> _
-            member __.CreateReader textReader = new XmlPickleReader(textReader, true) :> _
+            member __.CreateWriter (textWriter, leaveOpen) = new XmlPickleWriter(textWriter, indent, leaveOpen) :> _
+            member __.CreateReader (textReader, leaveOpen) = new XmlPickleReader(textReader, leaveOpen) :> _

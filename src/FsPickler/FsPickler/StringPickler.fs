@@ -20,9 +20,12 @@
         /// <param name="writer">target writer.</param>
         /// <param name="value">value to be serialized.</param>
         /// <param name="streamingContext">streaming context.</param>
-        member __.Serialize<'T>(writer : TextWriter, value : 'T, [<O;D(null)>]?streamingContext) : unit =
+        /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to false.</param>
+        member __.Serialize<'T>(writer : TextWriter, value : 'T, 
+                                        [<O;D(null)>]?streamingContext, [<O;D(null)>]?leaveOpen) : unit =
+
             let pickler = resolver.Resolve<'T> ()
-            use formatter = formatP.CreateWriter writer
+            use formatter = initTextWriter formatP writer leaveOpen
             writeRootObject resolver reflectionCache formatter streamingContext pickler value
 
         /// <summary>Serialize value to the underlying stream using given pickler.</summary>
@@ -30,8 +33,11 @@
         /// <param name="writer">target writer.</param>
         /// <param name="value">value to be serialized.</param>
         /// <param name="streamingContext">streaming context.</param>
-        member __.Serialize<'T>(pickler : Pickler<'T>, writer : TextWriter, value : 'T, [<O;D(null)>]?streamingContext) : unit =
-            use formatter = formatP.CreateWriter writer
+        /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to false.</param>
+        member __.Serialize<'T>(pickler : Pickler<'T>, writer : TextWriter, value : 'T, 
+                                        [<O;D(null)>]?streamingContext, [<O;D(null)>]?leaveOpen) : unit =
+
+            use formatter = initTextWriter formatP writer leaveOpen
             writeRootObject resolver reflectionCache formatter streamingContext pickler value
 
         /// <summary>Serialize object of given type to the underlying stream.</summary>
@@ -40,10 +46,12 @@
         /// <param name="value">value to be serialized.</param>
         /// <param name="streamingContext">streaming context.</param>
         /// <param name="encoding">encoding passed to the binary writer.</param>
-        /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to true.</param>
-        member __.Serialize(valueType : Type, writer : TextWriter, value : obj, [<O;D(null)>]?streamingContext) : unit =
+        /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to false.</param>
+        member __.Serialize(valueType : Type, writer : TextWriter, value : obj, 
+                                        [<O;D(null)>]?streamingContext, [<O;D(null)>]?leaveOpen) : unit =
+
             let pickler = resolver.Resolve valueType
-            use formatter = formatP.CreateWriter writer
+            use formatter = initTextWriter formatP writer leaveOpen
             writeRootObjectUntyped resolver reflectionCache formatter streamingContext pickler value
 
         /// <summary>Serialize object to the underlying stream using given pickler.</summary>
@@ -51,33 +59,45 @@
         /// <param name="writer">target writer.</param>
         /// <param name="value">value to be serialized.</param>
         /// <param name="streamingContext">streaming context.</param>
-        member __.Serialize(pickler : Pickler, writer : TextWriter, value : obj, [<O;D(null)>]?streamingContext) : unit =
-            use formatter = formatP.CreateWriter writer
+        /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to false.</param>
+        member __.Serialize(pickler : Pickler, writer : TextWriter, value : obj, 
+                                            [<O;D(null)>]?streamingContext, [<O;D(null)>]?leaveOpen) : unit =
+
+            use formatter = initTextWriter formatP writer leaveOpen
             writeRootObjectUntyped resolver reflectionCache formatter streamingContext pickler value
 
         /// <summary>Deserialize value of given type from the underlying stream.</summary>
         /// <param name="reader">source reader.</param>
         /// <param name="streamingContext">streaming context.</param>
-        member __.Deserialize<'T> (reader : TextReader, [<O;D(null)>]?streamingContext) : 'T =
+        /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to false.</param>
+        member __.Deserialize<'T> (reader : TextReader, 
+                                        [<O;D(null)>]?streamingContext, [<O;D(null)>]?leaveOpen) : 'T =
+
             let pickler = resolver.Resolve<'T> ()
-            use formatter = formatP.CreateReader reader
+            use formatter = initTextReader formatP reader leaveOpen
             readRootObject resolver reflectionCache formatter streamingContext pickler
 
         /// <summary>Deserialize value of given type from the underlying stream, using given pickler.</summary>
         /// <param name="pickler">pickler used for serialization.</param>
         /// <param name="reader">source reader.</param>
         /// <param name="streamingContext">streaming context.</param>
-        member __.Deserialize<'T> (pickler : Pickler<'T>, reader : TextReader, [<O;D(null)>]?streamingContext) : 'T =
-            use formatter = formatP.CreateReader reader
+        /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to false.</param>
+        member __.Deserialize<'T> (pickler : Pickler<'T>, reader : TextReader, 
+                                        [<O;D(null)>]?streamingContext, [<O;D(null)>]?leaveOpen) : 'T =
+
+            use formatter = initTextReader formatP reader leaveOpen
             readRootObject resolver reflectionCache formatter streamingContext pickler
 
         /// <summary>Deserialize object of given type from the underlying stream.</summary>
         /// <param name="valueType">anticipated value type.</param>
         /// <param name="reader">source reader.</param>
         /// <param name="streamingContext">streaming context.</param>
-        member __.Deserialize (valueType : Type, reader : TextReader, [<O;D(null)>]?streamingContext) : obj =
+        /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to false.</param>
+        member __.Deserialize (valueType : Type, reader : TextReader, 
+                                    [<O;D(null)>]?streamingContext, [<O;D(null)>]?leaveOpen) : obj =
+
             let pickler = resolver.Resolve valueType
-            use formatter = formatP.CreateReader reader
+            use formatter = initTextReader formatP reader leaveOpen
             readRootObjectUntyped resolver reflectionCache formatter streamingContext pickler
 
         /// <summary>Deserialize object from the underlying stream using given pickler.</summary>
@@ -85,18 +105,24 @@
         /// <param name="reader">source reader.</param>
         /// <param name="streamingContext">streaming context.</param>
         /// <return>number of elements written to the stream.</return>
-        member __.Deserialize (pickler : Pickler, reader : TextReader, [<O;D(null)>]?streamingContext) : obj =
-            use formatter = formatP.CreateReader reader
+        /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to false.</param>
+        member __.Deserialize (pickler : Pickler, reader : TextReader, 
+                                    [<O;D(null)>]?streamingContext, [<O;D(null)>]?leaveOpen) : obj =
+
+            use formatter = initTextReader formatP reader leaveOpen
             readRootObjectUntyped resolver reflectionCache formatter streamingContext pickler
 
         /// <summary>Serialize a sequence of objects to the underlying stream.</summary>
         /// <param name="writer">target writer.</param>
         /// <param name="sequence">input sequence.</param>
         /// <param name="streamingContext">streaming context.</param>
+        /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to false.</param>
         /// <return>number of elements written to the stream.</return>
-        member __.SerializeSequence<'T>(writer : TextWriter, sequence:seq<'T>, [<O;D(null)>]?streamingContext) : int =
+        member __.SerializeSequence<'T>(writer : TextWriter, sequence:seq<'T>, 
+                                            [<O;D(null)>]?streamingContext, [<O;D(null)>]?leaveOpen) : int =
+
             let pickler = resolver.Resolve<'T> ()
-            use formatter = formatP.CreateWriter writer
+            use formatter = initTextWriter formatP writer leaveOpen
             writeTopLevelSequence resolver reflectionCache formatter streamingContext pickler sequence
 
         /// <summary>Serialize a sequence of objects to the underlying stream.</summary>
@@ -104,29 +130,38 @@
         /// <param name="writer">target writer.</param>
         /// <param name="sequence">input sequence.</param>
         /// <param name="streamingContext">streaming context.</param>
+        /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to false.</param>
         /// <return>number of elements written to the stream.</return>
-        member __.SerializeSequence(elementType : Type, writer : TextWriter, sequence : IEnumerable, [<O;D(null)>]?streamingContext) : int =
+        member __.SerializeSequence(elementType : Type, writer : TextWriter, sequence : IEnumerable, 
+                                        [<O;D(null)>]?streamingContext, [<O;D(null)>]?leaveOpen) : int =
+
             let pickler = resolver.Resolve elementType
-            use formatter = formatP.CreateWriter writer
+            use formatter = initTextWriter formatP writer leaveOpen
             writeTopLevelSequenceUntyped resolver reflectionCache formatter streamingContext pickler sequence
 
         /// <summary>Lazily deserialize a sequence of objects from the underlying stream.</summary>
         /// <param name="reader">source reader.</param>
         /// <param name="streamingContext">streaming context.</param>
+        /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to false.</param>
         /// <returns>An IEnumerator that lazily consumes elements from the stream.</returns>
-        member __.DeserializeSequence<'T>(reader : TextReader, [<O;D(null)>]?streamingContext) : seq<'T> =
+        member __.DeserializeSequence<'T>(reader : TextReader, 
+                                            [<O;D(null)>]?streamingContext, [<O;D(null)>]?leaveOpen) : seq<'T> =
+
             let pickler = resolver.Resolve<'T> ()
-            let formatter = formatP.CreateReader reader
+            let formatter = initTextReader formatP reader leaveOpen
             readTopLevelSequence resolver reflectionCache formatter streamingContext pickler
 
         /// <summary>Lazily deserialize a sequence of objects from the underlying stream.</summary>
         /// <param name="elementType">element type used in sequence.</param>
         /// <param name="reader">source reader.</param>
         /// <param name="streamingContext">streaming context.</param>
+        /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to false.</param>
         /// <returns>An IEnumerator that lazily consumes elements from the stream.</returns>
-        member __.DeserializeSequence(elementType : Type, reader : TextReader, [<O;D(null)>]?streamingContext) : IEnumerable =
+        member __.DeserializeSequence(elementType : Type, reader : TextReader, 
+                                            [<O;D(null)>]?streamingContext, [<O;D(null)>]?leaveOpen) : IEnumerable =
+
             let pickler = resolver.Resolve elementType
-            let formatter = formatP.CreateReader reader
+            let formatter = initTextReader formatP reader leaveOpen
             readTopLevelSequenceUntyped resolver reflectionCache formatter streamingContext pickler
 
 

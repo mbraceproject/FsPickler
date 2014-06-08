@@ -31,7 +31,7 @@
         /// <param name="value">value to be serialized.</param>
         /// <param name="streamingContext">streaming context.</param>
         /// <param name="encoding">encoding passed to the binary writer.</param>
-        /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to true.</param>
+        /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to false.</param>
         member __.Serialize<'T>(stream : Stream, value : 'T, 
                                     [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : unit =
 
@@ -45,7 +45,7 @@
         /// <param name="value">value to be serialized.</param>
         /// <param name="streamingContext">streaming context.</param>
         /// <param name="encoding">encoding passed to the binary writer.</param>
-        /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to true.</param>
+        /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to false.</param>
         member __.Serialize<'T>(pickler : Pickler<'T>, stream : Stream, value : 'T, 
                                     [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : unit =
 
@@ -58,7 +58,7 @@
         /// <param name="value">value to be serialized.</param>
         /// <param name="streamingContext">streaming context.</param>
         /// <param name="encoding">encoding passed to the binary writer.</param>
-        /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to true.</param>
+        /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to false.</param>
         member __.Serialize(valueType : Type, stream : Stream, value : obj, 
                                     [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : unit =
 
@@ -72,7 +72,7 @@
         /// <param name="value">value to be serialized.</param>
         /// <param name="streamingContext">streaming context.</param>
         /// <param name="encoding">encoding passed to the binary writer.</param>
-        /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to true.</param>
+        /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to false.</param>
         member __.Serialize(pickler : Pickler, stream : Stream, value : obj, 
                                     [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : unit =
 
@@ -83,7 +83,7 @@
         /// <param name="stream">source stream.</param>
         /// <param name="streamingContext">streaming context.</param>
         /// <param name="encoding">encoding passed to the binary writer.</param>
-        /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to true.</param>
+        /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to false.</param>
         member __.Deserialize<'T> (stream : Stream, [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : 'T =
 
             let pickler = resolver.Resolve<'T> ()
@@ -95,7 +95,7 @@
         /// <param name="stream">source stream.</param>
         /// <param name="streamingContext">streaming context.</param>
         /// <param name="encoding">encoding passed to the binary writer.</param>
-        /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to true.</param>
+        /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to false.</param>
         member __.Deserialize<'T> (pickler : Pickler<'T>, stream : Stream, 
                                             [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : 'T =
 
@@ -107,7 +107,7 @@
         /// <param name="stream">source stream.</param>
         /// <param name="streamingContext">streaming context.</param>
         /// <param name="encoding">encoding passed to the binary writer.</param>
-        /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to true.</param>
+        /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to false.</param>
         member __.Deserialize (valueType : Type, stream : Stream, 
                                     [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : obj =
 
@@ -120,7 +120,7 @@
         /// <param name="stream">source stream.</param>
         /// <param name="streamingContext">streaming context.</param>
         /// <param name="encoding">encoding passed to the binary writer.</param>
-        /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to true.</param>
+        /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to false.</param>
         /// <return>number of elements written to the stream.</return>
         member __.Deserialize (pickler : Pickler, stream : Stream, 
                                     [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : obj =
@@ -133,7 +133,7 @@
         /// <param name="sequence">input sequence.</param>
         /// <param name="streamingContext">streaming context.</param>
         /// <param name="encoding">encoding passed to the binary writer.</param>
-        /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to true.</param>
+        /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to false.</param>
         /// <return>number of elements written to the stream.</return>
         member __.SerializeSequence<'T>(stream : Stream, sequence:seq<'T>, 
                                             [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : int =
@@ -148,7 +148,7 @@
         /// <param name="sequence">input sequence.</param>
         /// <param name="streamingContext">streaming context.</param>
         /// <param name="encoding">encoding passed to the binary writer.</param>
-        /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to true.</param>
+        /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to false.</param>
         /// <return>number of elements written to the stream.</return>
         member __.SerializeSequence(elementType : Type, stream : Stream, sequence : IEnumerable, 
                                             [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : int =
@@ -162,7 +162,7 @@
         /// <param name="length">number of elements to be deserialized.</param>
         /// <param name="streamingContext">streaming context.</param>
         /// <param name="encoding">encoding passed to the binary writer.</param>
-        /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to true.</param>
+        /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to false.</param>
         /// <returns>An IEnumerator that lazily consumes elements from the stream.</returns>
         member __.DeserializeSequence<'T>(stream : Stream, length : int, 
                                             [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : seq<'T> =
@@ -176,7 +176,7 @@
         /// <param name="stream">source stream.</param>
         /// <param name="streamingContext">streaming context.</param>
         /// <param name="encoding">encoding passed to the binary writer.</param>
-        /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to true.</param>
+        /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to false.</param>
         /// <returns>An IEnumerator that lazily consumes elements from the stream.</returns>
         member __.DeserializeSequence(elementType : Type, stream : Stream,
                                             [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : IEnumerable =

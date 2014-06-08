@@ -90,10 +90,12 @@
 
     open JsonUtils
 
-    type JsonPickleWriter internal (textWriter : TextWriter, indented) =
+    type JsonPickleWriter internal (textWriter : TextWriter, indented, leaveOpen) =
         
         let jsonWriter = new JsonTextWriter(textWriter) :> JsonWriter
-        do jsonWriter.Formatting <- if indented then Formatting.Indented else Formatting.None
+        do 
+            jsonWriter.Formatting <- if indented then Formatting.Indented else Formatting.None
+            jsonWriter.CloseOutput <- not leaveOpen
 
         let mutable currentValueIsNull = false
 
@@ -200,9 +202,11 @@
                 jsonWriter.Flush () ; textWriter.Flush () ; (jsonWriter :> IDisposable).Dispose()
 
 
-    type JsonPickleReader internal (textReader : TextReader) =
+    type JsonPickleReader internal (textReader : TextReader, leaveOpen) =
 
         let jsonReader = new JsonTextReader(textReader) :> JsonReader
+        do
+            jsonReader.CloseInput <- not leaveOpen
 
         let mutable currentValueIsNull = false
 
@@ -364,11 +368,11 @@
 
             member __.CreateWriter (stream, encoding, leaveOpen) =
                 let sw = new StreamWriter(stream, encoding, 1024, leaveOpen)
-                new JsonPickleWriter(sw, indent) :> _
+                new JsonPickleWriter(sw, indent, leaveOpen) :> _
 
             member __.CreateReader (stream, encoding, leaveOpen) =
                 let sr = new StreamReader(stream, encoding, true, 1024, leaveOpen)
-                new JsonPickleReader(sr) :> _
+                new JsonPickleReader(sr, leaveOpen) :> _
 
-            member __.CreateWriter textWriter = new JsonPickleWriter(textWriter, indent) :> _
-            member __.CreateReader textReader = new JsonPickleReader(textReader) :> _
+            member __.CreateWriter (textWriter, leaveOpen) = new JsonPickleWriter(textWriter, indent, leaveOpen) :> _
+            member __.CreateReader (textReader, leaveOpen) = new JsonPickleReader(textReader, leaveOpen) :> _
