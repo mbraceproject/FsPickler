@@ -112,24 +112,22 @@
 
         /// <summary>Lazily deserialize a sequence of objects from the underlying stream.</summary>
         /// <param name="reader">source reader.</param>
-        /// <param name="length">number of elements to be deserialized.</param>
         /// <param name="streamingContext">streaming context.</param>
         /// <returns>An IEnumerator that lazily consumes elements from the stream.</returns>
-        member __.DeserializeSequence<'T>(reader : TextReader, length : int, [<O;D(null)>]?streamingContext) : IEnumerator<'T> =
+        member __.DeserializeSequence<'T>(reader : TextReader, [<O;D(null)>]?streamingContext) : seq<'T> =
             let pickler = resolver.Resolve<'T> ()
             let formatter = formatP.CreateReader reader
-            readTopLevelSequence resolver reflectionCache formatter streamingContext pickler length
+            readTopLevelSequence resolver reflectionCache formatter streamingContext pickler
 
         /// <summary>Lazily deserialize a sequence of objects from the underlying stream.</summary>
         /// <param name="elementType">element type used in sequence.</param>
         /// <param name="reader">source reader.</param>
-        /// <param name="length">number of elements to be deserialized.</param>
         /// <param name="streamingContext">streaming context.</param>
         /// <returns>An IEnumerator that lazily consumes elements from the stream.</returns>
-        member __.DeserializeSequence(elementType : Type, reader : TextReader, length : int, [<O;D(null)>]?streamingContext) : IEnumerator =
+        member __.DeserializeSequence(elementType : Type, reader : TextReader, [<O;D(null)>]?streamingContext) : IEnumerable =
             let pickler = resolver.Resolve elementType
             let formatter = formatP.CreateReader reader
-            readTopLevelSequenceUntyped resolver reflectionCache formatter streamingContext pickler length
+            readTopLevelSequenceUntyped resolver reflectionCache formatter streamingContext pickler
 
 
         /// <summary>

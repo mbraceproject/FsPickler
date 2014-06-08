@@ -74,9 +74,10 @@
     let writeTopLevelSequence resolver reflectionCache formatter streamingContext (pickler : Pickler<'T>) (values : seq<'T>) : int =
         // write state initialization
         let state = new WriteState(formatter, resolver, reflectionCache, ?streamingContext = streamingContext)
-        let qn = sprintf "%s[]" <| reflectionCache.GetQualifiedName pickler.Type
+        let qn = reflectionCache.GetQualifiedName pickler.Type + "[]"
 
         state.Formatter.BeginWriteRoot qn
+        state.Formatter.BeginWriteUnBoundedSequence "values"
 
         let isObject = pickler.TypeKind > TypeKind.Value
 
@@ -87,7 +88,8 @@
 #endif
             if isObject && idx % sequenceStateResetThreshold = 0 then
                 state.ResetCounters()
-
+            
+            formatter.WriteHasNextElement true
             pickler.Write state "elem" t
             
         // specialize enumeration
@@ -113,16 +115,39 @@
                     i <- i + 1
                 i
 
+        state.Formatter.WriteHasNextElement false
         state.Formatter.EndWriteRoot()
         length
 
 
+    type SequenceDeserializationEnumerator<'T>(state : ReadState, pickler : Pickler<'T>) =
+        let formatter = state.Formatter
+        let isObject = pickler.TypeKind > TypeKind.Value
+        let mutable count = 0
+        let mutable value = Unchecked.defaultof<'T>
 
-    let readTopLevelSequence resolver reflectionCache formatter streamingContext (pickler : Pickler<'T>) (length : int) : IEnumerator<'T> =
+        interface IEnumerator<'T> with
+            member __.Current = value
+            member __.Current = box value
+            member __.Dispose () = formatter.EndReadRoot() ; formatter.Dispose()
+            member __.MoveNext () =
+                if formatter.ReadHasNextElement () then
+                    if isObject && count % sequenceStateResetThreshold = 0 then
+                        state.ResetCounters()
+
+                    value <- pickler.Read state "elem"
+
+                    true
+                else
+                    false
+
+            member __.Reset () = raise <| NotSupportedException()
+
+    let readTopLevelSequence resolver reflectionCache formatter streamingContext (pickler : Pickler<'T>) : seq<'T> =
         
         // read state initialization
         let state = new ReadState(formatter, resolver, reflectionCache, ?streamingContext = streamingContext)
-        let qn = sprintf "%s[]" <| reflectionCache.GetQualifiedName pickler.Type
+        let qn = reflectionCache.GetQualifiedName pickler.Type + "[]"
 
         // read stream header
         let rootName = 
@@ -132,30 +157,18 @@
         if rootName <> qn then
             raise <| new InvalidPickleTypeException(qn, rootName)
 
-        let isObject = pickler.TypeKind > TypeKind.Value
+        formatter.BeginReadUnBoundedSequence "values"
 
-        let read idx =
-            if isObject && idx % sequenceStateResetThreshold = 0 then
-                state.ResetCounters()
-                
-            pickler.Read state "elem"
-
-        let cnt = ref 0
-        let curr = ref Unchecked.defaultof<'T>
+        let isConsumed = ref 0
+        let getEnumerator () =
+            if System.Threading.Interlocked.CompareExchange(isConsumed, 1, 0) = 0 then
+                new SequenceDeserializationEnumerator<'T>(state, pickler) :> IEnumerator<'T>
+            else
+                invalidOp "Deserialization enumerable can only be consumed once."
         {
-            new System.Collections.Generic.IEnumerator<'T> with
-                member __.Current = !curr
-                member __.Current = box !curr
-                member __.Dispose () = state.Formatter.EndReadRoot() ; formatter.Dispose()
-                member __.MoveNext () =
-                    if !cnt < length then
-                        curr := read !cnt
-                        incr cnt
-                        true
-                    else
-                        false
-
-                member __.Reset () = raise <| NotSupportedException()
+            new IEnumerable<'T> with
+                member __.GetEnumerator () = getEnumerator ()
+                member __.GetEnumerator () = getEnumerator () :> IEnumerator
         }
 
 
@@ -171,13 +184,13 @@
 
         pickler.Unpack unpacker
 
-    let readTopLevelSequenceUntyped resolver reflectionCache formatter streamingContext (pickler : Pickler) (length : int) : IEnumerator =
+    let readTopLevelSequenceUntyped resolver reflectionCache formatter streamingContext (pickler : Pickler) : IEnumerable =
         let unpacker =
             {
-                new IPicklerUnpacker<IEnumerator> with
+                new IPicklerUnpacker<IEnumerable> with
                     member __.Apply (p : Pickler<'T>) =
                         readTopLevelSequence resolver reflectionCache formatter 
-                            streamingContext p length :> IEnumerator
+                            streamingContext p :> IEnumerable
             }
 
         pickler.Unpack unpacker

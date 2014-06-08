@@ -63,15 +63,16 @@
             use m = new MemoryStream()
             let length = pickler.SerializeSequence(m, xs)
             m.Position <- 0L
-            use enum = xs.GetEnumerator()
-            use enum' = pickler.DeserializeSequence<'T>(m, length)
-            let mutable pos = 0
-            while enum.MoveNext() do 
-                if enum'.MoveNext() && enum.Current = enum'.Current then
-                    pos <- pos + 1
+            let xs' = pickler.DeserializeSequence<'T>(m, length)
+            use enum = xs'.GetEnumerator()
+
+            for i,x in xs |> Seq.mapi (fun i x -> (i,x)) do
+                if enum.MoveNext() then 
+                    if enum.Current = x then ()
+                    else
+                        failwithf "element %d: expected '%A' but was '%A'." i x enum.Current
                 else
-                    failwithf "expected %A at position %d but was %A." 
-                        enum.Current pos enum'.Current
+                    failwithf "sequence terminated early at %d." i
                     
 
         abstract TestRoundtrip : 'T -> 'T
@@ -461,7 +462,7 @@
 
         [<Test; Category("FsPickler Generic tests")>]
         member __.``5. Object: large pair sequence`` () =
-            let pairs = [| 1 .. 1000000 |] |> Array.map (fun i -> string i,i)
+            let pairs = seq { for i in 1 .. 1000000 -> string i,i }
             __.TestSequenceRoundtrip pairs
 
         [<Test; Category("FsPickler Generic tests")>]

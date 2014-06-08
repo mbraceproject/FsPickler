@@ -165,26 +165,25 @@
         /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to true.</param>
         /// <returns>An IEnumerator that lazily consumes elements from the stream.</returns>
         member __.DeserializeSequence<'T>(stream : Stream, length : int, 
-                                            [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : IEnumerator<'T> =
+                                            [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : seq<'T> =
 
             let pickler = resolver.Resolve<'T> ()
             let reader = initStreamReader formatP stream encoding leaveOpen
-            readTopLevelSequence resolver reflectionCache reader streamingContext pickler length
+            readTopLevelSequence resolver reflectionCache reader streamingContext pickler
 
         /// <summary>Lazily deserialize a sequence of objects from the underlying stream.</summary>
         /// <param name="elementType">element type used in sequence.</param>
         /// <param name="stream">source stream.</param>
-        /// <param name="length">number of elements to be deserialized.</param>
         /// <param name="streamingContext">streaming context.</param>
         /// <param name="encoding">encoding passed to the binary writer.</param>
         /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to true.</param>
         /// <returns>An IEnumerator that lazily consumes elements from the stream.</returns>
-        member __.DeserializeSequence(elementType : Type, stream : Stream, length : int, 
-                                            [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : IEnumerator =
+        member __.DeserializeSequence(elementType : Type, stream : Stream,
+                                            [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : IEnumerable =
 
             let pickler = resolver.Resolve elementType
             let reader = initStreamReader formatP stream encoding leaveOpen
-            readTopLevelSequenceUntyped resolver reflectionCache reader streamingContext pickler length
+            readTopLevelSequenceUntyped resolver reflectionCache reader streamingContext pickler
 
         /// Decides if given type is serializable by FsPickler
         static member IsSerializableType (t : Type) = (PicklerCache.Instance :> IPicklerResolver).IsSerializable t
