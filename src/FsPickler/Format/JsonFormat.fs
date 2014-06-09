@@ -90,7 +90,7 @@
 
     open JsonUtils
 
-    type JsonPickleWriter internal (textWriter : TextWriter, indented, leaveOpen) =
+    type JsonPickleWriter internal (textWriter : TextWriter, omitHeader, indented, leaveOpen) =
         
         let jsonWriter = new JsonTextWriter(textWriter) :> JsonWriter
         do 
@@ -102,23 +102,25 @@
         let mutable depth = 0
         let arrayStack = new Stack<int> ()
         do arrayStack.Push Int32.MinValue
-        let isArrayElement () =
-            if arrayStack.Peek() = depth - 1 then true
-            else
-                false
+
+        // do not write tag if omitting header or array element
+        let omitTag () = (omitHeader && depth = 0) || arrayStack.Peek() = depth - 1
 
         interface IPickleFormatWriter with
             
             member __.BeginWriteRoot (tag : string) =
+                if omitHeader then () else
+
                 jsonWriter.WriteStartObject()
                 writePrimitive jsonWriter false "FsPickler" AssemblyVersionInformation.Version
                 writePrimitive jsonWriter false "type" tag
 
-            member __.EndWriteRoot () = jsonWriter.WriteEnd()
+            member __.EndWriteRoot () = 
+                if not omitHeader then jsonWriter.WriteEnd()
 
             member __.BeginWriteObject (tag : string) (flags : ObjectFlags) =
 
-                if not <| isArrayElement () then
+                if not <| omitTag () then
                     jsonWriter.WritePropertyName tag
 
                 if ObjectFlags.hasFlag flags ObjectFlags.IsNull then
@@ -155,7 +157,7 @@
                 jsonWriter.WriteEndArray ()
 
             member __.BeginWriteUnBoundedSequence (tag : string) =
-                if not <| isArrayElement () then
+                if not <| omitTag () then
                     jsonWriter.WritePropertyName tag
 
                 arrayStack.Push depth
@@ -169,31 +171,31 @@
                     depth <- depth - 1
                     jsonWriter.WriteEndArray ()
 
-            member __.WriteBoolean (tag : string) value = writePrimitive jsonWriter (isArrayElement ()) tag value
-            member __.WriteByte (tag : string) value = writePrimitive jsonWriter (isArrayElement ()) tag value
-            member __.WriteSByte (tag : string) value = writePrimitive jsonWriter (isArrayElement ()) tag value
+            member __.WriteBoolean (tag : string) value = writePrimitive jsonWriter (omitTag ()) tag value
+            member __.WriteByte (tag : string) value = writePrimitive jsonWriter (omitTag ()) tag value
+            member __.WriteSByte (tag : string) value = writePrimitive jsonWriter (omitTag ()) tag value
 
-            member __.WriteInt16 (tag : string) value = writePrimitive jsonWriter (isArrayElement ()) tag value
-            member __.WriteInt32 (tag : string) value = writePrimitive jsonWriter (isArrayElement ()) tag value
-            member __.WriteInt64 (tag : string) value = writePrimitive jsonWriter (isArrayElement ()) tag value
+            member __.WriteInt16 (tag : string) value = writePrimitive jsonWriter (omitTag ()) tag value
+            member __.WriteInt32 (tag : string) value = writePrimitive jsonWriter (omitTag ()) tag value
+            member __.WriteInt64 (tag : string) value = writePrimitive jsonWriter (omitTag ()) tag value
 
-            member __.WriteUInt16 (tag : string) value = writePrimitive jsonWriter (isArrayElement ()) tag value
-            member __.WriteUInt32 (tag : string) value = writePrimitive jsonWriter (isArrayElement ()) tag value
-            member __.WriteUInt64 (tag : string) value = writePrimitive jsonWriter (isArrayElement ()) tag value
+            member __.WriteUInt16 (tag : string) value = writePrimitive jsonWriter (omitTag ()) tag value
+            member __.WriteUInt32 (tag : string) value = writePrimitive jsonWriter (omitTag ()) tag value
+            member __.WriteUInt64 (tag : string) value = writePrimitive jsonWriter (omitTag ()) tag value
 
-            member __.WriteSingle (tag : string) value = writePrimitive jsonWriter (isArrayElement ()) tag value
-            member __.WriteDouble (tag : string) value = writePrimitive jsonWriter (isArrayElement ()) tag value
-            member __.WriteDecimal (tag : string) value = writePrimitive jsonWriter (isArrayElement ()) tag <| string value
+            member __.WriteSingle (tag : string) value = writePrimitive jsonWriter (omitTag ()) tag value
+            member __.WriteDouble (tag : string) value = writePrimitive jsonWriter (omitTag ()) tag value
+            member __.WriteDecimal (tag : string) value = writePrimitive jsonWriter (omitTag ()) tag <| string value
 
-            member __.WriteChar (tag : string) value = writePrimitive jsonWriter (isArrayElement ()) tag value
-            member __.WriteString (tag : string) value = writePrimitive jsonWriter (isArrayElement ()) tag value
-            member __.WriteBigInteger (tag : string) value = writePrimitive jsonWriter (isArrayElement ()) tag (value.ToString())
+            member __.WriteChar (tag : string) value = writePrimitive jsonWriter (omitTag ()) tag value
+            member __.WriteString (tag : string) value = writePrimitive jsonWriter (omitTag ()) tag value
+            member __.WriteBigInteger (tag : string) value = writePrimitive jsonWriter (omitTag ()) tag (value.ToString())
 
-            member __.WriteGuid (tag : string) value = writePrimitive jsonWriter (isArrayElement ()) tag value
-            member __.WriteDate (tag : string) value = writePrimitive jsonWriter (isArrayElement ()) tag value
-            member __.WriteTimeSpan (tag : string) value = writePrimitive jsonWriter (isArrayElement ()) tag <| value.ToString()
+            member __.WriteGuid (tag : string) value = writePrimitive jsonWriter (omitTag ()) tag value
+            member __.WriteDate (tag : string) value = writePrimitive jsonWriter (omitTag ()) tag value
+            member __.WriteTimeSpan (tag : string) value = writePrimitive jsonWriter (omitTag ()) tag <| value.ToString()
 
-            member __.WriteBytes (tag : string) (value : byte []) = writePrimitive jsonWriter (isArrayElement ()) tag value
+            member __.WriteBytes (tag : string) (value : byte []) = writePrimitive jsonWriter (omitTag ()) tag value
 
             member __.IsPrimitiveArraySerializationSupported = false
             member __.WritePrimitiveArray _ _ = raise <| NotSupportedException()
@@ -202,26 +204,28 @@
                 jsonWriter.Flush () ; textWriter.Flush () ; (jsonWriter :> IDisposable).Dispose()
 
 
-    type JsonPickleReader internal (textReader : TextReader, leaveOpen) =
+    type JsonPickleReader internal (textReader : TextReader, omitHeader, leaveOpen) =
 
         let jsonReader = new JsonTextReader(textReader) :> JsonReader
         do
             jsonReader.CloseInput <- not leaveOpen
+            jsonReader.SupportMultipleContent <- true
 
         let mutable currentValueIsNull = false
 
         let mutable depth = 0
         let arrayStack = new Stack<int> ()
         do arrayStack.Push Int32.MinValue
-        let isArrayElement () =
-            if arrayStack.Peek() = depth - 1 then true
-            else
-                false
+
+        // do not write tag if omitting header or array element
+        let omitTag () = (omitHeader && depth = 0) || arrayStack.Peek() = depth - 1
 
         interface IPickleFormatReader with
             
             member __.BeginReadRoot (tag : string) =
                 do jsonReader.MoveNext()
+                    
+                if omitHeader then () else
 
                 if jsonReader.ReadStartObject () then raise <| new InvalidDataException("invalid json root object.")
                 else
@@ -233,11 +237,12 @@
                     if tag <> sTag then
                         raise <| new InvalidPickleTypeException(tag, sTag)
 
-            member __.EndReadRoot () = jsonReader.Read() |> ignore
+            member __.EndReadRoot () = 
+                if not omitHeader then jsonReader.Read() |> ignore
 
             member __.BeginReadObject (tag : string) =
                 
-                if not <| isArrayElement () then
+                if not <| omitTag () then
                     jsonReader.ReadProperty tag
                     jsonReader.MoveNext ()
 
@@ -260,7 +265,8 @@
 
                 if currentValueIsNull then 
                     currentValueIsNull <- false
-                else 
+                elif omitHeader && depth = 0 then ()
+                else
                     jsonReader.MoveNext()
 
             member __.BeginReadBoundedSequence tag =
@@ -275,7 +281,7 @@
                     jsonReader.MoveNext()
                     int length
                 else
-                    raise <| new InvalidDataException("expected array.")
+                    raise <| new InvalidDataException("expected json array.")
 
             member __.EndReadBoundedSequence () =
                 if jsonReader.TokenType = JsonToken.EndArray && jsonReader.Read () then
@@ -285,15 +291,17 @@
                     raise <| InvalidDataException("expected end of array.")
 
             member __.BeginReadUnBoundedSequence tag =
+                if not <| omitTag () then
+                    jsonReader.ReadProperty tag
+                    jsonReader.MoveNext()
+
                 arrayStack.Push depth
                 depth <- depth + 1
 
-                jsonReader.ReadProperty tag
-
-                if jsonReader.Read () && jsonReader.TokenType = JsonToken.StartArray then
+                if jsonReader.TokenType = JsonToken.StartArray then
                     jsonReader.MoveNext()
                 else
-                    raise <| new InvalidDataException("expected array.")
+                    raise <| new InvalidDataException("expected json array.")
 
             member __.ReadHasNextElement () =
                 if jsonReader.TokenType = JsonToken.EndArray && jsonReader.Read () then
@@ -303,21 +311,21 @@
                 else
                     true
 
-            member __.ReadBoolean tag = jsonReader.ReadPrimitiveAs<bool> (isArrayElement ()) tag
+            member __.ReadBoolean tag = jsonReader.ReadPrimitiveAs<bool> (omitTag ()) tag
 
-            member __.ReadByte tag = jsonReader.ReadPrimitiveAs<int64> (isArrayElement ()) tag |> byte
-            member __.ReadSByte tag = jsonReader.ReadPrimitiveAs<int64> (isArrayElement ()) tag |> sbyte
+            member __.ReadByte tag = jsonReader.ReadPrimitiveAs<int64> (omitTag ()) tag |> byte
+            member __.ReadSByte tag = jsonReader.ReadPrimitiveAs<int64> (omitTag ()) tag |> sbyte
 
-            member __.ReadInt16 tag = jsonReader.ReadPrimitiveAs<int64> (isArrayElement ()) tag |> int16
-            member __.ReadInt32 tag = jsonReader.ReadPrimitiveAs<int64> (isArrayElement ()) tag |> int
-            member __.ReadInt64 tag = jsonReader.ReadPrimitiveAs<int64> (isArrayElement ()) tag
+            member __.ReadInt16 tag = jsonReader.ReadPrimitiveAs<int64> (omitTag ()) tag |> int16
+            member __.ReadInt32 tag = jsonReader.ReadPrimitiveAs<int64> (omitTag ()) tag |> int
+            member __.ReadInt64 tag = jsonReader.ReadPrimitiveAs<int64> (omitTag ()) tag
 
-            member __.ReadUInt16 tag = jsonReader.ReadPrimitiveAs<int64> (isArrayElement ()) tag |> uint16
-            member __.ReadUInt32 tag = jsonReader.ReadPrimitiveAs<int64> (isArrayElement ()) tag |> uint32
-            member __.ReadUInt64 tag = jsonReader.ReadPrimitiveAs<int64> (isArrayElement ()) tag |> uint64
+            member __.ReadUInt16 tag = jsonReader.ReadPrimitiveAs<int64> (omitTag ()) tag |> uint16
+            member __.ReadUInt32 tag = jsonReader.ReadPrimitiveAs<int64> (omitTag ()) tag |> uint32
+            member __.ReadUInt64 tag = jsonReader.ReadPrimitiveAs<int64> (omitTag ()) tag |> uint64
 
             member __.ReadSingle tag =
-                if not <| isArrayElement () then
+                if not <| omitTag () then
                     jsonReader.ReadProperty tag
                     jsonReader.MoveNext()
 
@@ -326,11 +334,12 @@
                     | JsonToken.Float -> jsonReader.ValueAs<double> () |> single
                     | JsonToken.String -> Single.Parse(jsonReader.ValueAs<string>(), CultureInfo.InvariantCulture)
                     | _ -> raise <| new InvalidDataException("not a float.")
-                jsonReader.MoveNext()
+
+                jsonReader.Read() |> ignore
                 value
                 
-            member __.ReadDouble tag = 
-                if not <| isArrayElement () then
+            member __.ReadDouble tag =
+                if not <| omitTag () then
                     jsonReader.ReadProperty tag
                     jsonReader.MoveNext()
 
@@ -339,21 +348,22 @@
                     | JsonToken.Float -> jsonReader.ValueAs<double> ()
                     | JsonToken.String -> Double.Parse(jsonReader.ValueAs<string>(), CultureInfo.InvariantCulture)
                     | _ -> raise <| new InvalidDataException("not a float.")
-                jsonReader.MoveNext()
+
+                jsonReader.Read() |> ignore
                 value
 
-            member __.ReadChar tag = let value = jsonReader.ReadPrimitiveAs<string> (isArrayElement ()) tag in value.[0]
-            member __.ReadString tag = jsonReader.ReadPrimitiveAs<string> (isArrayElement ()) tag
-            member __.ReadBigInteger tag = jsonReader.ReadPrimitiveAs<string> (isArrayElement ()) tag |> BigInteger.Parse
+            member __.ReadChar tag = let value = jsonReader.ReadPrimitiveAs<string> (omitTag ()) tag in value.[0]
+            member __.ReadString tag = jsonReader.ReadPrimitiveAs<string> (omitTag ()) tag
+            member __.ReadBigInteger tag = jsonReader.ReadPrimitiveAs<string> (omitTag ()) tag |> BigInteger.Parse
 
-            member __.ReadGuid tag = jsonReader.ReadPrimitiveAs<string> (isArrayElement ()) tag |> Guid.Parse
-            member __.ReadTimeSpan tag = jsonReader.ReadPrimitiveAs<string> (isArrayElement ()) tag |> TimeSpan.Parse
-            member __.ReadDate tag = jsonReader.ReadPrimitiveAs<DateTime> (isArrayElement ()) tag
+            member __.ReadGuid tag = jsonReader.ReadPrimitiveAs<string> (omitTag ()) tag |> Guid.Parse
+            member __.ReadTimeSpan tag = jsonReader.ReadPrimitiveAs<string> (omitTag ()) tag |> TimeSpan.Parse
+            member __.ReadDate tag = jsonReader.ReadPrimitiveAs<DateTime> (omitTag ()) tag
 
-            member __.ReadDecimal tag = jsonReader.ReadPrimitiveAs<string> (isArrayElement ()) tag |> decimal
+            member __.ReadDecimal tag = jsonReader.ReadPrimitiveAs<string> (omitTag ()) tag |> decimal
 
             member __.ReadBytes tag = 
-                match jsonReader.ReadPrimitiveAs<string> (isArrayElement ()) tag with
+                match jsonReader.ReadPrimitiveAs<string> (omitTag ()) tag with
                 | null -> null
                 | value -> Convert.FromBase64String value
 
@@ -365,16 +375,21 @@
     type JsonPickleFormatProvider (?indent) =
         let indent = defaultArg indent false
 
+        member val OmitHeader = false with get,set
+
         interface IStringPickleFormatProvider with
             member __.Name = "Json"
 
             member __.CreateWriter (stream, encoding, leaveOpen) =
                 let sw = new StreamWriter(stream, encoding, 1024, leaveOpen)
-                new JsonPickleWriter(sw, indent, leaveOpen) :> _
+                new JsonPickleWriter(sw, __.OmitHeader, indent, leaveOpen) :> _
 
             member __.CreateReader (stream, encoding, leaveOpen) =
                 let sr = new StreamReader(stream, encoding, true, 1024, leaveOpen)
-                new JsonPickleReader(sr, leaveOpen) :> _
+                new JsonPickleReader(sr, __.OmitHeader, leaveOpen) :> _
 
-            member __.CreateWriter (textWriter, leaveOpen) = new JsonPickleWriter(textWriter, indent, leaveOpen) :> _
-            member __.CreateReader (textReader, leaveOpen) = new JsonPickleReader(textReader, leaveOpen) :> _
+            member __.CreateWriter (textWriter, leaveOpen) = 
+                new JsonPickleWriter(textWriter, __.OmitHeader, indent, leaveOpen) :> _
+
+            member __.CreateReader (textReader, leaveOpen) = 
+                new JsonPickleReader(textReader, __.OmitHeader, leaveOpen) :> _

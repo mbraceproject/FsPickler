@@ -26,6 +26,7 @@ Json.unpickle fPickler jp' 41
 
 /////
 
+let jsp = JsonPickler.CreateJson()
 
-Json.pickle Pickler.auto (1,"hi")
-
+Json.pickle Pickler.auto [Some 32, None]
+|> Json.unpickle p

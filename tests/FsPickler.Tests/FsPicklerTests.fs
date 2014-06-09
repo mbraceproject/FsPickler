@@ -41,9 +41,6 @@
 
         member __.Pickler = pickler
 
-        abstract IsRemoted : bool
-        default __.IsRemoted = false
-
         abstract TestPickle : Pickler<'T> -> 'T -> obj
         default __.TestPickle p (t : 'T) =
             match pickler with

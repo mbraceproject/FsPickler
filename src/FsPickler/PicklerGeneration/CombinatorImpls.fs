@@ -62,10 +62,10 @@
 
         static member Create (ep : Pickler<'T>) =
             // Composite pickler filters None values by default
-            let writer (w : WriteState) (x : 'T option) = ep.Write w "value" x.Value
+            let writer (w : WriteState) (x : 'T option) = ep.Write w "Some" x.Value
 
             let reader (r : ReadState) =
-                let value = ep.Read r "value"
+                let value = ep.Read r "Some"
                 Some value
 
             CompositePickler.Create<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
