@@ -14,23 +14,22 @@
 
         [<RequireQualifiedAccess>]
         module Binary =
-            let internal binaryPickler = lazy(FsPickler.CreateBinary())
 
             /// pickles a value
             let pickle (pickler : Pickler<'T>) (value : 'T) : byte [] =
-                binaryPickler.Value.Pickle (pickler, value)
+                FsPickler.DefaultPickler.Pickle (pickler, value)
 
             /// upickles a value
             let unpickle (pickler : Pickler<'T>) (pickle : byte []) =
-                binaryPickler.Value.UnPickle (pickler, pickle)
+                FsPickler.DefaultPickler.UnPickle (pickler, pickle)
 
         /// computes the size of given value
         let getSize (value : 'T) =
-            Binary.binaryPickler.Value.ComputeSize(value)
+            FsPickler.DefaultPickler.ComputeSize(value)
 
         /// computes the hashcode of given value
         let getHashCode (value : 'T) =
-            Binary.binaryPickler.Value.ComputeHash(value)
+            FsPickler.DefaultPickler.ComputeHash(value)
 
         [<RequireQualifiedAccess>]
         module Xml =

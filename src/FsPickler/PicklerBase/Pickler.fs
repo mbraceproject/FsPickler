@@ -47,6 +47,9 @@
     and IPicklerUnpacker<'U> =
         abstract Apply : Pickler<'T> -> 'U
 
+    and IObjectVisitor =
+        abstract Visit<'T> : 'T -> unit
+
     and IPicklerResolver =
         abstract IsSerializable : Type -> bool
         abstract IsSerializable<'T> : unit -> bool
@@ -56,7 +59,7 @@
 
     and [<AutoSerializable(false)>] 
       WriteState internal (formatter : IPickleFormatWriter, resolver : IPicklerResolver, 
-                                reflectionCache : ReflectionCache, ?streamingContext) =
+                                reflectionCache : ReflectionCache, ?streamingContext, ?visitor : IObjectVisitor) =
 
         let tyPickler = resolver.Resolve<Type> ()
 
@@ -70,6 +73,7 @@
         member internal __.PicklerResolver = resolver
         member __.StreamingContext = sc
         member internal __.Formatter = formatter
+        member internal __.Visitor = visitor
         member internal __.ReflectionCache = reflectionCache
         member internal __.TypePickler = tyPickler
         member internal __.ObjectIdGenerator = idGen
@@ -85,7 +89,7 @@
 
     and [<AutoSerializable(false)>] 
       ReadState internal (formatter : IPickleFormatReader, resolver : IPicklerResolver, 
-                                reflectionCache : ReflectionCache, ?streamingContext) =
+                                reflectionCache : ReflectionCache, ?streamingContext, ?visitor : IObjectVisitor) =
         
         let sc = match streamingContext with None -> new StreamingContext() | Some sc -> sc
         let mutable nextObjectIsSubtype = false
@@ -100,6 +104,7 @@
         member internal __.TypePickler = tyPickler
         member internal __.ReflectionCache = reflectionCache
         member __.StreamingContext = sc
+        member internal __.Visitor = visitor
         member internal __.ObjectCache = objCache
         member internal __.FixupIndex = fixupIndex
         member internal __.GetObjectId (isArray : bool) =

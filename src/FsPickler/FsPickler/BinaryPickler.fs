@@ -285,16 +285,20 @@
             }
 
         /// <summary>Compute size in bytes for given input.</summary>
-        /// <param name="pickler">use specific pickler for length computation.</param>
         /// <param name="value">input value.</param>
-        member bp.ComputeSize<'T>(value : 'T, [<O;D(null)>]?pickler : Pickler<'T>) =
-
+        member bp.ComputeSize<'T>(value : 'T) =
             let lengthCounter = new LengthCounter()
-            match pickler with
-            | None -> bp.Serialize(lengthCounter, value)
-            | Some p -> bp.Serialize(p, lengthCounter, value)
+            bp.Serialize(lengthCounter, value)
             lengthCounter.Length
 
+        /// <summary>
+        ///     Visits all reference types that appear in the given object graph.
+        /// </summary>
+        /// <param name="visitor">Visitor implementation.</param>
+        /// <param name="graph">Object graph.</param>
+        member bp.VisitObject(visitor : IObjectVisitor, graph : 'T) : unit =
+            let pickler = resolver.Resolve<'T> ()
+            initVisit resolver reflectionCache visitor pickler graph
 
     type DefaultBinaryPickler (?tyConv) =
         inherit BinaryPickler(new BinaryPickleFormatProvider(), ?tyConv = tyConv)

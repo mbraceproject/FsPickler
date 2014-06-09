@@ -67,6 +67,10 @@
         formatter.EndReadRoot ()
         value
 
+    let initVisit resolver reflectionCache visitor (pickler : Pickler<'T>) value =
+        let formatter = new NullPickleWriter()
+        let state = new WriteState(formatter, resolver, reflectionCache, visitor = visitor)
+        pickler.Write state "value" value
 
     //
     //  top-level sequence serialization

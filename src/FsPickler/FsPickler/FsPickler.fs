@@ -1,21 +1,47 @@
 ﻿namespace Nessos.FsPickler
 
     open System
+    open System.Reflection
+    open System.Collections.Generic
     
     open Nessos.FsPickler.Hashing
     open Nessos.FsPickler.TypeCache
 
-    type FsPickler =
+    type FsPickler private () =
+        
+        static let defaultPickler = lazy(new DefaultBinaryPickler() :> BinaryPickler)
 
+        /// <summary>
+        ///     A default binary pickler instance.
+        /// </summary>
+        static member DefaultPickler = defaultPickler.Value
+
+        /// <summary>
+        ///     Create a new binary pickler instance.
+        /// </summary>
+        /// <param name="tyConv">optional type name converter implementation.</param>
         static member CreateBinary(?tyConv) = 
             new DefaultBinaryPickler(?tyConv = tyConv) :> BinaryPickler
 
+        /// <summary>
+        ///     Create a new binary pickler instance.
+        /// </summary>
+        /// <param name="tyConv">optional type name converter implementation.</param>
         static member CreateBclBinary(?tyConv) = 
             new BclBinaryPickler(?tyConv = tyConv) :> BinaryPickler
 
+        /// <summary>
+        ///     Create a new XML pickler instance.
+        /// </summary>
+        /// <param name="tyConv">optional type name converter implementation.</param>
         static member CreateXml(?tyConv, ?indent) = 
             new XmlPickler(?tyConv = tyConv, ?indent = indent)
 
+
+        /// <summary>
+        ///     Create a new JSON pickler instance.
+        /// </summary>
+        /// <param name="tyConv">optional type name converter implementation.</param>
         static member CreateJson(?tyConv, ?indent, ?omitHeader) = 
             new JsonPickler(?tyConv = tyConv, ?indent = indent, ?omitHeader = omitHeader)
 
@@ -34,3 +60,65 @@
         /// Auto generates a pickler for given type
         static member GeneratePickler (t : Type) = 
             (PicklerCache.Instance :> IPicklerResolver).Resolve t
+
+        //
+        // Misc utils
+        //
+
+        /// <summary>Compute size in bytes for given input.</summary>
+        /// <param name="value">input value.</param>
+        static member ComputeSize<'T>(value : 'T) = defaultPickler.Value.ComputeSize(value)
+
+        /// <summary>
+        ///     Visits all reference types that appear in the given object graph.
+        /// </summary>
+        /// <param name="visitor">Visitor implementation.</param>
+        /// <param name="graph">Object graph.</param>
+        static member VisitObject(visitor : IObjectVisitor, graph : 'T) =
+            defaultPickler.Value.VisitObject(visitor, graph)
+
+        /// <summary>Compute size and hashcode for given input.</summary>
+        /// <param name="value">input value.</param>
+        /// <param name="hashFactory">the hashing algorithm to be used. MurMur3 by default.</param>
+        static member ComputeHash<'T>(value : 'T, [<O;D(null)>] ?hashFactory : IHashStreamFactory) =
+            defaultPickler.Value.ComputeHash(value, ?hashFactory = hashFactory)
+
+        /// <summary>
+        ///     Uses FsPickler to traverse the object graph, gathering types of objects as it goes.
+        /// </summary>
+        /// <param name="graph">input object graph.</param>
+        static member GatherTypesInObjectGraph(graph : obj) =
+            let gathered = new HashSet<Type> ()
+            let visitor =
+                {
+                    new IObjectVisitor with
+                        member __.Visit (value : 'T) = 
+                            match box value with
+                            | :? MemberInfo as m -> gathered.Add m.ReflectedType |> ignore
+                            | :? Assembly
+                            | :? AssemblyInfo -> ()
+                            | value -> gathered.Add(value.GetType()) |> ignore
+                }
+
+            do FsPickler.VisitObject(visitor, graph)
+            gathered |> Seq.toArray
+
+        /// <summary>
+        ///     Use FsPickler to traverse the object graph, gathering object instances as it goes.
+        /// </summary>
+        /// <param name="graph">input object graph.</param>
+        static member GatherObjectsInGraph (graph : obj) =
+            let gathered = new HashSet<obj> ()
+            let visitor =
+                {
+                    new IObjectVisitor with
+                        member __.Visit (value : 'T) = 
+                            match box value with
+                            | :? MemberInfo 
+                            | :? Assembly 
+                            | :? AssemblyInfo -> ()
+                            | _ -> gathered.Add value |> ignore
+                }
+
+            do FsPickler.VisitObject(visitor, graph)
+            gathered |> Seq.toArray

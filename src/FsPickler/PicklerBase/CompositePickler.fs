@@ -147,6 +147,10 @@
 
             let formatter = state.Formatter
 
+            match state.Visitor with
+            | Some v -> v.Visit value
+            | None -> ()
+
             // writes a non-null instance of a reference type
 #if DEBUG
             let writeObject () =

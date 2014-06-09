@@ -58,6 +58,11 @@
             abstract member Apply : Pickler<'T> -> 'U
         end
 
+    and IObjectVisitor =
+        interface
+            abstract member Visit<'T> : 'T -> unit
+        end
+
     and IPicklerResolver =
         interface
             /// Identifies if instances of given type can be serialized.
@@ -74,9 +79,8 @@
     and WriteState =
         class
             internal new : 
-                formatter:IPickleFormatWriter * resolver:IPicklerResolver *
-                    reflectionCache:ReflectionCache * ?streamingContext:StreamingContext ->
-                        WriteState
+                formatter:IPickleFormatWriter * resolver:IPicklerResolver * reflectionCache:ReflectionCache * 
+                    ?streamingContext:StreamingContext * ?visitor : IObjectVisitor -> WriteState
 
             member internal ResetCounters : unit -> unit
             member internal CyclicObjectSet : HashSet<int64>
@@ -87,6 +91,7 @@
             member internal PicklerResolver : IPicklerResolver
             member internal ReflectionCache : TypeCache.ReflectionCache
             member StreamingContext : StreamingContext
+            member internal Visitor : IObjectVisitor option
             member internal TypePickler : Pickler<System.Type>
             member internal NextObjectIsSubtype : bool with set
         end
@@ -94,9 +99,8 @@
     and ReadState =
         class
             internal new : 
-                formatter:IPickleFormatReader * resolver:IPicklerResolver *
-                    reflectionCache:ReflectionCache * ?streamingContext:StreamingContext ->
-                        ReadState
+                formatter:IPickleFormatReader * resolver:IPicklerResolver * reflectionCache:ReflectionCache * 
+                    ?streamingContext:StreamingContext * ?visitor : IObjectVisitor -> ReadState
 
             member internal GetObjectId : isArray:bool -> int64
             member internal RegisterUninitializedArray : array:System.Array -> unit
@@ -108,6 +112,7 @@
             member internal PicklerResolver : IPicklerResolver
             member internal ReflectionCache : TypeCache.ReflectionCache
             member StreamingContext : StreamingContext
+            member internal Visitor : IObjectVisitor option
             member internal TypePickler : Pickler<System.Type>
             member internal NextObjectIsSubtype : bool with set
         end

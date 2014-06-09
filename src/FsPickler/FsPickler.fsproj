@@ -104,12 +104,13 @@
     <Compile Include="Format\BclBinaryFormat.fs" />
     <Compile Include="Format\XmlFormat.fs" />
     <Compile Include="Format\JsonFormat.fs" />
+    <Compile Include="Format\NullFormat.fs" />
     <Compile Include="FsPickler\RootObjectSerialization.fs" />
     <Compile Include="FsPickler\BinaryPickler.fs" />
     <Compile Include="FsPickler\StringPickler.fs" />
     <Compile Include="FsPickler\FsPickler.fs" />
-    <Compile Include="FsPickler\ExtensionMethods.fs" />
     <Compile Include="FsPickler\Combinators.fs" />
+    <Compile Include="FsPickler\ExtensionMethods.fs" />
     <None Include="Test.fsx" />
     <None Include="packages.config" />
   </ItemGroup>
