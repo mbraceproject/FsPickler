@@ -116,7 +116,7 @@
     type FsPicklerException =
         inherit Exception
 
-        internal new (message : string, ?inner : exn) =
+        new (message : string, ?inner : exn) =
             { inherit Exception(message, defaultArg inner null) }
 
         internal new (si : SerializationInfo, sc : StreamingContext) =
@@ -125,7 +125,7 @@
     type InvalidPickleException =
         inherit FsPicklerException
 
-        internal new (message, ?inner) =
+        new (message, ?inner) =
             { inherit FsPicklerException(message, ?inner = inner) }
 
         internal new (si : SerializationInfo, sc : StreamingContext) =
@@ -134,7 +134,7 @@
     type InvalidPickleTypeException =
         inherit FsPicklerException
 
-        internal new (expectedType : string, actualType : string) =
+        new (expectedType : string, actualType : string) =
             let message = sprintf "Expected pickle of type '%s' but was '%s'." expectedType actualType
             { inherit FsPicklerException(message) }
 

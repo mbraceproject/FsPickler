@@ -53,7 +53,7 @@
     and IPickleFormatReader =
         inherit IDisposable
 
-        abstract BeginReadRoot : unit -> string
+        abstract BeginReadRoot : tag:string -> unit
         abstract EndReadRoot : unit -> unit
 
         abstract BeginReadObject : tag:string -> ObjectFlags

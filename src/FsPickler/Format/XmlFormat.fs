@@ -169,7 +169,7 @@
 
         interface IPickleFormatReader with
             
-            member __.BeginReadRoot () =
+            member __.BeginReadRoot (tag : string) =
                 do readElementName reader "FsPickler"
 
                 let version = reader.["version"]
@@ -177,13 +177,13 @@
                     let msg = sprintf "Invalid FsPickler version %s (expected %s)." version AssemblyVersionInformation.Version
                     raise <| new InvalidDataException(msg)
 
-                let rootTag = reader.["type"]
+                let sTag = reader.["type"]
+                if sTag <> tag then
+                    raise <| new InvalidPickleTypeException(tag, sTag)
 
-                if not reader.IsEmptyElement then
-                    if not <| reader.Read() then
-                        raise <| new EndOfStreamException()
-
-                rootTag
+                if reader.IsEmptyElement || reader.Read () then ()
+                else
+                    raise <| new EndOfStreamException()
 
             member __.EndReadRoot () =
                 if reader.IsEmptyElement then
@@ -196,9 +196,9 @@
 
                 let flags = parseFlagCsv <| reader.["flags"]
 
-                if not reader.IsEmptyElement then
-                    if not <| reader.Read() then
-                        raise <| new EndOfStreamException()
+                if reader.IsEmptyElement || reader.Read() then ()
+                else
+                    raise <| new EndOfStreamException()
 
                 flags
 

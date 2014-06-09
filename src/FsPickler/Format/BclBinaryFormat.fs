@@ -88,10 +88,10 @@
         let bw = new BinaryWriter(stream, encoding, leaveOpen)
 
         interface IPickleFormatWriter with
-            member __.BeginWriteRoot (id : string) =
+            member __.BeginWriteRoot (tag : string) =
                 bw.Write initValue
                 bw.Write isLittleEndian
-                bw.Write id
+                bw.Write tag
 
             member __.EndWriteRoot () = ()
 
@@ -157,7 +157,7 @@
             
             member __.Dispose () = br.Dispose ()
 
-            member __.BeginReadRoot () =
+            member __.BeginReadRoot (tag : string) =
                 if br.ReadUInt32 () <> initValue then
                     raise <| new InvalidDataException("invalid stream initialization.")
 
@@ -167,7 +167,9 @@
                     else
                         raise <| new InvalidDataException("serialized data is little-endian.")
 
-                br.ReadString()
+                let sTag = br.ReadString()
+                if sTag <> tag then
+                    raise <| new InvalidPickleTypeException(tag, sTag)
 
             member __.EndReadRoot () = ()
 
