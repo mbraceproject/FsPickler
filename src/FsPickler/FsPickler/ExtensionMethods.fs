@@ -6,12 +6,6 @@
     [<AutoOpen>]
     module ExtensionMethods =
 
-        type FsPickler with
-            static member CreateBinary(?tyConv) = new BinaryPickler(?tyConv = tyConv)
-            static member CreateBclBinary(?tyConv) = new BinaryPickler(new BclBinaryPickleFormatProvider(), ?tyConv = tyConv)
-            static member CreateXml(?tyConv) = new XmlPickler(?tyConv = tyConv)
-            static member CreateJson(?tyConv) = new JsonPickler(?tyConv = tyConv)
-
         type Pickler with
             /// <summary>Initializes a pickler out of a pair of read/write lambdas. Unsafe pickler generation method.</summary>
             /// <param name="reader">Deserialization logic for the pickler.</param>

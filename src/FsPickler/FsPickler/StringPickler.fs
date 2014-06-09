@@ -11,7 +11,7 @@
     [<AbstractClass>]
     [<AutoSerializableAttribute(false)>]
     type StringPickler (formatP : IStringPickleFormatProvider, ?tyConv) =
-        inherit FsPickler(formatP, ?tyConv = tyConv)
+        inherit BinaryPickler(formatP, ?tyConv = tyConv)
 
         let resolver = base.Resolver
         let reflectionCache = base.ReflectionCache
@@ -171,7 +171,7 @@
         /// <param name="pickler">Pickler to use.</param>
         /// <param name="value">Value to pickle.</param>
         /// <param name="streamingContext">streaming context.</param>
-        member f.Pickle (pickler : Pickler<'T>, value : 'T, [<O;D(null)>]?streamingContext) : string =
+        member f.PickleToString (pickler : Pickler<'T>, value : 'T, [<O;D(null)>]?streamingContext) : string =
             pickleString (fun m v -> f.Serialize(pickler, m, v, ?streamingContext = streamingContext)) value
 
         /// <summary>
@@ -179,7 +179,7 @@
         /// </summary>
         /// <param name="value">Value to pickle.</param>
         /// <param name="streamingContext">streaming context.</param>
-        member f.Pickle (value : 'T, [<O;D(null)>]?streamingContext) : string =
+        member f.PickleToString (value : 'T, [<O;D(null)>]?streamingContext) : string =
             pickleString (fun m v -> f.Serialize(m, v, ?streamingContext = streamingContext)) value
 
         /// <summary>
@@ -188,7 +188,7 @@
         /// <param name="pickler">pickler to use.</param>
         /// <param name="value">value to pickle.</param>
         /// <param name="streamingContext">streaming context.</param>
-        member f.Pickle (pickler: Pickler, value : obj, [<O;D(null)>]?streamingContext) : string =
+        member f.PickleToString (pickler: Pickler, value : obj, [<O;D(null)>]?streamingContext) : string =
             pickleString (fun m v -> f.Serialize(pickler, m, v, ?streamingContext = streamingContext)) value
 
         /// <summary>
@@ -197,7 +197,7 @@
         /// <param name="valueType">type of pickled value.</param>
         /// <param name="value">value to pickle.</param>
         /// <param name="streamingContext">streaming context.</param>
-        member f.Pickle (valueType : Type, value : obj, [<O;D(null)>]?streamingContext) : string =
+        member f.PickleToString (valueType : Type, value : obj, [<O;D(null)>]?streamingContext) : string =
             pickleString (fun m v -> f.Serialize(valueType, m, v, ?streamingContext = streamingContext)) value
 
         /// <summary>
@@ -206,7 +206,7 @@
         /// <param name="pickler">Pickler to use.</param>
         /// <param name="pickle">Pickle.</param>
         /// <param name="streamingContext">streaming context.</param>
-        member f.UnPickle (pickler : Pickler<'T>, pickle : string, [<O;D(null)>]?streamingContext) : 'T =
+        member f.UnPickleOfString (pickler : Pickler<'T>, pickle : string, [<O;D(null)>]?streamingContext) : 'T =
             unpickleString (fun m -> f.Deserialize(pickler, m, ?streamingContext = streamingContext)) pickle
 
         /// <summary>
@@ -214,7 +214,7 @@
         /// </summary>
         /// <param name="pickle">Pickle.</param>
         /// <param name="streamingContext">streaming context.</param>
-        member f.UnPickle<'T> (pickle : string, [<O;D(null)>]?streamingContext) : 'T =
+        member f.UnPickleOfString<'T> (pickle : string, [<O;D(null)>]?streamingContext) : 'T =
             unpickleString (fun m -> f.Deserialize<'T>(m, ?streamingContext = streamingContext)) pickle
 
         /// <summary>
@@ -223,7 +223,7 @@
         /// <param name="valueType">type of pickled value.</param>
         /// <param name="pickle">Pickle.</param>
         /// <param name="streamingContext">streaming context.</param>
-        member f.UnPickle (valueType : Type, pickle : string, [<O;D(null)>]?streamingContext) : obj =
+        member f.UnPickleOfString (valueType : Type, pickle : string, [<O;D(null)>]?streamingContext) : obj =
             unpickleString (fun m -> f.Deserialize(valueType, m, ?streamingContext = streamingContext)) pickle
 
         /// <summary>
@@ -232,8 +232,44 @@
         /// <param name="pickler">pickler to use.</param>
         /// <param name="pickle">Pickle.</param>
         /// <param name="streamingContext">streaming context.</param>
-        member f.UnPickle (pickler : Pickler, pickle : string, [<O;D(null)>]?streamingContext) : obj =
+        member f.UnPickleOfString (pickler : Pickler, pickle : string, [<O;D(null)>]?streamingContext) : obj =
             unpickleString (fun m -> f.Deserialize(pickler, m, ?streamingContext = streamingContext)) pickle
 
-    type XmlPickler(?tyConv, ?indent) = inherit StringPickler(new XmlPickleFormatProvider(?indent = indent), ?tyConv = tyConv)
-    type JsonPickler(?tyConv, ?indent) = inherit StringPickler(new JsonPickleFormatProvider(?indent = indent), ?tyConv = tyConv)
+
+    type XmlPickler =
+        inherit StringPickler
+        
+        val private format : XmlPickleFormatProvider
+
+        new (?tyConv, ?indent) =
+            let xml = new XmlPickleFormatProvider(defaultArg indent false)
+            { 
+                inherit StringPickler(xml, ?tyConv = tyConv)
+                format = xml    
+            }
+
+        member x.Indent
+            with get () = x.format.Indent
+            and set b = x.format.Indent <- b
+
+    type JsonPickler =
+        inherit StringPickler
+        
+        val private format : JsonPickleFormatProvider
+
+        new (?tyConv, ?indent, ?omitHeader) =
+            let indent = defaultArg indent false
+            let omitHeader = defaultArg omitHeader false
+            let json = new JsonPickleFormatProvider(indent, omitHeader)
+            { 
+                inherit StringPickler(json, ?tyConv = tyConv)
+                format = json    
+            }
+
+        member x.Indent
+            with get () = x.format.Indent
+            and set b = x.format.Indent <- b
+
+        member x.OmitHeader
+            with get () = x.format.OmitHeader
+            and set b = x.format.OmitHeader <- b

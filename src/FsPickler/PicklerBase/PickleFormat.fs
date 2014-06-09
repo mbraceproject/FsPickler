@@ -100,9 +100,6 @@
         abstract CreateWriter : Stream * Encoding * leaveOpen:bool -> IPickleFormatWriter
         abstract CreateReader : Stream * Encoding * leaveOpen:bool -> IPickleFormatReader
 
-    and IBinaryPickleFormatProvider =
-        inherit IPickleFormatProvider
-
     and IStringPickleFormatProvider =
         inherit IPickleFormatProvider
 

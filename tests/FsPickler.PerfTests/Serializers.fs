@@ -17,7 +17,7 @@
         abstract Serialize : Stream * 'T -> unit
         abstract Deserialize : Stream -> 'T
 
-    type FsPicklerSerializer (name : string, fsp : FsPickler) =
+    type FsPicklerSerializer (name : string, fsp : BinaryPickler) =
         member __.Pickler = fsp
 
         interface ISerializer with
@@ -26,7 +26,7 @@
             member __.Deserialize(stream : Stream) = fsp.Deserialize<'T> stream
 
     and FsPicklerBinary () = inherit FsPicklerSerializer("FsPickler.Binary", FsPickler.CreateBinary())
-    and FsPicklerBclBinary () = inherit FsPicklerSerializer("FsPickler.BclBinary", new BinaryPickler(new BclBinaryPickleFormatProvider()))
+    and FsPicklerBclBinary () = inherit FsPicklerSerializer("FsPickler.BclBinary", FsPickler.CreateBclBinary())
     and FsPicklerXml () = inherit FsPicklerSerializer("FsPickler.Xml", FsPickler.CreateXml())
     and FsPicklerJson () = inherit FsPicklerSerializer("FsPickler.Json", FsPickler.CreateJson())
 

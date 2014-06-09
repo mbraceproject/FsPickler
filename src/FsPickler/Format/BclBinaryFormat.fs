@@ -227,7 +227,7 @@
 
     and BclBinaryPickleFormatProvider () =
 
-        interface IBinaryPickleFormatProvider with
+        interface IPickleFormatProvider with
             member __.Name = "BclBinary"
 
             member __.CreateWriter (stream, encoding, leaveOpen) = new BclBinaryPickleWriter(stream, encoding, leaveOpen) :> _

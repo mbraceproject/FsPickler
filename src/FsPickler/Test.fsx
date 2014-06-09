@@ -22,11 +22,3 @@ let jp' = Json.pickle fPickler (fun x -> x + 1)
 Binary.unpickle fPickler bp' 41
 Xml.unpickle fPickler xp' 41
 Json.unpickle fPickler jp' 41
-
-
-/////
-
-let jsp = JsonPickler.CreateJson()
-
-Json.pickle Pickler.auto [Some 32, None]
-|> Json.unpickle p

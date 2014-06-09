@@ -20,14 +20,16 @@
     [<TestFixture("FsPickler.BclBinary")>]
     [<TestFixture("FsPickler.Xml")>]
     [<TestFixture("FsPickler.Json")>]
+    [<TestFixture("FsPickler.Json-headerless")>]
     type ``FsPickler Tests`` (picklerName : string) as self =
 
         let pickler =
             match picklerName with
-            | "FsPickler.Binary" -> FsPickler.CreateBinary() :> FsPickler
-            | "FsPickler.BclBinary" -> FsPickler.CreateBclBinary() :> FsPickler
-            | "FsPickler.Json" -> FsPickler.CreateJson() :> FsPickler
-            | "FsPickler.Xml" -> FsPickler.CreateXml() :> FsPickler
+            | "FsPickler.Binary" -> FsPickler.CreateBinary()
+            | "FsPickler.BclBinary" -> FsPickler.CreateBclBinary()
+            | "FsPickler.Json" -> FsPickler.CreateJson() :> BinaryPickler
+            | "FsPickler.Xml" -> FsPickler.CreateXml() :> BinaryPickler
+            | "FsPickler.Json-headerless" -> FsPickler.CreateJson(omitHeader = true) :> BinaryPickler
             | _ -> invalidArg "name" <| sprintf "unexpected pickler format '%s'." picklerName
 
         let _ = Arb.register<FsPicklerGenerators> ()
@@ -41,19 +43,11 @@
 
         member __.Pickler = pickler
 
-        abstract TestPickle : Pickler<'T> -> 'T -> obj
-        default __.TestPickle p (t : 'T) =
-            match pickler with
-            | :? StringPickler as sp -> sp.Pickle(p, t) :> obj
-            | :? BinaryPickler as bp -> bp.Pickle(p, t) :> obj
-            | _ -> invalidOp "unexpected pickler type."
+        abstract TestPickle : Pickler<'T> -> 'T -> byte []
+        default __.TestPickle p (t : 'T) = pickler.Pickle(p,t)
 
-        abstract TestUnPickle<'T> : Pickler<'T> -> obj -> 'T
-        default __.TestUnPickle<'T> p (pickle : obj) : 'T =
-            match pickler, pickle with
-            | :? StringPickler as spr, (:? string as sp) -> spr.UnPickle<'T>(p, sp)
-            | :? BinaryPickler as bpr, (:? (byte[]) as bp) -> bpr.UnPickle<'T>(p, bp)
-            | _ -> invalidArg "p" "invalid pickle format."
+        abstract TestUnPickle<'T> : Pickler<'T> -> byte [] -> 'T
+        default __.TestUnPickle<'T> p (pickle : byte []) : 'T = pickler.UnPickle<'T>(p, pickle)
 
         abstract TestSequenceRoundtrip<'T when 'T : equality> : seq<'T> -> unit
         default __.TestSequenceRoundtrip (xs : seq<'T>) =
@@ -73,11 +67,9 @@
                     
 
         abstract TestRoundtrip : 'T -> 'T
-        default __.TestRoundtrip (t : 'T) =
-            match pickler with
-            | :? StringPickler as p -> let pickle = p.Pickle t in p.UnPickle pickle
-            | :? BinaryPickler as p -> let pickle = p.Pickle t in p.UnPickle pickle
-            | _ -> invalidOp "unexpected pickler type."
+        default __.TestRoundtrip (t : 'T) = 
+            let pickle = pickler.Pickle t
+            pickler.UnPickle pickle
 
         //
         //  Primitive Serialization tests
@@ -711,10 +703,13 @@
 
         [<Test; Category("Stress tests")>]
         member t.``8. Stress test: deserialization type mismatch`` () =
-            t.TestTypeMismatch<int, string> 42
-            t.TestTypeMismatch<string, int> "forty-two"
-            t.TestTypeMismatch<obj, int>(obj())
-            t.TestTypeMismatch<int * int64, int * int> (1,1L)
+            match pickler with
+            | :? JsonPickler as jsp when jsp.OmitHeader -> ()
+            | _ ->
+                t.TestTypeMismatch<int, string> 42
+                t.TestTypeMismatch<string, int> "forty-two"
+                t.TestTypeMismatch<obj, int>(obj())
+                t.TestTypeMismatch<int * int64, int * int> (1,1L)
 
         member t.TestDeserializeInvalidData<'T> (bytes : byte []) =
             try
@@ -727,10 +722,13 @@
 
         [<Test; Category("Stress tests")>]
         member t.``8. Stress test: arbitrary data deserialization`` () =
-            Check.QuickThrowOnFail (fun bs -> t.TestDeserializeInvalidData<int> bs)
-            Check.QuickThrowOnFail (fun bs -> t.TestDeserializeInvalidData<string> bs)
-            Check.QuickThrowOnFail (fun bs -> t.TestDeserializeInvalidData<byte []> bs)
-            Check.QuickThrowOnFail (fun bs -> t.TestDeserializeInvalidData<int * string option> bs)
+            match pickler with
+            | :? JsonPickler as jsp when jsp.OmitHeader -> ()
+            | _ ->
+                Check.QuickThrowOnFail (fun bs -> t.TestDeserializeInvalidData<int> bs)
+                Check.QuickThrowOnFail (fun bs -> t.TestDeserializeInvalidData<string> bs)
+                Check.QuickThrowOnFail (fun bs -> t.TestDeserializeInvalidData<byte []> bs)
+                Check.QuickThrowOnFail (fun bs -> t.TestDeserializeInvalidData<int * string option> bs)
 
         [<Test; Category("Stress tests")>]
         member __.``8. Stress test: massively auto-generated objects`` () =

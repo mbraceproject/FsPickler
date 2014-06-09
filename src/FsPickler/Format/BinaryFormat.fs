@@ -168,7 +168,7 @@
 
     and BinaryPickleFormatProvider () =
 
-        interface IBinaryPickleFormatProvider with
+        interface IPickleFormatProvider with
             member __.Name = "Binary"
 
             member __.CreateWriter (stream : Stream, _, _) = new BinaryPickleWriter(stream) :> _

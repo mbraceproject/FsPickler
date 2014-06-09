@@ -14,7 +14,7 @@
 
         [<RequireQualifiedAccess>]
         module Binary =
-            let private binaryPickler = lazy(FsPickler.CreateBinary())
+            let internal binaryPickler = lazy(FsPickler.CreateBinary())
 
             /// pickles a value
             let pickle (pickler : Pickler<'T>) (value : 'T) : byte [] =
@@ -24,13 +24,13 @@
             let unpickle (pickler : Pickler<'T>) (pickle : byte []) =
                 binaryPickler.Value.UnPickle (pickler, pickle)
 
-            /// computes the size of given value
-            let getSize (value : 'T) =
-                binaryPickler.Value.ComputeSize(value)
+        /// computes the size of given value
+        let getSize (value : 'T) =
+            Binary.binaryPickler.Value.ComputeSize(value)
 
-            /// computes the hashcode of given value
-            let getHashCode (value : 'T) =
-                binaryPickler.Value.ComputeHash(value)
+        /// computes the hashcode of given value
+        let getHashCode (value : 'T) =
+            Binary.binaryPickler.Value.ComputeHash(value)
 
         [<RequireQualifiedAccess>]
         module Xml =
@@ -38,23 +38,23 @@
 
             /// pickles a value
             let pickle (pickler : Pickler<'T>) (value : 'T) : string =
-                xmlPickler.Value.Pickle (pickler, value)
+                xmlPickler.Value.PickleToString (pickler, value) : string
 
             /// upickles a value
             let unpickle (pickler : Pickler<'T>) (pickle : string) =
-                xmlPickler.Value.UnPickle (pickler, pickle)
+                xmlPickler.Value.UnPickleOfString (pickler, pickle)
 
         [<RequireQualifiedAccess>]
         module Json =
-            let private jsonPickler = lazy(FsPickler.CreateJson())
+            let private jsonPickler = lazy(FsPickler.CreateJson(omitHeader = true))
 
             /// pickles a value
             let pickle (pickler : Pickler<'T>) (value : 'T) : string =
-                jsonPickler.Value.Pickle (pickler, value)
+                jsonPickler.Value.PickleToString (pickler, value)
 
             /// upickles a value
             let unpickle (pickler : Pickler<'T>) (pickle : string) =
-                jsonPickler.Value.UnPickle (pickler, pickle)
+                jsonPickler.Value.UnPickleOfString (pickler, pickle)
 
 
         [<RequireQualifiedAccess>]
