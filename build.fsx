@@ -64,6 +64,7 @@ Target "AssemblyInfo" (fun _ ->
         ] 
 
     CreateFSharpAssemblyInfo "src/FsPickler/AssemblyInfo.fs" attrs
+    CreateFSharpAssemblyInfo "src/FsPickler.Json/AssemblyInfo.fs" attrs
     CreateCSharpAssemblyInfo "src/FsPickler.Binary/Properties/AssemblyInfo.cs" attrs
 
 )

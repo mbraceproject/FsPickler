@@ -251,25 +251,3 @@
         member x.Indent
             with get () = x.format.Indent
             and set b = x.format.Indent <- b
-
-    type JsonPickler =
-        inherit TextPickler
-        
-        val private format : JsonPickleFormatProvider
-
-        new (?tyConv, ?indent, ?omitHeader) =
-            let indent = defaultArg indent false
-            let omitHeader = defaultArg omitHeader false
-            let json = new JsonPickleFormatProvider(indent, omitHeader)
-            { 
-                inherit TextPickler(json, ?tyConv = tyConv)
-                format = json    
-            }
-
-        member x.Indent
-            with get () = x.format.Indent
-            and set b = x.format.Indent <- b
-
-        member x.OmitHeader
-            with get () = x.format.OmitHeader
-            and set b = x.format.OmitHeader <- b

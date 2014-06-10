@@ -37,14 +37,6 @@
         static member CreateXml(?tyConv, ?indent) = 
             new XmlPickler(?tyConv = tyConv, ?indent = indent)
 
-
-        /// <summary>
-        ///     Create a new JSON pickler instance.
-        /// </summary>
-        /// <param name="tyConv">optional type name converter implementation.</param>
-        static member CreateJson(?tyConv, ?indent, ?omitHeader) = 
-            new JsonPickler(?tyConv = tyConv, ?indent = indent, ?omitHeader = omitHeader)
-
         /// Decides if given type is serializable by FsPickler
         static member IsSerializableType (t : Type) = 
             (PicklerCache.Instance :> IPicklerResolver).IsSerializable t

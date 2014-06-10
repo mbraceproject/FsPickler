@@ -43,18 +43,6 @@
             let unpickle (pickler : Pickler<'T>) (pickle : string) =
                 xmlPickler.Value.UnPickleOfString (pickler, pickle)
 
-        [<RequireQualifiedAccess>]
-        module Json =
-            let private jsonPickler = lazy(FsPickler.CreateJson(omitHeader = true))
-
-            /// pickles a value
-            let pickle (pickler : Pickler<'T>) (value : 'T) : string =
-                jsonPickler.Value.PickleToString (pickler, value)
-
-            /// upickles a value
-            let unpickle (pickler : Pickler<'T>) (pickle : string) =
-                jsonPickler.Value.UnPickleOfString (pickler, pickle)
-
 
         [<RequireQualifiedAccess>]
         module Pickler =

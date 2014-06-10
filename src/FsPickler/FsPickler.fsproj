@@ -75,7 +75,7 @@
   </PropertyGroup>
   <Import Project="$(FSharpTargetsPath)" Condition="Exists('$(FSharpTargetsPath)')" />
   <ItemGroup>
-    <Compile Include="assemblyInfo.fs" />
+    <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Utils\Utils.fs" />
     <Compile Include="Utils\Emit.fs" />
     <Compile Include="Utils\Reflection.fs" />
@@ -103,7 +103,6 @@
     <Compile Include="Format\BinaryFormat.fs" />
     <Compile Include="Format\BclBinaryFormat.fs" />
     <Compile Include="Format\XmlFormat.fs" />
-    <Compile Include="Format\JsonFormat.fs" />
     <Compile Include="Format\NullFormat.fs" />
     <Compile Include="FsPickler\RootObjectSerialization.fs" />
     <Compile Include="FsPickler\BinaryPickler.fs" />
@@ -112,15 +111,10 @@
     <Compile Include="FsPickler\Combinators.fs" />
     <Compile Include="FsPickler\ExtensionMethods.fs" />
     <None Include="Test.fsx" />
-    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Core, Version=$(TargetFSharpCoreVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
     <Reference Include="mscorlib" />
-    <Reference Include="Newtonsoft.Json">
-      <HintPath>..\..\packages\Newtonsoft.Json.6.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />

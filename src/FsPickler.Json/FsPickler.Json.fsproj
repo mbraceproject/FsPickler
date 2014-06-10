@@ -5,13 +5,14 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>50cbceef-24dd-454f-a3a3-ac1759883311</ProjectGuid>
+    <ProjectGuid>1dcb4ad7-2c00-4bcd-b1a5-a469f31e2cd1</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>FsPickler.PerfTests</RootNamespace>
-    <AssemblyName>FsPickler.PerfTests</AssemblyName>
+    <RootNamespace>FsPickler.Json</RootNamespace>
+    <AssemblyName>FsPickler.Json</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <TargetFSharpCoreVersion>4.3.1.0</TargetFSharpCoreVersion>
-    <Name>FsPickler.PerfTests</Name>
+    <Name>FsPickler.Json</Name>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
   </PropertyGroup>
@@ -23,7 +24,9 @@
     <OutputPath>..\..\bin\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>..\..\bin\FsPickler.PerfTests.XML</DocumentationFile>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DocumentationFile>..\..\bin\FsPickler.Json.XML</DocumentationFile>
+    <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -32,7 +35,9 @@
     <OutputPath>..\..\bin\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>..\..\bin\FsPickler.PerfTests.XML</DocumentationFile>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DocumentationFile>..\..\bin\FsPickler.Json.XML</DocumentationFile>
+    <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
@@ -58,25 +63,16 @@
     <Error Condition="!Exists('$(SolutionDir)\.nuget\NuGet.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)\.nuget\NuGet.targets'))" />
   </Target>
   <ItemGroup>
-    <Compile Include="Serializers.fs" />
-    <Compile Include="TestTypes.fs" />
-    <Compile Include="PerformanceTests.fs" />
-    <None Include="perfTests.fsx" />
-    <Content Include="fspPerf.xml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
+    <Compile Include="AssemblyInfo.fs" />
+    <Compile Include="Utils.fs" />
+    <Compile Include="JsonWriter.fs" />
+    <Compile Include="JsonReader.fs" />
+    <Compile Include="JsonFormat.fs" />
+    <Compile Include="JsonPickler.fs" />
+    <None Include="Test.fsx" />
     <None Include="packages.config" />
-    <None Include="app.config" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="FSharp.Charting">
-      <HintPath>..\..\packages\FSharp.Charting.0.90.6\lib\net40\FSharp.Charting.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="FsUnit.NUnit">
-      <HintPath>..\..\packages\FsUnit.1.2.1.0\Lib\Net40\FsUnit.NUnit.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core, Version=$(TargetFSharpCoreVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
       <Private>False</Private>
@@ -85,37 +81,10 @@
       <HintPath>..\..\packages\Newtonsoft.Json.6.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="nunit.framework">
-      <HintPath>..\..\packages\NUnit.2.6.3\lib\nunit.framework.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="PerfUtil">
-      <HintPath>..\..\packages\PerfUtil.0.1.5\lib\net40\PerfUtil.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="PerfUtil.NUnit">
-      <HintPath>..\..\packages\PerfUtil.NUnit.0.1.5\lib\net40\PerfUtil.NUnit.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="protobuf-net">
-      <HintPath>..\..\packages\protobuf-net.2.0.0.668\lib\net40\protobuf-net.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="ServiceStack.Text">
-      <HintPath>..\..\packages\ServiceStack.Text.4.0.21\lib\net40\ServiceStack.Text.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
-    <Reference Include="System.Runtime.Serialization" />
-    <Reference Include="System.Xml" />
-    <ProjectReference Include="..\..\src\FsPickler.Json\FsPickler.Json.fsproj">
-      <Name>FsPickler.Json</Name>
-      <Project>{1dcb4ad7-2c00-4bcd-b1a5-a469f31e2cd1}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\..\src\FsPickler\FsPickler.fsproj">
+    <ProjectReference Include="..\FsPickler\FsPickler.fsproj">
       <Name>FsPickler</Name>
       <Project>{3ad987bf-f0fa-40bd-9dae-4af3a5fe9cc7}</Project>
       <Private>True</Private>

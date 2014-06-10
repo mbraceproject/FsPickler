@@ -100,6 +100,11 @@
       <Project>{490f47d5-5ffa-4b2a-9a1f-039384e83b12}</Project>
       <Private>True</Private>
     </ProjectReference>
+    <ProjectReference Include="..\..\src\FsPickler.Json\FsPickler.Json.fsproj">
+      <Name>FsPickler.Json</Name>
+      <Project>{1dcb4ad7-2c00-4bcd-b1a5-a469f31e2cd1}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\..\src\FsPickler\FsPickler.fsproj">
       <Name>FsPickler</Name>
       <Project>{3ad987bf-f0fa-40bd-9dae-4af3a5fe9cc7}</Project>
