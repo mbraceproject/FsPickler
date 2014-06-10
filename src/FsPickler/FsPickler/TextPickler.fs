@@ -10,7 +10,7 @@
 
     [<AbstractClass>]
     [<AutoSerializableAttribute(false)>]
-    type StringPickler (formatP : IStringPickleFormatProvider, ?tyConv) =
+    type TextPickler (formatP : IStringPickleFormatProvider, ?tyConv) =
         inherit BinaryPickler(formatP, ?tyConv = tyConv)
 
         let resolver = base.Resolver
@@ -237,14 +237,14 @@
 
 
     type XmlPickler =
-        inherit StringPickler
+        inherit TextPickler
         
         val private format : XmlPickleFormatProvider
 
         new (?tyConv, ?indent) =
             let xml = new XmlPickleFormatProvider(defaultArg indent false)
             { 
-                inherit StringPickler(xml, ?tyConv = tyConv)
+                inherit TextPickler(xml, ?tyConv = tyConv)
                 format = xml    
             }
 
@@ -253,7 +253,7 @@
             and set b = x.format.Indent <- b
 
     type JsonPickler =
-        inherit StringPickler
+        inherit TextPickler
         
         val private format : JsonPickleFormatProvider
 
@@ -262,7 +262,7 @@
             let omitHeader = defaultArg omitHeader false
             let json = new JsonPickleFormatProvider(indent, omitHeader)
             { 
-                inherit StringPickler(json, ?tyConv = tyConv)
+                inherit TextPickler(json, ?tyConv = tyConv)
                 format = json    
             }
 
