@@ -296,7 +296,7 @@
         
         member val Indent = indent with get, set
             
-        interface IStringPickleFormatProvider with
+        interface ITextPickleFormatProvider with
             member __.Name = "Xml"
 
             member __.CreateWriter (stream, encoding, leaveOpen) =

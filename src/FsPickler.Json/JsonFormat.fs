@@ -7,7 +7,7 @@
         member val Indent = indent with get,set
         member val OmitHeader = omitHeader with get,set
 
-        interface IStringPickleFormatProvider with
+        interface ITextPickleFormatProvider with
             member __.Name = "Json"
 
             member __.CreateWriter (stream, encoding, leaveOpen) =

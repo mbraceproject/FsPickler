@@ -10,21 +10,21 @@
     open Nessos.FsPickler
     open Nessos.FsPickler.TypeCache
 
-    let initStreamWriter (formatP : IPickleFormatProvider) stream encoding leaveOpen =
+    let initStreamWriter (formatP : IBinaryPickleFormatProvider) stream encoding leaveOpen =
         let encoding = defaultArg encoding Encoding.UTF8
         let leaveOpen = defaultArg leaveOpen false
         formatP.CreateWriter(stream, encoding, leaveOpen)
 
-    let initStreamReader (formatP : IPickleFormatProvider) stream encoding leaveOpen =
+    let initStreamReader (formatP : IBinaryPickleFormatProvider) stream encoding leaveOpen =
         let encoding = defaultArg encoding Encoding.UTF8
         let leaveOpen = defaultArg leaveOpen false
         formatP.CreateReader(stream, encoding, leaveOpen)
 
-    let initTextWriter (formatP : IStringPickleFormatProvider) writer leaveOpen =
+    let initTextWriter (formatP : ITextPickleFormatProvider) writer leaveOpen =
         let leaveOpen = defaultArg leaveOpen false
         formatP.CreateWriter(writer, leaveOpen)
 
-    let initTextReader (formatP : IStringPickleFormatProvider) reader leaveOpen =
+    let initTextReader (formatP : ITextPickleFormatProvider) reader leaveOpen =
         let leaveOpen = defaultArg leaveOpen false
         formatP.CreateReader(reader, leaveOpen)
 

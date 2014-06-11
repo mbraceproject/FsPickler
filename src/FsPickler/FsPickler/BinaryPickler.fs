@@ -22,7 +22,7 @@
 
     [<AbstractClass>]
     [<AutoSerializableAttribute(false)>]
-    type BinaryPickler (formatP : IPickleFormatProvider, ?tyConv) =
+    type BinaryPickler (formatP : IBinaryPickleFormatProvider, ?tyConv) =
 
         let resolver = PicklerCache.Instance :> IPicklerResolver
         let reflectionCache = ReflectionCache.Create(?tyConv = tyConv)

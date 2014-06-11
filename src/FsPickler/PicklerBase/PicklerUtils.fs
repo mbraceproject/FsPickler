@@ -19,6 +19,7 @@
 
 
     let private memberNameRegex = new Regex(@"[^a-zA-Z0-9]")
+    /// normalizes member name into a serialializable string.
     let getTagFromMemberInfo (m : MemberInfo) =
         memberNameRegex.Replace(m.Name, "")
 

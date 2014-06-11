@@ -35,10 +35,11 @@
             /// Specifies if this pickler can be applied to proper subtypes.
             abstract member UseWithSubtypes : bool
 
-            abstract member internal TypeKind : TypeKind
-            abstract member internal Unpack : IPicklerUnpacker<'U> -> 'U
             abstract member internal UntypedRead : state:ReadState -> tag:string -> obj
             abstract member internal UntypedWrite : state:WriteState -> tag:string -> value:obj -> unit
+
+            abstract member internal TypeKind : TypeKind
+            abstract member internal Unpack : IPicklerUnpacker<'U> -> 'U
             abstract member internal InitializeFrom : other:Pickler -> unit
         end
 

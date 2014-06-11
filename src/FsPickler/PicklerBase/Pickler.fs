@@ -29,6 +29,7 @@
         abstract Unpack : IPicklerUnpacker<'U> -> 'U
 
         abstract Cast<'S> : unit -> Pickler<'S>
+        /// copy data from other pickler onto self; allows for recursive pickle bindings.
         abstract InitializeFrom : other:Pickler -> unit
 
     and

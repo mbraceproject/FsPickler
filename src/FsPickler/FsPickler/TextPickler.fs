@@ -10,7 +10,7 @@
 
     [<AbstractClass>]
     [<AutoSerializableAttribute(false)>]
-    type TextPickler (formatP : IStringPickleFormatProvider, ?tyConv) =
+    type TextPickler (formatP : ITextPickleFormatProvider, ?tyConv) =
         inherit BinaryPickler(formatP, ?tyConv = tyConv)
 
         let resolver = base.Resolver
