@@ -348,7 +348,7 @@
             if (length < 0) return null;
             if (length == 0) return String.Empty;
 
-            var value = new String(' ', length);
+            var value = new String('\0', length);
             fixed (char* cp = value)
             {
                 BlockRead((byte*)cp, 2 * length);
