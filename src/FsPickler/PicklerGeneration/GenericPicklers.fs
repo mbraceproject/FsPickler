@@ -12,7 +12,7 @@
     open Nessos.FsPickler.PicklerUtils
 
     //
-    //  Pickler combinator Implementations
+    //  Pickler combinator implementations for common generic types
     //
 
     // F# list pickler combinator

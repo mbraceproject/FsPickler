@@ -8,10 +8,12 @@
 
     open Nessos.FsPickler.RootObjectSerialization
 
+    /// <summary>
+    ///     The base class for text-based pickle format implementations.
+    /// </summary>
     [<AbstractClass>]
-    [<AutoSerializableAttribute(false)>]
-    type TextPickler (formatP : ITextPickleFormatProvider, ?tyConv) =
-        inherit BinaryPickler(formatP, ?tyConv = tyConv)
+    type TextPickler (formatProvider : ITextPickleFormatProvider, [<O;D(null)>] ?typeConverter) =
+        inherit BinaryPickler(formatProvider, ?typeConverter = typeConverter)
 
         let resolver = base.Resolver
         let reflectionCache = base.ReflectionCache
@@ -25,7 +27,7 @@
                                         [<O;D(null)>]?streamingContext, [<O;D(null)>]?leaveOpen) : unit =
 
             let pickler = resolver.Resolve<'T> ()
-            use formatter = initTextWriter formatP writer leaveOpen
+            use formatter = initTextWriter formatProvider writer leaveOpen
             writeRootObject resolver reflectionCache formatter streamingContext pickler value
 
         /// <summary>Serialize value to the underlying stream using given pickler.</summary>
@@ -37,7 +39,7 @@
         member __.Serialize<'T>(pickler : Pickler<'T>, writer : TextWriter, value : 'T, 
                                         [<O;D(null)>]?streamingContext, [<O;D(null)>]?leaveOpen) : unit =
 
-            use formatter = initTextWriter formatP writer leaveOpen
+            use formatter = initTextWriter formatProvider writer leaveOpen
             writeRootObject resolver reflectionCache formatter streamingContext pickler value
 
         /// <summary>Serialize object of given type to the underlying stream.</summary>
@@ -51,7 +53,7 @@
                                         [<O;D(null)>]?streamingContext, [<O;D(null)>]?leaveOpen) : unit =
 
             let pickler = resolver.Resolve valueType
-            use formatter = initTextWriter formatP writer leaveOpen
+            use formatter = initTextWriter formatProvider writer leaveOpen
             writeRootObjectUntyped resolver reflectionCache formatter streamingContext pickler value
 
         /// <summary>Serialize object to the underlying stream using given pickler.</summary>
@@ -63,7 +65,7 @@
         member __.Serialize(pickler : Pickler, writer : TextWriter, value : obj, 
                                             [<O;D(null)>]?streamingContext, [<O;D(null)>]?leaveOpen) : unit =
 
-            use formatter = initTextWriter formatP writer leaveOpen
+            use formatter = initTextWriter formatProvider writer leaveOpen
             writeRootObjectUntyped resolver reflectionCache formatter streamingContext pickler value
 
         /// <summary>Deserialize value of given type from the underlying stream.</summary>
@@ -74,7 +76,7 @@
                                         [<O;D(null)>]?streamingContext, [<O;D(null)>]?leaveOpen) : 'T =
 
             let pickler = resolver.Resolve<'T> ()
-            use formatter = initTextReader formatP reader leaveOpen
+            use formatter = initTextReader formatProvider reader leaveOpen
             readRootObject resolver reflectionCache formatter streamingContext pickler
 
         /// <summary>Deserialize value of given type from the underlying stream, using given pickler.</summary>
@@ -85,7 +87,7 @@
         member __.Deserialize<'T> (pickler : Pickler<'T>, reader : TextReader, 
                                         [<O;D(null)>]?streamingContext, [<O;D(null)>]?leaveOpen) : 'T =
 
-            use formatter = initTextReader formatP reader leaveOpen
+            use formatter = initTextReader formatProvider reader leaveOpen
             readRootObject resolver reflectionCache formatter streamingContext pickler
 
         /// <summary>Deserialize object of given type from the underlying stream.</summary>
@@ -97,7 +99,7 @@
                                     [<O;D(null)>]?streamingContext, [<O;D(null)>]?leaveOpen) : obj =
 
             let pickler = resolver.Resolve valueType
-            use formatter = initTextReader formatP reader leaveOpen
+            use formatter = initTextReader formatProvider reader leaveOpen
             readRootObjectUntyped resolver reflectionCache formatter streamingContext pickler
 
         /// <summary>Deserialize object from the underlying stream using given pickler.</summary>
@@ -109,7 +111,7 @@
         member __.Deserialize (pickler : Pickler, reader : TextReader, 
                                     [<O;D(null)>]?streamingContext, [<O;D(null)>]?leaveOpen) : obj =
 
-            use formatter = initTextReader formatP reader leaveOpen
+            use formatter = initTextReader formatProvider reader leaveOpen
             readRootObjectUntyped resolver reflectionCache formatter streamingContext pickler
 
         /// <summary>Serialize a sequence of objects to the underlying stream.</summary>
@@ -122,7 +124,7 @@
                                             [<O;D(null)>]?streamingContext, [<O;D(null)>]?leaveOpen) : int =
 
             let pickler = resolver.Resolve<'T> ()
-            use formatter = initTextWriter formatP writer leaveOpen
+            use formatter = initTextWriter formatProvider writer leaveOpen
             writeTopLevelSequence resolver reflectionCache formatter streamingContext pickler sequence
 
         /// <summary>Serialize a sequence of objects to the underlying stream.</summary>
@@ -136,7 +138,7 @@
                                         [<O;D(null)>]?streamingContext, [<O;D(null)>]?leaveOpen) : int =
 
             let pickler = resolver.Resolve elementType
-            use formatter = initTextWriter formatP writer leaveOpen
+            use formatter = initTextWriter formatProvider writer leaveOpen
             writeTopLevelSequenceUntyped resolver reflectionCache formatter streamingContext pickler sequence
 
         /// <summary>Lazily deserialize a sequence of objects from the underlying stream.</summary>
@@ -148,7 +150,7 @@
                                             [<O;D(null)>]?streamingContext, [<O;D(null)>]?leaveOpen) : seq<'T> =
 
             let pickler = resolver.Resolve<'T> ()
-            let formatter = initTextReader formatP reader leaveOpen
+            let formatter = initTextReader formatProvider reader leaveOpen
             readTopLevelSequence resolver reflectionCache formatter streamingContext pickler
 
         /// <summary>Lazily deserialize a sequence of objects from the underlying stream.</summary>
@@ -161,7 +163,7 @@
                                             [<O;D(null)>]?streamingContext, [<O;D(null)>]?leaveOpen) : IEnumerable =
 
             let pickler = resolver.Resolve elementType
-            let formatter = initTextReader formatP reader leaveOpen
+            let formatter = initTextReader formatProvider reader leaveOpen
             readTopLevelSequenceUntyped resolver reflectionCache formatter streamingContext pickler
 
 
@@ -235,19 +237,28 @@
         member f.UnPickleOfString (pickler : Pickler, pickle : string, [<O;D(null)>]?streamingContext) : obj =
             unpickleString (fun m -> f.Deserialize(pickler, m, ?streamingContext = streamingContext)) pickle
 
-
+    /// <summary>
+    ///     Xml pickler instance.
+    /// </summary>
+    [<AutoSerializable(false)>]
     type XmlPickler =
         inherit TextPickler
         
         val private format : XmlPickleFormatProvider
 
-        new (?tyConv, ?indent) =
+        /// <summary>
+        ///     Define a new Xml pickler instance.
+        /// </summary>
+        /// <param name="typeConverter">Define a custom type name converter.</param>
+        /// <param name="indent">Enable indentation of output XML pickles.</param>
+        new ([<O;D(null)>] ?typeConverter, [<O;D(null)>] ?indent) =
             let xml = new XmlPickleFormatProvider(defaultArg indent false)
             { 
-                inherit TextPickler(xml, ?tyConv = tyConv)
+                inherit TextPickler(xml, ?typeConverter = typeConverter)
                 format = xml    
             }
 
+        /// Gets or sets indentation of serialized pickles.
         member x.Indent
             with get () = x.format.Indent
             and set b = x.format.Indent <- b

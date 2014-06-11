@@ -7,51 +7,50 @@
     open Nessos.FsPickler.Hashing
     open Nessos.FsPickler.TypeCache
 
+    /// FsPickler static facade.
     type FsPickler private () =
         
         static let defaultPickler = lazy(new DefaultBinaryPickler() :> BinaryPickler)
 
-        /// <summary>
-        ///     A default binary pickler instance.
-        /// </summary>
-        static member DefaultPickler = defaultPickler.Value
+        static member internal DefaultPickler = defaultPickler.Value
+        static member internal Resolver = PicklerCache.Instance :> IPicklerResolver
 
         /// <summary>
         ///     Create a new binary pickler instance.
         /// </summary>
         /// <param name="tyConv">optional type name converter implementation.</param>
-        static member CreateBinary(?tyConv) = 
-            new DefaultBinaryPickler(?tyConv = tyConv) :> BinaryPickler
+        static member CreateBinary([<O;D(null)>] ?typeConverter) = 
+            new DefaultBinaryPickler(?typeConverter = typeConverter) :> BinaryPickler
 
         /// <summary>
         ///     Create a new binary pickler instance.
         /// </summary>
         /// <param name="tyConv">optional type name converter implementation.</param>
-        static member CreateBclBinary(?tyConv) = 
-            new BclBinaryPickler(?tyConv = tyConv) :> BinaryPickler
+        static member CreateBclBinary([<O;D(null)>] ?typeConverter) = 
+            new BclBinaryPickler(?typeConverter = typeConverter) :> BinaryPickler
 
         /// <summary>
         ///     Create a new XML pickler instance.
         /// </summary>
         /// <param name="tyConv">optional type name converter implementation.</param>
-        static member CreateXml(?tyConv, ?indent) = 
-            new XmlPickler(?tyConv = tyConv, ?indent = indent)
+        static member CreateXml([<O;D(null)>]?typeConverter, [<O;D(null)>]?indent) = 
+            new XmlPickler(?typeConverter = typeConverter, ?indent = indent)
 
         /// Decides if given type is serializable by FsPickler
         static member IsSerializableType (t : Type) = 
-            (PicklerCache.Instance :> IPicklerResolver).IsSerializable t
+            FsPickler.Resolver.IsSerializable t
 
         /// Decides if given type is serializable by FsPickler
         static member IsSerializableType<'T> () = 
-            (PicklerCache.Instance :> IPicklerResolver).IsSerializable<'T> ()
+            FsPickler.Resolver.IsSerializable<'T> ()
 
         /// Auto generates a pickler for given type variable
         static member GeneratePickler<'T> () = 
-            (PicklerCache.Instance :> IPicklerResolver).Resolve<'T> ()
+            FsPickler.Resolver.Resolve<'T> ()
         
         /// Auto generates a pickler for given type
         static member GeneratePickler (t : Type) = 
-            (PicklerCache.Instance :> IPicklerResolver).Resolve t
+            FsPickler.Resolver.Resolve t
 
         //
         // Misc utils

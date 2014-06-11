@@ -96,7 +96,7 @@
     <Compile Include="PicklerGeneration\ArrayPicklers.fs" />
     <Compile Include="PicklerGeneration\TuplePicklers.fs" />
     <Compile Include="PicklerGeneration\FSharpPicklers.fs" />
-    <Compile Include="PicklerGeneration\CombinatorImpls.fs" />
+    <Compile Include="PicklerGeneration\GenericPicklers.fs" />
     <Compile Include="PicklerGeneration\PicklerFactory.fs" />
     <Compile Include="PicklerGeneration\PicklerResolution.fs" />
     <Compile Include="PicklerGeneration\PicklerCache.fs" />

@@ -1,13 +1,8 @@
 ﻿module internal Nessos.FsPickler.PicklerResolution
 
     open System
-    open System.Reflection
     open System.Collections.Generic
-    open System.Collections.Concurrent
     open System.Runtime.CompilerServices
-    open System.Runtime.Serialization
-
-    open Microsoft.FSharp.Reflection
 
     open Nessos.FsPickler
     open Nessos.FsPickler.Reflection

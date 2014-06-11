@@ -15,31 +15,39 @@
         [<RequireQualifiedAccess>]
         module Binary =
 
-            /// pickles a value
+            /// <summary>
+            ///     Pickles a value to binary.
+            /// </summary>
+            /// <param name="pickler">utilized pickler.</param>
+            /// <param name="value">input value.</param>
             let pickle (pickler : Pickler<'T>) (value : 'T) : byte [] =
                 FsPickler.DefaultPickler.Pickle (pickler, value)
 
-            /// upickles a value
+            /// <summary>
+            ///     Unpickles a values from binary.
+            /// </summary>
+            /// <param name="pickler">utilized pickler.</param>
+            /// <param name="pickle">input pickle.</param>
             let unpickle (pickler : Pickler<'T>) (pickle : byte []) =
                 FsPickler.DefaultPickler.UnPickle (pickler, pickle)
-
-        /// computes the size of given value
-        let getSize (value : 'T) =
-            FsPickler.DefaultPickler.ComputeSize(value)
-
-        /// computes the hashcode of given value
-        let getHashCode (value : 'T) =
-            FsPickler.DefaultPickler.ComputeHash(value)
 
         [<RequireQualifiedAccess>]
         module Xml =
             let private xmlPickler = lazy(FsPickler.CreateXml())
 
-            /// pickles a value
+            /// <summary>
+            ///     Pickles a value to XML.
+            /// </summary>
+            /// <param name="pickler">utilized pickler.</param>
+            /// <param name="value">input value.</param>
             let pickle (pickler : Pickler<'T>) (value : 'T) : string =
                 xmlPickler.Value.PickleToString (pickler, value) : string
 
-            /// upickles a value
+            /// <summary>
+            ///     Unpickles a values from XML.
+            /// </summary>
+            /// <param name="pickler">utilized pickler.</param>
+            /// <param name="pickle">input pickle.</param>
             let unpickle (pickler : Pickler<'T>) (pickle : string) =
                 xmlPickler.Value.UnPickleOfString (pickler, pickle)
 

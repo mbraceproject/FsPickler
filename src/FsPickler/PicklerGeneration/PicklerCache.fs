@@ -1,5 +1,9 @@
 ﻿namespace Nessos.FsPickler
 
+    // The Pickler cache stores all generated picklers.
+    // It is essentially a ConcurrentDictionary<Type, Pickler>
+    // It is a singleton that is used by every pickler implementation in the AppDomain.
+
     open System
     open System.Collections.Generic
     open System.Collections.Concurrent

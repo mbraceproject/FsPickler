@@ -1,5 +1,10 @@
 ﻿module internal Nessos.FsPickler.PicklerFactory
 
+    //
+    //  Defines a type shape visitor that routes shapes into their
+    //  corresponding pickler combinator implementations
+    //
+
     open System
     open System.Reflection
     open System.Runtime.Serialization

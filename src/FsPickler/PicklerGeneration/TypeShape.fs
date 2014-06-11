@@ -1,5 +1,16 @@
 ﻿namespace Nessos.FsPickler.TypeShape
 
+    // TypeShape:
+    //
+    //  Defines a `GADT` classification for .NET types into common `shapes`,
+    //  which gives rise to a natural type visitor pattern.
+    //  
+    //  Type shapes are used to generate picklers for arbitrary .NET types.
+    //  The shape of a given System.Type is initially resolved and constructed 
+    //  using reflection, which is then passed to a pickler factory.
+    //
+    //
+
     open System
     open System.Runtime.Serialization
 
