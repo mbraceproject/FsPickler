@@ -11,7 +11,7 @@
     open Nessos.FsPickler.Utils
     open Nessos.FsPickler.Hashing
     open Nessos.FsPickler.TypeCache
-    open Nessos.FsPickler.RootObjectSerialization
+    open Nessos.FsPickler.RootSerialization
 
     type internal OAttribute = System.Runtime.InteropServices.OptionalAttribute
     type internal DAttribute = System.Runtime.InteropServices.DefaultParameterValueAttribute
@@ -296,4 +296,6 @@
         /// <param name="graph">Object graph.</param>
         member bp.VisitObject(visitor : IObjectVisitor, graph : 'T) : unit =
             let pickler = resolver.Resolve<'T> ()
-            initVisit resolver reflectionCache visitor pickler graph
+            use nullFormat = new NullPickleWriter()
+            let state = new WriteState(nullFormat, resolver, reflectionCache, visitor = visitor)
+            pickler.Write state "value" graph

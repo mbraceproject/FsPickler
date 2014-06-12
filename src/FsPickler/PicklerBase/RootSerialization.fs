@@ -1,4 +1,4 @@
-﻿module internal Nessos.FsPickler.RootObjectSerialization
+﻿module internal Nessos.FsPickler.RootSerialization
 
     open System
     open System.Collections
@@ -66,11 +66,6 @@
         let value = pickler.UntypedRead readState "value"
         formatter.EndReadRoot ()
         value
-
-    let initVisit resolver reflectionCache visitor (pickler : Pickler<'T>) value =
-        let formatter = new NullPickleWriter()
-        let state = new WriteState(formatter, resolver, reflectionCache, visitor = visitor)
-        pickler.Write state "value" value
 
     //
     //  top-level sequence serialization

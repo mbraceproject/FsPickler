@@ -90,6 +90,7 @@
     <Compile Include="PicklerBase\CompositePickler.fs" />
     <Compile Include="PicklerBase\PicklerUtils.fs" />
     <Compile Include="PicklerBase\ReflectionPicklers.fs" />
+    <Compile Include="PicklerBase\RootSerialization.fs" />
     <Compile Include="PicklerGeneration\TypeShape.fs" />
     <Compile Include="PicklerGeneration\PicklerEmit.fs" />
     <Compile Include="PicklerGeneration\DotNetPicklers.fs" />
@@ -103,7 +104,6 @@
     <Compile Include="Format\BinaryFormat.fs" />
     <Compile Include="Format\XmlFormat.fs" />
     <Compile Include="Format\NullFormat.fs" />
-    <Compile Include="FsPickler\RootObjectSerialization.fs" />
     <Compile Include="FsPickler\BasePickler.fs" />
     <Compile Include="FsPickler\TextPickler.fs" />
     <Compile Include="FsPickler\BinaryPickler.fs" />

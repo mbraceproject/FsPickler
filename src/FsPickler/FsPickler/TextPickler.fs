@@ -6,7 +6,7 @@
     open System.IO
     open System.Text
 
-    open Nessos.FsPickler.RootObjectSerialization
+    open Nessos.FsPickler.RootSerialization
 
     /// <summary>
     ///     The base class for text-based pickle format implementations.
