@@ -7,40 +7,7 @@
     open Nessos.FsPickler.Hashing
     open Nessos.FsPickler.TypeCache
 
-    /// <summary>
-    ///     Binary pickler instance.
-    /// </summary>
-    [<Sealed; AutoSerializable(false)>]
-    type BinaryPickler ([<O;D(null)>] ?typeConverter) =
-        inherit BasePickler(new BinaryPickleFormatProvider(), ?typeConverter = typeConverter)
-
-    /// <summary>
-    ///     XML pickler instance.
-    /// </summary>
-    [<Sealed; AutoSerializable(false)>]
-    type XmlPickler =
-        inherit TextPickler
-        
-        val private format : XmlPickleFormatProvider
-
-        /// <summary>
-        ///     Define a new Xml pickler instance.
-        /// </summary>
-        /// <param name="typeConverter">Define a custom type name converter.</param>
-        /// <param name="indent">Enable indentation of output XML pickles.</param>
-        new ([<O;D(null)>] ?typeConverter, [<O;D(null)>] ?indent) =
-            let xml = new XmlPickleFormatProvider(defaultArg indent false)
-            { 
-                inherit TextPickler(xml, ?typeConverter = typeConverter)
-                format = xml    
-            }
-
-        /// Gets or sets indentation of serialized pickles.
-        member x.Indent
-            with get () = x.format.Indent
-            and set b = x.format.Indent <- b
-
-    /// FsPickler static facade.
+    /// FsPickler public facade
     type FsPickler private () =
         
         static let defaultPickler = lazy(new BinaryPickler())
@@ -51,16 +18,10 @@
         /// <summary>
         ///     Create a new binary pickler instance.
         /// </summary>
+        /// <param name="forceLittleEndian">Force little-endian encoding in primitive arrays but is slower. Defaults to false.</param>
         /// <param name="tyConv">optional type name converter implementation.</param>
-        static member CreateBinary([<O;D(null)>] ?typeConverter) = 
-            new BinaryPickler(?typeConverter = typeConverter)
-
-        /// <summary>
-        ///     Create a new binary pickler instance.
-        /// </summary>
-        /// <param name="tyConv">optional type name converter implementation.</param>
-        static member CreateBclBinary([<O;D(null)>] ?typeConverter) = 
-            new BinaryPickler(?typeConverter = typeConverter)
+        static member CreateBinary([<O;D(null)>] ?forceLittleEndian, [<O;D(null)>] ?typeConverter) = 
+            new BinaryPickler(?forceLittleEndian = forceLittleEndian, ?typeConverter = typeConverter)
 
         /// <summary>
         ///     Create a new XML pickler instance.

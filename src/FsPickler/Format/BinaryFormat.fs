@@ -30,7 +30,7 @@
         // and thus does little to handle endianness issues.
         // To avoid silent data corruption, record the serializer's
         // endianness setting at the beginning of the serialization stream.
-        let isLittleEndian = BitConverter.IsLittleEndian
+        let isLittleEndianSystem = BitConverter.IsLittleEndian
 
         let inline createHeader (flags : ObjectFlags) = initValue ||| uint32 flags
 
@@ -82,15 +82,25 @@
                 do fillBytes bytes
                 Buffer.BlockCopy(buf, 0, target, i, bytes)
   
+    // force little endian : by default, the writer uses Buffer.BlockCopy when serializing arrays.
+    // this is performant, but it does not respect endianness.
+    // forcing little endian makes ALL data pass through BinaryWriter, but is less efficient
 
-    type BinaryPickleWriter internal (stream : Stream, encoding : Encoding, leaveOpen) =
+    type BinaryPickleWriter internal (stream : Stream, encoding : Encoding, leaveOpen, forceLittleEndian) =
 
         let bw = new BinaryWriter(stream, encoding, leaveOpen)
 
         interface IPickleFormatWriter with
             member __.BeginWriteRoot (tag : string) =
                 bw.Write initValue
-                bw.Write isLittleEndian
+
+                if forceLittleEndian then 
+                    bw.Write 0uy
+                elif isLittleEndianSystem then
+                    bw.Write 1uy
+                else
+                    bw.Write 2uy
+
                 bw.Write tag
 
             member __.EndWriteRoot () = ()
@@ -145,13 +155,18 @@
                     bw.Write value.Length
                     bw.Write value
 
-            member __.IsPrimitiveArraySerializationSupported = true
+            // if forced little endian, primitive arrays are to be serialized
+            // in an element-by-element basis. This ensures that all serialization
+            // is passed through BinaryWriter that always uses little endian.
+            member __.IsPrimitiveArraySerializationSupported = not forceLittleEndian
             member __.WritePrimitiveArray _ array = bw.Flush() ; blockCopy(array, stream) ; stream.Flush()
 
             member __.Dispose () = bw.Dispose()
 
     and BinaryPickleReader internal (stream : Stream, encoding, leaveOpen) =
         let br = new BinaryReader(stream, encoding, leaveOpen)
+
+        let mutable isForcedLittleEndianStream = false
 
         interface IPickleFormatReader with
             
@@ -161,11 +176,15 @@
                 if br.ReadUInt32 () <> initValue then
                     raise <| new InvalidDataException("invalid stream initialization.")
 
-                if br.ReadBoolean () <> isLittleEndian then
-                    if isLittleEndian then
-                        raise <| new InvalidDataException("serialized data is big-endian.")
-                    else
-                        raise <| new InvalidDataException("serialized data is little-endian.")
+                match br.ReadByte () with
+                | 0uy -> isForcedLittleEndianStream <- true
+                | b ->
+                    let isLittleEndianStream = (b = 1uy)
+                    if isLittleEndianStream <> isLittleEndianSystem then
+                        if isLittleEndianStream then
+                            raise <| new InvalidDataException("serialized data is little-endian.")
+                        else
+                            raise <| new InvalidDataException("serialized data is big-endian.")
 
                 let sTag = br.ReadString()
                 if sTag <> tag then
@@ -221,14 +240,16 @@
                 if length < 0 then null
                 else br.ReadBytes(length)
 
-            member __.IsPrimitiveArraySerializationSupported = true
+            member __.IsPrimitiveArraySerializationSupported = not isForcedLittleEndianStream
             member __.ReadPrimitiveArray _ array = blockRead(stream, array)
 
+    
+    and BinaryPickleFormatProvider (forceLittleEndian : bool) =
 
-    and BinaryPickleFormatProvider () =
+        member val ForceLittleEndian = forceLittleEndian with get, set
 
         interface IPickleFormatProvider with
             member __.Name = "Binary"
 
-            member __.CreateWriter (stream, encoding, leaveOpen) = new BinaryPickleWriter(stream, encoding, leaveOpen) :> _
+            member __.CreateWriter (stream, encoding, leaveOpen) = new BinaryPickleWriter(stream, encoding, leaveOpen, __.ForceLittleEndian) :> _
             member __.CreateReader (stream, encoding, leaveOpen) = new BinaryPickleReader(stream, encoding, leaveOpen) :> _

@@ -106,6 +106,8 @@
     <Compile Include="FsPickler\RootObjectSerialization.fs" />
     <Compile Include="FsPickler\BasePickler.fs" />
     <Compile Include="FsPickler\TextPickler.fs" />
+    <Compile Include="FsPickler\BinaryPickler.fs" />
+    <Compile Include="FsPickler\XmlPickler.fs" />
     <Compile Include="FsPickler\FsPickler.fs" />
     <Compile Include="FsPickler\Combinators.fs" />
     <Compile Include="FsPickler\ExtensionMethods.fs" />
