@@ -68,15 +68,15 @@ module PerfTests =
     let largeTree = mkTree 8
 
     [<PerfTest>]
-    let ``Record Class`` (s : ISerializer) =
+    let ``Generic Class`` (s : ISerializer) =
         Serializer.roundtrips 100000 entry s
 
     [<PerfTest>]
-    let ``Dictionary of Record Classes`` (s : ISerializer) =
+    let ``Dictionary of Generic Classes`` (s : ISerializer) =
         Serializer.roundtrips 100 entries s
 
     [<PerfTest>]
-    let ``Binary tree of depth 10`` (s : ISerializer) =
+    let ``Balanced Binary tree of depth 10`` (s : ISerializer) =
         Serializer.roundtrips 100 largeTree s
 
     let tuple = (1,"lorem ipsum",[|1..100|],4, (1,42), System.Guid.NewGuid())
@@ -114,14 +114,17 @@ module PerfTests =
     let kvArr = [|1..10000|] |> Array.map (fun i -> (i,string i))
 
     [<PerfTest>]
-    let ``Key-Value array`` s = Serializer.roundtrips 100 kvArr s
+    let ``Array of tuples`` s = Serializer.roundtrips 100 kvArr s
 
     let tyArray = Array.init 10 (fun i -> if i % 2 = 0 then typeof<int> else typeof<int * string option []>)
 
     [<PerfTest>]
     let ``System.Type`` s = Serializer.roundtrips 10000 tyArray s
 
+    let array = Array3D.init 200 200 200 (fun i j k -> float <| i + 1000 * j + 1000000 * k)
 
+    [<PerfTest>]
+    let ``200 x 200 x 200 double array`` s = Serializer.roundtrips 1 array s
 
 module RandomGraph =
     type Marker = class end
@@ -129,8 +132,8 @@ module RandomGraph =
     let graph = Nessos.FsPickler.Tests.TestTypes.createRandomGraph 0.2 500
 
     [<PerfTest>]
-    let ``Random cyclic graph (n=500,P=20%)`` s = Serializer.roundtrips 1 graph s
-        
+    let ``Random object graph (n=500,P=20%)`` s = Serializer.roundtrips 1 graph s
+
 
 
 let tests = PerfTest<ISerializer>.OfModuleMarker<PerfTests.Entry> ()
