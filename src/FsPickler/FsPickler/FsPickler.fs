@@ -10,7 +10,7 @@
     /// FsPickler static facade.
     type FsPickler private () =
         
-        static let defaultPickler = lazy(new DefaultBinaryPickler() :> BinaryPickler)
+        static let defaultPickler = lazy(new BinaryPickler())
 
         static member internal DefaultPickler = defaultPickler.Value
         static member internal Resolver = PicklerCache.Instance :> IPicklerResolver
@@ -20,14 +20,14 @@
         /// </summary>
         /// <param name="tyConv">optional type name converter implementation.</param>
         static member CreateBinary([<O;D(null)>] ?typeConverter) = 
-            new DefaultBinaryPickler(?typeConverter = typeConverter) :> BinaryPickler
+            new BinaryPickler(?typeConverter = typeConverter)
 
         /// <summary>
         ///     Create a new binary pickler instance.
         /// </summary>
         /// <param name="tyConv">optional type name converter implementation.</param>
         static member CreateBclBinary([<O;D(null)>] ?typeConverter) = 
-            new BclBinaryPickler(?typeConverter = typeConverter) :> BinaryPickler
+            new BinaryPickler(?typeConverter = typeConverter)
 
         /// <summary>
         ///     Create a new XML pickler instance.

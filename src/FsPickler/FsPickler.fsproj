@@ -101,7 +101,6 @@
     <Compile Include="PicklerGeneration\PicklerResolution.fs" />
     <Compile Include="PicklerGeneration\PicklerCache.fs" />
     <Compile Include="Format\BinaryFormat.fs" />
-    <Compile Include="Format\BclBinaryFormat.fs" />
     <Compile Include="Format\XmlFormat.fs" />
     <Compile Include="Format\NullFormat.fs" />
     <Compile Include="FsPickler\RootObjectSerialization.fs" />
@@ -119,13 +118,6 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
     <Reference Include="System.Xml" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\FsPickler.Binary\FsPickler.Binary.csproj">
-      <Name>FsPickler.Binary</Name>
-      <Project>{490f47d5-5ffa-4b2a-9a1f-039384e83b12}</Project>
-      <Private>True</Private>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

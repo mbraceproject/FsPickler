@@ -13,7 +13,7 @@
     /// </summary>
     [<AbstractClass>]
     type TextPickler (formatProvider : ITextPickleFormatProvider, [<O;D(null)>] ?typeConverter) =
-        inherit BinaryPickler(formatProvider, ?typeConverter = typeConverter)
+        inherit BasePickler(formatProvider, ?typeConverter = typeConverter)
 
         let resolver = base.Resolver
         let reflectionCache = base.ReflectionCache

@@ -18,10 +18,10 @@
     type internal DAttribute = System.Runtime.InteropServices.DefaultParameterValueAttribute
 
     /// <summary>
-    ///     The base class for the public pickler API. All pickle formats are binary formats.
+    ///     The base class for the public pickler API. Provides basic binary serialization functionality
     /// </summary>
     [<AbstractClass>]
-    type BinaryPickler (formatProvider : IBinaryPickleFormatProvider, [<O;D(null)>]?typeConverter) =
+    type BasePickler (formatProvider : IPickleFormatProvider, [<O;D(null)>]?typeConverter) =
 
         let resolver = PicklerCache.Instance :> IPicklerResolver
         let reflectionCache = ReflectionCache.Create(?tyConv = typeConverter)
@@ -299,8 +299,6 @@
             let pickler = resolver.Resolve<'T> ()
             initVisit resolver reflectionCache visitor pickler graph
 
-    type DefaultBinaryPickler ([<O;D(null)>] ?typeConverter) =
-        inherit BinaryPickler(new BinaryPickleFormatProvider(), ?typeConverter = typeConverter)
-
-    type BclBinaryPickler ([<O;D(null)>] ?typeConverter) =
-        inherit BinaryPickler(new BclBinaryPickleFormatProvider(), ?typeConverter = typeConverter)
+    [<AutoSerializable(false)>]
+    type BinaryPickler ([<O;D(null)>] ?typeConverter) =
+        inherit BasePickler(new BinaryPickleFormatProvider(), ?typeConverter = typeConverter)

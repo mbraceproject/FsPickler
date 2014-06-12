@@ -262,11 +262,10 @@
         inherit NUnitPerf<ISerializer> ()
 
         let binary = new FsPicklerBinary() :> ISerializer
-        let bclBinary = new FsPicklerBclBinary() :> ISerializer
         let json = new FsPicklerJson() :> ISerializer
         let xml = new FsPicklerXml() :> ISerializer
 
-        let tester = new ImplementationComparer<_>(binary, [bclBinary ; json ; xml], throwOnError = false)
+        let tester = new ImplementationComparer<_>(binary, [json ; xml], throwOnError = false)
         let tests = PerfTest.OfModuleMarker<PerformanceTests.Marker> ()
 
         override __.PerfTester = tester :> _

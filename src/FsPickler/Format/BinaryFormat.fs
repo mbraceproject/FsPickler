@@ -3,6 +3,7 @@
     open System
     open System.IO
     open System.Text
+    open System.Threading
     open System.Runtime.Serialization
 
     open Microsoft.FSharp.Core.LanguagePrimitives
@@ -38,11 +39,53 @@
                 raise <| new InvalidDataException("expected a new object header.")
 
             flagMask &&& header |> byte |> EnumOfValue<byte, ObjectFlags>
+
+        [<Literal>]
+        let bufferSize = 256    
+        let buffer = new ThreadLocal<byte []>(fun () -> Array.zeroCreate<byte> bufferSize)
+
+        /// block copy primitive array to stream
+        let blockCopy (source : Array, target : Stream) =
+
+            let buf = buffer.Value
+            let mutable bytes = Buffer.ByteLength source
+            let mutable i = 0
+
+            while bytes > bufferSize do
+                Buffer.BlockCopy(source, i, buf, 0, bufferSize)
+                target.Write(buf, 0, bufferSize)
+                i <- i + bufferSize
+                bytes <- bytes - bufferSize
+
+            if bytes > 0 then
+                Buffer.BlockCopy(source, i, buf, 0, bytes)
+                target.Write(buf, 0, bytes)
+
+        /// copy stream contents to preallocated array
+        let blockRead (source : Stream, target : Array) =
+            let buf = buffer.Value
+            let inline fillBytes (n : int) =
+                let mutable read = 0
+                while read < n do
+                    read <- read + source.Read(buf, 0, n - read)
+        
+            let mutable bytes = Buffer.ByteLength target
+            let mutable i = 0
+
+            while bytes > bufferSize do
+                do fillBytes bufferSize
+                Buffer.BlockCopy(buf, 0, target, i, bufferSize)
+                i <- i + bufferSize
+                bytes <- bytes - bufferSize
+
+            if bytes > 0 then
+                do fillBytes bytes
+                Buffer.BlockCopy(buf, 0, target, i, bytes)
   
 
-    type BinaryPickleWriter internal (stream : Stream) =
+    type BinaryPickleWriter internal (stream : Stream, encoding : Encoding, leaveOpen) =
 
-        let bw = new Nessos.FsPickler.Binary.BinaryWriter(stream)
+        let bw = new BinaryWriter(stream, encoding, leaveOpen)
 
         interface IPickleFormatWriter with
             member __.BeginWriteRoot (tag : string) =
@@ -81,25 +124,34 @@
             member __.WriteDecimal _ value = bw.Write value
 
             member __.WriteChar _ value = bw.Write value
-            member __.WriteString _ value = bw.Write value
+            member __.WriteString _ value = 
+                if obj.ReferenceEquals(value, null) then bw.Write true
+                else
+                    bw.Write false
+                    bw.Write value
 
             member __.WriteDate _ value = bw.Write value.Ticks
             member __.WriteTimeSpan _ value = bw.Write value.Ticks
-            member __.WriteGuid _ value = bw.Write value
+            member __.WriteGuid _ value = bw.Write (value.ToByteArray())
 
             member __.WriteBigInteger _ value = 
                 let data = value.ToByteArray()
+                bw.Write data.Length
                 bw.Write data
 
-            member __.WriteBytes _ value = bw.Write value
+            member __.WriteBytes _ value = 
+                if obj.ReferenceEquals(value, null) then bw.Write -1
+                else
+                    bw.Write value.Length
+                    bw.Write value
 
             member __.IsPrimitiveArraySerializationSupported = true
-            member __.WritePrimitiveArray _ array = bw.Write array
+            member __.WritePrimitiveArray _ array = bw.Flush() ; blockCopy(array, stream) ; stream.Flush()
 
             member __.Dispose () = bw.Dispose()
 
-    and BinaryPickleReader internal (stream : Stream) =
-        let br = new Nessos.FsPickler.Binary.BinaryReader(stream)
+    and BinaryPickleReader internal (stream : Stream, encoding, leaveOpen) =
+        let br = new BinaryReader(stream, encoding, leaveOpen)
 
         interface IPickleFormatReader with
             
@@ -150,26 +202,33 @@
             member __.ReadDouble _ = br.ReadDouble()
 
             member __.ReadChar _ = br.ReadChar()
-            member __.ReadString _ = br.ReadString()
+            member __.ReadString _ = 
+                if br.ReadBoolean() then null
+                else
+                    br.ReadString()
 
             member __.ReadDate _ = let ticks = br.ReadInt64() in DateTime(ticks)
             member __.ReadTimeSpan _ = let ticks = br.ReadInt64() in TimeSpan(ticks)
-            member __.ReadGuid _ = br.ReadGuid ()
+            member __.ReadGuid _ = let bytes = br.ReadBytes(16) in Guid(bytes)
 
             member __.ReadBigInteger _ =
-                let data = br.ReadBytes()
+                let length = br.ReadInt32()
+                let data = br.ReadBytes(length)
                 new System.Numerics.BigInteger(data)
 
-            member __.ReadBytes _ = br.ReadBytes()
+            member __.ReadBytes _ = 
+                let length = br.ReadInt32() 
+                if length < 0 then null
+                else br.ReadBytes(length)
 
             member __.IsPrimitiveArraySerializationSupported = true
-            member __.ReadPrimitiveArray _ array = br.ReadArray(array)
+            member __.ReadPrimitiveArray _ array = blockRead(stream, array)
 
 
     and BinaryPickleFormatProvider () =
 
-        interface IBinaryPickleFormatProvider with
+        interface IPickleFormatProvider with
             member __.Name = "Binary"
 
-            member __.CreateWriter (stream : Stream, _, _) = new BinaryPickleWriter(stream) :> _
-            member __.CreateReader (stream : Stream, _, _) = new BinaryPickleReader(stream) :> _
+            member __.CreateWriter (stream, encoding, leaveOpen) = new BinaryPickleWriter(stream, encoding, leaveOpen) :> _
+            member __.CreateReader (stream, encoding, leaveOpen) = new BinaryPickleReader(stream, encoding, leaveOpen) :> _

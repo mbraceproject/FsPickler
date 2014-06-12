@@ -17,7 +17,6 @@
     open FsCheck
 
     [<TestFixture("FsPickler.Binary")>]
-    [<TestFixture("FsPickler.BclBinary")>]
     [<TestFixture("FsPickler.Xml")>]
     [<TestFixture("FsPickler.Json")>]
     [<TestFixture("FsPickler.Json-headerless")>]
@@ -25,11 +24,10 @@
 
         let pickler =
             match picklerName with
-            | "FsPickler.Binary" -> FsPickler.CreateBinary()
-            | "FsPickler.BclBinary" -> FsPickler.CreateBclBinary()
-            | "FsPickler.Json" -> FsPickler.CreateJson() :> BinaryPickler
-            | "FsPickler.Xml" -> FsPickler.CreateXml() :> BinaryPickler
-            | "FsPickler.Json-headerless" -> FsPickler.CreateJson(omitHeader = true) :> BinaryPickler
+            | "FsPickler.Binary" -> FsPickler.CreateBinary() :> BasePickler
+            | "FsPickler.Json" -> FsPickler.CreateJson() :> BasePickler
+            | "FsPickler.Xml" -> FsPickler.CreateXml() :> BasePickler
+            | "FsPickler.Json-headerless" -> FsPickler.CreateJson(omitHeader = true) :> BasePickler
             | _ -> invalidArg "name" <| sprintf "unexpected pickler format '%s'." picklerName
 
         let _ = Arb.register<FsPicklerGenerators> ()

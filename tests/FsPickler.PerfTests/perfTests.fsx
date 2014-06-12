@@ -137,7 +137,6 @@ let tests = PerfTest<ISerializer>.OfModuleMarker<PerfTests.Entry> ()
 let cyclic = PerfTest<ISerializer>.OfModuleMarker<RandomGraph.Marker> ()
 
 let fspBinary = new FsPicklerBinary() :> ISerializer
-let fspBclBinary = new FsPicklerBclBinary() :> ISerializer
 let fspXml = new FsPicklerXml() :> ISerializer
 let fspJson = new FsPicklerJson() :> ISerializer
 let bfs = new BinaryFormatterSerializer() :> ISerializer
@@ -147,8 +146,8 @@ let pbn = new ProtoBufSerializer() :> ISerializer
 let ssj = new ServiceStackJsonSerializer() :> ISerializer
 let sst = new ServiceStackTypeSerializer() :> ISerializer
 
-let allSerializers = [fspXml;fspBclBinary;fspJson;bfs;ndc;jdn;pbn;ssj;sst]
-let cyclicOnly = [fspBclBinary;fspXml;fspJson;bfs]
+let allSerializers = [fspXml;fspJson;bfs;ndc;jdn;pbn;ssj;sst]
+let cyclicOnly = [fspXml;fspJson;bfs]
 
 let mkTester () = new ImplementationComparer<ISerializer>(fspBinary, allSerializers) :> PerformanceTester<ISerializer>
 let mkCyclicGraphTester () = new ImplementationComparer<ISerializer>(fspBinary, cyclicOnly) :> PerformanceTester<ISerializer>

@@ -174,7 +174,7 @@
         abstract ReadPrimitiveArray : tag:string -> target:Array -> unit
 
     /// Factory abstraction for binary pickle formats.
-    type IBinaryPickleFormatProvider =
+    type IPickleFormatProvider =
 
         /// Pickle format name
         abstract Name : string
@@ -186,7 +186,7 @@
 
     /// Factory abstraction for text-based pickle formats.
     and ITextPickleFormatProvider =
-        inherit IBinaryPickleFormatProvider
+        inherit IPickleFormatProvider
 
         /// Initializes a new format writer
         abstract CreateWriter : TextWriter * leaveOpen:bool -> IPickleFormatWriter
