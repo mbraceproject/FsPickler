@@ -17,7 +17,7 @@ open Fake.AssemblyInfoFile
 // --------------------------------------------------------------------------------------
 
 let project = "FsPickler"
-let authors = ["Nessos Information Technologies, Eirik Tsarpalis"]
+let authors = ["Eirik Tsarpalis"]
 let summary = "A fast serialization framework and pickler combinator library for .NET"
 
 let description = """
