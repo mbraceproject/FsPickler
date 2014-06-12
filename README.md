@@ -1,12 +1,13 @@
 # FsPickler
 
-A fast, general-purpose binary serializer for .NET written in F# 
+A fast, general-purpose serialization framework for .NET written in F#
 that doubles as a pickler combinator library.
 
 * Based on the notion of pickler combinators.
 * Provides an automated, strongly typed, pickler generation framework.
-* Full support for .NET serialization, including classes and open hierarchies.
-* Highly optimized for F# core types.
+* Supports binary, xml and json pickle formats.
+* Full support for F# types, quotations, closures, cyclic objects.
+* Fully backwards compatible with .NET serialization and open hierarchies.
 * One of the [fastest serializers](https://github.com/eiriktsarpalis/FsPickler/wiki/Performance) for the .NET framework.
 * Full support for the mono framework.
 
@@ -24,32 +25,23 @@ The following snippet presents the basic serialization/deserialization API for F
 ```fsharp
 open Nessos.FsPickler
 
-let fsp = new FsPickler()
+// Binary serialization
+let bnp = FsPickler.CreateBinary()
+bnp.Serialize<int option list>(stream, [Some 1; None; Some -1])
+bnp.Deserialize<int option list>(stream)
 
-// typed serialization
-fsp.Serialize<int list option>(stream, Some [1; 2; 3])
-fsp.Deserialize<int list option>(stream)
+// Xml serialization
+let xmp = FsPickler.CreateXml()
+xmp.Serialize<int option list>(stream, [Some 1; None; Some -1])
 
-// typed serialization with explicit pickler use
-let pickler : Pickler<int list option> = fsp.GeneratePickler<int list option> ()
-
-fsp.Serialize(pickler, stream, Some [1; 2; 3])
-fsp.Deserialize(pickler, stream) : int list option
-
-// untyped serialization
-fsp.Serialize(typeof<int>, stream, 42)
-fsp.Deserialize(typeof<int>, stream) : obj
-
-// untyped serialization with explicit pickler use
-let pickler' : Pickler = fsp.GeneratePickler typeof<int>
-
-fsp.Serialize(pickler', stream, 42)
-fsp.Deserializer(pickler', stream) : obj
+// Json serialization
+let jsp = FsPickler.CreateJson()
+jsp.Serialize<int option list>(stream, [Some 1; None; Some -1])
 ```
 
 All generated picklers are strongly typed; pickling is performed efficiently
 without intermediate boxings. Picklers are generated at runtime using reflection
-and expression trees that are aggressively cached for future use.
+and dynamic methods which are cached for future use.
 
 ### Pickler Combinators
 
@@ -64,8 +56,8 @@ let p : Pickler<int * string option> =
     |> Pickler.option 
     |> Pickler.pair Pickler.int
     
-let data : byte [] = pickle p (42, Some "")
-unpickle p data
+let pickle : string = Json.pickle p (42, Some "42") // {"item1":42,"item2":{"Some":"42"}}
+Json.unpickle p pickle
 ```
 
 The combinator library includes all primitives as described in Andrew Kennedy's 
@@ -83,7 +75,7 @@ let pp : Pickler<Peano> =
         |> Pickler.wrap (function None -> Zero | Some p -> Succ p)
                         (function Zero -> None | Succ p -> Some p))
                         
-Succ (Succ Zero) |> pickle pp |> unpickle pp
+Succ (Succ Zero) |> Binary.pickle pp |> Binary.unpickle pp
 ```
 The library comes with ``array``, ``array2D``, ``list``, ``set`` and ``map`` 
 combinators that are used to build picklers for the corresponding generic types.
@@ -104,7 +96,7 @@ let tree (ep : Pickler<'T>) =
         |> Pickler.wrap (function None -> Leaf | Some (t,c) -> Node(t,c))
                         (function Leaf -> None | Node (t,c) -> Some(t,c)))
                         
-Node(2,[]) |> pickle (tree Pickler.int)
+Node(2,[]) |> Xml.pickle (tree Pickler.int)
 ```
 or it could be done using automatic resolution of type parameters:
 
@@ -119,7 +111,7 @@ let tree<'T> =
                         (function Leaf -> None | Node (t,c) -> Some(t,c)))
 
 
-Node([1],[Leaf ; Leaf]) |> pickle tree
+Node([1],[Leaf ; Leaf]) |> Json.pickle tree
 ```
 
 ### Experimental N-way Sum and Product Combinators
@@ -216,78 +208,11 @@ let p = Pickler.auto<RecursiveClass>
 RecursiveClass(RecursiveClass()) |> pickle p |> unpickle p
 ```
 
-### Pluggable Picklers
-
-When in need to define custom serialization rules for elsewhere-defined types, 
-a pluggable pickler mechanism is provided. 
-Supposing the following custom ``Pickler<int option>``:
-```fsharp
-let customOptional = Pickler.FromPrimitives((fun _ -> Some 42), fun _ _ -> ())
-```
-how could one plug it into the pickler generator?
-```fsharp
-let registry = new CustomPicklerRegistry("pickler cache with custom optionals")
-
-do registry.RegisterPickler customOptional
-
-let fsp' = new FsPickler(registry)
-```
-The above initializes a *new* pickler cache; all picklers generated from that cache
-will adhere to the custom rules:
-```fsharp
-let optionlist = fsp'.GeneratePickler<int option list> ()
-
-// outputs a list of Some 42's
-[ for i in 1 .. 100 -> Some i ] |> fsp.Pickle optionlist |> fsp.UnPickle optionlist
-```
-Note that auto-generated picklers do not support interop between caches:
-```fsharp
-let pickler = fsp.GeneratePickler<int list> ()
-
-fsp'.Pickler pickler [1] // runtime error
-```
-
-Care should be taken that custom ``FsPickler`` instances are treated as singletons;
-generating arbitrarily many instances might put strain on the runtime, 
-since each will initialize a unique cache of picklers and emitted code.
-
-### Pluggable Generic Picklers
-
-Defining pluggable picklers for generic types is a bit more involved, 
-and requires the use of special factory methods that need to be implemented
-as instances of the ``IPicklerFactory`` interface. The interface itself
-does not include any methods but instances need to have implemented a
-factory method with type signature 
-```fsharp
-Create<'T1,...,'Tn when [constraints]> : IPicklerResolver -> Pickler
-```
-For instance, supposing I need to define a custom pickler for F# sets:
-```fsharp
-type CustomSet () =
-    interface IPicklerFactory
-
-    member __.Create<'T when 'T : comparison> (resolver : IPicklerResolver) =
-        let ep = resolver.Resolve<'T> ()
-
-        ep |> Pickler.wrap (fun x -> set [x]) (fun s -> Seq.head s)
-        
-do customPicklers.RegisterPicklerFactory (new CustomSet())
-
-let fsp'' = new FsPickler(customPicklers)
-```
-I can now combine this rather bad pickler implementation as expected:
-```fsharp
-let p = fsp''.GeneratePickler<Set<int> option> ()
-
-// will return singleton set
-Some(set [ 1 .. 1000 ]) |> fsp.Pickle p |> fsp.UnPickle p
-```
-
 ### Structural Hashcodes
 
-FsPickler now offers experimental support for structural, non-cryptographic, hashcode generation:
+FsPickler offers experimental support for structural, non-cryptographic, hashcode generation:
 ```fsharp
-> fsp.ComputeHash [1 .. 100000] ;;
+> FsPickler.ComputeHash [1 .. 100000] ;;
 val it : HashResult =
   {Algorithm = "MurMur3";
    Length = 400008L;
@@ -305,11 +230,31 @@ large objects or complex object graphs, but it is not recommended for small valu
 
 If a hashcode is not required, the size of an object alone can be computed as follows:
 ```fsharp
-> fsp.ComputeSize [1 .. 1000000] ;;
+> FsPickler.ComputeSize [1 .. 1000000] ;;
 val it : int64 = 4000008L
 ```
 
-### Future work
+### Object Graph Visitors
 
-* Support for multiple pickle formats.
-* A C# friendly API.
+FsPickler offers experimental support for so-called object graph visitors.
+An `IObjectVisitor` is a simple interface:
+```fsharp
+type IObjectVisitor =
+  interface
+    abstract member Visit : 'T -> unit
+  end
+```
+FsPickler is capable of efficiently traversing arbitrary object graphs (as long as they are serializable)
+by exploiting its pickler infrastructure. This can be done by calling the method:
+```fsharp
+static member FsPickler.VisitObject : visitor:IObjectVisitor * graph:obj -> unit
+```
+A couple of useful applications are provided by the core library:
+```fsharp
+> let types = FsPickler.GatherTypesInObjectGraph [box 42 ; box (Some (42, "42")) ] ;;
+
+val types : System.Type [] =
+  [|Microsoft.FSharp.Collections.FSharpList`1[System.Object]; System.Int32;
+    Microsoft.FSharp.Core.FSharpOption`1[System.Tuple`2[System.Int32,System.String]];
+    System.Tuple`2[System.Int32,System.String]|]
+```
