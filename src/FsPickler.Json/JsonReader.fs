@@ -16,7 +16,7 @@
         let jsonReader = new JsonTextReader(textReader) :> JsonReader
         do
             jsonReader.CloseInput <- not leaveOpen
-            jsonReader.SupportMultipleContent <- true
+//            jsonReader.SupportMultipleContent <- true
 
         let mutable currentValueIsNull = false
 
