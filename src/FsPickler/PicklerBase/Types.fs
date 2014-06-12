@@ -12,15 +12,16 @@
 
     type TypeKind =
         | Primitive             = 0uy
-        | String                = 1uy
-        | Enum                  = 2uy
-        | Value                 = 3uy
-        | Array                 = 4uy
-        | Sealed                = 5uy
-        | NonSealed             = 6uy
-        | Abstract              = 7uy
-        | ArrayCompatible       = 8uy // interfaces assignable from arrays
-        | Delegate              = 9uy
+        | Char                  = 1uy // char is special primitive that should be serialized w.r.t. encoding
+        | String                = 2uy
+        | Enum                  = 3uy
+        | Value                 = 4uy
+        | Array                 = 5uy
+        | Sealed                = 6uy
+        | NonSealed             = 7uy
+        | Abstract              = 8uy
+        | ArrayCompatible       = 9uy // interfaces assignable from arrays
+        | Delegate              = 10uy
 
     /// Pickler generation information
 
@@ -55,7 +56,8 @@
     module internal TypeKind =
         /// builds type info enumeration out of reflection info
         let compute (t : Type) =
-            if t.IsPrimitive then TypeKind.Primitive
+            if t = typeof<char> then TypeKind.Char
+            elif t.IsPrimitive then TypeKind.Primitive
             elif t = typeof<string> then TypeKind.String
             elif t.IsEnum then TypeKind.Enum
             elif t.IsValueType then TypeKind.Value
