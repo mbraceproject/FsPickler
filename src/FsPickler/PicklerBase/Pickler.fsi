@@ -100,8 +100,8 @@
     and ReadState =
         class
             internal new : 
-                formatter:IPickleFormatReader * resolver:IPicklerResolver * reflectionCache:ReflectionCache * 
-                    ?streamingContext:StreamingContext * ?visitor : IObjectVisitor -> ReadState
+                formatter:IPickleFormatReader * resolver:IPicklerResolver * 
+                    reflectionCache:ReflectionCache * ?streamingContext:StreamingContext-> ReadState
 
             member internal GetObjectId : isArray:bool -> int64
             member internal RegisterUninitializedArray : array:System.Array -> unit
@@ -113,7 +113,6 @@
             member internal PicklerResolver : IPicklerResolver
             member internal ReflectionCache : TypeCache.ReflectionCache
             member StreamingContext : StreamingContext
-            member internal Visitor : IObjectVisitor option
             member internal TypePickler : Pickler<System.Type>
             member internal NextObjectIsSubtype : bool with set
         end
