@@ -14,10 +14,11 @@
       <releaseNotes>@releaseNotes@</releaseNotes>
       <copyright>Copyright 2014</copyright>
       <tags>@tags@</tags>
+      @dependencies@
     </metadata>
     <files>
-      <file src="..\FsPickler\bin\Release\FsPickler.dll" target="lib/net45" />
-      <file src="..\FsPickler\bin\Release\FsPickler.xml" target="lib/net45" />
-      <file src="..\FsPickler\bin\Release\FsPickler.pdb" target="lib/net45" />
+      <file src="..\bin\FsPickler.dll" target="lib/net45" />
+      <file src="..\bin\FsPickler.xml" target="lib/net45" />
+      <file src="..\bin\FsPickler.pdb" target="lib/net45" />
     </files>
 </package>

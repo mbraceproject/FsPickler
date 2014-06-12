@@ -18,17 +18,17 @@ open Fake.AssemblyInfoFile
 
 let project = "FsPickler"
 let authors = ["Nessos Information Technologies, Eirik Tsarpalis"]
-let summary = "A fast binary serializer and pickler combinator library for F#"
+let summary = "A fast serialization framework and pickler combinator library for .NET"
 
 let description = """
-    A fast, general-purpose binary serializer for .NET written in F# that doubles as a pickler combinator library.
+    A fast, general-purpose serialization framework for .NET written in F# that doubles as a pickler combinator library.
 
     * Based on the notion of pickler combinators.
-    * Provides an automated, strongly typed, pickler generation framework.
-    * Full support for .NET types, including classes and open hierarchies.
-    * Compatible with all serializable types, including the ISerializable interface.
-    * Highly optimized for F# core types.
-    * Performance about 5-20x faster than the default .NET serializers.
+    * Provides an automated pickler generation framework.
+    * Offers binary, xml and json pickle formats.
+    * Support for F# types, quotations, closures and cyclic objects.
+    * Fully backwards compatible with .NET serialization and open hierarchies.
+    * One of the fastest serializers for the .NET framework.
     * Full support for the mono framework.
 """
 
@@ -122,24 +122,46 @@ FinalTarget "CloseTestRunner" (fun _ ->
 //// --------------------------------------------------------------------------------------
 //// Build a NuGet package
 
-Target "NuGet" (fun _ ->
-    // Format the description to fit on a single line (remove \r\n and double-spaces)
-    let description = description.Replace("\r", "").Replace("\n", "").Replace("  ", " ")
+Target "NuGet -- FsPickler" (fun _ ->
+//    // Format the description to fit on a single line (remove \r\n and double-spaces)
+//    let description = description.Replace("\r", "").Replace("\n", "").Replace("  ", " ")
     let nugetPath = ".nuget/NuGet.exe"
     NuGet (fun p -> 
         { p with   
             Authors = authors
-            Project = project
+            Project = "FsPickler"
             Summary = summary
             Description = description
             Version = nugetVersion
             ReleaseNotes = String.concat " " release.Notes
             Tags = tags
-            OutputPath = "nuget"
+            OutputPath = "bin"
             ToolPath = nugetPath
             AccessKey = getBuildParamOrDefault "nugetkey" ""
+            Dependencies = []
             Publish = hasBuildParam "nugetkey" })
-        ("nuget/" + project + ".nuspec")
+        ("nuget/FsPickler.nuspec")
+)
+
+Target "NuGet -- FsPickler.Json" (fun _ ->
+//    // Format the description to fit on a single line (remove \r\n and double-spaces)
+//    let description = description.Replace("\r", "").Replace("\n", "").Replace("  ", " ")
+    let nugetPath = ".nuget/NuGet.exe"
+    NuGet (fun p -> 
+        { p with   
+            Authors = authors
+            Project = "FsPickler.Json"
+            Summary = summary
+            Description = description
+            Version = nugetVersion
+            ReleaseNotes = String.concat " " release.Notes
+            Tags = tags
+            OutputPath = "bin"
+            ToolPath = nugetPath
+            AccessKey = getBuildParamOrDefault "nugetkey" ""
+            Dependencies = [("FsPickler", release.NugetVersion) ; ("Newtonsoft.Json", "6.0.3")] 
+            Publish = hasBuildParam "nugetkey" })
+        ("nuget/FsPickler.Json.nuspec")
 )
 
 
@@ -162,7 +184,8 @@ Target "All" DoNothing
 
 "All"
   ==> "PrepareRelease" 
-  ==> "NuGet"
+  ==> "NuGet -- FsPickler"
+  ==> "NuGet -- FsPickler.Json"
   ==> "Release"
 
 //RunTargetOrDefault "Release"
