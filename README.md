@@ -4,9 +4,9 @@ A fast, general-purpose serialization framework for .NET written in F#
 that doubles as a pickler combinator library.
 
 * Based on the notion of pickler combinators.
-* Provides an automated, strongly typed, pickler generation framework.
-* Supports binary, xml and json pickle formats.
-* Full support for F# types, quotations, closures, cyclic objects.
+* Provides an automated pickler generation framework.
+* Offers binary, xml and json pickle formats.
+* Support for F# types, quotations, closures and cyclic objects.
 * Fully backwards compatible with .NET serialization and open hierarchies.
 * One of the [fastest serializers](https://github.com/eiriktsarpalis/FsPickler/wiki/Performance) for the .NET framework.
 * Full support for the mono framework.
@@ -258,3 +258,17 @@ val types : System.Type [] =
     Microsoft.FSharp.Core.FSharpOption`1[System.Tuple`2[System.Int32,System.String]];
     System.Tuple`2[System.Int32,System.String]|]
 ```
+
+### Defining Custom Pickle Formats
+
+It is possible to create user-defined pickle formats for FsPickler. One simply needs to implement the interface
+```fsharp
+type IPickleFormatProvider =
+  interface
+    abstract member Name : string
+
+    abstract member CreateReader : Stream * Encoding * leaveOpen:bool -> IPickleFormatReader
+    abstract member CreateWriter : Stream * Encoding * leaveOpen:bool -> IPickleFormatWriter
+  end
+```
+which can then be bolted on a class that inherits either of the `BasePickler` or `TextPickler` types.
