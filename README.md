@@ -266,7 +266,6 @@ It is possible to create user-defined pickle formats for FsPickler. One simply n
 type IPickleFormatProvider =
   interface
     abstract member Name : string
-
     abstract member CreateReader : Stream * Encoding * leaveOpen:bool -> IPickleFormatReader
     abstract member CreateWriter : Stream * Encoding * leaveOpen:bool -> IPickleFormatWriter
   end
