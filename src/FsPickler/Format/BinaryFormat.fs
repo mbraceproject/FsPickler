@@ -246,10 +246,13 @@
     
     and BinaryPickleFormatProvider (forceLittleEndian : bool) =
 
+        // UTF8 is optimal for BinaryWriter ; use as default
+        static let defaultEnc e = match e with None -> Encoding.UTF8 | Some e -> e
+
         member val ForceLittleEndian = forceLittleEndian with get, set
 
         interface IPickleFormatProvider with
             member __.Name = "Binary"
 
-            member __.CreateWriter (stream, encoding, leaveOpen) = new BinaryPickleWriter(stream, encoding, leaveOpen, __.ForceLittleEndian) :> _
-            member __.CreateReader (stream, encoding, leaveOpen) = new BinaryPickleReader(stream, encoding, leaveOpen) :> _
+            member __.CreateWriter (stream, leaveOpen, ?encoding) = new BinaryPickleWriter(stream, defaultEnc encoding, leaveOpen, __.ForceLittleEndian) :> _
+            member __.CreateReader (stream, leaveOpen, ?encoding) = new BinaryPickleReader(stream, defaultEnc encoding, leaveOpen) :> _

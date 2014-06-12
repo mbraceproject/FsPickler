@@ -180,9 +180,9 @@
         abstract Name : string
 
         /// Initializes a new format writer
-        abstract CreateWriter : Stream * Encoding * leaveOpen:bool -> IPickleFormatWriter
+        abstract CreateWriter : Stream * leaveOpen:bool * ?encoding:Encoding -> IPickleFormatWriter
         /// Initializes a new format reader
-        abstract CreateReader : Stream * Encoding * leaveOpen:bool -> IPickleFormatReader
+        abstract CreateReader : Stream * leaveOpen:bool * ?encoding:Encoding -> IPickleFormatReader
 
     /// Factory abstraction for text-based pickle formats.
     and ITextPickleFormatProvider =
