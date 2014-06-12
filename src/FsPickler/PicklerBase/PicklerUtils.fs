@@ -74,37 +74,6 @@
         
         ts
 
-
-    /// length passed as argument to avoid unecessary evaluations of sequence
-
-#if DEBUG
-    let writeBoundedPairSequence (w : WriteState) (kp : Pickler<'K>) (vp : Pickler<'V>) tag (length : int) (xs : ('K * 'V) seq) =
-#else
-    let inline writeBoundedPairSequence (w : WriteState) (kp : Pickler<'K>) (vp : Pickler<'V>) tag (length : int) (xs : ('K * 'V) seq) =
-#endif
-        w.Formatter.BeginWriteBoundedSequence tag length
-        for k,v in xs do
-            kp.Write w "key" k
-            vp.Write w "val" v
-        w.Formatter.EndWriteBoundedSequence ()
-
-#if DEBUG
-    let readBoundedPairSequence (r : ReadState) (kp : Pickler<'K>) (vp : Pickler<'V>) tag =
-#else
-    let inline readBoundedPairSequence (r : ReadState) (kp : Pickler<'K>) (vp : Pickler<'V>) tag =
-#endif
-        let length = r.Formatter.BeginReadBoundedSequence tag
-        let xs = Array.zeroCreate<'K * 'V> length
-
-        for i = 0 to length - 1 do
-            let k = kp.Read r "key"
-            let v = vp.Read r "val"
-            xs.[i] <- k,v
-
-        r.Formatter.EndReadBoundedSequence ()
-
-        xs
-
     /// write a sequence where length is not known beforehand
 
     let writeSequence (p : Pickler<'T>) tag (w : WriteState) (ts : 'T seq) : unit =
@@ -160,67 +129,3 @@
                 ra.Add next
 
             ra :> _
-
-    let writePairSequence (kp : Pickler<'K>) (vp : Pickler<'V>) tag (w : WriteState) (xs : ('K * 'V) seq) : unit =
-        match xs with
-        | :? (('K * 'V) []) as arr ->
-            w.Formatter.WriteBoolean "isBounded" true
-            w.Formatter.BeginWriteBoundedSequence tag arr.Length
-
-            for i = 0 to arr.Length - 1 do
-                let k,v = arr.[i]
-                kp.Write w "key" k
-                vp.Write w "val" v
-
-        | :? (('K * 'V) list) as list ->
-            w.Formatter.WriteBoolean "isBounded" true
-            w.Formatter.BeginWriteBoundedSequence tag list.Length
-
-            let rec iter rest =
-                match rest with
-                | [] -> ()
-                | (k,v) :: tl ->
-                    kp.Write w "key" k
-                    vp.Write w "val" v
-                    iter tl
-
-            iter list
-
-        | _ ->
-            w.Formatter.WriteBoolean "isBounded" false
-            w.Formatter.BeginWriteUnBoundedSequence tag
-
-            let e = xs.GetEnumerator()
-
-            while e.MoveNext() do
-                w.Formatter.WriteHasNextElement true
-                let k,v = e.Current
-                kp.Write w "key" k
-                vp.Write w "val" v
-
-            w.Formatter.WriteHasNextElement false
-
-
-    /// Deserializes a sequence of key/value pairs from the underlying stream
-    let readPairSequence (kp : Pickler<'K>) (vp : Pickler<'V>) tag (r : ReadState) =
-
-        if r.Formatter.ReadBoolean "isBounded" then
-            let length = r.Formatter.BeginReadBoundedSequence tag
-            let arr = Array.zeroCreate<'K * 'V> length
-            for i = 0 to length - 1 do
-                let k = kp.Read r "key"
-                let v = vp.Read r "val"
-                arr.[i] <- k,v
-
-            r.Formatter.EndReadBoundedSequence ()
-
-            arr :> seq<'K * 'V>
-        else
-            do r.Formatter.BeginReadUnBoundedSequence tag
-            let ra = new ResizeArray<'K * 'V> ()
-            while r.Formatter.ReadHasNextElement () do
-                let k = kp.Read r "key"
-                let v = vp.Read r "val"
-                ra.Add (k,v)
-
-            ra :> seq<'K * 'V>

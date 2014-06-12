@@ -10,6 +10,7 @@
     open Nessos.FsPickler
     open Nessos.FsPickler.Reflection
     open Nessos.FsPickler.PicklerUtils
+    open Nessos.FsPickler.TuplePicklers
 
     //
     //  Pickler combinator implementations for common generic types
@@ -189,12 +190,14 @@
 
     type FSharpMapPickler =
         static member Create<'K, 'V when 'K : comparison> (kp : Pickler<'K>, vp : Pickler<'V>) =
+
+            let tp = TuplePickler.Create<'K,'V>(kp, vp)
             
             let writer (w : WriteState) (m : Map<'K,'V>) =
-                writeBoundedPairSequence w kp vp "map" m.Count (Map.toSeq m)
+                writeBoundedSequence w tp m.Count "keyvalues" (Map.toSeq m)
 
             let reader (r : ReadState) =
-                readBoundedPairSequence r kp vp "map" |> Map.ofArray
+                readBoundedSequence r tp "keyvalues" |> Map.ofArray
 
             CompositePickler.Create<_>(reader, writer, PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = false)
 
@@ -206,12 +209,14 @@
     type DictionaryPickler =
         static member Create<'K, 'V when 'K : equality> (kp : Pickler<'K>, vp : Pickler<'V>) =
 
+            let tp = TuplePickler.Create<'K,'V>(kp, vp)
+
             let writer (w : WriteState) (d : Dictionary<'K,'V>) =
                 let kvs = Seq.map (fun (KeyValue (k,v)) -> k,v) d
-                writeBoundedPairSequence w kp vp "dict" d.Count kvs
+                writeBoundedSequence w tp d.Count "dict" kvs
 
             let reader (r : ReadState) =
-                let kvs = readBoundedPairSequence r kp vp "dict"
+                let kvs = readBoundedSequence r tp "dict"
                 let d = new Dictionary<'K,'V>()
                 for i = 0 to kvs.Length - 1 do
                     let k,v = kvs.[i]
@@ -267,7 +272,3 @@
     type SeqPickler =
         static member Create(ep : Pickler<'T>) =
             CompositePickler.Create<_>(readSequence ep "seq", writeSequence ep "seq", PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = true)
-
-    type KeyValueSeqPickler =
-        static member Create(kp : Pickler<'K>, vp : Pickler<'V>) =
-            CompositePickler.Create<_>(readPairSequence kp vp "seq", writePairSequence kp vp "seq", PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = true)

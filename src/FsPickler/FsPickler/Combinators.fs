@@ -121,8 +121,6 @@
             let array4D (f : Pickler<'T>) = ArrayPickler.Create4D<'T> f
             /// sequence pickler combinator ; uses eager evaluation
             let seq f = SeqPickler.Create f
-            /// sequence of pairs pickler combinator ; uses eager evaluation
-            let pairSeq kp vp = KeyValueSeqPickler.Create(kp, vp)
 
             /// wrap combinator: defines picklers up to isomorphism
             let wrap recover convert p = WrapPickler.Create(p, recover, convert)
