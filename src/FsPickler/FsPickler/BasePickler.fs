@@ -2,8 +2,6 @@
 
     open System
 
-    open Nessos.FsPickler.Hashing
-
     open System
     open System.IO
     open System.Collections
@@ -11,6 +9,7 @@
     open System.Runtime.Serialization
 
     open Nessos.FsPickler.Utils
+    open Nessos.FsPickler.Hashing
     open Nessos.FsPickler.TypeCache
     open Nessos.FsPickler.RootObjectSerialization
 
@@ -18,7 +17,7 @@
     type internal DAttribute = System.Runtime.InteropServices.DefaultParameterValueAttribute
 
     /// <summary>
-    ///     The base class for the public pickler API. Provides basic binary serialization functionality
+    ///     The base class for the public pickler API. Provides basic serialization functionality
     /// </summary>
     [<AbstractClass>]
     type BasePickler (formatProvider : IPickleFormatProvider, [<O;D(null)>]?typeConverter) =
@@ -298,7 +297,3 @@
         member bp.VisitObject(visitor : IObjectVisitor, graph : 'T) : unit =
             let pickler = resolver.Resolve<'T> ()
             initVisit resolver reflectionCache visitor pickler graph
-
-    [<AutoSerializable(false)>]
-    type BinaryPickler ([<O;D(null)>] ?typeConverter) =
-        inherit BasePickler(new BinaryPickleFormatProvider(), ?typeConverter = typeConverter)

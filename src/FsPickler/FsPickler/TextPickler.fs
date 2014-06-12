@@ -236,29 +236,3 @@
         /// <param name="streamingContext">streaming context.</param>
         member f.UnPickleOfString (pickler : Pickler, pickle : string, [<O;D(null)>]?streamingContext) : obj =
             unpickleString (fun m -> f.Deserialize(pickler, m, ?streamingContext = streamingContext)) pickle
-
-    /// <summary>
-    ///     Xml pickler instance.
-    /// </summary>
-    [<AutoSerializable(false)>]
-    type XmlPickler =
-        inherit TextPickler
-        
-        val private format : XmlPickleFormatProvider
-
-        /// <summary>
-        ///     Define a new Xml pickler instance.
-        /// </summary>
-        /// <param name="typeConverter">Define a custom type name converter.</param>
-        /// <param name="indent">Enable indentation of output XML pickles.</param>
-        new ([<O;D(null)>] ?typeConverter, [<O;D(null)>] ?indent) =
-            let xml = new XmlPickleFormatProvider(defaultArg indent false)
-            { 
-                inherit TextPickler(xml, ?typeConverter = typeConverter)
-                format = xml    
-            }
-
-        /// Gets or sets indentation of serialized pickles.
-        member x.Indent
-            with get () = x.format.Indent
-            and set b = x.format.Indent <- b
