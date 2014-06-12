@@ -341,9 +341,9 @@
         
         /// use reflection to bootstrap a shape instance
         let resolve (t : Type) =
-            if t.IsGenericTypeDefinition then raise <| UnSupportedShape
-            elif t.IsGenericParameter then raise <| UnSupportedShape
-            elif isIntrinsicType t then raise <| UnSupportedShape
+            if t.IsGenericTypeDefinition then raise UnSupportedShape
+            elif t.IsGenericParameter then raise UnSupportedShape
+            elif isIntrinsicType t then raise UnSupportedShape
             elif t.IsPrimitive then activate1 typedefof<ShapePrimitive<_>> t
             elif FSharpType.IsTuple t then
                 let gas = t.GetGenericArguments()
@@ -356,7 +356,7 @@
                 | 6 -> activate typedefof<ShapeTuple<_,_,_,_,_,_>> gas
                 | 7 -> activate typedefof<ShapeTuple<_,_,_,_,_,_,_>> gas
                 | 8 -> activate typedefof<ShapeTuple<_,_,_,_,_,_,_,_>> gas
-                | _ -> invalidOp "invalid tuple type"
+                | _ -> raise UnSupportedShape
 
             elif FSharpType.IsUnion(t, allMembers) then
                 match t with
@@ -371,7 +371,7 @@
                     | 5 -> activate typedefof<ShapeChoice<_,_,_,_,_>> args
                     | 6 -> activate typedefof<ShapeChoice<_,_,_,_,_,_>> args
                     | 7 -> activate typedefof<ShapeChoice<_,_,_,_,_,_,_>> args
-                    | _ -> invalidOp "invalid parameter size"
+                    | _ -> raise UnSupportedShape
 
             elif FSharpType.IsRecord(t, allMembers) then
                 if t.IsGenericType && t.GetGenericTypeDefinition () = typedefof<_ ref> then
@@ -404,7 +404,7 @@
                     | 2 -> activate1 typedefof<ShapeArray2D<_>> et
                     | 3 -> activate1 typedefof<ShapeArray3D<_>> et
                     | 4 -> activate1 typedefof<ShapeArray4D<_>> et
-                    | rk -> invalidOp <| sprintf "unsupported array rank '%d'" rk
+                    | rk -> raise UnSupportedShape
 
                 elif typeof<Delegate>.IsAssignableFrom t then
                     activate1 typedefof<ShapeDelegate<_>> t
