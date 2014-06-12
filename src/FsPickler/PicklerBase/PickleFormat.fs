@@ -179,10 +179,13 @@
         /// Pickle format name
         abstract Name : string
 
+        /// Specifies the encoding intended as default for this pickle format
+        abstract DefaultEncoding : Encoding
+
         /// Initializes a new format writer
-        abstract CreateWriter : Stream * leaveOpen:bool * ?encoding:Encoding -> IPickleFormatWriter
+        abstract CreateWriter : Stream * Encoding * leaveOpen:bool -> IPickleFormatWriter
         /// Initializes a new format reader
-        abstract CreateReader : Stream * leaveOpen:bool * ?encoding:Encoding -> IPickleFormatReader
+        abstract CreateReader : Stream * Encoding * leaveOpen:bool -> IPickleFormatReader
 
     /// Factory abstraction for text-based pickle formats.
     and ITextPickleFormatProvider =

@@ -12,11 +12,13 @@
 
     let initStreamWriter (formatP : IPickleFormatProvider) stream encoding leaveOpen =
         let leaveOpen = defaultArg leaveOpen false
-        formatP.CreateWriter(stream, leaveOpen, ?encoding = encoding)
+        let encoding = defaultArg encoding formatP.DefaultEncoding
+        formatP.CreateWriter(stream, encoding, leaveOpen)
 
     let initStreamReader (formatP : IPickleFormatProvider) stream encoding leaveOpen =
         let leaveOpen = defaultArg leaveOpen false
-        formatP.CreateReader(stream, leaveOpen, ?encoding = encoding)
+        let encoding = defaultArg encoding formatP.DefaultEncoding
+        formatP.CreateReader(stream, encoding, leaveOpen)
 
     let initTextWriter (formatP : ITextPickleFormatProvider) writer leaveOpen =
         let leaveOpen = defaultArg leaveOpen false
