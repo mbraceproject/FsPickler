@@ -1,5 +1,7 @@
-#### 0.8.9-alpha
-* Formatting development
+#### 0.9.4-alpha
+* Major rewrite of the library.
+* Include support for multiple pickle formats.
+* Add support for object visitors.
 
 #### 0.8.6.2
 * Add StreamingContext option to Pickle/Unpickle methods
