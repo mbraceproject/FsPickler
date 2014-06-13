@@ -6,21 +6,30 @@
     open System.IO
     open System.Runtime.Serialization
 
+    open Nessos.FsPickler.Reflection
     open Nessos.FsPickler.TypeCache
 
-    [<AutoSerializable(false)>]
     [<AbstractClass>]
-    type Pickler internal () =
-        
-        abstract Type : Type
+    [<AutoSerializable(false)>]
+    type Pickler internal (t : Type) =
+
+        let typeKind = TypeKind.compute t
+        let isFixedSize = isOfFixedSize t
+        let isRecursive =
+#if OPTIMIZE_FSHARP
+            isRecursiveType true t
+#else
+            isRecursiveType false self.Type
+#endif
+
+        member __.Type = t
+        member __.TypeKind = typeKind
+        member __.IsOfFixedSize = isFixedSize
+        member __.IsRecursiveType = isRecursive
+
         abstract ImplementationType : Type
-
-        abstract TypeKind : TypeKind
         abstract PicklerInfo : PicklerInfo
-
-        abstract IsRecursiveType : bool
         abstract IsCacheByRef : bool
-        abstract IsOfFixedSize : bool
         abstract UseWithSubtypes : bool
 
         abstract UntypedWrite : state:WriteState -> tag:string -> value:obj -> unit
@@ -36,9 +45,7 @@
       [<AutoSerializable(false)>]
       [<AbstractClass>]
       Pickler<'T> internal () =
-        inherit Pickler ()
-        
-        override __.Type = typeof<'T>
+        inherit Pickler (typeof<'T>)
 
         abstract Write : state:WriteState -> tag:string -> value:'T -> unit
         abstract Read  : state:ReadState  -> tag:string -> 'T

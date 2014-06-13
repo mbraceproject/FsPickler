@@ -48,8 +48,6 @@
         r.Formatter.EndReadBoundedSequence ()
         array
 
-
-
     /// Serializes a sequence where the length is known beforehand.
 
 #if DEBUG
@@ -74,58 +72,23 @@
         
         ts
 
-    /// write a sequence where length is not known beforehand
 
-    let writeSequence (p : Pickler<'T>) tag (w : WriteState) (ts : 'T seq) : unit =
+    let writeUnboundedSequence (ep : Pickler<'T>) (tag : string) (w : WriteState) (ts : seq<'T>) =
         let formatter = w.Formatter
-        match ts with
-        | :? ('T []) as arr ->
-            formatter.WriteBoolean "isBounded" true
-            formatter.BeginWriteBoundedSequence tag arr.Length
-            for i = 0 to arr.Length - 1 do
-                p.Write w "elem" arr.[i]
+        formatter.BeginWriteUnBoundedSequence tag
+        use e = ts.GetEnumerator()
+        while e.MoveNext() do
+            formatter.WriteHasNextElement true
+            ep.Write w "elem" e.Current
 
-            formatter.EndWriteBoundedSequence ()
+        formatter.WriteHasNextElement false
 
-        | :? ('T list) as list ->
-            formatter.WriteBoolean "isBounded" true
-            formatter.BeginWriteBoundedSequence tag list.Length
-
-            let rec iter rest =
-                match rest with
-                | [] -> ()
-                | t :: tl ->
-                    p.Write w "elem" t
-                    iter tl
-
-            iter list
-            formatter.EndWriteBoundedSequence ()
-
-        | _ ->
-            formatter.WriteBoolean "isBounded" false
-            formatter.BeginWriteUnBoundedSequence tag
-            use e = ts.GetEnumerator()
-            while e.MoveNext() do
-                formatter.WriteHasNextElement true
-                p.Write w "elem" e.Current
-
-            formatter.WriteHasNextElement false
-
-    let readSequence (p : Pickler<'T>) tag (r : ReadState) : 'T seq =
+    let readUnboundedSequence (ep : Pickler<'T>) (tag : string) (r : ReadState) : seq<'T> =
         let formatter = r.Formatter
+        do formatter.BeginReadUnBoundedSequence tag
+        let ra = new ResizeArray<'T> ()
+        while formatter.ReadHasNextElement () do
+            let t = ep.Read r "elem"
+            ra.Add t
 
-        if formatter.ReadBoolean "isBounded" then
-            let length = formatter.BeginReadBoundedSequence tag
-            let array = Array.zeroCreate<'T> length
-            for i = 0 to length - 1 do
-                array.[i] <- p.Read r "elem"
-            formatter.EndReadBoundedSequence ()
-            array :> _
-        else
-            formatter.BeginReadUnBoundedSequence tag
-            let ra = new ResizeArray<'T> ()
-            while formatter.ReadHasNextElement () do
-                let next = p.Read r "elem"
-                ra.Add next
-
-            ra :> _
+        ra :> _

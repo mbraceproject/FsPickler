@@ -12,16 +12,9 @@
     type PrimitivePickler<'T> () =
         inherit Pickler<'T>()
 
-        let typeKind = TypeKind.compute typeof<'T>
-        let isOfFixedSize = isOfFixedSize typeof<'T>
-
         override p.ImplementationType = typeof<'T>
-        override p.TypeKind = typeKind
         override p.PicklerInfo = PicklerInfo.Primitive
-
-        override p.IsRecursiveType = false
         override p.IsCacheByRef = false
-        override p.IsOfFixedSize = isOfFixedSize
         override p.UseWithSubtypes = false
 
         override p.UntypedWrite (state:WriteState) (tag:string) (value:obj) =

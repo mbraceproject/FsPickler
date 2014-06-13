@@ -9,10 +9,19 @@
     [<AbstractClass>]
     type Pickler =
         class
-            internal new : unit -> Pickler
+            internal new : Type -> Pickler
 
             /// Type of values serialized by this pickler.
-            abstract member Type : System.Type
+            member Type : System.Type
+
+            /// Specifies if instances of this pickler type are of fixed size.
+            member IsOfFixedSize : bool
+
+            /// Specifies if instances of this pickler type can be cyclic objects.
+            member IsRecursiveType : bool
+
+            /// Pickler type classification
+            member TypeKind : TypeKind
 
             /// The underlying type that this pickler implements.
             abstract member ImplementationType : System.Type
@@ -23,12 +32,6 @@
             /// Specifies if pickled objects are to be cached by reference.
             abstract member IsCacheByRef : bool
 
-            /// Specifies if instances of this pickler type are of fixed size.
-            abstract member IsOfFixedSize : bool
-
-            /// Specifies if instances of this pickler type can be cyclic objects.
-            abstract member IsRecursiveType : bool
-
             /// Pickler generation metadata.
             abstract member PicklerInfo : PicklerInfo
             
@@ -38,7 +41,6 @@
             abstract member internal UntypedRead : state:ReadState -> tag:string -> obj
             abstract member internal UntypedWrite : state:WriteState -> tag:string -> value:obj -> unit
 
-            abstract member internal TypeKind : TypeKind
             abstract member internal Unpack : IPicklerUnpacker<'U> -> 'U
             abstract member internal InitializeFrom : other:Pickler -> unit
         end
@@ -47,10 +49,10 @@
         class
             inherit Pickler
             internal new : unit -> Pickler<'T>
+
             abstract member Read : state:ReadState -> tag:string -> 'T
             abstract member Write : state:WriteState -> tag:string -> value:'T -> unit
 
-            override Type : Type
             override Unpack : IPicklerUnpacker<'R> -> 'R
         end
 

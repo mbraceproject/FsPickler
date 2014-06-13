@@ -18,24 +18,12 @@
         val mutable private m_Writer : WriteState -> 'T -> unit
         val mutable private m_Reader : ReadState -> 'T
 
-        val mutable private m_TypeKind : TypeKind
         val mutable private m_PicklerInfo : PicklerInfo
-
-        val mutable private m_IsRecursiveType : bool
-        val mutable private m_IsOfFixedSize : bool
 
         val mutable private m_IsCacheByRef : bool
         val mutable private m_UseWithSubtypes : bool
 
         new (reader, writer, nested : Pickler option, picklerInfo, cacheByRef, useWithSubtypes) =
-            let typeKind = TypeKind.compute typeof<'T>
-            let isFixedSize = isOfFixedSize typeof<'T>
-            let isRecursive =
-#if OPTIMIZE_FSHARP
-                isRecursiveType true typeof<'T>
-#else
-                isRecursiveType false typeof<'T>
-#endif
             {
                 inherit Pickler<'T> ()
 
@@ -46,12 +34,7 @@
                 m_Writer = writer
                 m_Reader = reader
 
-                m_TypeKind = typeKind
                 m_PicklerInfo = picklerInfo
-
-                m_IsRecursiveType = isRecursive
-                m_IsOfFixedSize = isFixedSize
-
                 m_IsCacheByRef = cacheByRef
                 m_UseWithSubtypes = useWithSubtypes
             }
@@ -67,12 +50,7 @@
                 m_Writer = fun _ _ -> invalidOp "Attempting to consume pickler at initialization time."
                 m_Reader = fun _ -> invalidOp "Attempting to consume pickler at initialization time."
 
-                m_TypeKind = Unchecked.defaultof<_>
                 m_PicklerInfo = Unchecked.defaultof<_>
- 
-                m_IsRecursiveType = Unchecked.defaultof<_>
-                m_IsOfFixedSize = Unchecked.defaultof<_>
-
                 m_IsCacheByRef = Unchecked.defaultof<_>
                 m_UseWithSubtypes = Unchecked.defaultof<_>
             }
@@ -82,12 +60,8 @@
             | None -> typeof<'T> 
             | Some p -> p.Type
 
-        override p.TypeKind = p.m_TypeKind
         override p.PicklerInfo = p.m_PicklerInfo
-
-        override p.IsRecursiveType = p.m_IsRecursiveType
         override p.IsCacheByRef = p.m_IsCacheByRef
-        override p.IsOfFixedSize = p.m_IsOfFixedSize
         override p.UseWithSubtypes = p.m_UseWithSubtypes
 
         override p.Cast<'S> () =
@@ -115,12 +89,9 @@
                 elif not p'.m_IsInitialized then 
                     invalidOp "Source pickler has not been initialized."
                 else
-                    p.m_TypeKind <- p'.m_TypeKind
                     p.m_PicklerInfo <- p'.m_PicklerInfo
                     p.m_IsCacheByRef <- p'.m_IsCacheByRef
                     p.m_UseWithSubtypes <- p'.m_UseWithSubtypes
-                    p.m_IsRecursiveType <- p'.m_IsRecursiveType
-                    p.m_IsOfFixedSize <- p'.m_IsOfFixedSize
                     p.m_Writer <- p'.m_Writer
                     p.m_Reader <- p'.m_Reader
                     p.m_NestedPickler <- p'.m_NestedPickler
@@ -157,7 +128,7 @@
 #else
             let inline writeObject () =
 #endif
-                if p.m_TypeKind <= TypeKind.Sealed || p.m_UseWithSubtypes then
+                if p.TypeKind <= TypeKind.Sealed || p.m_UseWithSubtypes then
                     formatter.BeginWriteObject tag ObjectFlags.None
                     p.m_Writer state value
                     formatter.EndWriteObject ()
@@ -177,7 +148,7 @@
                         formatter.EndWriteObject ()
 
             try
-                if p.m_TypeKind = TypeKind.Value then
+                if p.TypeKind = TypeKind.Value then
                     formatter.BeginWriteObject tag ObjectFlags.None
                     p.m_Writer state value
                     formatter.EndWriteObject ()
@@ -192,14 +163,14 @@
                 do RuntimeHelpers.EnsureSufficientExecutionStack()
 #endif
 
-                if p.m_IsCacheByRef || p.m_IsRecursiveType then
+                if p.m_IsCacheByRef || p.IsRecursiveType then
                     let id, firstOccurence = state.ObjectIdGenerator.GetId value
 
                     let cyclicObjects = state.CyclicObjectSet
                     let objStack = state.ObjectStack
 
                     if firstOccurence then
-                        if p.m_IsRecursiveType then 
+                        if p.IsRecursiveType then 
                             // push id to the symbolic stack to detect cyclic objects during traversal
                             objStack.Push id
 
@@ -210,17 +181,17 @@
                         else
                             writeObject ()
 
-                    elif p.m_IsRecursiveType && objStack.Contains id && not <| cyclicObjects.Contains id then
+                    elif p.IsRecursiveType && objStack.Contains id && not <| cyclicObjects.Contains id then
                         // came across cyclic object, record fixup-related data
                         // cyclic objects are handled once per instance
                         // instances of cyclic arrays are handled differently than other reference types
 
                         do cyclicObjects.Add(id) |> ignore
                     
-                        if p.m_TypeKind = TypeKind.Array then
+                        if p.TypeKind = TypeKind.Array then
                             formatter.BeginWriteObject tag ObjectFlags.IsCachedInstance
 
-                        elif p.m_TypeKind <= TypeKind.Sealed || p.m_UseWithSubtypes then
+                        elif p.TypeKind <= TypeKind.Sealed || p.m_UseWithSubtypes then
                             formatter.BeginWriteObject tag ObjectFlags.IsCyclicInstance
                         else
                             let t = value.GetType()
@@ -271,7 +242,7 @@
                     formatter.EndReadObject ()
                     fastUnbox<'T> null
 
-                elif p.m_TypeKind = TypeKind.Value then 
+                elif p.TypeKind = TypeKind.Value then 
                     let value = p.m_Reader state
                     formatter.EndReadObject ()
                     value
@@ -301,9 +272,9 @@
                     formatter.EndReadObject ()
                     state.ObjectCache.[id] |> fastUnbox<'T>
 
-                elif p.m_IsCacheByRef || p.m_IsRecursiveType then
+                elif p.m_IsCacheByRef || p.IsRecursiveType then
                     let isArray = 
-                        match p.m_TypeKind with
+                        match p.TypeKind with
                         | TypeKind.Array | TypeKind.ArrayCompatible -> true
                         | _ -> false
 
@@ -313,7 +284,7 @@
 
                     formatter.EndReadObject()
 
-                    if p.m_IsRecursiveType then 
+                    if p.IsRecursiveType then 
                         let found, contents = state.FixupIndex.TryGetValue id
 
                         if found then

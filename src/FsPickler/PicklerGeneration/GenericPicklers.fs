@@ -271,4 +271,4 @@
 
     type SeqPickler =
         static member Create(ep : Pickler<'T>) =
-            CompositePickler.Create<_>(readSequence ep "seq", writeSequence ep "seq", PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = true)
+            CompositePickler.Create<_>(readUnboundedSequence ep "seq", writeUnboundedSequence ep "seq", PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = true)
