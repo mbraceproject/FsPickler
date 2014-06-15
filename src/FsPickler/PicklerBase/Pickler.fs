@@ -50,6 +50,9 @@
         abstract Write : state:WriteState -> tag:string -> value:'T -> unit
         abstract Read  : state:ReadState  -> tag:string -> 'T
 
+        override p.UntypedWrite (state : WriteState) (tag : string) (value : obj) = p.Write state tag (fastUnbox value)
+        override p.UntypedRead (state : ReadState) (tag : string) = p.Read state tag :> _
+
         override p.Unpack unpacker = unpacker.Apply p
 
     and IPicklerUnpacker<'U> =
@@ -73,8 +76,8 @@
 
         let sc = match streamingContext with None -> new StreamingContext() | Some sc -> sc
 
+        // ObjectIDGenerator has not 'Reset' method, hence make mutable
         let mutable idGen = new ObjectIDGenerator()
-        let mutable nextObjectIsSubtype = false
         let objStack = new Stack<int64> ()
         let cyclicObjects = new HashSet<int64> ()
 
@@ -91,15 +94,11 @@
         member internal __.ObjectStack = objStack
         member internal __.CyclicObjectSet = cyclicObjects
 
-        member internal __.NextObjectIsSubtype
-            with get () = nextObjectIsSubtype
-            and set b = nextObjectIsSubtype <- b
-
     and [<AutoSerializable(false)>] 
       ReadState internal (formatter : IPickleFormatReader, resolver : IPicklerResolver, reflectionCache : ReflectionCache, ?streamingContext) =
         
         let sc = match streamingContext with None -> new StreamingContext() | Some sc -> sc
-        let mutable nextObjectIsSubtype = false
+
         let mutable nextObjectId = 1L
         let mutable currentArrayId = 0L
         let objCache = new Dictionary<int64, obj> ()
@@ -125,7 +124,3 @@
 
         member internal __.RegisterUninitializedArray(array : Array) =
             objCache.Add(currentArrayId, array)
-
-        member internal __.NextObjectIsSubtype
-            with get () = nextObjectIsSubtype
-            and set b = nextObjectIsSubtype <- b

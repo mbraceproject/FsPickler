@@ -17,14 +17,6 @@
         override p.IsCacheByRef = false
         override p.UseWithSubtypes = false
 
-        override p.UntypedWrite (state:WriteState) (tag:string) (value:obj) =
-            state.NextObjectIsSubtype <- false
-            p.Write state tag (fastUnbox value)
-
-        override p.UntypedRead  (state:ReadState) (tag:string) =
-            state.NextObjectIsSubtype <- false
-            p.Read state tag :> obj
-
         override self.Cast<'S> () = self :> Pickler :?> Pickler<'S>
         override self.InitializeFrom _ = raise <| System.NotSupportedException("Primitive pickler late initialization not supported.")
 

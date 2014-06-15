@@ -213,7 +213,7 @@
         
         static member Create<'Exception when 'Exception :> exn>(resolver : IPicklerResolver) =
             // the default ISerializable pickler that handles exception metadata serialization
-            let defPickler = DotNetPicklers.ISerializablePickler.Create<'Exception>(resolver)
+            let defPickler = DotNetPicklers.ISerializablePickler.Create<'Exception>(resolver) :?> CompositePickler<'Exception>
             // separately serialize exception fields
             let fields = gatherFields typeof<'Exception> |> Array.filter(fun f -> f.DeclaringType = typeof<'Exception>)
             let fpicklers = fields |> Array.map (fun f -> resolver.Resolve f.FieldType)
@@ -243,27 +243,21 @@
 
 
             let writer (w : WriteState) (tag : string) (e : 'Exception) =
-                // toggle subtype to prevent pickler from detecting cyclic object pattern
-                w.NextObjectIsSubtype <- true
-                defPickler.UntypedWrite w tag e
+                do defPickler.Writer w tag e
  
                 match writerDele with
                 | None -> ()
                 | Some d -> d.Invoke(fpicklers, w, e)
 
             let reader (r : ReadState) (tag : string) =
-                // toggle subtype to prevent pickler from detecting cyclic object pattern
-                r.NextObjectIsSubtype <- true
-                let e = defPickler.UntypedRead r tag |> fastUnbox<'Exception>
+                let e = defPickler.Reader r tag
 
                 match readerDele with
                 | None -> e
                 | Some d -> d.Invoke(fpicklers, r, e) ; e
 #else
             let writer (w : WriteState) (tag : string) (e : 'Exception) =
-                // toggle subtype to prevent pickler from detecting cyclic object pattern
-                w.NextObjectIsSubtype <- true
-                defPickler.UntypedWrite w tag e
+                do defPickler.Writer w tag e
 
                 for i = 0 to fields.Length - 1 do
                     let f = fields.[i]
@@ -271,9 +265,7 @@
                     fpicklers.[i].UntypedWrite w tags.[i] o
 
             let reader (r : ReadState) (tag : string) =
-                // toggle subtype to prevent pickler from detecting cyclic object pattern
-                r.NextObjectIsSubtype <- true
-                let e = defPickler.UntypedRead r tag |> fastUnbox<'Exception>
+                let e = defPickler.Reader r tag
 
                 for i = 0 to fields.Length - 1 do
                     let f = fields.[i]
