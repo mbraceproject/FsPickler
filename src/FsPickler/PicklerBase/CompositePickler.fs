@@ -84,8 +84,6 @@
             | :? CompositePickler<'T> as p' ->
                 if p.m_IsInitialized then
                     invalidOp "Target pickler has already been initialized."
-                if p.m_IsInitialized then
-                    invalidOp "Target pickler has already been initialized."
                 elif not p'.m_IsInitialized then 
                     invalidOp "Source pickler has not been initialized."
                 else
