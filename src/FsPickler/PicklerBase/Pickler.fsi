@@ -53,6 +53,9 @@
             abstract member Read : state:ReadState -> tag:string -> 'T
             abstract member Write : state:WriteState -> tag:string -> value:'T -> unit
 
+            override UntypedRead : state:ReadState -> tag:string -> obj
+            override UntypedWrite : state:WriteState -> tag:string -> value:obj -> unit
+
             override Unpack : IPicklerUnpacker<'R> -> 'R
         end
 
@@ -89,14 +92,12 @@
             member internal CyclicObjectSet : HashSet<int64>
             member internal ObjectStack : Stack<int64>
             member internal Formatter : IPickleFormatWriter
-            member internal NextObjectIsSubtype : bool
             member internal ObjectIdGenerator : ObjectIDGenerator
             member internal PicklerResolver : IPicklerResolver
             member internal ReflectionCache : TypeCache.ReflectionCache
             member StreamingContext : StreamingContext
             member internal Visitor : IObjectVisitor option
             member internal TypePickler : Pickler<System.Type>
-            member internal NextObjectIsSubtype : bool with set
         end
 
     and ReadState =
@@ -110,11 +111,9 @@
             member internal ResetCounters : unit -> unit
             member internal FixupIndex : Dictionary<int64,(System.Type * obj)>
             member internal Formatter : IPickleFormatReader
-            member internal NextObjectIsSubtype : bool
             member internal ObjectCache : Dictionary<int64,obj>
             member internal PicklerResolver : IPicklerResolver
             member internal ReflectionCache : TypeCache.ReflectionCache
             member StreamingContext : StreamingContext
             member internal TypePickler : Pickler<System.Type>
-            member internal NextObjectIsSubtype : bool with set
         end
