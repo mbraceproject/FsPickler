@@ -345,5 +345,5 @@
             match factoryMethod with
             | Some m -> m.GuardedInvoke(null, [| resolver :> obj |]) :?> Pickler
             | None ->
-                let msg = "marked [<CustomPickler>] but missing factory method 'CreatePickler : IPicklerResolver -> Pickler<DeclaringType>'."
+                let msg = sprintf "marked [<CustomPickler>] but missing static method 'CreatePickler : IPicklerResolver -> Pickler<%s>'." t.Name
                 raise <| new NonSerializableTypeException(t, msg)
