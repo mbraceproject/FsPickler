@@ -13,7 +13,7 @@
 
     /// pickler initialization abbreviation
     let inline mkPickler<'T> (info:PicklerInfo) (useWithSubtypes:bool) (cache:bool) 
-                                        (reader : ReadState -> 'T) (writer : WriteState -> 'T -> unit) =
+                                        (reader : ReadState -> string -> 'T) (writer : WriteState -> string -> 'T -> unit) =
 
         CompositePickler.Create<'T>(reader, writer, info, cacheByRef = cache, useWithSubtypes = useWithSubtypes)
 
@@ -73,7 +73,7 @@
         ts
 
 
-    let writeUnboundedSequence (ep : Pickler<'T>) (tag : string) (w : WriteState) (ts : seq<'T>) =
+    let writeUnboundedSequence (ep : Pickler<'T>) (w : WriteState) (tag : string) (ts : seq<'T>) =
         let formatter = w.Formatter
         formatter.BeginWriteUnBoundedSequence tag
         use e = ts.GetEnumerator()
@@ -83,7 +83,7 @@
 
         formatter.WriteHasNextElement false
 
-    let readUnboundedSequence (ep : Pickler<'T>) (tag : string) (r : ReadState) : seq<'T> =
+    let readUnboundedSequence (ep : Pickler<'T>) (r : ReadState) (tag : string) : seq<'T> =
         let formatter = r.Formatter
         do formatter.BeginReadUnBoundedSequence tag
         let ra = new ResizeArray<'T> ()

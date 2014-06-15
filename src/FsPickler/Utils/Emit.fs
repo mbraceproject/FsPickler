@@ -97,6 +97,15 @@
                 do builderF arg0 arg1 arg2 ilGen
                 compileDynamicMethod<Func<'U1,'U2,'U3,'V>> dyn
 
+            let compileFunc4<'U1,'U2,'U3,'U4,'V> (name : string) (builderF : EnvItem<'U1> -> EnvItem<'U2> -> EnvItem<'U3> -> EnvItem<'U4> -> ILGenerator -> unit) =
+                let dyn, ilGen = createDynamicMethod name [| typeof<'U1> ; typeof<'U2> ; typeof<'U3> ; typeof<'U4> |] typeof<'V>
+                let arg0 = EnvItem<'U1>(ilGen, 0s)
+                let arg1 = EnvItem<'U2>(ilGen, 1s)
+                let arg2 = EnvItem<'U3>(ilGen, 2s)
+                let arg3 = EnvItem<'U4>(ilGen, 3s)
+                do builderF arg0 arg1 arg2 arg3 ilGen
+                compileDynamicMethod<Func<'U1,'U2,'U3,'U4,'V>> dyn
+
             let compileAction1<'U1> (name : string) (builderF : EnvItem<'U1> -> ILGenerator -> unit) =
                 let dyn, ilGen = createDynamicMethod name [| typeof<'U1> |] voidType
                 let arg0 = EnvItem<'U1>(ilGen, 0s)
@@ -117,5 +126,14 @@
                 let arg2 = EnvItem<'U3>(ilGen, 2s)
                 do builderF arg0 arg1 arg2 ilGen
                 compileDynamicMethod<Action<'U1,'U2,'U3>> dyn
+
+            let compileAction4<'U1,'U2,'U3,'U4> (name : string) (builderF : EnvItem<'U1> -> EnvItem<'U2> -> EnvItem<'U3> -> EnvItem<'U4> -> ILGenerator -> unit) =
+                let dyn, ilGen = createDynamicMethod name [| typeof<'U1> ; typeof<'U2> ; typeof<'U3> ; typeof<'U4> |] voidType
+                let arg0 = EnvItem<'U1>(ilGen, 0s)
+                let arg1 = EnvItem<'U2>(ilGen, 1s)
+                let arg2 = EnvItem<'U3>(ilGen, 2s)
+                let arg3 = EnvItem<'U4>(ilGen, 3s)
+                do builderF arg0 arg1 arg2 arg3 ilGen
+                compileDynamicMethod<Action<'U1,'U2,'U3,'U4>> dyn
         
 #endif

@@ -45,11 +45,11 @@
         static member Create<'Enum, 'Underlying when 'Enum : enum<'Underlying>> (resolver : IPicklerResolver) =
             let pickler = resolver.Resolve<'Underlying> ()
 
-            let writer (w : WriteState) (x : 'Enum) =
+            let writer (w : WriteState) (tag : string) (x : 'Enum) =
                 let value = Microsoft.FSharp.Core.LanguagePrimitives.EnumToValue<'Enum, 'Underlying> x
                 pickler.Write w "value" value
 
-            let reader (r : ReadState) =
+            let reader (r : ReadState) (tag : string) =
                 let value = pickler.Read r "value"
                 Microsoft.FSharp.Core.LanguagePrimitives.EnumOfValue<'Underlying, 'Enum> value
 
@@ -67,14 +67,14 @@
 
             let pickler = resolver.Resolve<'T> ()
 
-            let writer (w : WriteState) (x : Nullable<'T>) =
+            let writer (w : WriteState) (tag : string) (x : Nullable<'T>) =
                 if x.HasValue then 
                     w.Formatter.WriteBoolean "isNull" false
                     pickler.Write w "value" x.Value
                 else
                     w.Formatter.WriteBoolean "isNull" true
 
-            let reader (r : ReadState) =
+            let reader (r : ReadState) (tag : string) =
                 if r.Formatter.ReadBoolean "isNull" then
                     Nullable<'T> ()
                 else
@@ -116,8 +116,8 @@
                     ilGen.Emit OpCodes.Ret
                 )
 
-            let writer (w : WriteState) (t : 'T) = writerDele.Invoke(picklers, w, t)
-            let reader (r : ReadState) = readerDele.Invoke(picklers, r)
+            let writer (w : WriteState) (tag : string) (t : 'T) = writerDele.Invoke(picklers, w, t)
+            let reader (r : ReadState) (tag : string) = readerDele.Invoke(picklers, r)
 
 #else
             let writer (w : WriteState) (t : 'T) =
@@ -165,7 +165,7 @@
 #if EMIT_IL
             let writer =
                 if onSerializing.Length = 0 && fields.Length = 0 && onSerialized.Length = 0 then
-                    fun _ _ -> ()
+                    fun _ _ _ -> ()
                 else
                     let writerDele =
                         DynamicMethod.compileAction3<Pickler [], WriteState, 'T> "classSerializer" (fun picklers writer value ilGen ->
@@ -178,7 +178,7 @@
                             
                             ilGen.Emit OpCodes.Ret)
 
-                    fun w t -> writerDele.Invoke(picklers, w, t)
+                    fun w tag t -> writerDele.Invoke(picklers, w, t)
 
             let readerDele =
                 DynamicMethod.compileFunc2<Pickler [], ReadState, 'T> "classDeserializer" (fun picklers reader ilGen ->
@@ -200,7 +200,7 @@
                     ilGen.Emit OpCodes.Ret
                 )
 
-            let reader r = readerDele.Invoke(picklers, r)
+            let reader r (tag : string) = readerDele.Invoke(picklers, r)
 #else
             let inline run (ms : MethodInfo []) (x : obj) w =
                 for i = 0 to ms.Length - 1 do 
@@ -242,7 +242,7 @@
             let memberInfoPickler = resolver.Resolve<MethodInfo> ()
             let delePickler = resolver.Resolve<System.Delegate> ()
 
-            let writer (w : WriteState) (dele : 'Delegate) =
+            let writer (w : WriteState) (tag : string) (dele : 'Delegate) =
                 match dele.GetInvocationList() with
                 | [| _ |] ->
                     w.Formatter.WriteBoolean "isLinked" false
@@ -254,7 +254,7 @@
                     for i = 0 to deleList.Length - 1 do
                         delePickler.Write w "linked" deleList.[i]
 
-            let reader (r : ReadState) =
+            let reader (r : ReadState) (tag : string) =
                 if not <| r.Formatter.ReadBoolean "isLinked" then
                     let meth = memberInfoPickler.Read r "method"
                     if not meth.IsStatic then
@@ -299,11 +299,11 @@
                 let inline create (si : SerializationInfo) (sc : StreamingContext) = 
                     ctorInfo.Invoke [| si :> obj ; sc :> obj |] |> fastUnbox<'T>
 #endif
-                let writer (w : WriteState) (x : 'T) =
+                let writer (w : WriteState) (tag : string) (x : 'T) =
                     run onSerializing w x
                     let sI = new SerializationInfo(typeof<'T>, new FormatterConverter())
                     x.GetObjectData(sI, w.StreamingContext)
-                    w.Formatter.WriteInt32 "memberCount" sI.MemberCount
+                    w.Formatter.WriteInt32 "count" sI.MemberCount
                     let enum = sI.GetEnumerator()
                     while enum.MoveNext() do
                         w.Formatter.WriteString "name" enum.Current.Name
@@ -311,9 +311,9 @@
 
                     run onSerialized w x
 
-                let reader (r : ReadState) =
+                let reader (r : ReadState) (tag : string) =
                     let sI = new SerializationInfo(typeof<'T>, new FormatterConverter())
-                    let memberCount = r.Formatter.ReadInt32 "memberCount"
+                    let memberCount = r.Formatter.ReadInt32 "count"
                     for i = 1 to memberCount do
                         let name = r.Formatter.ReadString "name"
                         let v = objPickler.Read r "value"

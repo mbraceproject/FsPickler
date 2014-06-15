@@ -119,8 +119,8 @@
                         ilGen.Emit OpCodes.Ret
                 )
 
-            let writer w u = writerDele.Invoke(picklerss, w, u)
-            let reader r = readerDele.Invoke(picklerss, r)
+            let writer w tag u = writerDele.Invoke(picklerss, w, u)
+            let reader r tag = readerDele.Invoke(picklerss, r)
 #else
             let tagReader = Delegate.CreateDelegate<Func<'Union,int>> tagReaderMethod
 
@@ -167,7 +167,7 @@
 
 #if EMIT_IL
             let writer =
-                if fields.Length = 0 then fun _ _ -> ()
+                if fields.Length = 0 then fun _ _ _ -> ()
                 else
                     let writerDele =
                         DynamicMethod.compileAction3<Pickler [], WriteState, 'Record> "recordSerializer" (fun picklers writer record ilGen ->
@@ -176,7 +176,7 @@
                             
                             ilGen.Emit OpCodes.Ret)
 
-                    fun w t -> writerDele.Invoke(picklers, w,t)
+                    fun w tag t -> writerDele.Invoke(picklers, w,t)
 
             let readerDele =
                 DynamicMethod.compileFunc2<Pickler [], ReadState, 'Record> "recordDeserializer" (fun picklers reader ilGen ->
@@ -187,7 +187,7 @@
 
                     ilGen.Emit OpCodes.Ret)
             
-            let reader r = readerDele.Invoke(picklers, r)
+            let reader r tag = readerDele.Invoke(picklers, r)
 #else
             let writer (w : WriteState) (x : 'Record) =
                 for i = 0 to fields.Length - 1 do
@@ -242,19 +242,19 @@
                     ) |> Some
 
 
-            let writer (w : WriteState) (e : 'Exception) =
+            let writer (w : WriteState) (tag : string) (e : 'Exception) =
                 // toggle subtype to prevent pickler from detecting cyclic object pattern
                 w.NextObjectIsSubtype <- true
-                defPickler.UntypedWrite w "exceptionBase" e
+                defPickler.UntypedWrite w tag e
  
                 match writerDele with
                 | None -> ()
                 | Some d -> d.Invoke(fpicklers, w, e)
 
-            let reader (r : ReadState) =
+            let reader (r : ReadState) (tag : string) =
                 // toggle subtype to prevent pickler from detecting cyclic object pattern
                 r.NextObjectIsSubtype <- true
-                let e = defPickler.UntypedRead r "exceptionBase" |> fastUnbox<'Exception>
+                let e = defPickler.UntypedRead r tag |> fastUnbox<'Exception>
 
                 match readerDele with
                 | None -> e

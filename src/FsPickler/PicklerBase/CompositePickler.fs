@@ -15,8 +15,8 @@
         // stores the supertype pickler, if generated using subtype resolution
         val mutable private m_NestedPickler : Pickler option
 
-        val mutable private m_Writer : WriteState -> 'T -> unit
-        val mutable private m_Reader : ReadState -> 'T
+        val mutable private m_Writer : WriteState -> string -> 'T -> unit
+        val mutable private m_Reader : ReadState -> string -> 'T
 
         val mutable private m_PicklerInfo : PicklerInfo
 
@@ -71,8 +71,8 @@
                 if not p.m_IsInitialized then invalidOp "Pickler has not been initialized."
                 elif typeof<'T> = typeof<'S> then fastUnbox<Pickler<'S>> p
                 elif typeof<'T>.IsAssignableFrom typeof<'S> && p.m_UseWithSubtypes then
-                    let writer = let wf = p.m_Writer in fun w x -> wf w (fastUnbox<'T> x)
-                    let reader = let rf = p.m_Reader in fun r -> fastUnbox<'S> (rf r)
+                    let writer = let wf = p.m_Writer in fun w t x -> wf w t (fastUnbox<'T> x)
+                    let reader = let rf = p.m_Reader in fun r t -> fastUnbox<'S> (rf r t)
 
                     new CompositePickler<'S>(reader, writer, Some(p :> _), p.m_PicklerInfo, p.m_IsCacheByRef, p.m_UseWithSubtypes) :> Pickler<'S>
                 else
@@ -101,14 +101,14 @@
         override p.UntypedWrite (state:WriteState) (tag:string) (value:obj) =
             if state.NextObjectIsSubtype then
                 state.NextObjectIsSubtype <- false
-                p.m_Writer state (fastUnbox value)
+                p.m_Writer state tag (fastUnbox value)
             else
                 p.Write state tag (fastUnbox value)
 
         override p.UntypedRead (state:ReadState) (tag:string) =
             if state.NextObjectIsSubtype then
                 state.NextObjectIsSubtype <- false
-                p.m_Reader state :> obj
+                p.m_Reader state tag :> obj
             else
                 p.Read state tag :> obj
 
@@ -128,7 +128,7 @@
 #endif
                 if p.TypeKind <= TypeKind.Sealed || p.m_UseWithSubtypes then
                     formatter.BeginWriteObject tag ObjectFlags.None
-                    p.m_Writer state value
+                    p.m_Writer state tag value
                     formatter.EndWriteObject ()
                 else
                     // object might be of proper subtype, perform reflection resolution
@@ -142,13 +142,13 @@
                         formatter.EndWriteObject ()
                     else
                         formatter.BeginWriteObject tag ObjectFlags.None
-                        p.m_Writer state value
+                        p.m_Writer state tag value
                         formatter.EndWriteObject ()
 
             try
                 if p.TypeKind = TypeKind.Value then
                     formatter.BeginWriteObject tag ObjectFlags.None
-                    p.m_Writer state value
+                    p.m_Writer state tag value
                     formatter.EndWriteObject ()
 
                 elif obj.ReferenceEquals(value, null) then
@@ -229,7 +229,7 @@
                     state.NextObjectIsSubtype <- true
                     subPickler.UntypedRead state tag |> fastUnbox<'T>
                 else
-                    p.m_Reader state
+                    p.m_Reader state tag
 
             try
                 let formatter = state.Formatter
@@ -241,7 +241,7 @@
                     fastUnbox<'T> null
 
                 elif p.TypeKind = TypeKind.Value then 
-                    let value = p.m_Reader state
+                    let value = p.m_Reader state tag
                     formatter.EndReadObject ()
                     value
 
@@ -311,4 +311,4 @@
             new CompositePickler<'T>(reader, writer, None, picklerInfo, cacheByRef, useWithSubtypes) :> Pickler<'T>
 
         static member ObjectPickler =
-            CompositePickler.Create<obj>((fun _ -> obj ()), (fun _ _ -> ()), PicklerInfo.Object, cacheByRef = true, useWithSubtypes = false)
+            CompositePickler.Create<obj>((fun _ _ -> obj ()), (fun _ _ _ -> ()), PicklerInfo.Object, cacheByRef = true, useWithSubtypes = false)

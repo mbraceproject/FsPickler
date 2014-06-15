@@ -20,7 +20,7 @@
 
     type ListPickler =
         static member Create (ep : Pickler<'T>) =
-            let writer (w : WriteState) (list : 'T list) =
+            let writer (w : WriteState) (tag : string) (list : 'T list) =
 
                 if ep.TypeKind = TypeKind.Primitive && w.Formatter.IsPrimitiveArraySerializationSupported then
                     let arr = List.toArray list
@@ -36,7 +36,7 @@
                     writeL list
                     w.Formatter.EndWriteBoundedSequence ()
 
-            let reader (r : ReadState) =
+            let reader (r : ReadState) (tag : string) =
                 if ep.TypeKind = TypeKind.Primitive && r.Formatter.IsPrimitiveArraySerializationSupported then
                     let length = r.Formatter.ReadInt32 "length"
                     let array = Array.zeroCreate<'T> length
@@ -63,9 +63,9 @@
 
         static member Create (ep : Pickler<'T>) =
             // Composite pickler filters None values by default
-            let writer (w : WriteState) (x : 'T option) = ep.Write w "Some" x.Value
+            let writer (w : WriteState) (tag : string) (x : 'T option) = ep.Write w "Some" x.Value
 
-            let reader (r : ReadState) =
+            let reader (r : ReadState) (tag : string) =
                 let value = ep.Read r "Some"
                 Some value
 
@@ -78,7 +78,7 @@
 
     type ChoicePickler =
         static member Create(p1 : Pickler<'T1>, p2 : Pickler<'T2>) =
-            let writer (w : WriteState) (c : Choice<'T1, 'T2>) =
+            let writer (w : WriteState) (tag : string) (c : Choice<'T1, 'T2>) =
                 match c with
                 | Choice1Of2 t1 -> 
                     w.Formatter.WriteByte "case" 0uy
@@ -87,7 +87,7 @@
                     w.Formatter.WriteByte "case" 1uy
                     p2.Write w "Item" t2
 
-            let reader (r : ReadState) =
+            let reader (r : ReadState) (tag : string) =
                 match r.Formatter.ReadByte "case" with
                 | 0uy -> p1.Read r "Item" |> Choice1Of2
                 | 1uy -> p2.Read r "Item" |> Choice2Of2
@@ -101,7 +101,7 @@
             ChoicePickler.Create(p1, p2)
 
         static member Create(p1 : Pickler<'T1>, p2 : Pickler<'T2>, p3 : Pickler<'T3>) =
-            let writer (w : WriteState) (c : Choice<'T1, 'T2, 'T3>) =
+            let writer (w : WriteState) (tag : string) (c : Choice<'T1, 'T2, 'T3>) =
                 match c with
                 | Choice1Of3 t1 -> 
                     w.Formatter.WriteByte "case" 0uy
@@ -113,7 +113,7 @@
                     w.Formatter.WriteByte "case" 2uy
                     p3.Write w "Item" t3
 
-            let reader (r : ReadState) =
+            let reader (r : ReadState) (tag : string) =
                 match r.Formatter.ReadByte "case" with
                 | 0uy -> p1.Read r "Item" |> Choice1Of3
                 | 1uy -> p2.Read r "Item" |> Choice2Of3
@@ -128,7 +128,7 @@
             ChoicePickler.Create(p1, p2, p3)
 
         static member Create(p1 : Pickler<'T1>, p2 : Pickler<'T2>, p3 : Pickler<'T3>, p4 : Pickler<'T4>) =
-            let writer (w : WriteState) (c : Choice<'T1, 'T2, 'T3, 'T4>) =
+            let writer (w : WriteState) (tag : string) (c : Choice<'T1, 'T2, 'T3, 'T4>) =
                 match c with
                 | Choice1Of4 t1 -> 
                     w.Formatter.WriteByte "case" 0uy
@@ -143,7 +143,7 @@
                     w.Formatter.WriteByte "case" 3uy
                     p4.Write w "Item" t4
 
-            let reader (r : ReadState) =
+            let reader (r : ReadState) (tag : string) =
                 match r.Formatter.ReadByte "case" with
                 | 0uy -> p1.Read r "Item" |> Choice1Of4
                 | 1uy -> p2.Read r "Item" |> Choice2Of4
@@ -161,10 +161,10 @@
 
     type FSharpRefPickler =
         static member Create (ep : Pickler<'T>) =
-            let writer (w : WriteState) (r : 'T ref) =
+            let writer (w : WriteState) (tag : string) (r : 'T ref) =
                 ep.Write w "contents" r.Value
 
-            let reader (r : ReadState) =
+            let reader (r : ReadState) (tag : string) =
                 { contents = ep.Read r "contents" }
 
             // do not cache for performance
@@ -176,10 +176,10 @@
 
     type FSharpSetPickler =
         static member Create<'T when 'T : comparison>(ep : Pickler<'T>) =
-            let writer (w : WriteState) (s : Set<'T>) = 
+            let writer (w : WriteState) (tag : string) (s : Set<'T>) = 
                 writeBoundedSequence w ep s.Count "set" s
 
-            let reader (r : ReadState) =
+            let reader (r : ReadState) (tag : string) =
                 readBoundedSequence r ep "set" |> Set.ofArray
 
             CompositePickler.Create<_>(reader, writer, PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = false)
@@ -193,10 +193,10 @@
 
             let tp = TuplePickler.Create<'K,'V>(kp, vp)
             
-            let writer (w : WriteState) (m : Map<'K,'V>) =
+            let writer (w : WriteState) (tag : string) (m : Map<'K,'V>) =
                 writeBoundedSequence w tp m.Count "keyvalues" (Map.toSeq m)
 
-            let reader (r : ReadState) =
+            let reader (r : ReadState) (tag : string) =
                 readBoundedSequence r tp "keyvalues" |> Map.ofArray
 
             CompositePickler.Create<_>(reader, writer, PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = false)
@@ -211,11 +211,11 @@
 
             let tp = TuplePickler.Create<'K,'V>(kp, vp)
 
-            let writer (w : WriteState) (d : Dictionary<'K,'V>) =
+            let writer (w : WriteState) (tag : string) (d : Dictionary<'K,'V>) =
                 let kvs = Seq.map (fun (KeyValue (k,v)) -> k,v) d
                 writeBoundedSequence w tp d.Count "dict" kvs
 
-            let reader (r : ReadState) =
+            let reader (r : ReadState) (tag : string) =
                 let kvs = readBoundedSequence r tp "dict"
                 let d = new Dictionary<'K,'V>()
                 for i = 0 to kvs.Length - 1 do
@@ -238,12 +238,12 @@
             let cacheByRef = picklers |> Array.exists (fun p -> p.IsCacheByRef)
             let useWithSubtypes = picklers |> Array.forall (fun p -> p.UseWithSubtypes)
 
-            let writer (w : WriteState) (t : 'T) =
+            let writer (w : WriteState) (tag : string) (t : 'T) =
                 let tag = tagReader t
                 do w.Formatter.WriteInt32 "tag" tag
                 picklers.[tag].Write w "branch" t
 
-            let reader (r : ReadState) =
+            let reader (r : ReadState) (tag : string) =
                 let tag = r.Formatter.ReadInt32 "tag"
                 picklers.[tag].Read r "branch"
 
@@ -259,16 +259,16 @@
 #else
             let useWithSubtypes = FSharpType.IsUnion(typeof<'S>, allMembers)
 #endif
-            let writer (w : WriteState) (s : 'S) =
+            let writer (w : WriteState) (tag : string) (s : 'S) =
                 let t = convert s
-                origin.Write w "wrapped" t
+                origin.Write w tag t
 
-            let reader (r : ReadState) =
-                let t = origin.Read r "wrapped"
+            let reader (r : ReadState) (tag : string) =
+                let t = origin.Read r tag
                 recover t
 
             CompositePickler.Create<_>(reader, writer, PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = useWithSubtypes)
 
     type SeqPickler =
         static member Create(ep : Pickler<'T>) =
-            CompositePickler.Create<_>(readUnboundedSequence ep "seq", writeUnboundedSequence ep "seq", PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = true)
+            CompositePickler.Create<_>(readUnboundedSequence ep, writeUnboundedSequence ep, PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = true)

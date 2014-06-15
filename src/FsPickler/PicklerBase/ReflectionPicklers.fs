@@ -16,14 +16,14 @@
 
     let mkReflectionPicklers () =
         let assemblyInfoPickler =
-            let writer (w : WriteState) (aI : AssemblyInfo) =
+            let writer (w : WriteState) _ (aI : AssemblyInfo) =
                 let formatter = w.Formatter
                 formatter.WriteString "name" aI.Name
                 formatter.WriteString "version" aI.Version
                 formatter.WriteString "culture" aI.Culture
                 formatter.WriteBytes "pkt" aI.PublicKeyToken
 
-            let reader (r : ReadState) =
+            let reader (r : ReadState) _ =
                 let formatter = r.Formatter
                 let name = formatter.ReadString "name"
                 let version = formatter.ReadString "version"
@@ -41,10 +41,10 @@
 
         let assemblyPickler =
             mkPickler PicklerInfo.ReflectionType true true
-                (fun r -> let aI = assemblyInfoPickler.Read r "info" in r.ReflectionCache.LoadAssembly aI)
-                (fun w a -> let aI = w.ReflectionCache.GetAssemblyInfo a in assemblyInfoPickler.Write w "info" aI)
+                (fun r _ -> let aI = assemblyInfoPickler.Read r "info" in r.ReflectionCache.LoadAssembly aI)
+                (fun w _ a -> let aI = w.ReflectionCache.GetAssemblyInfo a in assemblyInfoPickler.Write w "info" aI)
 
-        let rec memberInfoWriter (w : WriteState) (m : MemberInfo) =
+        let rec memberInfoWriter (w : WriteState) (tag : string) (m : MemberInfo) =
             let formatter = w.Formatter
 
             // not used anywhere ; there just to aid type inference
@@ -161,7 +161,7 @@
             | Unknown(t, name) ->
                 raise <| new NonSerializableTypeException(t, sprintf "could not serialize '%s'." name)
 
-        and memberInfoReader (r : ReadState) =
+        and memberInfoReader (r : ReadState) (tag : string) =
             let formatter = r.Formatter
 
             let cMemberInfo =
@@ -277,8 +277,8 @@
             r.ReflectionCache.LoadMemberInfo cMemberInfo
 
         and memberInfoPickler = mkPickler PicklerInfo.ReflectionType true true memberInfoReader memberInfoWriter
-        and typePickler = mkPickler PicklerInfo.ReflectionType true true (memberInfoReader >> fastUnbox<Type>) memberInfoWriter
-        and methodInfoPickler = mkPickler PicklerInfo.ReflectionType true true (memberInfoReader >> fastUnbox<MethodInfo>) memberInfoWriter
+        and typePickler = mkPickler PicklerInfo.ReflectionType true true (fun r t -> memberInfoReader r t |> fastUnbox<Type>) memberInfoWriter
+        and methodInfoPickler = mkPickler PicklerInfo.ReflectionType true true (fun r t -> memberInfoReader r t |> fastUnbox<MethodInfo>) memberInfoWriter
 
         [|
             assemblyPickler :> Pickler

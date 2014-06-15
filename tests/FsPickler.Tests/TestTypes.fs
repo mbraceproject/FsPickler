@@ -128,8 +128,8 @@
 
             static member CreatePickler (resolver : IPicklerResolver) =
                 Pickler.FromPrimitives(
-                    (fun _ -> ClassWithPicklerFactory(42)),
-                    (fun _ _ -> ()),
+                    (fun _ _ -> ClassWithPicklerFactory(42)),
+                    (fun _ _ _ -> ()),
                         true, false)
 
         [<CustomPickler>]
