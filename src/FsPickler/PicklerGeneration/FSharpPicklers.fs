@@ -134,15 +134,15 @@
                     let tags = fields |> Array.map getTagFromMemberInfo
                     ctor, reader, fields, tags, picklers)
 
-            let writer (w : WriteState) (x : 'Union) =
-                let tag = tagReader.Invoke x
+            let writer (w : WriteState) (tag : string) (u : 'Union) =
+                let tag = tagReader.Invoke u
                 w.Formatter.WriteByte "case" (byte tag)
                 let _,reader,fields,tags,picklers = caseInfo.[tag]
-                let values = reader x
+                let values = reader u
                 for i = 0 to values.Length - 1 do
                     picklers.[i].UntypedWrite w tags.[i] (values.[i])
 
-            let reader (r : ReadState) =
+            let reader (r : ReadState) (tag : string) =
                 let tag = int (r.Formatter.ReadByte "case")
                 let ctor,_,fields,tags,picklers = caseInfo.[tag]
                 let values = Array.zeroCreate<obj> picklers.Length
@@ -189,13 +189,13 @@
             
             let reader r tag = readerDele.Invoke(picklers, r)
 #else
-            let writer (w : WriteState) (x : 'Record) =
+            let writer (w : WriteState) (tag : string) (r : 'Record) =
                 for i = 0 to fields.Length - 1 do
                     let f = fields.[i]
-                    let o = f.GetValue x
+                    let o = f.GetValue r
                     picklers.[i].UntypedWrite w tags.[i] o
             
-            let reader (r : ReadState) =
+            let reader (r : ReadState) (tag : string) =
                 let values = Array.zeroCreate<obj> fields.Length
                 for i = 0 to fields.Length - 1 do
                     values.[i] <- picklers.[i].UntypedRead r tags.[i]
@@ -260,20 +260,20 @@
                 | None -> e
                 | Some d -> d.Invoke(fpicklers, r, e) ; e
 #else
-            let writer (w : WriteState) (e : 'Exception) =
+            let writer (w : WriteState) (tag : string) (e : 'Exception) =
                 // toggle subtype to prevent pickler from detecting cyclic object pattern
                 w.NextObjectIsSubtype <- true
-                defPickler.UntypedWrite w "exceptionBase" e
+                defPickler.UntypedWrite w tag e
 
                 for i = 0 to fields.Length - 1 do
                     let f = fields.[i]
                     let o = f.GetValue e
                     fpicklers.[i].UntypedWrite w tags.[i] o
 
-            let reader (r : ReadState) =
+            let reader (r : ReadState) (tag : string) =
                 // toggle subtype to prevent pickler from detecting cyclic object pattern
                 r.NextObjectIsSubtype <- true
-                let e = defPickler.UntypedRead r "exceptionBase" |> fastUnbox<'Exception>
+                let e = defPickler.UntypedRead r tag |> fastUnbox<'Exception>
 
                 for i = 0 to fields.Length - 1 do
                     let f = fields.[i]

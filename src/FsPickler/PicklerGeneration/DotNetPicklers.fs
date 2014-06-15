@@ -120,13 +120,13 @@
             let reader (r : ReadState) (tag : string) = readerDele.Invoke(picklers, r)
 
 #else
-            let writer (w : WriteState) (t : 'T) =
+            let writer (w : WriteState) (tag : string) (t : 'T) =
                 for i = 0 to fields.Length - 1 do
                     let f = fields.[i]
                     let o = f.GetValue(t)
                     picklers.[i].UntypedWrite w tags.[i] o
 
-            let reader (r : ReadState) =
+            let reader (r : ReadState) (tag : string) =
                 let t = FormatterServices.GetUninitializedObject(typeof<'T>)
                 for i = 0 to fields.Length - 1 do
                     let f = fields.[i]
@@ -206,7 +206,7 @@
                 for i = 0 to ms.Length - 1 do 
                     ms.[i].Invoke(x, [| getStreamingContext w :> obj |]) |> ignore
 
-            let writer (w : WriteState) (t : 'T) =
+            let writer (w : WriteState) (tag : string) (t : 'T) =
                 run onSerializing t w
 
                 for i = 0 to fields.Length - 1 do
@@ -216,7 +216,7 @@
 
                 run onSerialized t w
 
-            let reader (r : ReadState) =
+            let reader (r : ReadState) (tag : string) =
                 let t = FormatterServices.GetUninitializedObject(typeof<'T>) |> fastUnbox<'T>
                 run onDeserializing t r
 

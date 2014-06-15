@@ -233,7 +233,7 @@
                 elif runsOnMono && t = typeof<System.Globalization.DateTimeFormatInfo> then false // mono bug in NoEmit build
                 else
                     // types that cause .IsSerializable to fail
-                    // should be included in the testing
+                    // should be included in testing
                     try FsPickler.IsSerializableType t with _ -> true
 
             let tryActivate (t : Type) =
