@@ -8,7 +8,7 @@
 
     open Nessos.FsPickler
     open Nessos.FsPickler.Reflection
-    open Nessos.FsPickler.PicklerUtils
+//    open Nessos.FsPickler.PicklerUtils
     open Nessos.FsPickler.TypeShape
 
 #if EMIT_IL
@@ -91,7 +91,7 @@
 
             let fields = gatherFields typeof<'T>
             let picklers = fields |> Array.map (fun f -> resolver.Resolve f.FieldType)
-            let tags = fields |> Array.map getTagFromMemberInfo
+            let tags = fields |> Array.map (fun f -> f.NormalizedName)
 
 #if EMIT_IL
             let writerDele =
@@ -152,7 +152,7 @@
                 |> Array.filter (not << containsAttr<NonSerializedAttribute>)
 
             let picklers = fields |> Array.map (fun f -> resolver.Resolve f.FieldType)
-            let tags = fields |> Array.map getTagFromMemberInfo
+            let tags = fields |> Array.map (fun f -> f.NormalizedName)
 
             let isDeserializationCallback = typeof<IDeserializationCallback>.IsAssignableFrom typeof<'T>
 

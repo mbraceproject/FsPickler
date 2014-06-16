@@ -56,6 +56,10 @@
     type ConstructorInfo with
         member c.GetParameterTypes() = c.GetParameters() |> Array.map (fun p -> p.ParameterType)
 
+    let private memberNameRegex = new System.Text.RegularExpressions.Regex(@"[^a-zA-Z0-9]")
+    type MemberInfo with
+        /// normalizes member name into a serialializable string.
+        member m.NormalizedName = memberNameRegex.Replace(m.Name, "")
 
     let containsAttr<'T when 'T :> Attribute> (m : MemberInfo) =
         m.GetCustomAttributes(typeof<'T>, true) |> Seq.isEmpty |> not

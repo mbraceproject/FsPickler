@@ -22,8 +22,9 @@
 
         val mutable private m_IsCacheByRef : bool
         val mutable private m_UseWithSubtypes : bool
+        val mutable private m_SkipHeaderWrite : bool
 
-        new (reader, writer, nested : Pickler option, picklerInfo, cacheByRef, useWithSubtypes) =
+        private new (reader, writer, nested : Pickler option, picklerInfo, cacheByRef, useWithSubtypes, ?skipHeaderWrite) =
             {
                 inherit Pickler<'T> ()
 
@@ -35,9 +36,14 @@
                 m_Reader = reader
 
                 m_PicklerInfo = picklerInfo
+
                 m_IsCacheByRef = cacheByRef
                 m_UseWithSubtypes = useWithSubtypes
+                m_SkipHeaderWrite = defaultArg skipHeaderWrite false
             }
+
+        new (reader, writer, picklerInfo, cacheByRef, useWithSubtypes, ?skipHeaderWrite) =
+            new CompositePickler<'T>(reader, writer, None, picklerInfo, cacheByRef, useWithSubtypes, ?skipHeaderWrite = skipHeaderWrite)
 
         new () = 
             {
@@ -53,6 +59,7 @@
                 m_PicklerInfo = Unchecked.defaultof<_>
                 m_IsCacheByRef = Unchecked.defaultof<_>
                 m_UseWithSubtypes = Unchecked.defaultof<_>
+                m_SkipHeaderWrite = Unchecked.defaultof<_>
             }
 
         override p.ImplementationType = 
@@ -74,7 +81,8 @@
                     let writer = let wf = p.m_Writer in fun w t x -> wf w t (fastUnbox<'T> x)
                     let reader = let rf = p.m_Reader in fun r t -> fastUnbox<'S> (rf r t)
 
-                    new CompositePickler<'S>(reader, writer, Some(p :> _), p.m_PicklerInfo, p.m_IsCacheByRef, p.m_UseWithSubtypes) :> Pickler<'S>
+                    new CompositePickler<'S>(reader, writer, Some(p :> _), p.m_PicklerInfo, 
+                                                p.m_IsCacheByRef, p.m_UseWithSubtypes, p.m_SkipHeaderWrite) :> Pickler<'S>
                 else
                     let msg = sprintf "Cannot cast pickler of type '%O' to '%O'." typeof<'T> typeof<'S>
                     raise <| new InvalidCastException(msg)
@@ -93,6 +101,7 @@
                     p.m_Writer <- p'.m_Writer
                     p.m_Reader <- p'.m_Reader
                     p.m_NestedPickler <- p'.m_NestedPickler
+                    p.m_SkipHeaderWrite <- p'.m_SkipHeaderWrite
                     p.m_IsInitialized <- true
 
             | _ -> invalidOp <| sprintf "Source pickler is of invalid type (%O)." p'.Type
@@ -127,14 +136,15 @@
                     if p.TypeKind <= TypeKind.Sealed || p.m_UseWithSubtypes then false
                     else
                         let t0 = value.GetType()
-                        if obj.ReferenceEquals(t0, p.Type) then false
-                        else
+                        if t0 <> p.Type then
                             let p0 = state.PicklerResolver.Resolve t0
                             formatter.BeginWriteObject tag ObjectFlags.IsProperSubtype
                             state.TypePickler.Write state "subtype" t0
                             p0.UntypedWrite state "instance" value
                             formatter.EndWriteObject()
                             true
+                        else
+                            false
 
                 if isProperSubtype then () else
 
@@ -149,16 +159,22 @@
                             // push id to the symbolic stack to detect cyclic objects during traversal
                             objStack.Push id
 
-                            formatter.BeginWriteObject tag ObjectFlags.None
-                            p.m_Writer state tag value
-                            formatter.EndWriteObject ()
+                            if p.m_SkipHeaderWrite then
+                                p.m_Writer state tag value
+                            else
+                                formatter.BeginWriteObject tag ObjectFlags.None
+                                p.m_Writer state tag value
+                                formatter.EndWriteObject ()
 
                             objStack.Pop () |> ignore
                             cyclicObjects.Remove id |> ignore
                         else
-                            formatter.BeginWriteObject tag ObjectFlags.None
-                            p.m_Writer state tag value
-                            formatter.EndWriteObject ()
+                            if p.m_SkipHeaderWrite then
+                                p.m_Writer state tag value
+                            else
+                                formatter.BeginWriteObject tag ObjectFlags.None
+                                p.m_Writer state tag value
+                                formatter.EndWriteObject ()
 
                     elif p.IsRecursiveType && p.TypeKind <> TypeKind.Array && objStack.Contains id && not <| cyclicObjects.Contains id then
                         // came across cyclic object, record fixup-related data
@@ -175,9 +191,12 @@
                         formatter.WriteInt64 "id" id
                         formatter.EndWriteObject()
                 else
-                    formatter.BeginWriteObject tag ObjectFlags.None
-                    p.m_Writer state tag value
-                    formatter.EndWriteObject ()
+                    if p.m_SkipHeaderWrite then
+                        p.m_Writer state tag value
+                    else
+                        formatter.BeginWriteObject tag ObjectFlags.None
+                        p.m_Writer state tag value
+                        formatter.EndWriteObject ()
 
             with 
             | :? FsPicklerException -> reraise ()
@@ -224,7 +243,11 @@
 
                 elif p.m_IsCacheByRef || p.IsRecursiveType then
 
-                    let id = state.GetObjectId(p.TypeKind = TypeKind.Array)
+////                    let isRecursiveArray = p.TypeKind = TypeKind.Array && p.IsRecursiveType
+//                    let isSelfRegisteringArray =
+//                        formatter.PreferLengthPrefixInSequences
+
+                    let id = state.NextObjectId()
 
                     let value = p.m_Reader state tag
 
@@ -255,8 +278,9 @@
     and internal CompositePickler =
         
         static member CreateUninitialized<'T>() = new CompositePickler<'T> () :> Pickler<'T>
-        static member Create<'T>(reader, writer, picklerInfo, cacheByRef : bool, useWithSubtypes : bool) =
-            new CompositePickler<'T>(reader, writer, None, picklerInfo, cacheByRef, useWithSubtypes) :> Pickler<'T>
+        static member Create<'T>(reader, writer, picklerInfo, cacheByRef : bool, useWithSubtypes : bool, ?skipHeaderWrite : bool) =
+            new CompositePickler<'T>(reader, writer, picklerInfo, cacheByRef = cacheByRef, 
+                                        useWithSubtypes = useWithSubtypes, ?skipHeaderWrite = skipHeaderWrite) :> Pickler<'T>
 
         static member ObjectPickler =
             CompositePickler.Create<obj>((fun _ _ -> obj ()), (fun _ _ _ -> ()), PicklerInfo.Object, cacheByRef = true, useWithSubtypes = false)

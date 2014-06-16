@@ -99,8 +99,8 @@
         
         let sc = match streamingContext with None -> new StreamingContext() | Some sc -> sc
 
-        let mutable nextObjectId = 1L
-        let mutable currentArrayId = 0L
+        let mutable idCounter = 0L
+//        let mutable currentArrayId = 0L
         let objCache = new Dictionary<int64, obj> ()
         let fixupIndex = new Dictionary<int64, Type * obj> ()
         let tyPickler = resolver.Resolve<Type> ()
@@ -112,15 +112,15 @@
         member __.StreamingContext = sc
         member internal __.ObjectCache = objCache
         member internal __.FixupIndex = fixupIndex
-        member internal __.GetObjectId (isArray : bool) =
-            let id = nextObjectId
-            nextObjectId <- id + 1L
-            if isArray then currentArrayId <- id
-            id
+        member internal __.NextObjectId () =
+            idCounter <- idCounter + 1L
+            idCounter
+
+//        member internal __.CurrentObjectId = idCounter
 
         member internal __.ResetCounters() = 
-            nextObjectId <- 1L
+            idCounter <- 0L
             objCache.Clear()
 
-        member internal __.RegisterUninitializedArray(array : Array) =
-            objCache.Add(currentArrayId, array)
+        member internal __.EarlyRegisterArray(array : Array) =
+            objCache.Add(idCounter, array)

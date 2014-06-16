@@ -1,6 +1,6 @@
 ﻿namespace Nessos.FsPickler
 
-    open Nessos.FsPickler.PicklerUtils
+//    open Nessos.FsPickler.PicklerUtils
 
     [<AutoOpen>]
     module ExtensionMethods =
@@ -15,6 +15,6 @@
                 if typeof<'T>.IsPrimitive then
                     invalidArg typeof<'T>.FullName "defining custom picklers for primitives not supported."
 
-                let cache = defaultArg cacheByRef (not typeof<'T>.IsValueType)
+                let cacheByRef = defaultArg cacheByRef (not typeof<'T>.IsValueType)
                 let useWithSubtypes = defaultArg useWithSubtypes false
-                mkPickler PicklerInfo.UserDefined useWithSubtypes cache reader writer
+                CompositePickler.Create(reader, writer, PicklerInfo.UserDefined, cacheByRef = cacheByRef, useWithSubtypes = useWithSubtypes)

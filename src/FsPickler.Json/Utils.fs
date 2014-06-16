@@ -71,17 +71,17 @@
                 else
                     raise <| new EndOfStreamException()
 
-            /// returns true iff null token
-            member inline jsonReader.ReadStartObject () =
-                match jsonReader.TokenType with
-                | JsonToken.Null ->
-                    jsonReader.Read() |> ignore
-                    true
-                | JsonToken.StartObject ->
-                    jsonReader.Read() |> ignore
-                    false
-                | _ ->
-                    invalidJsonFormat ()
+//            /// returns true iff null token
+//            member inline jsonReader.ReadStartObject () =
+//                match jsonReader.TokenType with
+//                | JsonToken.Null ->
+//                    jsonReader.Read() |> ignore
+//                    true
+//                | JsonToken.StartObject ->
+//                    jsonReader.Read() |> ignore
+//                    false
+//                | _ ->
+//                    invalidJsonFormat ()
 
             member inline jsonReader.ReadEndObject () =
                 if jsonReader.Read() && jsonReader.TokenType = JsonToken.EndObject then ()

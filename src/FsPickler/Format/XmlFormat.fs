@@ -45,6 +45,9 @@
             if ObjectFlags.hasFlag flags ObjectFlags.IsProperSubtype then
                 tokens.Add "subtype"
 
+            if ObjectFlags.hasFlag flags ObjectFlags.IsSequenceHeader then
+                tokens.Add "sequence"
+
             String.concat "," tokens
 
         let inline parseFlagCsv (csv : string) =
@@ -59,6 +62,7 @@
                 | "cached" -> flags <- flags ||| ObjectFlags.IsCachedInstance
                 | "cyclic" -> flags <- flags ||| ObjectFlags.IsCyclicInstance
                 | "subtype" -> flags <- flags ||| ObjectFlags.IsProperSubtype
+                | "sequence" -> flags <- flags ||| ObjectFlags.IsSequenceHeader
                 | _ -> raise <| new InvalidDataException(sprintf "invalid pickle flag '%s'." t)
 
             flags
@@ -98,17 +102,17 @@
 
             member __.EndWriteObject () = writer.WriteEndElement()
 
-            member __.BeginWriteBoundedSequence tag (length : int) =
-                writer.WriteStartElement tag
-                writer.WriteAttributeString("length", string length)
-
-            member __.EndWriteBoundedSequence () =
-                writer.WriteEndElement ()
-
-            member __.BeginWriteUnBoundedSequence tag =
-                writer.WriteStartElement tag
-
-            member __.WriteHasNextElement hasNext = if not hasNext then writer.WriteEndElement()
+//            member __.BeginWriteBoundedSequence tag (length : int) =
+//                writer.WriteStartElement tag
+//                writer.WriteAttributeString("length", string length)
+//
+//            member __.EndWriteBoundedSequence () =
+//                writer.WriteEndElement ()
+//
+//            member __.BeginWriteUnBoundedSequence tag =
+//                writer.WriteStartElement tag
+            member __.PreferLengthPrefixInSequences = true
+            member __.WriteNextSequenceElement hasNext = () //if not hasNext then writer.WriteEndElement()
 
             member __.WriteBoolean (tag : string) value = writePrimitive writer tag value
             member __.WriteByte (tag : string) value = writePrimitive writer tag (int value)
@@ -208,33 +212,35 @@
                 else
                     reader.ReadEndElement()
 
-            member __.BeginReadBoundedSequence tag =
-                do readElementName reader tag
-                let length = reader.GetAttribute("length") |> int
+//            member __.BeginReadBoundedSequence tag =
+//                do readElementName reader tag
+//                let length = reader.GetAttribute("length") |> int
+//
+//                if not reader.IsEmptyElement then
+//                    if not <| reader.Read() then
+//                        raise <| new EndOfStreamException()
+//
+//                length
+//
+//            member __.EndReadBoundedSequence () =
+//                if reader.IsEmptyElement then
+//                    let _ = reader.Read() in ()
+//                else
+//                    reader.ReadEndElement()
+//
+//            member __.BeginReadUnBoundedSequence tag =
+//                do readElementName reader tag
+//
+//                if not reader.IsEmptyElement then
+//                    if not <| reader.Read() then
+//                        raise <| new EndOfStreamException()
 
-                if not reader.IsEmptyElement then
-                    if not <| reader.Read() then
-                        raise <| new EndOfStreamException()
-
-                length
-
-            member __.EndReadBoundedSequence () =
-                if reader.IsEmptyElement then
-                    let _ = reader.Read() in ()
-                else
-                    reader.ReadEndElement()
-
-            member __.BeginReadUnBoundedSequence tag =
-                do readElementName reader tag
-
-                if not reader.IsEmptyElement then
-                    if not <| reader.Read() then
-                        raise <| new EndOfStreamException()
-
-            member __.ReadHasNextElement () =
+            member __.PreferLengthPrefixInSequences = true
+            member __.ReadNextSequenceElement () =
                 if reader.NodeType <> XmlNodeType.EndElement then true
                 else
-                    reader.ReadEndElement() ; false
+                    false
+//                    reader.ReadEndElement() ; false
 
             member __.ReadBoolean tag = readElementName reader tag ; reader.ReadElementContentAsBoolean()
 

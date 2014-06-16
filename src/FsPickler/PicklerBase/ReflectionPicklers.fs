@@ -12,18 +12,18 @@
     open Nessos.FsPickler
     open Nessos.FsPickler.Reflection
     open Nessos.FsPickler.TypeCache
-    open Nessos.FsPickler.PicklerUtils
+    open Nessos.FsPickler.ArrayPicklers
 
     let mkReflectionPicklers () =
         let assemblyInfoPickler =
-            let writer (w : WriteState) _ (aI : AssemblyInfo) =
+            let writer (w : WriteState) (_ : string) (aI : AssemblyInfo) =
                 let formatter = w.Formatter
                 formatter.WriteString "name" aI.Name
                 formatter.WriteString "version" aI.Version
                 formatter.WriteString "culture" aI.Culture
                 formatter.WriteBytes "pkt" aI.PublicKeyToken
 
-            let reader (r : ReadState) _ =
+            let reader (r : ReadState) (_ : string) =
                 let formatter = r.Formatter
                 let name = formatter.ReadString "name"
                 let version = formatter.ReadString "version"
@@ -37,18 +37,22 @@
                     PublicKeyToken = pkt
                 }
 
-            mkPickler PicklerInfo.ReflectionType false true reader writer
+            new CompositePickler<_>(reader, writer, PicklerInfo.ReflectionType, cacheByRef = true, useWithSubtypes = false)
 
         let assemblyPickler =
-            mkPickler PicklerInfo.ReflectionType true true
-                (fun r _ -> let aI = assemblyInfoPickler.Read r "info" in r.ReflectionCache.LoadAssembly aI)
-                (fun w _ a -> let aI = w.ReflectionCache.GetAssemblyInfo a in assemblyInfoPickler.Write w "info" aI)
+            CompositePickler.Create(
+                (fun r t -> let aI = assemblyInfoPickler.Reader r t in r.ReflectionCache.LoadAssembly aI),
+                (fun w t a -> let aI = w.ReflectionCache.GetAssemblyInfo a in assemblyInfoPickler.Writer w t aI),
+                    PicklerInfo.ReflectionType, cacheByRef = true, useWithSubtypes = true)
+
+        let stringArrayPickler = ArrayPickler.Create (PrimitivePicklers.StringPickler())
 
         let rec memberInfoWriter (w : WriteState) (tag : string) (m : MemberInfo) =
             let formatter = w.Formatter
 
             // not used anywhere ; there just to aid type inference
             let inline tp () : Pickler<Type> = typePickler
+            let inline tp () : Pickler<Type []> = typeArrayPickler
             let inline mp () : Pickler<MemberInfo> = memberInfoPickler
             let inline mp () : Pickler<MethodInfo> = methodInfoPickler
 
@@ -71,7 +75,7 @@
             | GenericType(dt, tyArgs) ->
                 formatter.WriteByte "memberType" 2uy
                 typePickler.Write w "genericDefinition" dt
-                writeArray w typePickler "tyArgs" tyArgs
+                typeArrayPickler.Write w "tyArgs" tyArgs
 
             | GenericTypeParam(dt, idx) ->
                 formatter.WriteByte "memberType" 3uy
@@ -94,12 +98,12 @@
 
                 formatter.WriteString "name" name
                 formatter.WriteBoolean "isStatic" isStatic
-                writeArray w typePickler "params" mParams
+                typeArrayPickler.Write w "params" mParams
 
             | GenericMethod(gm, tyArgs) ->
                 formatter.WriteByte "memberType" 6uy
                 methodInfoPickler.Write w "genericMethod" gm
-                writeArray w typePickler "tyArgs" tyArgs
+                typeArrayPickler.Write w "tyArgs" tyArgs
 
             | GenericMethodDefinition(dt, rt, name, isStatic, signature) ->
                 formatter.WriteByte "memberType" 7uy
@@ -112,15 +116,13 @@
 
                 formatter.WriteString "name" name
                 formatter.WriteBoolean "isStatic" isStatic
-                formatter.BeginWriteBoundedSequence "params" signature.Length
-                for s in signature do formatter.WriteString "param" s
-                formatter.EndWriteBoundedSequence ()
+                stringArrayPickler.Write w "params" signature
 
             | Constructor(dt, isStatic, cParams) ->
                 formatter.WriteByte "memberType" 8uy
                 typePickler.Write w "declaringType" dt
                 formatter.WriteBoolean "isStatic" isStatic
-                writeArray w typePickler "params" cParams
+                typeArrayPickler.Write w "params" cParams
 
             | Property(dt, rt, name, isStatic) ->
                 formatter.WriteByte "memberType" 9uy
@@ -179,7 +181,7 @@
 
                 | 2uy ->
                     let gt = typePickler.Read r "genericDefinition"
-                    let tyArgs = readArray r typePickler "tyArgs"
+                    let tyArgs = typeArrayPickler.Read r "tyArgs"
                     GenericType(gt, tyArgs)
 
                 | 3uy ->
@@ -202,12 +204,12 @@
 
                     let name = formatter.ReadString "name"
                     let isStatic = formatter.ReadBoolean "isStatic"
-                    let mParams = readArray r typePickler "params"
+                    let mParams = typeArrayPickler.Read r "params"
                     Method(dt, rt, name, isStatic, mParams)
 
                 | 6uy ->
                     let gm = methodInfoPickler.Read r "genericMethod"
-                    let tyArgs = readArray r typePickler "tyArgs"
+                    let tyArgs = typeArrayPickler.Read r "tyArgs"
                     GenericMethod(gm, tyArgs)
 
                 | 7uy ->
@@ -220,17 +222,13 @@
 
                     let name = formatter.ReadString "name"
                     let isStatic = formatter.ReadBoolean "isStatic"
-                    let plength = formatter.BeginReadBoundedSequence "params"
-                    let signature = Array.zeroCreate plength
-                    for i = 0 to plength - 1 do
-                        signature.[i] <- formatter.ReadString "param"
-                    formatter.EndReadBoundedSequence ()
+                    let signature = stringArrayPickler.Read r "params"
                     GenericMethodDefinition(dt, rt, name, isStatic, signature)
 
                 | 8uy ->
                     let dt = typePickler.Read r "declaringType"
                     let isStatic = formatter.ReadBoolean "isStatic"
-                    let cParams = readArray r typePickler "params"
+                    let cParams = typeArrayPickler.Read r "params"
                     Constructor(dt, isStatic, cParams)
 
                 | 9uy ->
@@ -276,9 +274,12 @@
 
             r.ReflectionCache.LoadMemberInfo cMemberInfo
 
-        and memberInfoPickler = mkPickler PicklerInfo.ReflectionType true true memberInfoReader memberInfoWriter
-        and typePickler = mkPickler PicklerInfo.ReflectionType true true (fun r t -> memberInfoReader r t |> fastUnbox<Type>) memberInfoWriter
-        and methodInfoPickler = mkPickler PicklerInfo.ReflectionType true true (fun r t -> memberInfoReader r t |> fastUnbox<MethodInfo>) memberInfoWriter
+        and memberInfoPickler = 
+            CompositePickler.Create(memberInfoReader, memberInfoWriter, PicklerInfo.ReflectionType, useWithSubtypes = true, cacheByRef = true)
+
+        and typePickler = memberInfoPickler.Cast<Type> ()
+        and methodInfoPickler = memberInfoPickler.Cast<MethodInfo> ()
+        and typeArrayPickler = ArrayPickler.Create typePickler
 
         [|
             assemblyPickler :> Pickler

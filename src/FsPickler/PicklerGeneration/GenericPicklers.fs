@@ -9,7 +9,6 @@
 
     open Nessos.FsPickler
     open Nessos.FsPickler.Reflection
-    open Nessos.FsPickler.PicklerUtils
     open Nessos.FsPickler.TuplePicklers
 
     //
@@ -22,42 +21,100 @@
         static member Create (ep : Pickler<'T>) =
             let writer (w : WriteState) (tag : string) (list : 'T list) =
 
-                if ep.TypeKind = TypeKind.Primitive && w.Formatter.IsPrimitiveArraySerializationSupported then
+                let formatter = w.Formatter
+
+                if ep.TypeKind = TypeKind.Primitive && formatter.IsPrimitiveArraySerializationSupported then
                     let arr = List.toArray list
-                    w.Formatter.WriteInt32 "length" arr.Length
-                    w.Formatter.WritePrimitiveArray "data" arr
-                else
+                    formatter.BeginWriteObject tag ObjectFlags.None
+                    formatter.WriteInt32 "length" arr.Length
+                    formatter.WritePrimitiveArray "data" arr
+                    formatter.EndWriteObject ()
+
+                elif ep.IsRecursiveType || formatter.PreferLengthPrefixInSequences then
+
                     let rec writeL (ts : 'T list) =
                         match ts with
                         | t :: tl -> ep.Write w "elem" t ; writeL tl
                         | [] -> ()
 
-                    w.Formatter.BeginWriteBoundedSequence "list" list.Length
+                    formatter.BeginWriteObject tag ObjectFlags.None
+                    formatter.WriteInt32 "length" list.Length
+                    formatter.BeginWriteObject "list" ObjectFlags.IsSequenceHeader
+                    do writeL list
+                    formatter.EndWriteObject ()
+                    formatter.EndWriteObject ()
+
+                else
+                    let rec writeL (ts : 'T list) =
+                        match ts with
+                        | t :: tl -> 
+                            formatter.WriteNextSequenceElement true
+                            ep.Write w "elem" t
+                            writeL tl
+
+                        | [] -> formatter.WriteNextSequenceElement false
+
+                    formatter.BeginWriteObject tag ObjectFlags.IsSequenceHeader
                     writeL list
-                    w.Formatter.EndWriteBoundedSequence ()
+                    formatter.EndWriteObject ()
+
 
             let reader (r : ReadState) (tag : string) =
-                if ep.TypeKind = TypeKind.Primitive && r.Formatter.IsPrimitiveArraySerializationSupported then
+                let formatter = r.Formatter
+
+                if ep.TypeKind = TypeKind.Primitive && formatter.IsPrimitiveArraySerializationSupported then
                     let length = r.Formatter.ReadInt32 "length"
                     let array = Array.zeroCreate<'T> length
-                    r.Formatter.ReadPrimitiveArray "data" array
+                    formatter.ReadPrimitiveArray "data" array
                     Array.toList array
-                else
-                    let length = r.Formatter.BeginReadBoundedSequence "list"
+                elif ep.IsRecursiveType || formatter.PreferLengthPrefixInSequences then
+
+                    let length = formatter.ReadInt32 "length"
                     let array = Array.zeroCreate<'T> length
+                    if formatter.BeginReadObject "list" <> ObjectFlags.IsSequenceHeader then
+                        raise <| new InvalidPickleException(sprintf "Error deserializing object of type '%O': expected new array." typeof<'T []>)
+
                     for i = 0 to length - 1 do
                         array.[i] <- ep.Read r "elem"
 
-                    r.Formatter.EndReadBoundedSequence ()
-                                    
-                    Array.toList array
+                    formatter.EndReadObject ()
 
-            CompositePickler.Create<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = true, useWithSubtypes = true)
+                    Array.toList array
+                else
+                    let ra = new ResizeArray<'T> ()
+
+                    while formatter.ReadNextSequenceElement() do
+                        ra.Add <| ep.Read r "elem"
+
+                    Seq.toList ra
+
+            CompositePickler.Create<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = true, useWithSubtypes = true, skipHeaderWrite = true)
 
         static member Create<'T>(resolver : IPicklerResolver) =
             let ep = resolver.Resolve<'T> ()
             ListPickler.Create<'T> ep
 
+    type SeqPickler =
+        static member Create(ep : Pickler<'T>) =
+            let writer (w : WriteState) (tag : string) (ts : seq<'T>) =
+                let formatter = w.Formatter
+                formatter.BeginWriteObject tag ObjectFlags.IsSequenceHeader
+                for t in ts do
+                    formatter.WriteNextSequenceElement true
+                    ep.Write w "elem" t
+
+                formatter.WriteNextSequenceElement false
+                formatter.EndWriteObject()
+
+            let reader (r : ReadState) (tag : string) =
+                let formatter = r.Formatter
+                let ra = new ResizeArray<'T> ()
+                while formatter.ReadNextSequenceElement() do
+                    ra.Add <| ep.Read r "elem"
+
+                ra :> seq<'T>
+
+            CompositePickler.Create<_>(reader, writer, PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = true, skipHeaderWrite = true)
 
     type OptionPickler =
 
@@ -176,11 +233,22 @@
 
     type FSharpSetPickler =
         static member Create<'T when 'T : comparison>(ep : Pickler<'T>) =
-            let writer (w : WriteState) (tag : string) (s : Set<'T>) = 
-                writeBoundedSequence w ep s.Count "set" s
+            let writer (w : WriteState) (tag : string) (set : Set<'T>) =
+                let formatter = w.Formatter
+                formatter.WriteInt32 "count" set.Count
+                formatter.BeginWriteObject "elements" ObjectFlags.IsSequenceHeader
+                for e in set do ep.Write w "elem" e
+                formatter.EndWriteObject ()
 
             let reader (r : ReadState) (tag : string) =
-                readBoundedSequence r ep "set" |> Set.ofArray
+                let formatter = r.Formatter
+                let count = formatter.ReadInt32 "count"
+                let array = Array.zeroCreate<'T> count
+                let _ = formatter.BeginReadObject "elements"
+                for i = 0 to array.Length - 1 do array.[i] <- ep.Read r "elem"
+                formatter.EndReadObject ()
+                
+                Set.ofArray array
 
             CompositePickler.Create<_>(reader, writer, PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = false)
             
@@ -193,11 +261,19 @@
 
             let tp = TuplePickler.Create<'K,'V>(kp, vp)
             
-            let writer (w : WriteState) (tag : string) (m : Map<'K,'V>) =
-                writeBoundedSequence w tp m.Count "keyvalues" (Map.toSeq m)
+            let writer (w : WriteState) (tag : string) (map : Map<'K,'V>) =
+                w.Formatter.WriteInt32 "count" map.Count
+                w.Formatter.BeginWriteObject "keyvals" ObjectFlags.IsSequenceHeader
+                for e in Map.toSeq map do tp.Write w "entry" e
+                w.Formatter.EndWriteObject ()
 
             let reader (r : ReadState) (tag : string) =
-                readBoundedSequence r tp "keyvalues" |> Map.ofArray
+                let count = r.Formatter.ReadInt32 "count"
+                let _ = r.Formatter.BeginReadObject "keyvals"
+                let array = Array.zeroCreate<'K * 'V> count
+                for i = 0 to array.Length - 1 do array.[i] <- tp.Read r "entry"
+                r.Formatter.EndReadObject ()
+                Map.ofArray array
 
             CompositePickler.Create<_>(reader, writer, PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = false)
 
@@ -212,15 +288,20 @@
             let tp = TuplePickler.Create<'K,'V>(kp, vp)
 
             let writer (w : WriteState) (tag : string) (d : Dictionary<'K,'V>) =
-                let kvs = Seq.map (fun (KeyValue (k,v)) -> k,v) d
-                writeBoundedSequence w tp d.Count "dict" kvs
+                w.Formatter.WriteInt32 "count" d.Count
+                w.Formatter.BeginWriteObject "keyvals" ObjectFlags.IsSequenceHeader
+                for e in Seq.map (fun (KeyValue (k,v)) -> k,v) d do tp.Write w "entry" e
+                w.Formatter.EndWriteObject ()
 
             let reader (r : ReadState) (tag : string) =
-                let kvs = readBoundedSequence r tp "dict"
                 let d = new Dictionary<'K,'V>()
-                for i = 0 to kvs.Length - 1 do
-                    let k,v = kvs.[i]
+                let count = r.Formatter.ReadInt32 "count"
+                let _ = r.Formatter.BeginReadObject "keyvals"
+                for i = 1 to count do
+                    let k,v = tp.Read r "entry"
                     d.Add(k,v)
+
+                r.Formatter.EndReadObject()
                 d
 
             CompositePickler.Create<_>(reader, writer, PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = false)
@@ -228,7 +309,6 @@
         static member Create<'K, 'V when 'K : equality> (resolver : IPicklerResolver) =
             let kp, vp = resolver.Resolve<'K>(), resolver.Resolve<'V>()
             DictionaryPickler.Create (kp, vp)
-
 
     type AltPickler =
         
@@ -268,7 +348,3 @@
                 recover t
 
             CompositePickler.Create<_>(reader, writer, PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = useWithSubtypes)
-
-    type SeqPickler =
-        static member Create(ep : Pickler<'T>) =
-            CompositePickler.Create<_>(readUnboundedSequence ep, writeUnboundedSequence ep, PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = true)

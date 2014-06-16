@@ -18,7 +18,7 @@
             jsonReader.CloseInput <- not leaveOpen
 //            jsonReader.SupportMultipleContent <- true
 
-        let mutable currentValueIsNull = false
+//        let mutable currentValueIsNull = false
 
         let mutable depth = 0
         let arrayStack = new Stack<int> ()
@@ -34,8 +34,9 @@
                     
                 if omitHeader then () else
 
-                if jsonReader.ReadStartObject () then raise <| new InvalidDataException("invalid json root object.")
+                if jsonReader.TokenType <> JsonToken.StartObject then raise <| new InvalidDataException("invalid json root object.")
                 else
+                    do jsonReader.MoveNext()
                     let version = jsonReader.ReadPrimitiveAs<string> false "FsPickler"
                     if version <> AssemblyVersionInformation.Version then
                         raise <| new InvalidDataException(sprintf "Invalid FsPickler version %s." version)
@@ -53,12 +54,21 @@
                     jsonReader.ReadProperty tag
                     jsonReader.MoveNext ()
 
-                depth <- depth + 1
-
-                if jsonReader.ReadStartObject () then 
-                    currentValueIsNull <- true
+                match jsonReader.TokenType with
+                | JsonToken.Null ->
+//                    jsonReader.Read() |> ignore
                     ObjectFlags.IsNull
-                else
+
+                | JsonToken.StartArray ->
+                    jsonReader.MoveNext()
+                    arrayStack.Push depth
+                    depth <- depth + 1
+                    ObjectFlags.IsSequenceHeader
+
+                | JsonToken.StartObject ->
+                    do jsonReader.MoveNext()
+                    depth <- depth + 1
+
                     if jsonReader.ValueAs<string> () = "pickle flags" then
                         jsonReader.MoveNext()
                         let csvFlags = jsonReader.ValueAs<string>()
@@ -67,56 +77,59 @@
                     else
                         ObjectFlags.None
 
+                | _ -> invalidJsonFormat ()
+
             member __.EndReadObject () =
-                depth <- depth - 1
-
-                if currentValueIsNull then 
-                    currentValueIsNull <- false
-                elif omitHeader && depth = 0 then ()
-                else
-                    jsonReader.MoveNext()
-
-            member __.BeginReadBoundedSequence tag =
-                arrayStack.Push depth
-                depth <- depth + 1
-
-                let length = jsonReader.ReadPrimitiveAs<int64> false "length"
-                jsonReader.ReadProperty tag
-                jsonReader.MoveNext()
-
-                if jsonReader.TokenType = JsonToken.StartArray then
-                    jsonReader.MoveNext()
-                    int length
-                else
-                    raise <| new InvalidDataException("expected json array.")
-
-            member __.EndReadBoundedSequence () =
-                if jsonReader.TokenType = JsonToken.EndArray && jsonReader.Read () then
-                    arrayStack.Pop () |> ignore
+                match jsonReader.TokenType with
+                | JsonToken.Null -> ()
+                | JsonToken.EndObject -> depth <- depth - 1
+                | JsonToken.EndArray ->
+                    arrayStack.Pop() |> ignore
                     depth <- depth - 1
-                else
-                    raise <| InvalidDataException("expected end of array.")
 
-            member __.BeginReadUnBoundedSequence tag =
-                if not <| omitTag () then
-                    jsonReader.ReadProperty tag
-                    jsonReader.MoveNext()
+                | _ -> invalidJsonFormat ()
 
-                arrayStack.Push depth
-                depth <- depth + 1
+                if omitHeader && depth = 0 then ()
+                else jsonReader.MoveNext()
 
-                if jsonReader.TokenType = JsonToken.StartArray then
-                    jsonReader.MoveNext()
-                else
-                    raise <| new InvalidDataException("expected json array.")
+            member __.PreferLengthPrefixInSequences = false
+            member __.ReadNextSequenceElement () = jsonReader.TokenType <> JsonToken.EndArray
 
-            member __.ReadHasNextElement () =
-                if jsonReader.TokenType = JsonToken.EndArray && jsonReader.Read () then
-                    arrayStack.Pop () |> ignore
-                    depth <- depth - 1
-                    false
-                else
-                    true
+//            member __.BeginReadBoundedSequence tag =
+//                arrayStack.Push depth
+//                depth <- depth + 1
+//
+//                let length = jsonReader.ReadPrimitiveAs<int64> false "length"
+//                jsonReader.ReadProperty tag
+//                jsonReader.MoveNext()
+//
+//                if jsonReader.TokenType = JsonToken.StartArray then
+//                    jsonReader.MoveNext()
+//                    int length
+//                else
+//                    raise <| new InvalidDataException("expected json array.")
+//
+//            member __.EndReadBoundedSequence () =
+//                if jsonReader.TokenType = JsonToken.EndArray && jsonReader.Read () then
+//                    arrayStack.Pop () |> ignore
+//                    depth <- depth - 1
+//                else
+//                    raise <| InvalidDataException("expected end of array.")
+//
+//            member __.BeginReadUnBoundedSequence tag =
+//                if not <| omitTag () then
+//                    jsonReader.ReadProperty tag
+//                    jsonReader.MoveNext()
+//
+//                arrayStack.Push depth
+//                depth <- depth + 1
+//
+//                if jsonReader.TokenType = JsonToken.StartArray then
+//                    jsonReader.MoveNext()
+//                else
+//                    raise <| new InvalidDataException("expected json array.")
+//
+
 
             member __.ReadBoolean tag = jsonReader.ReadPrimitiveAs<bool> (omitTag ()) tag
 

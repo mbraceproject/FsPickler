@@ -81,7 +81,7 @@
         let qn = reflectionCache.GetQualifiedName pickler.Type + " seq"
 
         state.Formatter.BeginWriteRoot qn
-        state.Formatter.BeginWriteUnBoundedSequence "values"
+        state.Formatter.BeginWriteObject "values" ObjectFlags.IsSequenceHeader
 
         let isObject = pickler.TypeKind > TypeKind.Value
 
@@ -93,7 +93,7 @@
             if isObject && idx % sequenceStateResetThreshold = 0 then
                 state.ResetCounters()
             
-            formatter.WriteHasNextElement true
+            formatter.WriteNextSequenceElement true
             pickler.Write state "elem" t
             
         // specialize enumeration
@@ -119,7 +119,8 @@
                     i <- i + 1
                 i
 
-        state.Formatter.WriteHasNextElement false
+        state.Formatter.WriteNextSequenceElement false
+        state.Formatter.EndWriteObject()
         state.Formatter.EndWriteRoot()
         length
 
@@ -133,9 +134,9 @@
         interface IEnumerator<'T> with
             member __.Current = value
             member __.Current = box value
-            member __.Dispose () = formatter.EndReadRoot() ; formatter.Dispose()
+            member __.Dispose () = formatter.Dispose()
             member __.MoveNext () =
-                if formatter.ReadHasNextElement () then
+                if formatter.ReadNextSequenceElement () then
                     if isObject && count % sequenceStateResetThreshold = 0 then
                         state.ResetCounters()
 
@@ -143,6 +144,8 @@
 
                     true
                 else
+                    formatter.EndReadObject ()
+                    formatter.EndReadRoot ()
                     false
 
             member __.Reset () = raise <| NotSupportedException()
@@ -159,7 +162,8 @@
         | :? FsPicklerException -> reraise () 
         | e -> raise <| new InvalidPickleException("error reading from pickle.", e)
 
-        formatter.BeginReadUnBoundedSequence "values"
+        if formatter.BeginReadObject "values" <> ObjectFlags.IsSequenceHeader then
+            raise <| new FsPicklerException("object header is not of sequence.")
 
         let isConsumed = ref 0
         let getEnumerator () =

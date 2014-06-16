@@ -29,27 +29,30 @@
         /// </summary>
         abstract EndWriteObject : unit -> unit
 
-        /// <summary>
-        ///     Start writing a new array to the pickle. The array has a predetermined length.
-        /// </summary>
-        /// <param name="tag">array identifier.</param>
-        /// <param name="length">array length.</param>
-        abstract BeginWriteBoundedSequence : tag:string -> length:int -> unit
-        /// <summary>
-        ///     End write a bounded array.
-        /// </summary>
-        abstract EndWriteBoundedSequence : unit -> unit
+        abstract PreferLengthPrefixInSequences : bool
+        abstract WriteNextSequenceElement : hasNext:bool -> unit
 
-        /// <summary>
-        ///     Start writing a new array to the pickle. The array has undetermined length.
-        /// </summary>
-        /// <param name="tag">array identifier.</param>
-        abstract BeginWriteUnBoundedSequence : tag:string -> unit
-        /// <summary>
-        ///     Writes boolean indicating that unbounded array has an upcoming element.
-        /// </summary>
-        /// <param name="hasNext">next element indicator.</param>
-        abstract WriteHasNextElement : hasNext:bool -> unit
+//        /// <summary>
+//        ///     Start writing a new array to the pickle. The array has a predetermined length.
+//        /// </summary>
+//        /// <param name="tag">array identifier.</param>
+//        /// <param name="length">array length.</param>
+//        abstract BeginWriteBoundedSequence : tag:string -> length:int -> unit
+//        /// <summary>
+//        ///     End write a bounded array.
+//        /// </summary>
+//        abstract EndWriteBoundedSequence : unit -> unit
+//
+//        /// <summary>
+//        ///     Start writing a new array to the pickle. The array has undetermined length.
+//        /// </summary>
+//        /// <param name="tag">array identifier.</param>
+//        abstract BeginWriteUnBoundedSequence : tag:string -> unit
+//        /// <summary>
+//        ///     Writes boolean indicating that unbounded array has an upcoming element.
+//        /// </summary>
+//        /// <param name="hasNext">next element indicator.</param>
+//        abstract WriteHasNextElement : hasNext:bool -> unit
         
 
         abstract WriteBoolean : tag:string -> value:bool -> unit
@@ -113,29 +116,32 @@
         /// </summary>
         abstract EndReadObject : unit -> unit
 
-        /// <summary>
-        ///     Begin reading an array of predetermined length.
-        /// </summary>
-        /// <param name="tag">array identifier.</param>
-        /// <returnType>array length.</returnType>
-        abstract BeginReadBoundedSequence : tag:string -> int
+        abstract PreferLengthPrefixInSequences : bool
+        abstract ReadNextSequenceElement : unit -> bool
 
-        /// <summary>
-        ///     End reading an array of predetermined length.
-        /// </summary>
-        abstract EndReadBoundedSequence : unit -> unit
-
-        /// <summary>
-        ///     Begins reading an array of undetermined length
-        /// </summary>
-        /// <param name="tag">array identifier.</param>
-        abstract BeginReadUnBoundedSequence : tag:string -> unit
-
-        /// <summary>
-        ///     Read if unbounded array has more elements.
-        /// </summary>
-        /// <returnType>True iff array has more elements.</returnType>
-        abstract ReadHasNextElement : unit -> bool
+//        /// <summary>
+//        ///     Begin reading an array of predetermined length.
+//        /// </summary>
+//        /// <param name="tag">array identifier.</param>
+//        /// <returnType>array length.</returnType>
+//        abstract BeginReadBoundedSequence : tag:string -> int
+//
+//        /// <summary>
+//        ///     End reading an array of predetermined length.
+//        /// </summary>
+//        abstract EndReadBoundedSequence : unit -> unit
+//
+//        /// <summary>
+//        ///     Begins reading an array of undetermined length
+//        /// </summary>
+//        /// <param name="tag">array identifier.</param>
+//        abstract BeginReadUnBoundedSequence : tag:string -> unit
+//
+//        /// <summary>
+//        ///     Read if unbounded array has more elements.
+//        /// </summary>
+//        /// <returnType>True iff array has more elements.</returnType>
+//        abstract ReadHasNextElement : unit -> bool
         
         abstract ReadBoolean : tag:string -> bool
         abstract ReadByte : tag:string -> byte

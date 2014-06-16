@@ -45,6 +45,12 @@
                 if flags.HasFlag ObjectFlags.IsNull then
                     currentValueIsNull <- true
                     jsonWriter.WriteNull()
+
+                elif flags.HasFlag ObjectFlags.IsSequenceHeader then
+                    arrayStack.Push depth
+                    jsonWriter.WriteStartArray()
+                    depth <- depth + 1
+
                 else
                     jsonWriter.WriteStartObject()
                     depth <- depth + 1
@@ -59,36 +65,40 @@
                     currentValueIsNull <- false
                 else
                     depth <- depth - 1
-                    jsonWriter.WriteEndObject()
+                    if arrayStack.Peek () = depth then
+                        arrayStack.Pop () |> ignore
+                        jsonWriter.WriteEndArray()
+                    else
+                        jsonWriter.WriteEndObject()
 
-            member __.BeginWriteBoundedSequence (tag : string) (length : int) =
-                arrayStack.Push depth
-                depth <- depth + 1
-
-                writePrimitive jsonWriter false "length" length
-                jsonWriter.WritePropertyName tag
-                
-                jsonWriter.WriteStartArray()
-
-            member __.EndWriteBoundedSequence () =
-                depth <- depth - 1
-                arrayStack.Pop () |> ignore
-                jsonWriter.WriteEndArray ()
-
-            member __.BeginWriteUnBoundedSequence (tag : string) =
-                if not <| omitTag () then
-                    jsonWriter.WritePropertyName tag
-
-                arrayStack.Push depth
-                depth <- depth + 1
-
-                jsonWriter.WriteStartArray()
-
-            member __.WriteHasNextElement hasNext =
-                if not hasNext then 
-                    arrayStack.Pop () |> ignore
-                    depth <- depth - 1
-                    jsonWriter.WriteEndArray ()
+//            member __.BeginWriteBoundedSequence (tag : string) (length : int) =
+//                arrayStack.Push depth
+//                depth <- depth + 1
+//
+//                writePrimitive jsonWriter false "length" length
+//                jsonWriter.WritePropertyName tag
+//                
+//                jsonWriter.WriteStartArray()
+//
+//            member __.EndWriteBoundedSequence () =
+//                depth <- depth - 1
+//                arrayStack.Pop () |> ignore
+//                jsonWriter.WriteEndArray ()
+//
+//            member __.BeginWriteUnBoundedSequence (tag : string) =
+//                if not <| omitTag () then
+//                    jsonWriter.WritePropertyName tag
+//
+//                arrayStack.Push depth
+//                depth <- depth + 1
+//
+//                jsonWriter.WriteStartArray()
+            member __.PreferLengthPrefixInSequences = false
+            member __.WriteNextSequenceElement _ = ()
+//                if not hasNext then 
+//                    arrayStack.Pop () |> ignore
+//                    depth <- depth - 1
+//                    jsonWriter.WriteEndArray ()
 
             member __.WriteBoolean (tag : string) value = writePrimitive jsonWriter (omitTag ()) tag value
             member __.WriteByte (tag : string) value = writePrimitive jsonWriter (omitTag ()) tag value

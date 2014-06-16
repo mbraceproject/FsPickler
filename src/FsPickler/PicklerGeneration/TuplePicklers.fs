@@ -3,7 +3,7 @@
     open System
 
     open Nessos.FsPickler
-    open Nessos.FsPickler.PicklerUtils
+//    open Nessos.FsPickler.PicklerUtils
 
     type TuplePickler =
 

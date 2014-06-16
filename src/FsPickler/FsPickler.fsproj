@@ -88,13 +88,13 @@
     <Compile Include="PicklerBase\Pickler.fs" />
     <Compile Include="PicklerBase\PrimitivePicklers.fs" />
     <Compile Include="PicklerBase\CompositePickler.fs" />
-    <Compile Include="PicklerBase\PicklerUtils.fs" />
+    <None Include="PicklerBase\PicklerUtils.fs" />
+    <Compile Include="PicklerBase\ArrayPicklers.fs" />
     <Compile Include="PicklerBase\ReflectionPicklers.fs" />
     <Compile Include="PicklerBase\RootSerialization.fs" />
     <Compile Include="PicklerGeneration\TypeShape.fs" />
     <Compile Include="PicklerGeneration\PicklerEmit.fs" />
     <Compile Include="PicklerGeneration\DotNetPicklers.fs" />
-    <Compile Include="PicklerGeneration\ArrayPicklers.fs" />
     <Compile Include="PicklerGeneration\TuplePicklers.fs" />
     <Compile Include="PicklerGeneration\FSharpPicklers.fs" />
     <Compile Include="PicklerGeneration\GenericPicklers.fs" />

@@ -10,7 +10,7 @@
 
     open Nessos.FsPickler
     open Nessos.FsPickler.Reflection
-    open Nessos.FsPickler.PicklerUtils
+//    open Nessos.FsPickler.PicklerUtils
 
 #if EMIT_IL
     open System.Reflection.Emit
@@ -45,7 +45,7 @@
                             | _ -> None
                     let ctor = FSharpValue.PreComputeUnionConstructorInfo(uci, allMembers)
                     let picklers = fields |> Array.map (fun f -> resolver.Resolve f.PropertyType)
-                    let tags = fields |> Array.map getTagFromMemberInfo
+                    let tags = fields |> Array.map (fun f -> f.NormalizedName)
                     caseType, ctor, fields, tags, picklers)
 
             let picklerss = caseInfo |> Array.map (fun (_,_,_,_,picklers) -> picklers)
@@ -131,7 +131,7 @@
                     let reader = FSharpValue.PreComputeUnionReader(uci, allMembers)
                     let fields = uci.GetFields()
                     let picklers = fields |> Array.map (fun f -> resolver.Resolve f.PropertyType)
-                    let tags = fields |> Array.map getTagFromMemberInfo
+                    let tags = fields |> Array.map (fun f -> f.NormalizedName)
                     ctor, reader, fields, tags, picklers)
 
             let writer (w : WriteState) (tag : string) (u : 'Union) =
@@ -163,7 +163,7 @@
             let ctor = FSharpValue.PreComputeRecordConstructorInfo(typeof<'Record>, allMembers)
 
             let picklers = fields |> Array.map (fun f -> resolver.Resolve f.PropertyType)
-            let tags = fields |> Array.map getTagFromMemberInfo
+            let tags = fields |> Array.map (fun f -> f.NormalizedName)
 
 #if EMIT_IL
             let writer =

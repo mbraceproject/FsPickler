@@ -8,7 +8,7 @@
 
     open System.Reflection.Emit
 
-    open Nessos.FsPickler.PicklerUtils
+//    open Nessos.FsPickler.PicklerUtils
     open Nessos.FsPickler.Reflection
     open Nessos.FsPickler.Emit
 

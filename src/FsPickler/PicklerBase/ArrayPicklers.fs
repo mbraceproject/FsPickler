@@ -5,7 +5,7 @@
 
     open Nessos.FsPickler
     open Nessos.FsPickler.Reflection
-    open Nessos.FsPickler.PicklerUtils
+//    open Nessos.FsPickler.PicklerUtils
 
     module private ArrayPicklerUtils =
         
@@ -40,40 +40,73 @@
             let writer (w : WriteState) (tag : string) (array : 'T []) =
 
                 let formatter = w.Formatter
-                
+
                 if isPrimitiveSerialized formatter ep then
+
+                    formatter.BeginWriteObject tag ObjectFlags.None
                     formatter.WriteInt32 "length" array.Length
                     formatter.WritePrimitiveArray "array" array
+                    formatter.EndWriteObject ()
 
-                else
-                    formatter.BeginWriteBoundedSequence "array" array.Length
+                elif ep.IsRecursiveType || formatter.PreferLengthPrefixInSequences then
+                    
+                    formatter.BeginWriteObject tag ObjectFlags.None
+                    formatter.WriteInt32 "length" array.Length
+                    formatter.BeginWriteObject "array" ObjectFlags.IsSequenceHeader
 
                     for i = 0 to array.Length - 1 do
                         ep.Write w "elem" array.[i]
 
-                    formatter.EndWriteBoundedSequence ()
+                    formatter.EndWriteObject ()
+                    formatter.EndWriteObject ()
+
+                else
+                    formatter.BeginWriteObject tag ObjectFlags.IsSequenceHeader
+
+                    for i = 0 to array.Length - 1 do
+                        formatter.WriteNextSequenceElement true
+                        ep.Write w "elem" array.[i]
+
+                    formatter.WriteNextSequenceElement false
+                    formatter.EndWriteObject ()
 
             let reader (r : ReadState) (tag : string) =
                 let formatter = r.Formatter
 
                 if isPrimitiveSerialized formatter ep then
+
                     let length = formatter.ReadInt32 "length"
                     let array = Array.zeroCreate<'T> length
-                    r.RegisterUninitializedArray array
+                    r.EarlyRegisterArray array
                     formatter.ReadPrimitiveArray "array" array
                     array
 
-                else
-                    let length = formatter.BeginReadBoundedSequence "array"
+                elif ep.IsRecursiveType || formatter.PreferLengthPrefixInSequences then
+
+                    let length = formatter.ReadInt32 "length"
                     let array = Array.zeroCreate<'T> length
-                    r.RegisterUninitializedArray array
+                    r.EarlyRegisterArray array
+
+                    if formatter.BeginReadObject "array" <> ObjectFlags.IsSequenceHeader then
+                        raise <| new InvalidPickleException(sprintf "Error deserializing object of type '%O': expected new array." typeof<'T []>)
+
                     for i = 0 to length - 1 do
                         array.[i] <- ep.Read r "elem"
 
-                    formatter.EndReadBoundedSequence ()
+                    formatter.EndReadObject()
+
                     array
 
-            mkPickler PicklerInfo.Array false true reader writer
+                else
+                    let ra = new ResizeArray<'T> ()
+
+                    while formatter.ReadNextSequenceElement() do
+                        ra.Add <| ep.Read r "elem"
+
+                    ra.ToArray()
+
+
+            CompositePickler.Create(reader, writer, PicklerInfo.Array, cacheByRef = true, useWithSubtypes = false, skipHeaderWrite = true)
 
         static member Create2D<'T> (ep : Pickler<'T>) =
             
@@ -84,12 +117,12 @@
                 if isPrimitiveSerialized formatter ep then
                     formatter.WritePrimitiveArray "array" array
                 else
-                    formatter.BeginWriteBoundedSequence "array" array.Length
+                    formatter.BeginWriteObject "array" ObjectFlags.IsSequenceHeader
                     for i = 0 to lengths.[0] - 1 do
                         for j = 0 to lengths.[1] - 1 do
                             ep.Write w "elem" array.[i,j]
 
-                    formatter.EndWriteBoundedSequence ()
+                    formatter.EndWriteObject ()
 
             let reader (r : ReadState) (tag : string) =
                 let formatter = r.Formatter
@@ -98,22 +131,23 @@
                 let array = Array2D.zeroCreate<'T> lengths.[0] lengths.[1]
 
                 // early register array to the deserialization cache
-                r.RegisterUninitializedArray array
+                r.EarlyRegisterArray array
 
                 if isPrimitiveSerialized formatter ep then
                     formatter.ReadPrimitiveArray "array" array
                 else
-                    let _ = formatter.BeginReadBoundedSequence "array"
+                    if formatter.BeginReadObject "array" <> ObjectFlags.IsSequenceHeader then
+                        raise <| new InvalidPickleException(sprintf "Error deserializing object of type '%O': expected new array." typeof<'T []>)
 
                     for i = 0 to lengths.[0] - 1 do
                         for j = 0 to lengths.[1] - 1 do
                             array.[i,j] <- ep.Read r "elem"
 
-                    formatter.EndReadBoundedSequence ()
+                    formatter.EndReadObject ()
 
                 array
 
-            mkPickler PicklerInfo.Array false true reader writer
+            CompositePickler.Create(reader, writer, PicklerInfo.Array, cacheByRef = true, useWithSubtypes = false, skipHeaderWrite = false)
 
 
         static member Create3D<'T> (ep : Pickler<'T>) =
@@ -125,13 +159,13 @@
                 if isPrimitiveSerialized formatter ep then
                     formatter.WritePrimitiveArray "array" array
                 else
-                    formatter.BeginWriteBoundedSequence "array" array.Length
+                    formatter.BeginWriteObject "array" ObjectFlags.IsSequenceHeader
                     for i = 0 to lengths.[0] - 1 do
                         for j = 0 to lengths.[1] - 1 do
                             for k = 0 to lengths.[2] - 1 do
                                 ep.Write w "elem" array.[i,j,k]
 
-                    formatter.EndWriteBoundedSequence ()
+                    formatter.EndWriteObject ()
 
             let reader (r : ReadState) (tag : string) =
                 let formatter = r.Formatter
@@ -140,23 +174,24 @@
                 let array = Array3D.zeroCreate<'T> lengths.[0] lengths.[1] lengths.[2]
 
                 // early register array to the deserialization cache
-                r.RegisterUninitializedArray array
+                r.EarlyRegisterArray array
 
                 if isPrimitiveSerialized formatter ep then
                     formatter.ReadPrimitiveArray "array" array
                 else
-                    let _ = formatter.BeginReadBoundedSequence "array"
+                    if formatter.BeginReadObject "array" <> ObjectFlags.IsSequenceHeader then
+                        raise <| new InvalidPickleException(sprintf "Error deserializing object of type '%O': expected new array." typeof<'T []>)
 
                     for i = 0 to lengths.[0] - 1 do
                         for j = 0 to lengths.[1] - 1 do
                             for k = 0 to lengths.[2] - 1 do
                                 array.[i,j,k] <- ep.Read r "elem"
 
-                    formatter.EndReadBoundedSequence ()
+                    formatter.EndReadObject ()
 
                 array
 
-            mkPickler PicklerInfo.Array false true reader writer
+            CompositePickler.Create(reader, writer, PicklerInfo.Array, cacheByRef = true, useWithSubtypes = false, skipHeaderWrite = false)
 
 
         static member Create4D<'T> (ep : Pickler<'T>) =
@@ -168,14 +203,15 @@
                 if isPrimitiveSerialized formatter ep then
                     formatter.WritePrimitiveArray "array" array
                 else
-                    formatter.BeginWriteBoundedSequence "array" array.Length
+                    formatter.BeginWriteObject "array" ObjectFlags.IsSequenceHeader
+
                     for i = 0 to lengths.[0] - 1 do
                         for j = 0 to lengths.[1] - 1 do
                             for k = 0 to lengths.[2] - 1 do
                                 for l = 0 to lengths.[3] - 1 do
                                     ep.Write w "elem" array.[i,j,k,l]
 
-                    formatter.EndWriteBoundedSequence ()
+                    formatter.EndWriteObject ()
 
             let reader (r : ReadState) (tag : string) =
                 let formatter = r.Formatter
@@ -184,12 +220,13 @@
                 let array = Array4D.zeroCreate<'T> lengths.[0] lengths.[1] lengths.[2] lengths.[3]
 
                 // early register array to the deserialization cache
-                r.RegisterUninitializedArray array
+                r.EarlyRegisterArray array
 
                 if isPrimitiveSerialized formatter ep then
                     formatter.ReadPrimitiveArray "array" array
                 else
-                    let _ = formatter.BeginReadBoundedSequence "array"
+                    if formatter.BeginReadObject "array" <> ObjectFlags.IsSequenceHeader then
+                        raise <| new InvalidPickleException(sprintf "Error deserializing object of type '%O': expected new array." typeof<'T []>)
 
                     for i = 0 to lengths.[0] - 1 do
                         for j = 0 to lengths.[1] - 1 do
@@ -197,11 +234,11 @@
                                 for l = 0 to lengths.[3] - 1 do
                                     array.[i,j,k,l] <- ep.Read r "elem"
 
-                    formatter.EndReadBoundedSequence ()
+                    formatter.EndReadObject ()
 
                 array
 
-            mkPickler PicklerInfo.Array false true reader writer
+            CompositePickler.Create(reader, writer, PicklerInfo.Array, cacheByRef = true, useWithSubtypes = false, skipHeaderWrite = false)
 
         static member Create<'T> (resolver : IPicklerResolver) =
             let ep = resolver.Resolve<'T> ()

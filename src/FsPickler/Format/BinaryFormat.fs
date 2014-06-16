@@ -105,11 +105,14 @@
 
             member __.EndWriteRoot () = ()
 
-            member __.BeginWriteBoundedSequence _ length = bw.Write length
-            member __.EndWriteBoundedSequence () = ()
+            member __.PreferLengthPrefixInSequences = true
+            member __.WriteNextSequenceElement hasNext = bw.Write hasNext
 
-            member __.BeginWriteUnBoundedSequence _ = ()
-            member __.WriteHasNextElement hasNext = bw.Write hasNext
+//            member __.BeginWriteBoundedSequence _ length = bw.Write length
+//            member __.EndWriteBoundedSequence () = ()
+//
+//            member __.BeginWriteUnBoundedSequence _ = ()
+//            member __.WriteHasNextElement hasNext = bw.Write hasNext
 
             member __.BeginWriteObject tag objectFlags =
                 let header = createHeader objectFlags
@@ -198,11 +201,14 @@
 
             member __.EndReadObject () = () 
 
-            member __.BeginReadBoundedSequence _ = br.ReadInt32 ()
-            member __.EndReadBoundedSequence () = ()
+            member __.PreferLengthPrefixInSequences = true
+            member __.ReadNextSequenceElement () = br.ReadBoolean()
 
-            member __.BeginReadUnBoundedSequence _ = ()
-            member __.ReadHasNextElement () = br.ReadBoolean ()
+//            member __.BeginReadBoundedSequence _ = br.ReadInt32 ()
+//            member __.EndReadBoundedSequence () = ()
+//
+//            member __.BeginReadUnBoundedSequence _ = ()
+//            member __.ReadHasNextElement () = br.ReadBoolean ()
 
             member __.ReadBoolean _ = br.ReadBoolean()
             member __.ReadByte _ = br.ReadByte()

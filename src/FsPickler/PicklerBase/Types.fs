@@ -45,6 +45,7 @@
         | IsProperSubtype       = 2uy
         | IsCachedInstance      = 4uy
         | IsCyclicInstance      = 8uy
+        | IsSequenceHeader      = 16uy
         
 
         

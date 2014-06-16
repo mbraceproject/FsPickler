@@ -106,8 +106,8 @@
                 formatter:IPickleFormatReader * resolver:IPicklerResolver * 
                     reflectionCache:ReflectionCache * ?streamingContext:StreamingContext-> ReadState
 
-            member internal GetObjectId : isArray:bool -> int64
-            member internal RegisterUninitializedArray : array:System.Array -> unit
+            member internal NextObjectId : unit -> int64
+            member internal EarlyRegisterArray : array:System.Array -> unit
             member internal ResetCounters : unit -> unit
             member internal FixupIndex : Dictionary<int64,(System.Type * obj)>
             member internal Formatter : IPickleFormatReader
