@@ -88,7 +88,6 @@
     <Compile Include="PicklerBase\Pickler.fs" />
     <Compile Include="PicklerBase\PrimitivePicklers.fs" />
     <Compile Include="PicklerBase\CompositePickler.fs" />
-    <None Include="PicklerBase\PicklerUtils.fs" />
     <Compile Include="PicklerBase\ArrayPicklers.fs" />
     <Compile Include="PicklerBase\ReflectionPicklers.fs" />
     <Compile Include="PicklerBase\RootSerialization.fs" />

@@ -18,8 +18,6 @@
             jsonReader.CloseInput <- not leaveOpen
 //            jsonReader.SupportMultipleContent <- true
 
-//        let mutable currentValueIsNull = false
-
         let mutable depth = 0
         let arrayStack = new Stack<int> ()
         do arrayStack.Push Int32.MinValue
@@ -55,10 +53,7 @@
                     jsonReader.MoveNext ()
 
                 match jsonReader.TokenType with
-                | JsonToken.Null ->
-//                    jsonReader.Read() |> ignore
-                    ObjectFlags.IsNull
-
+                | JsonToken.Null -> ObjectFlags.IsNull
                 | JsonToken.StartArray ->
                     jsonReader.MoveNext()
                     arrayStack.Push depth
@@ -94,42 +89,6 @@
 
             member __.PreferLengthPrefixInSequences = false
             member __.ReadNextSequenceElement () = jsonReader.TokenType <> JsonToken.EndArray
-
-//            member __.BeginReadBoundedSequence tag =
-//                arrayStack.Push depth
-//                depth <- depth + 1
-//
-//                let length = jsonReader.ReadPrimitiveAs<int64> false "length"
-//                jsonReader.ReadProperty tag
-//                jsonReader.MoveNext()
-//
-//                if jsonReader.TokenType = JsonToken.StartArray then
-//                    jsonReader.MoveNext()
-//                    int length
-//                else
-//                    raise <| new InvalidDataException("expected json array.")
-//
-//            member __.EndReadBoundedSequence () =
-//                if jsonReader.TokenType = JsonToken.EndArray && jsonReader.Read () then
-//                    arrayStack.Pop () |> ignore
-//                    depth <- depth - 1
-//                else
-//                    raise <| InvalidDataException("expected end of array.")
-//
-//            member __.BeginReadUnBoundedSequence tag =
-//                if not <| omitTag () then
-//                    jsonReader.ReadProperty tag
-//                    jsonReader.MoveNext()
-//
-//                arrayStack.Push depth
-//                depth <- depth + 1
-//
-//                if jsonReader.TokenType = JsonToken.StartArray then
-//                    jsonReader.MoveNext()
-//                else
-//                    raise <| new InvalidDataException("expected json array.")
-//
-
 
             member __.ReadBoolean tag = jsonReader.ReadPrimitiveAs<bool> (omitTag ()) tag
 

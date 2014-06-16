@@ -243,10 +243,6 @@
 
                 elif p.m_IsCacheByRef || p.IsRecursiveType then
 
-////                    let isRecursiveArray = p.TypeKind = TypeKind.Array && p.IsRecursiveType
-//                    let isSelfRegisteringArray =
-//                        formatter.PreferLengthPrefixInSequences
-
                     let id = state.NextObjectId()
 
                     let value = p.m_Reader state tag

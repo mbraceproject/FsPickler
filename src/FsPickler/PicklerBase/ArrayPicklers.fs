@@ -5,7 +5,6 @@
 
     open Nessos.FsPickler
     open Nessos.FsPickler.Reflection
-//    open Nessos.FsPickler.PicklerUtils
 
     module private ArrayPicklerUtils =
         

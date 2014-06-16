@@ -8,11 +8,6 @@
             member __.BeginWriteRoot _ = ()
             member __.EndWriteRoot () = ()
 
-//            member __.BeginWriteBoundedSequence _ _ = ()
-//            member __.EndWriteBoundedSequence () = ()
-//
-//            member __.BeginWriteUnBoundedSequence _ = ()
-//            member __.WriteHasNextElement _ = ()
             member __.PreferLengthPrefixInSequences = true
             member __.WriteNextSequenceElement _ = ()
 
