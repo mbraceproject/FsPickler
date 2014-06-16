@@ -3,7 +3,6 @@
     open System
 
     open NUnit.Framework
-    open FsUnit
 
     open PerfUtil
     open PerfUtil.NUnit
@@ -221,14 +220,18 @@
         [<PerfTest>]
         let ``FSharp: Quotation Small`` s = 
             let q' = roundtrip quotationSmall s
-            q'.ToString() |> should equal (quotationSmall.ToString())
+            // some serializers succeed, producing invalid output, force exception in this case.
+            if q'.ToString() <> quotationSmall.ToString() then
+                invalidOp "invalid quotation roundtrip"
 
             roundtrips 10000 quotationSmall s
 
         [<PerfTest>]
         let ``FSharp: Quotation Large`` s =
             let q' = roundtrip quotationLarge s
-            q'.ToString() |> should equal (quotationLarge.ToString())
+            // some serializers succeed, producing invalid output, force exception in this case.
+            if q'.ToString() <> quotationLarge.ToString() then
+                invalidOp "invalid quotation roundtrip"
 
             roundtrips 1000 quotationLarge s
 
