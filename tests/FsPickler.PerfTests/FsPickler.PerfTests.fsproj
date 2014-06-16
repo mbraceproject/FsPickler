@@ -61,6 +61,7 @@
     <Compile Include="Serializers.fs" />
     <Compile Include="TestTypes.fs" />
     <Compile Include="PerformanceTests.fs" />
+    <Compile Include="PerformanceTesters.fs" />
     <None Include="perfTests.fsx" />
     <Content Include="fspPerf.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

@@ -2,15 +2,11 @@
 
     open System
 
-    open NUnit.Framework
-
     open PerfUtil
-    open PerfUtil.NUnit
 
     open Nessos.FsPickler
     open Nessos.FsPickler.Tests.Serializer
     open Nessos.FsPickler.Tests.TestTypes
-
 
     module PerformanceTests =
 
@@ -234,57 +230,3 @@
                 invalidOp "invalid quotation roundtrip"
 
             roundtrips 1000 quotationLarge s
-
-    type ``Serializer Comparison`` () =
-        inherit NUnitPerf<ISerializer>()
-
-        let fsp = new FsPicklerBinary() :> ISerializer
-        let bfs = new BinaryFormatterSerializer() :> ISerializer
-        let ndc = new NetDataContractSerializer() :> ISerializer
-        let jdn = new JsonDotNetSerializer() :> ISerializer
-        let pbn = new ProtoBufSerializer() :> ISerializer
-        let ssj = new ServiceStackJsonSerializer() :> ISerializer
-        let sst = new ServiceStackTypeSerializer() :> ISerializer
-
-        let comparer = new WeightedComparer(spaceFactor = 0.2, leastAcceptableImprovementFactor = 1.)
-
-        let tester = new ImplementationComparer<_>(fsp, [bfs;ndc;jdn;pbn;ssj;sst], throwOnError = true, comparer = comparer)
-        let tests = PerfTest.OfModuleMarker<PerformanceTests.Marker> ()
-
-        override __.PerfTester = tester :> _
-        override __.PerfTests = tests
-
-    type ``FsPickler Formats Comparison`` () =
-        inherit NUnitPerf<ISerializer> ()
-
-        let binary = new FsPicklerBinary() :> ISerializer
-        let json = new FsPicklerJson() :> ISerializer
-        let xml = new FsPicklerXml() :> ISerializer
-
-        let tester = new ImplementationComparer<_>(binary, [json ; xml], throwOnError = false)
-        let tests = PerfTest.OfModuleMarker<PerformanceTests.Marker> ()
-
-        override __.PerfTester = tester :> _
-        override __.PerfTests = tests
-
-
-    type ``Past FsPickler Versions Comparison`` () =
-        inherit NUnitPerf<ISerializer> ()
-
-        let persistResults = true
-        let persistenceFile = "fspPerf.xml"
-
-        let fsp = new FsPicklerBinary() :> ISerializer
-        let version = typeof<FsPickler>.Assembly.GetName().Version
-        let comparer = new WeightedComparer(spaceFactor = 0.2, leastAcceptableImprovementFactor = 0.8)
-        let tests = PerfTest.OfModuleMarker<PerformanceTests.Marker> ()
-        let tester = 
-            new PastImplementationComparer<ISerializer>(
-                fsp, version, historyFile = persistenceFile, throwOnError = true, comparer = comparer)
-
-        override __.PerfTester = tester :> _
-        override __.PerfTests = tests
-
-        [<TestFixtureTearDown>]
-        member __.Persist() =
-            if persistResults then tester.PersistCurrentResults ()
