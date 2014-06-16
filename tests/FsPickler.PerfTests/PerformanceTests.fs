@@ -179,14 +179,7 @@
             roundtrips 1000 clo s
 
         [<PerfTest>]
-        let ``FSharp: Binary Tree`` s =
-            let rec mkTree = 
-                function
-                | 0 -> Leaf
-                | n ->
-                    Node(string n, mkTree (n-1), mkTree (n-1))
-
-            roundtrips 100 (mkTree 10) s
+        let ``FSharp: Binary Tree`` s = roundtrips 100 (mkTree 10) s
 
         let intSet = [1..1000] |> List.map string |> set
 

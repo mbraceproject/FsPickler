@@ -27,6 +27,19 @@
             | 0 -> Leaf
             | n -> Node(string n, mkTree(n-1), mkTree(n-1))
 
+        type Tree<'T> = Empty | Node of 'T * Forest<'T>
+        and Forest<'T> = Nil | Cons of Tree<'T> * Forest<'T>
+
+        let rec nTree (n : int) =
+            if n = 0 then Empty
+            else
+                Node(n, nForest (n-1) (n-1))
+
+        and nForest (d : int) (l : int) =
+            if l = 0 then Nil
+            else
+                Cons(nTree d, nForest d (l-1))
+
         type DU = 
             | Nothing 
             | Something of string * int
