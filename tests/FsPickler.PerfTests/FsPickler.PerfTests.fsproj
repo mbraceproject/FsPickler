@@ -66,6 +66,7 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <None Include="packages.config" />
+    <None Include="app.config" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Charting">
