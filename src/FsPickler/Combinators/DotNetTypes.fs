@@ -32,7 +32,7 @@
             CompositePickler.Create(reader, writer, PicklerInfo.FieldSerialization, cacheByRef = false, useWithSubtypes = false)
 
 
-    /// Nullable Pickler combinator ; TODO rewrite as an optional wrapping
+    /// Nullable Pickler combinator
 
     type internal NullablePickler =
 
@@ -44,18 +44,11 @@
             let pickler = resolver.Resolve<'T> ()
 
             let writer (w : WriteState) (tag : string) (x : Nullable<'T>) =
-                if x.HasValue then 
-                    w.Formatter.WriteBoolean "isNull" false
-                    pickler.Write w "value" x.Value
-                else
-                    w.Formatter.WriteBoolean "isNull" true
+                pickler.Write w "value" x.Value
 
             let reader (r : ReadState) (tag : string) =
-                if r.Formatter.ReadBoolean "isNull" then
-                    Nullable<'T> ()
-                else
-                    let value = pickler.Read r "value"
-                    Nullable<'T>(value)
+                let value = pickler.Read r "value"
+                Nullable<'T>(value)
 
             CompositePickler.Create(reader, writer, PicklerInfo.FieldSerialization, cacheByRef = false, useWithSubtypes = false)
 

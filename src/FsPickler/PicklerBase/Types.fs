@@ -16,11 +16,11 @@
         | String                = 2uy
         | Enum                  = 3uy
         | Value                 = 4uy
-        | Array                 = 5uy
-        | Sealed                = 6uy
-        | NonSealed             = 7uy
-        | Abstract              = 8uy
-        | ArrayCompatible       = 9uy // interfaces assignable from arrays
+        | Nullable              = 5uy
+        | Array                 = 6uy
+        | Sealed                = 7uy
+        | NonSealed             = 8uy
+        | Abstract              = 9uy
         | Delegate              = 10uy
 
     /// Pickler generation information
@@ -61,9 +61,9 @@
             elif t.IsPrimitive then TypeKind.Primitive
             elif t = typeof<string> then TypeKind.String
             elif t.IsEnum then TypeKind.Enum
+            elif isNullableType t then TypeKind.Nullable
             elif t.IsValueType then TypeKind.Value
             elif t.IsArray then TypeKind.Array
-            elif isAssignableFromArray t then TypeKind.ArrayCompatible
             elif t.IsSealed then TypeKind.Sealed
             elif t.IsAbstract then TypeKind.Abstract
             else TypeKind.NonSealed

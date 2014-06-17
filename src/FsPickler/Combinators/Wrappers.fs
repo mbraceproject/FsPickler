@@ -15,11 +15,11 @@
             let writer (w : WriteState) (tag : string) (t : 'T) =
                 let tag = tagReader t
                 do w.Formatter.WriteInt32 "tag" tag
-                picklers.[tag].Write w "branch" t
+                picklers.[tag].Write w "case" t
 
             let reader (r : ReadState) (tag : string) =
                 let tag = r.Formatter.ReadInt32 "tag"
-                picklers.[tag].Read r "branch"
+                picklers.[tag].Read r "case"
 
             CompositePickler.Create<_>(reader, writer, PicklerInfo.Combinator, 
                                 cacheByRef = cacheByRef, useWithSubtypes = useWithSubtypes)
