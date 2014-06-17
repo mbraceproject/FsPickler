@@ -10,7 +10,7 @@
     open Nessos.FsPickler.Emit
 #endif
 
-    type ShallowObjectCopier private () =  
+    type internal ShallowObjectCopier private () =  
         static let mkCopier (t : Type) =
             if t.IsValueType then invalidOp t.FullName "not a class."
 

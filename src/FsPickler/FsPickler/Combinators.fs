@@ -3,12 +3,7 @@
     open System
     open System.IO
 
-//    open Nessos.FsPickler.PicklerUtils
     open Nessos.FsPickler.PrimitivePicklers
-    open Nessos.FsPickler.DotNetPicklers
-    open Nessos.FsPickler.ArrayPicklers
-    open Nessos.FsPickler.TuplePicklers
-    open Nessos.FsPickler.CombinatorImpls
 
     module Combinators =
 

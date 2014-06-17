@@ -183,7 +183,7 @@
         // UnitPickler generic due to a bug in F# compiler: cannot explicitly instantiate Pickler<unit>
         inherit PrimitivePickler<'T> ()
 
-        override __.Write (writer : WriteState) (tag : string) (_ : 'T) = 
+        override __.Write (writer : WriteState) (tag : string) (_ : 'T) =
             writer.Formatter.BeginWriteObject tag ObjectFlags.IsNull
             writer.Formatter.EndWriteObject ()
 

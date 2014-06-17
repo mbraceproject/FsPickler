@@ -7,7 +7,6 @@
     open Nessos.FsPickler
     open Nessos.FsPickler.Reflection
     open Nessos.FsPickler.TypeShape
-    open Nessos.FsPickler.DotNetPicklers
     open Nessos.FsPickler.PicklerFactory
 
     /// <summary>

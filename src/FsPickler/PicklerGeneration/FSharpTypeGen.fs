@@ -1,4 +1,4 @@
-﻿module internal Nessos.FsPickler.FSharpPicklers
+﻿namespace Nessos.FsPickler
 
     open System
     open System.IO
@@ -10,7 +10,6 @@
 
     open Nessos.FsPickler
     open Nessos.FsPickler.Reflection
-//    open Nessos.FsPickler.PicklerUtils
 
 #if EMIT_IL
     open System.Reflection.Emit
@@ -20,7 +19,7 @@
 
     // F# union types
 
-    type FsUnionPickler =
+    type internal FsUnionPickler =
 
         static member Create<'Union> (resolver : IPicklerResolver) =
             // resolve tag reader methodInfo
@@ -155,7 +154,7 @@
 
     // F# record types
 
-    type FsRecordPickler =
+    type internal FsRecordPickler =
         
         static member Create<'Record>(resolver : IPicklerResolver) =
 
@@ -209,11 +208,11 @@
     // F# exception types
     // Exception serialization is broken in F#; while types are ISerializable, added fields will not be serialized properly
     // Use a combination of ISerializable resolution and reflection to derive correct logic
-    type FsExceptionPickler =
+    type internal FsExceptionPickler =
         
         static member Create<'Exception when 'Exception :> exn>(resolver : IPicklerResolver) =
             // the default ISerializable pickler that handles exception metadata serialization
-            let defPickler = DotNetPicklers.ISerializablePickler.Create<'Exception>(resolver) :?> CompositePickler<'Exception>
+            let defPickler = ISerializablePickler.Create<'Exception>(resolver) :?> CompositePickler<'Exception>
             // separately serialize exception fields
             let fields = gatherFields typeof<'Exception> |> Array.filter(fun f -> f.DeclaringType = typeof<'Exception>)
             let fpicklers = fields |> Array.map (fun f -> resolver.Resolve f.FieldType)

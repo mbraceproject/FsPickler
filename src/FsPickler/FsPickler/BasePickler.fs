@@ -162,13 +162,11 @@
 
         /// <summary>Lazily deserialize a sequence of objects from the underlying stream.</summary>
         /// <param name="stream">source stream.</param>
-        /// <param name="length">number of elements to be deserialized.</param>
         /// <param name="streamingContext">streaming context.</param>
         /// <param name="encoding">encoding passed to the binary writer.</param>
         /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to false.</param>
         /// <returns>An IEnumerator that lazily consumes elements from the stream.</returns>
-        member __.DeserializeSequence<'T>(stream : Stream, length : int, 
-                                            [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : seq<'T> =
+        member __.DeserializeSequence<'T>(stream : Stream, [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding, [<O;D(null)>]?leaveOpen) : seq<'T> =
 
             let pickler = resolver.Resolve<'T> ()
             let reader = initStreamReader formatProvider stream encoding leaveOpen

@@ -13,6 +13,7 @@
         /// </summary>
         /// <param name="tag">pickle identifier.</param>
         abstract BeginWriteRoot : tag:string -> unit
+
         /// <summary>
         ///     Writes the end of the pickle.
         /// </summary>
@@ -24,6 +25,7 @@
         /// <param name="tag">object identifier.</param>
         /// <param name="objectFlags">runtime object flags.</param>
         abstract BeginWriteObject : tag:string -> objectFlags:ObjectFlags -> unit
+
         /// <summary>
         ///     End write of an object.
         /// </summary>
@@ -31,29 +33,6 @@
 
         abstract PreferLengthPrefixInSequences : bool
         abstract WriteNextSequenceElement : hasNext:bool -> unit
-
-//        /// <summary>
-//        ///     Start writing a new array to the pickle. The array has a predetermined length.
-//        /// </summary>
-//        /// <param name="tag">array identifier.</param>
-//        /// <param name="length">array length.</param>
-//        abstract BeginWriteBoundedSequence : tag:string -> length:int -> unit
-//        /// <summary>
-//        ///     End write a bounded array.
-//        /// </summary>
-//        abstract EndWriteBoundedSequence : unit -> unit
-//
-//        /// <summary>
-//        ///     Start writing a new array to the pickle. The array has undetermined length.
-//        /// </summary>
-//        /// <param name="tag">array identifier.</param>
-//        abstract BeginWriteUnBoundedSequence : tag:string -> unit
-//        /// <summary>
-//        ///     Writes boolean indicating that unbounded array has an upcoming element.
-//        /// </summary>
-//        /// <param name="hasNext">next element indicator.</param>
-//        abstract WriteHasNextElement : hasNext:bool -> unit
-        
 
         abstract WriteBoolean : tag:string -> value:bool -> unit
         abstract WriteByte : tag:string -> value:byte -> unit
@@ -101,6 +80,7 @@
         /// </summary>
         /// <param name="tag">pickle identifier.</param>
         abstract BeginReadRoot : tag:string -> unit
+
         /// <summary>
         ///     End reading the pickle.
         /// </summary>
@@ -111,6 +91,7 @@
         /// </summary>
         /// <param name="tag">object identifier.</param>
         abstract BeginReadObject : tag:string -> ObjectFlags
+
         /// <summary>
         ///     End reading an object.
         /// </summary>
@@ -118,30 +99,6 @@
 
         abstract PreferLengthPrefixInSequences : bool
         abstract ReadNextSequenceElement : unit -> bool
-
-//        /// <summary>
-//        ///     Begin reading an array of predetermined length.
-//        /// </summary>
-//        /// <param name="tag">array identifier.</param>
-//        /// <returnType>array length.</returnType>
-//        abstract BeginReadBoundedSequence : tag:string -> int
-//
-//        /// <summary>
-//        ///     End reading an array of predetermined length.
-//        /// </summary>
-//        abstract EndReadBoundedSequence : unit -> unit
-//
-//        /// <summary>
-//        ///     Begins reading an array of undetermined length
-//        /// </summary>
-//        /// <param name="tag">array identifier.</param>
-//        abstract BeginReadUnBoundedSequence : tag:string -> unit
-//
-//        /// <summary>
-//        ///     Read if unbounded array has more elements.
-//        /// </summary>
-//        /// <returnType>True iff array has more elements.</returnType>
-//        abstract ReadHasNextElement : unit -> bool
         
         abstract ReadBoolean : tag:string -> bool
         abstract ReadByte : tag:string -> byte

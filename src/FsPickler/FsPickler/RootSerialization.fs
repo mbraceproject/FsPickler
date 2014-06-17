@@ -9,6 +9,7 @@
     
     open Nessos.FsPickler
     open Nessos.FsPickler.TypeCache
+    open Nessos.FsPickler.SequenceUtils
 
     let initStreamWriter (formatP : IPickleFormatProvider) stream encoding leaveOpen =
         let leaveOpen = defaultArg leaveOpen false
@@ -71,8 +72,6 @@
     //  top-level sequence serialization
     //
 
-    let private sequenceStateResetThreshold = 1000 // resets write/read state at the given interval
-
     /// serializes a sequence of objects to stream
 
     let writeTopLevelSequence resolver reflectionCache formatter streamingContext (pickler : Pickler<'T>) (values : seq<'T>) : int =
@@ -81,74 +80,9 @@
         let qn = reflectionCache.GetQualifiedName pickler.Type + " seq"
 
         state.Formatter.BeginWriteRoot qn
-        state.Formatter.BeginWriteObject "values" ObjectFlags.IsSequenceHeader
-
-        let isObject = pickler.TypeKind > TypeKind.Value
-
-#if DEBUG
-        let write idx t =
-#else
-        let inline write idx t =
-#endif
-            if isObject && idx % sequenceStateResetThreshold = 0 then
-                state.ResetCounters()
-            
-            formatter.WriteNextSequenceElement true
-            pickler.Write state "elem" t
-            
-        // specialize enumeration
-        let length =
-            match values with
-            | :? ('T []) as array ->
-                let n = array.Length
-                for i = 0 to n - 1 do
-                    write i array.[i]
-                n
-
-            | :? ('T list) as list ->
-                let rec writeLst i lst =
-                    match lst with
-                    | [] -> i
-                    | t :: ts -> write i t ; writeLst (i+1) ts
-
-                writeLst 0 list
-            | _ ->
-                let mutable i = 0
-                for t in values do
-                    write i t
-                    i <- i + 1
-                i
-
-        state.Formatter.WriteNextSequenceElement false
-        state.Formatter.EndWriteObject()
-        state.Formatter.EndWriteRoot()
+        let length = writeUnboundedSequence pickler state "values" values
+        state.Formatter.EndWriteRoot ()
         length
-
-
-    type SequenceDeserializationEnumerator<'T>(state : ReadState, pickler : Pickler<'T>) =
-        let formatter = state.Formatter
-        let isObject = pickler.TypeKind > TypeKind.Value
-        let mutable count = 0
-        let mutable value = Unchecked.defaultof<'T>
-
-        interface IEnumerator<'T> with
-            member __.Current = value
-            member __.Current = box value
-            member __.Dispose () = formatter.Dispose()
-            member __.MoveNext () =
-                if formatter.ReadNextSequenceElement () then
-                    if isObject && count % sequenceStateResetThreshold = 0 then
-                        state.ResetCounters()
-
-                    value <- pickler.Read state "elem"
-
-                    true
-                else
-                    formatter.EndReadObject ()
-                    formatter.EndReadRoot ()
-                    false
-
-            member __.Reset () = raise <| NotSupportedException()
 
     let readTopLevelSequence resolver reflectionCache formatter streamingContext (pickler : Pickler<'T>) : seq<'T> =
         
@@ -162,20 +96,7 @@
         | :? FsPicklerException -> reraise () 
         | e -> raise <| new InvalidPickleException("error reading from pickle.", e)
 
-        if formatter.BeginReadObject "values" <> ObjectFlags.IsSequenceHeader then
-            raise <| new FsPicklerException("object header is not of sequence.")
-
-        let isConsumed = ref 0
-        let getEnumerator () =
-            if System.Threading.Interlocked.CompareExchange(isConsumed, 1, 0) = 0 then
-                new SequenceDeserializationEnumerator<'T>(state, pickler) :> IEnumerator<'T>
-            else
-                invalidOp "Deserialization enumerable can only be consumed once."
-        {
-            new IEnumerable<'T> with
-                member __.GetEnumerator () = getEnumerator ()
-                member __.GetEnumerator () = getEnumerator () :> IEnumerator
-        }
+        readUnboundedSequenceLazy pickler state "values"
 
 
 

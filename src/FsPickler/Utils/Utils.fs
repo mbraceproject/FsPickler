@@ -104,6 +104,12 @@
         let inline fastUnbox<'T> (x : obj) = 
             Microsoft.FSharp.Core.LanguagePrimitives.IntrinsicFunctions.UnboxFast<'T> x
 
+
+        type Latch () =
+            let mutable switch = 0
+            member __.Trigger () = System.Threading.Interlocked.CompareExchange(&switch, 1, 0) = 0
+            member __.Reset () = switch <- 0
+
         type IDictionary<'K,'V> with
             member d.TryFind (k : 'K) =
                 let found, v = d.TryGetValue k

@@ -1,11 +1,10 @@
-﻿module internal Nessos.FsPickler.TuplePicklers
+﻿namespace Nessos.FsPickler
 
     open System
 
     open Nessos.FsPickler
-//    open Nessos.FsPickler.PicklerUtils
 
-    type TuplePickler =
+    type internal TuplePickler =
 
         static member Create(p1 : Pickler<'T1>) =
             let writer (w : WriteState) (tag : string) (t : Tuple<'T1>) =

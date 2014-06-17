@@ -52,7 +52,7 @@
             use m = new MemoryStream()
             let length = pickler.SerializeSequence(m, xs, leaveOpen = true)
             m.Position <- 0L
-            let xs' = pickler.DeserializeSequence<'T>(m, length)
+            let xs' = pickler.DeserializeSequence<'T>(m)
             use enum = xs'.GetEnumerator()
 
             for i,x in xs |> Seq.mapi (fun i x -> (i,x)) do

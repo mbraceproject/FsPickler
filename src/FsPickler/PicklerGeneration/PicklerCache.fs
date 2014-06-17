@@ -22,7 +22,7 @@
             seq {  
                 yield CompositePickler.ObjectPickler :> Pickler
                 yield! PrimitivePicklers.mkAll ()
-                yield! mkReflectionPicklers ()
+                yield! mkReflectionPicklers <| ArrayPickler.GetInterface()
             } |> Seq.map (fun p -> KeyValuePair(p.Type, Success p))
 
         let dict = new ConcurrentDictionary<Type, Exn<Pickler>>(basePicklers)

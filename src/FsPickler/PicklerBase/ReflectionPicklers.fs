@@ -12,9 +12,12 @@
     open Nessos.FsPickler
     open Nessos.FsPickler.Reflection
     open Nessos.FsPickler.TypeCache
-    open Nessos.FsPickler.ArrayPicklers
+    open Nessos.FsPickler.PrimitivePicklers
 
-    let mkReflectionPicklers () =
+    type IArrayPickler =
+        abstract Create : Pickler<'T> -> Pickler<'T []>
+
+    let mkReflectionPicklers (arrayPickler : IArrayPickler) =
         let assemblyInfoPickler =
             let writer (w : WriteState) (_ : string) (aI : AssemblyInfo) =
                 let formatter = w.Formatter
@@ -45,12 +48,12 @@
                 (fun w t a -> let aI = w.ReflectionCache.GetAssemblyInfo a in assemblyInfoPickler.Writer w t aI),
                     PicklerInfo.ReflectionType, cacheByRef = true, useWithSubtypes = true)
 
-        let stringArrayPickler = ArrayPickler.Create (PrimitivePicklers.StringPickler())
+        let stringArrayPickler = arrayPickler.Create <| PrimitivePicklers.mkString()
 
         let rec memberInfoWriter (w : WriteState) (tag : string) (m : MemberInfo) =
             let formatter = w.Formatter
 
-            // not used anywhere ; there just to aid type inference
+            // not used anywhere ; placed here just to assist type inference
             let inline tp () : Pickler<Type> = typePickler
             let inline tp () : Pickler<Type []> = typeArrayPickler
             let inline mp () : Pickler<MemberInfo> = memberInfoPickler
@@ -279,7 +282,7 @@
 
         and typePickler = memberInfoPickler.Cast<Type> ()
         and methodInfoPickler = memberInfoPickler.Cast<MethodInfo> ()
-        and typeArrayPickler = ArrayPickler.Create typePickler
+        and typeArrayPickler = arrayPickler.Create typePickler
 
         [|
             assemblyPickler :> Pickler
