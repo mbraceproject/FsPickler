@@ -1,4 +1,4 @@
-﻿module internal Nessos.FsPickler.TypeCache
+﻿module internal Nessos.FsPickler.ReflectionCache
 
     open System
     open System.Globalization

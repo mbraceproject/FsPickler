@@ -4,7 +4,7 @@
     open System.Collections.Generic
     open System.Runtime.Serialization
 
-    open Nessos.FsPickler.TypeCache
+    open Nessos.FsPickler.ReflectionCache
 
     [<AbstractClass>]
     type Pickler =
@@ -94,7 +94,7 @@
             member internal Formatter : IPickleFormatWriter
             member internal ObjectIdGenerator : ObjectIDGenerator
             member internal PicklerResolver : IPicklerResolver
-            member internal ReflectionCache : TypeCache.ReflectionCache
+            member internal ReflectionCache : ReflectionCache
             member StreamingContext : StreamingContext
             member internal Visitor : IObjectVisitor option
             member internal TypePickler : Pickler<System.Type>
@@ -113,7 +113,7 @@
             member internal Formatter : IPickleFormatReader
             member internal ObjectCache : Dictionary<int64,obj>
             member internal PicklerResolver : IPicklerResolver
-            member internal ReflectionCache : TypeCache.ReflectionCache
+            member internal ReflectionCache : ReflectionCache.ReflectionCache
             member StreamingContext : StreamingContext
             member internal TypePickler : Pickler<System.Type>
         end

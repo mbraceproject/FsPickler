@@ -11,7 +11,7 @@
 
     open Nessos.FsPickler
     open Nessos.FsPickler.Reflection
-    open Nessos.FsPickler.TypeCache
+    open Nessos.FsPickler.ReflectionCache
     open Nessos.FsPickler.PrimitivePicklers
 
     type IArrayPickler =

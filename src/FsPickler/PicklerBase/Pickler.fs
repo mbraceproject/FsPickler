@@ -7,7 +7,7 @@
     open System.Runtime.Serialization
 
     open Nessos.FsPickler.Reflection
-    open Nessos.FsPickler.TypeCache
+    open Nessos.FsPickler.ReflectionCache
 
     [<AbstractClass>]
     [<AutoSerializable(false)>]

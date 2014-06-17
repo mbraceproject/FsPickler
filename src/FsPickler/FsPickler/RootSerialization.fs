@@ -8,7 +8,7 @@
     open System.Runtime.Serialization
     
     open Nessos.FsPickler
-    open Nessos.FsPickler.TypeCache
+    open Nessos.FsPickler.ReflectionCache
     open Nessos.FsPickler.SequenceUtils
 
     let initStreamWriter (formatP : IPickleFormatProvider) stream encoding leaveOpen =

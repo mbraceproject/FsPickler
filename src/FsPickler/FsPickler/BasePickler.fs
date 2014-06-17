@@ -10,7 +10,7 @@
 
     open Nessos.FsPickler.Utils
     open Nessos.FsPickler.Hashing
-    open Nessos.FsPickler.TypeCache
+    open Nessos.FsPickler.ReflectionCache
     open Nessos.FsPickler.RootSerialization
 
     type internal OAttribute = System.Runtime.InteropServices.OptionalAttribute

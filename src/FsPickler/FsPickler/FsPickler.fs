@@ -5,7 +5,6 @@
     open System.Collections.Generic
     
     open Nessos.FsPickler.Hashing
-    open Nessos.FsPickler.TypeCache
 
     /// FsPickler public facade
     type FsPickler private () =
