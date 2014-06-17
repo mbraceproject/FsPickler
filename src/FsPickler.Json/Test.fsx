@@ -13,10 +13,3 @@ jsp.PickleToString { Name = "me" ; Age = 12 }
 
 let pickle = jsp.PickleToString <@ 1 + 1 @>
 jsp.UnPickleOfString<Quotations.Expr<int>> pickle
-
-
-let list = Pickler.seq Pickler.int |> Pickler.wrap Seq.toList Seq.ofList
-
-Json.pickle list [1..100] |> Json.unpickle list
-
-Json.pickle Pickler.auto [box 42; box 12; box 42]
