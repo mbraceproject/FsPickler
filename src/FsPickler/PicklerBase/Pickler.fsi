@@ -88,7 +88,6 @@
                 formatter:IPickleFormatWriter * resolver:IPicklerResolver * reflectionCache:ReflectionCache * 
                     ?streamingContext:StreamingContext * ?visitor : IObjectVisitor -> WriteState
 
-            member internal ResetCounters : unit -> unit
             member internal CyclicObjectSet : HashSet<int64>
             member internal ObjectStack : Stack<int64>
             member internal Formatter : IPickleFormatWriter
@@ -108,7 +107,6 @@
 
             member internal NextObjectId : unit -> int64
             member internal EarlyRegisterArray : array:System.Array -> unit
-            member internal ResetCounters : unit -> unit
             member internal FixupIndex : Dictionary<int64,(System.Type * obj)>
             member internal Formatter : IPickleFormatReader
             member internal ObjectCache : Dictionary<int64,obj>

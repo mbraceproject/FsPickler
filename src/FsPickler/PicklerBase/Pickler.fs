@@ -76,8 +76,7 @@
 
         let sc = match streamingContext with None -> new StreamingContext() | Some sc -> sc
 
-        // ObjectIDGenerator has not 'Reset' method, hence make mutable
-        let mutable idGen = new ObjectIDGenerator()
+        let idGen = new ObjectIDGenerator()
         let objStack = new Stack<int64> ()
         let cyclicObjects = new HashSet<int64> ()
 
@@ -88,8 +87,6 @@
         member internal __.ReflectionCache = reflectionCache
         member internal __.TypePickler = tyPickler
         member internal __.ObjectIdGenerator = idGen
-        member internal __.ResetCounters () = 
-            idGen <- new ObjectIDGenerator ()
 
         member internal __.ObjectStack = objStack
         member internal __.CyclicObjectSet = cyclicObjects
@@ -100,7 +97,6 @@
         let sc = match streamingContext with None -> new StreamingContext() | Some sc -> sc
 
         let mutable idCounter = 0L
-//        let mutable currentArrayId = 0L
         let objCache = new Dictionary<int64, obj> ()
         let fixupIndex = new Dictionary<int64, Type * obj> ()
         let tyPickler = resolver.Resolve<Type> ()
@@ -115,12 +111,6 @@
         member internal __.NextObjectId () =
             idCounter <- idCounter + 1L
             idCounter
-
-//        member internal __.CurrentObjectId = idCounter
-
-        member internal __.ResetCounters() = 
-            idCounter <- 0L
-            objCache.Clear()
 
         member internal __.EarlyRegisterArray(array : Array) =
             objCache.Add(idCounter, array)
