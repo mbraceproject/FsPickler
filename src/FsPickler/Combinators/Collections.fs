@@ -9,20 +9,15 @@
         static member Create<'T when 'T : comparison>(ep : Pickler<'T>) =
             let writer (w : WriteState) (tag : string) (set : Set<'T>) =
                 let formatter = w.Formatter
-                formatter.WriteInt32 "count" set.Count
-                formatter.BeginWriteObject "elements" ObjectFlags.IsSequenceHeader
-                for e in set do ep.Write w "elem" e
-                formatter.EndWriteObject ()
+                let count = set.Count
+                formatter.WriteInt32 "count" count
+                writeBoundedSequence ep count w "elements" set
 
             let reader (r : ReadState) (tag : string) =
                 let formatter = r.Formatter
                 let count = formatter.ReadInt32 "count"
-                let array = Array.zeroCreate<'T> count
-                let _ = formatter.BeginReadObject "elements"
-                for i = 0 to array.Length - 1 do array.[i] <- ep.Read r "elem"
-                formatter.EndReadObject ()
-                
-                Set.ofArray array
+                let elements = readBoundedSequence ep count r "elements"
+                Set.ofArray elements
 
             CompositePickler.Create<_>(reader, writer, PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = false)
             
@@ -36,18 +31,14 @@
             let tp = TuplePickler.Create<'K,'V>(kp, vp)
             
             let writer (w : WriteState) (tag : string) (map : Map<'K,'V>) =
-                w.Formatter.WriteInt32 "count" map.Count
-                w.Formatter.BeginWriteObject "keyvals" ObjectFlags.IsSequenceHeader
-                for e in Map.toSeq map do tp.Write w "entry" e
-                w.Formatter.EndWriteObject ()
+                let count = map.Count
+                w.Formatter.WriteInt32 "count" count
+                writeBoundedSequence tp count w "items" <| Map.toSeq map
 
             let reader (r : ReadState) (tag : string) =
                 let count = r.Formatter.ReadInt32 "count"
-                let _ = r.Formatter.BeginReadObject "keyvals"
-                let array = Array.zeroCreate<'K * 'V> count
-                for i = 0 to array.Length - 1 do array.[i] <- tp.Read r "entry"
-                r.Formatter.EndReadObject ()
-                Map.ofArray array
+                let items = readBoundedSequence tp count r "items"
+                Map.ofArray items
 
             CompositePickler.Create<_>(reader, writer, PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = false)
 
@@ -62,21 +53,17 @@
             let tp = TuplePickler.Create<'K,'V>(kp, vp)
 
             let writer (w : WriteState) (tag : string) (d : Dictionary<'K,'V>) =
+                let count = d.Count
                 w.Formatter.WriteInt32 "count" d.Count
-                w.Formatter.BeginWriteObject "keyvals" ObjectFlags.IsSequenceHeader
-                for e in Seq.map (fun (KeyValue (k,v)) -> k,v) d do tp.Write w "entry" e
-                w.Formatter.EndWriteObject ()
+                let kvs = Seq.map (fun (KeyValue (k,v)) -> k,v) d
+                writeBoundedSequence tp count w "items" kvs
 
             let reader (r : ReadState) (tag : string) =
-                let d = new Dictionary<'K,'V>()
                 let count = r.Formatter.ReadInt32 "count"
-                let _ = r.Formatter.BeginReadObject "keyvals"
-                for i = 1 to count do
-                    let k,v = tp.Read r "entry"
-                    d.Add(k,v)
-
-                r.Formatter.EndReadObject()
-                d
+                let dict = new Dictionary<'K,'V> (count)
+                let items = readBoundedSequence tp count r "items"
+                for k,v in items do dict.Add(k,v)
+                dict
 
             CompositePickler.Create<_>(reader, writer, PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = false)
 
