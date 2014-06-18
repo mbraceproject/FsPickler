@@ -102,8 +102,8 @@
 
             member __.EndWriteObject () = writer.WriteEndElement()
 
-            member __.PreferLengthPrefixInSequences = true
-            member __.WriteNextSequenceElement hasNext = () //if not hasNext then writer.WriteEndElement()
+            member __.PreferLengthPrefixInSequences = false
+            member __.WriteNextSequenceElement hasNext = ()
 
             member __.WriteBoolean (tag : string) value = writePrimitive writer tag value
             member __.WriteByte (tag : string) value = writePrimitive writer tag (int value)
@@ -142,7 +142,7 @@
                 if obj.ReferenceEquals(value, null) then
                     writer.WriteAttributeString("null", "true")
                 else
-                    writer.WriteAttributeString("length", string value.Length)
+                    writer.WriteAttributeString("size", string value.Length)
                     writer.WriteBase64(value, 0, value.Length)
                 writer.WriteEndElement()
 
@@ -161,6 +161,8 @@
             settings.CheckCharacters <- false
 
         let reader = XmlReader.Create(textReader, settings)
+
+        let mutable isAtEmptySequenceHeader = false
 
         interface IPickleFormatReader with
             
@@ -191,20 +193,28 @@
 
                 let flags = parseFlagCsv <| reader.["flags"]
 
-                if reader.IsEmptyElement || reader.Read() then ()
+                if ObjectFlags.hasFlag flags ObjectFlags.IsSequenceHeader then
+                    isAtEmptySequenceHeader <- reader.IsEmptyElement
+
+                if reader.IsEmptyElement || reader.Read () then ()
                 else
                     raise <| new EndOfStreamException()
 
                 flags
 
-            member __.EndReadObject() = 
+            member __.EndReadObject() =
                 if reader.IsEmptyElement then
                     let _ = reader.Read() in ()
                 else
                     reader.ReadEndElement()
 
-            member __.PreferLengthPrefixInSequences = true
-            member __.ReadNextSequenceElement () = reader.NodeType <> XmlNodeType.EndElement
+            member __.PreferLengthPrefixInSequences = false
+            member __.ReadNextSequenceElement () = 
+                if isAtEmptySequenceHeader then
+                    isAtEmptySequenceHeader <- false
+                    false
+                else
+                    reader.NodeType <> XmlNodeType.EndElement
 
             member __.ReadBoolean tag = readElementName reader tag ; reader.ReadElementContentAsBoolean()
 
@@ -243,7 +253,7 @@
                     reader.Read() |> ignore
                     null
                 else
-                    let length = reader.GetAttribute("length") |> int
+                    let length = reader.GetAttribute("size") |> int
                     let bytes = Array.zeroCreate<byte> length
                     do reader.Read() |> ignore
                     if length > 0 then
