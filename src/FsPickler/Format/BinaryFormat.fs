@@ -88,7 +88,12 @@
 
     type BinaryPickleWriter internal (stream : Stream, encoding : Encoding, leaveOpen, forceLittleEndian) =
 
+#if NET40
+        do if leaveOpen then raise <| new NotSupportedException("'leaveOpen' not supported in .NET 40.")
+        let bw = new BinaryWriter(stream, encoding)
+#else
         let bw = new BinaryWriter(stream, encoding, leaveOpen)
+#endif
 
         interface IPickleFormatWriter with
             member __.BeginWriteRoot (tag : string) =
@@ -161,7 +166,13 @@
             member __.Dispose () = bw.Dispose()
 
     and BinaryPickleReader internal (stream : Stream, encoding, leaveOpen) =
+
+#if NET40
+        do if leaveOpen then raise <| new NotSupportedException("'leaveOpen' not supported in .NET 40.")
+        let br = new BinaryReader(stream, encoding)
+#else
         let br = new BinaryReader(stream, encoding, leaveOpen)
+#endif
 
         let mutable isForcedLittleEndianStream = false
 
