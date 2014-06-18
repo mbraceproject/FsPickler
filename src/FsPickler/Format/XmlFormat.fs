@@ -160,7 +160,8 @@
                     writer.WriteAttributeString("null", "true")
                 else
                     writer.WriteAttributeString("size", string value.Length)
-                    writer.WriteBase64(value, 0, value.Length)
+                    if value.Length > 0 then writer.WriteBase64(value, 0, value.Length)
+
                 writer.WriteEndElement()
 
             member __.IsPrimitiveArraySerializationSupported = false
