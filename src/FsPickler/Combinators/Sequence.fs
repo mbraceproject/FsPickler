@@ -52,45 +52,40 @@
 
             let formatter = w.Formatter
             do formatter.BeginWriteObject tag ObjectFlags.IsSequenceHeader
-            
-            // specialize enumeration strategy
-            match ts with
-            | :? ('T []) as array ->
-                let len = array.Length
-                for i = 0 to len - 1 do
-                    formatter.WriteNextSequenceElement true
-                    ep.Write w elemTag array.[i]
 
-                formatter.WriteNextSequenceElement false
-                formatter.EndWriteObject ()
+            let count =
+                // specialize enumeration strategy
+                match ts with
+                | :? ('T []) as array ->
+                    let len = array.Length
+                    for i = 0 to len - 1 do
+                        formatter.WriteNextSequenceElement true
+                        ep.Write w elemTag array.[i]
 
-                len
+                    len
 
-            | :? ('T list) as list ->
-                let rec write i ts =
-                    match ts with
-                    | [] -> 
-                        formatter.WriteNextSequenceElement false
-                        formatter.EndWriteObject ()
-                        i
+                | :? ('T list) as list ->
+                    let rec write i ts =
+                        match ts with
+                        | [] -> i
+                        | t :: rest -> 
+                            formatter.WriteNextSequenceElement true
+                            ep.Write w elemTag t
+                            write (i+1) rest
 
-                    | t :: rest -> 
+                    write 0 list
+                | _ ->
+                    let mutable cnt = 0
+                    for t in ts do
                         formatter.WriteNextSequenceElement true
                         ep.Write w elemTag t
-                        write (i+1) rest
+                        cnt <- cnt + 1
 
-                write 0 list
-            | _ ->
-                let mutable cnt = 0
-                for t in ts do
-                    formatter.WriteNextSequenceElement true
-                    ep.Write w elemTag t
-                    cnt <- cnt + 1
+                    cnt
 
-                formatter.WriteNextSequenceElement false
-                formatter.EndWriteObject ()
-
-                cnt
+            formatter.WriteNextSequenceElement false
+            formatter.EndWriteObject ()
+            count
 
         /// lazily deserialize a sequence of elements ; reserved for top-level sequence deserializations only.
 
@@ -142,11 +137,13 @@
 
             let reader (r : ReadState) (tag : string) =
                 let formatter = r.Formatter
+                do beginReadSequence formatter tag
                 let ra = new ResizeArray<'T> ()
                 while formatter.ReadNextSequenceElement() do
                     ra.Add <| ep.Read r elemTag
 
+                formatter.EndReadObject()
+
                 ra :> seq<'T>
 
-            CompositePickler.Create<_>(reader, writer, PicklerInfo.Combinator, 
-                                        cacheByRef = true, useWithSubtypes = true, skipHeaderWrite = true)
+            CompositePickler.Create<seq<'T>>(reader, writer, PicklerInfo.Combinator, cacheByRef = false, useWithSubtypes = false, bypass = true)

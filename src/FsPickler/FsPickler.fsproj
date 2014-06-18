@@ -89,9 +89,9 @@
     <Compile Include="PicklerBase\CompositePickler.fs" />
     <Compile Include="PicklerBase\PrimitivePicklers.fs" />
     <Compile Include="PicklerBase\ReflectionPicklers.fs" />
+    <Compile Include="Combinators\Wrappers.fs" />
     <Compile Include="Combinators\Sequence.fs" />
     <Compile Include="Combinators\Array.fs" />
-    <Compile Include="Combinators\Wrappers.fs" />
     <Compile Include="Combinators\Tuple.fs" />
     <Compile Include="Combinators\FSharpList.fs" />
     <Compile Include="Combinators\DotNetTypes.fs" />
