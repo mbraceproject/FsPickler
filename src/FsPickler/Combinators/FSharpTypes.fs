@@ -1,5 +1,6 @@
 ﻿namespace Nessos.FsPickler
 
+    open System
     open System.IO
 
     // Pickler implementations for common F# generic types
@@ -36,7 +37,7 @@
                 match r.Formatter.ReadByte "case" with
                 | 0uy -> p1.Read r "Item" |> Choice1Of2
                 | 1uy -> p2.Read r "Item" |> Choice2Of2
-                | _ -> raise <| new InvalidDataException()
+                | _ -> raise <| new FormatException("invalid choice branch.")
 
             CompositePickler.Create<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
 
@@ -63,7 +64,7 @@
                 | 0uy -> p1.Read r "Item" |> Choice1Of3
                 | 1uy -> p2.Read r "Item" |> Choice2Of3
                 | 2uy -> p3.Read r "Item" |> Choice3Of3
-                | _ -> raise <| new InvalidDataException()
+                | _ -> raise <| new FormatException("invalid choice branch.")
 
             CompositePickler.Create<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
 
@@ -94,7 +95,7 @@
                 | 1uy -> p2.Read r "Item" |> Choice2Of4
                 | 2uy -> p3.Read r "Item" |> Choice3Of4
                 | 3uy -> p4.Read r "Item" |> Choice4Of4
-                | _ -> raise <| new InvalidDataException()
+                | _ -> raise <| new FormatException("invalid choice branch.")
 
             CompositePickler.Create<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
 

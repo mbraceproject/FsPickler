@@ -15,7 +15,7 @@
             let flags = formatter.BeginReadObject tag
             if not <| ObjectFlags.hasFlag flags ObjectFlags.IsSequenceHeader then
                 let msg = sprintf "Expected new array but was '%O'." flags
-                raise <| new System.IO.InvalidDataException(msg)
+                raise <| new FormatException(msg)
 
         /// writes a sequence whose length is known a priori
 #if DEBUG
