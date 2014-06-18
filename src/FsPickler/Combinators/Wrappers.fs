@@ -21,7 +21,7 @@
                 let tag = r.Formatter.ReadInt32 "tag"
                 picklers.[tag].Read r "case"
 
-            CompositePickler.Create<_>(reader, writer, PicklerInfo.Combinator, 
+            CompositePickler.Create<'T>(reader, writer, PicklerInfo.Combinator, 
                                 cacheByRef = cacheByRef, useWithSubtypes = useWithSubtypes)
 
 
@@ -35,4 +35,4 @@
                 let t = origin.Read r tag
                 recover t
 
-            CompositePickler.Create<_>(reader, writer, PicklerInfo.Combinator, cacheByRef = false, useWithSubtypes = false, bypass = true)
+            CompositePickler.Create<'S>(reader, writer, PicklerInfo.Combinator, cacheByRef = false, useWithSubtypes = false, bypass = true)
