@@ -25,8 +25,8 @@
         let pickler =
             match picklerName with
             | "FsPickler.Binary" -> FsPickler.CreateBinary() :> BasePickler
-            | "FsPickler.Json" -> FsPickler.CreateJson() :> BasePickler
-            | "FsPickler.Xml" -> FsPickler.CreateXml() :> BasePickler
+            | "FsPickler.Json" -> FsPickler.CreateJson(indent = true) :> BasePickler
+            | "FsPickler.Xml" -> FsPickler.CreateXml(indent = true) :> BasePickler
             | "FsPickler.Json-headerless" -> FsPickler.CreateJson(omitHeader = true) :> BasePickler
             | _ -> invalidArg "name" <| sprintf "unexpected pickler format '%s'." picklerName
 

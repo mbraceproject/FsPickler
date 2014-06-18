@@ -67,6 +67,16 @@
 
             flags
 
+        type XmlReader with
+            member inline r.MoveNext () =
+                if r.Read() then ()
+                else
+                    raise <| new FormatException("Xml document ended prematurely.")
+
+            member inline r.SkipWhitespace() =
+                while r.NodeType = XmlNodeType.Whitespace || r.NodeType = XmlNodeType.SignificantWhitespace do
+                    r.MoveNext()
+
 
     open XmlUtils
 
@@ -209,7 +219,8 @@
                     reader.ReadEndElement()
 
             member __.PreferLengthPrefixInSequences = false
-            member __.ReadNextSequenceElement () = 
+            member __.ReadNextSequenceElement () =
+                reader.SkipWhitespace ()
                 if isAtEmptySequenceHeader then
                     isAtEmptySequenceHeader <- false
                     false
