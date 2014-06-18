@@ -31,7 +31,16 @@
         /// </summary>
         abstract EndWriteObject : unit -> unit
 
+        /// <summary>
+        ///     Specifies if the format favors prefixing of sequence lengths where applicable.
+        ///     This is offered for performance and is mostly used by binary formats.
+        /// </summary>
         abstract PreferLengthPrefixInSequences : bool
+
+        /// <summary>
+        ///     Specifies if another sequence element is to follow in the stream.
+        /// </summary>
+        /// <param name="hasNext"></param>
         abstract WriteNextSequenceElement : hasNext:bool -> unit
 
         abstract WriteBoolean : tag:string -> value:bool -> unit
@@ -97,7 +106,15 @@
         /// </summary>
         abstract EndReadObject : unit -> unit
 
+        /// <summary>
+        ///     Specifies if the format favors prefixing of sequence lengths where applicable.
+        ///     This is offered for performance and is mostly used by binary formats.
+        /// </summary>
         abstract PreferLengthPrefixInSequences : bool
+
+        /// <summary>
+        ///     Check if sequence has another element.
+        /// </summary>
         abstract ReadNextSequenceElement : unit -> bool
         
         abstract ReadBoolean : tag:string -> bool
