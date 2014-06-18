@@ -21,11 +21,21 @@
             member __.DefaultEncoding = new UTF8Encoding(false) :> Encoding
 
             member __.CreateWriter (stream, encoding, isTopLevelSequence, leaveOpen) =
+#if NET40
+                if leaveOpen then raise <| new NotSupportedException("'leaveOpen' not supported in .NET 40.")
+                let sw = new StreamWriter(stream, encoding)
+#else
                 let sw = new StreamWriter(stream, encoding, 1024, leaveOpen)
+#endif
                 new JsonPickleWriter(sw, __.OmitHeader, __.Indent, isCustomSeq isTopLevelSequence, __.SequenceSeparator, leaveOpen) :> _
 
             member __.CreateReader (stream, encoding, isTopLevelSequence, leaveOpen) =
+#if NET40
+                if leaveOpen then raise <| new NotSupportedException("'leaveOpen' not supported in .NET 40.")
+                let sr = new StreamReader(stream, encoding)
+#else
                 let sr = new StreamReader(stream, encoding, true, 1024, leaveOpen)
+#endif
                 new JsonPickleReader(sr, __.OmitHeader, isCustomSeq isTopLevelSequence, leaveOpen) :> _
 
             member __.CreateWriter (textWriter, isTopLevelSequence, leaveOpen) =
