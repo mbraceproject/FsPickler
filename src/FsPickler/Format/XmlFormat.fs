@@ -10,21 +10,6 @@
 
     module private XmlUtils =
 
-        let inline writePrimitive (w : ^XmlWriter) (tag : string) (value : ^T) =
-            (^XmlWriter : (member WriteStartElement : string -> unit) (w, tag))
-            (^XmlWriter : (member WriteValue : ^T -> unit) (w, value))
-            (^XmlWriter : (member WriteEndElement : unit -> unit) w)
-
-        let inline readElementName (r : XmlReader) (tag : string) =
-            while r.NodeType <> XmlNodeType.Element && r.Read() do ()
-
-            if r.NodeType <> XmlNodeType.Element then
-                raise <| new InvalidDataException()
-
-            elif r.Name <> tag then
-                let msg = sprintf "expected type '%s' but was '%s'" tag r.Name
-                raise <| new FsPicklerException(msg)
-
         let inline escapeString (value : string) = SecurityElement.Escape value
         let inline unEscapeString (value : string) =
             let e = new SecurityElement("", value)
@@ -63,9 +48,14 @@
                 | "cyclic" -> flags <- flags ||| ObjectFlags.IsCyclicInstance
                 | "subtype" -> flags <- flags ||| ObjectFlags.IsProperSubtype
                 | "sequence" -> flags <- flags ||| ObjectFlags.IsSequenceHeader
-                | _ -> raise <| new InvalidDataException(sprintf "invalid pickle flag '%s'." t)
+                | _ -> raise <| new FormatException(sprintf "invalid pickle flag '%s'." t)
 
             flags
+
+        let inline writePrimitive (w : ^XmlWriter) (tag : string) (value : ^T) =
+            (^XmlWriter : (member WriteStartElement : string -> unit) (w, tag))
+            (^XmlWriter : (member WriteValue : ^T -> unit) (w, value))
+            (^XmlWriter : (member WriteEndElement : unit -> unit) w)
 
         type XmlReader with
             member inline r.MoveNext () =
@@ -74,8 +64,25 @@
                     raise <| new FormatException("Xml document ended prematurely.")
 
             member inline r.SkipWhitespace() =
-                while r.NodeType = XmlNodeType.Whitespace || r.NodeType = XmlNodeType.SignificantWhitespace do
-                    r.MoveNext()
+                while
+                   (match r.NodeType with
+                    | XmlNodeType.Whitespace
+                    | XmlNodeType.SignificantWhitespace
+                    | XmlNodeType.Comment -> true
+                    | _ -> false) 
+                    
+                    do r.MoveNext()
+
+            member inline r.ReadElementName (tag : string) =
+                do r.SkipWhitespace()
+
+                if r.NodeType <> XmlNodeType.Element then
+                    let msg = sprintf "expected token '%O' but was '%O'." XmlNodeType.Element r.NodeType
+                    raise <| new FormatException(msg)
+
+                elif r.Name <> tag then
+                    let msg = sprintf "expected element '%s' but was '%s'." tag r.Name
+                    raise <| new FormatException(msg)
 
 
     open XmlUtils
@@ -177,12 +184,17 @@
         interface IPickleFormatReader with
             
             member __.BeginReadRoot (tag : string) =
-                do readElementName reader "FsPickler"
+                do reader.MoveNext() // initial read
+                do reader.SkipWhitespace()
+                if reader.NodeType = XmlNodeType.XmlDeclaration then
+                    reader.MoveNext ()
+
+                reader.ReadElementName "FsPickler"
 
                 let version = reader.["version"]
                 if version <> AssemblyVersionInformation.Version then
-                    let msg = sprintf "Invalid FsPickler version %s (expected %s)." version AssemblyVersionInformation.Version
-                    raise <| new InvalidDataException(msg)
+                    let msg = sprintf "Unsupported FsPickler version %s." version
+                    raise <| new FormatException(msg)
 
                 let sTag = reader.["type"]
                 if sTag <> tag then
@@ -194,12 +206,12 @@
 
             member __.EndReadRoot () =
                 if reader.IsEmptyElement then
-                    let _ = reader.Read() in ()
+                    reader.MoveNext()
                 else
                     reader.ReadEndElement()
 
             member __.BeginReadObject (tag : string) =
-                do readElementName reader tag
+                do reader.ReadElementName tag
 
                 let flags = parseFlagCsv <| reader.["flags"]
 
@@ -214,7 +226,7 @@
 
             member __.EndReadObject() =
                 if reader.IsEmptyElement then
-                    let _ = reader.Read() in ()
+                    reader.MoveNext()
                 else
                     reader.ReadEndElement()
 
@@ -227,53 +239,52 @@
                 else
                     reader.NodeType <> XmlNodeType.EndElement
 
-            member __.ReadBoolean tag = readElementName reader tag ; reader.ReadElementContentAsBoolean()
+            member __.ReadBoolean tag = reader.ReadElementName tag ; reader.ReadElementContentAsBoolean()
+            member __.ReadByte tag = reader.ReadElementName tag ; reader.ReadElementContentAsInt() |> byte
+            member __.ReadSByte tag = reader.ReadElementName tag ; reader.ReadElementContentAsInt() |> sbyte
 
-            member __.ReadByte tag = readElementName reader tag ; reader.ReadElementContentAsInt() |> byte
-            member __.ReadSByte tag = readElementName reader tag ; reader.ReadElementContentAsInt() |> sbyte
+            member __.ReadInt16 tag = reader.ReadElementName tag ; reader.ReadElementContentAsInt() |> int16
+            member __.ReadInt32 tag = reader.ReadElementName tag ; reader.ReadElementContentAsInt()
+            member __.ReadInt64 tag = reader.ReadElementName tag ; reader.ReadElementContentAsLong()
 
-            member __.ReadInt16 tag = readElementName reader tag ; reader.ReadElementContentAsInt() |> int16
-            member __.ReadInt32 tag = readElementName reader tag ; reader.ReadElementContentAsInt()
-            member __.ReadInt64 tag = readElementName reader tag ; reader.ReadElementContentAsLong()
+            member __.ReadUInt16 tag = reader.ReadElementName tag ; reader.ReadElementContentAsInt() |> uint16
+            member __.ReadUInt32 tag = reader.ReadElementName tag ; reader.ReadElementContentAsInt() |> uint32
+            member __.ReadUInt64 tag = reader.ReadElementName tag ; reader.ReadElementContentAsLong() |> uint64
 
-            member __.ReadUInt16 tag = readElementName reader tag ; reader.ReadElementContentAsInt() |> uint16
-            member __.ReadUInt32 tag = readElementName reader tag ; reader.ReadElementContentAsInt() |> uint32
-            member __.ReadUInt64 tag = readElementName reader tag ; reader.ReadElementContentAsLong() |> uint64
+            member __.ReadDecimal tag = reader.ReadElementName tag ; reader.ReadElementContentAsDecimal()
+            member __.ReadSingle tag = reader.ReadElementName tag ; reader.ReadElementContentAsFloat()
+            member __.ReadDouble tag = reader.ReadElementName tag ; reader.ReadElementContentAsDouble()
 
-            member __.ReadDecimal tag = readElementName reader tag ; reader.ReadElementContentAsDecimal()
-            member __.ReadSingle tag = readElementName reader tag ; reader.ReadElementContentAsFloat()
-            member __.ReadDouble tag = readElementName reader tag ; reader.ReadElementContentAsDouble()
-
-            member __.ReadChar tag = readElementName reader tag ; reader.ReadElementContentAsString() |> unEscapeString |> char
-            member __.ReadBigInteger tag = readElementName reader tag ; reader.ReadElementContentAsString() |> System.Numerics.BigInteger.Parse
+            member __.ReadChar tag = reader.ReadElementName tag ; reader.ReadElementContentAsString() |> unEscapeString |> char
+            member __.ReadBigInteger tag = reader.ReadElementName tag ; reader.ReadElementContentAsString() |> System.Numerics.BigInteger.Parse
             member __.ReadString tag = 
-                readElementName reader tag 
+                reader.ReadElementName tag 
                 if reader.GetAttribute("null") = "true" then
-                    reader.Read() |> ignore
+                    reader.MoveNext()
                     null
                 else
                     reader.ReadElementContentAsString() |> unEscapeString
 
-            member __.ReadGuid tag = readElementName reader tag ; reader.ReadElementContentAsString() |> Guid.Parse
-            member __.ReadDate tag = readElementName reader tag ; reader.ReadElementContentAsDateTime()
-            member __.ReadTimeSpan tag = readElementName reader tag ; reader.ReadElementContentAsString () |> TimeSpan.Parse
+            member __.ReadGuid tag = reader.ReadElementName tag ; reader.ReadElementContentAsString() |> Guid.Parse
+            member __.ReadDate tag = reader.ReadElementName tag ; reader.ReadElementContentAsDateTime()
+            member __.ReadTimeSpan tag = reader.ReadElementName tag ; reader.ReadElementContentAsString () |> TimeSpan.Parse
 
             member __.ReadBytes tag =
-                do readElementName reader tag
+                do reader.ReadElementName tag
                 if reader.GetAttribute("null") = "true" then 
-                    reader.Read() |> ignore
+                    reader.MoveNext()
                     null
                 else
                     let length = reader.GetAttribute("size") |> int
                     let bytes = Array.zeroCreate<byte> length
-                    do reader.Read() |> ignore
+                    do reader.MoveNext()
                     if length > 0 then
                         let n = reader.ReadContentAsBase64(bytes, 0, length)
                         if n < length then
-                            raise <| new EndOfStreamException()
+                            raise <| new InvalidDataException()
 
                         if reader.NodeType = XmlNodeType.Text then
-                            reader.Read() |> ignore
+                            reader.MoveNext()
 
                     bytes
 
