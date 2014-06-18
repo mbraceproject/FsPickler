@@ -458,6 +458,11 @@
             __.TestSequenceRoundtrip pairs
 
         [<Test; Category("FsPickler Generic tests")>]
+        member __.``5. Object: record sequence`` () =
+            let records = seq { for i in 1 .. 10000 -> { Int = i ; String = string i ; Tuple = (i, "const") } }
+            __.TestSequenceRoundtrip records
+
+        [<Test; Category("FsPickler Generic tests")>]
         member __.``5. Object: sequence pickler`` () =
             let seqPickler = Pickler.seq Pickler.int
 
