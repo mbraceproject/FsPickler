@@ -1,5 +1,16 @@
 ﻿namespace Nessos.FsPickler
 
+    //
+    //  CompositePickler
+    //
+    //  Any non-trivial pickler is defined as an instance of CompositePickler.
+    //  CompositePickler defines all the logic required for handling arbitrary 
+    //  .NET objects: null instances, caching, subtype resolution, cyclic objects.
+    //
+    //  CompositePickler is designed so that implementation can be copied fieldwise.
+    //  This permits the definition of recursive picklers without need for wrappers.
+    //
+
     open System
     open System.Runtime.CompilerServices
     open System.Runtime.Serialization
@@ -23,8 +34,9 @@
         val mutable private m_IsCacheByRef : bool
         val mutable private m_UseWithSubtypes : bool
         val mutable private m_SkipHeaderWrite : bool
+        val mutable private m_Bypass : bool
 
-        private new (reader, writer, nested : Pickler option, picklerInfo, cacheByRef, useWithSubtypes, ?skipHeaderWrite) =
+        private new (reader, writer, nested : Pickler option, picklerInfo, cacheByRef, useWithSubtypes, ?skipHeaderWrite, ?bypass) =
             {
                 inherit Pickler<'T> ()
 
@@ -40,10 +52,11 @@
                 m_IsCacheByRef = cacheByRef
                 m_UseWithSubtypes = useWithSubtypes
                 m_SkipHeaderWrite = defaultArg skipHeaderWrite false
+                m_Bypass = defaultArg bypass false
             }
 
-        new (reader, writer, picklerInfo, cacheByRef, useWithSubtypes, ?skipHeaderWrite) =
-            new CompositePickler<'T>(reader, writer, None, picklerInfo, cacheByRef, useWithSubtypes, ?skipHeaderWrite = skipHeaderWrite)
+        new (reader, writer, picklerInfo, cacheByRef, useWithSubtypes, ?skipHeaderWrite, ?bypass) =
+            new CompositePickler<'T>(reader, writer, None, picklerInfo, cacheByRef, useWithSubtypes, ?skipHeaderWrite = skipHeaderWrite, ?bypass = bypass)
 
         new () = 
             {
@@ -60,6 +73,7 @@
                 m_IsCacheByRef = Unchecked.defaultof<_>
                 m_UseWithSubtypes = Unchecked.defaultof<_>
                 m_SkipHeaderWrite = Unchecked.defaultof<_>
+                m_Bypass = Unchecked.defaultof<_>
             }
 
         override p.ImplementationType = 
@@ -81,8 +95,8 @@
                     let writer = let wf = p.m_Writer in fun w t x -> wf w t (fastUnbox<'T> x)
                     let reader = let rf = p.m_Reader in fun r t -> fastUnbox<'S> (rf r t)
 
-                    new CompositePickler<'S>(reader, writer, Some(p :> _), p.m_PicklerInfo, 
-                                                p.m_IsCacheByRef, p.m_UseWithSubtypes, p.m_SkipHeaderWrite) :> Pickler<'S>
+                    new CompositePickler<'S>(reader, writer, Some(p :> _), p.m_PicklerInfo, p.m_IsCacheByRef, p.m_UseWithSubtypes, 
+                                                skipHeaderWrite = p.m_SkipHeaderWrite, bypass = p.m_Bypass) :> Pickler<'S>
                 else
                     let msg = sprintf "Cannot cast pickler of type '%O' to '%O'." typeof<'T> typeof<'S>
                     raise <| new InvalidCastException(msg)
@@ -102,6 +116,7 @@
                     p.m_Reader <- p'.m_Reader
                     p.m_NestedPickler <- p'.m_NestedPickler
                     p.m_SkipHeaderWrite <- p'.m_SkipHeaderWrite
+                    p.m_Bypass <- p'.m_Bypass
                     p.m_IsInitialized <- true
 
             | _ -> invalidOp <| sprintf "Source pickler is of invalid type (%O)." p'.Type
@@ -118,6 +133,8 @@
             | None -> ()
 
             try
+                if p.m_Bypass then p.m_Writer state tag value else
+
                 if p.TypeKind = TypeKind.Value then
                     formatter.BeginWriteObject tag ObjectFlags.None
                     p.m_Writer state tag value
@@ -206,8 +223,9 @@
         override p.Read (state : ReadState) (tag : string) =
 
             try
-                let formatter = state.Formatter
+                if p.m_Bypass then p.m_Reader state tag else
 
+                let formatter = state.Formatter
                 let flags = formatter.BeginReadObject tag
 
                 if ObjectFlags.hasFlag flags ObjectFlags.IsNull then 
@@ -274,9 +292,9 @@
     and internal CompositePickler =
         
         static member CreateUninitialized<'T>() = new CompositePickler<'T> () :> Pickler<'T>
-        static member Create<'T>(reader, writer, picklerInfo, cacheByRef : bool, useWithSubtypes : bool, ?skipHeaderWrite : bool) =
-            new CompositePickler<'T>(reader, writer, picklerInfo, cacheByRef = cacheByRef, 
-                                        useWithSubtypes = useWithSubtypes, ?skipHeaderWrite = skipHeaderWrite) :> Pickler<'T>
+        static member Create<'T>(reader, writer, picklerInfo, cacheByRef : bool, useWithSubtypes : bool, ?skipHeaderWrite : bool, ?bypass : bool) =
+            new CompositePickler<'T>(reader, writer, picklerInfo, cacheByRef = cacheByRef, useWithSubtypes = useWithSubtypes, 
+                                                                            ?skipHeaderWrite = skipHeaderWrite, ?bypass = bypass) :> Pickler<'T>
 
         static member ObjectPickler =
             CompositePickler.Create<obj>((fun _ _ -> obj ()), (fun _ _ _ -> ()), PicklerInfo.Object, cacheByRef = true, useWithSubtypes = false)
