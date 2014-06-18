@@ -58,7 +58,7 @@
                     if flags = ObjectFlags.None then ()
                     else
                         let flagCsv = mkFlagCsv flags
-                        writePrimitive jsonWriter false "pickle flags" flagCsv
+                        writePrimitive jsonWriter false "_flags" flagCsv
 
             member __.EndWriteObject () = 
                 if currentValueIsNull then 

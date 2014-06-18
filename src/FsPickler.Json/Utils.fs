@@ -33,11 +33,9 @@
                 | "cached" -> flags <- flags ||| ObjectFlags.IsCachedInstance
                 | "cyclic" -> flags <- flags ||| ObjectFlags.IsCyclicInstance
                 | "subtype" -> flags <- flags ||| ObjectFlags.IsProperSubtype
-                | _ -> raise <| new InvalidDataException(sprintf "invalid pickle flag '%s'." t)
+                | _ -> raise <| new FormatException(sprintf "invalid pickle flag '%s'." t)
 
             flags
-
-        let inline invalidJsonFormat () = raise <| new InvalidDataException("invalid json format.")
 
         let inline writePrimitive (jsonWriter : ^JsonWriter) ignoreName (name : string) (value : ^T) =
             if not ignoreName then
@@ -50,14 +48,14 @@
                     let jsonName = jsonReader.Value |> fastUnbox<string>
                     if name <> jsonName then
                         let msg = sprintf "expected property '%s' but was '%s'." name jsonName
-                        raise <| new InvalidDataException(msg)
+                        raise <| new FormatException(msg)
                 else
                     let msg = sprintf "expected token '%O' but was '%O'." JsonToken.PropertyName jsonReader.TokenType
-                    raise <| new InvalidDataException(msg)
+                    raise <| new FormatException(msg)
 
             member inline jsonReader.ValueAs<'T> () = jsonReader.Value |> fastUnbox<'T>
 
-            member inline jsonReader.ReadPrimitiveAs<'T> ignoreName (name : string) =
+            member jsonReader.ReadPrimitiveAs<'T> ignoreName (name : string) =
                 if not ignoreName then
                     jsonReader.ReadProperty name
                     jsonReader.Read() |> ignore
@@ -69,21 +67,9 @@
             member inline jsonReader.MoveNext () = 
                 if jsonReader.Read() then ()
                 else
-                    raise <| new EndOfStreamException()
-
-//            /// returns true iff null token
-//            member inline jsonReader.ReadStartObject () =
-//                match jsonReader.TokenType with
-//                | JsonToken.Null ->
-//                    jsonReader.Read() |> ignore
-//                    true
-//                | JsonToken.StartObject ->
-//                    jsonReader.Read() |> ignore
-//                    false
-//                | _ ->
-//                    invalidJsonFormat ()
+                    raise <| new FormatException("Json document ended prematurely.")
 
             member inline jsonReader.ReadEndObject () =
                 if jsonReader.Read() && jsonReader.TokenType = JsonToken.EndObject then ()
                 else
-                    invalidJsonFormat ()
+                    raise <| new FormatException(sprintf "Expected end of Json object but was '%O'." jsonReader.TokenType)

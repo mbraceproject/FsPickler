@@ -64,7 +64,7 @@
                     do jsonReader.MoveNext()
                     depth <- depth + 1
 
-                    if jsonReader.ValueAs<string> () = "pickle flags" then
+                    if jsonReader.ValueAs<string> () = "_flags" then
                         jsonReader.MoveNext()
                         let csvFlags = jsonReader.ValueAs<string>()
                         jsonReader.MoveNext()
@@ -72,7 +72,7 @@
                     else
                         ObjectFlags.None
 
-                | _ -> invalidJsonFormat ()
+                | token -> raise <| new FormatException(sprintf "expected start of Json object but was '%O'." token)
 
             member __.EndReadObject () =
                 match jsonReader.TokenType with
@@ -82,7 +82,7 @@
                     arrayStack.Pop() |> ignore
                     depth <- depth - 1
 
-                | _ -> invalidJsonFormat ()
+                | token -> raise <| new FormatException(sprintf "expected end of Json object but was '%O'." token)
 
                 if omitHeader && depth = 0 then ()
                 else jsonReader.MoveNext()
