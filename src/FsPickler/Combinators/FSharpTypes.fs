@@ -26,14 +26,14 @@
             let writer (w : WriteState) (tag : string) (c : Choice<'T1, 'T2>) =
                 match c with
                 | Choice1Of2 t1 -> 
-                    w.Formatter.WriteByte "case" 0uy
+                    w.Formatter.WriteByte "Tag" 0uy
                     p1.Write w "Item" t1
                 | Choice2Of2 t2 -> 
-                    w.Formatter.WriteByte "case" 1uy
+                    w.Formatter.WriteByte "Tag" 1uy
                     p2.Write w "Item" t2
 
             let reader (r : ReadState) (tag : string) =
-                match r.Formatter.ReadByte "case" with
+                match r.Formatter.ReadByte "Tag" with
                 | 0uy -> p1.Read r "Item" |> Choice1Of2
                 | 1uy -> p2.Read r "Item" |> Choice2Of2
                 | _ -> raise <| new InvalidDataException()
@@ -49,17 +49,17 @@
             let writer (w : WriteState) (tag : string) (c : Choice<'T1, 'T2, 'T3>) =
                 match c with
                 | Choice1Of3 t1 -> 
-                    w.Formatter.WriteByte "case" 0uy
+                    w.Formatter.WriteByte "Tag" 0uy
                     p1.Write w "Item" t1
                 | Choice2Of3 t2 -> 
-                    w.Formatter.WriteByte "case" 1uy
+                    w.Formatter.WriteByte "Tag" 1uy
                     p2.Write w "Item" t2
                 | Choice3Of3 t3 -> 
-                    w.Formatter.WriteByte "case" 2uy
+                    w.Formatter.WriteByte "Tag" 2uy
                     p3.Write w "Item" t3
 
             let reader (r : ReadState) (tag : string) =
-                match r.Formatter.ReadByte "case" with
+                match r.Formatter.ReadByte "Tag" with
                 | 0uy -> p1.Read r "Item" |> Choice1Of3
                 | 1uy -> p2.Read r "Item" |> Choice2Of3
                 | 2uy -> p3.Read r "Item" |> Choice3Of3
@@ -76,20 +76,20 @@
             let writer (w : WriteState) (tag : string) (c : Choice<'T1, 'T2, 'T3, 'T4>) =
                 match c with
                 | Choice1Of4 t1 -> 
-                    w.Formatter.WriteByte "case" 0uy
+                    w.Formatter.WriteByte "Tag" 0uy
                     p1.Write w "Item" t1
                 | Choice2Of4 t2 -> 
-                    w.Formatter.WriteByte "case" 1uy
+                    w.Formatter.WriteByte "Tag" 1uy
                     p2.Write w "Item" t2
                 | Choice3Of4 t3 -> 
-                    w.Formatter.WriteByte "case" 2uy
+                    w.Formatter.WriteByte "Tag" 2uy
                     p3.Write w "Item" t3
                 | Choice4Of4 t4 -> 
-                    w.Formatter.WriteByte "case" 3uy
+                    w.Formatter.WriteByte "Tag" 3uy
                     p4.Write w "Item" t4
 
             let reader (r : ReadState) (tag : string) =
-                match r.Formatter.ReadByte "case" with
+                match r.Formatter.ReadByte "Tag" with
                 | 0uy -> p1.Read r "Item" |> Choice1Of4
                 | 1uy -> p2.Read r "Item" |> Choice2Of4
                 | 2uy -> p3.Read r "Item" |> Choice3Of4
