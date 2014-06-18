@@ -48,7 +48,7 @@
                     run onSerializing w x
                     let sI = new SerializationInfo(typeof<'T>, new FormatterConverter())
                     x.GetObjectData(sI, w.StreamingContext)
-                    w.Formatter.WriteInt32 "count" sI.MemberCount
+                    w.Formatter.WriteInt32 "memberCount" sI.MemberCount
                     let enum = sI.GetEnumerator()
                     while enum.MoveNext() do
                         w.Formatter.WriteString "name" enum.Current.Name
@@ -58,7 +58,7 @@
 
                 let reader (r : ReadState) (tag : string) =
                     let sI = new SerializationInfo(typeof<'T>, new FormatterConverter())
-                    let memberCount = r.Formatter.ReadInt32 "count"
+                    let memberCount = r.Formatter.ReadInt32 "memberCount"
                     for i = 1 to memberCount do
                         let name = r.Formatter.ReadString "name"
                         let v = objPickler.Read r "value"

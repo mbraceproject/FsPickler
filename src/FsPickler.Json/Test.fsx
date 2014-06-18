@@ -11,5 +11,9 @@ type Record = { Name : string ; Age : int }
 
 jsp.PickleToString { Name = "me" ; Age = 12 }
 
+type Union = A of int | B of string * int | C
+
+jsp.PickleToString [A 42 ; B("test", 0) ; C]
+
 let pickle = jsp.PickleToString <@ 1 + 1 @>
 jsp.UnPickleOfString<Quotations.Expr<int>> pickle
