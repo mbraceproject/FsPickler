@@ -163,15 +163,15 @@
         abstract DefaultEncoding : Encoding
 
         /// Initializes a new format writer
-        abstract CreateWriter : Stream * Encoding * leaveOpen:bool -> IPickleFormatWriter
+        abstract CreateWriter : Stream * Encoding * isTopLevelSequence:bool * leaveOpen:bool -> IPickleFormatWriter
         /// Initializes a new format reader
-        abstract CreateReader : Stream * Encoding * leaveOpen:bool -> IPickleFormatReader
+        abstract CreateReader : Stream * Encoding * isTopLevelSequence:bool * leaveOpen:bool -> IPickleFormatReader
 
     /// Factory abstraction for text-based pickle formats.
     and ITextPickleFormatProvider =
         inherit IPickleFormatProvider
 
         /// Initializes a new format writer
-        abstract CreateWriter : TextWriter * leaveOpen:bool -> IPickleFormatWriter
+        abstract CreateWriter : TextWriter * isTopLevelSequence:bool *leaveOpen:bool -> IPickleFormatWriter
         /// Initializes a new format reader
-        abstract CreateReader : TextReader * leaveOpen:bool -> IPickleFormatReader
+        abstract CreateReader : TextReader * isTopLevelSequence:bool *leaveOpen:bool -> IPickleFormatReader

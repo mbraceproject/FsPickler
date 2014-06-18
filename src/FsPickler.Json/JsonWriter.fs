@@ -9,7 +9,7 @@
     open Nessos.FsPickler.Utils
 
 
-    type JsonPickleWriter internal (textWriter : TextWriter, omitHeader, indented, leaveOpen) =
+    type JsonPickleWriter internal (textWriter : TextWriter, omitHeader, indented, isTopLevelSequence, separator, leaveOpen) =
         
         let jsonWriter = new JsonTextWriter(textWriter) :> JsonWriter
         do 
@@ -17,6 +17,7 @@
             jsonWriter.CloseOutput <- not leaveOpen
 
         let mutable depth = 0
+        let mutable isTopLevelSequenceHead = false
         let mutable currentValueIsNull = false
 
         let arrayStack = new Stack<int> ()
@@ -47,10 +48,13 @@
                     jsonWriter.WriteNull()
 
                 elif flags.HasFlag ObjectFlags.IsSequenceHeader then
-                    arrayStack.Push depth
-                    jsonWriter.WriteStartArray()
-                    depth <- depth + 1
+                    if isTopLevelSequence && depth = 0 then
+                        isTopLevelSequenceHead <- true
+                    else
+                        jsonWriter.WriteStartArray()
 
+                    arrayStack.Push depth
+                    depth <- depth + 1
                 else
                     jsonWriter.WriteStartObject()
                     depth <- depth + 1
@@ -66,13 +70,21 @@
                 else
                     depth <- depth - 1
                     if arrayStack.Peek () = depth then
+                        if isTopLevelSequence && depth = 0 then ()
+                        else
+                            jsonWriter.WriteEndArray()
+
                         arrayStack.Pop () |> ignore
-                        jsonWriter.WriteEndArray()
                     else
                         jsonWriter.WriteEndObject()
 
             member __.PreferLengthPrefixInSequences = false
-            member __.WriteNextSequenceElement _ = ()
+            member __.WriteNextSequenceElement hasNext =
+                if isTopLevelSequence && depth = 1 then
+                    if isTopLevelSequenceHead then
+                        isTopLevelSequenceHead <- false
+                    else
+                        jsonWriter.WriteWhitespace separator
 
             member __.WriteBoolean (tag : string) value = writePrimitive jsonWriter (omitTag ()) tag value
             member __.WriteByte (tag : string) value = writePrimitive jsonWriter (omitTag ()) tag value

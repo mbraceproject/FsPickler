@@ -1,5 +1,9 @@
 ﻿namespace Nessos.FsPickler
 
+    open System
+
+    open Nessos.FsPickler.Utils
+
     type internal OAttribute = System.Runtime.InteropServices.OptionalAttribute
     type internal DAttribute = System.Runtime.InteropServices.DefaultParameterValueAttribute
 
@@ -39,6 +43,25 @@
         member x.OmitHeader
             with get () = x.format.OmitHeader
             and set b = x.format.OmitHeader <- b
+
+        /// <summary>
+        ///     Gets or sets a non-null whitespace string that serves as a custom, top-level sequence separator.
+        /// </summary>
+        member x.SequenceSeparator
+            with get () = x.format.SequenceSeparator
+            and set sep =
+                if sep <> null && String.IsNullOrWhiteSpace sep then
+                    x.format.SequenceSeparator <- sep
+                else
+                    invalidArg "SequenceSeparator" "should be non-null whitespace."
+
+        /// <summary>
+        ///     Gets or sets whether top-level sequences should be serialized using the custom separator.
+        /// </summary>
+        member x.UseCustomTopLevelSequenceSeparator
+            with get () = x.format.UseCustomTopLevelSequenceSeparator
+            and set e = x.format.UseCustomTopLevelSequenceSeparator <- e
+
 
 
     type FsPickler =

@@ -25,9 +25,14 @@
         let pickler =
             match picklerName with
             | "FsPickler.Binary" -> FsPickler.CreateBinary() :> BasePickler
-            | "FsPickler.Json" -> FsPickler.CreateJson(indent = true) :> BasePickler
             | "FsPickler.Xml" -> FsPickler.CreateXml(indent = true) :> BasePickler
-            | "FsPickler.Json-headerless" -> FsPickler.CreateJson(omitHeader = true) :> BasePickler
+            | "FsPickler.Json" -> FsPickler.CreateJson(indent = true) :> BasePickler
+            | "FsPickler.Json-headerless" -> 
+                let jsp = FsPickler.CreateJson(omitHeader = true)
+                jsp.UseCustomTopLevelSequenceSeparator <- true
+                jsp.SequenceSeparator <- Environment.NewLine
+                jsp :> BasePickler
+
             | _ -> invalidArg "name" <| sprintf "unexpected pickler format '%s'." picklerName
 
         let _ = Arb.register<FsPicklerGenerators> ()

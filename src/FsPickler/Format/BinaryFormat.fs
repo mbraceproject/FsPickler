@@ -248,5 +248,5 @@
             // UTF8 is the optimal encoding for string serialization by BinaryWriter/Reader
             member __.DefaultEncoding = Encoding.UTF8
 
-            member __.CreateWriter (stream, encoding, leaveOpen) = new BinaryPickleWriter(stream, encoding, leaveOpen, __.ForceLittleEndian) :> _
-            member __.CreateReader (stream, encoding, leaveOpen) = new BinaryPickleReader(stream, encoding, leaveOpen) :> _
+            member __.CreateWriter (stream, encoding, _, leaveOpen) = new BinaryPickleWriter(stream, encoding, leaveOpen, __.ForceLittleEndian) :> _
+            member __.CreateReader (stream, encoding, _, leaveOpen) = new BinaryPickleReader(stream, encoding, leaveOpen) :> _

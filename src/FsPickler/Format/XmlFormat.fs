@@ -306,13 +306,13 @@
 
             member __.DefaultEncoding = Encoding.UTF8
 
-            member __.CreateWriter (stream, encoding, leaveOpen) =
+            member __.CreateWriter (stream, encoding, _, leaveOpen) =
                 let sw = new StreamWriter(stream, encoding, 1024, leaveOpen)
                 new XmlPickleWriter(sw, __.Indent, leaveOpen) :> _
 
-            member __.CreateReader (stream, encoding, leaveOpen) =
+            member __.CreateReader (stream, encoding, _, leaveOpen) =
                 let sr = new StreamReader(stream, encoding, true, 1024, leaveOpen)
                 new XmlPickleReader(sr, leaveOpen) :> _
 
-            member __.CreateWriter (textWriter, leaveOpen) = new XmlPickleWriter(textWriter, __.Indent, leaveOpen) :> _
-            member __.CreateReader (textReader, leaveOpen) = new XmlPickleReader(textReader, leaveOpen) :> _
+            member __.CreateWriter (textWriter, _, leaveOpen) = new XmlPickleWriter(textWriter, __.Indent, leaveOpen) :> _
+            member __.CreateReader (textReader, _, leaveOpen) = new XmlPickleReader(textReader, leaveOpen) :> _

@@ -11,23 +11,23 @@
     open Nessos.FsPickler.ReflectionCache
     open Nessos.FsPickler.SequenceUtils
 
-    let initStreamWriter (formatP : IPickleFormatProvider) stream encoding leaveOpen =
+    let initStreamWriter (formatP : IPickleFormatProvider) stream encoding isSeq leaveOpen =
         let leaveOpen = defaultArg leaveOpen false
         let encoding = defaultArg encoding formatP.DefaultEncoding
-        formatP.CreateWriter(stream, encoding, leaveOpen)
+        formatP.CreateWriter(stream, encoding, isSeq, leaveOpen)
 
-    let initStreamReader (formatP : IPickleFormatProvider) stream encoding leaveOpen =
+    let initStreamReader (formatP : IPickleFormatProvider) stream encoding isSeq leaveOpen =
         let leaveOpen = defaultArg leaveOpen false
         let encoding = defaultArg encoding formatP.DefaultEncoding
-        formatP.CreateReader(stream, encoding, leaveOpen)
+        formatP.CreateReader(stream, encoding, isSeq, leaveOpen)
 
-    let initTextWriter (formatP : ITextPickleFormatProvider) writer leaveOpen =
+    let initTextWriter (formatP : ITextPickleFormatProvider) writer isSeq leaveOpen =
         let leaveOpen = defaultArg leaveOpen false
-        formatP.CreateWriter(writer, leaveOpen)
+        formatP.CreateWriter(writer, isSeq, leaveOpen)
 
-    let initTextReader (formatP : ITextPickleFormatProvider) reader leaveOpen =
+    let initTextReader (formatP : ITextPickleFormatProvider) reader isSeq leaveOpen =
         let leaveOpen = defaultArg leaveOpen false
-        formatP.CreateReader(reader, leaveOpen)
+        formatP.CreateReader(reader, isSeq, leaveOpen)
 
     let writeRootObject resolver reflectionCache formatter streamingContext (pickler : Pickler<'T>) (value : 'T) =
         let writeState = new WriteState(formatter, resolver, reflectionCache, ?streamingContext = streamingContext)

@@ -27,7 +27,7 @@
                                         [<O;D(null)>]?streamingContext, [<O;D(null)>]?leaveOpen) : unit =
 
             let pickler = resolver.Resolve<'T> ()
-            use formatter = initTextWriter formatProvider writer leaveOpen
+            use formatter = initTextWriter formatProvider writer false leaveOpen
             writeRootObject resolver reflectionCache formatter streamingContext pickler value
 
         /// <summary>Serialize value to the underlying stream using given pickler.</summary>
@@ -39,7 +39,7 @@
         member __.Serialize<'T>(pickler : Pickler<'T>, writer : TextWriter, value : 'T, 
                                         [<O;D(null)>]?streamingContext, [<O;D(null)>]?leaveOpen) : unit =
 
-            use formatter = initTextWriter formatProvider writer leaveOpen
+            use formatter = initTextWriter formatProvider writer false leaveOpen
             writeRootObject resolver reflectionCache formatter streamingContext pickler value
 
         /// <summary>Serialize object of given type to the underlying stream.</summary>
@@ -53,7 +53,7 @@
                                         [<O;D(null)>]?streamingContext, [<O;D(null)>]?leaveOpen) : unit =
 
             let pickler = resolver.Resolve valueType
-            use formatter = initTextWriter formatProvider writer leaveOpen
+            use formatter = initTextWriter formatProvider writer false leaveOpen
             writeRootObjectUntyped resolver reflectionCache formatter streamingContext pickler value
 
         /// <summary>Serialize object to the underlying stream using given pickler.</summary>
@@ -65,7 +65,7 @@
         member __.Serialize(pickler : Pickler, writer : TextWriter, value : obj, 
                                             [<O;D(null)>]?streamingContext, [<O;D(null)>]?leaveOpen) : unit =
 
-            use formatter = initTextWriter formatProvider writer leaveOpen
+            use formatter = initTextWriter formatProvider writer false leaveOpen
             writeRootObjectUntyped resolver reflectionCache formatter streamingContext pickler value
 
         /// <summary>Deserialize value of given type from the underlying stream.</summary>
@@ -76,7 +76,7 @@
                                         [<O;D(null)>]?streamingContext, [<O;D(null)>]?leaveOpen) : 'T =
 
             let pickler = resolver.Resolve<'T> ()
-            use formatter = initTextReader formatProvider reader leaveOpen
+            use formatter = initTextReader formatProvider reader false leaveOpen
             readRootObject resolver reflectionCache formatter streamingContext pickler
 
         /// <summary>Deserialize value of given type from the underlying stream, using given pickler.</summary>
@@ -87,7 +87,7 @@
         member __.Deserialize<'T> (pickler : Pickler<'T>, reader : TextReader, 
                                         [<O;D(null)>]?streamingContext, [<O;D(null)>]?leaveOpen) : 'T =
 
-            use formatter = initTextReader formatProvider reader leaveOpen
+            use formatter = initTextReader formatProvider reader false leaveOpen
             readRootObject resolver reflectionCache formatter streamingContext pickler
 
         /// <summary>Deserialize object of given type from the underlying stream.</summary>
@@ -99,7 +99,7 @@
                                     [<O;D(null)>]?streamingContext, [<O;D(null)>]?leaveOpen) : obj =
 
             let pickler = resolver.Resolve valueType
-            use formatter = initTextReader formatProvider reader leaveOpen
+            use formatter = initTextReader formatProvider reader false leaveOpen
             readRootObjectUntyped resolver reflectionCache formatter streamingContext pickler
 
         /// <summary>Deserialize object from the underlying stream using given pickler.</summary>
@@ -111,7 +111,7 @@
         member __.Deserialize (pickler : Pickler, reader : TextReader, 
                                     [<O;D(null)>]?streamingContext, [<O;D(null)>]?leaveOpen) : obj =
 
-            use formatter = initTextReader formatProvider reader leaveOpen
+            use formatter = initTextReader formatProvider reader false leaveOpen
             readRootObjectUntyped resolver reflectionCache formatter streamingContext pickler
 
         /// <summary>Serialize a sequence of objects to the underlying stream.</summary>
@@ -124,7 +124,7 @@
                                             [<O;D(null)>]?streamingContext, [<O;D(null)>]?leaveOpen) : int =
 
             let pickler = resolver.Resolve<'T> ()
-            use formatter = initTextWriter formatProvider writer leaveOpen
+            use formatter = initTextWriter formatProvider writer true leaveOpen
             writeTopLevelSequence resolver reflectionCache formatter streamingContext pickler sequence
 
         /// <summary>Serialize a sequence of objects to the underlying stream.</summary>
@@ -138,7 +138,7 @@
                                         [<O;D(null)>]?streamingContext, [<O;D(null)>]?leaveOpen) : int =
 
             let pickler = resolver.Resolve elementType
-            use formatter = initTextWriter formatProvider writer leaveOpen
+            use formatter = initTextWriter formatProvider writer true leaveOpen
             writeTopLevelSequenceUntyped resolver reflectionCache formatter streamingContext pickler sequence
 
         /// <summary>Lazily deserialize a sequence of objects from the underlying stream.</summary>
@@ -150,7 +150,7 @@
                                             [<O;D(null)>]?streamingContext, [<O;D(null)>]?leaveOpen) : seq<'T> =
 
             let pickler = resolver.Resolve<'T> ()
-            let formatter = initTextReader formatProvider reader leaveOpen
+            let formatter = initTextReader formatProvider reader true leaveOpen
             readTopLevelSequence resolver reflectionCache formatter streamingContext pickler
 
         /// <summary>Lazily deserialize a sequence of objects from the underlying stream.</summary>
@@ -163,7 +163,7 @@
                                             [<O;D(null)>]?streamingContext, [<O;D(null)>]?leaveOpen) : IEnumerable =
 
             let pickler = resolver.Resolve elementType
-            let formatter = initTextReader formatProvider reader leaveOpen
+            let formatter = initTextReader formatProvider reader true leaveOpen
             readTopLevelSequenceUntyped resolver reflectionCache formatter streamingContext pickler
 
 
