@@ -179,9 +179,9 @@
                     let isLittleEndianStream = (b = 1uy)
                     if isLittleEndianStream <> isLittleEndianSystem then
                         if isLittleEndianStream then
-                            raise <| new InvalidDataException("serialized data is little-endian.")
+                            raise <| new FormatException("serialized data is little-endian.")
                         else
-                            raise <| new InvalidDataException("serialized data is big-endian.")
+                            raise <| new FormatException("serialized data is big-endian.")
 
                 let sTag = br.ReadString()
                 if sTag <> tag then

@@ -32,12 +32,12 @@
                     
                 if omitHeader then () else
 
-                if jsonReader.TokenType <> JsonToken.StartObject then raise <| new InvalidDataException("invalid json root object.")
+                if jsonReader.TokenType <> JsonToken.StartObject then raise <| new FormatException("invalid json root object.")
                 else
                     do jsonReader.MoveNext()
                     let version = jsonReader.ReadPrimitiveAs<string> false "FsPickler"
                     if version <> AssemblyVersionInformation.Version then
-                        raise <| new InvalidDataException(sprintf "Invalid FsPickler version %s." version)
+                        raise <| new FormatException(sprintf "Invalid FsPickler version %s." version)
 
                     let sTag = jsonReader.ReadPrimitiveAs<string> false "type"
                     if tag <> sTag then
@@ -112,7 +112,7 @@
                     match jsonReader.TokenType with
                     | JsonToken.Float -> jsonReader.ValueAs<double> () |> single
                     | JsonToken.String -> Single.Parse(jsonReader.ValueAs<string>(), CultureInfo.InvariantCulture)
-                    | _ -> raise <| new InvalidDataException("not a float.")
+                    | _ -> raise <| new FormatException("not a float.")
 
                 jsonReader.Read() |> ignore
                 value
@@ -126,7 +126,7 @@
                     match jsonReader.TokenType with
                     | JsonToken.Float -> jsonReader.ValueAs<double> ()
                     | JsonToken.String -> Double.Parse(jsonReader.ValueAs<string>(), CultureInfo.InvariantCulture)
-                    | _ -> raise <| new InvalidDataException("not a float.")
+                    | _ -> raise <| new FormatException("not a float.")
 
                 jsonReader.Read() |> ignore
                 value
