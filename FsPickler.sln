@@ -41,6 +41,7 @@ Global
 		Debug|Any CPU = Debug|Any CPU
 		NoEmit|Any CPU = NoEmit|Any CPU
 		Release|Any CPU = Release|Any CPU
+		Release-NET40|Any CPU = Release-NET40|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{3AD987BF-F0FA-40BD-9DAE-4AF3A5FE9CC7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -49,24 +50,30 @@ Global
 		{3AD987BF-F0FA-40BD-9DAE-4AF3A5FE9CC7}.NoEmit|Any CPU.Build.0 = NoEmit|Any CPU
 		{3AD987BF-F0FA-40BD-9DAE-4AF3A5FE9CC7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3AD987BF-F0FA-40BD-9DAE-4AF3A5FE9CC7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3AD987BF-F0FA-40BD-9DAE-4AF3A5FE9CC7}.Release-NET40|Any CPU.ActiveCfg = Release-NET40|Any CPU
+		{3AD987BF-F0FA-40BD-9DAE-4AF3A5FE9CC7}.Release-NET40|Any CPU.Build.0 = Release-NET40|Any CPU
 		{50CBCEEF-24DD-454F-A3A3-AC1759883311}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{50CBCEEF-24DD-454F-A3A3-AC1759883311}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{50CBCEEF-24DD-454F-A3A3-AC1759883311}.NoEmit|Any CPU.ActiveCfg = Release|Any CPU
 		{50CBCEEF-24DD-454F-A3A3-AC1759883311}.NoEmit|Any CPU.Build.0 = Release|Any CPU
 		{50CBCEEF-24DD-454F-A3A3-AC1759883311}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{50CBCEEF-24DD-454F-A3A3-AC1759883311}.Release|Any CPU.Build.0 = Release|Any CPU
+		{50CBCEEF-24DD-454F-A3A3-AC1759883311}.Release-NET40|Any CPU.ActiveCfg = Release|Any CPU
 		{EC89A90F-5EBF-40FB-B4F3-1A8F2D224A20}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{EC89A90F-5EBF-40FB-B4F3-1A8F2D224A20}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EC89A90F-5EBF-40FB-B4F3-1A8F2D224A20}.NoEmit|Any CPU.ActiveCfg = Release|Any CPU
 		{EC89A90F-5EBF-40FB-B4F3-1A8F2D224A20}.NoEmit|Any CPU.Build.0 = Release|Any CPU
 		{EC89A90F-5EBF-40FB-B4F3-1A8F2D224A20}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EC89A90F-5EBF-40FB-B4F3-1A8F2D224A20}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EC89A90F-5EBF-40FB-B4F3-1A8F2D224A20}.Release-NET40|Any CPU.ActiveCfg = Release|Any CPU
 		{1DCB4AD7-2C00-4BCD-B1A5-A469F31E2CD1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{1DCB4AD7-2C00-4BCD-B1A5-A469F31E2CD1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1DCB4AD7-2C00-4BCD-B1A5-A469F31E2CD1}.NoEmit|Any CPU.ActiveCfg = Release|Any CPU
 		{1DCB4AD7-2C00-4BCD-B1A5-A469F31E2CD1}.NoEmit|Any CPU.Build.0 = Release|Any CPU
 		{1DCB4AD7-2C00-4BCD-B1A5-A469F31E2CD1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1DCB4AD7-2C00-4BCD-B1A5-A469F31E2CD1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1DCB4AD7-2C00-4BCD-B1A5-A469F31E2CD1}.Release-NET40|Any CPU.ActiveCfg = Release-NET40|Any CPU
+		{1DCB4AD7-2C00-4BCD-B1A5-A469F31E2CD1}.Release-NET40|Any CPU.Build.0 = Release-NET40|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

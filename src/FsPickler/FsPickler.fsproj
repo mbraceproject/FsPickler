@@ -34,7 +34,7 @@
     <Optimize>true</Optimize>
     <Tailcalls>true</Tailcalls>
     <OutputPath>..\..\bin\</OutputPath>
-    <DefineConstants>TRACE;PROTECT_STACK_OVERFLOWS;OPTIMIZE_FSHARP;SERIALIZE_STRONG_NAMES;EMIT_IL</DefineConstants>
+    <DefineConstants>TRACE;PROTECT_STACK_OVERFLOWS;OPTIMIZE_FSHARP;EMIT_IL</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>..\..\bin\FsPickler.xml</DocumentationFile>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
@@ -49,7 +49,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <Tailcalls>true</Tailcalls>
-    <DefineConstants>TRACE;PROTECT_STACK_OVERFLOWS;OPTIMIZE_FSHARP;SERIALIZE_STRONG_NAMES;EMIT_IL</DefineConstants>
+    <DefineConstants>TRACE;PROTECT_STACK_OVERFLOWS;OPTIMIZE_FSHARP;EMIT_IL</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\Release\FsPickler.xml</DocumentationFile>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
@@ -66,12 +66,24 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <Tailcalls>true</Tailcalls>
-    <DefineConstants>TRACE;PROTECT_STACK_OVERFLOWS;OPTIMIZE_FSHARP;SERIALIZE_STRONG_NAMES</DefineConstants>
+    <DefineConstants>TRACE;PROTECT_STACK_OVERFLOWS;OPTIMIZE_FSHARP</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>..\..\bin\FsPickler.xml</DocumentationFile>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <TargetFrameworkProfile />
     <OutputPath>..\..\bin\</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release-NET40|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <Tailcalls>true</Tailcalls>
+    <DefineConstants>TRACE;PROTECT_STACK_OVERFLOWS;OPTIMIZE_FSHARP;EMIT_IL;NET40</DefineConstants>
+    <WarningLevel>3</WarningLevel>
+    <DocumentationFile>..\..\bin\net40\FsPickler.xml</DocumentationFile>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkProfile />
+    <OtherFlags />
+    <OutputPath>..\..\bin\net40</OutputPath>
   </PropertyGroup>
   <Import Project="$(FSharpTargetsPath)" Condition="Exists('$(FSharpTargetsPath)')" />
   <ItemGroup>

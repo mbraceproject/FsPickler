@@ -87,6 +87,15 @@ Target "Clean" (fun _ ->
 
 let configuration = environVarOrDefault "Configuration" "Release"
 
+Target "Build - NET40" (fun _ ->
+    // Build the rest of the project
+    { BaseDirectory = __SOURCE_DIRECTORY__
+      Includes = [ project + ".sln" ]
+      Excludes = [] } 
+    |> MSBuild "" "Build" ["Configuration", "Release-NET40"]
+    |> Log "AppBuild-Output: "
+)
+
 Target "Build" (fun _ ->
     // Build the rest of the project
     { BaseDirectory = __SOURCE_DIRECTORY__
@@ -178,6 +187,7 @@ Target "All" DoNothing
   ==> "RestorePackages"
   ==> "AssemblyInfo"
   ==> "Prepare"
+  ==> "Build - NET40"
   ==> "Build"
   ==> "RunTests"
   ==> "All"
