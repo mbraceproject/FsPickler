@@ -107,7 +107,6 @@
 
             member internal NextObjectId : unit -> int64
             member internal EarlyRegisterArray : array:System.Array -> unit
-            member internal FixupIndex : Dictionary<int64,(System.Type * obj)>
             member internal Formatter : IPickleFormatReader
             member internal ObjectCache : Dictionary<int64,obj>
             member internal PicklerResolver : IPicklerResolver

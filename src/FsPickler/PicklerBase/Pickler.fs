@@ -98,7 +98,6 @@
 
         let mutable idCounter = 0L
         let objCache = new Dictionary<int64, obj> ()
-        let fixupIndex = new Dictionary<int64, Type * obj> ()
         let tyPickler = resolver.Resolve<Type> ()
 
         member internal __.PicklerResolver = resolver
@@ -107,7 +106,6 @@
         member internal __.ReflectionCache = reflectionCache
         member __.StreamingContext = sc
         member internal __.ObjectCache = objCache
-        member internal __.FixupIndex = fixupIndex
         member internal __.NextObjectId () =
             idCounter <- idCounter + 1L
             idCounter

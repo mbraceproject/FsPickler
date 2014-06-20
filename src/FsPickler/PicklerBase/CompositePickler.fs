@@ -244,14 +244,10 @@
                     // add an uninitialized object to the cache and schedule
                     // reflection-based fixup at the root level.
                     let id = formatter.ReadCachedObjectId ()
-                    let value = FormatterServices.GetUninitializedObject(p.Type)
-
-                    // register a fixup operation & cache
-                    state.FixupIndex.Add(id, (p.Type,value))
-                    state.ObjectCache.Add(id, value)
-
                     formatter.EndReadObject()
 
+                    let value = FormatterServices.GetUninitializedObject(p.Type)
+                    state.ObjectCache.Add(id, value)
                     fastUnbox<'T> value
 
                 elif ObjectFlags.hasFlag flags ObjectFlags.IsCachedInstance then
@@ -262,24 +258,27 @@
                 elif p.m_IsCacheByRef || p.IsRecursiveType then
 
                     let id = state.NextObjectId()
-
                     let value = p.m_Reader state tag
-
                     formatter.EndReadObject()
 
-                    if p.IsRecursiveType then 
-                        let found, contents = state.FixupIndex.TryGetValue id
+                    if p.TypeKind = TypeKind.Array then
+                        // depending on the format implementation,
+                        // array picklers may or may not cache deserialized values early.
+                        // solve this ambiguity by forcing an update here.
+                        state.ObjectCache.[id] <- value ; value
+
+                    elif p.IsRecursiveType then
+                        let found, cachedInstance = state.ObjectCache.TryGetValue id
 
                         if found then
                             // deserialization reached root level of a cyclic object
-                            // perform fixup by doing reflection-based field copying
-                            let t,o = contents
-                            do ShallowObjectCopier.Copy t value o
-                            fastUnbox<'T> o
+                            // create cyclic binding by performing shallow field copying
+                            do ShallowObjectCopier.Copy p.Type value cachedInstance
+                            fastUnbox<'T> cachedInstance
                         else
-                            state.ObjectCache.[id] <- value ; value
+                            state.ObjectCache.Add(id, value) ; value
                     else
-                        state.ObjectCache.[id] <- value ; value
+                        state.ObjectCache.Add(id, value) ; value
                 else
                     let value = p.m_Reader state tag
                     formatter.EndReadObject ()
