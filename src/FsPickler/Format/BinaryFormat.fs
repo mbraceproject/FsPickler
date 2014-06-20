@@ -113,6 +113,8 @@
             member __.PreferLengthPrefixInSequences = true
             member __.WriteNextSequenceElement hasNext = bw.Write hasNext
 
+            member __.WriteCachedObjectId id = bw.Write id
+
             member __.BeginWriteObject tag objectFlags =
                 let header = createHeader objectFlags
                 bw.Write header
@@ -208,6 +210,8 @@
 
             member __.PreferLengthPrefixInSequences = true
             member __.ReadNextSequenceElement () = br.ReadBoolean()
+
+            member __.ReadCachedObjectId () = br.ReadInt64()
 
             member __.ReadBoolean _ = br.ReadBoolean()
             member __.ReadByte _ = br.ReadByte()

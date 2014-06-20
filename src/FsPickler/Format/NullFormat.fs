@@ -11,6 +11,8 @@
             member __.PreferLengthPrefixInSequences = true
             member __.WriteNextSequenceElement _ = ()
 
+            member __.WriteCachedObjectId _ = ()
+
             member __.BeginWriteObject _ _ = ()
             member __.EndWriteObject () = ()
 

@@ -43,6 +43,8 @@
         /// <param name="hasNext"></param>
         abstract WriteNextSequenceElement : hasNext:bool -> unit
 
+        abstract WriteCachedObjectId : id:int64 -> unit
+
         abstract WriteBoolean : tag:string -> value:bool -> unit
         abstract WriteByte : tag:string -> value:byte -> unit
         abstract WriteSByte : tag:string -> value:sbyte -> unit
@@ -116,6 +118,8 @@
         ///     Check if sequence has another element.
         /// </summary>
         abstract ReadNextSequenceElement : unit -> bool
+
+        abstract ReadCachedObjectId : unit -> int64
         
         abstract ReadBoolean : tag:string -> bool
         abstract ReadByte : tag:string -> byte

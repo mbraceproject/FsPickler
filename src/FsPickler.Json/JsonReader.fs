@@ -106,8 +106,9 @@
                 else
                     jsonReader.TokenType <> JsonToken.EndArray
 
-            member __.ReadBoolean tag = jsonReader.ReadPrimitiveAs<bool> (omitTag ()) tag
+            member __.ReadCachedObjectId () = jsonReader.ReadPrimitiveAs<int64> false "id"
 
+            member __.ReadBoolean tag = jsonReader.ReadPrimitiveAs<bool> (omitTag ()) tag
             member __.ReadByte tag = jsonReader.ReadPrimitiveAs<int64> (omitTag ()) tag |> byte
             member __.ReadSByte tag = jsonReader.ReadPrimitiveAs<int64> (omitTag ()) tag |> sbyte
 

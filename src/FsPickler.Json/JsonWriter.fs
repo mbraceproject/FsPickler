@@ -86,6 +86,8 @@
                     else
                         jsonWriter.WriteWhitespace separator
 
+            member __.WriteCachedObjectId id = writePrimitive jsonWriter false "id" id
+
             member __.WriteBoolean (tag : string) value = writePrimitive jsonWriter (omitTag ()) tag value
             member __.WriteByte (tag : string) value = writePrimitive jsonWriter (omitTag ()) tag value
             member __.WriteSByte (tag : string) value = writePrimitive jsonWriter (omitTag ()) tag value

@@ -201,11 +201,11 @@
                         do cyclicObjects.Add(id) |> ignore
                     
                         formatter.BeginWriteObject tag ObjectFlags.IsCyclicInstance
-                        formatter.WriteInt64 "id" id
+                        formatter.WriteCachedObjectId id
                         formatter.EndWriteObject()
                     else
                         formatter.BeginWriteObject tag ObjectFlags.IsCachedInstance
-                        formatter.WriteInt64 "id" id
+                        formatter.WriteCachedObjectId id
                         formatter.EndWriteObject()
                 else
                     if p.m_SkipHeaderWrite then
@@ -243,7 +243,7 @@
                     // came across a nested instance of a cyclic object
                     // add an uninitialized object to the cache and schedule
                     // reflection-based fixup at the root level.
-                    let id = formatter.ReadInt64 "id"
+                    let id = formatter.ReadCachedObjectId ()
                     let value = FormatterServices.GetUninitializedObject(p.Type)
 
                     // register a fixup operation & cache
@@ -255,7 +255,7 @@
                     fastUnbox<'T> value
 
                 elif ObjectFlags.hasFlag flags ObjectFlags.IsCachedInstance then
-                    let id = formatter.ReadInt64 "id"
+                    let id = formatter.ReadCachedObjectId ()
                     formatter.EndReadObject ()
                     state.ObjectCache.[id] |> fastUnbox<'T>
 

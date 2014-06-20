@@ -122,6 +122,8 @@
             member __.PreferLengthPrefixInSequences = false
             member __.WriteNextSequenceElement hasNext = ()
 
+            member __.WriteCachedObjectId id = writer.WriteAttributeString("id", string id)
+
             member __.WriteBoolean (tag : string) value = writePrimitive writer tag value
             member __.WriteByte (tag : string) value = writePrimitive writer tag (int value)
             member __.WriteSByte (tag : string) value = writePrimitive writer tag (int value)
@@ -186,6 +188,7 @@
         let reader = XmlReader.Create(textReader, settings)
 
         let mutable isAtEmptySequenceHeader = false
+        let mutable cachedObjectId = 0L
 
         interface IPickleFormatReader with
             
@@ -224,6 +227,10 @@
                 if ObjectFlags.hasFlag flags ObjectFlags.IsSequenceHeader then
                     isAtEmptySequenceHeader <- reader.IsEmptyElement
 
+                match reader.["id"] with
+                | null -> ()
+                | id -> cachedObjectId <- int64 id
+
                 if reader.IsEmptyElement || reader.Read () then ()
                 else
                     raise <| new EndOfStreamException()
@@ -235,6 +242,8 @@
                     reader.MoveNext()
                 else
                     reader.ReadEndElement()
+
+            member __.ReadCachedObjectId () = cachedObjectId
 
             member __.PreferLengthPrefixInSequences = false
             member __.ReadNextSequenceElement () =
