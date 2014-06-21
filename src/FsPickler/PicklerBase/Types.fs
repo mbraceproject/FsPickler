@@ -76,39 +76,31 @@
     type CustomPicklerAttribute () = 
         inherit System.Attribute()
 
+    /// <summary>
+    ///     Contains serialization information for a named type.
+    /// </summary>
+    type TypeInfo =
+        {
+            Name : string
+            AssemblyQualifiedName : string
+        }
 
-    /// <summary>Provides facility for implementing a custom type serialization scheme.
-    /// This is particularly useful in cases where bridging mono/.NET runtimes or
-    /// dynamic/static assemblies is required.</summary>
+    /// <summary>
+    ///     Specifies user-defined type serialization remappings.
+    /// </summary>
     type ITypeNameConverter =
         abstract member OfSerializedType : TypeInfo -> TypeInfo
         abstract member ToDeserializedType : TypeInfo -> TypeInfo
 
-    and TypeInfo =
-        {
-            Name : string
-            AssemblyInfo : AssemblyInfo
-        }
-
-    // An immutable, structurally equatable version of AssemblyName
-    and AssemblyInfo =
-        {
-            Name : string
-            Version : string
-            Culture : string
-            PublicKeyToken : byte []
-        }
-    with
-        static member OfAssemblyName(an : AssemblyName) =
-            {
-                Name = an.Name
-                Version = an.Version.ToString()
-                Culture = an.CultureInfo.Name
-                PublicKeyToken = an.GetPublicKeyToken()
-            }
-
-        static member OfAssembly(a : Assembly) =
-            a.GetName() |> AssemblyInfo.OfAssemblyName
+    /// <summary>
+    ///     Used for deserializing all types without strong assembly names.
+    /// </summary>
+    type StrongAssemblyNameEraser () =
+        interface ITypeNameConverter with
+            member __.OfSerializedType tI = tI
+            member __.ToDeserializedType tI =
+                let an = System.Reflection.AssemblyName(tI.AssemblyQualifiedName)
+                { tI with AssemblyQualifiedName = an.Name }
 
 
     //

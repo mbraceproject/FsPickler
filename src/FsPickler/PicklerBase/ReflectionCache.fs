@@ -18,7 +18,7 @@
 
     type CompositeMemberInfo =
         // System.Type breakdown
-        | NamedType of string * AssemblyInfo
+        | NamedType of TypeInfo
         | ArrayType of Type * (* rank *) int option
         | GenericType of Type * Type []
         | GenericTypeParam of Type * int
@@ -35,42 +35,19 @@
         | Field of Type * (*reflected type*) Type option * (* name *) string * (* isStatic *) bool
         | Event of Type * (*reflected type*) Type option * (* name *) string * (* isStatic *) bool
         | Unknown of Type * string
-
-
-    /// TypeInfo extension methods
-
-    type AssemblyInfo with
-        static member ToAssemblyName (aI : AssemblyInfo) =
-            let an = new AssemblyName()
-
-            an.Name <- aI.Name
-
-            match aI.Version with
-            | null | "" -> ()
-            | version -> an.Version <- new Version(version)
-                
-            match aI.Culture with
-            | null -> ()
-            | culture -> an.CultureInfo <- new System.Globalization.CultureInfo(culture)
-
-            match aI.PublicKeyToken with
-            | null -> ()
-            | pkt -> an.SetPublicKeyToken(pkt)
-
-            an
-
     
     // Assembly Loading Code
 
-    let loadAssembly (aI : AssemblyInfo) =
-        let an = AssemblyInfo.ToAssemblyName aI
-
-        try Assembly.Load an
+    let loadAssembly (assemblyQualifiedName : string) =
+        try Assembly.Load assemblyQualifiedName
         with :? FileNotFoundException | :? FileLoadException as e ->
+
+            // in cases of assemblies loaded from reflection at runtime, Assembly.Load may fail.
+            // Attempt a direct query on the AppDomain to resolve this.
 
             let result =
                 System.AppDomain.CurrentDomain.GetAssemblies()
-                |> Array.tryFind (fun a -> a.FullName = an.FullName)
+                |> Array.tryFind (fun a -> a.FullName = assemblyQualifiedName)
 
             match result with
             | None -> raise <| new FsPicklerException("FsPickler: Assembly load error.", e)
@@ -83,7 +60,7 @@
         
     // converts a memberInfo instance to a CompositeMemberInfo structure
     let getMemberInfo (tyConv : ITypeNameConverter option) 
-                        (getAssemblyInfo : Assembly -> AssemblyInfo)
+//                        (getAssemblyInfo : Assembly -> AssemblyInfo)
                         (getQualifiedName : Type -> string) (m : MemberInfo) =
 
         let getReflectedType (m : MemberInfo) =
@@ -115,13 +92,13 @@
                 let name =
                     match t.FullName with null -> t.Name | name -> name
 
-                let tI = { Name = name ; AssemblyInfo = getAssemblyInfo t.Assembly }
+                let tI = { Name = name ; AssemblyQualifiedName = t.Assembly.FullName }
                 let tI' =
                     match tyConv with
                     | None -> tI
                     | Some tc -> tc.OfSerializedType tI
 
-                NamedType(tI'.Name, tI'.AssemblyInfo)
+                NamedType tI'
 
         | :? MethodInfo as m ->
             if m.IsGenericMethod then
@@ -160,7 +137,7 @@
 
 
     let loadMemberInfo (tyConv : ITypeNameConverter option) 
-                        (loadAssembly : AssemblyInfo -> Assembly) 
+                        (loadAssembly : string -> Assembly) 
                         (getQualifiedName : Type -> string) (mI : CompositeMemberInfo) =
 
         let inline getFlags isStatic =
@@ -168,14 +145,13 @@
             allVisibility ||| (if isStatic then BindingFlags.Static else BindingFlags.Instance)
 
         match mI with
-        | NamedType(name, aI) ->
-            let tI = { Name = name ; AssemblyInfo = aI }
+        | NamedType tI ->
             let tI' =
                 match tyConv with
                 | None -> tI
                 | Some tc -> tc.ToDeserializedType tI
 
-            let assembly = loadAssembly tI'.AssemblyInfo
+            let assembly = loadAssembly tI'.AssemblyQualifiedName
             try assembly.GetType(tI'.Name, throwOnError = true) |> fastUnbox<MemberInfo>
             with e ->
                 raise <| new FsPicklerException("FsPickler: Type load error.", e)
@@ -254,11 +230,11 @@
 
 
     // qualified name generator that emulates Type.ToString() but respects ITypeConverter changes
-    let generateQualifiedName (getInfo : Type -> CompositeMemberInfo) (t : Type) =
+    let generateTypeName (getInfo : Type -> CompositeMemberInfo) (t : Type) =
         let rec generate (b : StringBuilder) (t : Type) =
             let inline append (x : string) = b.Append x |> ignore
             match getInfo t with
-            | NamedType(name, _) -> append name
+            | NamedType tI -> append tI.Name
             | ArrayType(et, rk) ->
                 generate b et
                 match rk with
@@ -294,18 +270,16 @@
         static let defaultInstance = lazy (new ReflectionCache())
 
         let loadAssembly = memoize loadAssembly
-        let getAssemblyInfo = memoize AssemblyInfo.OfAssembly
 
         let rec memberInfoCache = new BiMemoizer<_,_>(getMember, loadMember)
-        and getMember m   = getMemberInfo tyConv getAssemblyInfo getQualifiedName m
-        and loadMember mI = loadMemberInfo tyConv loadAssembly getQualifiedName mI
-        and getQualifiedName = memoize (fun t -> generateQualifiedName memberInfoCache.F t)
+        and getMember m   = getMemberInfo tyConv getTypeName m
+        and loadMember mI = loadMemberInfo tyConv loadAssembly getTypeName mI
+        and getTypeName = memoize (fun t -> generateTypeName memberInfoCache.F t)
 
-        member __.GetAssemblyInfo(a : Assembly) = getAssemblyInfo a
-        member __.LoadAssembly(aI : AssemblyInfo) = loadAssembly aI
+        member __.LoadAssembly(qualifiedName : string) = loadAssembly qualifiedName
         member __.GetCompositeMemberInfo(m : MemberInfo) = memberInfoCache.F m
         member __.LoadMemberInfo(m : CompositeMemberInfo) = memberInfoCache.G m
-        member __.GetQualifiedName(t : Type) = getQualifiedName t
+        member __.GetTypeName(t : Type) = getTypeName t
 
         static member Create(?tyConv : ITypeNameConverter) =
             match tyConv with

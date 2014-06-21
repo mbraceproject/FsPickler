@@ -18,35 +18,16 @@
         abstract Create : Pickler<'T> -> Pickler<'T []>
 
     let mkReflectionPicklers (arrayPickler : IArrayPickler) =
-        let assemblyInfoPickler =
-            let writer (w : WriteState) (_ : string) (aI : AssemblyInfo) =
-                let formatter = w.Formatter
-                formatter.WriteString "name" aI.Name
-                formatter.WriteString "version" aI.Version
-                formatter.WriteString "culture" aI.Culture
-                formatter.WriteBytes "pkt" aI.PublicKeyToken
-
-            let reader (r : ReadState) (_ : string) =
-                let formatter = r.Formatter
-                let name = formatter.ReadString "name"
-                let version = formatter.ReadString "version"
-                let culture = formatter.ReadString "culture" 
-                let pkt = formatter.ReadBytes "pkt"
-
-                {
-                    Name = name
-                    Version = version
-                    Culture = culture
-                    PublicKeyToken = pkt
-                }
-
-            new CompositePickler<_>(reader, writer, PicklerInfo.ReflectionType, cacheByRef = true, useWithSubtypes = false)
 
         let assemblyPickler =
-            CompositePickler.Create(
-                (fun r t -> let aI = assemblyInfoPickler.Reader r t in r.ReflectionCache.LoadAssembly aI),
-                (fun w t a -> let aI = w.ReflectionCache.GetAssemblyInfo a in assemblyInfoPickler.Writer w t aI),
-                    PicklerInfo.ReflectionType, cacheByRef = true, useWithSubtypes = true)
+            let writer (w : WriteState) (tag : string) (a : Assembly) =
+                w.Formatter.WriteString "QualifiedName" a.FullName
+
+            let reader (r : ReadState) (tag : string) =
+                let qn = r.Formatter.ReadString "QualifiedName"
+                r.ReflectionCache.LoadAssembly qn
+
+            CompositePickler.Create(reader, writer, PicklerInfo.ReflectionType, cacheByRef = false, useWithSubtypes = true)
 
         let stringArrayPickler = arrayPickler.Create <| PrimitivePicklers.mkString()
 
@@ -60,11 +41,11 @@
             let inline mp () : Pickler<MethodInfo> = methodInfoPickler
 
             match w.ReflectionCache.GetCompositeMemberInfo m with
-            | NamedType (name, aI) ->
+            | NamedType tI ->
                 formatter.WriteByte "memberType" 0uy
 
-                formatter.WriteString "name" name
-                assemblyInfoPickler.Write w "assembly" aI
+                formatter.WriteString "name" tI.Name
+                formatter.WriteString "assemblyQualifiedName" tI.AssemblyQualifiedName
 
             | ArrayType (et, rk) ->
                 formatter.WriteByte "memberType" 1uy
@@ -159,8 +140,8 @@
                 match formatter.ReadByte "memberType" with
                 | 0uy ->
                     let name = formatter.ReadString "name"
-                    let assembly = assemblyInfoPickler.Read r "assembly"
-                    NamedType(name, assembly)
+                    let qn = formatter.ReadString "assemblyQualifiedName"
+                    NamedType { Name = name ; AssemblyQualifiedName = qn }
 
                 | 1uy ->
                     let et = typePickler.Read r "elementType"
@@ -256,7 +237,6 @@
 
         [|
             assemblyPickler :> Pickler
-            assemblyInfoPickler :> _
             methodInfoPickler :> _
             memberInfoPickler :> _
             typePickler :> _

@@ -31,16 +31,16 @@
 
     let writeRootObject resolver reflectionCache formatter streamingContext (pickler : Pickler<'T>) (value : 'T) =
         let writeState = new WriteState(formatter, resolver, reflectionCache, ?streamingContext = streamingContext)
-        let qualifiedName = reflectionCache.GetQualifiedName pickler.Type
-        formatter.BeginWriteRoot qualifiedName
+        let typeName = reflectionCache.GetTypeName pickler.Type
+        formatter.BeginWriteRoot typeName
         pickler.Write writeState "value" value
         formatter.EndWriteRoot ()
 
     let readRootObject resolver reflectionCache formatter streamingContext (pickler : Pickler<'T>) =
         let readState = new ReadState(formatter, resolver, reflectionCache, ?streamingContext = streamingContext)
-        let qualifiedName = reflectionCache.GetQualifiedName pickler.Type
+        let typeName = reflectionCache.GetTypeName pickler.Type
 
-        try formatter.BeginReadRoot qualifiedName
+        try formatter.BeginReadRoot typeName
         with 
         | :? FsPicklerException -> reraise () 
         | e -> raise <| new InvalidPickleException("error reading from pickle.", e)
@@ -51,15 +51,15 @@
 
     let writeRootObjectUntyped resolver reflectionCache formatter streamingContext (pickler : Pickler) (value : obj) =
         let writeState = new WriteState(formatter, resolver, reflectionCache, ?streamingContext = streamingContext)
-        let qualifiedName = reflectionCache.GetQualifiedName pickler.Type
-        formatter.BeginWriteRoot qualifiedName
+        let typeName = reflectionCache.GetTypeName pickler.Type
+        formatter.BeginWriteRoot typeName
         pickler.UntypedWrite writeState "value" value
         formatter.EndWriteRoot ()
 
     let readRootObjectUntyped resolver reflectionCache formatter streamingContext (pickler : Pickler) =
         let readState = new ReadState(formatter, resolver, reflectionCache, ?streamingContext = streamingContext)
-        let qualifiedName = reflectionCache.GetQualifiedName pickler.Type
-        try formatter.BeginReadRoot qualifiedName
+        let typeName = reflectionCache.GetTypeName pickler.Type
+        try formatter.BeginReadRoot typeName
         with 
         | :? FsPicklerException -> reraise () 
         | e -> raise <| new InvalidPickleException("error reading from pickle.", e)
@@ -77,9 +77,9 @@
     let writeTopLevelSequence resolver reflectionCache formatter streamingContext (pickler : Pickler<'T>) (values : seq<'T>) : int =
         // write state initialization
         let state = new WriteState(formatter, resolver, reflectionCache, ?streamingContext = streamingContext)
-        let qn = reflectionCache.GetQualifiedName pickler.Type + " seq"
+        let typeName = reflectionCache.GetTypeName pickler.Type + " seq"
 
-        state.Formatter.BeginWriteRoot qn
+        state.Formatter.BeginWriteRoot typeName
         let length = writeUnboundedSequence pickler state "values" values
         state.Formatter.EndWriteRoot ()
         length
@@ -88,10 +88,10 @@
         
         // read state initialization
         let state = new ReadState(formatter, resolver, reflectionCache, ?streamingContext = streamingContext)
-        let qn = reflectionCache.GetQualifiedName pickler.Type + " seq"
+        let typeName = reflectionCache.GetTypeName pickler.Type + " seq"
 
         // read stream header
-        try formatter.BeginReadRoot qn
+        try formatter.BeginReadRoot typeName
         with 
         | :? FsPicklerException -> reraise () 
         | e -> raise <| new InvalidPickleException("error reading from pickle.", e)
