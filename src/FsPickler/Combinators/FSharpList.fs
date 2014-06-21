@@ -23,8 +23,8 @@
 
                     formatter.EndWriteObject ()
 
-                elif ep.IsRecursiveType || formatter.PreferLengthPrefixInSequences then
-                    // format specifies that it prefers length prefixing or is potentially cyclic object
+                elif formatter.PreferLengthPrefixInSequences then
+                    // format specifies that it prefers length prefixing
                     // serialize as object and prefix list length
                     formatter.BeginWriteObject tag ObjectFlags.None
                     formatter.WriteInt32 "length" list.Length
@@ -67,8 +67,8 @@
                     formatter.ReadPrimitiveArray "data" array
                     Array.toList array
 
-                elif ep.IsRecursiveType || formatter.PreferLengthPrefixInSequences then
-                    // format specifies that it prefers length prefixing or is potentially cyclic object
+                elif formatter.PreferLengthPrefixInSequences then
+                    // format specifies that it prefers length prefixing
                     let length = formatter.ReadInt32 "length"
                     let array = Array.zeroCreate<'T> length
 
