@@ -48,6 +48,12 @@
                 (fun w t a -> let aI = w.ReflectionCache.GetAssemblyInfo a in assemblyInfoPickler.Writer w t aI),
                     PicklerInfo.ReflectionType, cacheByRef = true, useWithSubtypes = true)
 
+        let assemblyNamePickler =
+            CompositePickler.Create(
+                (fun r t -> let aI = assemblyInfoPickler.Reader r t in aI.ToAssemblyName()),
+                (fun w t an -> let aI = AssemblyInfo.OfAssemblyName an in assemblyInfoPickler.Writer w t aI),
+                PicklerInfo.ReflectionType, cacheByRef = true, useWithSubtypes = true)
+
         let stringArrayPickler = arrayPickler.Create <| PrimitivePicklers.mkString()
 
         let rec memberInfoWriter (w : WriteState) (tag : string) (m : MemberInfo) =
@@ -257,6 +263,7 @@
         [|
             assemblyPickler :> Pickler
             assemblyInfoPickler :> _
+            assemblyNamePickler :> _
             methodInfoPickler :> _
             memberInfoPickler :> _
             typePickler :> _

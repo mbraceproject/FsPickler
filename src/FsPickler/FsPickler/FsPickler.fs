@@ -84,7 +84,8 @@
                                 | null, dt -> gathered.Add dt |> ignore
                                 | rt, _ -> gathered.Add rt |> ignore
 
-                            | :? Assembly -> ()
+                            | :? Assembly
+                            | :? AssemblyInfo -> ()
                             | value -> 
                                 match value.GetType() with
                                 | null -> ()
@@ -105,7 +106,7 @@
                     new IObjectVisitor with
                         member __.Visit (value : 'T) = 
                             match box value with
-                            | :? Type -> ()
+                            | :? Type | :? AssemblyInfo -> ()
                             | _ -> gathered.Add value |> ignore
                 }
 
