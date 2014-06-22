@@ -31,14 +31,14 @@
 
     let writeRootObject resolver reflectionCache formatter streamingContext (pickler : Pickler<'T>) (value : 'T) =
         let writeState = new WriteState(formatter, resolver, reflectionCache, ?streamingContext = streamingContext)
-        let typeName = reflectionCache.GetTypeName pickler.Type
+        let typeName = reflectionCache.GetTypeSignature pickler.Type
         formatter.BeginWriteRoot typeName
         pickler.Write writeState "value" value
         formatter.EndWriteRoot ()
 
     let readRootObject resolver reflectionCache formatter streamingContext (pickler : Pickler<'T>) =
         let readState = new ReadState(formatter, resolver, reflectionCache, ?streamingContext = streamingContext)
-        let typeName = reflectionCache.GetTypeName pickler.Type
+        let typeName = reflectionCache.GetTypeSignature pickler.Type
 
         try formatter.BeginReadRoot typeName
         with 
@@ -51,14 +51,14 @@
 
     let writeRootObjectUntyped resolver reflectionCache formatter streamingContext (pickler : Pickler) (value : obj) =
         let writeState = new WriteState(formatter, resolver, reflectionCache, ?streamingContext = streamingContext)
-        let typeName = reflectionCache.GetTypeName pickler.Type
+        let typeName = reflectionCache.GetTypeSignature pickler.Type
         formatter.BeginWriteRoot typeName
         pickler.UntypedWrite writeState "value" value
         formatter.EndWriteRoot ()
 
     let readRootObjectUntyped resolver reflectionCache formatter streamingContext (pickler : Pickler) =
         let readState = new ReadState(formatter, resolver, reflectionCache, ?streamingContext = streamingContext)
-        let typeName = reflectionCache.GetTypeName pickler.Type
+        let typeName = reflectionCache.GetTypeSignature pickler.Type
         try formatter.BeginReadRoot typeName
         with 
         | :? FsPicklerException -> reraise () 
@@ -77,7 +77,7 @@
     let writeTopLevelSequence resolver reflectionCache formatter streamingContext (pickler : Pickler<'T>) (values : seq<'T>) : int =
         // write state initialization
         let state = new WriteState(formatter, resolver, reflectionCache, ?streamingContext = streamingContext)
-        let typeName = reflectionCache.GetTypeName pickler.Type + " seq"
+        let typeName = reflectionCache.GetTypeSignature pickler.Type + " seq"
 
         state.Formatter.BeginWriteRoot typeName
         let length = writeUnboundedSequence pickler state "values" values
@@ -88,7 +88,7 @@
         
         // read state initialization
         let state = new ReadState(formatter, resolver, reflectionCache, ?streamingContext = streamingContext)
-        let typeName = reflectionCache.GetTypeName pickler.Type + " seq"
+        let typeName = reflectionCache.GetTypeSignature pickler.Type + " seq"
 
         // read stream header
         try formatter.BeginReadRoot typeName

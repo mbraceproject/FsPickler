@@ -20,15 +20,12 @@
         // System.Type breakdown
         | NamedType of string * AssemblyInfo
         | ArrayType of Type * (* rank *) int option
-        | GenericType of Type * Type []
+        | GenericTypeInstance of Type * Type []
         | GenericTypeParam of Type * int
         | GenericMethodParam of MethodInfo * int
         // System.MethodInfo breakdown
-        | Method of Type * (*reflected type*) Type option * (* name *) string * (* isStatic *) bool * Type []
-        | GenericMethod of MethodInfo * Type []
-        // in generic method definitions, encode as signature
-        // this is to avoid recursive situations in method overload resolutions
-        | GenericMethodDefinition of Type * (*reflected type*) Type option * (* name *) string * (* isStatic *) bool * (*params*) string []
+        | Method of Type * (*reflected type*) Type option * (* signature *) string * (* isStatic *) bool
+        | GenericMethodInstance of MethodInfo * Type []
         // misc MemberInfo
         | Constructor of Type * (*isStatic*) bool * (* params *) Type []
         | Property of Type * (*reflected type*) Type option * (* name *) string * (* isStatic *) bool
@@ -110,7 +107,7 @@
     // converts a memberInfo instance to a CompositeMemberInfo structure
     let getMemberInfo (tyConv : ITypeNameConverter option) 
                         (getAssemblyInfo : Assembly -> AssemblyInfo)
-                        (getTypeName : Type -> string) (m : MemberInfo) =
+                        (getMethodSignature : MethodInfo -> string) (m : MemberInfo) =
 
         let getReflectedType (m : MemberInfo) =
             match m.ReflectedType with
@@ -130,7 +127,7 @@
             elif t.IsGenericType && not t.IsGenericTypeDefinition then
                 let gt = t.GetGenericTypeDefinition()
                 let gas = t.GetGenericArguments()
-                GenericType(gt, gas)
+                GenericTypeInstance(gt, gas)
 
             elif t.IsGenericParameter then
                 match t.DeclaringMethod with
@@ -150,17 +147,13 @@
                 NamedType(tI'.Name, tI'.AssemblyInfo)
 
         | :? MethodInfo as m ->
-            if m.IsGenericMethod then
-                if m.IsGenericMethodDefinition then
-                    let mParams = m.GetParameterTypes() |> Array.map getTypeName
-                    GenericMethodDefinition(m.DeclaringType, getReflectedType m, m.Name, m.IsStatic, mParams)
-                else
-                    let gm = m.GetGenericMethodDefinition()
-                    let tyArgs = m.GetGenericArguments()
-                    GenericMethod(gm, tyArgs)
+            if m.IsGenericMethod && not m.IsGenericMethodDefinition then
+                let gm = m.GetGenericMethodDefinition()
+                let mParams = m.GetParameterTypes()
+                GenericMethodInstance(gm, mParams)
             else
-                let mParams = m.GetParameters() |> Array.map (fun p -> p.ParameterType)
-                Method(m.DeclaringType, getReflectedType m, m.Name, m.IsStatic, mParams)
+                let signature = getMethodSignature m
+                Method(m.DeclaringType, getReflectedType m, signature, m.IsStatic)
 
         | :? ConstructorInfo as ctor ->
             let dt = ctor.DeclaringType 
@@ -187,7 +180,7 @@
 
     let loadMemberInfo (tyConv : ITypeNameConverter option) 
                         (loadAssembly : AssemblyInfo -> Assembly) 
-                        (getTypeName : Type -> string) (mI : CompositeMemberInfo) =
+                        (getMethodSignature : MethodInfo -> string) (mI : CompositeMemberInfo) =
 
         let inline getFlags isStatic =
             let allVisibility = BindingFlags.Public ||| BindingFlags.NonPublic
@@ -211,44 +204,22 @@
             | None -> et.MakeArrayType() |> fastUnbox<MemberInfo>
             | Some r -> et.MakeArrayType(r) |> fastUnbox<MemberInfo>
 
-        | GenericType(dt, tyArgs) -> dt.MakeGenericType tyArgs |> fastUnbox<MemberInfo>
+        | GenericTypeInstance(dt, tyArgs) -> dt.MakeGenericType tyArgs |> fastUnbox<MemberInfo>
         | GenericTypeParam(dt, idx) -> dt.GetGenericArguments().[idx] |> fastUnbox<MemberInfo>
         | GenericMethodParam(dm, idx) -> dm.GetGenericArguments().[idx] |> fastUnbox<MemberInfo>
-        | GenericMethod(gm, tyParams) -> gm.MakeGenericMethod tyParams |> fastUnbox<MemberInfo>
-        | Method(dt, None, name, isStatic, mParams) ->  dt.GetMethod(name, getFlags isStatic, null, mParams, [||]) |> fastUnbox<MemberInfo>
-        | Method(dt, Some rt, name, isStatic, mParams) ->
-            try
-                rt.GetMethods(getFlags isStatic) 
-                |> Array.find (fun m -> m.Name = name && m.DeclaringType = dt && m.GetParameterTypes() = mParams)
-                |> fastUnbox<MemberInfo>
 
-            with :? KeyNotFoundException ->
-                let msg = sprintf "Cloud not load method '%s' from type '%O'." name dt
-                raise <| new FsPicklerException(msg)
+        | Method(dt, reflectedType, signature, isStatic) ->
+            let isMatchingMethod (m : MethodInfo) = 
+                m.DeclaringType = dt && getMethodSignature m = signature
 
-        | GenericMethodDefinition(dt, None, name, isStatic, signature) ->
-            let isMatchingGenericMethod (m : MethodInfo) =
-                if m.Name = name && m.IsGenericMethodDefinition then
-                    let signature' = m.GetParameterTypes() |> Array.map getTypeName
-                    signature = signature'
-                else false
+            let qt = match reflectedType with None -> dt | Some r -> r
 
-            try dt.GetMethods(getFlags isStatic) |> Array.find isMatchingGenericMethod |> fastUnbox<MemberInfo>
+            try qt.GetMethods(getFlags isStatic) |> Array.find isMatchingMethod |> fastUnbox<MemberInfo>
             with :? KeyNotFoundException -> 
-                let msg = sprintf "Cloud not load method '%s' from type '%O'." name dt
+                let msg = sprintf "Cloud not load method '%s' from type '%O'." signature dt
                 raise <| new FsPicklerException(msg)
 
-        | GenericMethodDefinition(dt, Some rt, name, isStatic, signature) ->
-            let isMatchingGenericMethod (m : MethodInfo) =
-                if m.Name = name && m.IsGenericMethodDefinition && m.DeclaringType = dt then
-                    let signature' = m.GetParameterTypes() |> Array.map getTypeName
-                    signature = signature'
-                else false
-
-            try rt.GetMethods(getFlags isStatic) |> Array.find isMatchingGenericMethod |> fastUnbox<MemberInfo>
-            with :? KeyNotFoundException -> 
-                let msg = sprintf "Cloud not load method '%s' from type '%O'." name dt
-                raise <| new FsPicklerException(msg)
+        | GenericMethodInstance(gm, mParams) -> gm.MakeGenericMethod mParams |> fastUnbox<MemberInfo>
 
         | Constructor (dt, isStatic, cParams) -> dt.GetConstructor(getFlags isStatic, null, cParams, [||]) |> fastUnbox<MemberInfo>
         | Property (dt, None, name, isStatic) -> dt.GetProperty(name, getFlags isStatic) |> fastUnbox<MemberInfo>
@@ -279,14 +250,14 @@
         | Unknown (t, name) -> invalidOp <| sprintf "Cannot load '%s' of type %O." name t
 
 
-    // type name generator that emulates Type.ToString() but respects ITypeNameConverter rules
-    let generateTypeName (getInfo : Type -> CompositeMemberInfo) (t : Type) =
-        let rec generate (b : StringBuilder) (t : Type) =
-            let inline append (x : string) = b.Append x |> ignore
+    // type signature generator that emulates Type.ToString() but respects ITypeNameConverter rules
+    let generateTypeSignature (getInfo : Type -> CompositeMemberInfo) (t : Type) =
+        let rec generate (sb : StringBuilder) (t : Type) =
+            let inline append (x : string) = sb.Append x |> ignore
             match getInfo t with
             | NamedType(name, _) -> append name
             | ArrayType(et, rk) ->
-                generate b et
+                generate sb et
                 match rk with
                 | None -> append "[]"
                 | Some 1 -> append "[*]"
@@ -295,21 +266,49 @@
                     for i = 1 to r - 1 do append ","
                     append "]"
 
-            | GenericType(gt, tyParams) ->
-                generate b gt
+            | GenericTypeInstance(gt, tyParams) ->
+                generate sb gt
                 append "["
                 for i = 0 to tyParams.Length - 1 do
-                    generate b tyParams.[i]
+                    generate sb tyParams.[i]
                     if i < tyParams.Length - 1 then append ","
                 append "]"
 
             | GenericTypeParam _
             | GenericMethodParam _ -> append t.Name
-            | _ -> failwith "not a type."
+            | _ -> invalidOp "not a type."
 
-        let b = new StringBuilder()
-        generate b t
-        b.ToString()
+        let sb = new StringBuilder()
+        generate sb t
+        sb.ToString()
+
+    // method signature generator that emulates Type.ToString() but respects ITypeNameConverter rules
+    let generateMethodSignature (getTypeSig : Type -> string) (m : MethodInfo) =
+        let sb = new StringBuilder ()
+        let inline append (x : string) = sb.Append x |> ignore
+
+        append <| getTypeSig m.ReturnType
+        append " "
+        append m.Name
+        if m.IsGenericMethod then
+            let gas = m.GetGenericArguments()
+
+            append "["
+            for i = 0 to gas.Length - 1 do
+                append <| getTypeSig gas.[i]
+                if i < gas.Length - 1 then append ","
+            append "]"
+
+        let ps = m.GetParameterTypes()
+
+        append "("
+        for i = 0 to ps.Length - 1 do
+            append <| getTypeSig ps.[i]
+            if i < ps.Length - 1 then append ","
+        append ")"
+
+        sb.ToString()
+
 
     #nowarn "40"
 
@@ -324,15 +323,15 @@
         let getAssemblyInfo = memoize AssemblyInfo.OfAssembly
 
         let rec memberInfoCache = new BiMemoizer<_,_>(getMember, loadMember)
-        and getMember m   = getMemberInfo tyConv getAssemblyInfo getTypeName m
-        and loadMember mI = loadMemberInfo tyConv loadAssembly getTypeName mI
-        and getTypeName = memoize (fun t -> generateTypeName memberInfoCache.F t)
+        and getMember m   = getMemberInfo tyConv getAssemblyInfo (generateMethodSignature getSignature) m
+        and loadMember mI = loadMemberInfo tyConv loadAssembly (generateMethodSignature getSignature) mI
+        and getSignature = memoize (fun t -> generateTypeSignature memberInfoCache.F t)
 
         member __.GetAssemblyInfo(a : Assembly) = getAssemblyInfo a
         member __.LoadAssembly(aI : AssemblyInfo) = loadAssembly aI
         member __.GetCompositeMemberInfo(m : MemberInfo) = memberInfoCache.F m
         member __.LoadMemberInfo(m : CompositeMemberInfo) = memberInfoCache.G m
-        member __.GetTypeName(t : Type) = getTypeName t
+        member __.GetTypeSignature(t : Type) = getSignature t
 
         static member Create(?tyConv : ITypeNameConverter) =
             let container = new ReferenceEqualityContainer<_>(tyConv)

@@ -80,7 +80,7 @@
                 | None -> formatter.WriteInt32 "rank" 0
                 | Some r -> formatter.WriteInt32 "rank" r
 
-            | GenericType(dt, tyArgs) ->
+            | GenericTypeInstance(dt, tyArgs) ->
                 formatter.WriteByte "memberType" 2uy
                 typePickler.Write w "definition" dt
                 typeArrayPickler.Write w "typeArgs" tyArgs
@@ -95,31 +95,30 @@
                 methodInfoPickler.Write w "declaringMethod" dm
                 formatter.WriteInt32 "index" idx
 
-            | Method(dt, rt, name, isStatic, mParams) ->
+            | Method(dt, rt, signature, isStatic) ->
                 formatter.WriteByte "memberType" 5uy
 
-                formatter.WriteString "name" name
+                formatter.WriteString "signature" signature
                 formatter.WriteBoolean "isStatic" isStatic
-                typeArrayPickler.Write w "params" mParams
 
                 typePickler.Write w "declaringType" dt
                 typePickler.Write w "reflectedType" (defaultArg rt null)
 
-            | GenericMethod(gm, tyArgs) ->
+            | GenericMethodInstance(gm, tyArgs) ->
                 formatter.WriteByte "memberType" 6uy
 
                 methodInfoPickler.Write w "definition" gm
                 typeArrayPickler.Write w "typeArgs" tyArgs
 
-            | GenericMethodDefinition(dt, rt, name, isStatic, signature) ->
-                formatter.WriteByte "memberType" 7uy
-
-                formatter.WriteString "name" name
-                formatter.WriteBoolean "isStatic" isStatic
-                stringArrayPickler.Write w "params" signature
-
-                typePickler.Write w "declaringType" dt
-                typePickler.Write w "reflectedType" (defaultArg rt null)
+//            | GenericMethodDefinition(dt, rt, name, isStatic, signature) ->
+//                formatter.WriteByte "memberType" 7uy
+//
+//                formatter.WriteString "name" name
+//                formatter.WriteBoolean "isStatic" isStatic
+//                stringArrayPickler.Write w "params" signature
+//
+//                typePickler.Write w "declaringType" dt
+//                typePickler.Write w "reflectedType" (defaultArg rt null)
 
             | Constructor(dt, isStatic, cParams) ->
                 formatter.WriteByte "memberType" 8uy
@@ -177,7 +176,7 @@
                 | 2uy ->
                     let gt = typePickler.Read r "definition"
                     let tyArgs = typeArrayPickler.Read r "typeArgs"
-                    GenericType(gt, tyArgs)
+                    GenericTypeInstance(gt, tyArgs)
 
                 | 3uy ->
                     let dt = typePickler.Read r "declaringType"
@@ -190,29 +189,29 @@
                     GenericMethodParam(dm, idx)
 
                 | 5uy ->
-                    let name = formatter.ReadString "name"
+                    let signature = formatter.ReadString "signature"
                     let isStatic = formatter.ReadBoolean "isStatic"
-                    let mParams = typeArrayPickler.Read r "params"
+//                    let mParams = typeArrayPickler.Read r "params"
 
                     let dt = typePickler.Read r "declaringType"
                     let rt = denull <| typePickler.Read r "reflectedType"
 
-                    Method(dt, rt, name, isStatic, mParams)
+                    Method(dt, rt, signature, isStatic)
 
                 | 6uy ->
                     let gm = methodInfoPickler.Read r "definition"
                     let tyArgs = typeArrayPickler.Read r "typeArgs"
-                    GenericMethod(gm, tyArgs)
+                    GenericMethodInstance(gm, tyArgs)
 
-                | 7uy ->
-                    let name = formatter.ReadString "name"
-                    let isStatic = formatter.ReadBoolean "isStatic"
-                    let signature = stringArrayPickler.Read r "params"
-
-                    let dt = typePickler.Read r "declaringType"
-                    let rt = denull <| typePickler.Read r "reflectedType"
-
-                    GenericMethodDefinition(dt, rt, name, isStatic, signature)
+//                | 7uy ->
+//                    let name = formatter.ReadString "name"
+//                    let isStatic = formatter.ReadBoolean "isStatic"
+//                    let signature = stringArrayPickler.Read r "params"
+//
+//                    let dt = typePickler.Read r "declaringType"
+//                    let rt = denull <| typePickler.Read r "reflectedType"
+//
+//                    GenericMethodDefinition(dt, rt, name, isStatic, signature)
 
                 | 8uy ->
                     let dt = typePickler.Read r "declaringType"
