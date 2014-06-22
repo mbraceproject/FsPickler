@@ -1,6 +1,7 @@
 ﻿namespace Nessos.FsPickler
 
     open System
+    open System.Globalization
     open System.Reflection
     open System.IO
     open System.Runtime.Serialization
@@ -12,7 +13,7 @@
 
     type TypeKind =
         | Primitive             = 0uy
-        | Char                  = 1uy // char is special primitive that should be serialized w.r.t. encoding
+        | Char                  = 1uy // char is a special primitive that should be serialized w.r.t. encoding
         | String                = 2uy
         | Enum                  = 3uy
         | Value                 = 4uy
@@ -76,31 +77,54 @@
     type CustomPicklerAttribute () = 
         inherit System.Attribute()
 
+
     /// <summary>
-    ///     Contains serialization information for a named type.
+    ///     Serialized type descriptor
     /// </summary>
     type TypeInfo =
         {
             Name : string
-            AssemblyQualifiedName : string
+            AssemblyInfo : AssemblyInfo
+        }
+
+
+    /// <summary>
+    ///     An immutable, structurally equatable version of AssemblyName
+    /// </summary>
+    and AssemblyInfo =
+        {
+            Name : string
+            Version : string
+            Culture : string
+            PublicKeyToken : string
         }
 
     /// <summary>
-    ///     Specifies user-defined type serialization remappings.
+    ///     Provides facility for user-defined type conversion at 
+    ///     serialization and deserialization
     /// </summary>
     type ITypeNameConverter =
+        /// TypeInfo to be recorded to serialization
         abstract member OfSerializedType : TypeInfo -> TypeInfo
+        /// TypeInfo to be converted at deserialization
         abstract member ToDeserializedType : TypeInfo -> TypeInfo
 
     /// <summary>
-    ///     Used for deserializing all types without strong assembly names.
+    ///     Defines a type conversion scheme in which strong assembly info is dropped 
+    ///     at deserialization.
     /// </summary>
-    type StrongAssemblyNameEraser () =
+    type IgnoreStrongNamesConverter (?ignoreVersion) =
+        let ignoreVersion = defaultArg ignoreVersion true
         interface ITypeNameConverter with
-            member __.OfSerializedType tI = tI
-            member __.ToDeserializedType tI =
-                let an = System.Reflection.AssemblyName(tI.AssemblyQualifiedName)
-                { tI with AssemblyQualifiedName = an.Name }
+            member __.OfSerializedType (tI : TypeInfo) = tI
+            member __.ToDeserializedType (tI : TypeInfo) =
+                let aI = 
+                    { tI.AssemblyInfo with 
+                        Version = if ignoreVersion then null else tI.AssemblyInfo.Version
+                        Culture = null ; 
+                        PublicKeyToken = null 
+                    }
+                { tI with AssemblyInfo = aI }
 
 
     //

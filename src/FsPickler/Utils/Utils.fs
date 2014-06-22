@@ -72,33 +72,6 @@
                 | Success x -> try Success <| f x with e -> Error e
                 | Error e -> Error e
 
-        type Atom<'T when 'T : not struct>(value : 'T) =
-            let refCell = ref value
-    
-            let rec swap f = 
-                let currentValue = !refCell
-                let result = Interlocked.CompareExchange<'T>(refCell, f currentValue, currentValue)
-                if obj.ReferenceEquals(result, currentValue) then ()
-                else Thread.SpinWait 20; swap f
-
-            let transact f =
-                let output = ref Unchecked.defaultof<'S>
-                let f' x = let t,s = f x in output := s ; t
-                swap f' ; !output
-        
-            member __.Value with get() : 'T = !refCell
-            member __.Swap (f : 'T -> 'T) : unit = swap f
-            member __.Set (v : 'T) : unit = swap (fun _ -> v)
-            member __.Transact (f : 'T -> 'T * 'S) : 'S = transact f  
-
-        [<RequireQualifiedAccess>]
-        module Atom =
-            let atom x = Atom<_>(x)
-            let get (a : Atom<_>) = a.Value
-            let swap (f : 'T -> 'T) (a : Atom<_>) = a.Swap f
-            let transact (f : 'T -> 'T * 'R) (a : Atom<_>) = a.Transact f
-
-
         let inline denull x = if x = null then None else Some x
 
         let inline fastUnbox<'T> (x : obj) = 
@@ -157,70 +130,6 @@
                     cache'.TryAdd(s,t) |> ignore
                     t
 
-        [<RequireQualifiedAccess>]
-        module Stream =
-
-            let internal bufferSize = 256    
-            let internal buffer = new ThreadLocal<byte []>(fun () -> Array.zeroCreate<byte> bufferSize)
-
-            let inline WriteInt (stream : Stream) (n : int) =
-                let buf = buffer.Value
-                buf.[0] <- byte n
-                buf.[1] <- byte (n >>> 8)
-                buf.[2] <- byte (n >>> 16)
-                buf.[3] <- byte (n >>> 24)
-                stream.Write(buf, 0, 4)
-
-            let inline ReadInt (stream : Stream) = 
-                let buf = buffer.Value
-                if stream.Read(buf, 0, 4) < 4 then
-                    raise <| new EndOfStreamException()
-
-                (int buf.[0])
-                    ||| (int buf.[1] <<< 8)
-                    ||| (int buf.[2] <<< 16)
-                    ||| (int buf.[3] <<< 24)
-                
-
-            /// block copy primitive array to stream
-            let ReadFromArray (stream : Stream, array : Array) =
-                do stream.Flush()
-
-                let buf = buffer.Value
-                let totalBytes = Buffer.ByteLength array
-
-                let d = totalBytes / bufferSize
-                let r = totalBytes % bufferSize
-
-                for i = 0 to d - 1 do
-                    Buffer.BlockCopy(array, i * bufferSize, buf, 0, bufferSize)
-                    stream.Write(buf, 0, bufferSize)
-
-                if r > 0 then
-                    Buffer.BlockCopy(array, d * bufferSize, buf, 0, r)
-                    stream.Write(buf, 0, r)
-
-            /// copy stream contents to preallocated array
-            let WriteToArray (stream : Stream, array : Array) =
-                let buf = buffer.Value
-                let inline readBytes (n : int) =
-                    if stream.Read(buf, 0, n) < n then
-                        // TODO: this is wrong
-                        raise <| new EndOfStreamException()
-        
-                let totalBytes = Buffer.ByteLength array
-
-                let d = totalBytes / bufferSize
-                let r = totalBytes % bufferSize
-
-                for i = 0 to d - 1 do
-                    do readBytes bufferSize
-                    Buffer.BlockCopy(buf, 0, array, i * bufferSize, bufferSize)
-
-                if r > 0 then
-                    do readBytes r
-                    Buffer.BlockCopy(buf, 0, array, d * bufferSize, r)
-
         type SerializationInfo with
             member internal sI.Write<'T> (name : string, x : 'T) =
                 sI.AddValue(name, x, typeof<'T>)
@@ -254,3 +163,30 @@
                 match o with
                 | :? ReferenceEqualityContainer<'T> as c -> obj.ReferenceEquals(value, c.Value)
                 | _ -> false
+
+        // Byte <-> hex converter that emulates the AssemblyQualifiedName format
+        // used in public key tokens
+        module Bytes =
+
+            [<Literal>]
+            let private alph = "0123456789abcdef"
+            let private alphInv = alph |> Seq.mapi (fun i s -> (s,byte i)) |> Map.ofSeq
+
+            let toBase16String (bs : byte []) =
+                let sb = new StringBuilder()
+                for i = 0 to bs.Length - 1 do
+                    let b = bs.[i]
+                    let c1 = alph.[int (b >>> 4)]
+                    let c2 = alph.[int (0x0fuy &&& b)]
+                    sb.Append(c1).Append(c2) |> ignore
+
+                sb.ToString()
+
+            let ofBase16String (hex : string) =
+                let inline toUInt (c : Char) = alphInv.[Char.ToLower c]
+                let size = hex.Length / 2
+                let bs = Array.zeroCreate<byte> (size)
+                for i = 0 to size - 1 do
+                    bs.[i] <- (toUInt hex.[2*i + 1]) ||| ((toUInt hex.[2*i]) <<< 4)
+
+                bs
