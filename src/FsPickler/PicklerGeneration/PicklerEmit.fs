@@ -25,12 +25,10 @@
             let getTypedPickler (t : Type) = picklerT.MakeGenericType [|t|]
             let getPicklerWriter (t : Type) = getTypedPickler(t).GetMethod("Write")
             let getPicklerReader (t : Type) = getTypedPickler(t).GetMethod("Read")
-            let bw = typeof<WriteState>.GetProperty("Formatter", allMembers).GetGetMethod(true)
-            let br = typeof<ReadState>.GetProperty("Formatter", allMembers).GetGetMethod(true)
-            let bwIntWriter = typeof<IPickleFormatWriter>.GetMethod("WriteInt32")
-            let brIntReader = typeof<IPickleFormatReader>.GetMethod("ReadInt32")
-            let bwStringWriter = typeof<IPickleFormatWriter>.GetMethod("WriteString")
-            let brStringReader = typeof<IPickleFormatReader>.GetMethod("ReadString")
+            let getWriteFormatter = typeof<WriteState>.GetProperty("Formatter", allMembers).GetGetMethod(true)
+            let getReadFormatter = typeof<ReadState>.GetProperty("Formatter", allMembers).GetGetMethod(true)
+            let stringWriter = typeof<IPickleFormatWriter>.GetMethod("WriteString")
+            let stringReader = typeof<IPickleFormatReader>.GetMethod("ReadString")
 
         /// emits typed pickler from array of untyped picklers
         let emitLoadPickler (picklers : EnvItem<Pickler []>) (t : Type) (idx : int) (ilGen : ILGenerator) =
@@ -198,34 +196,19 @@
                 ilGen.Emit OpCodes.Ret
             )
 
-        /// writes an integer
-        let writeInt (writer : EnvItem<WriteState>) (tag : string) (n : EnvItem<int>) (ilGen : ILGenerator) =
-            writer.Load ()
-            ilGen.EmitCall(OpCodes.Call, bw, null) // load BinaryWriter
-            ilGen.Emit(OpCodes.Ldstr, tag) // load tag
-            n.Load () // load value
-            ilGen.EmitCall(OpCodes.Callvirt, bwIntWriter, null) // perform write
-
-        /// reads an integer and pushes to stack
-        let readInt (reader : EnvItem<ReadState>) (tag : string) (ilGen : ILGenerator) =
-            reader.Load ()
-            ilGen.EmitCall(OpCodes.Call, br, null) // load BinaryReader
-            ilGen.Emit(OpCodes.Ldstr, tag) // load tag
-            ilGen.EmitCall(OpCodes.Callvirt, brIntReader, null) // perform read, push to stack
-
         /// writes a string
         let writeString (writer : EnvItem<WriteState>) (tag : string) (value : string) (ilGen : ILGenerator) =
             writer.Load ()
-            ilGen.EmitCall(OpCodes.Call, bw, null) // load BinaryWriter
+            ilGen.EmitCall(OpCodes.Call, getWriteFormatter, null) // load write formatter
             ilGen.Emit(OpCodes.Ldstr, tag) // load tag
-            ilGen.Emit(OpCodes.Ldstr, value) // load tag
-            ilGen.EmitCall(OpCodes.Callvirt, bwStringWriter, null) // perform write
+            ilGen.Emit(OpCodes.Ldstr, value) // load value
+            ilGen.EmitCall(OpCodes.Callvirt, stringWriter, null) // perform write
 
         /// reads a string and pushes to stack
         let readString (reader : EnvItem<ReadState>) (tag : string) (ilGen : ILGenerator) =
             reader.Load ()
-            ilGen.EmitCall(OpCodes.Call, br, null) // load BinaryReader
+            ilGen.EmitCall(OpCodes.Call, getReadFormatter, null) // load read formatter
             ilGen.Emit(OpCodes.Ldstr, tag) // load tag
-            ilGen.EmitCall(OpCodes.Callvirt, brStringReader, null) // perform read, push to stack
+            ilGen.EmitCall(OpCodes.Callvirt, stringReader, null) // perform read, push result to stack
         
 #endif
