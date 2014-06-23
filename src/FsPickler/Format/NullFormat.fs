@@ -8,6 +8,8 @@
             member __.BeginWriteRoot _ = ()
             member __.EndWriteRoot () = ()
 
+            member __.SerializeUnionCaseNames = false
+
             member __.PreferLengthPrefixInSequences = true
             member __.WriteNextSequenceElement _ = ()
 

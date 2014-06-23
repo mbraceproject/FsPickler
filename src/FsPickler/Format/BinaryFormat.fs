@@ -110,6 +110,8 @@
 
             member __.EndWriteRoot () = ()
 
+            member __.SerializeUnionCaseNames = false
+
             member __.PreferLengthPrefixInSequences = true
             member __.WriteNextSequenceElement hasNext = bw.Write hasNext
 
@@ -207,6 +209,8 @@
                 readHeader header
 
             member __.EndReadObject () = () 
+
+            member __.SerializeUnionCaseNames = false
 
             member __.PreferLengthPrefixInSequences = true
             member __.ReadNextSequenceElement () = br.ReadBoolean()

@@ -38,6 +38,11 @@
         abstract PreferLengthPrefixInSequences : bool
 
         /// <summary>
+        ///     
+        /// </summary>
+        abstract SerializeUnionCaseNames : bool
+
+        /// <summary>
         ///     Specifies if another sequence element is to follow in the stream.
         /// </summary>
         /// <param name="hasNext"></param>
@@ -107,6 +112,11 @@
         ///     End reading an object.
         /// </summary>
         abstract EndReadObject : unit -> unit
+
+        /// <summary>
+        ///     
+        /// </summary>
+        abstract SerializeUnionCaseNames : bool
 
         /// <summary>
         ///     Specifies if the format favors prefixing of sequence lengths where applicable.

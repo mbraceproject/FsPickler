@@ -99,6 +99,8 @@
                     if omitHeader && depth = 0 then ()
                     else jsonReader.Read() |> ignore
 
+            member __.SerializeUnionCaseNames = true
+
             member __.PreferLengthPrefixInSequences = false
             member __.ReadNextSequenceElement () = 
                 if isTopLevelSequence && depth = 1 then

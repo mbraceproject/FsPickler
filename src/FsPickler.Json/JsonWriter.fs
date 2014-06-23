@@ -78,6 +78,8 @@
                     else
                         jsonWriter.WriteEndObject()
 
+            member __.SerializeUnionCaseNames = true
+
             member __.PreferLengthPrefixInSequences = false
             member __.WriteNextSequenceElement hasNext =
                 if isTopLevelSequence && depth = 1 then

@@ -100,6 +100,7 @@
     <Compile Include="PicklerBase\Pickler.fs" />
     <Compile Include="PicklerBase\CompositePickler.fs" />
     <Compile Include="PicklerBase\PrimitivePicklers.fs" />
+    <Compile Include="PicklerBase\UnionCaseHelper.fs" />
     <Compile Include="PicklerBase\ReflectionPicklers.fs" />
     <Compile Include="Combinators\Wrappers.fs" />
     <Compile Include="Combinators\Sequence.fs" />

@@ -119,6 +119,8 @@
 
             member __.EndWriteObject () = writer.WriteEndElement()
 
+            member __.SerializeUnionCaseNames = true
+
             member __.PreferLengthPrefixInSequences = false
             member __.WriteNextSequenceElement hasNext = ()
 
@@ -244,6 +246,8 @@
                     reader.ReadEndElement()
 
             member __.ReadCachedObjectId () = cachedObjectId
+
+            member __.SerializeUnionCaseNames = true
 
             member __.PreferLengthPrefixInSequences = false
             member __.ReadNextSequenceElement () =
