@@ -4,10 +4,13 @@
     open System.IO
     open System.Collections.Generic
 
+    open Microsoft.FSharp.Reflection
+
+    open Nessos.FsPickler.Reflection
+
 #if EMIT_IL
     open System.Reflection.Emit
     open Nessos.FsPickler.Emit
-    open Nessos.FsPickler.Reflection
 #endif
 
     type internal UnionCaseSerializationHelper(caseNames : string []) =
@@ -17,15 +20,15 @@
             for i = 0 to n - 1 do
                 dict.Add(caseNames.[i], i)
 
-        member __.WriteTag (state : WriteState, tag : int) =
-            if state.Formatter.SerializeUnionCaseNames then
-                state.Formatter.WriteString "Case" <| caseNames.[tag]
+        member __.WriteTag (formatter : IPickleFormatWriter, tag : int) =
+            if formatter.SerializeUnionCaseNames then
+                formatter.WriteString "Case" <| caseNames.[tag]
             else
-                state.Formatter.WriteInt32 "Tag" tag
+                formatter.WriteInt32 "Tag" tag
 
-        member __.ReadTag (state : ReadState) =
-            if state.Formatter.SerializeUnionCaseNames then
-                let case = state.Formatter.ReadString "Case"
+        member __.ReadTag (formatter : IPickleFormatReader) =
+            if formatter.SerializeUnionCaseNames then
+                let case = formatter.ReadString "Case"
                 if obj.ReferenceEquals(case, null) then
                     raise <| new FormatException("invalid union case 'null'.")
 
@@ -34,11 +37,15 @@
                 else
                     raise <| new FormatException(sprintf "invalid union case '%s'." case)
             else
-                let tag = state.Formatter.ReadInt32 "Tag"
-                if tag < 0 || tag >= n then
-                    raise <| new InvalidDataException(sprintf "invalid case tag '%d'" tag)
+                formatter.ReadInt32 "Tag"
 
-                tag
+
+        static member OfUnionType<'Union> () =
+            let cases =
+                FSharpType.GetUnionCases(typeof<'Union>, allMembers)
+                |> Array.map(fun u -> u.Name)
+
+            new UnionCaseSerializationHelper(cases)
 
 #if EMIT_IL
         static member InvokeTagWriter (c : EnvItem<UnionCaseSerializationHelper>) 
@@ -46,6 +53,8 @@
                                         (ilGen : ILGenerator) =
             c.Load()
             w.Load()
+            let m = typeof<WriteState>.GetMethod("get_Formatter", allMembers)
+            ilGen.EmitCall(OpCodes.Call, m, null)
             tag.Load()
             let m = typeof<UnionCaseSerializationHelper>.GetMethod("WriteTag", allMembers)
             ilGen.EmitCall(OpCodes.Call, m, null)
@@ -56,6 +65,9 @@
             
             c.Load()
             r.Load()
+            let m = typeof<ReadState>.GetMethod("get_Formatter", allMembers)
+            ilGen.EmitCall(OpCodes.Call, m, null)
+
             let m = typeof<UnionCaseSerializationHelper>.GetMethod("ReadTag", allMembers)
             ilGen.EmitCall(OpCodes.Call, m, null)
 #endif
