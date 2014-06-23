@@ -4,6 +4,7 @@
     open System.IO
     open System.Reflection
     open System.Threading
+    open System.Collections.Generic
     open System.Runtime.Serialization
 
     open Microsoft.FSharp.Reflection
@@ -45,9 +46,10 @@
                     let ctor = FSharpValue.PreComputeUnionConstructorInfo(uci, allMembers)
                     let picklers = fields |> Array.map (fun f -> resolver.Resolve f.PropertyType)
                     let tags = fields |> Array.map (fun f -> f.NormalizedName)
-                    caseType, ctor, fields, tags, picklers)
+                    uci.Name, caseType, ctor, fields, tags, picklers)
 
-            let picklerss = caseInfo |> Array.map (fun (_,_,_,_,picklers) -> picklers)
+            let picklerss = caseInfo |> Array.map (fun (_,_,_,_,_,picklers) -> picklers)
+            let tagResolver = UnionTagResolver(caseInfo |> Array.map (fun (name,_,_,_,_,_) -> name))
 
             let writerDele =
                 DynamicMethod.compileAction3<Pickler [] [], WriteState, 'Union> "unionSerializer" (fun picklerss writer union ilGen ->
@@ -56,7 +58,7 @@
 
                     let labels = Array.init caseInfo.Length (fun _ -> ilGen.DefineLabel())
 
-                    // read union tag & store to local value
+                    // read union tag
                     union.Load ()
                     ilGen.EmitCall(OpCodes.Call, tagReaderMethod, null)
                     tag.Store ()
@@ -67,9 +69,6 @@
                     ilGen.Emit OpCodes.Ldelem_Ref
                     picklers.Store ()
 
-                    // write tag to stream
-                    writeInt writer "Tag" tag ilGen
-
                     // make jump table
                     tag.Load ()
                     ilGen.Emit(OpCodes.Switch, labels)
@@ -77,24 +76,33 @@
                     // emit cases
                     for i = 0 to caseInfo.Length - 1 do
                         let label = labels.[i]
-                        let caseType,_,fields,tags,_ = caseInfo.[i]
+                        let name,caseType,_,fields,tags,_ = caseInfo.[i]
 
                         ilGen.MarkLabel label
+                        writeString writer "Case" name ilGen
                         emitSerializeProperties fields tags writer picklers union ilGen
                         ilGen.Emit OpCodes.Ret
                 )
 
             let readerDele =
-                DynamicMethod.compileFunc2<Pickler [] [], ReadState, 'Union> "unionDeserializer" (fun picklerss reader ilGen ->
+                DynamicMethod.compileFunc3<Pickler [] [], UnionTagResolver, ReadState, 'Union> "unionDeserializer" (fun picklerss tagResolver reader ilGen ->
 
                     let tag = EnvItem<int>(ilGen)
                     let picklers = EnvItem<Pickler []>(ilGen)
 
                     let labels = Array.init caseInfo.Length (fun _ -> ilGen.DefineLabel())
 
-                    // read tag from stream & store
-                    readInt reader "Tag" ilGen
-                    tag.Store ()
+                    // push tag resolver to stack
+                    tagResolver.Load()
+
+                    // read case from stream
+                    readString reader "Case" ilGen
+
+                    // call tag resolver
+                    UnionTagResolver.InvokeResolver ilGen
+
+                    // store to local var
+                    tag.Store()
 
                     // select appropriate picklers & store
                     picklerss.Load ()
@@ -109,7 +117,7 @@
                     // emit cases
                     for i = 0 to caseInfo.Length - 1 do
                         let label = labels.[i]
-                        let _,ctor,fields,tags,_ = caseInfo.[i]
+                        let _,_,ctor,fields,tags,_ = caseInfo.[i]
 
                         let ctorParams = fields |> Array.map (fun f -> f.PropertyType)
 
@@ -119,7 +127,7 @@
                 )
 
             let writer w tag u = writerDele.Invoke(picklerss, w, u)
-            let reader r tag = readerDele.Invoke(picklerss, r)
+            let reader r tag = readerDele.Invoke(picklerss, tagResolver, r)
 #else
             let tagReader = Delegate.CreateDelegate<Func<'Union,int>> tagReaderMethod
 
@@ -131,19 +139,22 @@
                     let fields = uci.GetFields()
                     let picklers = fields |> Array.map (fun f -> resolver.Resolve f.PropertyType)
                     let tags = fields |> Array.map (fun f -> f.NormalizedName)
-                    ctor, reader, fields, tags, picklers)
+                    uci.Name,ctor, reader, fields, tags, picklers)
+
+            let tagResolver = UnionTagResolver(caseInfo |> Array.map (fun (name,_,_,_,_,_) -> name))
 
             let writer (w : WriteState) (tag : string) (u : 'Union) =
                 let tag = tagReader.Invoke u
-                w.Formatter.WriteByte "case" (byte tag)
-                let _,reader,fields,tags,picklers = caseInfo.[tag]
+                let name,_,reader,fields,tags,picklers = caseInfo.[tag]
+                w.Formatter.WriteString "Case" name
                 let values = reader u
                 for i = 0 to values.Length - 1 do
                     picklers.[i].UntypedWrite w tags.[i] (values.[i])
 
             let reader (r : ReadState) (tag : string) =
-                let tag = int (r.Formatter.ReadByte "case")
-                let ctor,_,fields,tags,picklers = caseInfo.[tag]
+                let case = r.Formatter.ReadString "Case"
+                let tag = tagResolver.ResolveTag case
+                let _,ctor,_,fields,tags,picklers = caseInfo.[tag]
                 let values = Array.zeroCreate<obj> picklers.Length
                 for i = 0 to picklers.Length - 1 do
                     values.[i] <- picklers.[i].UntypedRead r tags.[i]
@@ -151,6 +162,27 @@
                 ctor values |> fastUnbox<'Union>
 #endif
             CompositePickler.Create(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
+
+    and private UnionTagResolver(caseNames : string []) =
+        let dict = new Dictionary<string, int>()
+        do 
+            for i = 0 to caseNames.Length - 1 do
+                dict.Add(caseNames.[i], i)
+
+        member __.ResolveTag(case : string) =
+            if obj.ReferenceEquals(case, null) then
+                raise <| new FormatException("invalid union case 'null'.")
+            else
+                let ok, tag = dict.TryGetValue case
+                if ok then tag
+                else
+                    raise <| new FormatException(sprintf "invalid union case '%s'." case)
+
+#if EMIT_IL
+        static member InvokeResolver (ilGen : ILGenerator) =
+            let m = typeof<UnionTagResolver>.GetMethod("ResolveTag", allMembers)
+            ilGen.EmitCall(OpCodes.Call, m, null)
+#endif
 
     // F# record types
 
