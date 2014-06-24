@@ -52,7 +52,7 @@
 
         let stringArrayPickler = arrayPickler.Create <| PrimitivePicklers.mkString()
 
-        let caseSerializer = UnionCaseSerializationHelper.OfUnionType<CompositeMemberInfo> ()
+        let tagSerializer = UnionCaseSerializationHelper.OfUnionType<CompositeMemberInfo> ()
 
         let rec memberInfoWriter (w : WriteState) (tag : string) (m : MemberInfo) =
             let formatter = w.Formatter
@@ -67,13 +67,13 @@
             // so that tag assignments correspond to internal union tag.
             match w.ReflectionCache.GetCompositeMemberInfo m with
             | NamedType (name, aI) ->
-                caseSerializer.WriteTag(formatter, 0)
+                tagSerializer.WriteTag(formatter, 0)
 
                 formatter.WriteString "name" name
                 assemblyInfoPickler.Write w "assembly" aI
 
             | ArrayType (et, rk) ->
-                caseSerializer.WriteTag(formatter, 1)
+                tagSerializer.WriteTag(formatter, 1)
                 typePickler.Write w "elementType" et
 
                 match rk with
@@ -81,22 +81,22 @@
                 | Some r -> formatter.WriteInt32 "rank" r
 
             | GenericTypeInstance(dt, tyArgs) ->
-                caseSerializer.WriteTag(formatter, 2)
+                tagSerializer.WriteTag(formatter, 2)
                 typePickler.Write w "definition" dt
                 typeArrayPickler.Write w "typeArgs" tyArgs
 
             | GenericTypeParam(dt, idx) ->
-                caseSerializer.WriteTag(formatter, 3)
+                tagSerializer.WriteTag(formatter, 3)
                 typePickler.Write w "declaringType" dt
                 formatter.WriteInt32 "index" idx
 
             | GenericMethodParam(dm, idx) ->
-                caseSerializer.WriteTag(formatter, 4)
+                tagSerializer.WriteTag(formatter, 4)
                 methodInfoPickler.Write w "declaringMethod" dm
                 formatter.WriteInt32 "index" idx
 
             | Method(dt, rt, signature, isStatic) ->
-                caseSerializer.WriteTag(formatter, 5)
+                tagSerializer.WriteTag(formatter, 5)
 
                 formatter.WriteString "signature" signature
                 formatter.WriteBoolean "isStatic" isStatic
@@ -105,20 +105,20 @@
                 typePickler.Write w "reflectedType" (defaultArg rt null)
 
             | GenericMethodInstance(gm, tyArgs) ->
-                caseSerializer.WriteTag(formatter, 6)
+                tagSerializer.WriteTag(formatter, 6)
 
                 methodInfoPickler.Write w "definition" gm
                 typeArrayPickler.Write w "typeArgs" tyArgs
 
             | Constructor(dt, isStatic, cParams) ->
-                caseSerializer.WriteTag(formatter, 7)
+                tagSerializer.WriteTag(formatter, 7)
 
                 typePickler.Write w "declaringType" dt
                 formatter.WriteBoolean "isStatic" isStatic
                 typeArrayPickler.Write w "params" cParams
 
             | Property(dt, rt, name, isStatic) ->
-                caseSerializer.WriteTag(formatter, 8)
+                tagSerializer.WriteTag(formatter, 8)
 
                 formatter.WriteString "name" name
                 formatter.WriteBoolean "isStatic" isStatic
@@ -127,7 +127,7 @@
                 typePickler.Write w "reflectedType" (defaultArg rt null)
 
             | Field(dt, rt, name, isStatic) ->
-                caseSerializer.WriteTag(formatter, 9)
+                tagSerializer.WriteTag(formatter, 9)
 
                 formatter.WriteString "name" name
                 formatter.WriteBoolean "isStatic" isStatic
@@ -136,7 +136,7 @@
                 typePickler.Write w "reflectedType" (defaultArg rt null)
 
             | Event(dt, rt, name, isStatic) ->
-                caseSerializer.WriteTag(formatter, 10)
+                tagSerializer.WriteTag(formatter, 10)
 
                 formatter.WriteString "name" name
                 formatter.WriteBoolean "isStatic" isStatic
@@ -151,7 +151,7 @@
             let formatter = r.Formatter
 
             let cMemberInfo =
-                match caseSerializer.ReadTag formatter with
+                match tagSerializer.ReadTag formatter with
                 | 0 ->
                     let name = formatter.ReadString "name"
                     let assembly = assemblyInfoPickler.Read r "assembly"

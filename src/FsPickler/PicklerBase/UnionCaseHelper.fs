@@ -13,11 +13,14 @@
     open Nessos.FsPickler.Emit
 #endif
 
+    //
+    //  Provides facility for serializing union cases
+    //
+
     type internal UnionCaseSerializationHelper(caseNames : string []) =
-        let n = caseNames.Length
-        let dict = new Dictionary<string, int>()
+        let dict = new Dictionary<string, int>(caseNames.Length)
         do 
-            for i = 0 to n - 1 do
+            for i = 0 to caseNames.Length - 1 do
                 dict.Add(caseNames.[i], i)
 
         member __.WriteTag (formatter : IPickleFormatWriter, tag : int) =
