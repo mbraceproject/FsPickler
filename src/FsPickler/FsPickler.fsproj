@@ -94,8 +94,8 @@
     <Compile Include="Utils\ShallowCopy.fs" />
     <Compile Include="Utils\Hashing.fs" />
     <Compile Include="PicklerBase\Types.fs" />
-    <Compile Include="PicklerBase\ReflectionCache.fs" />
     <Compile Include="PicklerBase\PickleFormat.fs" />
+    <Compile Include="PicklerBase\ReflectionCache.fs" />
     <Compile Include="PicklerBase\Pickler.fsi" />
     <Compile Include="PicklerBase\Pickler.fs" />
     <Compile Include="PicklerBase\CompositePickler.fs" />

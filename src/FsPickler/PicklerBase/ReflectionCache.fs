@@ -44,9 +44,12 @@
                     | null -> null
                     | v -> v.ToString()
 
-                Culture = 
-                    if String.IsNullOrEmpty an.CultureInfo.Name then "neutral"
-                    else an.CultureInfo.Name
+                Culture =
+                    match an.CultureInfo with
+                    | null -> null
+                    | cI ->
+                        if String.IsNullOrEmpty cI.Name then "neutral"
+                        else cI.Name
 
                 PublicKeyToken =
                     match an.GetPublicKeyToken () with
