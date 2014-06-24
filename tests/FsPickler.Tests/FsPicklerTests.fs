@@ -41,8 +41,11 @@
         let testEquals x = self.TestRoundtrip x |> should equal x
         let testReflected x =
             let y = self.TestRoundtrip x
-            y.GetType() |> should equal (x.GetType())
-            y.ToString() |> should equal (x.ToString())
+            if obj.ReferenceEquals(x, null) then
+                y |> should equal x
+            else
+                y.GetType() |> should equal (x.GetType())
+                y.ToString() |> should equal (x.ToString())
 
         member __.Pickler = pickler
 
@@ -178,6 +181,14 @@
         member __.``2. Reflection: Assembly`` () =
             System.AppDomain.CurrentDomain.GetAssemblies()
             |> Array.iter testEquals
+
+        [<Test; Category("Reflection types")>]
+        member __.``2. Reflection: AssemblyName`` () =
+            AssemblyName() |> testReflected
+
+            System.AppDomain.CurrentDomain.GetAssemblies()
+            |> Array.map (fun a -> a.GetName())
+            |> Array.iter testReflected
             
         //
         // Arrays

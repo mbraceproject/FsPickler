@@ -241,7 +241,6 @@
 
         [|
             assemblyPickler :> Pickler
-            assemblyInfoPickler :> _
             assemblyNamePickler :> _
             methodInfoPickler :> _
             memberInfoPickler :> _
