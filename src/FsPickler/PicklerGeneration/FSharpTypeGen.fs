@@ -122,7 +122,7 @@
             let tagReader = Delegate.CreateDelegate<Func<'Union,int>> tagReaderMethod
 
             let caseInfo =
-                FSharpType.GetUnionCases(typeof<'Union>, allMembers) 
+                ucis
                 |> Array.map (fun uci ->
                     let ctor = FSharpValue.PreComputeUnionConstructor(uci, allMembers)
                     let reader = FSharpValue.PreComputeUnionReader(uci, allMembers)
