@@ -20,6 +20,8 @@
         // System.Type breakdown
         | NamedType of string * AssemblyInfo
         | ArrayType of Type * (* rank *) int option
+        | Pointer of Type
+        | ByRef of Type
         | GenericTypeInstance of Type * Type []
         | GenericTypeParam of Type * int
         | GenericMethodParam of MethodInfo * int
@@ -127,6 +129,14 @@
                 else
                     ArrayType (et, Some rk)
 
+            elif t.IsPointer then
+                let et = t.GetElementType()
+                Pointer et
+
+            elif t.IsByRef then
+                let et = t.GetElementType()
+                ByRef et
+
             elif t.IsGenericType && not t.IsGenericTypeDefinition then
                 let gt = t.GetGenericTypeDefinition()
                 let gas = t.GetGenericArguments()
@@ -138,10 +148,13 @@
                 | dm -> GenericMethodParam(dm :?> MethodInfo, t.GenericParameterPosition)
             else
                 // is named type, no generic arguments
-                let name =
-                    match t.FullName with null -> t.Name | name -> name
+                let name = match t.FullName with null -> t.Name | name -> name
+                let assemblyInfo = 
+                    match t.Assembly with 
+                    | null -> raise <| new FsPicklerException(sprintf "Type '%O' does not belong to assembly." t)
+                    | a -> getAssemblyInfo a
 
-                let tI = { Name = name ; AssemblyInfo = getAssemblyInfo t.Assembly }
+                let tI = { Name = name ; AssemblyInfo = assemblyInfo }
                 let tI' =
                     match tyConv with
                     | None -> tI
@@ -214,6 +227,9 @@
             | None -> et.MakeArrayType() |> fastUnbox<MemberInfo>
             | Some r -> et.MakeArrayType(r) |> fastUnbox<MemberInfo>
 
+        | Pointer et -> et.MakePointerType() |> fastUnbox<MemberInfo>
+        | ByRef et -> et.MakeByRefType() |> fastUnbox<MemberInfo>
+
         | GenericTypeInstance(dt, tyArgs) -> dt.MakeGenericType tyArgs |> fastUnbox<MemberInfo>
         | GenericTypeParam(dt, idx) -> dt.GetGenericArguments().[idx] |> fastUnbox<MemberInfo>
         | GenericMethodParam(dm, idx) -> dm.GetGenericArguments().[idx] |> fastUnbox<MemberInfo>
@@ -275,6 +291,14 @@
                     append "["
                     for i = 1 to r - 1 do append ","
                     append "]"
+
+            | Pointer et ->
+                generate sb et
+                append "*"
+
+            | ByRef et ->
+                generate sb et
+                append "&"
 
             | GenericTypeInstance(gt, tyParams) ->
                 generate sb gt
