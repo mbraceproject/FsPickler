@@ -22,6 +22,8 @@
         let isDotNet45OrNewer =
             lazy(Type.GetType("System.Reflection.ReflectionContext") <> null)
 
+        let runsOnMono = lazy(Type.GetType("Mono.Runtime") <> null)
+
         /// stackless raise operator
         let inline raise (e: System.Exception) = (# "throw" e : 'U #)
 
