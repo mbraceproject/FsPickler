@@ -17,17 +17,17 @@
         let assemblyInfoPickler =
             let writer (w : WriteState) (_ : string) (aI : AssemblyInfo) =
                 let formatter = w.Formatter
-                formatter.WriteString "name" aI.Name
-                formatter.WriteString "version" aI.Version
-                formatter.WriteString "culture" aI.Culture
-                formatter.WriteString "publicKeyToken" aI.PublicKeyToken
+                formatter.WriteString "Name" aI.Name
+                formatter.WriteString "Version" aI.Version
+                formatter.WriteString "Culture" aI.Culture
+                formatter.WriteString "PublicKeyToken" aI.PublicKeyToken
 
             let reader (r : ReadState) (_ : string) =
                 let formatter = r.Formatter
-                let name = formatter.ReadString "name"
-                let version = formatter.ReadString "version"
-                let culture = formatter.ReadString "culture" 
-                let pkt = formatter.ReadString "publicKeyToken"
+                let name = formatter.ReadString "Name"
+                let version = formatter.ReadString "Version"
+                let culture = formatter.ReadString "Culture" 
+                let pkt = formatter.ReadString "PublicKeyToken"
 
                 {
                     Name = name
@@ -69,80 +69,80 @@
             | NamedType (name, aI) ->
                 tagSerializer.WriteTag(formatter, 0)
 
-                formatter.WriteString "name" name
-                assemblyInfoPickler.Write w "assembly" aI
+                formatter.WriteString "Name" name
+                assemblyInfoPickler.Write w "Assembly" aI
 
             | ArrayType (et, rk) ->
                 tagSerializer.WriteTag(formatter, 1)
-                typePickler.Write w "elementType" et
+                typePickler.Write w "ElementType" et
 
                 match rk with
-                | None -> formatter.WriteInt32 "rank" 0
-                | Some r -> formatter.WriteInt32 "rank" r
+                | None -> formatter.WriteInt32 "Rank" 0
+                | Some r -> formatter.WriteInt32 "Rank" r
 
             | GenericTypeInstance(dt, tyArgs) ->
                 tagSerializer.WriteTag(formatter, 2)
-                typePickler.Write w "definition" dt
-                typeArrayPickler.Write w "typeArgs" tyArgs
+                typePickler.Write w "GenericDefinition" dt
+                typeArrayPickler.Write w "TypeArgs" tyArgs
 
             | GenericTypeParam(dt, idx) ->
                 tagSerializer.WriteTag(formatter, 3)
-                typePickler.Write w "declaringType" dt
-                formatter.WriteInt32 "index" idx
+                typePickler.Write w "DeclaringType" dt
+                formatter.WriteInt32 "Index" idx
 
             | GenericMethodParam(dm, idx) ->
                 tagSerializer.WriteTag(formatter, 4)
-                methodInfoPickler.Write w "declaringMethod" dm
-                formatter.WriteInt32 "index" idx
+                methodInfoPickler.Write w "DeclaringMethod" dm
+                formatter.WriteInt32 "Index" idx
 
             | Method(dt, rt, signature, isStatic) ->
                 tagSerializer.WriteTag(formatter, 5)
 
-                formatter.WriteString "signature" signature
-                formatter.WriteBoolean "isStatic" isStatic
+                formatter.WriteString "Signature" signature
+                formatter.WriteBoolean "IsStatic" isStatic
 
-                typePickler.Write w "declaringType" dt
-                typePickler.Write w "reflectedType" (defaultArg rt null)
+                typePickler.Write w "DeclaringType" dt
+                typePickler.Write w "ReflectedType" (defaultArg rt null)
 
             | GenericMethodInstance(gm, tyArgs) ->
                 tagSerializer.WriteTag(formatter, 6)
 
-                methodInfoPickler.Write w "definition" gm
-                typeArrayPickler.Write w "typeArgs" tyArgs
+                methodInfoPickler.Write w "GenericDefinition" gm
+                typeArrayPickler.Write w "TypeArgs" tyArgs
 
             | Constructor(dt, isStatic, cParams) ->
                 tagSerializer.WriteTag(formatter, 7)
 
-                typePickler.Write w "declaringType" dt
-                formatter.WriteBoolean "isStatic" isStatic
-                typeArrayPickler.Write w "params" cParams
+                typePickler.Write w "DeclaringType" dt
+                formatter.WriteBoolean "IsStatic" isStatic
+                typeArrayPickler.Write w "Params" cParams
 
             | Property(dt, rt, name, isStatic) ->
                 tagSerializer.WriteTag(formatter, 8)
 
-                formatter.WriteString "name" name
-                formatter.WriteBoolean "isStatic" isStatic
+                formatter.WriteString "Name" name
+                formatter.WriteBoolean "IsStatic" isStatic
 
-                typePickler.Write w "declaringType" dt
-                typePickler.Write w "reflectedType" (defaultArg rt null)
+                typePickler.Write w "DeclaringType" dt
+                typePickler.Write w "ReflectedType" (defaultArg rt null)
 
             | Field(dt, rt, name, isStatic) ->
                 tagSerializer.WriteTag(formatter, 9)
 
-                formatter.WriteString "name" name
-                formatter.WriteBoolean "isStatic" isStatic
+                formatter.WriteString "Name" name
+                formatter.WriteBoolean "IsStatic" isStatic
 
-                typePickler.Write w "declaringType" dt
-                typePickler.Write w "reflectedType" (defaultArg rt null)
+                typePickler.Write w "DeclaringType" dt
+                typePickler.Write w "ReflectedType" (defaultArg rt null)
 
             | Event(dt, rt, name, isStatic) ->
                 tagSerializer.WriteTag(formatter, 10)
 
-                formatter.WriteString "name" name
-                formatter.WriteBoolean "isStatic" isStatic
+                formatter.WriteString "Name" name
+                formatter.WriteBoolean "IsStatic" isStatic
 
-                typePickler.Write w "declaringType" dt
-                typePickler.Write w "reflectedType" (defaultArg rt null)
+                typePickler.Write w "DeclaringType" dt
+                typePickler.Write w "ReflectedType" (defaultArg rt null)
 
             | Unknown(t, name) ->
                 raise <| new NonSerializableTypeException(t, sprintf "could not serialize '%s'." name)
@@ -153,75 +153,75 @@
             let cMemberInfo =
                 match tagSerializer.ReadTag formatter with
                 | 0 ->
-                    let name = formatter.ReadString "name"
-                    let assembly = assemblyInfoPickler.Read r "assembly"
+                    let name = formatter.ReadString "Name"
+                    let assembly = assemblyInfoPickler.Read r "Assembly"
                     NamedType(name, assembly)
 
                 | 1 ->
-                    let et = typePickler.Read r "elementType"
-                    match formatter.ReadInt32 "rank" with
+                    let et = typePickler.Read r "ElementType"
+                    match formatter.ReadInt32 "Rank" with
                     | 0 -> ArrayType(et, None)
                     | rk -> ArrayType(et, Some rk)
 
                 | 2 ->
-                    let gt = typePickler.Read r "definition"
-                    let tyArgs = typeArrayPickler.Read r "typeArgs"
+                    let gt = typePickler.Read r "GenericDefinition"
+                    let tyArgs = typeArrayPickler.Read r "TypeArgs"
                     GenericTypeInstance(gt, tyArgs)
 
                 | 3 ->
-                    let dt = typePickler.Read r "declaringType"
-                    let idx = formatter.ReadInt32 "index"
+                    let dt = typePickler.Read r "DeclaringType"
+                    let idx = formatter.ReadInt32 "Index"
                     GenericTypeParam(dt, idx)
 
                 | 4 ->
-                    let dm = methodInfoPickler.Read r "declaringMethod"
-                    let idx = formatter.ReadInt32 "index"
+                    let dm = methodInfoPickler.Read r "DeclaringMethod"
+                    let idx = formatter.ReadInt32 "Index"
                     GenericMethodParam(dm, idx)
 
                 | 5 ->
-                    let signature = formatter.ReadString "signature"
-                    let isStatic = formatter.ReadBoolean "isStatic"
+                    let signature = formatter.ReadString "Signature"
+                    let isStatic = formatter.ReadBoolean "IsStatic"
 
-                    let dt = typePickler.Read r "declaringType"
-                    let rt = denull <| typePickler.Read r "reflectedType"
+                    let dt = typePickler.Read r "DeclaringType"
+                    let rt = denull <| typePickler.Read r "ReflectedType"
 
                     Method(dt, rt, signature, isStatic)
 
                 | 6 ->
-                    let gm = methodInfoPickler.Read r "definition"
-                    let tyArgs = typeArrayPickler.Read r "typeArgs"
+                    let gm = methodInfoPickler.Read r "GenericDefinition"
+                    let tyArgs = typeArrayPickler.Read r "TypeArgs"
                     GenericMethodInstance(gm, tyArgs)
 
                 | 7 ->
-                    let dt = typePickler.Read r "declaringType"
-                    let isStatic = formatter.ReadBoolean "isStatic"
-                    let cParams = typeArrayPickler.Read r "params"
+                    let dt = typePickler.Read r "DeclaringType"
+                    let isStatic = formatter.ReadBoolean "IsStatic"
+                    let cParams = typeArrayPickler.Read r "Params"
                     Constructor(dt, isStatic, cParams)
 
                 | 8 ->
-                    let name = formatter.ReadString "name"
-                    let isStatic = formatter.ReadBoolean "isStatic"
+                    let name = formatter.ReadString "Name"
+                    let isStatic = formatter.ReadBoolean "IsStatic"
 
-                    let dt = typePickler.Read r "declaringType"
-                    let rt = denull <| typePickler.Read r "reflectedType"
+                    let dt = typePickler.Read r "DeclaringType"
+                    let rt = denull <| typePickler.Read r "ReflectedType"
 
                     Property(dt, rt, name, isStatic)
 
                 | 9 ->
-                    let name = formatter.ReadString "name"
-                    let isStatic = formatter.ReadBoolean "isStatic"
+                    let name = formatter.ReadString "Name"
+                    let isStatic = formatter.ReadBoolean "IsStatic"
 
-                    let dt = typePickler.Read r "declaringType"
-                    let rt = denull <| typePickler.Read r "reflectedType"
+                    let dt = typePickler.Read r "DeclaringType"
+                    let rt = denull <| typePickler.Read r "ReflectedType"
 
                     Field(dt, rt, name, isStatic)
 
                 | 10 ->
-                    let name = formatter.ReadString "name"
-                    let isStatic = formatter.ReadBoolean "isStatic"
+                    let name = formatter.ReadString "Name"
+                    let isStatic = formatter.ReadBoolean "IsStatic"
 
-                    let dt = typePickler.Read r "declaringType"
-                    let rt = denull <| typePickler.Read r "reflectedType"
+                    let dt = typePickler.Read r "DeclaringType"
+                    let rt = denull <| typePickler.Read r "ReflectedType"
 
                     Event(dt, rt, name, isStatic)
 
