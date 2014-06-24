@@ -17,8 +17,7 @@
         override p.IsCacheByRef = false
         override p.UseWithSubtypes = false
 
-        override self.Cast<'S> () = self :> Pickler :?> Pickler<'S>
-        override self.InitializeFrom _ = raise <| System.NotSupportedException("Primitive pickler late initialization not supported.")
+        override p.Cast<'S> () : Pickler<'S> = raise <| new NotSupportedException("Cannot cast primitive picklers.")
 
     [<AutoSerializable(false)>]
     type BooleanPickler () =

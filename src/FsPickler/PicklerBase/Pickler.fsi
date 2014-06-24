@@ -14,6 +14,12 @@
             /// Type of values serialized by this pickler.
             member Type : System.Type
 
+            /// The underlying type that this pickler implements.
+            abstract member ImplementationType : System.Type
+
+            /// Specifies if pickled objects are to be cached by reference.
+            abstract member IsCacheByRef : bool
+
             /// Specifies if instances of this pickler type are of fixed size.
             member IsOfFixedSize : bool
 
@@ -23,26 +29,17 @@
             /// Pickler type classification
             member TypeKind : TypeKind
 
-            /// The underlying type that this pickler implements.
-            abstract member ImplementationType : System.Type
-
-            /// Cast to a pickler of specific type.
-            abstract member Cast : unit -> Pickler<'S>
-
-            /// Specifies if pickled objects are to be cached by reference.
-            abstract member IsCacheByRef : bool
-
             /// Pickler generation metadata.
             abstract member PicklerInfo : PicklerInfo
             
             /// Specifies if this pickler can be applied to proper subtypes.
             abstract member UseWithSubtypes : bool
 
+            abstract member internal Cast : unit -> Pickler<'S>
+            abstract member internal Unpack : IPicklerUnpacker<'U> -> 'U
+
             abstract member internal UntypedRead : state:ReadState -> tag:string -> obj
             abstract member internal UntypedWrite : state:WriteState -> tag:string -> value:obj -> unit
-
-            abstract member internal Unpack : IPicklerUnpacker<'U> -> 'U
-            abstract member internal InitializeFrom : other:Pickler -> unit
         end
 
     and [<AbstractClass>] Pickler<'T> =
@@ -53,10 +50,10 @@
             abstract member Read : state:ReadState -> tag:string -> 'T
             abstract member Write : state:WriteState -> tag:string -> value:'T -> unit
 
-            override UntypedRead : state:ReadState -> tag:string -> obj
-            override UntypedWrite : state:WriteState -> tag:string -> value:obj -> unit
+            override internal UntypedRead : state:ReadState -> tag:string -> obj
+            override internal UntypedWrite : state:WriteState -> tag:string -> value:obj -> unit
 
-            override Unpack : IPicklerUnpacker<'R> -> 'R
+            override internal Unpack : IPicklerUnpacker<'R> -> 'R
         end
 
     and internal IPicklerUnpacker<'U> =

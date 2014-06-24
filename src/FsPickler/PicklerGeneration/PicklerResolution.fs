@@ -94,8 +94,19 @@
                     let factory = new PicklerFactory(resolver)
                     shape.Accept factory
 
-            // pickler generation complete, copy data to uninitialized binding and return it
-            p0.InitializeFrom pickler
+            // step 4; pickler generation complete, copy data to uninitialized binding and return it
+            p0.Unpack
+                {
+                    // should be IPicklerUnpacker<unit> but F# does not allow this
+                    new IPicklerUnpacker<bool> with
+                        member __.Apply<'T> (p : Pickler<'T>) =
+                            match p with
+                            | :? CompositePickler<'T> as p -> p.InitializeFrom pickler ; true
+                            | _ -> 
+                                let msg = sprintf "Unexpected pickler implementation '%O'" <| p.GetType()
+                                raise <| new PicklerGenerationException(p.Type, msg)
+                } |> ignore
+
             Success p0
 
         with 

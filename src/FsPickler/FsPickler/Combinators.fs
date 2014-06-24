@@ -127,26 +127,26 @@
 
             /// pickler fixpoint combinator
             let fix (F : Pickler<'T> -> Pickler<'T>) =
-                let f = CompositePickler.CreateUninitialized<'T> ()
+                let f = new CompositePickler<'T> ()
                 let f' = F f
-                f.InitializeFrom f' ; f
+                f.InitializeFrom f' ; f :> Pickler<'T>
 
             /// pickler fixpoint combinator
             let fix2 (F : Pickler<'T> -> Pickler<'S> -> Pickler<'T> * Pickler<'S>) =
-                let f = CompositePickler.CreateUninitialized<'T> ()
-                let g = CompositePickler.CreateUninitialized<'S> ()
+                let f = new CompositePickler<'T> ()
+                let g = new CompositePickler<'S> ()
                 let f',g' = F f g
                 f.InitializeFrom f' ; g.InitializeFrom g'
-                f,g
+                f :> Pickler<'T>, g :> Pickler<'S>
 
             /// pickler fixpoint combinator
             let fix3 (F : Pickler<'T> -> Pickler<'S> -> Pickler<'U> -> Pickler<'T> * Pickler<'S> * Pickler<'U>) =
-                let f = CompositePickler.CreateUninitialized<'T> ()
-                let g = CompositePickler.CreateUninitialized<'S> ()
-                let h = CompositePickler.CreateUninitialized<'U> ()
+                let f = new CompositePickler<'T> ()
+                let g = new CompositePickler<'S> ()
+                let h = new CompositePickler<'U> ()
                 let f',g',h' = F f g h
                 f.InitializeFrom f' ; g.InitializeFrom g' ; h.InitializeFrom h'
-                f,g,h
+                f :> Pickler<'T>, g :> Pickler<'S>, h :> Pickler<'U>
 
             /// Experimental support for n-way product types such as records.
             /// See `product` and `field` combinators.

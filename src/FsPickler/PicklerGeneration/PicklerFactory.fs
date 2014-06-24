@@ -20,7 +20,7 @@
         static let visitor =
             {
                 new ITypeVisitor<Pickler> with
-                    member __.Visit<'T> () = CompositePickler.CreateUninitialized<'T> () :> Pickler
+                    member __.Visit<'T> () = new CompositePickler<'T> () :> Pickler
             }
 
         static member Create(shape : TypeShape) = shape.Accept visitor

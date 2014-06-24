@@ -72,6 +72,9 @@
             new CompositePickler<'T>(reader, writer, None, picklerInfo, cacheByRef, ?useWithSubtypes = useWithSubtypes, 
                                                         ?skipHeaderWrite = skipHeaderWrite, ?bypass = bypass, ?skipVisit = skipVisit)
 
+        /// <summary>
+        ///     Uninitialized pickler constructor
+        /// </summary>
         new () = 
             {
                 inherit Pickler<'T>()
@@ -116,13 +119,14 @@
                     let msg = sprintf "Cannot cast pickler of type '%O' to '%O'." typeof<'T> typeof<'S>
                     raise <| new InvalidCastException(msg)
 
-        override p.InitializeFrom(p' : Pickler) : unit =
+        /// Pickler initialization code
+        member internal p.InitializeFrom(p' : Pickler) : unit =
             match p'.Cast<'T> () with
             | :? CompositePickler<'T> as p' ->
                 if p.m_IsInitialized then
-                    invalidOp "Target pickler has already been initialized."
+                    invalidOp "target pickler has already been initialized."
                 elif not p'.m_IsInitialized then 
-                    invalidOp "Source pickler has not been initialized."
+                    raise <| new PicklerGenerationException(p.Type, "source pickler has not been initialized.")
                 else
                     p.m_PicklerInfo <- p'.m_PicklerInfo
                     p.m_IsCacheByRef <- p'.m_IsCacheByRef
@@ -135,7 +139,7 @@
                     p.m_SkipVisit <- p'.m_SkipVisit
                     p.m_IsInitialized <- true
 
-            | _ -> invalidOp <| sprintf "Source pickler is of invalid type (%O)." p'.Type
+            | _ -> raise <| new PicklerGenerationException(p.Type, sprintf "source pickler is of invalid type (%O)." p'.Type)
 
         member internal p.Writer = p.m_Writer
         member internal p.Reader = p.m_Reader
@@ -305,11 +309,6 @@
             | e -> raise <| new FsPicklerException(sprintf "Error deserializing instance of type '%O'." typeof<'T>, e)
 
     and internal CompositePickler =
-        
-        /// <summary>
-        ///     Creates an uninitialized pickler instance.
-        /// </summary>
-        static member CreateUninitialized<'T>() = new CompositePickler<'T> () :> Pickler<'T>
 
         /// <summary>
         ///     Primary constructor for definining a materialized composite pickler
