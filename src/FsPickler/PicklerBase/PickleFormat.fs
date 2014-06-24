@@ -38,7 +38,7 @@
         abstract PreferLengthPrefixInSequences : bool
 
         /// <summary>
-        ///     
+        ///     If specified, serializes full union case name for readability.
         /// </summary>
         abstract SerializeUnionCaseNames : bool
 
@@ -114,7 +114,7 @@
         abstract EndReadObject : unit -> unit
 
         /// <summary>
-        ///     
+        ///     If specified, serializes full union case name for readability.
         /// </summary>
         abstract SerializeUnionCaseNames : bool
 
