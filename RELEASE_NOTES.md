@@ -1,3 +1,8 @@
+#### 0.9.5
+* Pickle format revisions.
+* Add .NET 4.0 release.
+* Overall improvements and fixes.
+
 #### 0.9.4-alpha
 * Major rewrite of the library.
 * Include support for multiple pickle formats.
