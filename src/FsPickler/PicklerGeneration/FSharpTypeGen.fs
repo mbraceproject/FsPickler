@@ -133,14 +133,14 @@
 
             let writer (w : WriteState) (_ : string) (u : 'Union) =
                 let tag = tagReader.Invoke u
-                tagSerializer.WriteTag(w, tag)
+                tagSerializer.WriteTag(w.Formatter, tag)
                 let _,reader,fields,tags,picklers = caseInfo.[tag]
                 let values = reader u
                 for i = 0 to values.Length - 1 do
                     picklers.[i].UntypedWrite w tags.[i] (values.[i])
 
             let reader (r : ReadState) (_ : string) =
-                let tag = tagSerializer.ReadTag r
+                let tag = tagSerializer.ReadTag r.Formatter
                 let ctor,_,fields,tags,picklers = caseInfo.[tag]
                 let values = Array.zeroCreate<obj> picklers.Length
                 for i = 0 to picklers.Length - 1 do
