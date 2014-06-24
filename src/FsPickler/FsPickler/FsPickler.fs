@@ -78,12 +78,8 @@
                     new IObjectVisitor with
                         member __.Visit (value : 'T) = 
                             match box value with
-                            | :? MemberInfo as m -> 
-                                match m.ReflectedType, m.DeclaringType with
-                                | null, null -> ()
-                                | null, dt -> gathered.Add dt |> ignore
-                                | rt, _ -> gathered.Add rt |> ignore
-
+                            | :? MemberInfo as m when m.DeclaringType <> null ->
+                                gathered.Add m.DeclaringType |> ignore
                             | :? Assembly
                             | :? AssemblyInfo -> ()
                             | value -> 
@@ -106,7 +102,7 @@
                     new IObjectVisitor with
                         member __.Visit (value : 'T) = 
                             match box value with
-                            | :? Type | :? AssemblyInfo -> ()
+                            | :? AssemblyInfo -> ()
                             | _ -> gathered.Add value |> ignore
                 }
 
