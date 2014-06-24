@@ -198,5 +198,5 @@ Target "All" DoNothing
   ==> "NuGet -- FsPickler.Json"
   ==> "Release"
 
-RunTargetOrDefault "Release"
-//RunTargetOrDefault "All"
+//RunTargetOrDefault "Release"
+RunTargetOrDefault "All"
