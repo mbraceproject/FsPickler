@@ -51,7 +51,7 @@
             new UnionCaseSerializationHelper(cases)
 
 #if EMIT_IL
-        static member InvokeTagWriter (c : EnvItem<UnionCaseSerializationHelper>) 
+        static member InvokeTagWriter (c : EnvItem<UnionCaseSerializationHelper>)
                                         (w : EnvItem<WriteState>) (tag : EnvItem<int>) 
                                         (ilGen : ILGenerator) =
             c.Load()

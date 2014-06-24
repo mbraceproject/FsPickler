@@ -9,20 +9,17 @@
         static member Create(tagReader : 'T -> int, picklers : Pickler<'T> list) =
             
             let picklers = List.toArray picklers
-            let cacheByRef = picklers |> Array.exists (fun p -> p.IsCacheByRef)
-            let useWithSubtypes = picklers |> Array.forall (fun p -> p.UseWithSubtypes)
 
             let writer (w : WriteState) (tag : string) (t : 'T) =
                 let tag = tagReader t
-                do w.Formatter.WriteInt32 "tag" tag
-                picklers.[tag].Write w "case" t
+                do w.Formatter.WriteInt32 "Tag" tag
+                picklers.[tag].Write w "Value" t
 
             let reader (r : ReadState) (tag : string) =
-                let tag = r.Formatter.ReadInt32 "tag"
-                picklers.[tag].Read r "case"
+                let tag = r.Formatter.ReadInt32 "Tag"
+                picklers.[tag].Read r "Value"
 
-            CompositePickler.Create<'T>(reader, writer, PicklerInfo.Combinator, 
-                                cacheByRef = cacheByRef, useWithSubtypes = useWithSubtypes)
+            CompositePickler.Create<'T>(reader, writer, PicklerInfo.Combinator, cacheByRef = false)
 
 
     type internal WrapPickler =

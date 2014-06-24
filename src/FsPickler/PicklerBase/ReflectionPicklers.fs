@@ -36,7 +36,7 @@
                     PublicKeyToken = pkt
                 }
 
-            new CompositePickler<_>(reader, writer, PicklerInfo.ReflectionType, cacheByRef = true, useWithSubtypes = false)
+            new CompositePickler<_>(reader, writer, PicklerInfo.ReflectionType, cacheByRef = true, skipVisit = true)
 
         let assemblyPickler =
             CompositePickler.Create(
@@ -48,7 +48,7 @@
             CompositePickler.Create(
                 (fun r t -> let aI = assemblyInfoPickler.Reader r t in aI.ToAssemblyName()),
                 (fun w t an -> let aI = AssemblyInfo.OfAssemblyName an in assemblyInfoPickler.Writer w t aI),
-                PicklerInfo.ReflectionType, cacheByRef = true, useWithSubtypes = true)
+                    PicklerInfo.ReflectionType, cacheByRef = true, useWithSubtypes = true)
 
         let stringArrayPickler = arrayPickler.Create <| PrimitivePicklers.mkString()
 
@@ -64,7 +64,8 @@
             let inline mp () : Pickler<MethodInfo> = methodInfoPickler
 
             // note: order of cases must be kept same as type definition
-            // so that tag assignments correspond to internal union tag.
+            // so that tag assignments correspond to internal union tag
+            // as this is the order defined in the UnionCaseSerializationHelper.
             match w.ReflectionCache.GetCompositeMemberInfo m with
             | NamedType (name, aI) ->
                 tagSerializer.WriteTag(formatter, 0)

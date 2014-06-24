@@ -78,10 +78,11 @@
                     new IObjectVisitor with
                         member __.Visit (value : 'T) = 
                             match box value with
+                            | null -> ()
+                            | :? Type as t -> gathered.Add t |> ignore
                             | :? MemberInfo as m when m.DeclaringType <> null ->
                                 gathered.Add m.DeclaringType |> ignore
-                            | :? Assembly
-                            | :? AssemblyInfo -> ()
+
                             | value -> 
                                 match value.GetType() with
                                 | null -> ()
@@ -102,8 +103,8 @@
                     new IObjectVisitor with
                         member __.Visit (value : 'T) = 
                             match box value with
-                            | :? AssemblyInfo -> ()
-                            | _ -> gathered.Add value |> ignore
+                            | null -> ()
+                            | v -> gathered.Add v |> ignore
                 }
 
             do FsPickler.VisitObject(visitor, graph)

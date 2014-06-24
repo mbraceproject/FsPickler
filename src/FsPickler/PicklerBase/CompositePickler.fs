@@ -35,8 +35,9 @@
         val mutable private m_UseWithSubtypes : bool
         val mutable private m_SkipHeaderWrite : bool
         val mutable private m_Bypass : bool
+        val mutable private m_SkipVisit : bool
 
-        private new (reader, writer, nested : Pickler option, picklerInfo, cacheByRef, useWithSubtypes, ?skipHeaderWrite, ?bypass) =
+        private new (reader, writer, nested : Pickler option, picklerInfo, cacheByRef, ?useWithSubtypes, ?skipHeaderWrite, ?bypass, ?skipVisit) =
             {
                 inherit Pickler<'T> ()
 
@@ -50,13 +51,26 @@
                 m_PicklerInfo = picklerInfo
 
                 m_IsCacheByRef = cacheByRef
-                m_UseWithSubtypes = useWithSubtypes
+                m_UseWithSubtypes = defaultArg useWithSubtypes false
                 m_SkipHeaderWrite = defaultArg skipHeaderWrite false
                 m_Bypass = defaultArg bypass false
+                m_SkipVisit = defaultArg skipVisit false
             }
 
-        new (reader, writer, picklerInfo, cacheByRef, useWithSubtypes, ?skipHeaderWrite, ?bypass) =
-            new CompositePickler<'T>(reader, writer, None, picklerInfo, cacheByRef, useWithSubtypes, ?skipHeaderWrite = skipHeaderWrite, ?bypass = bypass)
+        /// <summary>
+        ///     Primary constructor for definining a materialized composite pickler
+        /// </summary>
+        /// <param name="reader">deserialization lambda.</param>
+        /// <param name="writer">serialization lambda.</param>
+        /// <param name="picklerInfo">pickler generation metadata.</param>
+        /// <param name="cacheByRef">enable caching by reference for serialized instances.</param>
+        /// <param name="useWithSubtypes">allow casting of pickler implementation to proper subtypes.</param>
+        /// <param name="skipHeaderWrite">skip header serialization of instances.</param>
+        /// <param name="bypass">pickle using serialization/deserialization lambdas directly.</param>
+        /// <param name="skipVisit">do not apply visitor to instances if specified.</param>
+        new (reader, writer, picklerInfo, cacheByRef, ?useWithSubtypes, ?skipHeaderWrite, ?bypass, ?skipVisit) =
+            new CompositePickler<'T>(reader, writer, None, picklerInfo, cacheByRef, ?useWithSubtypes = useWithSubtypes, 
+                                                        ?skipHeaderWrite = skipHeaderWrite, ?bypass = bypass, ?skipVisit = skipVisit)
 
         new () = 
             {
@@ -74,6 +88,7 @@
                 m_UseWithSubtypes = Unchecked.defaultof<_>
                 m_SkipHeaderWrite = Unchecked.defaultof<_>
                 m_Bypass = Unchecked.defaultof<_>
+                m_SkipVisit = Unchecked.defaultof<_>
             }
 
         override p.ImplementationType = 
@@ -96,7 +111,7 @@
                     let reader = let rf = p.m_Reader in fun r t -> fastUnbox<'S> (rf r t)
 
                     new CompositePickler<'S>(reader, writer, Some(p :> _), p.m_PicklerInfo, p.m_IsCacheByRef, p.m_UseWithSubtypes, 
-                                                skipHeaderWrite = p.m_SkipHeaderWrite, bypass = p.m_Bypass) :> Pickler<'S>
+                                                skipHeaderWrite = p.m_SkipHeaderWrite, bypass = p.m_Bypass, skipVisit = p.m_SkipVisit) :> Pickler<'S>
                 else
                     let msg = sprintf "Cannot cast pickler of type '%O' to '%O'." typeof<'T> typeof<'S>
                     raise <| new InvalidCastException(msg)
@@ -117,6 +132,7 @@
                     p.m_NestedPickler <- p'.m_NestedPickler
                     p.m_SkipHeaderWrite <- p'.m_SkipHeaderWrite
                     p.m_Bypass <- p'.m_Bypass
+                    p.m_SkipVisit <- p'.m_SkipVisit
                     p.m_IsInitialized <- true
 
             | _ -> invalidOp <| sprintf "Source pickler is of invalid type (%O)." p'.Type
@@ -129,8 +145,8 @@
             let formatter = state.Formatter
 
             match state.Visitor with
-            | Some v -> v.Visit value
-            | None -> ()
+            | Some v when not p.m_SkipVisit -> v.Visit value
+            | _ -> ()
 
             try
                 if p.m_Bypass then p.m_Writer state tag value else
@@ -290,10 +306,25 @@
 
     and internal CompositePickler =
         
+        /// <summary>
+        ///     Creates an uninitialized pickler instance.
+        /// </summary>
         static member CreateUninitialized<'T>() = new CompositePickler<'T> () :> Pickler<'T>
-        static member Create<'T>(reader, writer, picklerInfo, cacheByRef : bool, useWithSubtypes : bool, ?skipHeaderWrite : bool, ?bypass : bool) =
-            new CompositePickler<'T>(reader, writer, picklerInfo, cacheByRef = cacheByRef, useWithSubtypes = useWithSubtypes, 
-                                                                            ?skipHeaderWrite = skipHeaderWrite, ?bypass = bypass) :> Pickler<'T>
+
+        /// <summary>
+        ///     Primary constructor for definining a materialized composite pickler
+        /// </summary>
+        /// <param name="reader">deserialization lambda.</param>
+        /// <param name="writer">serialization lambda.</param>
+        /// <param name="picklerInfo">pickler generation metadata.</param>
+        /// <param name="cacheByRef">enable caching by reference for serialized instances.</param>
+        /// <param name="useWithSubtypes">allow casting of pickler implementation to proper subtypes.</param>
+        /// <param name="skipHeaderWrite">skip header serialization of instances.</param>
+        /// <param name="bypass">pickle using serialization/deserialization lambdas directly.</param>
+        /// <param name="skipVisit">do not apply visitor to instances if specified.</param>
+        static member Create<'T>(reader, writer, picklerInfo, cacheByRef : bool, ?useWithSubtypes : bool, ?skipHeaderWrite : bool, ?bypass : bool, ?skipVisit : bool) =
+            new CompositePickler<'T>(reader, writer, picklerInfo, cacheByRef = cacheByRef, ?useWithSubtypes = useWithSubtypes, 
+                                                        ?skipHeaderWrite = skipHeaderWrite, ?bypass = bypass, ?skipVisit = skipVisit) :> Pickler<'T>
 
         static member ObjectPickler =
-            CompositePickler.Create<obj>((fun _ _ -> obj ()), (fun _ _ _ -> ()), PicklerInfo.Object, cacheByRef = true, useWithSubtypes = false)
+            CompositePickler.Create<obj>((fun _ _ -> obj ()), (fun _ _ _ -> ()), PicklerInfo.Object, cacheByRef = true)
