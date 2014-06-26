@@ -98,6 +98,54 @@
             Culture : string
             PublicKeyToken : string
         }
+    with
+        static member OfAssemblyName(an : AssemblyName) =
+            {
+                Name = an.Name
+                Version = 
+                    match an.Version with
+                    | null -> null
+                    | v -> v.ToString()
+
+                Culture =
+                    match an.CultureInfo with
+                    | null -> null
+                    | cI ->
+                        if String.IsNullOrEmpty cI.Name then "neutral"
+                        else cI.Name
+
+                PublicKeyToken =
+                    match an.GetPublicKeyToken () with
+                    | null -> null
+                    | [||] -> ""
+                    | pkt -> Bytes.toBase16String pkt
+            }
+
+        static member OfAssembly(a : Assembly) =
+            a.GetName() |> AssemblyInfo.OfAssemblyName
+
+        member aI.ToAssemblyName () =
+            let an = new AssemblyName()
+
+            an.Name <- aI.Name
+
+            match aI.Version with
+            | null | "" -> ()
+            | version -> an.Version <- new Version(version)
+                
+            match aI.Culture with
+            | null -> ()
+            | "neutral" -> an.CultureInfo <- new CultureInfo("")
+            | culture -> an.CultureInfo <- new CultureInfo(culture)
+
+            match aI.PublicKeyToken with
+            | null -> ()
+            | "" -> an.SetPublicKeyToken [||]
+            | pkt -> an.SetPublicKeyToken(Bytes.ofBase16String pkt)
+
+            an
+
+        member __.AssemblyQualifiedName = __.ToAssemblyName().ToString()
 
     /// <summary>
     ///     Provides facility for user-defined type conversion at 
