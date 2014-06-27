@@ -253,7 +253,7 @@
                 | None -> e
                 | Some d -> d.Invoke(fpicklers, r, e) ; e
 #else
-            let writer (w : WriteState) _ : string) (e : 'Exception) =
+            let writer (w : WriteState) (_ : string) (e : 'Exception) =
                 do defPickler.Writer w "exceptionData" e
 
                 for i = 0 to fields.Length - 1 do
@@ -261,7 +261,7 @@
                     let o = f.GetValue e
                     fpicklers.[i].UntypedWrite w tags.[i] o
 
-            let reader (r : ReadState) _ : string) =
+            let reader (r : ReadState) (_ : string) =
                 let e = defPickler.Reader r "exceptionData"
 
                 for i = 0 to fields.Length - 1 do
