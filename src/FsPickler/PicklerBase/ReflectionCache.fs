@@ -33,6 +33,7 @@
         | Property of Type * (*reflected type*) Type option * (* name *) string * (* isStatic *) bool
         | Field of Type * (*reflected type*) Type option * (* name *) string * (* isStatic *) bool
         | Event of Type * (*reflected type*) Type option * (* name *) string * (* isStatic *) bool
+        // Unknown instance ; cannot serialize
         | Unknown of Type * string
 
 
