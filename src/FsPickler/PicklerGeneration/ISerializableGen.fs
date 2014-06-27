@@ -15,7 +15,26 @@
     open Nessos.FsPickler.PicklerEmit
 #endif
 
-    // pickler combinator for ISerializable types
+    module private ISerializableUtils =
+
+        let inline writeSerializationEntry (w : WriteState) (entry : SerializationEntry) =
+            let formatter = w.Formatter
+            formatter.BeginWriteObject "entry" ObjectFlags.None
+            formatter.WriteString "Name" entry.Name
+            w.TypePickler.Write w "Type" entry.ObjectType
+            let op = w.PicklerResolver.Resolve entry.ObjectType
+            op.UntypedWrite w "Value" entry.Value
+            formatter.EndWriteObject()
+
+        let inline readSerializationEntry (r : ReadState) (sI : SerializationInfo) =
+            let formatter = r.Formatter
+            let _ = formatter.BeginReadObject "entry"
+            let name = formatter.ReadString "Name"
+            let objectType = r.TypePickler.Read r "Type"
+            let op = r.PicklerResolver.Resolve objectType
+            let value = op.UntypedRead r "Value"
+            sI.AddValue(name, value)
+            formatter.EndReadObject()
 
     type internal ISerializablePickler =
 
@@ -30,7 +49,7 @@
 
                 let isDeserializationCallback = typeof<IDeserializationCallback>.IsAssignableFrom typeof<'T>
 
-                let objPickler = resolver.Resolve<obj> ()
+                let entryP = resolver.Resolve<SerializationEntry> ()
 
                 let inline run (dele : Action<'T, StreamingContext> []) w x =
                     for d in dele do
@@ -44,30 +63,36 @@
                 let inline create (si : SerializationInfo) (sc : StreamingContext) = 
                     ctorInfo.Invoke [| si :> obj ; sc :> obj |] |> fastUnbox<'T>
 #endif
-                let writer (w : WriteState) (tag : string) (x : 'T) =
-                    run onSerializing w x
+                let writer (w : WriteState) (tag : string) (t : 'T) =
+                    let formatter = w.Formatter
+
+                    run onSerializing w t
                     let sI = new SerializationInfo(typeof<'T>, new FormatterConverter())
-                    x.GetObjectData(sI, w.StreamingContext)
-                    w.Formatter.WriteInt32 "memberCount" sI.MemberCount
+                    t.GetObjectData(sI, w.StreamingContext)
+
+                    formatter.BeginWriteObject "entries" ObjectFlags.IsSequenceHeader
                     let enum = sI.GetEnumerator()
                     while enum.MoveNext() do
-                        w.Formatter.WriteString "name" enum.Current.Name
-                        objPickler.Write w "value" enum.Current.Value
+                        formatter.WriteNextSequenceElement true
+                        ISerializableUtils.writeSerializationEntry w enum.Current
+                    formatter.WriteNextSequenceElement false
+                    formatter.EndWriteObject ()
 
-                    run onSerialized w x
+                    run onSerialized w t
 
                 let reader (r : ReadState) (tag : string) =
+                    let formatter = r.Formatter
                     let sI = new SerializationInfo(typeof<'T>, new FormatterConverter())
-                    let memberCount = r.Formatter.ReadInt32 "memberCount"
-                    for i = 1 to memberCount do
-                        let name = r.Formatter.ReadString "name"
-                        let v = objPickler.Read r "value"
-                        sI.AddValue(name, v)
 
-                    let x = create sI r.StreamingContext
+                    let _ = formatter.BeginReadObject "entries"
+                    while formatter.ReadNextSequenceElement() do
+                        ISerializableUtils.readSerializationEntry r sI
+                    formatter.EndReadObject ()
 
-                    run onDeserialized r x
-                    if isDeserializationCallback then (fastUnbox<IDeserializationCallback> x).OnDeserialization null
-                    x
+                    let t = create sI r.StreamingContext
+
+                    run onDeserialized r t
+                    if isDeserializationCallback then (fastUnbox<IDeserializationCallback> t).OnDeserialization null
+                    t
 
                 CompositePickler.Create(reader, writer, PicklerInfo.ISerializable, cacheByRef = true, useWithSubtypes = false)

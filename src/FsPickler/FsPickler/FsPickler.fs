@@ -49,6 +49,16 @@
         // Misc utils
         //
 
+        /// <summary>
+        ///     Creates a deep clone of given object.
+        /// </summary>
+        /// <param name="t"></param>
+        static member Clone (t : 'T) =
+            use m = new System.IO.MemoryStream()
+            defaultPickler.Value.Serialize(m, t, leaveOpen = true)
+            m.Position <- 0L
+            defaultPickler.Value.Deserialize<'T>(m)
+
         /// <summary>Compute size in bytes for given input.</summary>
         /// <param name="value">input value.</param>
         static member ComputeSize<'T>(value : 'T) = defaultPickler.Value.ComputeSize(value)
