@@ -70,13 +70,26 @@
                     let sI = new SerializationInfo(typeof<'T>, new FormatterConverter())
                     t.GetObjectData(sI, w.StreamingContext)
 
-                    formatter.BeginWriteObject "serializationEntries" ObjectFlags.IsSequenceHeader
                     let enum = sI.GetEnumerator()
-                    while enum.MoveNext() do
-                        formatter.WriteNextSequenceElement true
-                        ISerializableUtils.writeSerializationEntry w enum.Current
-                    formatter.WriteNextSequenceElement false
-                    formatter.EndWriteObject ()
+
+                    if formatter.PreferLengthPrefixInSequences then
+                        formatter.WriteInt32 "memberCount" sI.MemberCount
+                        formatter.BeginWriteObject "serializationEntries" ObjectFlags.IsSequenceHeader
+
+                        while enum.MoveNext() do
+                            ISerializableUtils.writeSerializationEntry w enum.Current
+
+                        formatter.EndWriteObject ()
+
+                    else
+                        formatter.BeginWriteObject "serializationEntries" ObjectFlags.IsSequenceHeader
+
+                        while enum.MoveNext() do
+                            formatter.WriteNextSequenceElement true
+                            ISerializableUtils.writeSerializationEntry w enum.Current
+
+                        formatter.WriteNextSequenceElement false
+                        formatter.EndWriteObject ()
 
                     run onSerialized w t
 
@@ -84,10 +97,17 @@
                     let formatter = r.Formatter
                     let sI = new SerializationInfo(typeof<'T>, new FormatterConverter())
 
-                    let _ = formatter.BeginReadObject "serializationEntries"
-                    while formatter.ReadNextSequenceElement() do
-                        ISerializableUtils.readSerializationEntry r sI
-                    formatter.EndReadObject ()
+                    if formatter.PreferLengthPrefixInSequences then
+                        let memberCount = formatter.ReadInt32 "memberCount"
+                        let _ = formatter.BeginReadObject "serializationEntries"
+                        for i = 1 to memberCount do
+                            ISerializableUtils.readSerializationEntry r sI
+                        formatter.EndReadObject ()
+                    else
+                        let _ = formatter.BeginReadObject "serializationEntries"
+                        while formatter.ReadNextSequenceElement() do
+                            ISerializableUtils.readSerializationEntry r sI
+                        formatter.EndReadObject ()
 
                     let t = create sI r.StreamingContext
 
