@@ -18,3 +18,7 @@ let xp' = Xml.pickle fPickler (fun x -> x + 1)
 
 Binary.unpickle fPickler bp' 41
 Xml.unpickle fPickler xp' 41
+
+open System
+
+//let e = Activator.CreateInstance<NotFiniteNumberException>()

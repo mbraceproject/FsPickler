@@ -70,7 +70,7 @@
                     let sI = new SerializationInfo(typeof<'T>, new FormatterConverter())
                     t.GetObjectData(sI, w.StreamingContext)
 
-                    formatter.BeginWriteObject "entries" ObjectFlags.IsSequenceHeader
+                    formatter.BeginWriteObject "serializationEntries" ObjectFlags.IsSequenceHeader
                     let enum = sI.GetEnumerator()
                     while enum.MoveNext() do
                         formatter.WriteNextSequenceElement true
@@ -84,7 +84,7 @@
                     let formatter = r.Formatter
                     let sI = new SerializationInfo(typeof<'T>, new FormatterConverter())
 
-                    let _ = formatter.BeginReadObject "entries"
+                    let _ = formatter.BeginReadObject "serializationEntries"
                     while formatter.ReadNextSequenceElement() do
                         ISerializableUtils.readSerializationEntry r sI
                     formatter.EndReadObject ()

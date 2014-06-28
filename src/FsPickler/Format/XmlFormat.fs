@@ -242,6 +242,7 @@
             member __.EndReadObject() =
                 if reader.IsEmptyElement then
                     reader.MoveNext()
+                    isAtEmptySequenceHeader <- false
                 else
                     reader.ReadEndElement()
 
