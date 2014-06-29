@@ -1,3 +1,7 @@
+#### 0.9.5.1-alpha
+* Pickle format refinements.
+* Bug fixes.
+
 #### 0.9.5-alpha
 * Pickle format refinements.
 * Add .NET 4.0 release.
