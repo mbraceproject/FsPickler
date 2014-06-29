@@ -19,7 +19,8 @@
     type CompositeMemberInfo =
         // System.Type breakdown
         | NamedType of string * AssemblyInfo
-        | ArrayType of Type * (* rank *) int option
+        | Array of Type
+        | ArrayMultiDimensional of Type * (* rank *) int
         | Pointer of Type
         | ByRef of Type
         | GenericTypeInstance of Type * Type []
@@ -78,9 +79,9 @@
                 let et = t.GetElementType()
                 let rk = t.GetArrayRank()
                 if rk = 1 && et.MakeArrayType() = t then
-                    ArrayType(et, None)
+                    Array et
                 else
-                    ArrayType (et, Some rk)
+                    ArrayMultiDimensional (et, rk)
 
             elif t.IsPointer then
                 let et = t.GetElementType()
@@ -175,11 +176,8 @@
             with e ->
                 raise <| new FsPicklerException("FsPickler: Type load error.", e)
 
-        | ArrayType(et, rk) -> 
-            match rk with
-            | None -> et.MakeArrayType() |> fastUnbox<MemberInfo>
-            | Some r -> et.MakeArrayType(r) |> fastUnbox<MemberInfo>
-
+        | Array et -> et.MakeArrayType() |> fastUnbox<MemberInfo>
+        | ArrayMultiDimensional (et, rk) -> et.MakeArrayType(rk) |> fastUnbox<MemberInfo>
         | Pointer et -> et.MakePointerType() |> fastUnbox<MemberInfo>
         | ByRef et -> et.MakeByRefType() |> fastUnbox<MemberInfo>
 
@@ -235,15 +233,13 @@
             let inline append (x : string) = sb.Append x |> ignore
             match getInfo t with
             | NamedType(name, _) -> append name
-            | ArrayType(et, rk) ->
+            | Array et -> generate sb et ; append "[]"
+            | ArrayMultiDimensional(et, 1) -> generate sb et ; append "[*]"
+            | ArrayMultiDimensional(et, rk) ->
                 generate sb et
-                match rk with
-                | None -> append "[]"
-                | Some 1 -> append "[*]"
-                | Some r ->
-                    append "["
-                    for i = 1 to r - 1 do append ","
-                    append "]"
+                append "["
+                for i = 1 to rk - 1 do append ","
+                append "]"
 
             | Pointer et ->
                 generate sb et
