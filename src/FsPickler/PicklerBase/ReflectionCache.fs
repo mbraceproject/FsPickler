@@ -125,7 +125,7 @@
                     let signature = getMethodSignature m
                     Method(m.DeclaringType, getReflectedType m, signature, m.IsStatic)
                 else
-                    let mParams = m.GetParameterTypes()
+                    let mParams = m.GetGenericArguments()
                     GenericMethodInstance(gm, mParams)
             else
                 let signature = getMethodSignature m
@@ -137,7 +137,7 @@
             Constructor(dt, ctor.IsStatic, ps)
 
         | :? PropertyInfo as p ->
-            let dt = p.ReflectedType
+            let dt = p.DeclaringType
             let isStatic = let m = p.GetGetMethod(true) in m.IsStatic
             Property(dt, getReflectedType p, p.Name, isStatic)
 
@@ -159,7 +159,7 @@
                         (getMethodSignature : MethodInfo -> string) (mI : CompositeMemberInfo) =
 
         let inline getFlags isStatic =
-            let allVisibility = BindingFlags.Public ||| BindingFlags.NonPublic
+            let allVisibility = BindingFlags.Public ||| BindingFlags.NonPublic ||| BindingFlags.FlattenHierarchy
             allVisibility ||| (if isStatic then BindingFlags.Static else BindingFlags.Instance)
 
         match mI with

@@ -2,7 +2,6 @@
 
     open System
     open System.Reflection
-    open System.Runtime.Serialization.Formatters.Binary
 
     open NUnit.Framework
 
@@ -29,9 +28,26 @@
                 let msg = sprintf "An unexpected exception type was thrown\nExpected: '%s'\n but was: '%s'." (e.GetType().Name) typeof<'Exception>.Name
                 raise <| new AssertionException(msg)
 
-        let private bf = new BinaryFormatter()
-        let cloneObject(t : 'T) =
-            use m = new System.IO.MemoryStream()
-            bf.Serialize(m, t)
-            m.Position <- 0L
-            bf.Deserialize(m) :?> 'T
+
+        type AppDomainManager private () =
+            static let container = new System.Collections.Concurrent.ConcurrentDictionary<string, AppDomain>()
+
+            static let initDomain (name : string) =
+                let currentDomain = AppDomain.CurrentDomain
+                let appDomainSetup = currentDomain.SetupInformation
+                let evidence = new Security.Policy.Evidence(currentDomain.Evidence)
+                AppDomain.CreateDomain(name, evidence, appDomainSetup)
+
+            static member GetAppDomain(name : string) =
+                let ok, value = container.TryGetValue name
+                if ok then value
+                else
+                    container.GetOrAdd(name, initDomain)
+
+            static member Activate<'T when 'T :> MarshalByRefObject>(domain : string, ctorParams : obj []) =
+                let domain = AppDomainManager.GetAppDomain(domain)
+                let assemblyName = typeof<'T>.Assembly.FullName
+                let typeName = typeof<'T>.FullName
+                let culture = System.Globalization.CultureInfo.CurrentCulture
+                let handle = domain.CreateInstance(assemblyName, typeName, false, allFlags, null, ctorParams, culture, [||])
+                handle.Unwrap() :?> 'T

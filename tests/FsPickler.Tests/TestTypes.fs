@@ -26,6 +26,14 @@
 
         let rec int2Peano n = match n with 0 -> Zero | n -> Succ(int2Peano(n-1))
 
+        let mkPeanoPickler () =
+            Pickler.fix(fun peanoP -> 
+                peanoP 
+                |> Pickler.option 
+                |> Pickler.wrap 
+                    (function None -> Zero | Some p -> Succ p) 
+                    (function Zero -> None | Succ p -> Some p))
+
         type ClassWithGenericMethod =
             static member Method<'T,'S> () = Unchecked.defaultof<'T>, Unchecked.defaultof<'S>
 
@@ -155,7 +163,6 @@
 
         exception FSharpException of int * string
 
-
         type BinTree<'T> =
             | Leaf
             | Node of 'T * BinTree<'T> * BinTree<'T>
@@ -240,9 +247,11 @@
                 try Some (t, Activator.CreateInstance t)
                 with _ -> None
 
-            // only test things that are successfully serialized by BinaryFormatter
+            let fo = FailoverPickler.Create()
+
+            // only test things that are successfully serialized by other Picklers
             let filterObject (t : Type, o : obj) =
-                try cloneObject o |> ignore ; true
+                try fo.Pickle o |> ignore ; true
                 with _ -> false
             
             assembly.GetTypes()

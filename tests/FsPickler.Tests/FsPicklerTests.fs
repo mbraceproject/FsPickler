@@ -16,66 +16,40 @@
     open FsUnit
     open FsCheck
 
-    [<TestFixture("FsPickler.Binary")>]
-    [<TestFixture("FsPickler.Xml")>]
-    [<TestFixture("FsPickler.Json")>]
-    [<TestFixture("FsPickler.Json-headerless")>]
-    type ``FsPickler Tests`` (picklerName : string) as self =
-
-        let pickler =
-            match picklerName with
-            | "FsPickler.Binary" -> FsPickler.CreateBinary() :> BasePickler
-            | "FsPickler.Xml" -> FsPickler.CreateXml(indent = true) :> BasePickler
-            | "FsPickler.Json" -> FsPickler.CreateJson(indent = true) :> BasePickler
-            | "FsPickler.Json-headerless" -> 
-                let jsp = FsPickler.CreateJson(omitHeader = true)
-                jsp.UseCustomTopLevelSequenceSeparator <- true
-                jsp.SequenceSeparator <- Environment.NewLine
-                jsp :> BasePickler
-
-            | _ -> invalidArg "name" <| sprintf "unexpected pickler format '%s'." picklerName
+    [<AbstractClass>]
+    [<TestFixture(PickleFormat.Binary)>]
+    [<TestFixture(PickleFormat.Xml)>]
+    [<TestFixture(PickleFormat.Json)>]
+    [<TestFixture(PickleFormat.Json_Headerless)>]
+    type ``FsPickler Tests`` (format : string) as self =
 
         let _ = Arb.register<FsPicklerGenerators> ()
 
-        let testRoundtrip x = self.TestRoundtrip x
-        let testEquals x = self.TestRoundtrip x |> should equal x
+        let manager = FsPicklerManager(format)
+        let pickler = manager.Pickler
+
+        let testRoundtrip (x : 'T) = 
+            let bytes = self.Pickle x
+            pickler.UnPickle<'T>(bytes)
+
+        let testEquals x = 
+            let y = testRoundtrip x 
+            y |> should equal x
+
         let testReflected x =
-            let y = self.TestRoundtrip x
+            let y = testRoundtrip x
             if obj.ReferenceEquals(x, null) then
                 y |> should equal x
             else
                 y.GetType() |> should equal (x.GetType())
                 y.ToString() |> should equal (x.ToString())
 
-        member __.Pickler = pickler
+        member __.PicklerManager = manager
 
-        abstract TestPickle : Pickler<'T> -> 'T -> byte []
-        default __.TestPickle p (t : 'T) = pickler.Pickle(p,t)
+        abstract IsRemotedTest : bool
 
-        abstract TestUnPickle<'T> : Pickler<'T> -> byte [] -> 'T
-        default __.TestUnPickle<'T> p (pickle : byte []) : 'T = pickler.UnPickle<'T>(p, pickle)
-
-        abstract TestSequenceRoundtrip<'T when 'T : equality> : seq<'T> -> unit
-        default __.TestSequenceRoundtrip (xs : seq<'T>) =
-            use m = new MemoryStream()
-            let length = pickler.SerializeSequence(m, xs, leaveOpen = true)
-            m.Position <- 0L
-            let xs' = pickler.DeserializeSequence<'T>(m)
-            use enum = xs'.GetEnumerator()
-
-            for i,x in xs |> Seq.mapi (fun i x -> (i,x)) do
-                if enum.MoveNext() then 
-                    if enum.Current = x then ()
-                    else
-                        failwithf "element %d: expected '%A' but was '%A'." i x enum.Current
-                else
-                    failwithf "sequence terminated early at %d." i
-                    
-
-        abstract TestRoundtrip : 'T -> 'T
-        default __.TestRoundtrip (t : 'T) = 
-            let pickle = pickler.Pickle t
-            pickler.UnPickle pickle
+        abstract Pickle : 'T -> byte []
+        abstract PickleF : (BasePickler -> byte []) -> byte []
 
         //
         //  Primitive Serialization tests
@@ -121,7 +95,7 @@
         member __.``1. Primitive: char`` () = Check.QuickThrowOnFail<char> testEquals
 
         [<Test; Category("Primitives")>]
-        member __.``1. Primitive: string`` () = testEquals (null : string) ; Check.QuickThrowOnFail<string> testEquals
+        member __.``1. Primitive: string`` () = Check.QuickThrowOnFail<string> testEquals
 
         [<Test; Category("Primitives")>]
         member __.``1. Primitive: date`` () = 
@@ -179,7 +153,8 @@
 
         [<Test; Category("Reflection types")>]
         member __.``2. Reflection: Assembly`` () =
-            System.AppDomain.CurrentDomain.GetAssemblies()
+            AppDomain.CurrentDomain.GetAssemblies()
+            |> Array.filter (fun a -> if self.IsRemotedTest then a.GlobalAssemblyCache else true)
             |> Array.iter testEquals
 
         [<Test; Category("Reflection types")>]
@@ -424,7 +399,7 @@
         [<Test; Category("FsPickler Generic tests")>]
         member __.``5. Object: should fail at non-serializable type`` () =
             let m = box <| new System.IO.MemoryStream()
-            shouldFailwith<NonSerializableTypeException>(fun () -> self.TestPickle Pickler.auto m |> ignore)
+            shouldFailwith<NonSerializableTypeException>(fun () -> pickler.Pickle m |> ignore)
 
         [<Test; Category("FsPickler Generic tests")>]
         member __.``5. Object: cyclic object`` () = testReflected <| CyclicClass()
@@ -446,6 +421,25 @@
             let g' = testRoundtrip g
 
             areEqualGraphs g g' |> should equal true
+
+        member self.TestSequenceRoundtrip (xs : seq<'T>) =
+            let bytes =
+                self.PickleF(fun p ->
+                    use m = new MemoryStream()
+                    let length = p.SerializeSequence(m, xs, leaveOpen = true)
+                    m.ToArray())
+
+            use m = new MemoryStream(bytes)
+            let xs' = pickler.DeserializeSequence<'T>(m)
+            use enum = xs'.GetEnumerator()
+
+            for i,x in xs |> Seq.mapi (fun i x -> (i,x)) do
+                if enum.MoveNext() then 
+                    if enum.Current = x then ()
+                    else
+                        failwithf "element %d: expected '%A' but was '%A'." i x enum.Current
+                else
+                    failwithf "sequence terminated early at %d." i
 
         [<Test; Category("FsPickler Generic tests")>]
         member __.``5. Object: int sequence`` () =
@@ -474,23 +468,28 @@
             __.TestSequenceRoundtrip records
 
         [<Test; Category("FsPickler Generic tests")>]
-        member __.``5. Object: sequence pickler`` () =
-            let seqPickler = Pickler.seq Pickler.int
+        member self.``5. Object: sequence pickler`` () =
+            let data =
+                self.PickleF(fun p ->
+                    let seqPickler = Pickler.seq Pickler.int
 
-            let state = ref 0
-            let sequence =
-                seq {
-                    while !state < 100 do
-                        yield !state
-                        incr state
-                }
-            
-            let sequence' = sequence |> self.TestPickle seqPickler |> self.TestUnPickle seqPickler
+                    let state = ref 0
+                    let sequence =
+                        seq {
+                            while !state < 100 do
+                                yield !state
+                                incr state
+                        }
 
-            // check that sequence has been evaluated
-            !state |> should equal 100
+                    let data = p.Pickle(seqPickler, sequence)
 
-            sequence' |> Seq.length |> should equal 100
+                    !state |> should equal 100
+
+                    data)
+
+            pickler.UnPickle(Pickler.seq Pickler.int, data) 
+            |> Seq.length 
+            |> should equal 100
 
 
         //
@@ -590,25 +589,26 @@
             Check.QuickThrowOnFail<Forest<int * string>> testEquals
 
         [<Test; Category("FSharp type tests")>]
-        member __.``7. FSharp: combinator-based recursive union`` () =
-            let pp = 
-                Pickler.fix(fun peanoP -> 
-                    peanoP 
-                    |> Pickler.option 
-                    |> Pickler.wrap 
-                        (function None -> Zero | Some p -> Succ p) 
-                        (function Zero -> None | Succ p -> Some p))
+        member self.``7. FSharp: combinator-based recursive union`` () =
+            let data = 
+                self.PickleF(fun p ->
+                    let n = int2Peano 100
+                    let pp = mkPeanoPickler()
+                    p.Pickle(pp, n))
 
-            let p = int2Peano 100
-
-            p |> self.TestPickle pp |> self.TestUnPickle pp |> should equal p
+            pickler.UnPickle(mkPeanoPickler(), data) |> should equal (int2Peano 100)
 
         [<Test; Category("FSharp type tests")>]
-        member __.``7. FSharp: combinator-based mutual recursive union`` () =
-            let tp,_ = getTreeForestPicklers Pickler.int
-            let t = nTree 6
+        member self.``7. FSharp: combinator-based mutual recursive union`` () =
+            let data =
+                self.PickleF(fun p ->
+                    let tp,_ = getTreeForestPicklers Pickler.int
+                    let t = nTree 6
 
-            t |> self.TestPickle tp |> self.TestUnPickle tp |> should equal t
+                    p.Pickle(tp, t))
+
+            pickler.UnPickle(getTreeForestPicklers Pickler.int |> fst, data)
+            |> should equal (nTree 6)
 
         [<Test; Category("FSharp type tests")>]
         member __.``7. FSharp: record`` () = 
@@ -625,12 +625,19 @@
 
         [<Test; Category("FSharp type tests")>]
         member __.``7. FSharp: exception`` () =
-            let e = FSharpException(42, "fortyTwo") :?> FSharpException |> addStackTrace
-            testReflected e
-            let e' = testRoundtrip e
-            // test exception field serialization
-            e'.Data0 |> should equal e.Data0
-            e'.Data1 |> should equal e.Data1
+            let mkExn () = FSharpException(42, "fortyTwo") :?> FSharpException |> addStackTrace
+
+            // F# exception serialization is broken
+            // so need to make sure that serialization is initialized at serialization domain
+            // rather than copied
+            let pickle = self.PickleF(fun p -> p.Pickle(mkExn()))
+            
+            let e0 = pickler.UnPickle<FSharpException>(pickle)
+            let e = mkExn()
+
+            e0.ToString() |> should equal (e.ToString())
+            e0.Data0 |> should equal e.Data0
+            e0.Data1 |> should equal e.Data1
 
         [<Test; Category("FSharp type tests")>]
         member __.``7. FSharp: map`` () =
@@ -714,9 +721,9 @@
 
         member t.TestTypeMismatch<'In, 'Out> (v : 'In) = 
             fun () ->
-                t.TestPickle<'In> Pickler.auto<'In> v 
-                |> t.TestUnPickle<'Out> Pickler.auto<'Out>
-                |> ignore
+                let pickle = pickler.Pickle(Pickler.auto<'In>, v)
+                let result = pickler.UnPickle<'Out>(Pickler.auto<'Out>, pickle)
+                ()
 
             |> shouldFailwith<InvalidPickleTypeException>
 
@@ -775,5 +782,3 @@
                 raise <| new AssertionException(msg)
             else
                 printfn "Failed Serializations: %d out of %d." failedResults results.Length
-
-
