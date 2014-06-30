@@ -120,7 +120,10 @@
                 else
                     let s = f t
                     cache.TryAdd(t,s) |> ignore
+#if DEBUG
+#else
                     cache'.TryAdd(s,t) |> ignore
+#endif
                     s
 
             member __.G(s : 'S) =
@@ -128,8 +131,12 @@
                 if found then t
                 else
                     let t = g s
-                    cache.TryAdd(t,s) |> ignore
                     cache'.TryAdd(s,t) |> ignore
+#if DEBUG
+#else
+                    cache.TryAdd(t,s) |> ignore
+#endif
+
                     t
 
         type SerializationInfo with
