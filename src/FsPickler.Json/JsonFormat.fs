@@ -1,8 +1,10 @@
-﻿namespace Nessos.FsPickler
+﻿namespace Nessos.FsPickler.Json
 
     open System
     open System.IO
     open System.Text
+
+    open Nessos.FsPickler
 
     type JsonPickleFormatProvider internal (indent, omitHeader) as self =
 

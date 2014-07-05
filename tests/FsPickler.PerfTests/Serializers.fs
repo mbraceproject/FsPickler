@@ -10,6 +10,8 @@
     open ProtoBuf
 
     open Nessos.FsPickler
+    open Nessos.FsPickler.Json
+
     open PerfUtil
 
     type ISerializer =

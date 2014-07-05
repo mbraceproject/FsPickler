@@ -3,6 +3,7 @@
     open System
 
     open Nessos.FsPickler
+    open Nessos.FsPickler.Json
 
     [<RequireQualifiedAccess>]
     module PickleFormat =

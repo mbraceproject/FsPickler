@@ -3,9 +3,12 @@
     open System
     open System.IO
 
+    [<StructuralEquality>]
+    [<StructuralComparison>]
     type HashResult =
         {
             Algorithm : string
+            Type : string
             Length : int64
             Hash : byte []
         }

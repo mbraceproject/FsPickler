@@ -270,12 +270,15 @@
                 | Some h -> h.Create()
                 | None -> new MurMur3Stream() :> HashStream
 
+            let signature = reflectionCache.GetTypeSignature typeof<'T>
+
             match pickler with
             | None -> bp.Serialize(hashStream, value)
             | Some p -> bp.Serialize(p, hashStream, value)
 
             {
                 Algorithm = hashStream.HashAlgorithm
+                Type = signature
                 Length = hashStream.Length
                 Hash = hashStream.ComputeHash()
             }

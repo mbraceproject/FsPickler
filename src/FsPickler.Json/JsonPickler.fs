@@ -1,8 +1,8 @@
-﻿namespace Nessos.FsPickler
+﻿namespace Nessos.FsPickler.Json
 
     open System
 
-    open Nessos.FsPickler.Utils
+    open Nessos.FsPickler
 
     type internal OAttribute = System.Runtime.InteropServices.OptionalAttribute
     type internal DAttribute = System.Runtime.InteropServices.DefaultParameterValueAttribute

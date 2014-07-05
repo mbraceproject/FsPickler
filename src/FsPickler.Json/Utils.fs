@@ -1,12 +1,15 @@
-﻿namespace Nessos.FsPickler
+﻿namespace Nessos.FsPickler.Json
 
     open System
     open System.IO
 
     open Newtonsoft.Json
 
+    open Nessos.FsPickler
+
     #nowarn "1204"
 
+    [<AutoOpen>]
     module internal Utils =
 
         let inline fastUnbox<'T> (x : obj) = 

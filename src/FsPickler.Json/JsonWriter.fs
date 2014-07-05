@@ -1,4 +1,4 @@
-﻿namespace Nessos.FsPickler
+﻿namespace Nessos.FsPickler.Json
 
     open System
     open System.IO
@@ -6,8 +6,7 @@
 
     open Newtonsoft.Json
 
-    open Nessos.FsPickler.Utils
-
+    open Nessos.FsPickler
 
     type JsonPickleWriter internal (textWriter : TextWriter, omitHeader, indented, isTopLevelSequence, separator, leaveOpen) =
         

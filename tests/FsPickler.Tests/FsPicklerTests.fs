@@ -8,6 +8,7 @@
     open System.Runtime.Serialization
 
     open Nessos.FsPickler
+    open Nessos.FsPickler.Json
     open Nessos.FsPickler.Combinators
 
     open Nessos.FsPickler.Tests.TestTypes

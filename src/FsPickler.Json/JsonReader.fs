@@ -1,4 +1,4 @@
-﻿namespace Nessos.FsPickler
+﻿namespace Nessos.FsPickler.Json
 
     open System
     open System.Collections.Generic
@@ -7,9 +7,9 @@
     open System.Numerics
     open System.Text
 
-    open Nessos.FsPickler.Utils
-
     open Newtonsoft.Json
+
+    open Nessos.FsPickler
 
     type JsonPickleReader internal (textReader : TextReader, omitHeader, isTopLevelSequence, leaveOpen) =
 
