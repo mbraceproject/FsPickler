@@ -9,7 +9,7 @@ using FSP = Nessos.FsPickler;
 namespace Nessos.CsPickler
 {
     /// <summary>
-    ///     Xml FsPickler serializer
+    ///     Defines an Xml serializer instance.
     /// </summary>
     public class XmlPickler : CsPicklerText
     {
@@ -21,10 +21,9 @@ namespace Nessos.CsPickler
         }
 
         /// <summary>
-        ///     Creates a new Xml FsPickler instance.
+        ///     Creates a new XmlPickler instance.
         /// </summary>
         /// <param name="indent">indent xml serializations; defaults to false.</param>
-        /// <returns>Xml FsPickler instance.</returns>
         public static XmlPickler Create(bool indent = false)
         {
             var xp = new FSP.XmlPickler();

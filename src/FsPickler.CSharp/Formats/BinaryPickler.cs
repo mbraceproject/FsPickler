@@ -9,7 +9,7 @@ using FSP = Nessos.FsPickler;
 namespace Nessos.CsPickler
 {
     /// <summary>
-    ///     Binary FsPickler serializer.
+    ///     Defines a binary serializer instance.
     /// </summary>
     public class BinaryPickler : CsPicklerBase
     {
@@ -21,10 +21,9 @@ namespace Nessos.CsPickler
         }
 
         /// <summary>
-        ///     Creates a new Binary FsPickler instance.
+        ///     Creates a new BinaryPickler instance.
         /// </summary>
         /// <param name="forceLittleEndian">force little-endian encoding in primitive arrays but is slower; defaults to false.</param>
-        /// <returns>Binary Pickler.</returns>
         public static BinaryPickler Create(bool forceLittleEndian = false)
         {
             var bp = new FSP.BinaryPickler();

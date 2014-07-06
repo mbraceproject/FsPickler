@@ -10,36 +10,34 @@ using HashResult = Nessos.FsPickler.Hashing.HashResult;
 namespace Nessos.CsPickler
 {
     /// <summary>
-    ///     Public API.
+    ///     Provides a collection of utilities and factory methods.
     /// </summary>
     public static class CsPickler
     {
         /// <summary>
-        ///     Creates a new Binary FsPickler instance.
+        ///     Creates a new BinaryPickler instance.
         /// </summary>
         /// <param name="forceLittleEndian">force little-endian encoding in primitive arrays but is slower; defaults to false.</param>
-        /// <returns>Binary Pickler.</returns>
+        /// <returns>BinaryPickler instance.</returns>
         public static BinaryPickler CreateBinary(bool forceLittleEndian = false) 
         {
             return BinaryPickler.Create(forceLittleEndian);
         }
 
         /// <summary>
-        ///     Creates a new Xml FsPickler instance.
+        ///     Creates a new XmlPickler instance.
         /// </summary>
         /// <param name="indent">indent xml serializations; defaults to false.</param>
-        /// <returns>Xml FsPickler instance.</returns>
         public static XmlPickler CreateXml(bool indent = false)
         {
             return XmlPickler.Create(indent);
         }
 
         /// <summary>
-        ///     Creates a new Json FsPickler instance.
+        ///     Creates a new JsonPickler instance.
         /// </summary>
-        /// <param name="indent">Indent Json serialization.</param>
-        /// <param name="omitHeader">Omit FsPickler metadata at the serialization header.</param>
-        /// <returns>a JsonPickler instance.</returns>
+        /// <param name="indent">indent json serializations; defaults to false.</param>
+        /// <param name="omitHeader">omit FsPickler metadata at the serialization header; defaults to false.</param>
         public static JsonPickler CreateJson(bool indent = false, bool omitHeader = false)
         {
             return JsonPickler.Create(indent:indent, omitHeader:omitHeader);
@@ -49,7 +47,6 @@ namespace Nessos.CsPickler
         ///     Checks if given type is serializable.
         /// </summary>
         /// <param name="type">input type.</param>
-        /// <returns></returns>
         public static bool IsSerializableType(Type type)
         {
             return FSP.IsSerializableType(type);
@@ -59,7 +56,6 @@ namespace Nessos.CsPickler
         ///     Checks if given type is serializable.
         /// </summary>
         /// <typeparam name="T">input type.</typeparam>
-        /// <returns></returns>
         public static bool IsSerializableType<T>()
         {
             return FSP.IsSerializableType<T>();

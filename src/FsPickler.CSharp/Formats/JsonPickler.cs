@@ -9,7 +9,7 @@ using FSP = Nessos.FsPickler;
 namespace Nessos.CsPickler
 {
     /// <summary>
-    ///     Json FsPickler serializer.
+    ///     Defines a Json serializer instance.
     /// </summary>
     public class JsonPickler : CsPicklerText
     {
@@ -21,11 +21,10 @@ namespace Nessos.CsPickler
         }
 
         /// <summary>
-        ///     Creates a new Json FsPickler instance.
+        ///     Creates a new JsonPickler instance.
         /// </summary>
-        /// <param name="indent">Indent Json serialization.</param>
-        /// <param name="omitHeader">Omit FsPickler metadata at the serialization header.</param>
-        /// <returns>a JsonPickler instance.</returns>
+        /// <param name="indent">indent Json serializations; defaults to false.</param>
+        /// <param name="omitHeader">omit FsPickler metadata at the serialization header; defaults to false.</param>
         public static JsonPickler Create(bool indent = false, bool omitHeader = false)
         {
             var jp = new FSP.Json.JsonPickler();

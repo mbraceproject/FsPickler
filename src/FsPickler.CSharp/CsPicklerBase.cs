@@ -9,14 +9,14 @@ using FSP = Nessos.FsPickler;
 namespace Nessos.CsPickler
 {
     /// <summary>
-    ///     Provides basic functionality for binary serialization.
+    ///     Provides basic serialization functionality.
     /// </summary>
     public abstract class CsPicklerBase
     {
         private FSP.FsPicklerBase _pickler;
 
         /// <summary>
-        ///     Wraps an FsPickler instance in a CsPickler facade.
+        ///     Wraps an FsPickler instance in a C# friendly facade.
         /// </summary>
         /// <param name="pickler">FsPickler instance.</param>
         public CsPicklerBase(FSP.FsPicklerBase pickler)
