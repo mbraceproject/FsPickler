@@ -97,14 +97,19 @@
     /// walks up the type hierarchy, gathering all instance fields
     let gatherFields (t : Type) =
         // resolve conflicts, index by declaring type and field name
-        let gathered = ref Map.empty<string * string, FieldInfo>
+        let gathered = ref Map.empty<string * string, (* index *) int * FieldInfo>
+        let i = ref 0
+
+        let isSerializableField (f : FieldInfo) =
+            not (f.IsLiteral || f.IsNotSerialized)
 
         let rec gather (t : Type) =
             let fields = t.GetFields(allFields)
             for f in fields do
                 let k = f.DeclaringType.AssemblyQualifiedName, f.Name
-                if not <| gathered.Value.ContainsKey k then
-                    gathered := gathered.Value.Add(k, f)
+                if isSerializableField f && not <| gathered.Value.ContainsKey k then
+                    gathered := gathered.Value.Add(k, (!i, f))
+                    incr i
 
             match t.BaseType with
             | null -> ()
@@ -113,7 +118,12 @@
 
         do gather t
 
-        gathered.Value |> Map.toArray |> Array.map snd
+        gathered.Value 
+        |> Map.toSeq
+        |> Seq.map snd
+        |> Seq.sortBy fst // sort by index; this is to preserve field serialization ordering
+        |> Seq.map snd
+        |> Seq.toArray
 
 
     /// checks if instances of given type can be arrays
