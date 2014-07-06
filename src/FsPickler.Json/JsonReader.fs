@@ -36,8 +36,9 @@
                 else
                     do jsonReader.MoveNext()
                     let version = jsonReader.ReadPrimitiveAs<string> false "FsPickler"
-                    if version <> AssemblyVersionInformation.Version then
-                        raise <| new FormatException(sprintf "Invalid FsPickler version %s." version)
+                    if version <> jsonFormatVersion then
+                        let v = Version(version)
+                        raise <| new FormatException(sprintf "Invalid FsPickler format version %O." version)
 
                     let sTag = jsonReader.ReadPrimitiveAs<string> false "type"
                     if tag <> sTag then

@@ -31,7 +31,7 @@
                 if omitHeader then () else
 
                 jsonWriter.WriteStartObject()
-                writePrimitive jsonWriter false "FsPickler" AssemblyVersionInformation.Version
+                writePrimitive jsonWriter false "FsPickler" jsonFormatVersion
                 writePrimitive jsonWriter false "type" tag
 
             member __.EndWriteRoot () = 

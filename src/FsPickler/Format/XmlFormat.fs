@@ -10,6 +10,9 @@
 
     module private XmlUtils =
 
+        [<Literal>]
+        let formatVersion = "0.9.6.0"
+
         let inline escapeString (value : string) = SecurityElement.Escape value
         let inline unEscapeString (value : string) =
             let e = new SecurityElement("", value)
@@ -104,7 +107,7 @@
             member __.BeginWriteRoot (tag : string) = 
                 writer.WriteStartDocument()
                 writer.WriteStartElement("FsPickler")
-                writer.WriteAttributeString("version", AssemblyVersionInformation.Version)
+                writer.WriteAttributeString("version", formatVersion)
                 writer.WriteAttributeString("type", tag)
 
             member __.EndWriteRoot () = 
@@ -203,8 +206,9 @@
                 reader.ReadElementName "FsPickler"
 
                 let version = reader.["version"]
-                if version <> AssemblyVersionInformation.Version then
-                    let msg = sprintf "Unsupported FsPickler version %s." version
+                if version <> formatVersion then
+                    let version = Version(version)
+                    let msg = sprintf "Unsupported FsPickler version %O." version
                     raise <| new FormatException(msg)
 
                 let sTag = reader.["type"]

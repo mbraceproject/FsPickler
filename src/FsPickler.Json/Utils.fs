@@ -12,6 +12,9 @@
     [<AutoOpen>]
     module internal Utils =
 
+        [<Literal>]
+        let jsonFormatVersion = "0.9.6"
+
         let inline fastUnbox<'T> (x : obj) = 
             Microsoft.FSharp.Core.LanguagePrimitives.IntrinsicFunctions.UnboxFast<'T> x
 

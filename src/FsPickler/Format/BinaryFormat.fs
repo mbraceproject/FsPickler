@@ -13,6 +13,9 @@
     [<AutoOpen>]
     module private BinaryFormatUtils =
 
+        [<Literal>]
+        let formatVersion = 0960u // As specified in FsPickler v. 0.9.6.0
+
         // each object is serialized with a 32 bit header 
         // of which the first 24 are a fixed identifier
         // and the final 8 encode the object flags.
@@ -98,6 +101,8 @@
         interface IPickleFormatWriter with
             member __.BeginWriteRoot (tag : string) =
                 bw.Write initValue
+                bw.Write formatVersion
+                bw.Write encoding.CodePage
 
                 if forceLittleEndian then 
                     bw.Write 0uy
@@ -186,7 +191,15 @@
 
             member __.BeginReadRoot (tag : string) =
                 if br.ReadUInt32 () <> initValue then
-                    raise <| new InvalidDataException("invalid stream initialization.")
+                    raise <| new InvalidDataException("invalid stream initialization bytes.")
+
+                let version = br.ReadUInt32()
+                if version <> formatVersion then
+                    raise <| new FormatException(sprintf "unsupported binary format version '%d'." version)
+
+                let codePage = br.ReadInt32()
+                if codePage <> encoding.CodePage then
+                    raise <| new FormatException(sprintf "invalid code page '%d' (expected %d)." codePage encoding.CodePage)
 
                 match br.ReadByte () with
                 | 0uy -> isForcedLittleEndianStream <- true
