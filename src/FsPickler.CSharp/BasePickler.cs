@@ -15,7 +15,11 @@ namespace Nessos.CsPickler
     {
         private FSP.BasePickler _pickler;
 
-        internal BasePickler (FSP.BasePickler pickler)
+        /// <summary>
+        ///     Wraps an FsPickler instance in a CsPickler facade.
+        /// </summary>
+        /// <param name="pickler">FsPickler instance.</param>
+        public BasePickler (FSP.BasePickler pickler)
         {
             _pickler = pickler;
         }
@@ -32,9 +36,9 @@ namespace Nessos.CsPickler
         public void Serialize<T>(Stream stream, T value, Object streamingContext = null,
                                     Encoding encoding = null, bool leaveOpen = false)
         {
-            var e = FSharpParams.GetEncoding(encoding);
-            var sc = FSharpParams.GetStreamingContext(streamingContext);
-            var lo = FSharpParams.GetLeaveOpen(leaveOpen);
+            var e = Utils.GetEncoding(encoding);
+            var sc = Utils.GetStreamingContext(streamingContext);
+            var lo = Utils.GetLeaveOpen(leaveOpen);
 
             _pickler.Serialize<T>(stream, value, sc, e, lo);
         }
@@ -51,9 +55,9 @@ namespace Nessos.CsPickler
         public T Deserialize<T>(Stream stream, Object streamingContext = null,
                                         Encoding encoding = null, bool leaveOpen = false)
         {
-            var e = FSharpParams.GetEncoding(encoding);
-            var sc = FSharpParams.GetStreamingContext(streamingContext);
-            var lo = FSharpParams.GetLeaveOpen(leaveOpen);
+            var e = Utils.GetEncoding(encoding);
+            var sc = Utils.GetStreamingContext(streamingContext);
+            var lo = Utils.GetLeaveOpen(leaveOpen);
 
             return _pickler.Deserialize<T>(stream, sc, e, lo);
         }
@@ -68,8 +72,8 @@ namespace Nessos.CsPickler
         /// <returns>binary pickle for object.</returns>
         public byte [] Pickle<T>(T value, Object streamingContext = null, Encoding encoding = null) 
         {
-            var e = FSharpParams.GetEncoding(encoding);
-            var sc = FSharpParams.GetStreamingContext(streamingContext);
+            var e = Utils.GetEncoding(encoding);
+            var sc = Utils.GetStreamingContext(streamingContext);
 
             return _pickler.Pickle<T>(value, sc, e);
         }
@@ -84,8 +88,8 @@ namespace Nessos.CsPickler
         /// <returns>unpickled instance.</returns>
         public T UnPickle<T>(byte[] pickle, Object streamingContext = null, Encoding encoding = null)
         {
-            var e = FSharpParams.GetEncoding(encoding);
-            var sc = FSharpParams.GetStreamingContext(streamingContext);
+            var e = Utils.GetEncoding(encoding);
+            var sc = Utils.GetStreamingContext(streamingContext);
 
             return _pickler.UnPickle<T>(pickle, sc, e);
         }

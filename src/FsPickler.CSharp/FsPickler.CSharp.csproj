@@ -59,13 +59,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BasePickler.cs" />
-    <Compile Include="BinaryPickler.cs" />
+    <Compile Include="Formats\BinaryPickler.cs" />
     <Compile Include="CsPickler.cs" />
-    <Compile Include="FSharpParams.cs" />
-    <Compile Include="JsonPickler.cs" />
+    <Compile Include="Utils.cs" />
+    <Compile Include="Formats\JsonPickler.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TextPickler.cs" />
-    <Compile Include="XmlPickler.cs" />
+    <Compile Include="Formats\XmlPickler.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\FsPickler.Json\FsPickler.Json.fsproj">

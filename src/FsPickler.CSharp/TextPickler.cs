@@ -15,7 +15,11 @@ namespace Nessos.CsPickler
     {
         FSP.TextPickler _textPickler;
 
-        internal TextPickler (FSP.TextPickler textPickler) : base(textPickler)
+        /// <summary>
+        ///     Wraps an FsPickler instance in a CsPickler facade.
+        /// </summary>
+        /// <param name="textPickler">FsPickler instance.</param>
+        public TextPickler (FSP.TextPickler textPickler) : base(textPickler)
         {
             _textPickler = textPickler;
         }
@@ -30,8 +34,8 @@ namespace Nessos.CsPickler
         /// <param name="leaveOpen">leave stream open; defaults to false.</param>
         public void Serialize<T>(TextWriter writer, T value, Object streamingContext = null, bool leaveOpen = false)
         {
-            var sc = FSharpParams.GetStreamingContext(streamingContext);
-            var lo = FSharpParams.GetLeaveOpen(leaveOpen);
+            var sc = Utils.GetStreamingContext(streamingContext);
+            var lo = Utils.GetLeaveOpen(leaveOpen);
 
             _textPickler.Serialize<T>(writer, value, sc, lo);
         }
@@ -46,8 +50,8 @@ namespace Nessos.CsPickler
         /// <returns>deserialized value.</returns>
         public T Deserialize<T>(TextReader reader, Object streamingContext = null, bool leaveOpen = false)
         {
-            var sc = FSharpParams.GetStreamingContext(streamingContext);
-            var lo = FSharpParams.GetLeaveOpen(leaveOpen);
+            var sc = Utils.GetStreamingContext(streamingContext);
+            var lo = Utils.GetLeaveOpen(leaveOpen);
 
             return _textPickler.Deserialize<T>(reader, sc, lo);
         }
@@ -62,7 +66,7 @@ namespace Nessos.CsPickler
         /// <returns>binary pickle for object.</returns>
         public string PickleToString<T>(T value, Object streamingContext = null)
         {
-            var sc = FSharpParams.GetStreamingContext(streamingContext);
+            var sc = Utils.GetStreamingContext(streamingContext);
 
             return _textPickler.PickleToString<T>(value, sc);
         }
@@ -76,7 +80,7 @@ namespace Nessos.CsPickler
         /// <returns>unpickled instance.</returns>
         public T UnPickleOfString<T>(string pickle, Object streamingContext = null)
         {
-            var sc = FSharpParams.GetStreamingContext(streamingContext);
+            var sc = Utils.GetStreamingContext(streamingContext);
 
             return _textPickler.UnPickleOfString<T>(pickle, sc);
         }

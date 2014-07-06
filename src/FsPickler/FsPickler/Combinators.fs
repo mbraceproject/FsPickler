@@ -10,13 +10,15 @@
         [<RequireQualifiedAccess>]
         module Binary =
 
+            let private binaryPickler = lazy(new BinaryPickler())
+
             /// <summary>
             ///     Pickles a value to binary.
             /// </summary>
             /// <param name="pickler">utilized pickler.</param>
             /// <param name="value">input value.</param>
             let pickle (pickler : Pickler<'T>) (value : 'T) : byte [] =
-                FsPickler.DefaultPickler.Pickle (pickler, value)
+                binaryPickler.Value.Pickle (pickler, value)
 
             /// <summary>
             ///     Unpickles a values from binary.
@@ -24,7 +26,7 @@
             /// <param name="pickler">utilized pickler.</param>
             /// <param name="pickle">input pickle.</param>
             let unpickle (pickler : Pickler<'T>) (pickle : byte []) =
-                FsPickler.DefaultPickler.UnPickle (pickler, pickle)
+                binaryPickler.Value.UnPickle (pickler, pickle)
 
         [<RequireQualifiedAccess>]
         module Xml =

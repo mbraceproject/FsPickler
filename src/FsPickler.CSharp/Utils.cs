@@ -6,7 +6,7 @@ using Microsoft.FSharp.Core;
 
 namespace Nessos.CsPickler
 {
-    internal class FSharpParams
+    internal class Utils
     {
         public static FSharpOption<Encoding> GetEncoding(Encoding e)
         {

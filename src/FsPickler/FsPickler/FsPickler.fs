@@ -11,8 +11,7 @@
         
         static let defaultPickler = lazy(new BinaryPickler())
 
-        static member internal DefaultPickler = defaultPickler.Value
-        static member internal Resolver = PicklerCache.Instance :> IPicklerResolver
+        static member private Resolver = PicklerCache.Instance :> IPicklerResolver
 
         /// <summary>
         ///     Create a new binary pickler instance.
