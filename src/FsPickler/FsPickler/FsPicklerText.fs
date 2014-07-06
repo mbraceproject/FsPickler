@@ -12,8 +12,8 @@
     ///     The base class for text-based pickle format implementations.
     /// </summary>
     [<AbstractClass>]
-    type TextPickler (formatProvider : ITextPickleFormatProvider, [<O;D(null)>] ?typeConverter) =
-        inherit BasePickler(formatProvider, ?typeConverter = typeConverter)
+    type FsPicklerText (formatProvider : ITextPickleFormatProvider, [<O;D(null)>] ?typeConverter) =
+        inherit FsPicklerBase(formatProvider, ?typeConverter = typeConverter)
 
         let resolver = base.Resolver
         let reflectionCache = base.ReflectionCache

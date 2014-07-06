@@ -50,7 +50,7 @@
         abstract IsRemotedTest : bool
 
         abstract Pickle : 'T -> byte []
-        abstract PickleF : (BasePickler -> byte []) -> byte []
+        abstract PickleF : (FsPicklerBase -> byte []) -> byte []
 
         //
         //  Primitive Serialization tests

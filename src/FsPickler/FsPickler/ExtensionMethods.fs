@@ -1,7 +1,5 @@
 ﻿namespace Nessos.FsPickler
 
-//    open Nessos.FsPickler.PicklerUtils
-
     [<AutoOpen>]
     module ExtensionMethods =
 

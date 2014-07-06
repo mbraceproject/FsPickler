@@ -19,7 +19,7 @@
         abstract Serialize : Stream * 'T -> unit
         abstract Deserialize : Stream -> 'T
 
-    type FsPicklerSerializer (name : string, fsp : BasePickler) =
+    type FsPicklerSerializer (name : string, fsp : FsPicklerBase) =
         member __.Pickler = fsp
 
         interface ISerializer with

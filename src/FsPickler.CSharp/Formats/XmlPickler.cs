@@ -11,7 +11,7 @@ namespace Nessos.CsPickler
     /// <summary>
     ///     Xml FsPickler serializer
     /// </summary>
-    public class XmlPickler : TextPickler
+    public class XmlPickler : CsPicklerText
     {
         private FSP.XmlPickler _xp;
 

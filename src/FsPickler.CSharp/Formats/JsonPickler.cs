@@ -11,7 +11,7 @@ namespace Nessos.CsPickler
     /// <summary>
     ///     Json FsPickler serializer.
     /// </summary>
-    public class JsonPickler : TextPickler
+    public class JsonPickler : CsPicklerText
     {
         FSP.Json.JsonPickler _jp;
 

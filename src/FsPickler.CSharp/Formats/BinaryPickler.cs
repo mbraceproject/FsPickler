@@ -11,7 +11,7 @@ namespace Nessos.CsPickler
     /// <summary>
     ///     Binary FsPickler serializer.
     /// </summary>
-    public class BinaryPickler : BasePickler
+    public class BinaryPickler : CsPicklerBase
     {
         private FSP.BinaryPickler _bp ;
         

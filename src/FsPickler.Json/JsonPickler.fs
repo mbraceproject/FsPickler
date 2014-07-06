@@ -11,7 +11,7 @@
     ///     Json pickler instance.
     /// </summary>
     type JsonPickler =
-        inherit TextPickler
+        inherit FsPicklerText
         
         val private format : JsonPickleFormatProvider
 
@@ -26,7 +26,7 @@
             let omitHeader = defaultArg omitHeader false
             let json = new JsonPickleFormatProvider(indent, omitHeader)
             { 
-                inherit TextPickler(json, ?typeConverter = typeConverter)
+                inherit FsPicklerText(json, ?typeConverter = typeConverter)
                 format = json    
             }
 

@@ -10,8 +10,7 @@
     type FsPickler private () =
         
         static let defaultPickler = lazy(new BinaryPickler())
-
-        static member private Resolver = PicklerCache.Instance :> IPicklerResolver
+        static let resolver = lazy(PicklerCache.Instance :> IPicklerResolver)
 
         /// <summary>
         ///     Create a new binary pickler instance.
@@ -30,19 +29,19 @@
 
         /// Decides if given type is serializable by FsPickler
         static member IsSerializableType (t : Type) = 
-            FsPickler.Resolver.IsSerializable t
+            resolver.Value.IsSerializable t
 
         /// Decides if given type is serializable by FsPickler
         static member IsSerializableType<'T> () = 
-            FsPickler.Resolver.IsSerializable<'T> ()
+            resolver.Value.IsSerializable<'T> ()
 
         /// Auto generates a pickler for given type variable
         static member GeneratePickler<'T> () = 
-            FsPickler.Resolver.Resolve<'T> ()
+            resolver.Value.Resolve<'T> ()
         
         /// Auto generates a pickler for given type
         static member GeneratePickler (t : Type) = 
-            FsPickler.Resolver.Resolve t
+            resolver.Value.Resolve t
 
         //
         // Misc utils

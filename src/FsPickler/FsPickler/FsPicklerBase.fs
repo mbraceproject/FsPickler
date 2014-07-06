@@ -20,7 +20,7 @@
     ///     The base class for the public pickler API. Provides basic serialization functionality
     /// </summary>
     [<AbstractClass>]
-    type BasePickler (formatProvider : IPickleFormatProvider, [<O;D(null)>]?typeConverter) =
+    type FsPicklerBase (formatProvider : IPickleFormatProvider, [<O;D(null)>]?typeConverter) =
 
         let resolver = PicklerCache.Instance :> IPicklerResolver
         let reflectionCache = ReflectionCache.Create(?tyConv = typeConverter)

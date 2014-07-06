@@ -12,4 +12,4 @@
 
         override __.IsRemotedTest = false
         override __.Pickle (value : 'T) = __.PicklerManager.Pickler.Pickle value
-        override __.PickleF (pickleF : BasePickler -> byte []) = pickleF __.PicklerManager.Pickler
+        override __.PickleF (pickleF : FsPicklerBase -> byte []) = pickleF __.PicklerManager.Pickler

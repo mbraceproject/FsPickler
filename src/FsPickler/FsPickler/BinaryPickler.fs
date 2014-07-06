@@ -5,7 +5,7 @@
     /// </summary>
     [<Sealed; AutoSerializable(false)>]
     type BinaryPickler =
-        inherit BasePickler
+        inherit FsPicklerBase
 
         val private format : BinaryPickleFormatProvider
 
@@ -18,7 +18,7 @@
             let forceLittleEndian = defaultArg forceLittleEndian false
             let format = new BinaryPickleFormatProvider(forceLittleEndian)
             { 
-                inherit BasePickler(format, ?typeConverter = typeConverter) 
+                inherit FsPicklerBase(format, ?typeConverter = typeConverter) 
                 format = format    
             }
 
