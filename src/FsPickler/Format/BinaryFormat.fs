@@ -14,7 +14,7 @@
     module private BinaryFormatUtils =
 
         [<Literal>]
-        let formatVersion = 0960u // As specified in FsPickler v. 0.9.6.0
+        let formatVersion = 0960us // As specified in FsPickler v. 0.9.6.0
 
         // each object is serialized with a 32 bit header 
         // of which the first 24 are a fixed identifier
@@ -193,7 +193,7 @@
                 if br.ReadUInt32 () <> initValue then
                     raise <| new InvalidDataException("invalid stream initialization bytes.")
 
-                let version = br.ReadUInt32()
+                let version = br.ReadUInt16()
                 if version <> formatVersion then
                     raise <| new FormatException(sprintf "unsupported binary format version '%d'." version)
 
