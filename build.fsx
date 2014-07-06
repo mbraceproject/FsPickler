@@ -132,8 +132,6 @@ FinalTarget "CloseTestRunner" (fun _ ->
 //// Build a NuGet package
 
 Target "NuGet -- FsPickler" (fun _ ->
-//    // Format the description to fit on a single line (remove \r\n and double-spaces)
-//    let description = description.Replace("\r", "").Replace("\n", "").Replace("  ", " ")
     let nugetPath = ".nuget/NuGet.exe"
     NuGet (fun p -> 
         { p with   
@@ -153,8 +151,6 @@ Target "NuGet -- FsPickler" (fun _ ->
 )
 
 Target "NuGet -- FsPickler.Json" (fun _ ->
-//    // Format the description to fit on a single line (remove \r\n and double-spaces)
-//    let description = description.Replace("\r", "").Replace("\n", "").Replace("  ", " ")
     let nugetPath = ".nuget/NuGet.exe"
     NuGet (fun p -> 
         { p with   
@@ -168,7 +164,7 @@ Target "NuGet -- FsPickler.Json" (fun _ ->
             OutputPath = "bin"
             ToolPath = nugetPath
             AccessKey = getBuildParamOrDefault "nugetkey" ""
-            Dependencies = [("FsPickler", release.NugetVersion) ; ("Newtonsoft.Json", "6.0.3")] 
+            Dependencies = [("FsPickler", RequireExactly release.NugetVersion) ; ("Newtonsoft.Json", "6.0.3")] 
             Publish = hasBuildParam "nugetkey" })
         ("nuget/FsPickler.Json.nuspec")
 )
@@ -190,8 +186,8 @@ Target "NuGet -- FsPickler.CSharp" (fun _ ->
             Dependencies = 
                 [
                     ("FSharp.Core.3", "0.0.2")
-                    ("FsPickler", release.NugetVersion)
-                    ("FsPickler.Json", release.NugetVersion)
+                    ("FsPickler", RequireExactly release.NugetVersion)
+                    ("FsPickler.Json", RequireExactly release.NugetVersion)
                 ] 
             Publish = hasBuildParam "nugetkey" })
         ("nuget/FsPickler.CSharp.nuspec")
