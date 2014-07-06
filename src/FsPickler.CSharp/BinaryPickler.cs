@@ -8,6 +8,9 @@ using FSP = Nessos.FsPickler;
 
 namespace Nessos.CsPickler
 {
+    /// <summary>
+    ///     Binary FsPickler serializer.
+    /// </summary>
     public class BinaryPickler : BasePickler
     {
         private FSP.BinaryPickler _bp ;
@@ -17,6 +20,11 @@ namespace Nessos.CsPickler
             _bp = pickler;
         }
 
+        /// <summary>
+        ///     Creates a new Binary FsPickler instance.
+        /// </summary>
+        /// <param name="forceLittleEndian">force little-endian encoding in primitive arrays but is slower; defaults to false.</param>
+        /// <returns>Binary Pickler.</returns>
         public static BinaryPickler Create(bool forceLittleEndian = false)
         {
             var bp = new FSP.BinaryPickler();
@@ -24,6 +32,11 @@ namespace Nessos.CsPickler
             return new BinaryPickler(bp);
         }
 
+        /// <summary>
+        ///     Gets or sets the ForceLittleEndian setting.
+        ///     Uses BinaryWriter rather than Buffer.BlockCopy 
+        ///     for array serializations but is slower.
+        /// </summary>
         public bool ForceLittleEndian
         {
             get { return _bp.ForceLittleEndian;  }
