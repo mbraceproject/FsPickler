@@ -173,6 +173,30 @@ Target "NuGet -- FsPickler.Json" (fun _ ->
         ("nuget/FsPickler.Json.nuspec")
 )
 
+Target "NuGet -- FsPickler.CSharp" (fun _ ->
+    let nugetPath = ".nuget/NuGet.exe"
+    NuGet (fun p -> 
+        { p with   
+            Authors = authors
+            Project = "FsPickler.CSharp"
+            Summary = summary
+            Description = description
+            Version = nugetVersion
+            ReleaseNotes = String.concat " " release.Notes
+            Tags = tags
+            OutputPath = "bin"
+            ToolPath = nugetPath
+            AccessKey = getBuildParamOrDefault "nugetkey" ""
+            Dependencies = 
+                [
+                    ("FSharp.Core.3", "0.0.2")
+                    ("FsPickler", release.NugetVersion)
+                    ("FsPickler.Json", release.NugetVersion)
+                ] 
+            Publish = hasBuildParam "nugetkey" })
+        ("nuget/FsPickler.CSharp.nuspec")
+)
+
 
 Target "Release" DoNothing
 
@@ -196,6 +220,7 @@ Target "All" DoNothing
   ==> "Build - NET40"
   ==> "NuGet -- FsPickler"
   ==> "NuGet -- FsPickler.Json"
+  ==> "NuGet -- FsPickler.CSharp"
   ==> "Release"
 
 //RunTargetOrDefault "Release"

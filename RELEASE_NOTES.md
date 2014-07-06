@@ -1,3 +1,8 @@
+#### 0.9.6
+* Pickle format refinements.
+* Add C# library.
+* Bug fixes.
+
 #### 0.9.5.1-alpha
 * Pickle format refinements.
 * Bug fixes.
