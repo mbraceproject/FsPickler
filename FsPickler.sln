@@ -39,6 +39,13 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FsPickler.Json", "src\FsPic
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FsPickler.CSharp", "src\FsPickler.CSharp\FsPickler.CSharp.csproj", "{49D58CB3-B5A5-41DD-8398-060A8C6FBDD0}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "nuspec", "nuspec", "{CD4F0F33-C330-4991-BE9B-7AE50A3EB6D5}"
+	ProjectSection(SolutionItems) = preProject
+		nuget\FsPickler.CSharp.nuspec = nuget\FsPickler.CSharp.nuspec
+		nuget\FsPickler.Json.nuspec = nuget\FsPickler.Json.nuspec
+		nuget\FsPickler.nuspec = nuget\FsPickler.nuspec
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -95,5 +102,6 @@ Global
 		{EC89A90F-5EBF-40FB-B4F3-1A8F2D224A20} = {109340B6-EAF7-4DDC-9D6C-F51A3E6E747F}
 		{1DCB4AD7-2C00-4BCD-B1A5-A469F31E2CD1} = {23BFC6E5-8581-44C7-B9C6-A42F06DCD6A6}
 		{49D58CB3-B5A5-41DD-8398-060A8C6FBDD0} = {23BFC6E5-8581-44C7-B9C6-A42F06DCD6A6}
+		{CD4F0F33-C330-4991-BE9B-7AE50A3EB6D5} = {87846678-C0AD-48CD-8D7D-4224116EEB73}
 	EndGlobalSection
 EndGlobal
