@@ -61,7 +61,7 @@
 
             member inline jsonReader.ValueAs<'T> () = jsonReader.Value |> fastUnbox<'T>
 
-            member jsonReader.ReadPrimitiveAs<'T> ignoreName (name : string) =
+            member inline jsonReader.ReadPrimitiveAs<'T> ignoreName (name : string) =
                 if not ignoreName then
                     jsonReader.ReadProperty name
                     jsonReader.Read() |> ignore
