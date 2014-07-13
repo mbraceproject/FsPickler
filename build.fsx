@@ -79,6 +79,8 @@ Target "RestorePackages" (fun _ ->
 
 Target "Clean" (fun _ ->
     CleanDirs <| !! "./**/bin/"
+    CleanDir "./tools/output"
+    CleanDir "./temp"
 )
 
 //
