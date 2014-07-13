@@ -10,7 +10,7 @@
         val private format : BinaryPickleFormatProvider
 
         /// <summary>
-        ///     
+        ///     Initializes a new Binary pickler instance.
         /// </summary>
         /// <param name="forceLittleEndian">Force little-endian encoding in primitive arrays but is slower. Defaults to false.</param>
         /// <param name="typeConverter">Define a custom type name converter.</param>
