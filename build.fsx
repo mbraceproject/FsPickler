@@ -193,6 +193,23 @@ Target "NuGet -- FsPickler.CSharp" (fun _ ->
         ("nuget/FsPickler.CSharp.nuspec")
 )
 
+// Doc generation
+
+Target "GenerateDocs" (fun _ ->
+    executeFSIWithArgs "docs/tools" "generate.fsx" ["--define:RELEASE"] [] |> ignore
+)
+
+Target "ReleaseDocs" (fun _ ->
+    let tempDocsDir = "temp/gh-pages"
+    CleanDir tempDocsDir
+    Repository.cloneSingleBranch "" (gitHome + "/" + gitName + ".git") "gh-pages" tempDocsDir
+
+    fullclean tempDocsDir
+    CopyRecursive "docs/output" tempDocsDir true |> tracefn "%A"
+    StageAll tempDocsDir
+    Commit tempDocsDir (sprintf "Update generated documentation for version %s" release.NugetVersion)
+    Branches.push tempDocsDir
+)
 
 Target "Release" DoNothing
 
@@ -214,6 +231,8 @@ Target "All" DoNothing
 "All"
   ==> "PrepareRelease"
   ==> "Build - NET40"
+  ==> "GenerateDocs"
+  ==> "ReleaseDocs"
   ==> "NuGet -- FsPickler"
   ==> "NuGet -- FsPickler.Json"
   ==> "NuGet -- FsPickler.CSharp"
