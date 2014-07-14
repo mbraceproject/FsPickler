@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8"/>
-    <title>Shape - FsPickler</title>
+    <title>JsonPickler - FsPickler</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <meta name="description" content=""/>
     <meta name="author" content="Eirik Tsarpalis"/>
@@ -35,8 +35,9 @@
 
 
 
-<h1>Shape</h1>
+<h1>JsonPickler</h1>
 <div class="xmldoc">
+<p>Json pickler instance.</p>
 </div>
   <h3>Record Fields</h3>
   <table class="table table-bordered member-list">
@@ -47,229 +48,206 @@
       <tr>
         <td class="member-name">
 
+          <code onmouseout="hideTip(event, '286', 286)" onmouseover="showTip(event, '286', 286)">
+            format
+          </code>
+          <div class="tip" id="286">
+            <strong>Signature:</strong> JsonPickleFormatProvider<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler.Json/JsonPickler.fs#L16-16" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <h3>Constructors</h3>
+  <table class="table table-bordered member-list">
+    <thead>
+      <tr><td>Constructor</td><td>Description</td></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '288', 288)" onmouseover="showTip(event, '288', 288)">
+            new(...)
+          </code>
+          <div class="tip" id="288">
+            <strong>Signature:</strong> (indent:bool option * omitHeader:bool option * typeConverter:ITypeNameConverter option) -&gt; JsonPickler<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler.Json/JsonPickler.fs#L24-24" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Initializes a new Json pickler instance.</p>
+
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <h3>Instance members</h3>
+  <table class="table table-bordered member-list">
+    <thead>
+      <tr><td>Instance member</td><td>Description</td></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '290', 290)" onmouseover="showTip(event, '290', 290)">
+            Indent
+          </code>
+          <div class="tip" id="290">
+            <strong>Signature:</strong> bool<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler.Json/JsonPickler.fs#L37-37" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Gets or sets whether Json output should be indented.</p>
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '291', 291)" onmouseover="showTip(event, '291', 291)">
+            Indent()
+          </code>
+          <div class="tip" id="291">
+            <strong>Signature:</strong> unit -&gt; bool<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler.Json/JsonPickler.fs#L38-38" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Gets or sets whether Json output should be indented.</p>
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '292', 292)" onmouseover="showTip(event, '292', 292)">
+            OmitHeader
+          </code>
+          <div class="tip" id="292">
+            <strong>Signature:</strong> bool<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler.Json/JsonPickler.fs#L44-44" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Gets or sets whether FsPickler headers should be ignored in pickle format.</p>
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '293', 293)" onmouseover="showTip(event, '293', 293)">
+            OmitHeader()
+          </code>
+          <div class="tip" id="293">
+            <strong>Signature:</strong> unit -&gt; bool<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler.Json/JsonPickler.fs#L45-45" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Gets or sets whether FsPickler headers should be ignored in pickle format.</p>
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '294', 294)" onmouseover="showTip(event, '294', 294)">
+            SequenceSeparator
+          </code>
+          <div class="tip" id="294">
+            <strong>Signature:</strong> string<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler.Json/JsonPickler.fs#L51-51" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Gets or sets a non-null whitespace string that serves as a custom, top-level sequence separator.</p>
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '295', 295)" onmouseover="showTip(event, '295', 295)">
+            SequenceSeparator()
+          </code>
+          <div class="tip" id="295">
+            <strong>Signature:</strong> unit -&gt; string<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler.Json/JsonPickler.fs#L52-52" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Gets or sets a non-null whitespace string that serves as a custom, top-level sequence separator.</p>
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '296', 296)" onmouseover="showTip(event, '296', 296)">
+            UseCustomTopLevelSequenceSeparator
+          </code>
+          <div class="tip" id="296">
+            <strong>Signature:</strong> bool<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler.Json/JsonPickler.fs#L62-62" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Gets or sets whether top-level sequences should be serialized using the custom separator.</p>
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
           <code onmouseout="hideTip(event, '297', 297)" onmouseover="showTip(event, '297', 297)">
-            Abstract
+            UseCustomTopLevelSequenceSeparator()
           </code>
           <div class="tip" id="297">
-            <strong>Signature:</strong> Shape<br />
-              <strong>Modifiers:</strong> static<br />
+            <strong>Signature:</strong> unit -&gt; bool<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/PicklerGeneration/TypeShape.fs#L18-18" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler.Json/JsonPickler.fs#L63-63" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          
-        </td>
-      </tr>
-      <tr>
-        <td class="member-name">
+          <p>Gets or sets whether top-level sequences should be serialized using the custom separator.</p>
 
-          <code onmouseout="hideTip(event, '298', 298)" onmouseover="showTip(event, '298', 298)">
-            Array
-          </code>
-          <div class="tip" id="298">
-            <strong>Signature:</strong> Shape<br />
-              <strong>Modifiers:</strong> static<br />
-                      </div>
-        </td>
-        <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/PicklerGeneration/TypeShape.fs#L26-26" class="github-link">
-              <img src="../content/img/github.png" class="normal" />
-              <img src="../content/img/github-blue.png" class="hover" />
-            </a>
-          
-        </td>
-      </tr>
-      <tr>
-        <td class="member-name">
-
-          <code onmouseout="hideTip(event, '299', 299)" onmouseover="showTip(event, '299', 299)">
-            Class
-          </code>
-          <div class="tip" id="299">
-            <strong>Signature:</strong> Shape<br />
-              <strong>Modifiers:</strong> static<br />
-                      </div>
-        </td>
-        <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/PicklerGeneration/TypeShape.fs#L21-21" class="github-link">
-              <img src="../content/img/github.png" class="normal" />
-              <img src="../content/img/github-blue.png" class="hover" />
-            </a>
-          
-        </td>
-      </tr>
-      <tr>
-        <td class="member-name">
-
-          <code onmouseout="hideTip(event, '300', 300)" onmouseover="showTip(event, '300', 300)">
-            Delegate
-          </code>
-          <div class="tip" id="300">
-            <strong>Signature:</strong> Shape<br />
-              <strong>Modifiers:</strong> static<br />
-                      </div>
-        </td>
-        <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/PicklerGeneration/TypeShape.fs#L23-23" class="github-link">
-              <img src="../content/img/github.png" class="normal" />
-              <img src="../content/img/github-blue.png" class="hover" />
-            </a>
-          
-        </td>
-      </tr>
-      <tr>
-        <td class="member-name">
-
-          <code onmouseout="hideTip(event, '301', 301)" onmouseover="showTip(event, '301', 301)">
-            Dictionary
-          </code>
-          <div class="tip" id="301">
-            <strong>Signature:</strong> Shape<br />
-              <strong>Modifiers:</strong> static<br />
-                      </div>
-        </td>
-        <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/PicklerGeneration/TypeShape.fs#L29-29" class="github-link">
-              <img src="../content/img/github.png" class="normal" />
-              <img src="../content/img/github-blue.png" class="hover" />
-            </a>
-          
-        </td>
-      </tr>
-      <tr>
-        <td class="member-name">
-
-          <code onmouseout="hideTip(event, '302', 302)" onmouseover="showTip(event, '302', 302)">
-            Enum
-          </code>
-          <div class="tip" id="302">
-            <strong>Signature:</strong> Shape<br />
-              <strong>Modifiers:</strong> static<br />
-                      </div>
-        </td>
-        <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/PicklerGeneration/TypeShape.fs#L24-24" class="github-link">
-              <img src="../content/img/github.png" class="normal" />
-              <img src="../content/img/github-blue.png" class="hover" />
-            </a>
-          
-        </td>
-      </tr>
-      <tr>
-        <td class="member-name">
-
-          <code onmouseout="hideTip(event, '303', 303)" onmouseover="showTip(event, '303', 303)">
-            FSharpType
-          </code>
-          <div class="tip" id="303">
-            <strong>Signature:</strong> Shape<br />
-              <strong>Modifiers:</strong> static<br />
-                      </div>
-        </td>
-        <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/PicklerGeneration/TypeShape.fs#L28-28" class="github-link">
-              <img src="../content/img/github.png" class="normal" />
-              <img src="../content/img/github-blue.png" class="hover" />
-            </a>
-          
-        </td>
-      </tr>
-      <tr>
-        <td class="member-name">
-
-          <code onmouseout="hideTip(event, '304', 304)" onmouseover="showTip(event, '304', 304)">
-            ISerializable
-          </code>
-          <div class="tip" id="304">
-            <strong>Signature:</strong> Shape<br />
-              <strong>Modifiers:</strong> static<br />
-                      </div>
-        </td>
-        <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/PicklerGeneration/TypeShape.fs#L22-22" class="github-link">
-              <img src="../content/img/github.png" class="normal" />
-              <img src="../content/img/github-blue.png" class="hover" />
-            </a>
-          
-        </td>
-      </tr>
-      <tr>
-        <td class="member-name">
-
-          <code onmouseout="hideTip(event, '305', 305)" onmouseover="showTip(event, '305', 305)">
-            Nullable
-          </code>
-          <div class="tip" id="305">
-            <strong>Signature:</strong> Shape<br />
-              <strong>Modifiers:</strong> static<br />
-                      </div>
-        </td>
-        <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/PicklerGeneration/TypeShape.fs#L25-25" class="github-link">
-              <img src="../content/img/github.png" class="normal" />
-              <img src="../content/img/github-blue.png" class="hover" />
-            </a>
-          
-        </td>
-      </tr>
-      <tr>
-        <td class="member-name">
-
-          <code onmouseout="hideTip(event, '306', 306)" onmouseover="showTip(event, '306', 306)">
-            Primitive
-          </code>
-          <div class="tip" id="306">
-            <strong>Signature:</strong> Shape<br />
-              <strong>Modifiers:</strong> static<br />
-                      </div>
-        </td>
-        <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/PicklerGeneration/TypeShape.fs#L20-20" class="github-link">
-              <img src="../content/img/github.png" class="normal" />
-              <img src="../content/img/github-blue.png" class="hover" />
-            </a>
-          
-        </td>
-      </tr>
-      <tr>
-        <td class="member-name">
-
-          <code onmouseout="hideTip(event, '307', 307)" onmouseover="showTip(event, '307', 307)">
-            Struct
-          </code>
-          <div class="tip" id="307">
-            <strong>Signature:</strong> Shape<br />
-              <strong>Modifiers:</strong> static<br />
-                      </div>
-        </td>
-        <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/PicklerGeneration/TypeShape.fs#L19-19" class="github-link">
-              <img src="../content/img/github.png" class="normal" />
-              <img src="../content/img/github-blue.png" class="hover" />
-            </a>
-          
-        </td>
-      </tr>
-      <tr>
-        <td class="member-name">
-
-          <code onmouseout="hideTip(event, '308', 308)" onmouseover="showTip(event, '308', 308)">
-            Tuple
-          </code>
-          <div class="tip" id="308">
-            <strong>Signature:</strong> Shape<br />
-              <strong>Modifiers:</strong> static<br />
-                      </div>
-        </td>
-        <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/PicklerGeneration/TypeShape.fs#L27-27" class="github-link">
-              <img src="../content/img/github.png" class="normal" />
-              <img src="../content/img/github-blue.png" class="hover" />
-            </a>
-          
         </td>
       </tr>
     </tbody>
@@ -282,7 +260,7 @@
             <li class="nav-header">FsPickler</li>
             <li><a href="/FsPickler/index.html">Home page</a></li>
             <li class="divider"></li>
-            <li><a href="http://nuget.com/packages/FsPickler">Get Library via NuGet</a></li>
+            <li><a href="http://www.nuget.org/packages/FsPickler">Get Library via NuGet</a></li>
             <li><a href="http://github.com/nessos/FsPickler">Source Code on GitHub</a></li>
             <li><a href="http://github.com/nessos/FsPickler/blob/master/LICENSE.txt">License</a></li>
             <li><a href="http://github.com/nessos/FsPickler/blob/master/RELEASE_NOTES.md">Release Notes</a></li>
