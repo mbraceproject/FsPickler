@@ -63,7 +63,7 @@
             and set e = x.format.UseCustomTopLevelSequenceSeparator <- e
 
 
-
+    /// FsPickler static methods.
     type FsPickler =
 
         /// <summary>
@@ -76,6 +76,12 @@
             new JsonPickler(?indent = indent, ?omitHeader = omitHeader, ?typeConverter = typeConverter)
 
 
+namespace Nessos.FsPickler.Combinators
+
+    open Nessos.FsPickler
+    open Nessos.FsPickler.Json
+
+    /// Json pickling methods
     [<RequireQualifiedAccess>]
     module Json =
 

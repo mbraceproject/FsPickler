@@ -17,7 +17,7 @@
     type internal DAttribute = System.Runtime.InteropServices.DefaultParameterValueAttribute
 
     /// <summary>
-    ///     The base class for the public pickler API. Provides basic serialization functionality
+    ///     An abstract class containg the basic serialization API.
     /// </summary>
     [<AbstractClass>]
     type FsPicklerBase (formatProvider : IPickleFormatProvider, [<O;D(null)>]?typeConverter) =

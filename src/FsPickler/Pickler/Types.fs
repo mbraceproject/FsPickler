@@ -9,7 +9,7 @@
     open Nessos.FsPickler.Utils
     open Nessos.FsPickler.Reflection
 
-    /// Type stratification
+    /// Defines a type stratification.
 
     type TypeKind =
         | Primitive             = 0uy
@@ -24,7 +24,7 @@
         | Abstract              = 9uy
         | Delegate              = 10uy
 
-    /// Pickler generation information
+    /// Pickler generation metadata.
 
     type PicklerInfo =
         | Primitive             = 0uy
@@ -38,7 +38,7 @@
         | Combinator            = 8uy
         | UserDefined           = 9uy
 
-    /// flags that specify runtime properties of serialized objects
+    /// Specifies runtime properties of serialized objects.
 
     type ObjectFlags = 
         | None                  = 0uy
@@ -71,7 +71,7 @@
 
 
     /// Specifies that the pickler for this type is to be generated using
-    /// the static method 'TypeDef.CreatePickler : IPicklerResolver -> Pickler<TypeDef>'
+    /// the static method 'TypeDef.CreatePickler : IPicklerResolver -> Pickler<TypeDef>'.
     [<Sealed>]
     [<System.AttributeUsage(AttributeTargets.Class, AllowMultiple = false)>]
     type CustomPicklerAttribute () = 
@@ -79,7 +79,7 @@
 
 
     /// <summary>
-    ///     Serialized type descriptor
+    ///     Serialization information for named types.
     /// </summary>
     type TypeInfo =
         {
@@ -89,7 +89,7 @@
 
 
     /// <summary>
-    ///     An immutable, structurally equatable version of AssemblyName
+    ///     An immutable, structurally equatable version of System.Reflection.AssemblyName.
     /// </summary>
     and AssemblyInfo =
         {
@@ -99,31 +99,42 @@
             PublicKeyToken : string
         }
     with
-        static member OfAssemblyName(an : AssemblyName) =
+        /// <summary>
+        ///     Initializes a new record out of a given assembly name.
+        /// </summary>
+        /// <param name="name"></param>
+        static member OfAssemblyName(name : AssemblyName) =
             {
-                Name = an.Name
+                Name = name.Name
                 Version = 
-                    match an.Version with
+                    match name.Version with
                     | null -> null
                     | v -> v.ToString()
 
                 Culture =
-                    match an.CultureInfo with
+                    match name.CultureInfo with
                     | null -> null
                     | cI ->
                         if String.IsNullOrEmpty cI.Name then "neutral"
                         else cI.Name
 
                 PublicKeyToken =
-                    match an.GetPublicKeyToken () with
+                    match name.GetPublicKeyToken () with
                     | null -> null
                     | [||] -> ""
                     | pkt -> Bytes.toBase16String pkt
             }
 
-        static member OfAssembly(a : Assembly) =
-            a.GetName() |> AssemblyInfo.OfAssemblyName
+        /// <summary>
+        ///     Initializes a new record out of a given assembly.
+        /// </summary>
+        /// <param name="assembly">input assembly.</param>
+        static member OfAssembly(assembly : Assembly) =
+            assembly.GetName() |> AssemblyInfo.OfAssemblyName
 
+        /// <summary>
+        ///     Defines a new System.Reflection.AssemblyName from given record.
+        /// </summary>
         member aI.ToAssemblyName () =
             let an = new AssemblyName()
 
@@ -145,11 +156,14 @@
 
             an
 
+        /// <summary>
+        ///     Returns assembly qualified name string from given assembly info.
+        /// </summary>
         member __.AssemblyQualifiedName = __.ToAssemblyName().ToString()
 
     /// <summary>
     ///     Provides facility for user-defined type conversion at 
-    ///     serialization and deserialization
+    ///     serialization and deserialization.
     /// </summary>
     type ITypeNameConverter =
         /// TypeInfo to be recorded to serialization
@@ -179,6 +193,7 @@
     //  Exception Definitions
     //
 
+    /// Base exception raised by the FsPickler library.
     type FsPicklerException =
         inherit Exception
 
@@ -188,7 +203,7 @@
         internal new (si : SerializationInfo, sc : StreamingContext) =
             { inherit Exception(si, sc) }
 
-    /// Raised when pickle is of invalid format
+    /// Raised when pickle is of invalid format.
     type InvalidPickleException =
         inherit FsPicklerException
 
@@ -198,7 +213,7 @@
         internal new (si : SerializationInfo, sc : StreamingContext) =
             { inherit FsPicklerException(si, sc) }
             
-    /// Raised when pickle is of invalid type
+    /// Raised when pickle is of invalid type.
     type InvalidPickleTypeException =
         inherit FsPicklerException
 

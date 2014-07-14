@@ -11,6 +11,9 @@
 
     open Nessos.FsPickler
 
+    /// <summary>
+    ///     Json format deserializer
+    /// </summary>
     type JsonPickleReader internal (textReader : TextReader, omitHeader, isTopLevelSequence, leaveOpen) =
 
         let jsonReader = new JsonTextReader(textReader) :> JsonReader

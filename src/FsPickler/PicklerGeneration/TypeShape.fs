@@ -1,4 +1,4 @@
-﻿namespace Nessos.FsPickler.TypeShape
+﻿module internal Nessos.FsPickler.TypeShape
 
     // TypeShape:
     //

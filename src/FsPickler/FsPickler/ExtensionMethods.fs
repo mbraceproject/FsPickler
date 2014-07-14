@@ -1,5 +1,7 @@
 ﻿namespace Nessos.FsPickler
 
+    /// F# Extension methods for FsPickler
+
     [<AutoOpen>]
     module ExtensionMethods =
 

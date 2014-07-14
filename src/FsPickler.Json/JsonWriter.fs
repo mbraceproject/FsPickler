@@ -8,6 +8,9 @@
 
     open Nessos.FsPickler
 
+    /// <summary>
+    ///     Json format serializer.
+    /// </summary>
     type JsonPickleWriter internal (textWriter : TextWriter, omitHeader, indented, isTopLevelSequence, separator, leaveOpen) =
         
         let jsonWriter = new JsonTextWriter(textWriter) :> JsonWriter

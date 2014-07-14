@@ -6,7 +6,7 @@
     
     open Nessos.FsPickler.Hashing
 
-    /// FsPickler public facade
+    /// FsPickler static methods.
     type FsPickler private () =
         
         static let defaultPickler = lazy(new BinaryPickler())

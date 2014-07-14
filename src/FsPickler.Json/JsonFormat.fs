@@ -6,6 +6,9 @@
 
     open Nessos.FsPickler
 
+    /// <summary>
+    ///     Factory methods for the Json serialization format.
+    /// </summary>
     type JsonPickleFormatProvider internal (indent, omitHeader) as self =
 
         let isCustomSeq isTopLevelSequence = 

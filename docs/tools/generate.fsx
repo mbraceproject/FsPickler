@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------------------
 
 // Binaries that have XML documentation (in a corresponding generated XML file)
-let referenceBinaries = [ "FsPickler.dll" ]
+let referenceBinaries = [ "FsPickler.dll" ; "FsPickler.Json.dll" ]
 // Web site location for the generated documentation
 let website = "/FsPickler"
 
@@ -16,7 +16,7 @@ let info =
     "project-author", "Eirik Tsarpalis"
     "project-summary", "A general-purpose serialization library for .NET"
     "project-github", githubLink
-    "project-nuget", "http://nuget.com/packages/FsPickler" ]
+    "project-nuget", "http://www.nuget.org/packages/FsPickler" ]
 
 // --------------------------------------------------------------------------------------
 // For typical project, no changes are needed below

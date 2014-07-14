@@ -90,7 +90,9 @@
 
     open XmlUtils
 
-
+    /// <summary>
+    ///     Xml format serializer.
+    /// </summary>
     type XmlPickleWriter internal (textWriter : TextWriter, indent : bool, leaveOpen) =
 
         let settings = new XmlWriterSettings()
@@ -181,7 +183,9 @@
                 writer.Dispose()
 #endif
 
-
+    /// <summary>
+    ///     Xml format deserializer.
+    /// </summary>
     type XmlPickleReader internal (textReader : TextReader, leaveOpen) =
 
         let settings = new XmlReaderSettings()
@@ -322,7 +326,9 @@
                 reader.Dispose()
 #endif
 
-
+    /// <summary>
+    ///     Factory methods for the Xml serialization format.
+    /// </summary>
     type XmlPickleFormatProvider(indent) =
 
         static let defaultEnc e = match e with None -> Encoding.UTF8 | Some e -> e

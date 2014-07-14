@@ -89,6 +89,9 @@
     // this is performant, but it does not respect endianness.
     // forcing little endian makes ALL data pass through BinaryWriter, but is less efficient
 
+    /// <summary>
+    ///     Binary format serializer.
+    /// </summary>
     type BinaryPickleWriter internal (stream : Stream, encoding : Encoding, leaveOpen, forceLittleEndian) =
 
 #if NET40
@@ -174,6 +177,9 @@
 
             member __.Dispose () = bw.Dispose()
 
+    /// <summary>
+    ///     Binary format deserializer.
+    /// </summary>
     and BinaryPickleReader internal (stream : Stream, encoding, leaveOpen) =
 
 #if NET40
@@ -269,7 +275,9 @@
             member __.IsPrimitiveArraySerializationSupported = not isForcedLittleEndianStream
             member __.ReadPrimitiveArray _ array = blockRead(stream, array)
 
-    
+    /// <summary>
+    ///     Factory methods for the binary serialization format.
+    /// </summary>
     and BinaryPickleFormatProvider (forceLittleEndian : bool) =
 
         member val ForceLittleEndian = forceLittleEndian with get, set

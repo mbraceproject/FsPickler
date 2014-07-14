@@ -4,6 +4,9 @@
     open System.Text
     open System.IO
 
+    /// <summary>
+    ///     Serialization format abstraction.
+    /// </summary>
     type IPickleFormatWriter =
 
         inherit IDisposable
@@ -87,7 +90,9 @@
         /// <param name="value">source array.</param>
         abstract WritePrimitiveArray : tag:string -> value:Array -> unit
 
-
+    /// <summary>
+    ///     Deserialization format abstraction.
+    /// </summary>
     and IPickleFormatReader =
         inherit IDisposable
 

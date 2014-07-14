@@ -6,6 +6,8 @@
 
     open Nessos.FsPickler.ReflectionCache
 
+    /// Base pickler type.
+
     [<AbstractClass>]
     type Pickler =
         class
@@ -42,6 +44,8 @@
             abstract member internal UntypedWrite : state:WriteState -> tag:string -> value:obj -> unit
         end
 
+    /// Defines serialization rules for given type parameter.
+
     and [<AbstractClass>] Pickler<'T> =
         class
             inherit Pickler
@@ -61,11 +65,13 @@
             abstract member Apply : Pickler<'T> -> 'U
         end
 
+    /// Object graph visitor abstraction.
     and IObjectVisitor =
         interface
             abstract member Visit<'T> : 'T -> unit
         end
-
+    
+    /// Provides access to automated pickler generation facility.
     and IPicklerResolver =
         interface
             /// Identifies if instances of given type can be serialized.
@@ -79,6 +85,7 @@
             abstract member Resolve : unit -> Pickler<'T>
         end
 
+    /// Contains all state related to object serializations
     and WriteState =
         class
             internal new : 
@@ -91,11 +98,13 @@
             member internal ObjectIdGenerator : ObjectIDGenerator
             member internal PicklerResolver : IPicklerResolver
             member internal ReflectionCache : ReflectionCache
+            /// Streaming context to the serialization
             member StreamingContext : StreamingContext
             member internal Visitor : IObjectVisitor option
             member internal TypePickler : Pickler<System.Type>
         end
-
+    
+    /// Contains all state related to object deserializations
     and ReadState =
         class
             internal new : 
@@ -108,6 +117,7 @@
             member internal ObjectCache : Dictionary<int64,obj>
             member internal PicklerResolver : IPicklerResolver
             member internal ReflectionCache : ReflectionCache.ReflectionCache
+            /// Streaming context to the deserialization
             member StreamingContext : StreamingContext
             member internal TypePickler : Pickler<System.Type>
         end

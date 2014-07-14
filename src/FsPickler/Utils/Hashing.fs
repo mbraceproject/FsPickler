@@ -3,6 +3,7 @@
     open System
     open System.IO
 
+    /// Hashed object result info
     [<StructuralEquality>]
     [<StructuralComparison>]
     type HashResult =
@@ -100,7 +101,7 @@
     //
 
     [<AutoOpen>]
-    module MurMur3Utils =
+    module internal MurMur3Utils =
         
         [<Literal>]
         let C1 = 0x87c37b91114253d5uL
@@ -178,7 +179,7 @@
         interface IHashStreamFactory with
             member __.Create () = new MurMur3Stream(?seed = seed) :> HashStream
 
-    and MurMur3Stream(?seed : uint64) =
+    and internal MurMur3Stream(?seed : uint64) =
         inherit HashStream()
 
         let mutable length = 0L

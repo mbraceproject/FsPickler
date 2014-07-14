@@ -9,7 +9,7 @@
     open Nessos.FsPickler.RootSerialization
 
     /// <summary>
-    ///     The base class for text-based pickle format implementations.
+    ///     An abstract class containing the text-based serialization API.
     /// </summary>
     [<AbstractClass>]
     type FsPicklerText (formatProvider : ITextPickleFormatProvider, [<O;D(null)>] ?typeConverter) =
