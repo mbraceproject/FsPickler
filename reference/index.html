@@ -82,7 +82,7 @@
             <a href="nessos-fspickler-custompicklerattribute.html">CustomPicklerAttribute</a>
           </td>
           <td class="xmldoc"><p>Specifies that the pickler for this type is to be generated using
-the static method 'TypeDef.CreatePickler : IPicklerResolver -> Pickler<TypeDef>'</p>
+the static method 'TypeDef.CreatePickler : IPicklerResolver -> Pickler<TypeDef>'.</p>
 </td>
         </tr>
         <tr>
@@ -96,7 +96,7 @@ the static method 'TypeDef.CreatePickler : IPicklerResolver -> Pickler<TypeDef>'
           <td class="type-name">
             <a href="nessos-fspickler-fspicklerbase.html">FsPicklerBase</a>
           </td>
-          <td class="xmldoc"><p>The base class for the public pickler API. Provides basic serialization functionality</p>
+          <td class="xmldoc"><p>An abstract class containg the basic serialization API.</p>
 </td>
         </tr>
         <tr>
@@ -110,14 +110,14 @@ the static method 'TypeDef.CreatePickler : IPicklerResolver -> Pickler<TypeDef>'
           <td class="type-name">
             <a href="nessos-fspickler-fspicklertext.html">FsPicklerText</a>
           </td>
-          <td class="xmldoc"><p>The base class for text-based pickle format implementations.</p>
+          <td class="xmldoc"><p>An abstract class containing the text-based serialization API.</p>
 </td>
         </tr>
         <tr>
           <td class="type-name">
             <a href="nessos-fspickler-iobjectvisitor.html">IObjectVisitor</a>
           </td>
-          <td class="xmldoc"><p>Object graph visitor abstraction</p>
+          <td class="xmldoc"><p>Object graph visitor abstraction.</p>
 </td>
         </tr>
         <tr>
@@ -160,7 +160,7 @@ the static method 'TypeDef.CreatePickler : IPicklerResolver -> Pickler<TypeDef>'
             <a href="nessos-fspickler-itypenameconverter.html">ITypeNameConverter</a>
           </td>
           <td class="xmldoc"><p>Provides facility for user-defined type conversion at 
-serialization and deserialization</p>
+serialization and deserialization.</p>
 </td>
         </tr>
         <tr>
@@ -196,7 +196,7 @@ at deserialization.</p>
           <td class="type-name">
             <a href="nessos-fspickler-objectflags.html">ObjectFlags</a>
           </td>
-          <td class="xmldoc"><p>flags that specify runtime properties of serialized objects</p>
+          <td class="xmldoc"><p>Specifies runtime properties of serialized objects.</p>
 </td>
         </tr>
         <tr>
@@ -224,7 +224,7 @@ at deserialization.</p>
           <td class="type-name">
             <a href="nessos-fspickler-picklerinfo.html">PicklerInfo</a>
           </td>
-          <td class="xmldoc"><p>Pickler generation information</p>
+          <td class="xmldoc"><p>Pickler generation metadata.</p>
 </td>
         </tr>
         <tr>
@@ -245,7 +245,7 @@ at deserialization.</p>
           <td class="type-name">
             <a href="nessos-fspickler-typekind.html">TypeKind</a>
           </td>
-          <td class="xmldoc"><p>Type stratification</p>
+          <td class="xmldoc"><p>Defines a type stratification.</p>
 </td>
         </tr>
         <tr>
@@ -259,7 +259,7 @@ at deserialization.</p>
           <td class="type-name">
             <a href="nessos-fspickler-xmlpickleformatprovider.html">XmlPickleFormatProvider</a>
           </td>
-          <td class="xmldoc"><p>Factory methods for Xml serialization format.</p>
+          <td class="xmldoc"><p>Factory methods for the Xml serialization format.</p>
 </td>
         </tr>
         <tr>
@@ -327,6 +327,13 @@ at deserialization.</p>
             <a href="nessos-fspickler-combinators-xml.html">Xml</a>
           </td>
           <td class="xmldoc"><p>Xml pickling methods</p>
+</td>
+        </tr>
+        <tr>
+          <td class="module-name">
+            <a href="nessos-fspickler-combinators-json.html">Json</a>
+          </td>
+          <td class="xmldoc"><p>Json pickling methods</p>
 </td>
         </tr>
     </tbody>
@@ -398,25 +405,29 @@ Optimized for 64-bit architectures</p>
           <td class="type-name">
             <a href="nessos-fspickler-json-fspickler.html">FsPickler</a>
           </td>
-          <td class="xmldoc"></td>
+          <td class="xmldoc"><p>FsPickler static methods.</p>
+</td>
         </tr>
         <tr>
           <td class="type-name">
             <a href="nessos-fspickler-json-jsonpickleformatprovider.html">JsonPickleFormatProvider</a>
           </td>
-          <td class="xmldoc"></td>
+          <td class="xmldoc"><p>Factory methods for the Json serialization format.</p>
+</td>
         </tr>
         <tr>
           <td class="type-name">
             <a href="nessos-fspickler-json-jsonpicklereader.html">JsonPickleReader</a>
           </td>
-          <td class="xmldoc"></td>
+          <td class="xmldoc"><p>Json format deserializer</p>
+</td>
         </tr>
         <tr>
           <td class="type-name">
             <a href="nessos-fspickler-json-jsonpicklewriter.html">JsonPickleWriter</a>
           </td>
-          <td class="xmldoc"></td>
+          <td class="xmldoc"><p>Json format serializer.</p>
+</td>
         </tr>
         <tr>
           <td class="type-name">
@@ -424,89 +435,6 @@ Optimized for 64-bit architectures</p>
           </td>
           <td class="xmldoc"><p>Json pickler instance.</p>
 </td>
-        </tr>
-    </tbody>
-  </table>
-  <table class="table table-bordered module-list">
-    <thead>
-      <tr><td>Module</td><td>Description</td></tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td class="module-name">
-            <a href="nessos-fspickler-json-json.html">Json</a>
-          </td>
-          <td class="xmldoc"></td>
-        </tr>
-    </tbody>
-  </table>
-
-    </div>
-    <h2>Nessos.CsPickler Namespace</h2>
-    <div>
-        <table class="table table-bordered type-list">
-    <thead>
-      <tr><td>Type</td><td>Description</td></tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td class="type-name">
-            <a href="nessos-cspickler-binarypickler.html">BinaryPickler</a>
-          </td>
-          <td class="xmldoc"></td>
-        </tr>
-        <tr>
-          <td class="type-name">
-            <a href="nessos-cspickler-cspickler.html">CsPickler</a>
-          </td>
-          <td class="xmldoc"></td>
-        </tr>
-        <tr>
-          <td class="type-name">
-            <a href="nessos-cspickler-cspicklerbase.html">CsPicklerBase</a>
-          </td>
-          <td class="xmldoc"></td>
-        </tr>
-        <tr>
-          <td class="type-name">
-            <a href="nessos-cspickler-cspicklertext.html">CsPicklerText</a>
-          </td>
-          <td class="xmldoc"></td>
-        </tr>
-        <tr>
-          <td class="type-name">
-            <a href="nessos-cspickler-jsonpickler.html">JsonPickler</a>
-          </td>
-          <td class="xmldoc"></td>
-        </tr>
-        <tr>
-          <td class="type-name">
-            <a href="nessos-cspickler-utils.html">Utils</a>
-          </td>
-          <td class="xmldoc"></td>
-        </tr>
-        <tr>
-          <td class="type-name">
-            <a href="nessos-cspickler-xmlpickler.html">XmlPickler</a>
-          </td>
-          <td class="xmldoc"></td>
-        </tr>
-    </tbody>
-  </table>
-
-    </div>
-    <h2>global Namespace</h2>
-    <div>
-        <table class="table table-bordered type-list">
-    <thead>
-      <tr><td>Type</td><td>Description</td></tr>
-    </thead>
-    <tbody>
-        <tr>
-          <td class="type-name">
-            <a href="global-<module>.html"><Module></a>
-          </td>
-          <td class="xmldoc"></td>
         </tr>
     </tbody>
   </table>
