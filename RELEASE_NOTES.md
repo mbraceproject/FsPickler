@@ -1,3 +1,6 @@
+#### 0.9.7
+* Add support for BSON format.
+
 #### 0.9.6
 * Pickle format refinements.
 * Add C# library.

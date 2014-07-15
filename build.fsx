@@ -6,6 +6,8 @@
 #r "packages/FAKE/tools/FakeLib.dll"
 //#load "packages/SourceLink.Fake/tools/SourceLink.fsx"
 open System
+open System.IO
+
 open Fake 
 open Fake.Git
 open Fake.ReleaseNotesHelper
@@ -65,6 +67,7 @@ Target "AssemblyInfo" (fun _ ->
 
     CreateFSharpAssemblyInfo "src/FsPickler/AssemblyInfo.fs" attrs
     CreateFSharpAssemblyInfo "src/FsPickler.Json/AssemblyInfo.fs" attrs
+    CreateCSharpAssemblyInfo "src/FsPickler.CSharp/Properties/AssemblyInfo.cs" attrs
 
 )
 
@@ -133,6 +136,24 @@ FinalTarget "CloseTestRunner" (fun _ ->
 //// --------------------------------------------------------------------------------------
 //// Build a NuGet package
 
+let addFile (target : string) (file : string) =
+    if File.Exists (Path.Combine("nuget", file)) then (file, Some target, None)
+    else raise <| new FileNotFoundException(file)
+
+let addAssembly (target : string) assembly =
+    let includeFile force file =
+        let file = file
+        if File.Exists (Path.Combine("nuget", file)) then [(file, Some target, None)]
+        elif force then raise <| new FileNotFoundException(file)
+        else []
+
+    seq {
+        yield! includeFile true assembly
+        yield! includeFile false <| Path.ChangeExtension(assembly, "pdb")
+        yield! includeFile false <| Path.ChangeExtension(assembly, "xml")
+        yield! includeFile false <| assembly + ".config"
+    }
+
 Target "NuGet -- FsPickler" (fun _ ->
     let nugetPath = ".nuget/NuGet.exe"
     NuGet (fun p -> 
@@ -148,7 +169,13 @@ Target "NuGet -- FsPickler" (fun _ ->
             ToolPath = nugetPath
             AccessKey = getBuildParamOrDefault "nugetkey" ""
             Dependencies = []
-            Publish = hasBuildParam "nugetkey" })
+            Publish = hasBuildParam "nugetkey" 
+            Files =
+                [
+                    yield! addAssembly @"lib\net45" @"..\bin\FsPickler.dll"
+                    yield! addAssembly @"lib\net40" @"..\bin\net40\FsPickler.dll"
+                ]
+        })
         ("nuget/FsPickler.nuspec")
 )
 
@@ -167,8 +194,15 @@ Target "NuGet -- FsPickler.Json" (fun _ ->
             ToolPath = nugetPath
             AccessKey = getBuildParamOrDefault "nugetkey" ""
             Dependencies = [("FsPickler", RequireExactly release.NugetVersion) ; ("Newtonsoft.Json", "6.0.3")] 
-            Publish = hasBuildParam "nugetkey" })
-        ("nuget/FsPickler.Json.nuspec")
+            Publish = hasBuildParam "nugetkey" 
+            Files =
+                [
+                    yield! addAssembly @"lib\net45" @"..\bin\FsPickler.Json.dll"
+                    yield! addAssembly @"lib\net40" @"..\bin\net40\FsPickler.Json.dll"
+                ]
+            
+        })
+        ("nuget/FsPickler.nuspec")
 )
 
 Target "NuGet -- FsPickler.CSharp" (fun _ ->
@@ -191,8 +225,14 @@ Target "NuGet -- FsPickler.CSharp" (fun _ ->
                     ("FsPickler", RequireExactly release.NugetVersion)
                     ("FsPickler.Json", RequireExactly release.NugetVersion)
                 ] 
-            Publish = hasBuildParam "nugetkey" })
-        ("nuget/FsPickler.CSharp.nuspec")
+            Publish = hasBuildParam "nugetkey" 
+            Files =
+                [
+                    yield! addAssembly @"lib\net45" @"..\bin\FsPickler.CSharp.dll"
+                    yield! addAssembly @"lib\net40" @"..\bin\net40\FsPickler.CSharp.dll"
+                ]
+        })
+        ("nuget/FsPickler.nuspec")
 )
 
 // Doc generation

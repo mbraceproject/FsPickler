@@ -12,8 +12,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "project", "project", "{8784
 		build.cmd = build.cmd
 		build.fsx = build.fsx
 		build.sh = build.sh
-		nuget\FsPickler.CSharp.nuspec = nuget\FsPickler.CSharp.nuspec
-		nuget\FsPickler.Json.nuspec = nuget\FsPickler.Json.nuspec
 		nuget\FsPickler.nuspec = nuget\FsPickler.nuspec
 		License.md = License.md
 		README.md = README.md
@@ -38,13 +36,6 @@ EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FsPickler.Json", "src\FsPickler.Json\FsPickler.Json.fsproj", "{1DCB4AD7-2C00-4BCD-B1A5-A469F31E2CD1}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FsPickler.CSharp", "src\FsPickler.CSharp\FsPickler.CSharp.csproj", "{49D58CB3-B5A5-41DD-8398-060A8C6FBDD0}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "nuspec", "nuspec", "{CD4F0F33-C330-4991-BE9B-7AE50A3EB6D5}"
-	ProjectSection(SolutionItems) = preProject
-		nuget\FsPickler.CSharp.nuspec = nuget\FsPickler.CSharp.nuspec
-		nuget\FsPickler.Json.nuspec = nuget\FsPickler.Json.nuspec
-		nuget\FsPickler.nuspec = nuget\FsPickler.nuspec
-	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{D0FD949B-2995-4392-AD02-E9C69BA9DFE0}"
 EndProject
@@ -123,7 +114,6 @@ Global
 		{EC89A90F-5EBF-40FB-B4F3-1A8F2D224A20} = {109340B6-EAF7-4DDC-9D6C-F51A3E6E747F}
 		{1DCB4AD7-2C00-4BCD-B1A5-A469F31E2CD1} = {23BFC6E5-8581-44C7-B9C6-A42F06DCD6A6}
 		{49D58CB3-B5A5-41DD-8398-060A8C6FBDD0} = {23BFC6E5-8581-44C7-B9C6-A42F06DCD6A6}
-		{CD4F0F33-C330-4991-BE9B-7AE50A3EB6D5} = {87846678-C0AD-48CD-8D7D-4224116EEB73}
 		{69847FBC-4407-48A7-9109-C07D3164F29A} = {D0FD949B-2995-4392-AD02-E9C69BA9DFE0}
 		{E2C73A7A-643B-48D0-9DBB-581778FC8C6D} = {D0FD949B-2995-4392-AD02-E9C69BA9DFE0}
 		{BE768967-0DE8-4FB3-83EA-2841CB790B9E} = {D0FD949B-2995-4392-AD02-E9C69BA9DFE0}
