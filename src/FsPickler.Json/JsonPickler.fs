@@ -66,7 +66,7 @@
     ///     BSON pickler instance.
     /// </summary>
     type BsonPickler([<O;D(null)>] ?typeConverter) =
-        inherit FsPicklerBase(new BsonPickleFormat(), ?typeConverter = typeConverter)
+        inherit FsPicklerBase(new BsonPickleFormatProvider(), ?typeConverter = typeConverter)
 
 
     /// FsPickler static methods.

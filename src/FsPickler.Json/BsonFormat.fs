@@ -12,7 +12,7 @@
     /// <summary>
     ///     BSON format factory methods.
     /// </summary>
-    type BsonPickleFormat() =
+    type BsonPickleFormatProvider() =
         
         interface IPickleFormatProvider with
 
