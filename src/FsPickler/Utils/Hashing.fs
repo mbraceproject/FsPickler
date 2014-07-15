@@ -48,7 +48,7 @@
             member __.Create () = new FNV1aStream(?bits = bits) :> HashStream
 
     /// 64-bit Fowler-Noll-Vo hashing algorithm
-    and FNV1aStream (?bits : int) =
+    and internal FNV1aStream (?bits : int) =
         inherit HashStream()
 
         let shift = 64 - (defaultArg bits 64)
