@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8"/>
-    <title>Json - FsPickler</title>
+    <title>BsonPickler - FsPickler</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <meta name="description" content=""/>
     <meta name="author" content="Eirik Tsarpalis"/>
@@ -35,55 +35,32 @@
 
 
 
-<h1>Json</h1>
+<h1>BsonPickler</h1>
 <div class="xmldoc">
-<p>Json pickling methods</p>
+<p>BSON pickler instance.</p>
 </div>
-
-<!-- Render nested types and modules, if there are any -->
-
-  <h3>Functions and values</h3>
+  <h3>Constructors</h3>
   <table class="table table-bordered member-list">
     <thead>
-      <tr><td>Function or value</td><td>Description</td></tr>
+      <tr><td>Constructor</td><td>Description</td></tr>
     </thead>
     <tbody>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '56', 56)" onmouseover="showTip(event, '56', 56)">
-            pickle(pickler value)
+          <code onmouseout="hideTip(event, '267', 267)" onmouseover="showTip(event, '267', 267)">
+            new(?typeConverter)
           </code>
-          <div class="tip" id="56">
-            <strong>Signature:</strong> pickler:Pickler&lt;&#39;T&gt; -&gt; value:&#39;T -&gt; string<br />
-                          <strong>Type parameters:</strong> 'T          </div>
+          <div class="tip" id="267">
+            <strong>Signature:</strong> (typeConverter:ITypeNameConverter option) -&gt; BsonPickler<br />
+                      </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler.Json/JsonPickler.fs#L108-108" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler.Json/JsonPickler.fs#L68-68" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          <p>Pickles a value to json.</p>
-
-        </td>
-      </tr>
-      <tr>
-        <td class="member-name">
-
-          <code onmouseout="hideTip(event, '57', 57)" onmouseover="showTip(event, '57', 57)">
-            unpickle(pickler pickle)
-          </code>
-          <div class="tip" id="57">
-            <strong>Signature:</strong> pickler:Pickler&lt;&#39;T&gt; -&gt; pickle:string -&gt; &#39;T<br />
-                          <strong>Type parameters:</strong> 'T          </div>
-        </td>
-        <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler.Json/JsonPickler.fs#L116-116" class="github-link">
-              <img src="../content/img/github.png" class="normal" />
-              <img src="../content/img/github-blue.png" class="hover" />
-            </a>
-          <p>Unpickles a value from json.</p>
-
+          
         </td>
       </tr>
     </tbody>
