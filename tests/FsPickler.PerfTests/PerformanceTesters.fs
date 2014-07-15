@@ -22,12 +22,13 @@
         let bfs = new BinaryFormatterSerializer() :> ISerializer
         let ndc = new NetDataContractSerializer() :> ISerializer
         let jdn = new JsonDotNetSerializer() :> ISerializer
+        let bdn = new JsonDotNetBsonSerializer () :> ISerializer
         let pbn = new ProtoBufSerializer() :> ISerializer
         let ssj = new ServiceStackJsonSerializer() :> ISerializer
         let sst = new ServiceStackTypeSerializer() :> ISerializer
 
         let comparer = new WeightedComparer(spaceFactor = 0.2, leastAcceptableImprovementFactor = 1.)
-        let tester = new ImplementationComparer<_>(fsp, [bfs;ndc;jdn;pbn;ssj;sst], throwOnError = true, comparer = comparer)
+        let tester = new ImplementationComparer<_>(fsp, [bfs;ndc;jdn;bdn;pbn;ssj;sst], throwOnError = true, comparer = comparer)
 
         override __.PerfTester = tester :> _
         
@@ -37,9 +38,10 @@
 
         let binary = new FsPicklerBinary() :> ISerializer
         let json = new FsPicklerJson() :> ISerializer
+        let bson = new FsPicklerBson() :> ISerializer
         let xml = new FsPicklerXml() :> ISerializer
 
-        let tester = new ImplementationComparer<_>(binary, [json ; xml], throwOnError = false)
+        let tester = new ImplementationComparer<_>(binary, [json ; bson; xml], throwOnError = false)
 
         override __.PerfTester = tester :> _
 

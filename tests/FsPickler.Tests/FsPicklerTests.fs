@@ -22,6 +22,7 @@
     [<TestFixture(PickleFormat.Xml)>]
     [<TestFixture(PickleFormat.Json)>]
     [<TestFixture(PickleFormat.Json_Headerless)>]
+    [<TestFixture(PickleFormat.Bson)>]
     type ``FsPickler Tests`` (format : string) as self =
 
         let _ = Arb.register<FsPicklerGenerators> ()

@@ -61,6 +61,7 @@
     <Compile Include="CsPicklerBase.cs" />
     <Compile Include="Formats\BinaryPickler.cs" />
     <Compile Include="CsPickler.cs" />
+    <Compile Include="Formats\BsonPickler.cs" />
     <Compile Include="Utils.cs" />
     <Compile Include="Formats\JsonPickler.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

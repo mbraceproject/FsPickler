@@ -44,6 +44,14 @@ namespace Nessos.CsPickler
         }
 
         /// <summary>
+        ///     Creates a new BsonPickler instance.
+        /// </summary>
+        public static BsonPickler CreateBson()
+        {
+            return BsonPickler.Create();
+        }
+
+        /// <summary>
         ///     Checks if given type is serializable.
         /// </summary>
         /// <param name="type">input type.</param>

@@ -3,9 +3,11 @@
 #r "FsPickler.Json.dll"
 
 open Nessos.FsPickler
+open Nessos.FsPickler.Json
 open Nessos.FsPickler.Combinators
 
 let jsp = FsPickler.CreateJson(indent = true, omitHeader = true)
+let bsp = FsPickler.CreateBson()
 
 type Record = { Name : string ; Age : int }
 

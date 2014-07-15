@@ -62,6 +62,12 @@
             with get () = x.format.UseCustomTopLevelSequenceSeparator
             and set e = x.format.UseCustomTopLevelSequenceSeparator <- e
 
+    /// <summary>
+    ///     BSON pickler instance.
+    /// </summary>
+    type BsonPickler([<O;D(null)>] ?typeConverter) =
+        inherit FsPicklerBase(new BsonPickleFormat(), ?typeConverter = typeConverter)
+
 
     /// FsPickler static methods.
     type FsPickler =
@@ -74,6 +80,13 @@
         /// <param name="typeConverter">specify a custom type name converter.</param>
         static member CreateJson([<O;D(null)>] ?indent, [<O;D(null)>] ?omitHeader, [<O;D(null)>] ?typeConverter) = 
             new JsonPickler(?indent = indent, ?omitHeader = omitHeader, ?typeConverter = typeConverter)
+
+        /// <summary>
+        ///     Initializes a new Bson pickler instance.
+        /// </summary>
+        /// <param name="typeConverter">specify a custom type name converter.</param>
+        static member CreateBson([<O;D(null)>] ?typeConverter) = 
+            new BsonPickler(?typeConverter = typeConverter)
 
 
 namespace Nessos.FsPickler.Combinators
@@ -96,9 +109,32 @@ namespace Nessos.FsPickler.Combinators
             jsonPickler.Value.PickleToString (pickler, value)
 
         /// <summary>
-        ///     Unpickles a values from json.
+        ///     Unpickles a value from json.
         /// </summary>
         /// <param name="pickler">utilized pickler.</param>
         /// <param name="pickle">input pickle.</param>
         let unpickle (pickler : Pickler<'T>) (pickle : string) : 'T =
             jsonPickler.Value.UnPickleOfString (pickler, pickle)
+
+
+    /// Json pickling methods
+    [<RequireQualifiedAccess>]
+    module Bson =
+
+        let private bsonPickler = lazy(FsPickler.CreateBson())
+
+        /// <summary>
+        ///     Pickles a value to bson.
+        /// </summary>
+        /// <param name="pickler">utilized pickler.</param>
+        /// <param name="value">input value.</param>
+        let pickle (pickler : Pickler<'T>) (value : 'T) : byte [] =
+            bsonPickler.Value.Pickle (pickler, value)
+
+        /// <summary>
+        ///     Unpickles a value from bson.
+        /// </summary>
+        /// <param name="pickler">utilized pickler.</param>
+        /// <param name="pickle">input pickle.</param>
+        let unpickle (pickler : Pickler<'T>) (pickle : byte []) : 'T =
+            bsonPickler.Value.UnPickle (pickler, pickle)

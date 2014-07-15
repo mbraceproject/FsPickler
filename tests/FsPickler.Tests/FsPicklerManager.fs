@@ -19,6 +19,9 @@
         [<Literal>]
         let Json_Headerless = "FsPickler.Json-headerless"
 
+        [<Literal>]
+        let Bson = "FsPickler.Bson"
+
     type FsPicklerManager(pickleFormat : string) =
 
         let pickler =
@@ -31,6 +34,8 @@
                 jsp.UseCustomTopLevelSequenceSeparator <- true
                 jsp.SequenceSeparator <- System.Environment.NewLine
                 jsp :> FsPicklerBase
+
+            | PickleFormat.Bson -> FsPickler.CreateBson() :> FsPicklerBase
 
             | _ -> invalidArg "name" <| sprintf "unexpected pickler format '%s'." pickleFormat
 

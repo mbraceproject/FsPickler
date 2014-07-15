@@ -4,6 +4,8 @@
     open System.IO
     open System.Text
 
+    open Newtonsoft.Json
+
     open Nessos.FsPickler
 
     /// <summary>
@@ -32,7 +34,8 @@
 #else
                 let sw = new StreamWriter(stream, encoding, 1024, leaveOpen)
 #endif
-                new JsonPickleWriter(sw, __.OmitHeader, __.Indent, isCustomSeq isTopLevelSequence, __.SequenceSeparator, leaveOpen) :> _
+                let jw = new JsonTextWriter(sw)
+                new JsonPickleWriter(jw, __.OmitHeader, __.Indent, isCustomSeq isTopLevelSequence, __.SequenceSeparator, leaveOpen) :> _
 
             member __.CreateReader (stream, encoding, isTopLevelSequence, leaveOpen) =
 #if NET40
@@ -41,10 +44,13 @@
 #else
                 let sr = new StreamReader(stream, encoding, true, 1024, leaveOpen)
 #endif
-                new JsonPickleReader(sr, __.OmitHeader, isCustomSeq isTopLevelSequence, leaveOpen) :> _
+                let jr = new JsonTextReader(sr)
+                new JsonPickleReader(jr, __.OmitHeader, isCustomSeq isTopLevelSequence, leaveOpen) :> _
 
             member __.CreateWriter (textWriter, isTopLevelSequence, leaveOpen) =
-                new JsonPickleWriter(textWriter, __.OmitHeader, __.Indent, isCustomSeq isTopLevelSequence, __.SequenceSeparator, leaveOpen) :> _
+                let jw = new JsonTextWriter(textWriter)
+                new JsonPickleWriter(jw, __.OmitHeader, __.Indent, isCustomSeq isTopLevelSequence, __.SequenceSeparator, leaveOpen) :> _
 
             member __.CreateReader (textReader, isTopLevelSequence, leaveOpen) =
-                new JsonPickleReader(textReader, __.OmitHeader, isCustomSeq isTopLevelSequence, leaveOpen) :> _
+                let jr = new JsonTextReader(textReader)
+                new JsonPickleReader(jr, __.OmitHeader, isCustomSeq isTopLevelSequence, leaveOpen) :> _

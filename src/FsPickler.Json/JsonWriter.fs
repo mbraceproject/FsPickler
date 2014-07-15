@@ -11,12 +11,13 @@
     /// <summary>
     ///     Json format serializer.
     /// </summary>
-    type JsonPickleWriter internal (textWriter : TextWriter, omitHeader, indented, isTopLevelSequence, separator, leaveOpen) =
-        
-        let jsonWriter = new JsonTextWriter(textWriter) :> JsonWriter
+    type JsonPickleWriter internal (jsonWriter : JsonWriter, omitHeader, indented, isTopLevelSequence, separator, leaveOpen) =
+
         do 
             jsonWriter.Formatting <- if indented then Formatting.Indented else Formatting.None
             jsonWriter.CloseOutput <- not leaveOpen
+
+        let isBsonWriter = match jsonWriter with :? Bson.BsonWriter -> true | _ -> false
 
         let mutable depth = 0
         let mutable isTopLevelSequenceHead = false
@@ -113,13 +114,29 @@
             member __.WriteBigInteger (tag : string) value = writePrimitive jsonWriter (omitTag ()) tag (string value)
 
             member __.WriteGuid (tag : string) value = writePrimitive jsonWriter (omitTag ()) tag value
-            member __.WriteDate (tag : string) value = writePrimitive jsonWriter (omitTag ()) tag value
             member __.WriteTimeSpan (tag : string) value = writePrimitive jsonWriter (omitTag ()) tag (string value)
 
-            member __.WriteBytes (tag : string) (value : byte []) = writePrimitive jsonWriter (omitTag ()) tag value
+            // BSON spec mandates the use of Unix time; 
+            // this has millisecond precision which results in loss of accuracy w.r.t. ticks
+            // since the goal of FsPickler is to offer faithful representations of .NET objects
+            // we choose to override the spec and serialize ticks outright.
+            // see also https://json.codeplex.com/discussions/212067 
+            member __.WriteDate (tag : string) value = 
+                if isBsonWriter then
+                    writePrimitive jsonWriter (omitTag ()) tag value.Ticks
+                else
+                    writePrimitive jsonWriter (omitTag ()) tag value
+
+            member __.WriteBytes (tag : string) (value : byte []) =
+                if not <| omitTag () then 
+                    jsonWriter.WritePropertyName tag
+
+                if obj.ReferenceEquals(value, null) then
+                    jsonWriter.WriteNull()
+                else
+                    jsonWriter.WriteValue value
 
             member __.IsPrimitiveArraySerializationSupported = false
             member __.WritePrimitiveArray _ _ = raise <| NotSupportedException()
 
-            member __.Dispose () = 
-                jsonWriter.Flush () ; textWriter.Flush () ; (jsonWriter :> IDisposable).Dispose()
+            member __.Dispose () = jsonWriter.Flush()

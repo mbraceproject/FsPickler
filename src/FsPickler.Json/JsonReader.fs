@@ -14,12 +14,13 @@
     /// <summary>
     ///     Json format deserializer
     /// </summary>
-    type JsonPickleReader internal (textReader : TextReader, omitHeader, isTopLevelSequence, leaveOpen) =
+    type JsonPickleReader internal (jsonReader : JsonReader, omitHeader, isTopLevelSequence, leaveOpen) =
 
-        let jsonReader = new JsonTextReader(textReader) :> JsonReader
         do
             jsonReader.CloseInput <- not leaveOpen
             jsonReader.SupportMultipleContent <- isTopLevelSequence
+
+        let isBsonReader = match jsonReader with :? Bson.BsonReader -> true | _ -> false
 
         let mutable depth = 0
         let arrayStack = new Stack<int> ()
@@ -158,16 +159,43 @@
             member __.ReadString tag = jsonReader.ReadPrimitiveAs<string> (omitTag ()) tag
             member __.ReadBigInteger tag = jsonReader.ReadPrimitiveAs<string> (omitTag ()) tag |> BigInteger.Parse
 
-            member __.ReadGuid tag = jsonReader.ReadPrimitiveAs<string> (omitTag ()) tag |> Guid.Parse
-            member __.ReadTimeSpan tag = jsonReader.ReadPrimitiveAs<string> (omitTag ()) tag |> TimeSpan.Parse
-            member __.ReadDate tag = jsonReader.ReadPrimitiveAs<DateTime> (omitTag ()) tag
+            member __.ReadGuid tag = 
+                if isBsonReader then 
+                    let bytes = jsonReader.ReadPrimitiveAs<byte []> (omitTag ()) tag
+                    Guid(bytes)
+                else
+                    jsonReader.ReadPrimitiveAs<string> (omitTag ()) tag |> Guid.Parse
 
+            member __.ReadTimeSpan tag = jsonReader.ReadPrimitiveAs<string> (omitTag ()) tag |> TimeSpan.Parse
             member __.ReadDecimal tag = jsonReader.ReadPrimitiveAs<string> (omitTag ()) tag |> decimal
 
-            member __.ReadBytes tag = 
-                match jsonReader.ReadPrimitiveAs<string> (omitTag ()) tag with
-                | null -> null
-                | value -> Convert.FromBase64String value
+            // BSON spec mandates the use of Unix time; 
+            // this has millisecond precision which results in loss of accuracy w.r.t. ticks
+            // since the goal of FsPickler is to offer faithful representations of .NET objects
+            // we choose to override the spec and serialize ticks outright.
+            // see also https://json.codeplex.com/discussions/212067 
+            member __.ReadDate tag = 
+                if isBsonReader then
+                    let ticks = jsonReader.ReadPrimitiveAs<int64> (omitTag ()) tag
+                    DateTime(ticks)
+                else
+                    jsonReader.ReadPrimitiveAs<DateTime> (omitTag ()) tag
+
+            member __.ReadBytes tag =
+                if not <| omitTag () then
+                    jsonReader.ReadProperty tag
+                    jsonReader.Read() |> ignore
+
+                let bytes =
+                    if jsonReader.TokenType = JsonToken.Null then null
+                    elif isBsonReader then jsonReader.ValueAs<byte []> ()
+                    else
+                        let base64 = jsonReader.ValueAs<string> ()
+                        Convert.FromBase64String base64
+
+                jsonReader.Read() |> ignore
+
+                bytes
 
             member __.IsPrimitiveArraySerializationSupported = false
             member __.ReadPrimitiveArray _ _ = raise <| new NotImplementedException()

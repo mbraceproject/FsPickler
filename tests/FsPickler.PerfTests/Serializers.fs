@@ -7,6 +7,7 @@
 
     open ServiceStack.Text
     open Newtonsoft.Json
+    open Newtonsoft.Json.Bson
     open ProtoBuf
 
     open Nessos.FsPickler
@@ -30,6 +31,7 @@
     and FsPicklerBinary () = inherit FsPicklerSerializer("FsPickler.Binary", FsPickler.CreateBinary())
     and FsPicklerXml () = inherit FsPicklerSerializer("FsPickler.Xml", FsPickler.CreateXml())
     and FsPicklerJson () = inherit FsPicklerSerializer("FsPickler.Json", FsPickler.CreateJson())
+    and FsPicklerBson () = inherit FsPicklerSerializer("FsPickler.Bson", FsPickler.CreateBson())
 
     type BinaryFormatterSerializer () =
         let bfs = new BinaryFormatter()
@@ -58,6 +60,20 @@
                 writer.Flush()
             member __.Deserialize(stream : Stream) : 'T =
                 use reader = new System.IO.StreamReader(stream)
+                jdn.Deserialize(reader, typeof<'T>) :?> 'T
+
+    type JsonDotNetBsonSerializer () =
+        let jdn = Newtonsoft.Json.JsonSerializer.Create()
+        
+        interface ISerializer with
+            member __.Name = "Json.Net (Bson)"
+            member __.Serialize(stream : Stream, x : 'T) =
+                use writer = new BsonWriter(stream)
+                jdn.Serialize(writer, x)
+                writer.Flush()
+
+            member __.Deserialize(stream : Stream) : 'T =
+                use reader = new BsonReader(stream)
                 jdn.Deserialize(reader, typeof<'T>) :?> 'T
 
     type ServiceStackJsonSerializer () =
