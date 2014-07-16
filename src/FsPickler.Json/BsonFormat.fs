@@ -21,7 +21,7 @@
 
             member __.CreateWriter(stream : Stream, encoding : Encoding, isTopLevelSequence : bool, leaveOpen : bool) =
 #if NET40
-                do if leaveOpen then raise <| new NotSupportedException("'leaveOpen' not supported in .NET 40.")
+                if leaveOpen then raise <| new NotSupportedException("'leaveOpen' not supported in .NET 40.")
                 let bw = new BinaryWriter(stream, encoding)
 #else
                 let bw = new BinaryWriter(stream, encoding, leaveOpen)
@@ -31,7 +31,7 @@
 
             member __.CreateReader(stream : Stream, encoding : Encoding, isTopLevelSequence : bool, leaveOpen : bool) =
 #if NET40
-                do if leaveOpen then raise <| new NotSupportedException("'leaveOpen' not supported in .NET 40.")
+                if leaveOpen then raise <| new NotSupportedException("'leaveOpen' not supported in .NET 40.")
                 let br = new BinaryReader(stream, encoding)
 #else
                 let br = new BinaryReader(stream, encoding, leaveOpen)
