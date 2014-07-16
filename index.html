@@ -87,19 +87,25 @@ library that offers efficient, correct and complete support for serializable
 objects in the .NET framework. It is aimed at providing a foundation for
 communication of arbitrary objects between .NET processes.</p>
 
-<p>FsPickler is ideally suited for serializing:
-- Large and complex objects, such as dictionaries and trees.
-- Abstract classes, inherited classes, delegates and closures.
-- ISerializable, IDeserializationCallback or attribute-based serializable types.
-- Reflection types.
-- F# unions, records and quotations.
-- Cyclic objects.
-- Types with inaccessible properties or constructors.
-- Types unknown at compile time.</p>
+<p>FsPickler is ideally suited for serializing:</p>
 
-<p>FsPickler is NOT:
-- a general-purpose XML/JSON/BSON framework.
-- designed for cross-platform communication.</p>
+<ul>
+<li><p>Large and complex objects, such as dictionaries and trees.</p></li>
+<li><p>Abstract classes, inherited classes, delegates and closures.</p></li>
+<li><p>ISerializable, IDeserializationCallback or attribute-based serializable types.</p></li>
+<li><p>Reflection types.</p></li>
+<li><p>F# unions, records and quotations.</p></li>
+<li><p>Cyclic objects.</p></li>
+<li><p>Types with inaccessible properties or constructors.</p></li>
+<li><p>Types unknown at compile time.</p></li>
+</ul>
+
+<p>FsPickler is NOT:</p>
+
+<ul>
+<li><p>a general-purpose XML/JSON/BSON framework.</p></li>
+<li><p>designed for cross-platform communication.</p></li>
+</ul>
 
 <h2>Documentation &amp; Technical Overview</h2>
 
