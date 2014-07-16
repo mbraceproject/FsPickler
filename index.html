@@ -80,6 +80,31 @@ PM> Install-Package FsPickler.CSharp</pre>
 </tr>
 </table>
 
+<h2>Why FsPickler?</h2>
+
+<p>The principal motivation behind creating FsPickler is the need for a
+library that offers efficient, correct and complete support for serializable
+objects in the .NET framework. It is aimed at providing a foundation for
+communication of arbitrary objects between .NET processes.</p>
+
+<p>FsPickler is ideally suited for serializing:
+<em> Large and complex objects, such as dictionaries and trees.
+</em> Abstract classes, inherited classes, delegates and closures.
+<em> ISerializable, IDeserializationCallback or attribute-based serializable types.
+</em> Reflection types.
+<em> F# unions, records and quotations.
+</em> Cyclic objects.
+<em> Types with inaccessible properties or constructors.
+</em> Types unknown at compile time.</p>
+
+<p>FsPickler is NOT:
+<em> a general-purpose XML/JSON/BSON framework.
+</em> designed for cross-platform communication.</p>
+
+<h2>Documentation &amp; Technical Overview</h2>
+
+<p>TODO</p>
+
 <h2>Contributing and copyright</h2>
 
 <p>The project is hosted on <a href="https://github.com/nessos/FsPickler">GitHub</a> where you can <a href="https://github.com/nessos/FsPickler/issues">report issues</a>, fork 
