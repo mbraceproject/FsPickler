@@ -10,8 +10,8 @@
     /// <summary>
     ///     Json pickler instance.
     /// </summary>
-    type JsonPickler =
-        inherit FsPicklerText
+    type JsonSerializer =
+        inherit FsPicklerTextSerializer
         
         val private format : JsonPickleFormatProvider
 
@@ -26,7 +26,7 @@
             let omitHeader = defaultArg omitHeader false
             let json = new JsonPickleFormatProvider(indent, omitHeader)
             { 
-                inherit FsPicklerText(json, ?typeConverter = typeConverter)
+                inherit FsPicklerTextSerializer(json, ?typeConverter = typeConverter)
                 format = json    
             }
 
@@ -49,11 +49,7 @@
         /// </summary>
         member x.SequenceSeparator
             with get () = x.format.SequenceSeparator
-            and set sep =
-                if sep <> null && String.IsNullOrWhiteSpace sep then
-                    x.format.SequenceSeparator <- sep
-                else
-                    invalidArg "SequenceSeparator" "should be non-null whitespace."
+            and set sep = x.format.SequenceSeparator <- sep
 
         /// <summary>
         ///     Gets or sets whether top-level sequences should be serialized using the custom separator.
@@ -65,8 +61,8 @@
     /// <summary>
     ///     BSON pickler instance.
     /// </summary>
-    type BsonPickler([<O;D(null)>] ?typeConverter) =
-        inherit FsPicklerBase(new BsonPickleFormatProvider(), ?typeConverter = typeConverter)
+    type BsonSerializer([<O;D(null)>] ?typeConverter) =
+        inherit FsPicklerSerializer(new BsonPickleFormatProvider(), ?typeConverter = typeConverter)
 
 
     /// FsPickler static methods.
@@ -79,14 +75,14 @@
         /// <param name="omitHeader">omit FsPickler header in Json pickles.</param>
         /// <param name="typeConverter">specify a custom type name converter.</param>
         static member CreateJson([<O;D(null)>] ?indent, [<O;D(null)>] ?omitHeader, [<O;D(null)>] ?typeConverter) = 
-            new JsonPickler(?indent = indent, ?omitHeader = omitHeader, ?typeConverter = typeConverter)
+            new JsonSerializer(?indent = indent, ?omitHeader = omitHeader, ?typeConverter = typeConverter)
 
         /// <summary>
         ///     Initializes a new Bson pickler instance.
         /// </summary>
         /// <param name="typeConverter">specify a custom type name converter.</param>
         static member CreateBson([<O;D(null)>] ?typeConverter) = 
-            new BsonPickler(?typeConverter = typeConverter)
+            new BsonSerializer(?typeConverter = typeConverter)
 
 
 namespace Nessos.FsPickler.Combinators
@@ -98,7 +94,7 @@ namespace Nessos.FsPickler.Combinators
     [<RequireQualifiedAccess>]
     module Json =
 
-        let private jsonPickler = lazy(FsPickler.CreateJson(omitHeader = true))
+        let private jsonSerializer = lazy(FsPickler.CreateJson(omitHeader = true))
 
         /// <summary>
         ///     Pickles a value to json.
@@ -106,7 +102,7 @@ namespace Nessos.FsPickler.Combinators
         /// <param name="pickler">utilized pickler.</param>
         /// <param name="value">input value.</param>
         let pickle (pickler : Pickler<'T>) (value : 'T) : string =
-            jsonPickler.Value.PickleToString (pickler, value)
+            jsonSerializer.Value.PickleToString (pickler, value)
 
         /// <summary>
         ///     Unpickles a value from json.
@@ -114,7 +110,7 @@ namespace Nessos.FsPickler.Combinators
         /// <param name="pickler">utilized pickler.</param>
         /// <param name="pickle">input pickle.</param>
         let unpickle (pickler : Pickler<'T>) (pickle : string) : 'T =
-            jsonPickler.Value.UnPickleOfString (pickler, pickle)
+            jsonSerializer.Value.UnPickleOfString (pickler, pickle)
 
 
     /// Json pickling methods

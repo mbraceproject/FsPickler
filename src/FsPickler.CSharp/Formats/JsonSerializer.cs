@@ -11,13 +11,14 @@ namespace Nessos.CsPickler
     /// <summary>
     ///     Defines a Json serializer instance.
     /// </summary>
-    public class JsonPickler : CsPicklerText
+    public class JsonSerializer : CsPicklerTextSerializer
     {
-        FSP.Json.JsonPickler _jp;
+        FSP.Json.JsonSerializer _js;
 
-        private JsonPickler(FSP.Json.JsonPickler jp) : base(jp)
+        private JsonSerializer(FSP.Json.JsonSerializer js)
+            : base(js)
         {
-            _jp = jp;
+            _js = js;
         }
 
         /// <summary>
@@ -25,12 +26,12 @@ namespace Nessos.CsPickler
         /// </summary>
         /// <param name="indent">indent Json serializations; defaults to false.</param>
         /// <param name="omitHeader">omit FsPickler metadata at the serialization header; defaults to false.</param>
-        public static JsonPickler Create(bool indent = false, bool omitHeader = false)
+        public static JsonSerializer Create(bool indent = false, bool omitHeader = false)
         {
-            var jp = new FSP.Json.JsonPickler();
-            jp.Indent = indent;
-            jp.OmitHeader = omitHeader;
-            return new JsonPickler(jp);
+            var js = new FSP.Json.JsonSerializer();
+            js.Indent = indent;
+            js.OmitHeader = omitHeader;
+            return new JsonSerializer(js);
         }
 
         /// <summary>
@@ -38,8 +39,8 @@ namespace Nessos.CsPickler
         /// </summary>
         public bool Indent
         {
-            get { return _jp.Indent ; }
-            set { _jp.Indent = value; }
+            get { return _js.Indent ; }
+            set { _js.Indent = value; }
         }
 
         /// <summary>
@@ -47,8 +48,8 @@ namespace Nessos.CsPickler
         /// </summary>
         public bool OmitHeader
         {
-            get { return _jp.OmitHeader ; }
-            set { _jp.OmitHeader = value; }
+            get { return _js.OmitHeader ; }
+            set { _js.OmitHeader = value; }
         }
     }
 }

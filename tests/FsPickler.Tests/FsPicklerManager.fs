@@ -26,16 +26,16 @@
 
         let pickler =
             match pickleFormat with
-            | PickleFormat.Binary -> FsPickler.CreateBinary() :> FsPicklerBase
-            | PickleFormat.Xml -> FsPickler.CreateXml(indent = true) :> FsPicklerBase
-            | PickleFormat.Json -> FsPickler.CreateJson(indent = true) :> FsPicklerBase
+            | PickleFormat.Binary -> FsPickler.CreateBinary() :> FsPicklerSerializer
+            | PickleFormat.Xml -> FsPickler.CreateXml(indent = true) :> FsPicklerSerializer
+            | PickleFormat.Json -> FsPickler.CreateJson(indent = true) :> FsPicklerSerializer
             | PickleFormat.Json_Headerless -> 
                 let jsp = FsPickler.CreateJson(omitHeader = true)
                 jsp.UseCustomTopLevelSequenceSeparator <- true
                 jsp.SequenceSeparator <- System.Environment.NewLine
-                jsp :> FsPicklerBase
+                jsp :> FsPicklerSerializer
 
-            | PickleFormat.Bson -> FsPickler.CreateBson() :> FsPicklerBase
+            | PickleFormat.Bson -> FsPickler.CreateBson() :> FsPicklerSerializer
 
             | _ -> invalidArg "name" <| sprintf "unexpected pickler format '%s'." pickleFormat
 
@@ -61,7 +61,7 @@
             mgr.Pickler.Pickle<'T>(value)
 
         member __.PickleF(data : byte []) : byte [] =
-            let serializer = fp.UnPickle<FsPicklerBase -> byte[]>(data)
+            let serializer = fp.UnPickle<FsPicklerSerializer -> byte[]>(data)
             serializer mgr.Pickler
 
     and RemoteSerializationClient (pickleFormat : string) =
@@ -72,6 +72,6 @@
             let data = fp.Pickle<'T> value
             remote.Pickle<'T> data
 
-        member __.PickleF (pickleF : FsPicklerBase -> byte []) =
+        member __.PickleF (pickleF : FsPicklerSerializer -> byte []) =
             let data = fp.Pickle pickleF
             remote.PickleF data

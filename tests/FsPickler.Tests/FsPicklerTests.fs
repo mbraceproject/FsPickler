@@ -51,7 +51,7 @@
         abstract IsRemotedTest : bool
 
         abstract Pickle : 'T -> byte []
-        abstract PickleF : (FsPicklerBase -> byte []) -> byte []
+        abstract PickleF : (FsPicklerSerializer -> byte []) -> byte []
 
         //
         //  Primitive Serialization tests
@@ -732,7 +732,7 @@
         [<Test; Category("Stress tests")>]
         member t.``8. Stress test: deserialization type mismatch`` () =
             match pickler with
-            | :? JsonPickler as jsp when jsp.OmitHeader -> ()
+            | :? JsonSerializer as jsp when jsp.OmitHeader -> ()
             | _ ->
                 t.TestTypeMismatch<int, string> 42
                 t.TestTypeMismatch<string, int> "forty-two"
@@ -751,7 +751,7 @@
         [<Test; Category("Stress tests")>]
         member t.``8. Stress test: arbitrary data deserialization`` () =
             match pickler with
-            | :? JsonPickler as jsp when jsp.OmitHeader -> ()
+            | :? JsonSerializer as jsp when jsp.OmitHeader -> ()
             | _ ->
                 Check.QuickThrowOnFail (fun bs -> t.TestDeserializeInvalidData<int> bs)
                 Check.QuickThrowOnFail (fun bs -> t.TestDeserializeInvalidData<string> bs)

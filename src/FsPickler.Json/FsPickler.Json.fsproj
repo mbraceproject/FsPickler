@@ -82,7 +82,7 @@
     <Compile Include="JsonReader.fs" />
     <Compile Include="JsonFormat.fs" />
     <Compile Include="BsonFormat.fs" />
-    <Compile Include="JsonPickler.fs" />
+    <Compile Include="JsonSerializer.fs" />
     <None Include="Test.fsx" />
     <None Include="packages.config" />
   </ItemGroup>

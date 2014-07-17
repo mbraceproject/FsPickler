@@ -11,23 +11,23 @@ namespace Nessos.CsPickler
     /// <summary>
     ///     Defines a Bson serializer instance.
     /// </summary>
-    public class BsonPickler : CsPicklerBase
+    public class BsonSerializer : CsPicklerSerializer
     {
-        FSP.Json.BsonPickler _bp;
+        FSP.Json.BsonSerializer _bs;
 
-        private BsonPickler(FSP.Json.BsonPickler bp)
-            : base(bp)
+        private BsonSerializer(FSP.Json.BsonSerializer bs)
+            : base(bs)
         {
-            _bp = bp;
+            _bs = bs;
         }
 
         /// <summary>
         ///     Creates a new BsonPickler instance.
         /// </summary>
-        public static BsonPickler Create()
+        public static BsonSerializer Create()
         {
-            var bp = new FSP.Json.BsonPickler();
-            return new BsonPickler(bp);
+            var bs = new FSP.Json.BsonSerializer();
+            return new BsonSerializer(bs);
         }
     }
 }

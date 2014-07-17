@@ -12,8 +12,8 @@
     ///     An abstract class containing the text-based serialization API.
     /// </summary>
     [<AbstractClass>]
-    type FsPicklerText (formatProvider : ITextPickleFormatProvider, [<O;D(null)>] ?typeConverter) =
-        inherit FsPicklerBase(formatProvider, ?typeConverter = typeConverter)
+    type FsPicklerTextSerializer (formatProvider : ITextPickleFormatProvider, [<O;D(null)>] ?typeConverter) =
+        inherit FsPicklerSerializer(formatProvider, ?typeConverter = typeConverter)
 
         let resolver = base.Resolver
         let reflectionCache = base.ReflectionCache

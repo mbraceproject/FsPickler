@@ -4,8 +4,8 @@
     ///     XML pickler instance.
     /// </summary>
     [<Sealed; AutoSerializable(false)>]
-    type XmlPickler =
-        inherit FsPicklerText
+    type XmlSerializer =
+        inherit FsPicklerTextSerializer
         
         val private format : XmlPickleFormatProvider
 
@@ -17,7 +17,7 @@
         new ([<O;D(null)>] ?indent, [<O;D(null)>] ?typeConverter) =
             let xml = new XmlPickleFormatProvider(defaultArg indent false)
             { 
-                inherit FsPicklerText(xml, ?typeConverter = typeConverter)
+                inherit FsPicklerTextSerializer(xml, ?typeConverter = typeConverter)
                 format = xml    
             }
 

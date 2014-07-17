@@ -3,8 +3,10 @@
     open PerfUtil
     open PerfUtil.NUnit
 
-    open Nessos.FsPickler
     open NUnit.Framework
+
+    open Nessos.FsPickler
+    open Nessos.FsPickler.Json
 
     [<AbstractClass>]
     type PerfTester () =
@@ -18,7 +20,7 @@
     type ``Serializer Comparison`` () =
         inherit PerfTester()
 
-        let fsp = new FsPicklerBinary() :> ISerializer
+        let fsp = FsPickler.initBinary()
         let bfs = new BinaryFormatterSerializer() :> ISerializer
         let ndc = new NetDataContractSerializer() :> ISerializer
         let jdn = new JsonDotNetSerializer() :> ISerializer
@@ -36,10 +38,10 @@
     type ``FsPickler Formats Comparison`` () =
         inherit PerfTester ()
 
-        let binary = new FsPicklerBinary() :> ISerializer
-        let json = new FsPicklerJson() :> ISerializer
-        let bson = new FsPicklerBson() :> ISerializer
-        let xml = new FsPicklerXml() :> ISerializer
+        let binary = FsPickler.initBinary()
+        let json = FsPickler.initJson()
+        let bson = FsPickler.initBson()
+        let xml = FsPickler.initXml()
 
         let tester = new ImplementationComparer<_>(binary, [json ; bson; xml], throwOnError = false)
 
@@ -52,7 +54,7 @@
         let persistResults = true
         let persistenceFile = "fspPerf.xml"
 
-        let fsp = new FsPicklerBinary() :> ISerializer
+        let fsp = FsPickler.initBinary()
         let version = typeof<FsPickler>.Assembly.GetName().Version
         let comparer = new WeightedComparer(spaceFactor = 0.2, leastAcceptableImprovementFactor = 0.8)
         let tester = 

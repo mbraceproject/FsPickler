@@ -123,10 +123,10 @@
     <Compile Include="Format\XmlFormat.fs" />
     <Compile Include="Format\NullFormat.fs" />
     <Compile Include="FsPickler\RootSerialization.fs" />
-    <Compile Include="FsPickler\FsPicklerBase.fs" />
-    <Compile Include="FsPickler\FsPicklerText.fs" />
-    <Compile Include="FsPickler\BinaryPickler.fs" />
-    <Compile Include="FsPickler\XmlPickler.fs" />
+    <Compile Include="FsPickler\Serializer.fs" />
+    <Compile Include="FsPickler\TextSerializer.fs" />
+    <Compile Include="FsPickler\BinarySerializer.fs" />
+    <Compile Include="FsPickler\XmlSerializer.fs" />
     <Compile Include="FsPickler\FsPickler.fs" />
     <Compile Include="FsPickler\Combinators.fs" />
     <Compile Include="FsPickler\ExtensionMethods.fs" />

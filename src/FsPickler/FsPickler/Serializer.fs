@@ -20,7 +20,7 @@
     ///     An abstract class containg the basic serialization API.
     /// </summary>
     [<AbstractClass>]
-    type FsPicklerBase (formatProvider : IPickleFormatProvider, [<O;D(null)>]?typeConverter) =
+    type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?typeConverter) =
 
         let resolver = PicklerCache.Instance :> IPicklerResolver
         let reflectionCache = ReflectionCache.Create(?tyConv = typeConverter)
@@ -289,14 +289,3 @@
             let lengthCounter = new LengthCounter()
             bp.Serialize(lengthCounter, value)
             lengthCounter.Length
-
-        /// <summary>
-        ///     Visits all reference types that appear in the given object graph.
-        /// </summary>
-        /// <param name="visitor">Visitor implementation.</param>
-        /// <param name="graph">Object graph.</param>
-        member bp.VisitObject(visitor : IObjectVisitor, graph : 'T) : unit =
-            let pickler = resolver.Resolve<'T> ()
-            use nullFormat = new NullPickleWriter()
-            let state = new WriteState(nullFormat, resolver, reflectionCache, visitor = visitor)
-            pickler.Write state "value" graph

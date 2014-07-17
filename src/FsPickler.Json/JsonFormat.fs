@@ -16,10 +16,19 @@
         let isCustomSeq isTopLevelSequence = 
             isTopLevelSequence && self.OmitHeader && self.UseCustomTopLevelSequenceSeparator
 
+        let mutable sequenceSeparator = " "
+
         member val Indent = indent with get,set
         member val OmitHeader = omitHeader with get,set
-        member val SequenceSeparator = " " with get,set
         member val UseCustomTopLevelSequenceSeparator = false with get,set
+
+        member __.SequenceSeparator
+            with get () = sequenceSeparator
+            and set sep =
+                if sep <> null && String.IsNullOrWhiteSpace sep then
+                    sequenceSeparator <- sep
+                else
+                    invalidArg "SequenceSeparator" "should be non-null whitespace."
 
         interface ITextPickleFormatProvider with
             member __.Name = "Json"
@@ -35,7 +44,7 @@
                 let sw = new StreamWriter(stream, encoding, 1024, leaveOpen)
 #endif
                 let jw = new JsonTextWriter(sw)
-                new JsonPickleWriter(jw, __.OmitHeader, __.Indent, isCustomSeq isTopLevelSequence, __.SequenceSeparator, leaveOpen) :> _
+                new JsonPickleWriter(jw, __.OmitHeader, __.Indent, isCustomSeq isTopLevelSequence, sequenceSeparator, leaveOpen) :> _
 
             member __.CreateReader (stream, encoding, isTopLevelSequence, leaveOpen) =
 #if NET40
@@ -49,7 +58,7 @@
 
             member __.CreateWriter (textWriter, isTopLevelSequence, leaveOpen) =
                 let jw = new JsonTextWriter(textWriter)
-                new JsonPickleWriter(jw, __.OmitHeader, __.Indent, isCustomSeq isTopLevelSequence, __.SequenceSeparator, leaveOpen) :> _
+                new JsonPickleWriter(jw, __.OmitHeader, __.Indent, isCustomSeq isTopLevelSequence, sequenceSeparator, leaveOpen) :> _
 
             member __.CreateReader (textReader, isTopLevelSequence, leaveOpen) =
                 let jr = new JsonTextReader(textReader)

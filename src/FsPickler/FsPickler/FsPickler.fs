@@ -9,7 +9,7 @@
     /// FsPickler static methods.
     type FsPickler private () =
         
-        static let defaultPickler = lazy(new BinaryPickler())
+        static let defaultSerializer = lazy(new BinarySerializer())
         static let resolver = lazy(PicklerCache.Instance :> IPicklerResolver)
 
         /// <summary>
@@ -18,14 +18,14 @@
         /// <param name="forceLittleEndian">Force little-endian encoding in primitive arrays but is slower. Defaults to false.</param>
         /// <param name="tyConv">optional type name converter implementation.</param>
         static member CreateBinary([<O;D(null)>] ?forceLittleEndian, [<O;D(null)>] ?typeConverter) = 
-            new BinaryPickler(?forceLittleEndian = forceLittleEndian, ?typeConverter = typeConverter)
+            new BinarySerializer(?forceLittleEndian = forceLittleEndian, ?typeConverter = typeConverter)
 
         /// <summary>
         ///     Create a new XML pickler instance.
         /// </summary>
         /// <param name="tyConv">optional type name converter implementation.</param>
         static member CreateXml([<O;D(null)>]?typeConverter, [<O;D(null)>]?indent) = 
-            new XmlPickler(?typeConverter = typeConverter, ?indent = indent)
+            new XmlSerializer(?typeConverter = typeConverter, ?indent = indent)
 
         /// Decides if given type is serializable by FsPickler
         static member IsSerializableType (t : Type) = 
@@ -53,13 +53,13 @@
         /// <param name="t"></param>
         static member Clone (t : 'T) =
             use m = new System.IO.MemoryStream()
-            defaultPickler.Value.Serialize(m, t, leaveOpen = true)
+            defaultSerializer.Value.Serialize(m, t, leaveOpen = true)
             m.Position <- 0L
-            defaultPickler.Value.Deserialize<'T>(m)
+            defaultSerializer.Value.Deserialize<'T>(m)
 
         /// <summary>Compute size in bytes for given input.</summary>
         /// <param name="value">input value.</param>
-        static member ComputeSize<'T>(value : 'T) = defaultPickler.Value.ComputeSize(value)
+        static member ComputeSize<'T>(value : 'T) = defaultSerializer.Value.ComputeSize(value)
 
         /// <summary>
         ///     Visits all reference types that appear in the given object graph.
@@ -67,13 +67,18 @@
         /// <param name="visitor">Visitor implementation.</param>
         /// <param name="graph">Object graph.</param>
         static member VisitObject(visitor : IObjectVisitor, graph : 'T) =
-            defaultPickler.Value.VisitObject(visitor, graph)
+            let resolver = defaultSerializer.Value.Resolver
+            let cache = defaultSerializer.Value.ReflectionCache
+            let pickler = resolver.Resolve<'T> ()
+            use nullFormat = new NullPickleWriter()
+            let state = new WriteState(nullFormat, resolver, cache, visitor = visitor)
+            pickler.Write state "value" graph
 
         /// <summary>Compute size and hashcode for given input.</summary>
         /// <param name="value">input value.</param>
         /// <param name="hashFactory">the hashing algorithm to be used. MurMur3 by default.</param>
         static member ComputeHash<'T>(value : 'T, [<O;D(null)>] ?hashFactory : IHashStreamFactory) =
-            defaultPickler.Value.ComputeHash(value, ?hashFactory = hashFactory)
+            defaultSerializer.Value.ComputeHash(value, ?hashFactory = hashFactory)
 
         /// <summary>
         ///     Uses FsPickler to traverse the object graph, gathering types of objects as it goes.

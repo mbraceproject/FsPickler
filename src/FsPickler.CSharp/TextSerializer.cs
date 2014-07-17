@@ -11,15 +11,15 @@ namespace Nessos.CsPickler
     /// <summary>
     ///     Provides basic functionality for text-based serialization.
     /// </summary>
-    public abstract class CsPicklerText : CsPicklerBase
+    public abstract class CsPicklerTextSerializer : CsPicklerSerializer
     {
-        FSP.FsPicklerText _textPickler;
+        FSP.FsPicklerTextSerializer _textPickler;
 
         /// <summary>
         ///     Wraps an FsPickler instance in a CsPickler facade.
         /// </summary>
         /// <param name="textPickler">FsPickler instance.</param>
-        public CsPicklerText(FSP.FsPicklerText textPickler) : base(textPickler)
+        public CsPicklerTextSerializer(FSP.FsPicklerTextSerializer textPickler) : base(textPickler)
         {
             _textPickler = textPickler;
         }

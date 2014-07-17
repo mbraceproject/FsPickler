@@ -11,7 +11,7 @@
     [<RequireQualifiedAccess>]
     module Binary =
 
-        let private binaryPickler = lazy(new BinaryPickler())
+        let private binarySerializer = lazy(new BinarySerializer())
 
         /// <summary>
         ///     Pickles a value to binary.
@@ -19,7 +19,7 @@
         /// <param name="pickler">utilized pickler.</param>
         /// <param name="value">input value.</param>
         let pickle (pickler : Pickler<'T>) (value : 'T) : byte [] =
-            binaryPickler.Value.Pickle (pickler, value)
+            binarySerializer.Value.Pickle (pickler, value)
 
         /// <summary>
         ///     Unpickles a values from binary.
@@ -27,13 +27,13 @@
         /// <param name="pickler">utilized pickler.</param>
         /// <param name="pickle">input pickle.</param>
         let unpickle (pickler : Pickler<'T>) (pickle : byte []) =
-            binaryPickler.Value.UnPickle (pickler, pickle)
+            binarySerializer.Value.UnPickle (pickler, pickle)
 
     /// Xml pickling methods
 
     [<RequireQualifiedAccess>]
     module Xml =
-        let private xmlPickler = lazy(FsPickler.CreateXml())
+        let private xmlSerializer = lazy(FsPickler.CreateXml())
 
         /// <summary>
         ///     Pickles a value to XML.
@@ -41,7 +41,7 @@
         /// <param name="pickler">utilized pickler.</param>
         /// <param name="value">input value.</param>
         let pickle (pickler : Pickler<'T>) (value : 'T) : string =
-            xmlPickler.Value.PickleToString (pickler, value) : string
+            xmlSerializer.Value.PickleToString (pickler, value) : string
 
         /// <summary>
         ///     Unpickles a values from XML.
@@ -49,7 +49,7 @@
         /// <param name="pickler">utilized pickler.</param>
         /// <param name="pickle">input pickle.</param>
         let unpickle (pickler : Pickler<'T>) (pickle : string) =
-            xmlPickler.Value.UnPickleOfString (pickler, pickle)
+            xmlSerializer.Value.UnPickleOfString (pickler, pickle)
 
 
     /// Pickler combinator definitions

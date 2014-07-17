@@ -139,9 +139,9 @@ module RandomGraph =
 let tests = PerfTest<ISerializer>.OfModuleMarker<PerfTests.Entry> ()
 let cyclic = PerfTest<ISerializer>.OfModuleMarker<RandomGraph.Marker> ()
 
-let fspBinary = new FsPicklerBinary() :> ISerializer
-let fspXml = new FsPicklerXml() :> ISerializer
-let fspJson = new FsPicklerJson() :> ISerializer
+let fspBinary = FsPickler.initBinary()
+let fspXml = FsPickler.initXml()
+let fspJson = FsPickler.initJson()
 let bfs = new BinaryFormatterSerializer() :> ISerializer
 let ndc = new NetDataContractSerializer() :> ISerializer
 let jdn = new JsonDotNetSerializer() :> ISerializer

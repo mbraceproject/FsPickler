@@ -19,7 +19,7 @@
             try remotePickler.Pickle<'T> value
             with :? FailoverPicklerException -> self.PicklerManager.Pickler.Pickle value
 
-        override __.PickleF (pickleF : FsPicklerBase -> byte []) = 
+        override __.PickleF (pickleF : FsPicklerSerializer -> byte []) = 
             try remotePickler.PickleF pickleF
             with :? FailoverPicklerException -> pickleF self.PicklerManager.Pickler
 #endif

@@ -11,15 +11,15 @@ namespace Nessos.CsPickler
     /// <summary>
     ///     Provides basic serialization functionality.
     /// </summary>
-    public abstract class CsPicklerBase
+    public abstract class CsPicklerSerializer
     {
-        private FSP.FsPicklerBase _pickler;
+        private FSP.FsPicklerSerializer _pickler;
 
         /// <summary>
         ///     Wraps an FsPickler instance in a C# friendly facade.
         /// </summary>
         /// <param name="pickler">FsPickler instance.</param>
-        public CsPicklerBase(FSP.FsPicklerBase pickler)
+        public CsPicklerSerializer(FSP.FsPicklerSerializer pickler)
         {
             _pickler = pickler;
         }

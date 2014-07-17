@@ -58,15 +58,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CsPicklerBase.cs" />
-    <Compile Include="Formats\BinaryPickler.cs" />
+    <Compile Include="Serializer.cs" />
+    <Compile Include="Formats\BinarySerializer.cs" />
     <Compile Include="CsPickler.cs" />
-    <Compile Include="Formats\BsonPickler.cs" />
+    <Compile Include="Formats\BsonSerializer.cs" />
     <Compile Include="Utils.cs" />
-    <Compile Include="Formats\JsonPickler.cs" />
+    <Compile Include="Formats\JsonSerializer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="CsPicklerText.cs" />
-    <Compile Include="Formats\XmlPickler.cs" />
+    <Compile Include="TextSerializer.cs" />
+    <Compile Include="Formats\XmlSerializer.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\FsPickler.Json\FsPickler.Json.fsproj">

@@ -11,24 +11,25 @@ namespace Nessos.CsPickler
     /// <summary>
     ///     Defines an Xml serializer instance.
     /// </summary>
-    public class XmlPickler : CsPicklerText
+    public class XmlSerializer : CsPicklerTextSerializer
     {
-        private FSP.XmlPickler _xp;
+        private FSP.XmlSerializer _xs;
 
-        private XmlPickler(FSP.XmlPickler pickler) : base(pickler) 
+        private XmlSerializer(FSP.XmlSerializer xs)
+            : base(xs) 
         {
-            _xp = pickler;
+            _xs = xs;
         }
 
         /// <summary>
         ///     Creates a new XmlPickler instance.
         /// </summary>
         /// <param name="indent">indent xml serializations; defaults to false.</param>
-        public static XmlPickler Create(bool indent = false)
+        public static XmlSerializer Create(bool indent = false)
         {
-            var xp = new FSP.XmlPickler();
-            xp.Indent = indent;
-            return new XmlPickler(xp);
+            var xs = new FSP.XmlSerializer();
+            xs.Indent = indent;
+            return new XmlSerializer(xs);
         }
 
         /// <summary>
@@ -36,8 +37,8 @@ namespace Nessos.CsPickler
         /// </summary>
         public bool Indent
         {
-            get { return _xp.Indent ; }
-            set { _xp.Indent = value; }
+            get { return _xs.Indent ; }
+            set { _xs.Indent = value; }
         }
     }
 }

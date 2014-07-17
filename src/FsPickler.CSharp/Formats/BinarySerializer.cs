@@ -11,24 +11,25 @@ namespace Nessos.CsPickler
     /// <summary>
     ///     Defines a binary serializer instance.
     /// </summary>
-    public class BinaryPickler : CsPicklerBase
+    public class BinarySerializer : CsPicklerSerializer
     {
-        private FSP.BinaryPickler _bp ;
-        
-        private BinaryPickler(FSP.BinaryPickler pickler) : base(pickler) 
+        private FSP.BinarySerializer _bs ;
+
+        private BinarySerializer(FSP.BinarySerializer serializer)
+            : base(serializer) 
         {
-            _bp = pickler;
+            _bs = serializer;
         }
 
         /// <summary>
         ///     Creates a new BinaryPickler instance.
         /// </summary>
         /// <param name="forceLittleEndian">force little-endian encoding in primitive arrays but is slower; defaults to false.</param>
-        public static BinaryPickler Create(bool forceLittleEndian = false)
+        public static BinarySerializer Create(bool forceLittleEndian = false)
         {
-            var bp = new FSP.BinaryPickler();
-            bp.ForceLittleEndian = forceLittleEndian;
-            return new BinaryPickler(bp);
+            var bs = new FSP.BinarySerializer();
+            bs.ForceLittleEndian = forceLittleEndian;
+            return new BinarySerializer(bs);
         }
 
         /// <summary>
@@ -38,8 +39,8 @@ namespace Nessos.CsPickler
         /// </summary>
         public bool ForceLittleEndian
         {
-            get { return _bp.ForceLittleEndian;  }
-            set { _bp.ForceLittleEndian = value; }
+            get { return _bs.ForceLittleEndian;  }
+            set { _bs.ForceLittleEndian = value; }
         }
     }
 }

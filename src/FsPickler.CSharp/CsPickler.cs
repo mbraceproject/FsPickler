@@ -19,18 +19,18 @@ namespace Nessos.CsPickler
         /// </summary>
         /// <param name="forceLittleEndian">force little-endian encoding in primitive arrays but is slower; defaults to false.</param>
         /// <returns>BinaryPickler instance.</returns>
-        public static BinaryPickler CreateBinary(bool forceLittleEndian = false) 
+        public static BinarySerializer CreateBinary(bool forceLittleEndian = false) 
         {
-            return BinaryPickler.Create(forceLittleEndian);
+            return BinarySerializer.Create(forceLittleEndian);
         }
 
         /// <summary>
         ///     Creates a new XmlPickler instance.
         /// </summary>
         /// <param name="indent">indent xml serializations; defaults to false.</param>
-        public static XmlPickler CreateXml(bool indent = false)
+        public static XmlSerializer CreateXml(bool indent = false)
         {
-            return XmlPickler.Create(indent);
+            return XmlSerializer.Create(indent);
         }
 
         /// <summary>
@@ -38,17 +38,17 @@ namespace Nessos.CsPickler
         /// </summary>
         /// <param name="indent">indent json serializations; defaults to false.</param>
         /// <param name="omitHeader">omit FsPickler metadata at the serialization header; defaults to false.</param>
-        public static JsonPickler CreateJson(bool indent = false, bool omitHeader = false)
+        public static JsonSerializer CreateJson(bool indent = false, bool omitHeader = false)
         {
-            return JsonPickler.Create(indent:indent, omitHeader:omitHeader);
+            return JsonSerializer.Create(indent: indent, omitHeader: omitHeader);
         }
 
         /// <summary>
         ///     Creates a new BsonPickler instance.
         /// </summary>
-        public static BsonPickler CreateBson()
+        public static BsonSerializer CreateBson()
         {
-            return BsonPickler.Create();
+            return BsonSerializer.Create();
         }
 
         /// <summary>
