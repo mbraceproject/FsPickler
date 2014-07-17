@@ -37,10 +37,10 @@
 
 <p>The following provides an overview of the basic functionalities offered by the library.</p>
 
-<h2>Initializing an FsPickler instance</h2>
+<h2>The core serialization API</h2>
 
 <p>The basic API is accessible through instances of type <a href="reference/nessos-fspickler-fspicklerserializer.html"><code>FsPicklerSerializer</code></a>
-which encapsulate serialization format settings. These can be initialized as follows:</p>
+that can be initialized as follows:</p>
 
 <table class="pre"><tr><td class="lines"><pre class="fssnip">
 <span class="l"> 1: </span>
@@ -76,8 +76,6 @@ which encapsulate serialization format settings. These can be initialized as fol
 </tr>
 </table>
 
-<h2>Performing serializations</h2>
-
 <p>A simple serialization/deserialization roundtrip can be performed as follows:</p>
 
 <table class="pre"><tr><td class="lines"><pre class="fssnip">
@@ -92,8 +90,8 @@ which encapsulate serialization format settings. These can be initialized as fol
 </tr>
 </table>
 
-<p>These can also be used to produce binary pickles, that is byte arrays contained
-the serialized objects:</p>
+<p>FsPickler instances can be used to produce binary pickles, 
+that is byte arrays containing the serialized values:</p>
 
 <table class="pre"><tr><td class="lines"><pre class="fssnip">
 <span class="l">1: </span>
@@ -107,7 +105,7 @@ the serialized objects:</p>
 </tr>
 </table>
 
-<h2>Text-based serialization</h2>
+<h3>Text-based serialization</h3>
 
 <p>The Xml and Json serializers are instances of type <a href="reference/nessos-fspickler-fspicklertextserializer.html"><code>FsPicklerTextSerializer</code></a>
 that offers functionality for text-based serialization:</p>
@@ -130,7 +128,7 @@ that offers functionality for text-based serialization:</p>
 </tr>
 </table>
 
-<h2>Sequence serialization</h2>
+<h3>Sequence serialization</h3>
 
 <p>FsPickler offers support for on-demand sequence serialization/deserialization:</p>
 
@@ -178,15 +176,22 @@ that offers functionality for text-based serialization:</p>
 Picklers are strongly typed and perform serialization without reflection
 or intermediate boxings.</p>
 
-<p>There are two kinds of picklers: <em>primitive</em> or <em>atomic</em> picklers that are 
-self-contained definitions for simple values like primitives or strings.
-Secondly, there are <em>composite</em> picklers which are derived from composition of simpler types.
-Composite picklers are generated using <em>pickler combinators</em>; functions taking a collection
-of picklers as inputs yielding a composite result.</p>
+<p>There are two kinds of picklers: 
+ <em> </em>primitive<em> or </em>atomic* picklers that are self-contained definitions 
+   for simple values like primitives or strings.</p>
 
-<p>FsPickler provides an automated pickler genaration framework: picklers are generated at runtime
-using a combination of reflection and dynamic methods. This generation cost is constant
-since all generated picklers are cached upon creation.</p>
+<ul>
+<li><em>composite</em> picklers which are derived from composition of simpler types.
+Composite picklers are generated using <em>pickler combinators</em>; functions taking a collection
+of picklers as inputs yielding a composite result.</li>
+</ul>
+
+<p>FsPickler is essentially an automated pickler generation framework: picklers are generated at runtime
+using a combination of reflection and dynamic IL generation. Picklers are cached upon creation, hence the
+cost of generation has a constant price.</p>
+
+<p>Moreover, the library provides an experimental combinator module that allows direct manipulation
+of picklers in a more functional style:</p>
 
 <table class="pre"><tr><td class="lines"><pre class="fssnip">
 <span class="l"> 1: </span>
@@ -207,6 +212,7 @@ since all generated picklers are cached upon creation.</p>
 <span class="l">16: </span>
 <span class="l">17: </span>
 <span class="l">18: </span>
+<span class="l">19: </span>
 </pre>
 </td>
 <td class="snippet"><pre class="fssnip">
@@ -217,24 +223,25 @@ since all generated picklers are cached upon creation.</p>
 <span class="k">let</span> <span onmouseout="hideTip(event, 'fs63', 112)" onmouseover="showTip(event, 'fs63', 112)" class="i">string</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs61', 113)" onmouseover="showTip(event, 'fs61', 113)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs64', 114)" onmouseover="showTip(event, 'fs64', 114)" class="i">string</span>
 <span class="k">let</span> <span onmouseout="hideTip(event, 'fs65', 115)" onmouseover="showTip(event, 'fs65', 115)" class="i">dateTime</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs61', 116)" onmouseover="showTip(event, 'fs61', 116)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs66', 117)" onmouseover="showTip(event, 'fs66', 117)" class="i">dateTime</span>
 
-<span class="c">// composite picklers from combinators</span>
+<span class="c">// composite picklers</span>
 <span class="k">let</span> <span onmouseout="hideTip(event, 'fs67', 118)" onmouseover="showTip(event, 'fs67', 118)" class="i">p1</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs61', 119)" onmouseover="showTip(event, 'fs61', 119)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs68', 120)" onmouseover="showTip(event, 'fs68', 120)" class="i">pair</span> <span onmouseout="hideTip(event, 'fs60', 121)" onmouseover="showTip(event, 'fs60', 121)" class="i">int</span> <span onmouseout="hideTip(event, 'fs65', 122)" onmouseover="showTip(event, 'fs65', 122)" class="i">dateTime</span>
 <span class="k">let</span> <span onmouseout="hideTip(event, 'fs69', 123)" onmouseover="showTip(event, 'fs69', 123)" class="i">p2</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs61', 124)" onmouseover="showTip(event, 'fs61', 124)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs70', 125)" onmouseover="showTip(event, 'fs70', 125)" class="i">option</span> <span onmouseout="hideTip(event, 'fs63', 126)" onmouseover="showTip(event, 'fs63', 126)" class="i">string</span>
 <span class="k">let</span> <span onmouseout="hideTip(event, 'fs71', 127)" onmouseover="showTip(event, 'fs71', 127)" class="i">p3</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs61', 128)" onmouseover="showTip(event, 'fs61', 128)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs72', 129)" onmouseover="showTip(event, 'fs72', 129)" class="i">list</span> <span onmouseout="hideTip(event, 'fs69', 130)" onmouseover="showTip(event, 'fs69', 130)" class="i">p2</span>
-<span class="k">let</span> <span onmouseout="hideTip(event, 'fs73', 131)" onmouseover="showTip(event, 'fs73', 131)" class="i">p4</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs61', 132)" onmouseover="showTip(event, 'fs61', 132)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs74', 133)" onmouseover="showTip(event, 'fs74', 133)" class="i">auto</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs60', 134)" onmouseover="showTip(event, 'fs60', 134)" class="i">int</span> <span class="o">*</span> <span onmouseout="hideTip(event, 'fs63', 135)" onmouseover="showTip(event, 'fs63', 135)" class="i">string</span> <span onmouseout="hideTip(event, 'fs36', 136)" onmouseover="showTip(event, 'fs36', 136)" class="i">option</span> <span onmouseout="hideTip(event, 'fs27', 137)" onmouseover="showTip(event, 'fs27', 137)" class="i">list</span><span class="o">&gt;</span> <span class="c">// auto-generated</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'fs73', 131)" onmouseover="showTip(event, 'fs73', 131)" class="i">p4</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs61', 132)" onmouseover="showTip(event, 'fs61', 132)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs74', 133)" onmouseover="showTip(event, 'fs74', 133)" class="i">array2D</span> <span onmouseout="hideTip(event, 'fs67', 134)" onmouseover="showTip(event, 'fs67', 134)" class="i">p1</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'fs75', 135)" onmouseover="showTip(event, 'fs75', 135)" class="i">p5</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs61', 136)" onmouseover="showTip(event, 'fs61', 136)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs76', 137)" onmouseover="showTip(event, 'fs76', 137)" class="i">auto</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs60', 138)" onmouseover="showTip(event, 'fs60', 138)" class="i">int</span> <span class="o">*</span> <span onmouseout="hideTip(event, 'fs63', 139)" onmouseover="showTip(event, 'fs63', 139)" class="i">string</span> <span onmouseout="hideTip(event, 'fs36', 140)" onmouseover="showTip(event, 'fs36', 140)" class="i">option</span> <span onmouseout="hideTip(event, 'fs27', 141)" onmouseover="showTip(event, 'fs27', 141)" class="i">list</span><span class="o">&gt;</span>
 
-<span class="c">// serialization using picklers</span>
-<span class="k">let</span> <span onmouseout="hideTip(event, 'fs75', 138)" onmouseover="showTip(event, 'fs75', 138)" class="i">t1</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs76', 139)" onmouseover="showTip(event, 'fs76', 139)" class="i">Json</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs77', 140)" onmouseover="showTip(event, 'fs77', 140)" class="i">pickle</span> <span onmouseout="hideTip(event, 'fs60', 141)" onmouseover="showTip(event, 'fs60', 141)" class="i">int</span> <span class="n">42</span>
-<span class="k">let</span> <span onmouseout="hideTip(event, 'fs78', 142)" onmouseover="showTip(event, 'fs78', 142)" class="i">t2</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs76', 143)" onmouseover="showTip(event, 'fs76', 143)" class="i">Json</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs77', 144)" onmouseover="showTip(event, 'fs77', 144)" class="i">pickle</span> <span onmouseout="hideTip(event, 'fs71', 145)" onmouseover="showTip(event, 'fs71', 145)" class="i">p3</span> [ <span onmouseout="hideTip(event, 'fs33', 146)" onmouseover="showTip(event, 'fs33', 146)" class="i">Some</span> <span class="s">&quot;</span><span class="s">&quot;</span> ; <span onmouseout="hideTip(event, 'fs34', 147)" onmouseover="showTip(event, 'fs34', 147)" class="i">None</span> ; <span onmouseout="hideTip(event, 'fs33', 148)" onmouseover="showTip(event, 'fs33', 148)" class="i">Some</span> <span class="s">&quot;</span><span class="s">message</span><span class="s">&quot;</span> ]
+<span class="c">// pickler-based serialization</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'fs77', 142)" onmouseover="showTip(event, 'fs77', 142)" class="i">t1</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs78', 143)" onmouseover="showTip(event, 'fs78', 143)" class="i">Binary</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs79', 144)" onmouseover="showTip(event, 'fs79', 144)" class="i">pickle</span> <span onmouseout="hideTip(event, 'fs60', 145)" onmouseover="showTip(event, 'fs60', 145)" class="i">int</span> <span class="n">42</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'fs80', 146)" onmouseover="showTip(event, 'fs80', 146)" class="i">t2</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs81', 147)" onmouseover="showTip(event, 'fs81', 147)" class="i">Json</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs82', 148)" onmouseover="showTip(event, 'fs82', 148)" class="i">pickle</span> <span onmouseout="hideTip(event, 'fs71', 149)" onmouseover="showTip(event, 'fs71', 149)" class="i">p3</span> [ <span onmouseout="hideTip(event, 'fs33', 150)" onmouseover="showTip(event, 'fs33', 150)" class="i">Some</span> <span class="s">&quot;</span><span class="s">&quot;</span> ; <span onmouseout="hideTip(event, 'fs34', 151)" onmouseover="showTip(event, 'fs34', 151)" class="i">None</span> ; <span onmouseout="hideTip(event, 'fs33', 152)" onmouseover="showTip(event, 'fs33', 152)" class="i">Some</span> <span class="s">&quot;</span><span class="s">message</span><span class="s">&quot;</span> ]
 
-<span onmouseout="hideTip(event, 'fs76', 149)" onmouseover="showTip(event, 'fs76', 149)" class="i">Json</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs79', 150)" onmouseover="showTip(event, 'fs79', 150)" class="i">unpickle</span> <span onmouseout="hideTip(event, 'fs71', 151)" onmouseover="showTip(event, 'fs71', 151)" class="i">p3</span> <span onmouseout="hideTip(event, 'fs78', 152)" onmouseover="showTip(event, 'fs78', 152)" class="i">t2</span></pre>
+<span onmouseout="hideTip(event, 'fs81', 153)" onmouseover="showTip(event, 'fs81', 153)" class="i">Json</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs83', 154)" onmouseover="showTip(event, 'fs83', 154)" class="i">unpickle</span> <span onmouseout="hideTip(event, 'fs71', 155)" onmouseover="showTip(event, 'fs71', 155)" class="i">p3</span> <span onmouseout="hideTip(event, 'fs80', 156)" onmouseover="showTip(event, 'fs80', 156)" class="i">t2</span></pre>
 </td>
 </tr>
 </table>
 
-<p>The combinator library includes all primitives as described in Andrew Kennedy's 
+<p>The module includes all primitive combinators as described in Andrew Kennedy's 
 <a href="http://research.microsoft.com/en-us/um/people/akenn/fun/picklercombinators.pdf">Pickler Combinators</a>
-such as <code>wrap</code> and <code>alt</code>. Fixpoint combinators for declaring recursive picklers are also available:</p>
+like<code>wrap</code> and <code>alt</code>. Fixpoint combinators for declaring recursive picklers are also available:</p>
 
 <table class="pre"><tr><td class="lines"><pre class="fssnip">
 <span class="l"> 1: </span>
@@ -250,26 +257,21 @@ such as <code>wrap</code> and <code>alt</code>. Fixpoint combinators for declari
 </pre>
 </td>
 <td class="snippet"><pre class="fssnip">
-<span class="k">type</span> <span onmouseout="hideTip(event, 'fs80', 153)" onmouseover="showTip(event, 'fs80', 153)" class="i">Peano</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs81', 154)" onmouseover="showTip(event, 'fs81', 154)" class="i">Zero</span> | <span onmouseout="hideTip(event, 'fs82', 155)" onmouseover="showTip(event, 'fs82', 155)" class="i">Succ</span> <span class="k">of</span> <span onmouseout="hideTip(event, 'fs80', 156)" onmouseover="showTip(event, 'fs80', 156)" class="i">Peano</span>
+<span class="k">type</span> <span onmouseout="hideTip(event, 'fs84', 157)" onmouseover="showTip(event, 'fs84', 157)" class="i">Peano</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs85', 158)" onmouseover="showTip(event, 'fs85', 158)" class="i">Zero</span> | <span onmouseout="hideTip(event, 'fs86', 159)" onmouseover="showTip(event, 'fs86', 159)" class="i">Succ</span> <span class="k">of</span> <span onmouseout="hideTip(event, 'fs84', 160)" onmouseover="showTip(event, 'fs84', 160)" class="i">Peano</span>
 
-<span class="k">let</span> <span onmouseout="hideTip(event, 'fs83', 157)" onmouseover="showTip(event, 'fs83', 157)" class="i">pp</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs61', 158)" onmouseover="showTip(event, 'fs61', 158)" class="i">Pickler</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs80', 159)" onmouseover="showTip(event, 'fs80', 159)" class="i">Peano</span><span class="o">&gt;</span> <span class="o">=</span>
-    <span onmouseout="hideTip(event, 'fs61', 160)" onmouseover="showTip(event, 'fs61', 160)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs84', 161)" onmouseover="showTip(event, 'fs84', 161)" class="i">fix</span>(<span class="k">fun</span> <span onmouseout="hideTip(event, 'fs85', 162)" onmouseover="showTip(event, 'fs85', 162)" class="i">peano</span> <span class="k">-&gt;</span>
-        <span onmouseout="hideTip(event, 'fs85', 163)" onmouseover="showTip(event, 'fs85', 163)" class="i">peano</span>
-        <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs61', 164)" onmouseover="showTip(event, 'fs61', 164)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs70', 165)" onmouseover="showTip(event, 'fs70', 165)" class="i">option</span>
-        <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs61', 166)" onmouseover="showTip(event, 'fs61', 166)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs86', 167)" onmouseover="showTip(event, 'fs86', 167)" class="i">wrap</span> (<span class="k">function</span> <span onmouseout="hideTip(event, 'fs34', 168)" onmouseover="showTip(event, 'fs34', 168)" class="i">None</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs81', 169)" onmouseover="showTip(event, 'fs81', 169)" class="i">Zero</span> | <span onmouseout="hideTip(event, 'fs33', 170)" onmouseover="showTip(event, 'fs33', 170)" class="i">Some</span> <span onmouseout="hideTip(event, 'fs87', 171)" onmouseover="showTip(event, 'fs87', 171)" class="i">p</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs82', 172)" onmouseover="showTip(event, 'fs82', 172)" class="i">Succ</span> <span onmouseout="hideTip(event, 'fs87', 173)" onmouseover="showTip(event, 'fs87', 173)" class="i">p</span>)
-                        (<span class="k">function</span> <span onmouseout="hideTip(event, 'fs81', 174)" onmouseover="showTip(event, 'fs81', 174)" class="i">Zero</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs34', 175)" onmouseover="showTip(event, 'fs34', 175)" class="i">None</span> | <span onmouseout="hideTip(event, 'fs82', 176)" onmouseover="showTip(event, 'fs82', 176)" class="i">Succ</span> <span onmouseout="hideTip(event, 'fs87', 177)" onmouseover="showTip(event, 'fs87', 177)" class="i">p</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs33', 178)" onmouseover="showTip(event, 'fs33', 178)" class="i">Some</span> <span onmouseout="hideTip(event, 'fs87', 179)" onmouseover="showTip(event, 'fs87', 179)" class="i">p</span>))
+<span class="k">let</span> <span onmouseout="hideTip(event, 'fs87', 161)" onmouseover="showTip(event, 'fs87', 161)" class="i">pp</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs61', 162)" onmouseover="showTip(event, 'fs61', 162)" class="i">Pickler</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs84', 163)" onmouseover="showTip(event, 'fs84', 163)" class="i">Peano</span><span class="o">&gt;</span> <span class="o">=</span>
+    <span onmouseout="hideTip(event, 'fs61', 164)" onmouseover="showTip(event, 'fs61', 164)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs88', 165)" onmouseover="showTip(event, 'fs88', 165)" class="i">fix</span>(<span class="k">fun</span> <span onmouseout="hideTip(event, 'fs89', 166)" onmouseover="showTip(event, 'fs89', 166)" class="i">peano</span> <span class="k">-&gt;</span>
+        <span onmouseout="hideTip(event, 'fs89', 167)" onmouseover="showTip(event, 'fs89', 167)" class="i">peano</span>
+        <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs61', 168)" onmouseover="showTip(event, 'fs61', 168)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs70', 169)" onmouseover="showTip(event, 'fs70', 169)" class="i">option</span>
+        <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs61', 170)" onmouseover="showTip(event, 'fs61', 170)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs90', 171)" onmouseover="showTip(event, 'fs90', 171)" class="i">wrap</span> (<span class="k">function</span> <span onmouseout="hideTip(event, 'fs34', 172)" onmouseover="showTip(event, 'fs34', 172)" class="i">None</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs85', 173)" onmouseover="showTip(event, 'fs85', 173)" class="i">Zero</span> | <span onmouseout="hideTip(event, 'fs33', 174)" onmouseover="showTip(event, 'fs33', 174)" class="i">Some</span> <span onmouseout="hideTip(event, 'fs91', 175)" onmouseover="showTip(event, 'fs91', 175)" class="i">p</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs86', 176)" onmouseover="showTip(event, 'fs86', 176)" class="i">Succ</span> <span onmouseout="hideTip(event, 'fs91', 177)" onmouseover="showTip(event, 'fs91', 177)" class="i">p</span>)
+                        (<span class="k">function</span> <span onmouseout="hideTip(event, 'fs85', 178)" onmouseover="showTip(event, 'fs85', 178)" class="i">Zero</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs34', 179)" onmouseover="showTip(event, 'fs34', 179)" class="i">None</span> | <span onmouseout="hideTip(event, 'fs86', 180)" onmouseover="showTip(event, 'fs86', 180)" class="i">Succ</span> <span onmouseout="hideTip(event, 'fs91', 181)" onmouseover="showTip(event, 'fs91', 181)" class="i">p</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs33', 182)" onmouseover="showTip(event, 'fs33', 182)" class="i">Some</span> <span onmouseout="hideTip(event, 'fs91', 183)" onmouseover="showTip(event, 'fs91', 183)" class="i">p</span>))
                         
-<span onmouseout="hideTip(event, 'fs82', 180)" onmouseover="showTip(event, 'fs82', 180)" class="i">Succ</span> (<span onmouseout="hideTip(event, 'fs82', 181)" onmouseover="showTip(event, 'fs82', 181)" class="i">Succ</span> <span onmouseout="hideTip(event, 'fs81', 182)" onmouseover="showTip(event, 'fs81', 182)" class="i">Zero</span>) <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs88', 183)" onmouseover="showTip(event, 'fs88', 183)" class="i">Binary</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs89', 184)" onmouseover="showTip(event, 'fs89', 184)" class="i">pickle</span> <span onmouseout="hideTip(event, 'fs83', 185)" onmouseover="showTip(event, 'fs83', 185)" class="i">pp</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs88', 186)" onmouseover="showTip(event, 'fs88', 186)" class="i">Binary</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs90', 187)" onmouseover="showTip(event, 'fs90', 187)" class="i">unpickle</span> <span onmouseout="hideTip(event, 'fs83', 188)" onmouseover="showTip(event, 'fs83', 188)" class="i">pp</span></pre>
+<span onmouseout="hideTip(event, 'fs86', 184)" onmouseover="showTip(event, 'fs86', 184)" class="i">Succ</span> (<span onmouseout="hideTip(event, 'fs86', 185)" onmouseover="showTip(event, 'fs86', 185)" class="i">Succ</span> <span onmouseout="hideTip(event, 'fs85', 186)" onmouseover="showTip(event, 'fs85', 186)" class="i">Zero</span>) <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs78', 187)" onmouseover="showTip(event, 'fs78', 187)" class="i">Binary</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs79', 188)" onmouseover="showTip(event, 'fs79', 188)" class="i">pickle</span> <span onmouseout="hideTip(event, 'fs87', 189)" onmouseover="showTip(event, 'fs87', 189)" class="i">pp</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs78', 190)" onmouseover="showTip(event, 'fs78', 190)" class="i">Binary</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs92', 191)" onmouseover="showTip(event, 'fs92', 191)" class="i">unpickle</span> <span onmouseout="hideTip(event, 'fs87', 192)" onmouseover="showTip(event, 'fs87', 192)" class="i">pp</span></pre>
 </td>
 </tr>
 </table>
 
-<p>The library comes with <code>array</code>, <code>array2D</code>, <code>list</code>, <code>set</code> and <code>map</code> 
-combinators that are used to build picklers for the corresponding generic types.
-The <code>Pickler.seq</code> combinator generates picklers for sequences using eager evaluation of elements.
-Finally, <code>Pickler.func&lt;'a,'b&gt;</code> : <code>Pickler&lt;('a -&gt; 'b)&gt;</code> instantiates picklers for F# functions.</p>
-
-<p>When it comes to generic types, picklers can be defined using user-defined combinators:</p>
+<p>When it comes to generic types, picklers can be created through user-defined combinators:</p>
 
 <table class="pre"><tr><td class="lines"><pre class="fssnip">
 <span class="l"> 1: </span>
@@ -287,18 +289,18 @@ Finally, <code>Pickler.func&lt;'a,'b&gt;</code> : <code>Pickler&lt;('a -&gt; 'b)
 </pre>
 </td>
 <td class="snippet"><pre class="fssnip">
-<span class="k">type</span> <span onmouseout="hideTip(event, 'fs91', 189)" onmouseover="showTip(event, 'fs91', 189)" class="i">Tree</span><span class="o">&lt;</span><span class="o">&#39;</span><span class="i">T</span><span class="o">&gt;</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs92', 190)" onmouseover="showTip(event, 'fs92', 190)" class="i">Leaf</span> | <span onmouseout="hideTip(event, 'fs93', 191)" onmouseover="showTip(event, 'fs93', 191)" class="i">Node</span> <span class="k">of</span> <span class="o">&#39;</span><span class="i">T</span> <span class="o">*</span> <span onmouseout="hideTip(event, 'fs91', 192)" onmouseover="showTip(event, 'fs91', 192)" class="i">Tree</span><span class="o">&lt;</span><span class="o">&#39;</span><span class="i">T</span><span class="o">&gt;</span> <span onmouseout="hideTip(event, 'fs27', 193)" onmouseover="showTip(event, 'fs27', 193)" class="i">list</span>
+<span class="k">type</span> <span onmouseout="hideTip(event, 'fs93', 193)" onmouseover="showTip(event, 'fs93', 193)" class="i">Tree</span><span class="o">&lt;</span><span class="o">&#39;</span><span class="i">T</span><span class="o">&gt;</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs94', 194)" onmouseover="showTip(event, 'fs94', 194)" class="i">Leaf</span> | <span onmouseout="hideTip(event, 'fs95', 195)" onmouseover="showTip(event, 'fs95', 195)" class="i">Node</span> <span class="k">of</span> <span class="o">&#39;</span><span class="i">T</span> <span class="o">*</span> <span onmouseout="hideTip(event, 'fs93', 196)" onmouseover="showTip(event, 'fs93', 196)" class="i">Tree</span><span class="o">&lt;</span><span class="o">&#39;</span><span class="i">T</span><span class="o">&gt;</span> <span onmouseout="hideTip(event, 'fs27', 197)" onmouseover="showTip(event, 'fs27', 197)" class="i">list</span>
 
-<span class="k">let</span> <span onmouseout="hideTip(event, 'fs94', 194)" onmouseover="showTip(event, 'fs94', 194)" class="i">mkTree</span> (<span onmouseout="hideTip(event, 'fs95', 195)" onmouseover="showTip(event, 'fs95', 195)" class="i">ep</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs61', 196)" onmouseover="showTip(event, 'fs61', 196)" class="i">Pickler</span><span class="o">&lt;</span><span class="o">&#39;</span><span class="i">T</span><span class="o">&gt;</span>) <span class="o">=</span>
-    <span onmouseout="hideTip(event, 'fs61', 197)" onmouseover="showTip(event, 'fs61', 197)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs84', 198)" onmouseover="showTip(event, 'fs84', 198)" class="i">fix</span>(<span class="k">fun</span> <span onmouseout="hideTip(event, 'fs96', 199)" onmouseover="showTip(event, 'fs96', 199)" class="i">tree</span> <span class="k">-&gt;</span>
-        <span onmouseout="hideTip(event, 'fs96', 200)" onmouseover="showTip(event, 'fs96', 200)" class="i">tree</span>
-        <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs61', 201)" onmouseover="showTip(event, 'fs61', 201)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs72', 202)" onmouseover="showTip(event, 'fs72', 202)" class="i">list</span>
-        <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs61', 203)" onmouseover="showTip(event, 'fs61', 203)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs68', 204)" onmouseover="showTip(event, 'fs68', 204)" class="i">pair</span> <span onmouseout="hideTip(event, 'fs95', 205)" onmouseover="showTip(event, 'fs95', 205)" class="i">ep</span>
-        <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs61', 206)" onmouseover="showTip(event, 'fs61', 206)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs70', 207)" onmouseover="showTip(event, 'fs70', 207)" class="i">option</span>
-        <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs61', 208)" onmouseover="showTip(event, 'fs61', 208)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs86', 209)" onmouseover="showTip(event, 'fs86', 209)" class="i">wrap</span> (<span class="k">function</span> <span onmouseout="hideTip(event, 'fs34', 210)" onmouseover="showTip(event, 'fs34', 210)" class="i">None</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs92', 211)" onmouseover="showTip(event, 'fs92', 211)" class="i">Leaf</span> | <span onmouseout="hideTip(event, 'fs33', 212)" onmouseover="showTip(event, 'fs33', 212)" class="i">Some</span> (<span onmouseout="hideTip(event, 'fs97', 213)" onmouseover="showTip(event, 'fs97', 213)" class="i">t</span>,<span onmouseout="hideTip(event, 'fs98', 214)" onmouseover="showTip(event, 'fs98', 214)" class="i">c</span>) <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs93', 215)" onmouseover="showTip(event, 'fs93', 215)" class="i">Node</span>(<span onmouseout="hideTip(event, 'fs97', 216)" onmouseover="showTip(event, 'fs97', 216)" class="i">t</span>,<span onmouseout="hideTip(event, 'fs98', 217)" onmouseover="showTip(event, 'fs98', 217)" class="i">c</span>))
-                        (<span class="k">function</span> <span onmouseout="hideTip(event, 'fs92', 218)" onmouseover="showTip(event, 'fs92', 218)" class="i">Leaf</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs34', 219)" onmouseover="showTip(event, 'fs34', 219)" class="i">None</span> | <span onmouseout="hideTip(event, 'fs93', 220)" onmouseover="showTip(event, 'fs93', 220)" class="i">Node</span> (<span onmouseout="hideTip(event, 'fs97', 221)" onmouseover="showTip(event, 'fs97', 221)" class="i">t</span>,<span onmouseout="hideTip(event, 'fs98', 222)" onmouseover="showTip(event, 'fs98', 222)" class="i">c</span>) <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs33', 223)" onmouseover="showTip(event, 'fs33', 223)" class="i">Some</span>(<span onmouseout="hideTip(event, 'fs97', 224)" onmouseover="showTip(event, 'fs97', 224)" class="i">t</span>,<span onmouseout="hideTip(event, 'fs98', 225)" onmouseover="showTip(event, 'fs98', 225)" class="i">c</span>)))
+<span class="k">let</span> <span onmouseout="hideTip(event, 'fs96', 198)" onmouseover="showTip(event, 'fs96', 198)" class="i">mkTree</span> (<span onmouseout="hideTip(event, 'fs97', 199)" onmouseover="showTip(event, 'fs97', 199)" class="i">ep</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs61', 200)" onmouseover="showTip(event, 'fs61', 200)" class="i">Pickler</span><span class="o">&lt;</span><span class="o">&#39;</span><span class="i">T</span><span class="o">&gt;</span>) <span class="o">=</span>
+    <span onmouseout="hideTip(event, 'fs61', 201)" onmouseover="showTip(event, 'fs61', 201)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs88', 202)" onmouseover="showTip(event, 'fs88', 202)" class="i">fix</span>(<span class="k">fun</span> <span onmouseout="hideTip(event, 'fs98', 203)" onmouseover="showTip(event, 'fs98', 203)" class="i">tree</span> <span class="k">-&gt;</span>
+        <span onmouseout="hideTip(event, 'fs98', 204)" onmouseover="showTip(event, 'fs98', 204)" class="i">tree</span>
+        <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs61', 205)" onmouseover="showTip(event, 'fs61', 205)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs72', 206)" onmouseover="showTip(event, 'fs72', 206)" class="i">list</span>
+        <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs61', 207)" onmouseover="showTip(event, 'fs61', 207)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs68', 208)" onmouseover="showTip(event, 'fs68', 208)" class="i">pair</span> <span onmouseout="hideTip(event, 'fs97', 209)" onmouseover="showTip(event, 'fs97', 209)" class="i">ep</span>
+        <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs61', 210)" onmouseover="showTip(event, 'fs61', 210)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs70', 211)" onmouseover="showTip(event, 'fs70', 211)" class="i">option</span>
+        <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs61', 212)" onmouseover="showTip(event, 'fs61', 212)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs90', 213)" onmouseover="showTip(event, 'fs90', 213)" class="i">wrap</span> (<span class="k">function</span> <span onmouseout="hideTip(event, 'fs34', 214)" onmouseover="showTip(event, 'fs34', 214)" class="i">None</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs94', 215)" onmouseover="showTip(event, 'fs94', 215)" class="i">Leaf</span> | <span onmouseout="hideTip(event, 'fs33', 216)" onmouseover="showTip(event, 'fs33', 216)" class="i">Some</span> (<span onmouseout="hideTip(event, 'fs99', 217)" onmouseover="showTip(event, 'fs99', 217)" class="i">t</span>,<span onmouseout="hideTip(event, 'fs100', 218)" onmouseover="showTip(event, 'fs100', 218)" class="i">c</span>) <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs95', 219)" onmouseover="showTip(event, 'fs95', 219)" class="i">Node</span>(<span onmouseout="hideTip(event, 'fs99', 220)" onmouseover="showTip(event, 'fs99', 220)" class="i">t</span>,<span onmouseout="hideTip(event, 'fs100', 221)" onmouseover="showTip(event, 'fs100', 221)" class="i">c</span>))
+                        (<span class="k">function</span> <span onmouseout="hideTip(event, 'fs94', 222)" onmouseover="showTip(event, 'fs94', 222)" class="i">Leaf</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs34', 223)" onmouseover="showTip(event, 'fs34', 223)" class="i">None</span> | <span onmouseout="hideTip(event, 'fs95', 224)" onmouseover="showTip(event, 'fs95', 224)" class="i">Node</span> (<span onmouseout="hideTip(event, 'fs99', 225)" onmouseover="showTip(event, 'fs99', 225)" class="i">t</span>,<span onmouseout="hideTip(event, 'fs100', 226)" onmouseover="showTip(event, 'fs100', 226)" class="i">c</span>) <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs33', 227)" onmouseover="showTip(event, 'fs33', 227)" class="i">Some</span>(<span onmouseout="hideTip(event, 'fs99', 228)" onmouseover="showTip(event, 'fs99', 228)" class="i">t</span>,<span onmouseout="hideTip(event, 'fs100', 229)" onmouseover="showTip(event, 'fs100', 229)" class="i">c</span>)))
                         
-<span onmouseout="hideTip(event, 'fs93', 226)" onmouseover="showTip(event, 'fs93', 226)" class="i">Node</span>(<span class="n">2</span>,[]) <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs99', 227)" onmouseover="showTip(event, 'fs99', 227)" class="i">Xml</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs100', 228)" onmouseover="showTip(event, 'fs100', 228)" class="i">pickle</span> (<span onmouseout="hideTip(event, 'fs94', 229)" onmouseover="showTip(event, 'fs94', 229)" class="i">mkTree</span> <span onmouseout="hideTip(event, 'fs61', 230)" onmouseover="showTip(event, 'fs61', 230)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs62', 231)" onmouseover="showTip(event, 'fs62', 231)" class="i">int</span>)</pre>
+<span onmouseout="hideTip(event, 'fs95', 230)" onmouseover="showTip(event, 'fs95', 230)" class="i">Node</span>(<span class="n">2</span>,[]) <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs101', 231)" onmouseover="showTip(event, 'fs101', 231)" class="i">Xml</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs102', 232)" onmouseover="showTip(event, 'fs102', 232)" class="i">pickle</span> (<span onmouseout="hideTip(event, 'fs96', 233)" onmouseover="showTip(event, 'fs96', 233)" class="i">mkTree</span> <span onmouseout="hideTip(event, 'fs61', 234)" onmouseover="showTip(event, 'fs61', 234)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs62', 235)" onmouseover="showTip(event, 'fs62', 235)" class="i">int</span>)</pre>
 </td>
 </tr>
 </table>
@@ -320,17 +322,17 @@ Finally, <code>Pickler.func&lt;'a,'b&gt;</code> : <code>Pickler&lt;('a -&gt; 'b)
 </pre>
 </td>
 <td class="snippet"><pre class="fssnip">
-<span class="k">let</span> <span onmouseout="hideTip(event, 'fs101', 232)" onmouseover="showTip(event, 'fs101', 232)" class="i">tree</span><span class="o">&lt;</span><span class="o">&#39;</span><span class="i">T</span><span class="o">&gt;</span> <span class="o">=</span>
-    <span onmouseout="hideTip(event, 'fs61', 233)" onmouseover="showTip(event, 'fs61', 233)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs84', 234)" onmouseover="showTip(event, 'fs84', 234)" class="i">fix</span>(<span class="k">fun</span> <span onmouseout="hideTip(event, 'fs96', 235)" onmouseover="showTip(event, 'fs96', 235)" class="i">tree</span> <span class="k">-&gt;</span>
-        <span onmouseout="hideTip(event, 'fs96', 236)" onmouseover="showTip(event, 'fs96', 236)" class="i">tree</span>
-        <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs61', 237)" onmouseover="showTip(event, 'fs61', 237)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs72', 238)" onmouseover="showTip(event, 'fs72', 238)" class="i">list</span>
-        <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs61', 239)" onmouseover="showTip(event, 'fs61', 239)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs68', 240)" onmouseover="showTip(event, 'fs68', 240)" class="i">pair</span> <span onmouseout="hideTip(event, 'fs61', 241)" onmouseover="showTip(event, 'fs61', 241)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs74', 242)" onmouseover="showTip(event, 'fs74', 242)" class="i">auto</span><span class="o">&lt;</span><span class="o">&#39;</span><span class="i">T</span><span class="o">&gt;</span>
-        <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs61', 243)" onmouseover="showTip(event, 'fs61', 243)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs70', 244)" onmouseover="showTip(event, 'fs70', 244)" class="i">option</span>
-        <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs61', 245)" onmouseover="showTip(event, 'fs61', 245)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs86', 246)" onmouseover="showTip(event, 'fs86', 246)" class="i">wrap</span> (<span class="k">function</span> <span onmouseout="hideTip(event, 'fs34', 247)" onmouseover="showTip(event, 'fs34', 247)" class="i">None</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs92', 248)" onmouseover="showTip(event, 'fs92', 248)" class="i">Leaf</span> | <span onmouseout="hideTip(event, 'fs33', 249)" onmouseover="showTip(event, 'fs33', 249)" class="i">Some</span> (<span onmouseout="hideTip(event, 'fs97', 250)" onmouseover="showTip(event, 'fs97', 250)" class="i">t</span>,<span onmouseout="hideTip(event, 'fs98', 251)" onmouseover="showTip(event, 'fs98', 251)" class="i">c</span>) <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs93', 252)" onmouseover="showTip(event, 'fs93', 252)" class="i">Node</span>(<span onmouseout="hideTip(event, 'fs97', 253)" onmouseover="showTip(event, 'fs97', 253)" class="i">t</span>,<span onmouseout="hideTip(event, 'fs98', 254)" onmouseover="showTip(event, 'fs98', 254)" class="i">c</span>))
-                        (<span class="k">function</span> <span onmouseout="hideTip(event, 'fs92', 255)" onmouseover="showTip(event, 'fs92', 255)" class="i">Leaf</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs34', 256)" onmouseover="showTip(event, 'fs34', 256)" class="i">None</span> | <span onmouseout="hideTip(event, 'fs93', 257)" onmouseover="showTip(event, 'fs93', 257)" class="i">Node</span> (<span onmouseout="hideTip(event, 'fs97', 258)" onmouseover="showTip(event, 'fs97', 258)" class="i">t</span>,<span onmouseout="hideTip(event, 'fs98', 259)" onmouseover="showTip(event, 'fs98', 259)" class="i">c</span>) <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs33', 260)" onmouseover="showTip(event, 'fs33', 260)" class="i">Some</span>(<span onmouseout="hideTip(event, 'fs97', 261)" onmouseover="showTip(event, 'fs97', 261)" class="i">t</span>,<span onmouseout="hideTip(event, 'fs98', 262)" onmouseover="showTip(event, 'fs98', 262)" class="i">c</span>)))
+<span class="k">let</span> <span onmouseout="hideTip(event, 'fs103', 236)" onmouseover="showTip(event, 'fs103', 236)" class="i">tree</span><span class="o">&lt;</span><span class="o">&#39;</span><span class="i">T</span><span class="o">&gt;</span> <span class="o">=</span>
+    <span onmouseout="hideTip(event, 'fs61', 237)" onmouseover="showTip(event, 'fs61', 237)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs88', 238)" onmouseover="showTip(event, 'fs88', 238)" class="i">fix</span>(<span class="k">fun</span> <span onmouseout="hideTip(event, 'fs98', 239)" onmouseover="showTip(event, 'fs98', 239)" class="i">tree</span> <span class="k">-&gt;</span>
+        <span onmouseout="hideTip(event, 'fs98', 240)" onmouseover="showTip(event, 'fs98', 240)" class="i">tree</span>
+        <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs61', 241)" onmouseover="showTip(event, 'fs61', 241)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs72', 242)" onmouseover="showTip(event, 'fs72', 242)" class="i">list</span>
+        <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs61', 243)" onmouseover="showTip(event, 'fs61', 243)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs68', 244)" onmouseover="showTip(event, 'fs68', 244)" class="i">pair</span> <span onmouseout="hideTip(event, 'fs61', 245)" onmouseover="showTip(event, 'fs61', 245)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs76', 246)" onmouseover="showTip(event, 'fs76', 246)" class="i">auto</span><span class="o">&lt;</span><span class="o">&#39;</span><span class="i">T</span><span class="o">&gt;</span>
+        <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs61', 247)" onmouseover="showTip(event, 'fs61', 247)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs70', 248)" onmouseover="showTip(event, 'fs70', 248)" class="i">option</span>
+        <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs61', 249)" onmouseover="showTip(event, 'fs61', 249)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs90', 250)" onmouseover="showTip(event, 'fs90', 250)" class="i">wrap</span> (<span class="k">function</span> <span onmouseout="hideTip(event, 'fs34', 251)" onmouseover="showTip(event, 'fs34', 251)" class="i">None</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs94', 252)" onmouseover="showTip(event, 'fs94', 252)" class="i">Leaf</span> | <span onmouseout="hideTip(event, 'fs33', 253)" onmouseover="showTip(event, 'fs33', 253)" class="i">Some</span> (<span onmouseout="hideTip(event, 'fs99', 254)" onmouseover="showTip(event, 'fs99', 254)" class="i">t</span>,<span onmouseout="hideTip(event, 'fs100', 255)" onmouseover="showTip(event, 'fs100', 255)" class="i">c</span>) <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs95', 256)" onmouseover="showTip(event, 'fs95', 256)" class="i">Node</span>(<span onmouseout="hideTip(event, 'fs99', 257)" onmouseover="showTip(event, 'fs99', 257)" class="i">t</span>,<span onmouseout="hideTip(event, 'fs100', 258)" onmouseover="showTip(event, 'fs100', 258)" class="i">c</span>))
+                        (<span class="k">function</span> <span onmouseout="hideTip(event, 'fs94', 259)" onmouseover="showTip(event, 'fs94', 259)" class="i">Leaf</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs34', 260)" onmouseover="showTip(event, 'fs34', 260)" class="i">None</span> | <span onmouseout="hideTip(event, 'fs95', 261)" onmouseover="showTip(event, 'fs95', 261)" class="i">Node</span> (<span onmouseout="hideTip(event, 'fs99', 262)" onmouseover="showTip(event, 'fs99', 262)" class="i">t</span>,<span onmouseout="hideTip(event, 'fs100', 263)" onmouseover="showTip(event, 'fs100', 263)" class="i">c</span>) <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs33', 264)" onmouseover="showTip(event, 'fs33', 264)" class="i">Some</span>(<span onmouseout="hideTip(event, 'fs99', 265)" onmouseover="showTip(event, 'fs99', 265)" class="i">t</span>,<span onmouseout="hideTip(event, 'fs100', 266)" onmouseover="showTip(event, 'fs100', 266)" class="i">c</span>)))
 
 
-<span onmouseout="hideTip(event, 'fs93', 263)" onmouseover="showTip(event, 'fs93', 263)" class="i">Node</span>([<span class="n">1</span>],[<span onmouseout="hideTip(event, 'fs92', 264)" onmouseover="showTip(event, 'fs92', 264)" class="i">Leaf</span> ; <span onmouseout="hideTip(event, 'fs92', 265)" onmouseover="showTip(event, 'fs92', 265)" class="i">Leaf</span>]) <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs76', 266)" onmouseover="showTip(event, 'fs76', 266)" class="i">Json</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs77', 267)" onmouseover="showTip(event, 'fs77', 267)" class="i">pickle</span> <span onmouseout="hideTip(event, 'fs101', 268)" onmouseover="showTip(event, 'fs101', 268)" class="i">tree</span></pre>
+<span onmouseout="hideTip(event, 'fs95', 267)" onmouseover="showTip(event, 'fs95', 267)" class="i">Node</span>([<span class="n">1</span>],[<span onmouseout="hideTip(event, 'fs94', 268)" onmouseover="showTip(event, 'fs94', 268)" class="i">Leaf</span> ; <span onmouseout="hideTip(event, 'fs94', 269)" onmouseover="showTip(event, 'fs94', 269)" class="i">Leaf</span>]) <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs81', 270)" onmouseover="showTip(event, 'fs81', 270)" class="i">Json</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs82', 271)" onmouseover="showTip(event, 'fs82', 271)" class="i">pickle</span> <span onmouseout="hideTip(event, 'fs103', 272)" onmouseover="showTip(event, 'fs103', 272)" class="i">tree</span></pre>
 </td>
 </tr>
 </table>
@@ -371,25 +373,25 @@ see this <a href="https://gist.github.com/t0yv0/6834822">gist</a> for some Coq c
 </pre>
 </td>
 <td class="snippet"><pre class="fssnip">
-<span class="k">type</span> <span onmouseout="hideTip(event, 'fs102', 269)" onmouseover="showTip(event, 'fs102', 269)" class="i">Person</span> <span class="o">=</span>
+<span class="k">type</span> <span onmouseout="hideTip(event, 'fs104', 273)" onmouseover="showTip(event, 'fs104', 273)" class="i">Person</span> <span class="o">=</span>
     {
-        <span onmouseout="hideTip(event, 'fs103', 270)" onmouseover="showTip(event, 'fs103', 270)" class="i">Address</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs63', 271)" onmouseover="showTip(event, 'fs63', 271)" class="i">string</span>
-        <span onmouseout="hideTip(event, 'fs104', 272)" onmouseover="showTip(event, 'fs104', 272)" class="i">Age</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs60', 273)" onmouseover="showTip(event, 'fs60', 273)" class="i">int</span>
-        <span onmouseout="hideTip(event, 'fs105', 274)" onmouseover="showTip(event, 'fs105', 274)" class="i">Name</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs63', 275)" onmouseover="showTip(event, 'fs63', 275)" class="i">string</span>
+        <span onmouseout="hideTip(event, 'fs105', 274)" onmouseover="showTip(event, 'fs105', 274)" class="i">Address</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs63', 275)" onmouseover="showTip(event, 'fs63', 275)" class="i">string</span>
+        <span onmouseout="hideTip(event, 'fs106', 276)" onmouseover="showTip(event, 'fs106', 276)" class="i">Age</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs60', 277)" onmouseover="showTip(event, 'fs60', 277)" class="i">int</span>
+        <span onmouseout="hideTip(event, 'fs107', 278)" onmouseover="showTip(event, 'fs107', 278)" class="i">Name</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs63', 279)" onmouseover="showTip(event, 'fs63', 279)" class="i">string</span>
     }
 
-<span class="k">let</span> <span onmouseout="hideTip(event, 'fs106', 276)" onmouseover="showTip(event, 'fs106', 276)" class="i">makePerson</span> <span onmouseout="hideTip(event, 'fs107', 277)" onmouseover="showTip(event, 'fs107', 277)" class="i">name</span> <span onmouseout="hideTip(event, 'fs108', 278)" onmouseover="showTip(event, 'fs108', 278)" class="i">age</span> <span onmouseout="hideTip(event, 'fs109', 279)" onmouseover="showTip(event, 'fs109', 279)" class="i">address</span> <span class="o">=</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'fs108', 280)" onmouseover="showTip(event, 'fs108', 280)" class="i">makePerson</span> <span onmouseout="hideTip(event, 'fs109', 281)" onmouseover="showTip(event, 'fs109', 281)" class="i">name</span> <span onmouseout="hideTip(event, 'fs110', 282)" onmouseover="showTip(event, 'fs110', 282)" class="i">age</span> <span onmouseout="hideTip(event, 'fs111', 283)" onmouseover="showTip(event, 'fs111', 283)" class="i">address</span> <span class="o">=</span>
     {
-        <span class="i">Address</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs109', 280)" onmouseover="showTip(event, 'fs109', 280)" class="i">address</span>
-        <span class="i">Age</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs108', 281)" onmouseover="showTip(event, 'fs108', 281)" class="i">age</span>
-        <span class="i">Name</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs107', 282)" onmouseover="showTip(event, 'fs107', 282)" class="i">name</span>
+        <span class="i">Address</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs111', 284)" onmouseover="showTip(event, 'fs111', 284)" class="i">address</span>
+        <span class="i">Age</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs110', 285)" onmouseover="showTip(event, 'fs110', 285)" class="i">age</span>
+        <span class="i">Name</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs109', 286)" onmouseover="showTip(event, 'fs109', 286)" class="i">name</span>
     }
 
-<span class="k">let</span> <span onmouseout="hideTip(event, 'fs110', 283)" onmouseover="showTip(event, 'fs110', 283)" class="i">personPickler</span> <span class="o">=</span>
-    <span onmouseout="hideTip(event, 'fs61', 284)" onmouseover="showTip(event, 'fs61', 284)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs111', 285)" onmouseover="showTip(event, 'fs111', 285)" class="i">product</span> <span onmouseout="hideTip(event, 'fs106', 286)" onmouseover="showTip(event, 'fs106', 286)" class="i">makePerson</span>
-    <span class="o">^+</span> <span onmouseout="hideTip(event, 'fs61', 287)" onmouseover="showTip(event, 'fs61', 287)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs112', 288)" onmouseover="showTip(event, 'fs112', 288)" class="i">field</span> (<span class="k">fun</span> <span onmouseout="hideTip(event, 'fs113', 289)" onmouseover="showTip(event, 'fs113', 289)" class="i">p</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs113', 290)" onmouseover="showTip(event, 'fs113', 290)" class="i">p</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs105', 291)" onmouseover="showTip(event, 'fs105', 291)" class="i">Name</span>) <span onmouseout="hideTip(event, 'fs61', 292)" onmouseover="showTip(event, 'fs61', 292)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs64', 293)" onmouseover="showTip(event, 'fs64', 293)" class="i">string</span>
-    <span class="o">^+</span> <span onmouseout="hideTip(event, 'fs61', 294)" onmouseover="showTip(event, 'fs61', 294)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs112', 295)" onmouseover="showTip(event, 'fs112', 295)" class="i">field</span> (<span class="k">fun</span> <span onmouseout="hideTip(event, 'fs113', 296)" onmouseover="showTip(event, 'fs113', 296)" class="i">p</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs113', 297)" onmouseover="showTip(event, 'fs113', 297)" class="i">p</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs104', 298)" onmouseover="showTip(event, 'fs104', 298)" class="i">Age</span>) <span onmouseout="hideTip(event, 'fs61', 299)" onmouseover="showTip(event, 'fs61', 299)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs62', 300)" onmouseover="showTip(event, 'fs62', 300)" class="i">int</span>
-    <span class="o">^.</span> <span onmouseout="hideTip(event, 'fs61', 301)" onmouseover="showTip(event, 'fs61', 301)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs112', 302)" onmouseover="showTip(event, 'fs112', 302)" class="i">field</span> (<span class="k">fun</span> <span onmouseout="hideTip(event, 'fs113', 303)" onmouseover="showTip(event, 'fs113', 303)" class="i">p</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs113', 304)" onmouseover="showTip(event, 'fs113', 304)" class="i">p</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs103', 305)" onmouseover="showTip(event, 'fs103', 305)" class="i">Address</span>) <span onmouseout="hideTip(event, 'fs61', 306)" onmouseover="showTip(event, 'fs61', 306)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs64', 307)" onmouseover="showTip(event, 'fs64', 307)" class="i">string</span></pre>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'fs112', 287)" onmouseover="showTip(event, 'fs112', 287)" class="i">personPickler</span> <span class="o">=</span>
+    <span onmouseout="hideTip(event, 'fs61', 288)" onmouseover="showTip(event, 'fs61', 288)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs113', 289)" onmouseover="showTip(event, 'fs113', 289)" class="i">product</span> <span onmouseout="hideTip(event, 'fs108', 290)" onmouseover="showTip(event, 'fs108', 290)" class="i">makePerson</span>
+    <span class="o">^+</span> <span onmouseout="hideTip(event, 'fs61', 291)" onmouseover="showTip(event, 'fs61', 291)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs114', 292)" onmouseover="showTip(event, 'fs114', 292)" class="i">field</span> (<span class="k">fun</span> <span onmouseout="hideTip(event, 'fs115', 293)" onmouseover="showTip(event, 'fs115', 293)" class="i">p</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs115', 294)" onmouseover="showTip(event, 'fs115', 294)" class="i">p</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs107', 295)" onmouseover="showTip(event, 'fs107', 295)" class="i">Name</span>) <span onmouseout="hideTip(event, 'fs61', 296)" onmouseover="showTip(event, 'fs61', 296)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs64', 297)" onmouseover="showTip(event, 'fs64', 297)" class="i">string</span>
+    <span class="o">^+</span> <span onmouseout="hideTip(event, 'fs61', 298)" onmouseover="showTip(event, 'fs61', 298)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs114', 299)" onmouseover="showTip(event, 'fs114', 299)" class="i">field</span> (<span class="k">fun</span> <span onmouseout="hideTip(event, 'fs115', 300)" onmouseover="showTip(event, 'fs115', 300)" class="i">p</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs115', 301)" onmouseover="showTip(event, 'fs115', 301)" class="i">p</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs106', 302)" onmouseover="showTip(event, 'fs106', 302)" class="i">Age</span>) <span onmouseout="hideTip(event, 'fs61', 303)" onmouseover="showTip(event, 'fs61', 303)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs62', 304)" onmouseover="showTip(event, 'fs62', 304)" class="i">int</span>
+    <span class="o">^.</span> <span onmouseout="hideTip(event, 'fs61', 305)" onmouseover="showTip(event, 'fs61', 305)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs114', 306)" onmouseover="showTip(event, 'fs114', 306)" class="i">field</span> (<span class="k">fun</span> <span onmouseout="hideTip(event, 'fs115', 307)" onmouseover="showTip(event, 'fs115', 307)" class="i">p</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs115', 308)" onmouseover="showTip(event, 'fs115', 308)" class="i">p</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs105', 309)" onmouseover="showTip(event, 'fs105', 309)" class="i">Address</span>) <span onmouseout="hideTip(event, 'fs61', 310)" onmouseover="showTip(event, 'fs61', 310)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs64', 311)" onmouseover="showTip(event, 'fs64', 311)" class="i">string</span></pre>
 </td>
 </tr>
 </table>
@@ -414,25 +416,25 @@ see this <a href="https://gist.github.com/t0yv0/6834822">gist</a> for some Coq c
 </pre>
 </td>
 <td class="snippet"><pre class="fssnip">
-<span class="k">type</span> <span onmouseout="hideTip(event, 'fs114', 308)" onmouseover="showTip(event, 'fs114', 308)" class="i">U</span> <span class="o">=</span>
-| <span onmouseout="hideTip(event, 'fs115', 309)" onmouseover="showTip(event, 'fs115', 309)" class="i">Case1</span>
-| <span onmouseout="hideTip(event, 'fs116', 310)" onmouseover="showTip(event, 'fs116', 310)" class="i">Case2</span> <span class="k">of</span> <span onmouseout="hideTip(event, 'fs60', 311)" onmouseover="showTip(event, 'fs60', 311)" class="i">int</span>
-| <span onmouseout="hideTip(event, 'fs117', 312)" onmouseover="showTip(event, 'fs117', 312)" class="i">Case3</span> <span class="k">of</span> <span onmouseout="hideTip(event, 'fs63', 313)" onmouseover="showTip(event, 'fs63', 313)" class="i">string</span> <span class="o">*</span> <span onmouseout="hideTip(event, 'fs60', 314)" onmouseover="showTip(event, 'fs60', 314)" class="i">int</span>
+<span class="k">type</span> <span onmouseout="hideTip(event, 'fs116', 312)" onmouseover="showTip(event, 'fs116', 312)" class="i">U</span> <span class="o">=</span>
+| <span onmouseout="hideTip(event, 'fs117', 313)" onmouseover="showTip(event, 'fs117', 313)" class="i">Case1</span>
+| <span onmouseout="hideTip(event, 'fs118', 314)" onmouseover="showTip(event, 'fs118', 314)" class="i">Case2</span> <span class="k">of</span> <span onmouseout="hideTip(event, 'fs60', 315)" onmouseover="showTip(event, 'fs60', 315)" class="i">int</span>
+| <span onmouseout="hideTip(event, 'fs119', 316)" onmouseover="showTip(event, 'fs119', 316)" class="i">Case3</span> <span class="k">of</span> <span onmouseout="hideTip(event, 'fs63', 317)" onmouseover="showTip(event, 'fs63', 317)" class="i">string</span> <span class="o">*</span> <span onmouseout="hideTip(event, 'fs60', 318)" onmouseover="showTip(event, 'fs60', 318)" class="i">int</span>
 
-<span class="k">let</span> <span onmouseout="hideTip(event, 'fs118', 315)" onmouseover="showTip(event, 'fs118', 315)" class="i">uPickler</span> <span class="o">=</span>
-    <span onmouseout="hideTip(event, 'fs61', 316)" onmouseover="showTip(event, 'fs61', 316)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs119', 317)" onmouseover="showTip(event, 'fs119', 317)" class="i">sum</span> (<span class="k">fun</span> <span onmouseout="hideTip(event, 'fs120', 318)" onmouseover="showTip(event, 'fs120', 318)" class="i">x</span> <span onmouseout="hideTip(event, 'fs121', 319)" onmouseover="showTip(event, 'fs121', 319)" class="i">k1</span> <span onmouseout="hideTip(event, 'fs122', 320)" onmouseover="showTip(event, 'fs122', 320)" class="i">k2</span> <span onmouseout="hideTip(event, 'fs123', 321)" onmouseover="showTip(event, 'fs123', 321)" class="i">k3</span> <span class="k">-&gt;</span>
-        <span class="k">match</span> <span onmouseout="hideTip(event, 'fs120', 322)" onmouseover="showTip(event, 'fs120', 322)" class="i">x</span> <span class="k">with</span>
-        | <span onmouseout="hideTip(event, 'fs115', 323)" onmouseover="showTip(event, 'fs115', 323)" class="i">Case1</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs121', 324)" onmouseover="showTip(event, 'fs121', 324)" class="i">k1</span> ()
-        | <span onmouseout="hideTip(event, 'fs116', 325)" onmouseover="showTip(event, 'fs116', 325)" class="i">Case2</span> <span onmouseout="hideTip(event, 'fs39', 326)" onmouseover="showTip(event, 'fs39', 326)" class="i">x</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs122', 327)" onmouseover="showTip(event, 'fs122', 327)" class="i">k2</span> <span onmouseout="hideTip(event, 'fs39', 328)" onmouseover="showTip(event, 'fs39', 328)" class="i">x</span>
-        | <span onmouseout="hideTip(event, 'fs117', 329)" onmouseover="showTip(event, 'fs117', 329)" class="i">Case3</span> (<span onmouseout="hideTip(event, 'fs124', 330)" onmouseover="showTip(event, 'fs124', 330)" class="i">x</span>, <span onmouseout="hideTip(event, 'fs125', 331)" onmouseover="showTip(event, 'fs125', 331)" class="i">y</span>) <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs123', 332)" onmouseover="showTip(event, 'fs123', 332)" class="i">k3</span> (<span onmouseout="hideTip(event, 'fs124', 333)" onmouseover="showTip(event, 'fs124', 333)" class="i">x</span>, <span onmouseout="hideTip(event, 'fs125', 334)" onmouseover="showTip(event, 'fs125', 334)" class="i">y</span>))
-    <span class="o">^+</span> <span onmouseout="hideTip(event, 'fs61', 335)" onmouseover="showTip(event, 'fs61', 335)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs126', 336)" onmouseover="showTip(event, 'fs126', 336)" class="i">variant</span> <span onmouseout="hideTip(event, 'fs115', 337)" onmouseover="showTip(event, 'fs115', 337)" class="i">Case1</span>
-    <span class="o">^+</span> <span onmouseout="hideTip(event, 'fs61', 338)" onmouseover="showTip(event, 'fs61', 338)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs127', 339)" onmouseover="showTip(event, 'fs127', 339)" class="i">case</span> <span onmouseout="hideTip(event, 'fs116', 340)" onmouseover="showTip(event, 'fs116', 340)" class="i">Case2</span> <span onmouseout="hideTip(event, 'fs61', 341)" onmouseover="showTip(event, 'fs61', 341)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs62', 342)" onmouseover="showTip(event, 'fs62', 342)" class="i">int</span>
-    <span class="o">^.</span> <span onmouseout="hideTip(event, 'fs61', 343)" onmouseover="showTip(event, 'fs61', 343)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs127', 344)" onmouseover="showTip(event, 'fs127', 344)" class="i">case</span> <span onmouseout="hideTip(event, 'fs117', 345)" onmouseover="showTip(event, 'fs117', 345)" class="i">Case3</span> (<span onmouseout="hideTip(event, 'fs61', 346)" onmouseover="showTip(event, 'fs61', 346)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs68', 347)" onmouseover="showTip(event, 'fs68', 347)" class="i">pair</span> <span onmouseout="hideTip(event, 'fs61', 348)" onmouseover="showTip(event, 'fs61', 348)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs64', 349)" onmouseover="showTip(event, 'fs64', 349)" class="i">string</span> <span onmouseout="hideTip(event, 'fs61', 350)" onmouseover="showTip(event, 'fs61', 350)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs62', 351)" onmouseover="showTip(event, 'fs62', 351)" class="i">int</span>)</pre>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'fs120', 319)" onmouseover="showTip(event, 'fs120', 319)" class="i">uPickler</span> <span class="o">=</span>
+    <span onmouseout="hideTip(event, 'fs61', 320)" onmouseover="showTip(event, 'fs61', 320)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs121', 321)" onmouseover="showTip(event, 'fs121', 321)" class="i">sum</span> (<span class="k">fun</span> <span onmouseout="hideTip(event, 'fs122', 322)" onmouseover="showTip(event, 'fs122', 322)" class="i">x</span> <span onmouseout="hideTip(event, 'fs123', 323)" onmouseover="showTip(event, 'fs123', 323)" class="i">k1</span> <span onmouseout="hideTip(event, 'fs124', 324)" onmouseover="showTip(event, 'fs124', 324)" class="i">k2</span> <span onmouseout="hideTip(event, 'fs125', 325)" onmouseover="showTip(event, 'fs125', 325)" class="i">k3</span> <span class="k">-&gt;</span>
+        <span class="k">match</span> <span onmouseout="hideTip(event, 'fs122', 326)" onmouseover="showTip(event, 'fs122', 326)" class="i">x</span> <span class="k">with</span>
+        | <span onmouseout="hideTip(event, 'fs117', 327)" onmouseover="showTip(event, 'fs117', 327)" class="i">Case1</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs123', 328)" onmouseover="showTip(event, 'fs123', 328)" class="i">k1</span> ()
+        | <span onmouseout="hideTip(event, 'fs118', 329)" onmouseover="showTip(event, 'fs118', 329)" class="i">Case2</span> <span onmouseout="hideTip(event, 'fs39', 330)" onmouseover="showTip(event, 'fs39', 330)" class="i">x</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs124', 331)" onmouseover="showTip(event, 'fs124', 331)" class="i">k2</span> <span onmouseout="hideTip(event, 'fs39', 332)" onmouseover="showTip(event, 'fs39', 332)" class="i">x</span>
+        | <span onmouseout="hideTip(event, 'fs119', 333)" onmouseover="showTip(event, 'fs119', 333)" class="i">Case3</span> (<span onmouseout="hideTip(event, 'fs126', 334)" onmouseover="showTip(event, 'fs126', 334)" class="i">x</span>, <span onmouseout="hideTip(event, 'fs127', 335)" onmouseover="showTip(event, 'fs127', 335)" class="i">y</span>) <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs125', 336)" onmouseover="showTip(event, 'fs125', 336)" class="i">k3</span> (<span onmouseout="hideTip(event, 'fs126', 337)" onmouseover="showTip(event, 'fs126', 337)" class="i">x</span>, <span onmouseout="hideTip(event, 'fs127', 338)" onmouseover="showTip(event, 'fs127', 338)" class="i">y</span>))
+    <span class="o">^+</span> <span onmouseout="hideTip(event, 'fs61', 339)" onmouseover="showTip(event, 'fs61', 339)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs128', 340)" onmouseover="showTip(event, 'fs128', 340)" class="i">variant</span> <span onmouseout="hideTip(event, 'fs117', 341)" onmouseover="showTip(event, 'fs117', 341)" class="i">Case1</span>
+    <span class="o">^+</span> <span onmouseout="hideTip(event, 'fs61', 342)" onmouseover="showTip(event, 'fs61', 342)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs129', 343)" onmouseover="showTip(event, 'fs129', 343)" class="i">case</span> <span onmouseout="hideTip(event, 'fs118', 344)" onmouseover="showTip(event, 'fs118', 344)" class="i">Case2</span> <span onmouseout="hideTip(event, 'fs61', 345)" onmouseover="showTip(event, 'fs61', 345)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs62', 346)" onmouseover="showTip(event, 'fs62', 346)" class="i">int</span>
+    <span class="o">^.</span> <span onmouseout="hideTip(event, 'fs61', 347)" onmouseover="showTip(event, 'fs61', 347)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs129', 348)" onmouseover="showTip(event, 'fs129', 348)" class="i">case</span> <span onmouseout="hideTip(event, 'fs119', 349)" onmouseover="showTip(event, 'fs119', 349)" class="i">Case3</span> (<span onmouseout="hideTip(event, 'fs61', 350)" onmouseover="showTip(event, 'fs61', 350)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs68', 351)" onmouseover="showTip(event, 'fs68', 351)" class="i">pair</span> <span onmouseout="hideTip(event, 'fs61', 352)" onmouseover="showTip(event, 'fs61', 352)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs64', 353)" onmouseover="showTip(event, 'fs64', 353)" class="i">string</span> <span onmouseout="hideTip(event, 'fs61', 354)" onmouseover="showTip(event, 'fs61', 354)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs62', 355)" onmouseover="showTip(event, 'fs62', 355)" class="i">int</span>)</pre>
 </td>
 </tr>
 </table>
 
-<h3>Custom Pickler Definition</h3>
+<h2>Generating custom picklers in type definitions</h2>
 
 <p>FsPickler can be instructed to use custom pickler definitions for given types
 using the following design pattern:</p>
@@ -461,34 +463,34 @@ using the following design pattern:</p>
 </pre>
 </td>
 <td class="snippet"><pre class="fssnip">
-[&lt;<span onmouseout="hideTip(event, 'fs128', 352)" onmouseover="showTip(event, 'fs128', 352)" class="i">CustomPickler</span>&gt;]
-<span class="k">type</span> <span onmouseout="hideTip(event, 'fs129', 353)" onmouseover="showTip(event, 'fs129', 353)" class="i">CustomClass</span><span class="o">&lt;</span><span class="o">&#39;</span><span class="i">T</span>, <span class="o">&#39;</span><span class="i">S</span><span class="o">&gt;</span> (<span onmouseout="hideTip(event, 'fs130', 354)" onmouseover="showTip(event, 'fs130', 354)" class="i">x</span> <span class="o">:</span> <span class="o">&#39;</span><span class="i">T</span>, <span onmouseout="hideTip(event, 'fs131', 355)" onmouseover="showTip(event, 'fs131', 355)" class="i">y</span> <span class="o">:</span> <span class="o">&#39;</span><span class="i">S</span>) <span class="o">=</span>
+[&lt;<span onmouseout="hideTip(event, 'fs130', 356)" onmouseover="showTip(event, 'fs130', 356)" class="i">CustomPickler</span>&gt;]
+<span class="k">type</span> <span onmouseout="hideTip(event, 'fs131', 357)" onmouseover="showTip(event, 'fs131', 357)" class="i">CustomClass</span><span class="o">&lt;</span><span class="o">&#39;</span><span class="i">T</span>, <span class="o">&#39;</span><span class="i">S</span><span class="o">&gt;</span> (<span onmouseout="hideTip(event, 'fs132', 358)" onmouseover="showTip(event, 'fs132', 358)" class="i">x</span> <span class="o">:</span> <span class="o">&#39;</span><span class="i">T</span>, <span onmouseout="hideTip(event, 'fs133', 359)" onmouseover="showTip(event, 'fs133', 359)" class="i">y</span> <span class="o">:</span> <span class="o">&#39;</span><span class="i">S</span>) <span class="o">=</span>
 
-    <span class="k">member</span> <span class="i">__</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs132', 356)" onmouseover="showTip(event, 'fs132', 356)" class="i">X</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs130', 357)" onmouseover="showTip(event, 'fs130', 357)" class="i">x</span>
-    <span class="k">member</span> <span onmouseout="hideTip(event, 'fs133', 358)" onmouseover="showTip(event, 'fs133', 358)" class="i">__</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs134', 359)" onmouseover="showTip(event, 'fs134', 359)" class="i">Y</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs131', 360)" onmouseover="showTip(event, 'fs131', 360)" class="i">y</span>
+    <span class="k">member</span> <span class="i">__</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs134', 360)" onmouseover="showTip(event, 'fs134', 360)" class="i">X</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs132', 361)" onmouseover="showTip(event, 'fs132', 361)" class="i">x</span>
+    <span class="k">member</span> <span onmouseout="hideTip(event, 'fs135', 362)" onmouseover="showTip(event, 'fs135', 362)" class="i">__</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs136', 363)" onmouseover="showTip(event, 'fs136', 363)" class="i">Y</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs133', 364)" onmouseover="showTip(event, 'fs133', 364)" class="i">y</span>
 
-    <span class="k">static</span> <span class="k">member</span> <span onmouseout="hideTip(event, 'fs135', 361)" onmouseover="showTip(event, 'fs135', 361)" class="i">CreatePickler</span> (<span onmouseout="hideTip(event, 'fs136', 362)" onmouseover="showTip(event, 'fs136', 362)" class="i">resolver</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs137', 363)" onmouseover="showTip(event, 'fs137', 363)" class="i">IPicklerResolver</span>) <span class="o">=</span>
-        <span class="k">let</span> <span onmouseout="hideTip(event, 'fs138', 364)" onmouseover="showTip(event, 'fs138', 364)" class="i">xp</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs136', 365)" onmouseover="showTip(event, 'fs136', 365)" class="i">resolver</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs139', 366)" onmouseover="showTip(event, 'fs139', 366)" class="i">Resolve</span><span class="o">&lt;</span><span class="o">&#39;</span><span class="i">T</span><span class="o">&gt;</span> ()
-        <span class="k">let</span> <span onmouseout="hideTip(event, 'fs140', 367)" onmouseover="showTip(event, 'fs140', 367)" class="i">yp</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs136', 368)" onmouseover="showTip(event, 'fs136', 368)" class="i">resolver</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs139', 369)" onmouseover="showTip(event, 'fs139', 369)" class="i">Resolve</span><span class="o">&lt;</span><span class="o">&#39;</span><span class="i">S</span><span class="o">&gt;</span> ()
+    <span class="k">static</span> <span class="k">member</span> <span onmouseout="hideTip(event, 'fs137', 365)" onmouseover="showTip(event, 'fs137', 365)" class="i">CreatePickler</span> (<span onmouseout="hideTip(event, 'fs138', 366)" onmouseover="showTip(event, 'fs138', 366)" class="i">resolver</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs139', 367)" onmouseover="showTip(event, 'fs139', 367)" class="i">IPicklerResolver</span>) <span class="o">=</span>
+        <span class="k">let</span> <span onmouseout="hideTip(event, 'fs140', 368)" onmouseover="showTip(event, 'fs140', 368)" class="i">xp</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs138', 369)" onmouseover="showTip(event, 'fs138', 369)" class="i">resolver</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs141', 370)" onmouseover="showTip(event, 'fs141', 370)" class="i">Resolve</span><span class="o">&lt;</span><span class="o">&#39;</span><span class="i">T</span><span class="o">&gt;</span> ()
+        <span class="k">let</span> <span onmouseout="hideTip(event, 'fs142', 371)" onmouseover="showTip(event, 'fs142', 371)" class="i">yp</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs138', 372)" onmouseover="showTip(event, 'fs138', 372)" class="i">resolver</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs141', 373)" onmouseover="showTip(event, 'fs141', 373)" class="i">Resolve</span><span class="o">&lt;</span><span class="o">&#39;</span><span class="i">S</span><span class="o">&gt;</span> ()
 
-        <span class="k">let</span> <span onmouseout="hideTip(event, 'fs141', 370)" onmouseover="showTip(event, 'fs141', 370)" class="i">writer</span> (<span onmouseout="hideTip(event, 'fs142', 371)" onmouseover="showTip(event, 'fs142', 371)" class="i">w</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs55', 372)" onmouseover="showTip(event, 'fs55', 372)" class="i">WriteState</span>) (<span onmouseout="hideTip(event, 'fs143', 373)" onmouseover="showTip(event, 'fs143', 373)" class="i">tag</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs63', 374)" onmouseover="showTip(event, 'fs63', 374)" class="i">string</span>) (<span onmouseout="hideTip(event, 'fs144', 375)" onmouseover="showTip(event, 'fs144', 375)" class="i">c</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs129', 376)" onmouseover="showTip(event, 'fs129', 376)" class="i">CustomClass</span><span class="o">&lt;</span><span class="o">&#39;</span><span class="i">T</span>,<span class="o">&#39;</span><span class="i">S</span><span class="o">&gt;</span>) <span class="o">=</span>
-            <span onmouseout="hideTip(event, 'fs138', 377)" onmouseover="showTip(event, 'fs138', 377)" class="i">xp</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs145', 378)" onmouseover="showTip(event, 'fs145', 378)" class="i">Write</span> <span onmouseout="hideTip(event, 'fs142', 379)" onmouseover="showTip(event, 'fs142', 379)" class="i">w</span> <span onmouseout="hideTip(event, 'fs143', 380)" onmouseover="showTip(event, 'fs143', 380)" class="i">tag</span> <span onmouseout="hideTip(event, 'fs144', 381)" onmouseover="showTip(event, 'fs144', 381)" class="i">c</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs146', 382)" onmouseover="showTip(event, 'fs146', 382)" class="i">X</span>
-            <span onmouseout="hideTip(event, 'fs140', 383)" onmouseover="showTip(event, 'fs140', 383)" class="i">yp</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs145', 384)" onmouseover="showTip(event, 'fs145', 384)" class="i">Write</span> <span onmouseout="hideTip(event, 'fs142', 385)" onmouseover="showTip(event, 'fs142', 385)" class="i">w</span> <span onmouseout="hideTip(event, 'fs143', 386)" onmouseover="showTip(event, 'fs143', 386)" class="i">tag</span> <span onmouseout="hideTip(event, 'fs144', 387)" onmouseover="showTip(event, 'fs144', 387)" class="i">c</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs147', 388)" onmouseover="showTip(event, 'fs147', 388)" class="i">Y</span>
+        <span class="k">let</span> <span onmouseout="hideTip(event, 'fs143', 374)" onmouseover="showTip(event, 'fs143', 374)" class="i">writer</span> (<span onmouseout="hideTip(event, 'fs144', 375)" onmouseover="showTip(event, 'fs144', 375)" class="i">w</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs55', 376)" onmouseover="showTip(event, 'fs55', 376)" class="i">WriteState</span>) (<span onmouseout="hideTip(event, 'fs145', 377)" onmouseover="showTip(event, 'fs145', 377)" class="i">tag</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs63', 378)" onmouseover="showTip(event, 'fs63', 378)" class="i">string</span>) (<span onmouseout="hideTip(event, 'fs146', 379)" onmouseover="showTip(event, 'fs146', 379)" class="i">c</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs131', 380)" onmouseover="showTip(event, 'fs131', 380)" class="i">CustomClass</span><span class="o">&lt;</span><span class="o">&#39;</span><span class="i">T</span>,<span class="o">&#39;</span><span class="i">S</span><span class="o">&gt;</span>) <span class="o">=</span>
+            <span onmouseout="hideTip(event, 'fs140', 381)" onmouseover="showTip(event, 'fs140', 381)" class="i">xp</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs147', 382)" onmouseover="showTip(event, 'fs147', 382)" class="i">Write</span> <span onmouseout="hideTip(event, 'fs144', 383)" onmouseover="showTip(event, 'fs144', 383)" class="i">w</span> <span onmouseout="hideTip(event, 'fs145', 384)" onmouseover="showTip(event, 'fs145', 384)" class="i">tag</span> <span onmouseout="hideTip(event, 'fs146', 385)" onmouseover="showTip(event, 'fs146', 385)" class="i">c</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs148', 386)" onmouseover="showTip(event, 'fs148', 386)" class="i">X</span>
+            <span onmouseout="hideTip(event, 'fs142', 387)" onmouseover="showTip(event, 'fs142', 387)" class="i">yp</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs147', 388)" onmouseover="showTip(event, 'fs147', 388)" class="i">Write</span> <span onmouseout="hideTip(event, 'fs144', 389)" onmouseover="showTip(event, 'fs144', 389)" class="i">w</span> <span onmouseout="hideTip(event, 'fs145', 390)" onmouseover="showTip(event, 'fs145', 390)" class="i">tag</span> <span onmouseout="hideTip(event, 'fs146', 391)" onmouseover="showTip(event, 'fs146', 391)" class="i">c</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs149', 392)" onmouseover="showTip(event, 'fs149', 392)" class="i">Y</span>
 
-        <span class="k">let</span> <span onmouseout="hideTip(event, 'fs148', 389)" onmouseover="showTip(event, 'fs148', 389)" class="i">reader</span> (<span onmouseout="hideTip(event, 'fs149', 390)" onmouseover="showTip(event, 'fs149', 390)" class="i">r</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs58', 391)" onmouseover="showTip(event, 'fs58', 391)" class="i">ReadState</span>) (<span onmouseout="hideTip(event, 'fs143', 392)" onmouseover="showTip(event, 'fs143', 392)" class="i">tag</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs63', 393)" onmouseover="showTip(event, 'fs63', 393)" class="i">string</span>) <span class="o">=</span>
-            <span class="k">let</span> <span onmouseout="hideTip(event, 'fs130', 394)" onmouseover="showTip(event, 'fs130', 394)" class="i">x</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs138', 395)" onmouseover="showTip(event, 'fs138', 395)" class="i">xp</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs150', 396)" onmouseover="showTip(event, 'fs150', 396)" class="i">Read</span> <span onmouseout="hideTip(event, 'fs149', 397)" onmouseover="showTip(event, 'fs149', 397)" class="i">r</span> <span onmouseout="hideTip(event, 'fs143', 398)" onmouseover="showTip(event, 'fs143', 398)" class="i">tag</span>
-            <span class="k">let</span> <span onmouseout="hideTip(event, 'fs131', 399)" onmouseover="showTip(event, 'fs131', 399)" class="i">y</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs140', 400)" onmouseover="showTip(event, 'fs140', 400)" class="i">yp</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs150', 401)" onmouseover="showTip(event, 'fs150', 401)" class="i">Read</span> <span onmouseout="hideTip(event, 'fs149', 402)" onmouseover="showTip(event, 'fs149', 402)" class="i">r</span> <span onmouseout="hideTip(event, 'fs143', 403)" onmouseover="showTip(event, 'fs143', 403)" class="i">tag</span>
-            <span class="k">new</span> <span onmouseout="hideTip(event, 'fs129', 404)" onmouseover="showTip(event, 'fs129', 404)" class="i">CustomClass</span><span class="o">&lt;</span>_,_<span class="o">&gt;</span>(<span onmouseout="hideTip(event, 'fs130', 405)" onmouseover="showTip(event, 'fs130', 405)" class="i">x</span>,<span onmouseout="hideTip(event, 'fs131', 406)" onmouseover="showTip(event, 'fs131', 406)" class="i">y</span>)
+        <span class="k">let</span> <span onmouseout="hideTip(event, 'fs150', 393)" onmouseover="showTip(event, 'fs150', 393)" class="i">reader</span> (<span onmouseout="hideTip(event, 'fs151', 394)" onmouseover="showTip(event, 'fs151', 394)" class="i">r</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs58', 395)" onmouseover="showTip(event, 'fs58', 395)" class="i">ReadState</span>) (<span onmouseout="hideTip(event, 'fs145', 396)" onmouseover="showTip(event, 'fs145', 396)" class="i">tag</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs63', 397)" onmouseover="showTip(event, 'fs63', 397)" class="i">string</span>) <span class="o">=</span>
+            <span class="k">let</span> <span onmouseout="hideTip(event, 'fs132', 398)" onmouseover="showTip(event, 'fs132', 398)" class="i">x</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs140', 399)" onmouseover="showTip(event, 'fs140', 399)" class="i">xp</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs152', 400)" onmouseover="showTip(event, 'fs152', 400)" class="i">Read</span> <span onmouseout="hideTip(event, 'fs151', 401)" onmouseover="showTip(event, 'fs151', 401)" class="i">r</span> <span onmouseout="hideTip(event, 'fs145', 402)" onmouseover="showTip(event, 'fs145', 402)" class="i">tag</span>
+            <span class="k">let</span> <span onmouseout="hideTip(event, 'fs133', 403)" onmouseover="showTip(event, 'fs133', 403)" class="i">y</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs142', 404)" onmouseover="showTip(event, 'fs142', 404)" class="i">yp</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs152', 405)" onmouseover="showTip(event, 'fs152', 405)" class="i">Read</span> <span onmouseout="hideTip(event, 'fs151', 406)" onmouseover="showTip(event, 'fs151', 406)" class="i">r</span> <span onmouseout="hideTip(event, 'fs145', 407)" onmouseover="showTip(event, 'fs145', 407)" class="i">tag</span>
+            <span class="k">new</span> <span onmouseout="hideTip(event, 'fs131', 408)" onmouseover="showTip(event, 'fs131', 408)" class="i">CustomClass</span><span class="o">&lt;</span>_,_<span class="o">&gt;</span>(<span onmouseout="hideTip(event, 'fs132', 409)" onmouseover="showTip(event, 'fs132', 409)" class="i">x</span>,<span onmouseout="hideTip(event, 'fs133', 410)" onmouseover="showTip(event, 'fs133', 410)" class="i">y</span>)
 
-        <span onmouseout="hideTip(event, 'fs61', 407)" onmouseover="showTip(event, 'fs61', 407)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs151', 408)" onmouseover="showTip(event, 'fs151', 408)" class="i">FromPrimitives</span>(<span onmouseout="hideTip(event, 'fs148', 409)" onmouseover="showTip(event, 'fs148', 409)" class="i">reader</span>, <span onmouseout="hideTip(event, 'fs141', 410)" onmouseover="showTip(event, 'fs141', 410)" class="i">writer</span>)</pre>
+        <span onmouseout="hideTip(event, 'fs61', 411)" onmouseover="showTip(event, 'fs61', 411)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs153', 412)" onmouseover="showTip(event, 'fs153', 412)" class="i">FromPrimitives</span>(<span onmouseout="hideTip(event, 'fs150', 413)" onmouseover="showTip(event, 'fs150', 413)" class="i">reader</span>, <span onmouseout="hideTip(event, 'fs143', 414)" onmouseover="showTip(event, 'fs143', 414)" class="i">writer</span>)</pre>
 </td>
 </tr>
 </table>
 
-<p>This tells the pickler generator to yield a pickler for the given type
-using that particular factory method. It should be noted that the <code>read</code>/<code>write</code>
-operations are not commutative, hence care must be taken so that ordering is matched. 
-The <code>IPicklerResolver</code> argument provides a handle to the pickler generator and can be used for recursive types:</p>
+<p>This tells FsPickler to generate a pickler for the given type using
+that particular factory method. It should be noted that the <code>read</code>/<code>write</code>
+operations are not commutative, hence care should be taken so that ordering is matched. 
+The <code>IPicklerResolver</code> argument provides a handle to the pickler generator and can be used recursively:</p>
 
 <table class="pre"><tr><td class="lines"><pre class="fssnip">
 <span class="l"> 1: </span>
@@ -509,21 +511,21 @@ The <code>IPicklerResolver</code> argument provides a handle to the pickler gene
 </pre>
 </td>
 <td class="snippet"><pre class="fssnip">
-[&lt;<span onmouseout="hideTip(event, 'fs128', 411)" onmouseover="showTip(event, 'fs128', 411)" class="i">CustomPickler</span>&gt;]
-<span class="k">type</span> <span onmouseout="hideTip(event, 'fs152', 412)" onmouseover="showTip(event, 'fs152', 412)" class="i">RecursiveClass</span>(<span class="o">?</span><span onmouseout="hideTip(event, 'fs153', 413)" onmouseover="showTip(event, 'fs153', 413)" class="i">nested</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs152', 414)" onmouseover="showTip(event, 'fs152', 414)" class="i">RecursiveClass</span>) <span class="o">=</span>
+[&lt;<span onmouseout="hideTip(event, 'fs130', 415)" onmouseover="showTip(event, 'fs130', 415)" class="i">CustomPickler</span>&gt;]
+<span class="k">type</span> <span onmouseout="hideTip(event, 'fs154', 416)" onmouseover="showTip(event, 'fs154', 416)" class="i">RecursiveClass</span>(<span class="o">?</span><span onmouseout="hideTip(event, 'fs155', 417)" onmouseover="showTip(event, 'fs155', 417)" class="i">nested</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs154', 418)" onmouseover="showTip(event, 'fs154', 418)" class="i">RecursiveClass</span>) <span class="o">=</span>
 
-    <span class="k">member</span> <span class="i">__</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs154', 415)" onmouseover="showTip(event, 'fs154', 415)" class="i">Value</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs153', 416)" onmouseover="showTip(event, 'fs153', 416)" class="i">nested</span>
+    <span class="k">member</span> <span class="i">__</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs156', 419)" onmouseover="showTip(event, 'fs156', 419)" class="i">Value</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs155', 420)" onmouseover="showTip(event, 'fs155', 420)" class="i">nested</span>
 
-    <span class="k">static</span> <span class="k">member</span> <span onmouseout="hideTip(event, 'fs155', 417)" onmouseover="showTip(event, 'fs155', 417)" class="i">CreatePickler</span> (<span onmouseout="hideTip(event, 'fs136', 418)" onmouseover="showTip(event, 'fs136', 418)" class="i">resolver</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs137', 419)" onmouseover="showTip(event, 'fs137', 419)" class="i">IPicklerResolver</span>) <span class="o">=</span>
-        <span class="k">let</span> <span onmouseout="hideTip(event, 'fs156', 420)" onmouseover="showTip(event, 'fs156', 420)" class="i">self</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs136', 421)" onmouseover="showTip(event, 'fs136', 421)" class="i">resolver</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs139', 422)" onmouseover="showTip(event, 'fs139', 422)" class="i">Resolve</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs152', 423)" onmouseover="showTip(event, 'fs152', 423)" class="i">RecursiveClass</span><span class="o">&gt;</span> ()
-        <span onmouseout="hideTip(event, 'fs156', 424)" onmouseover="showTip(event, 'fs156', 424)" class="i">self</span>
-        <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs61', 425)" onmouseover="showTip(event, 'fs61', 425)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs70', 426)" onmouseover="showTip(event, 'fs70', 426)" class="i">option</span> 
-        <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs61', 427)" onmouseover="showTip(event, 'fs61', 427)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs86', 428)" onmouseover="showTip(event, 'fs86', 428)" class="i">wrap</span> (<span class="k">fun</span> <span onmouseout="hideTip(event, 'fs157', 429)" onmouseover="showTip(event, 'fs157', 429)" class="i">x</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs152', 430)" onmouseover="showTip(event, 'fs152', 430)" class="i">RecursiveClass</span>(<span class="o">?</span><span class="i">nested</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs157', 431)" onmouseover="showTip(event, 'fs157', 431)" class="i">x</span>)) (<span class="k">fun</span> <span onmouseout="hideTip(event, 'fs158', 432)" onmouseover="showTip(event, 'fs158', 432)" class="i">rc</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs158', 433)" onmouseover="showTip(event, 'fs158', 433)" class="i">rc</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs159', 434)" onmouseover="showTip(event, 'fs159', 434)" class="i">Value</span>)
+    <span class="k">static</span> <span class="k">member</span> <span onmouseout="hideTip(event, 'fs157', 421)" onmouseover="showTip(event, 'fs157', 421)" class="i">CreatePickler</span> (<span onmouseout="hideTip(event, 'fs138', 422)" onmouseover="showTip(event, 'fs138', 422)" class="i">resolver</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs139', 423)" onmouseover="showTip(event, 'fs139', 423)" class="i">IPicklerResolver</span>) <span class="o">=</span>
+        <span class="k">let</span> <span onmouseout="hideTip(event, 'fs158', 424)" onmouseover="showTip(event, 'fs158', 424)" class="i">self</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs138', 425)" onmouseover="showTip(event, 'fs138', 425)" class="i">resolver</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs141', 426)" onmouseover="showTip(event, 'fs141', 426)" class="i">Resolve</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs154', 427)" onmouseover="showTip(event, 'fs154', 427)" class="i">RecursiveClass</span><span class="o">&gt;</span> ()
+        <span onmouseout="hideTip(event, 'fs158', 428)" onmouseover="showTip(event, 'fs158', 428)" class="i">self</span>
+        <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs61', 429)" onmouseover="showTip(event, 'fs61', 429)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs70', 430)" onmouseover="showTip(event, 'fs70', 430)" class="i">option</span> 
+        <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs61', 431)" onmouseover="showTip(event, 'fs61', 431)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs90', 432)" onmouseover="showTip(event, 'fs90', 432)" class="i">wrap</span> (<span class="k">fun</span> <span onmouseout="hideTip(event, 'fs159', 433)" onmouseover="showTip(event, 'fs159', 433)" class="i">x</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs154', 434)" onmouseover="showTip(event, 'fs154', 434)" class="i">RecursiveClass</span>(<span class="o">?</span><span class="i">nested</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs159', 435)" onmouseover="showTip(event, 'fs159', 435)" class="i">x</span>)) (<span class="k">fun</span> <span onmouseout="hideTip(event, 'fs160', 436)" onmouseover="showTip(event, 'fs160', 436)" class="i">rc</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs160', 437)" onmouseover="showTip(event, 'fs160', 437)" class="i">rc</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs161', 438)" onmouseover="showTip(event, 'fs161', 438)" class="i">Value</span>)
 
+<span class="c">// a pickler will be generated based on the above definition</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'fs162', 439)" onmouseover="showTip(event, 'fs162', 439)" class="i">p</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs14', 440)" onmouseover="showTip(event, 'fs14', 440)" class="i">FsPickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs163', 441)" onmouseover="showTip(event, 'fs163', 441)" class="i">GeneratePickler</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs154', 442)" onmouseover="showTip(event, 'fs154', 442)" class="i">RecursiveClass</span><span class="o">&gt;</span> ()
 
-<span class="k">let</span> <span onmouseout="hideTip(event, 'fs160', 435)" onmouseover="showTip(event, 'fs160', 435)" class="i">p</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs61', 436)" onmouseover="showTip(event, 'fs61', 436)" class="i">Pickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs74', 437)" onmouseover="showTip(event, 'fs74', 437)" class="i">auto</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs152', 438)" onmouseover="showTip(event, 'fs152', 438)" class="i">RecursiveClass</span><span class="o">&gt;</span>
-
-<span onmouseout="hideTip(event, 'fs152', 439)" onmouseover="showTip(event, 'fs152', 439)" class="i">RecursiveClass</span>(<span onmouseout="hideTip(event, 'fs152', 440)" onmouseover="showTip(event, 'fs152', 440)" class="i">RecursiveClass</span>()) <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs76', 441)" onmouseover="showTip(event, 'fs76', 441)" class="i">Json</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs77', 442)" onmouseover="showTip(event, 'fs77', 442)" class="i">pickle</span> <span onmouseout="hideTip(event, 'fs160', 443)" onmouseover="showTip(event, 'fs160', 443)" class="i">p</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs76', 444)" onmouseover="showTip(event, 'fs76', 444)" class="i">Json</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs79', 445)" onmouseover="showTip(event, 'fs79', 445)" class="i">unpickle</span> <span onmouseout="hideTip(event, 'fs160', 446)" onmouseover="showTip(event, 'fs160', 446)" class="i">p</span></pre>
+<span onmouseout="hideTip(event, 'fs154', 443)" onmouseover="showTip(event, 'fs154', 443)" class="i">RecursiveClass</span>(<span onmouseout="hideTip(event, 'fs154', 444)" onmouseover="showTip(event, 'fs154', 444)" class="i">RecursiveClass</span>()) <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs81', 445)" onmouseover="showTip(event, 'fs81', 445)" class="i">Json</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs82', 446)" onmouseover="showTip(event, 'fs82', 446)" class="i">pickle</span> <span onmouseout="hideTip(event, 'fs162', 447)" onmouseover="showTip(event, 'fs162', 447)" class="i">p</span> <span class="o">|&gt;</span> <span onmouseout="hideTip(event, 'fs81', 448)" onmouseover="showTip(event, 'fs81', 448)" class="i">Json</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs83', 449)" onmouseover="showTip(event, 'fs83', 449)" class="i">unpickle</span> <span onmouseout="hideTip(event, 'fs162', 450)" onmouseover="showTip(event, 'fs162', 450)" class="i">p</span></pre>
 </td>
 </tr>
 </table>
@@ -548,7 +550,7 @@ The <code>IPicklerResolver</code> argument provides a handle to the pickler gene
 </pre>
 </td>
 <td class="snippet"><pre class="fssnip">
-<span class="k">let</span> <span onmouseout="hideTip(event, 'fs161', 447)" onmouseover="showTip(event, 'fs161', 447)" class="i">hash</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs14', 448)" onmouseover="showTip(event, 'fs14', 448)" class="i">FsPickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs162', 449)" onmouseover="showTip(event, 'fs162', 449)" class="i">ComputeHash</span> [<span class="n">1</span> <span class="o">..</span> <span class="n">100000</span>]
+<span class="k">let</span> <span onmouseout="hideTip(event, 'fs164', 451)" onmouseover="showTip(event, 'fs164', 451)" class="i">hash</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs14', 452)" onmouseover="showTip(event, 'fs14', 452)" class="i">FsPickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs165', 453)" onmouseover="showTip(event, 'fs165', 453)" class="i">ComputeHash</span> [<span class="n">1</span> <span class="o">..</span> <span class="n">100000</span>]
 
 <span class="c">//val it : HashResult =</span>
 <span class="c">//  {Algorithm = &quot;MurMur3&quot;;</span>
@@ -577,7 +579,7 @@ large objects or complex object graphs, but it is not recommended for small valu
 </pre>
 </td>
 <td class="snippet"><pre class="fssnip">
-<span onmouseout="hideTip(event, 'fs14', 450)" onmouseover="showTip(event, 'fs14', 450)" class="i">FsPickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs163', 451)" onmouseover="showTip(event, 'fs163', 451)" class="i">ComputeSize</span> [<span class="n">1</span> <span class="o">..</span> <span class="n">1000000</span>]
+<span onmouseout="hideTip(event, 'fs14', 454)" onmouseover="showTip(event, 'fs14', 454)" class="i">FsPickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs166', 455)" onmouseover="showTip(event, 'fs166', 455)" class="i">ComputeSize</span> [<span class="n">1</span> <span class="o">..</span> <span class="n">1000000</span>]
 
 <span class="c">//val it : int64 = 4000008L</span></pre>
 </td>
@@ -585,25 +587,6 @@ large objects or complex object graphs, but it is not recommended for small valu
 </table>
 
 <h3>Object Graph Visitors</h3>
-
-<p>FsPickler offers experimental support for so-called object graph visitors.
-An <code>IObjectVisitor</code> is a simple interface:</p>
-
-<table class="pre"><tr><td class="lines"><pre class="fssnip">
-<span class="l">1: </span>
-<span class="l">2: </span>
-<span class="l">3: </span>
-<span class="l">4: </span>
-</pre>
-</td>
-<td class="snippet"><pre class="fssnip">
-<span class="k">type</span> <span onmouseout="hideTip(event, 'fs164', 452)" onmouseover="showTip(event, 'fs164', 452)" class="i">IObjectVisitor</span> <span class="o">=</span>
-  <span class="k">interface</span>
-    <span class="k">abstract</span> <span class="k">member</span> <span onmouseout="hideTip(event, 'fs165', 453)" onmouseover="showTip(event, 'fs165', 453)" class="i">Visit</span> <span class="o">:</span> <span class="o">&#39;</span><span class="i">T</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs56', 454)" onmouseover="showTip(event, 'fs56', 454)" class="i">unit</span>
-  <span class="k">end</span></pre>
-</td>
-</tr>
-</table>
 
 <p>FsPickler is capable of efficiently traversing arbitrary object graphs (as long as they are serializable)
 by exploiting its pickler infrastructure. This can be done by calling the method:</p>
@@ -613,12 +596,30 @@ by exploiting its pickler infrastructure. This can be done by calling the method
 </pre>
 </td>
 <td class="snippet"><pre class="fssnip">
-<span onmouseout="hideTip(event, 'fs14', 461)" onmouseover="showTip(event, 'fs14', 461)" class="i">FsPickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs167', 462)" onmouseover="showTip(event, 'fs167', 462)" class="i">VisitObject</span></pre>
+<span onmouseout="hideTip(event, 'fs14', 456)" onmouseover="showTip(event, 'fs14', 456)" class="i">FsPickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs167', 457)" onmouseover="showTip(event, 'fs167', 457)" class="i">VisitObject</span></pre>
 </td>
 </tr>
 </table>
 
-<p>A couple of useful applications are provided by the core library:</p>
+<p>which takes as input a serializable object graph and a so-called object visitor:</p>
+
+<table class="pre"><tr><td class="lines"><pre class="fssnip">
+<span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+<span class="l">4: </span>
+</pre>
+</td>
+<td class="snippet"><pre class="fssnip">
+<span class="k">type</span> <span onmouseout="hideTip(event, 'fs168', 458)" onmouseover="showTip(event, 'fs168', 458)" class="i">IObjectVisitor</span> <span class="o">=</span>
+  <span class="k">interface</span>
+    <span class="k">abstract</span> <span class="k">member</span> <span onmouseout="hideTip(event, 'fs169', 459)" onmouseover="showTip(event, 'fs169', 459)" class="i">Visit</span> <span class="o">:</span> <span class="o">&#39;</span><span class="i">T</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs56', 460)" onmouseover="showTip(event, 'fs56', 460)" class="i">unit</span>
+  <span class="k">end</span></pre>
+</td>
+</tr>
+</table>
+
+<p>A few applications of this are provided by the core library:</p>
 
 <table class="pre"><tr><td class="lines"><pre class="fssnip">
 <span class="l">1: </span>
@@ -630,7 +631,7 @@ by exploiting its pickler infrastructure. This can be done by calling the method
 </pre>
 </td>
 <td class="snippet"><pre class="fssnip">
-<span class="k">let</span> <span onmouseout="hideTip(event, 'fs168', 463)" onmouseover="showTip(event, 'fs168', 463)" class="i">types</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs14', 464)" onmouseover="showTip(event, 'fs14', 464)" class="i">FsPickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs169', 465)" onmouseover="showTip(event, 'fs169', 465)" class="i">GatherTypesInObjectGraph</span> [<span onmouseout="hideTip(event, 'fs170', 466)" onmouseover="showTip(event, 'fs170', 466)" class="i">box</span> <span class="n">42</span> ; <span onmouseout="hideTip(event, 'fs170', 467)" onmouseover="showTip(event, 'fs170', 467)" class="i">box</span> (<span onmouseout="hideTip(event, 'fs33', 468)" onmouseover="showTip(event, 'fs33', 468)" class="i">Some</span> (<span class="n">42</span>, <span class="s">&quot;</span><span class="s">42</span><span class="s">&quot;</span>))]
+<span class="k">let</span> <span onmouseout="hideTip(event, 'fs171', 467)" onmouseover="showTip(event, 'fs171', 467)" class="i">types</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs14', 468)" onmouseover="showTip(event, 'fs14', 468)" class="i">FsPickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs172', 469)" onmouseover="showTip(event, 'fs172', 469)" class="i">GatherTypesInObjectGraph</span> [<span onmouseout="hideTip(event, 'fs173', 470)" onmouseover="showTip(event, 'fs173', 470)" class="i">box</span> <span class="n">42</span> ; <span onmouseout="hideTip(event, 'fs173', 471)" onmouseover="showTip(event, 'fs173', 471)" class="i">box</span> (<span onmouseout="hideTip(event, 'fs33', 472)" onmouseover="showTip(event, 'fs33', 472)" class="i">Some</span> (<span class="n">42</span>, <span class="s">&quot;</span><span class="s">42</span><span class="s">&quot;</span>))]
 
 <span class="c">//val types : System.Type [] =</span>
 <span class="c">//  [|Microsoft.FSharp.Collections.FSharpList`1[System.Object]; System.Int32;</span>
@@ -640,7 +641,7 @@ by exploiting its pickler infrastructure. This can be done by calling the method
 </tr>
 </table>
 
-<h3>Defining Custom Pickle Formats</h3>
+<h2>Defining Custom Pickle Formats</h2>
 
 <p>It is possible to create user-defined pickle formats for FsPickler. One simply needs to implement the interface</p>
 
@@ -655,18 +656,20 @@ by exploiting its pickler infrastructure. This can be done by calling the method
 </pre>
 </td>
 <td class="snippet"><pre class="fssnip">
-<span class="k">type</span> <span onmouseout="hideTip(event, 'fs171', 469)" onmouseover="showTip(event, 'fs171', 469)" class="i">IPickleFormatProvider</span> <span class="o">=</span>
+<span class="k">type</span> <span onmouseout="hideTip(event, 'fs174', 473)" onmouseover="showTip(event, 'fs174', 473)" class="i">IPickleFormatProvider</span> <span class="o">=</span>
   <span class="k">interface</span>
-    <span class="k">abstract</span> <span class="k">member</span> <span onmouseout="hideTip(event, 'fs172', 470)" onmouseover="showTip(event, 'fs172', 470)" class="i">Name</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs63', 471)" onmouseover="showTip(event, 'fs63', 471)" class="i">string</span>
-    <span class="k">abstract</span> <span onmouseout="hideTip(event, 'fs173', 472)" onmouseover="showTip(event, 'fs173', 472)" class="i">DefaultEncoding</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs174', 473)" onmouseover="showTip(event, 'fs174', 473)" class="i">Encoding</span>
-    <span class="k">abstract</span> <span class="k">member</span> <span onmouseout="hideTip(event, 'fs175', 474)" onmouseover="showTip(event, 'fs175', 474)" class="i">CreateReader</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs6', 475)" onmouseover="showTip(event, 'fs6', 475)" class="i">Stream</span> <span class="o">*</span> <span onmouseout="hideTip(event, 'fs174', 476)" onmouseover="showTip(event, 'fs174', 476)" class="i">Encoding</span> <span class="o">*</span> <span class="i">leaveOpen</span><span class="o">:</span><span onmouseout="hideTip(event, 'fs176', 477)" onmouseover="showTip(event, 'fs176', 477)" class="i">bool</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs177', 478)" onmouseover="showTip(event, 'fs177', 478)" class="i">IPickleFormatReader</span>
-    <span class="k">abstract</span> <span class="k">member</span> <span onmouseout="hideTip(event, 'fs178', 479)" onmouseover="showTip(event, 'fs178', 479)" class="i">CreateWriter</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs6', 480)" onmouseover="showTip(event, 'fs6', 480)" class="i">Stream</span> <span class="o">*</span> <span onmouseout="hideTip(event, 'fs174', 481)" onmouseover="showTip(event, 'fs174', 481)" class="i">Encoding</span> <span class="o">*</span> <span class="i">leaveOpen</span><span class="o">:</span><span onmouseout="hideTip(event, 'fs176', 482)" onmouseover="showTip(event, 'fs176', 482)" class="i">bool</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs179', 483)" onmouseover="showTip(event, 'fs179', 483)" class="i">IPickleFormatWriter</span>
+    <span class="k">abstract</span> <span class="k">member</span> <span onmouseout="hideTip(event, 'fs175', 474)" onmouseover="showTip(event, 'fs175', 474)" class="i">Name</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs63', 475)" onmouseover="showTip(event, 'fs63', 475)" class="i">string</span>
+    <span class="k">abstract</span> <span onmouseout="hideTip(event, 'fs176', 476)" onmouseover="showTip(event, 'fs176', 476)" class="i">DefaultEncoding</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs177', 477)" onmouseover="showTip(event, 'fs177', 477)" class="i">Encoding</span>
+    <span class="k">abstract</span> <span class="k">member</span> <span onmouseout="hideTip(event, 'fs178', 478)" onmouseover="showTip(event, 'fs178', 478)" class="i">CreateReader</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs6', 479)" onmouseover="showTip(event, 'fs6', 479)" class="i">Stream</span> <span class="o">*</span> <span onmouseout="hideTip(event, 'fs177', 480)" onmouseover="showTip(event, 'fs177', 480)" class="i">Encoding</span> <span class="o">*</span> <span class="i">leaveOpen</span><span class="o">:</span><span onmouseout="hideTip(event, 'fs179', 481)" onmouseover="showTip(event, 'fs179', 481)" class="i">bool</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs180', 482)" onmouseover="showTip(event, 'fs180', 482)" class="i">IPickleFormatReader</span>
+    <span class="k">abstract</span> <span class="k">member</span> <span onmouseout="hideTip(event, 'fs181', 483)" onmouseover="showTip(event, 'fs181', 483)" class="i">CreateWriter</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs6', 484)" onmouseover="showTip(event, 'fs6', 484)" class="i">Stream</span> <span class="o">*</span> <span onmouseout="hideTip(event, 'fs177', 485)" onmouseover="showTip(event, 'fs177', 485)" class="i">Encoding</span> <span class="o">*</span> <span class="i">leaveOpen</span><span class="o">:</span><span onmouseout="hideTip(event, 'fs179', 486)" onmouseover="showTip(event, 'fs179', 486)" class="i">bool</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs182', 487)" onmouseover="showTip(event, 'fs182', 487)" class="i">IPickleFormatWriter</span>
   <span class="k">end</span></pre>
 </td>
 </tr>
 </table>
 
-<p>which can then be bolted on a class that inherits either of the <code>FsPicklerSerializer</code> or <code>FsPicklerTextSerializer</code> types.</p>
+<p>which can then be bolted on a class that inherits either of the 
+<a href="reference/nessos-fspickler-fspicklerserializer.html"><code>FsPicklerSerializer</code></a> or 
+<a href="reference/nessos-fspickler-fspicklertextserializer.html"><code>FsPicklerTextSerializer</code></a>.</p>
 
 <div class="tip" id="fs1">val stream : System.IO.Stream<br /><br />Full name: Tutorial.stream</div>
 <div class="tip" id="fs2">module Unchecked<br /><br />from Microsoft.FSharp.Core.Operators</div>
@@ -740,113 +743,116 @@ by exploiting its pickler infrastructure. This can be done by calling the method
 <div class="tip" id="fs70">val option : f:Pickler&lt;&#39;T&gt; -&gt; Pickler&lt;&#39;T option&gt;<br /><br />Full name: Nessos.FsPickler.Combinators.Pickler.option</div>
 <div class="tip" id="fs71">val p3 : Pickler&lt;string option list&gt;<br /><br />Full name: Tutorial.p3</div>
 <div class="tip" id="fs72">val list : f:Pickler&lt;&#39;T&gt; -&gt; Pickler&lt;&#39;T list&gt;<br /><br />Full name: Nessos.FsPickler.Combinators.Pickler.list</div>
-<div class="tip" id="fs73">val p4 : Pickler&lt;int * string option list&gt;<br /><br />Full name: Tutorial.p4</div>
-<div class="tip" id="fs74">val auto&lt;&#39;T&gt; : Pickler&lt;&#39;T&gt;<br /><br />Full name: Nessos.FsPickler.Combinators.Pickler.auto</div>
-<div class="tip" id="fs75">val t1 : string<br /><br />Full name: Tutorial.t1</div>
-<div class="tip" id="fs76">Multiple items<br />module Json<br /><br />from Nessos.FsPickler.Combinators<br /><br />--------------------<br />namespace Nessos.FsPickler.Json</div>
-<div class="tip" id="fs77">val pickle : pickler:Pickler&lt;&#39;T&gt; -&gt; value:&#39;T -&gt; string<br /><br />Full name: Nessos.FsPickler.Combinators.Json.pickle</div>
-<div class="tip" id="fs78">val t2 : string<br /><br />Full name: Tutorial.t2</div>
-<div class="tip" id="fs79">val unpickle : pickler:Pickler&lt;&#39;T&gt; -&gt; pickle:string -&gt; &#39;T<br /><br />Full name: Nessos.FsPickler.Combinators.Json.unpickle</div>
-<div class="tip" id="fs80">type Peano =<br />&#160;&#160;| Zero<br />&#160;&#160;| Succ of Peano<br /><br />Full name: Tutorial.Peano</div>
-<div class="tip" id="fs81">union case Peano.Zero: Peano</div>
-<div class="tip" id="fs82">union case Peano.Succ: Peano -&gt; Peano</div>
-<div class="tip" id="fs83">val pp : Pickler&lt;Peano&gt;<br /><br />Full name: Tutorial.pp</div>
-<div class="tip" id="fs84">val fix : F:(Pickler&lt;&#39;T&gt; -&gt; Pickler&lt;&#39;T&gt;) -&gt; Pickler&lt;&#39;T&gt;<br /><br />Full name: Nessos.FsPickler.Combinators.Pickler.fix</div>
-<div class="tip" id="fs85">val peano : Pickler&lt;Peano&gt;</div>
-<div class="tip" id="fs86">val wrap : recover:(&#39;a -&gt; &#39;b) -&gt; convert:(&#39;b -&gt; &#39;a) -&gt; p:Pickler&lt;&#39;a&gt; -&gt; Pickler&lt;&#39;b&gt;<br /><br />Full name: Nessos.FsPickler.Combinators.Pickler.wrap</div>
-<div class="tip" id="fs87">val p : Peano</div>
-<div class="tip" id="fs88">module Binary<br /><br />from Nessos.FsPickler.Combinators</div>
-<div class="tip" id="fs89">val pickle : pickler:Pickler&lt;&#39;T&gt; -&gt; value:&#39;T -&gt; byte []<br /><br />Full name: Nessos.FsPickler.Combinators.Binary.pickle</div>
-<div class="tip" id="fs90">val unpickle : pickler:Pickler&lt;&#39;T&gt; -&gt; pickle:byte [] -&gt; &#39;T<br /><br />Full name: Nessos.FsPickler.Combinators.Binary.unpickle</div>
-<div class="tip" id="fs91">type Tree&lt;&#39;T&gt; =<br />&#160;&#160;| Leaf<br />&#160;&#160;| Node of &#39;T * Tree&lt;&#39;T&gt; list<br /><br />Full name: Tutorial.Tree&lt;_&gt;</div>
-<div class="tip" id="fs92">union case Tree.Leaf: Tree&lt;&#39;T&gt;</div>
-<div class="tip" id="fs93">union case Tree.Node: &#39;T * Tree&lt;&#39;T&gt; list -&gt; Tree&lt;&#39;T&gt;</div>
-<div class="tip" id="fs94">val mkTree : ep:Pickler&lt;&#39;T&gt; -&gt; Pickler&lt;Tree&lt;&#39;T&gt;&gt;<br /><br />Full name: Tutorial.mkTree</div>
-<div class="tip" id="fs95">val ep : Pickler&lt;&#39;T&gt;</div>
-<div class="tip" id="fs96">val tree : Pickler&lt;Tree&lt;&#39;T&gt;&gt;</div>
-<div class="tip" id="fs97">val t : &#39;T</div>
-<div class="tip" id="fs98">val c : Tree&lt;&#39;T&gt; list</div>
-<div class="tip" id="fs99">module Xml<br /><br />from Nessos.FsPickler.Combinators</div>
-<div class="tip" id="fs100">val pickle : pickler:Pickler&lt;&#39;T&gt; -&gt; value:&#39;T -&gt; string<br /><br />Full name: Nessos.FsPickler.Combinators.Xml.pickle</div>
-<div class="tip" id="fs101">val tree&lt;&#39;T&gt; : Pickler&lt;Tree&lt;&#39;T&gt;&gt;<br /><br />Full name: Tutorial.tree</div>
-<div class="tip" id="fs102">type Person =<br />&#160;&#160;{Address: string;<br />&#160;&#160;&#160;Age: int;<br />&#160;&#160;&#160;Name: string;}<br /><br />Full name: Tutorial.Person</div>
-<div class="tip" id="fs103">Person.Address: string</div>
-<div class="tip" id="fs104">Person.Age: int</div>
-<div class="tip" id="fs105">Person.Name: string</div>
-<div class="tip" id="fs106">val makePerson : name:string -&gt; age:int -&gt; address:string -&gt; Person<br /><br />Full name: Tutorial.makePerson</div>
-<div class="tip" id="fs107">val name : string</div>
-<div class="tip" id="fs108">val age : int</div>
-<div class="tip" id="fs109">val address : string</div>
-<div class="tip" id="fs110">val personPickler : Pickler&lt;Person&gt;<br /><br />Full name: Tutorial.personPickler</div>
-<div class="tip" id="fs111">val product : f:&#39;a -&gt; Pickler.ProductInternals.Wrap&lt;(Pickler.ProductInternals.Part&lt;&#39;b,&#39;a,&#39;c&gt; -&gt; Pickler&lt;&#39;b&gt;)&gt;<br /><br />Full name: Nessos.FsPickler.Combinators.Pickler.product</div>
-<div class="tip" id="fs112">val field : f:(&#39;a -&gt; &#39;b) -&gt; p:Pickler&lt;&#39;b&gt; -&gt; Pickler.ProductInternals.Wrap&lt;(Pickler.ProductInternals.Part&lt;&#39;a,&#39;c,&#39;d&gt; -&gt; Pickler.ProductInternals.Part&lt;&#39;a,(&#39;b -&gt; &#39;c),(&#39;b * &#39;d)&gt;)&gt;<br /><br />Full name: Nessos.FsPickler.Combinators.Pickler.field</div>
-<div class="tip" id="fs113">val p : Person</div>
-<div class="tip" id="fs114">type U =<br />&#160;&#160;| Case1<br />&#160;&#160;| Case2 of int<br />&#160;&#160;| Case3 of string * int<br /><br />Full name: Tutorial.U</div>
-<div class="tip" id="fs115">union case U.Case1: U</div>
-<div class="tip" id="fs116">union case U.Case2: int -&gt; U</div>
-<div class="tip" id="fs117">union case U.Case3: string * int -&gt; U</div>
-<div class="tip" id="fs118">val uPickler : Pickler&lt;U&gt;<br /><br />Full name: Tutorial.uPickler</div>
-<div class="tip" id="fs119">val sum : f:(&#39;a -&gt; &#39;b) -&gt; Pickler.SumInternals.Wrap&lt;(Pickler.SumInternals.Part&lt;&#39;a,&#39;b,&#39;c,&#39;c&gt; -&gt; Pickler&lt;&#39;a&gt;)&gt;<br /><br />Full name: Nessos.FsPickler.Combinators.Pickler.sum</div>
-<div class="tip" id="fs120">val x : U</div>
-<div class="tip" id="fs121">val k1 : (unit -&gt; Choice&lt;unit,Choice&lt;int,(string * int)&gt;&gt;)</div>
-<div class="tip" id="fs122">val k2 : (int -&gt; Choice&lt;unit,Choice&lt;int,(string * int)&gt;&gt;)</div>
-<div class="tip" id="fs123">val k3 : (string * int -&gt; Choice&lt;unit,Choice&lt;int,(string * int)&gt;&gt;)</div>
-<div class="tip" id="fs124">val x : string</div>
-<div class="tip" id="fs125">val y : int</div>
-<div class="tip" id="fs126">val variant : v:&#39;a -&gt; Pickler.SumInternals.Case&lt;(unit -&gt; &#39;a),Pickler&lt;unit&gt;&gt;<br /><br />Full name: Nessos.FsPickler.Combinators.Pickler.variant</div>
-<div class="tip" id="fs127">val case : inj:&#39;a -&gt; p:&#39;b -&gt; Pickler.SumInternals.Case&lt;&#39;a,&#39;b&gt;<br /><br />Full name: Nessos.FsPickler.Combinators.Pickler.case</div>
-<div class="tip" id="fs128">Multiple items<br />type CustomPicklerAttribute =<br />&#160;&#160;inherit Attribute<br />&#160;&#160;new : unit -&gt; CustomPicklerAttribute<br /><br />Full name: Nessos.FsPickler.CustomPicklerAttribute<br /><br />--------------------<br />new : unit -&gt; CustomPicklerAttribute</div>
-<div class="tip" id="fs129">Multiple items<br />type CustomClass&lt;&#39;T,&#39;S&gt; =<br />&#160;&#160;new : x:&#39;T * y:&#39;S -&gt; CustomClass&lt;&#39;T,&#39;S&gt;<br />&#160;&#160;member X : &#39;T<br />&#160;&#160;member Y : &#39;S<br />&#160;&#160;static member CreatePickler : resolver:IPicklerResolver -&gt; Pickler&lt;CustomClass&lt;&#39;T,&#39;S&gt;&gt;<br /><br />Full name: Tutorial.CustomClass&lt;_,_&gt;<br /><br />--------------------<br />new : x:&#39;T * y:&#39;S -&gt; CustomClass&lt;&#39;T,&#39;S&gt;</div>
-<div class="tip" id="fs130">val x : &#39;T</div>
-<div class="tip" id="fs131">val y : &#39;S</div>
-<div class="tip" id="fs132">member CustomClass.X : &#39;T<br /><br />Full name: Tutorial.CustomClass`2.X</div>
-<div class="tip" id="fs133">val __ : CustomClass&lt;&#39;T,&#39;S&gt;</div>
-<div class="tip" id="fs134">member CustomClass.Y : &#39;S<br /><br />Full name: Tutorial.CustomClass`2.Y</div>
-<div class="tip" id="fs135">static member CustomClass.CreatePickler : resolver:IPicklerResolver -&gt; Pickler&lt;CustomClass&lt;&#39;T,&#39;S&gt;&gt;<br /><br />Full name: Tutorial.CustomClass`2.CreatePickler</div>
-<div class="tip" id="fs136">val resolver : IPicklerResolver</div>
-<div class="tip" id="fs137">type IPicklerResolver =<br />&#160;&#160;interface<br />&#160;&#160;&#160;&#160;abstract member IsSerializable : unit -&gt; bool<br />&#160;&#160;&#160;&#160;abstract member IsSerializable : Type -&gt; bool<br />&#160;&#160;&#160;&#160;abstract member Resolve : unit -&gt; Pickler&lt;&#39;T&gt;<br />&#160;&#160;&#160;&#160;abstract member Resolve : Type -&gt; Pickler<br />&#160;&#160;end<br /><br />Full name: Nessos.FsPickler.IPicklerResolver</div>
-<div class="tip" id="fs138">val xp : Pickler&lt;&#39;T&gt;</div>
-<div class="tip" id="fs139">abstract member IPicklerResolver.Resolve : unit -&gt; Pickler&lt;&#39;T&gt;<br />abstract member IPicklerResolver.Resolve : System.Type -&gt; Pickler</div>
-<div class="tip" id="fs140">val yp : Pickler&lt;&#39;S&gt;</div>
-<div class="tip" id="fs141">val writer : (WriteState -&gt; string -&gt; CustomClass&lt;&#39;T,&#39;S&gt; -&gt; unit)</div>
-<div class="tip" id="fs142">val w : WriteState</div>
-<div class="tip" id="fs143">val tag : string</div>
-<div class="tip" id="fs144">val c : CustomClass&lt;&#39;T,&#39;S&gt;</div>
-<div class="tip" id="fs145">abstract member Pickler.Write : state:WriteState -&gt; tag:string -&gt; value:&#39;T -&gt; unit</div>
-<div class="tip" id="fs146">property CustomClass.X: &#39;T</div>
-<div class="tip" id="fs147">property CustomClass.Y: &#39;S</div>
-<div class="tip" id="fs148">val reader : (ReadState -&gt; string -&gt; CustomClass&lt;&#39;T,&#39;S&gt;)</div>
-<div class="tip" id="fs149">val r : ReadState</div>
-<div class="tip" id="fs150">abstract member Pickler.Read : state:ReadState -&gt; tag:string -&gt; &#39;T</div>
-<div class="tip" id="fs151">static member Pickler.FromPrimitives : reader:(ReadState -&gt; string -&gt; &#39;T) * writer:(WriteState -&gt; string -&gt; &#39;T -&gt; unit) * ?cacheByRef:bool * ?useWithSubtypes:bool -&gt; Pickler&lt;&#39;T&gt;</div>
-<div class="tip" id="fs152">Multiple items<br />type RecursiveClass =<br />&#160;&#160;new : ?nested:RecursiveClass -&gt; RecursiveClass<br />&#160;&#160;member Value : RecursiveClass option<br />&#160;&#160;static member CreatePickler : resolver:IPicklerResolver -&gt; Pickler&lt;RecursiveClass&gt;<br /><br />Full name: Tutorial.RecursiveClass<br /><br />--------------------<br />new : ?nested:RecursiveClass -&gt; RecursiveClass</div>
-<div class="tip" id="fs153">val nested : RecursiveClass option</div>
-<div class="tip" id="fs154">member RecursiveClass.Value : RecursiveClass option<br /><br />Full name: Tutorial.RecursiveClass.Value</div>
-<div class="tip" id="fs155">static member RecursiveClass.CreatePickler : resolver:IPicklerResolver -&gt; Pickler&lt;RecursiveClass&gt;<br /><br />Full name: Tutorial.RecursiveClass.CreatePickler</div>
-<div class="tip" id="fs156">val self : Pickler&lt;RecursiveClass&gt;</div>
-<div class="tip" id="fs157">val x : RecursiveClass option</div>
-<div class="tip" id="fs158">val rc : RecursiveClass</div>
-<div class="tip" id="fs159">property RecursiveClass.Value: RecursiveClass option</div>
-<div class="tip" id="fs160">val p : Pickler&lt;RecursiveClass&gt;<br /><br />Full name: Tutorial.p</div>
-<div class="tip" id="fs161">val hash : Hashing.HashResult<br /><br />Full name: Tutorial.hash</div>
-<div class="tip" id="fs162">static member FsPickler.ComputeHash : value:&#39;T * ?hashFactory:Hashing.IHashStreamFactory -&gt; Hashing.HashResult</div>
-<div class="tip" id="fs163">static member FsPickler.ComputeSize : value:&#39;T -&gt; int64</div>
-<div class="tip" id="fs164">type IObjectVisitor =<br />&#160;&#160;interface<br />&#160;&#160;&#160;&#160;abstract member Visit : &#39;T -&gt; unit<br />&#160;&#160;end<br /><br />Full name: Tutorial.IObjectVisitor</div>
-<div class="tip" id="fs165">abstract member IObjectVisitor.Visit : &#39;T -&gt; unit<br /><br />Full name: Tutorial.IObjectVisitor.Visit</div>
-<div class="tip" id="fs166">namespace System.Text</div>
+<div class="tip" id="fs73">val p4 : Pickler&lt;(int * System.DateTime) [,]&gt;<br /><br />Full name: Tutorial.p4</div>
+<div class="tip" id="fs74">val array2D : f:Pickler&lt;&#39;T&gt; -&gt; Pickler&lt;&#39;T [,]&gt;<br /><br />Full name: Nessos.FsPickler.Combinators.Pickler.array2D</div>
+<div class="tip" id="fs75">val p5 : Pickler&lt;int * string option list&gt;<br /><br />Full name: Tutorial.p5</div>
+<div class="tip" id="fs76">val auto&lt;&#39;T&gt; : Pickler&lt;&#39;T&gt;<br /><br />Full name: Nessos.FsPickler.Combinators.Pickler.auto</div>
+<div class="tip" id="fs77">val t1 : byte []<br /><br />Full name: Tutorial.t1</div>
+<div class="tip" id="fs78">module Binary<br /><br />from Nessos.FsPickler.Combinators</div>
+<div class="tip" id="fs79">val pickle : pickler:Pickler&lt;&#39;T&gt; -&gt; value:&#39;T -&gt; byte []<br /><br />Full name: Nessos.FsPickler.Combinators.Binary.pickle</div>
+<div class="tip" id="fs80">val t2 : string<br /><br />Full name: Tutorial.t2</div>
+<div class="tip" id="fs81">Multiple items<br />module Json<br /><br />from Nessos.FsPickler.Combinators<br /><br />--------------------<br />namespace Nessos.FsPickler.Json</div>
+<div class="tip" id="fs82">val pickle : pickler:Pickler&lt;&#39;T&gt; -&gt; value:&#39;T -&gt; string<br /><br />Full name: Nessos.FsPickler.Combinators.Json.pickle</div>
+<div class="tip" id="fs83">val unpickle : pickler:Pickler&lt;&#39;T&gt; -&gt; pickle:string -&gt; &#39;T<br /><br />Full name: Nessos.FsPickler.Combinators.Json.unpickle</div>
+<div class="tip" id="fs84">type Peano =<br />&#160;&#160;| Zero<br />&#160;&#160;| Succ of Peano<br /><br />Full name: Tutorial.Peano</div>
+<div class="tip" id="fs85">union case Peano.Zero: Peano</div>
+<div class="tip" id="fs86">union case Peano.Succ: Peano -&gt; Peano</div>
+<div class="tip" id="fs87">val pp : Pickler&lt;Peano&gt;<br /><br />Full name: Tutorial.pp</div>
+<div class="tip" id="fs88">val fix : F:(Pickler&lt;&#39;T&gt; -&gt; Pickler&lt;&#39;T&gt;) -&gt; Pickler&lt;&#39;T&gt;<br /><br />Full name: Nessos.FsPickler.Combinators.Pickler.fix</div>
+<div class="tip" id="fs89">val peano : Pickler&lt;Peano&gt;</div>
+<div class="tip" id="fs90">val wrap : recover:(&#39;a -&gt; &#39;b) -&gt; convert:(&#39;b -&gt; &#39;a) -&gt; p:Pickler&lt;&#39;a&gt; -&gt; Pickler&lt;&#39;b&gt;<br /><br />Full name: Nessos.FsPickler.Combinators.Pickler.wrap</div>
+<div class="tip" id="fs91">val p : Peano</div>
+<div class="tip" id="fs92">val unpickle : pickler:Pickler&lt;&#39;T&gt; -&gt; pickle:byte [] -&gt; &#39;T<br /><br />Full name: Nessos.FsPickler.Combinators.Binary.unpickle</div>
+<div class="tip" id="fs93">type Tree&lt;&#39;T&gt; =<br />&#160;&#160;| Leaf<br />&#160;&#160;| Node of &#39;T * Tree&lt;&#39;T&gt; list<br /><br />Full name: Tutorial.Tree&lt;_&gt;</div>
+<div class="tip" id="fs94">union case Tree.Leaf: Tree&lt;&#39;T&gt;</div>
+<div class="tip" id="fs95">union case Tree.Node: &#39;T * Tree&lt;&#39;T&gt; list -&gt; Tree&lt;&#39;T&gt;</div>
+<div class="tip" id="fs96">val mkTree : ep:Pickler&lt;&#39;T&gt; -&gt; Pickler&lt;Tree&lt;&#39;T&gt;&gt;<br /><br />Full name: Tutorial.mkTree</div>
+<div class="tip" id="fs97">val ep : Pickler&lt;&#39;T&gt;</div>
+<div class="tip" id="fs98">val tree : Pickler&lt;Tree&lt;&#39;T&gt;&gt;</div>
+<div class="tip" id="fs99">val t : &#39;T</div>
+<div class="tip" id="fs100">val c : Tree&lt;&#39;T&gt; list</div>
+<div class="tip" id="fs101">module Xml<br /><br />from Nessos.FsPickler.Combinators</div>
+<div class="tip" id="fs102">val pickle : pickler:Pickler&lt;&#39;T&gt; -&gt; value:&#39;T -&gt; string<br /><br />Full name: Nessos.FsPickler.Combinators.Xml.pickle</div>
+<div class="tip" id="fs103">val tree&lt;&#39;T&gt; : Pickler&lt;Tree&lt;&#39;T&gt;&gt;<br /><br />Full name: Tutorial.tree</div>
+<div class="tip" id="fs104">type Person =<br />&#160;&#160;{Address: string;<br />&#160;&#160;&#160;Age: int;<br />&#160;&#160;&#160;Name: string;}<br /><br />Full name: Tutorial.Person</div>
+<div class="tip" id="fs105">Person.Address: string</div>
+<div class="tip" id="fs106">Person.Age: int</div>
+<div class="tip" id="fs107">Person.Name: string</div>
+<div class="tip" id="fs108">val makePerson : name:string -&gt; age:int -&gt; address:string -&gt; Person<br /><br />Full name: Tutorial.makePerson</div>
+<div class="tip" id="fs109">val name : string</div>
+<div class="tip" id="fs110">val age : int</div>
+<div class="tip" id="fs111">val address : string</div>
+<div class="tip" id="fs112">val personPickler : Pickler&lt;Person&gt;<br /><br />Full name: Tutorial.personPickler</div>
+<div class="tip" id="fs113">val product : f:&#39;a -&gt; Pickler.ProductInternals.Wrap&lt;(Pickler.ProductInternals.Part&lt;&#39;b,&#39;a,&#39;c&gt; -&gt; Pickler&lt;&#39;b&gt;)&gt;<br /><br />Full name: Nessos.FsPickler.Combinators.Pickler.product</div>
+<div class="tip" id="fs114">val field : f:(&#39;a -&gt; &#39;b) -&gt; p:Pickler&lt;&#39;b&gt; -&gt; Pickler.ProductInternals.Wrap&lt;(Pickler.ProductInternals.Part&lt;&#39;a,&#39;c,&#39;d&gt; -&gt; Pickler.ProductInternals.Part&lt;&#39;a,(&#39;b -&gt; &#39;c),(&#39;b * &#39;d)&gt;)&gt;<br /><br />Full name: Nessos.FsPickler.Combinators.Pickler.field</div>
+<div class="tip" id="fs115">val p : Person</div>
+<div class="tip" id="fs116">type U =<br />&#160;&#160;| Case1<br />&#160;&#160;| Case2 of int<br />&#160;&#160;| Case3 of string * int<br /><br />Full name: Tutorial.U</div>
+<div class="tip" id="fs117">union case U.Case1: U</div>
+<div class="tip" id="fs118">union case U.Case2: int -&gt; U</div>
+<div class="tip" id="fs119">union case U.Case3: string * int -&gt; U</div>
+<div class="tip" id="fs120">val uPickler : Pickler&lt;U&gt;<br /><br />Full name: Tutorial.uPickler</div>
+<div class="tip" id="fs121">val sum : f:(&#39;a -&gt; &#39;b) -&gt; Pickler.SumInternals.Wrap&lt;(Pickler.SumInternals.Part&lt;&#39;a,&#39;b,&#39;c,&#39;c&gt; -&gt; Pickler&lt;&#39;a&gt;)&gt;<br /><br />Full name: Nessos.FsPickler.Combinators.Pickler.sum</div>
+<div class="tip" id="fs122">val x : U</div>
+<div class="tip" id="fs123">val k1 : (unit -&gt; Choice&lt;unit,Choice&lt;int,(string * int)&gt;&gt;)</div>
+<div class="tip" id="fs124">val k2 : (int -&gt; Choice&lt;unit,Choice&lt;int,(string * int)&gt;&gt;)</div>
+<div class="tip" id="fs125">val k3 : (string * int -&gt; Choice&lt;unit,Choice&lt;int,(string * int)&gt;&gt;)</div>
+<div class="tip" id="fs126">val x : string</div>
+<div class="tip" id="fs127">val y : int</div>
+<div class="tip" id="fs128">val variant : v:&#39;a -&gt; Pickler.SumInternals.Case&lt;(unit -&gt; &#39;a),Pickler&lt;unit&gt;&gt;<br /><br />Full name: Nessos.FsPickler.Combinators.Pickler.variant</div>
+<div class="tip" id="fs129">val case : inj:&#39;a -&gt; p:&#39;b -&gt; Pickler.SumInternals.Case&lt;&#39;a,&#39;b&gt;<br /><br />Full name: Nessos.FsPickler.Combinators.Pickler.case</div>
+<div class="tip" id="fs130">Multiple items<br />type CustomPicklerAttribute =<br />&#160;&#160;inherit Attribute<br />&#160;&#160;new : unit -&gt; CustomPicklerAttribute<br /><br />Full name: Nessos.FsPickler.CustomPicklerAttribute<br /><br />--------------------<br />new : unit -&gt; CustomPicklerAttribute</div>
+<div class="tip" id="fs131">Multiple items<br />type CustomClass&lt;&#39;T,&#39;S&gt; =<br />&#160;&#160;new : x:&#39;T * y:&#39;S -&gt; CustomClass&lt;&#39;T,&#39;S&gt;<br />&#160;&#160;member X : &#39;T<br />&#160;&#160;member Y : &#39;S<br />&#160;&#160;static member CreatePickler : resolver:IPicklerResolver -&gt; Pickler&lt;CustomClass&lt;&#39;T,&#39;S&gt;&gt;<br /><br />Full name: Tutorial.CustomClass&lt;_,_&gt;<br /><br />--------------------<br />new : x:&#39;T * y:&#39;S -&gt; CustomClass&lt;&#39;T,&#39;S&gt;</div>
+<div class="tip" id="fs132">val x : &#39;T</div>
+<div class="tip" id="fs133">val y : &#39;S</div>
+<div class="tip" id="fs134">member CustomClass.X : &#39;T<br /><br />Full name: Tutorial.CustomClass`2.X</div>
+<div class="tip" id="fs135">val __ : CustomClass&lt;&#39;T,&#39;S&gt;</div>
+<div class="tip" id="fs136">member CustomClass.Y : &#39;S<br /><br />Full name: Tutorial.CustomClass`2.Y</div>
+<div class="tip" id="fs137">static member CustomClass.CreatePickler : resolver:IPicklerResolver -&gt; Pickler&lt;CustomClass&lt;&#39;T,&#39;S&gt;&gt;<br /><br />Full name: Tutorial.CustomClass`2.CreatePickler</div>
+<div class="tip" id="fs138">val resolver : IPicklerResolver</div>
+<div class="tip" id="fs139">type IPicklerResolver =<br />&#160;&#160;interface<br />&#160;&#160;&#160;&#160;abstract member IsSerializable : unit -&gt; bool<br />&#160;&#160;&#160;&#160;abstract member IsSerializable : Type -&gt; bool<br />&#160;&#160;&#160;&#160;abstract member Resolve : unit -&gt; Pickler&lt;&#39;T&gt;<br />&#160;&#160;&#160;&#160;abstract member Resolve : Type -&gt; Pickler<br />&#160;&#160;end<br /><br />Full name: Nessos.FsPickler.IPicklerResolver</div>
+<div class="tip" id="fs140">val xp : Pickler&lt;&#39;T&gt;</div>
+<div class="tip" id="fs141">abstract member IPicklerResolver.Resolve : unit -&gt; Pickler&lt;&#39;T&gt;<br />abstract member IPicklerResolver.Resolve : System.Type -&gt; Pickler</div>
+<div class="tip" id="fs142">val yp : Pickler&lt;&#39;S&gt;</div>
+<div class="tip" id="fs143">val writer : (WriteState -&gt; string -&gt; CustomClass&lt;&#39;T,&#39;S&gt; -&gt; unit)</div>
+<div class="tip" id="fs144">val w : WriteState</div>
+<div class="tip" id="fs145">val tag : string</div>
+<div class="tip" id="fs146">val c : CustomClass&lt;&#39;T,&#39;S&gt;</div>
+<div class="tip" id="fs147">abstract member Pickler.Write : state:WriteState -&gt; tag:string -&gt; value:&#39;T -&gt; unit</div>
+<div class="tip" id="fs148">property CustomClass.X: &#39;T</div>
+<div class="tip" id="fs149">property CustomClass.Y: &#39;S</div>
+<div class="tip" id="fs150">val reader : (ReadState -&gt; string -&gt; CustomClass&lt;&#39;T,&#39;S&gt;)</div>
+<div class="tip" id="fs151">val r : ReadState</div>
+<div class="tip" id="fs152">abstract member Pickler.Read : state:ReadState -&gt; tag:string -&gt; &#39;T</div>
+<div class="tip" id="fs153">static member Pickler.FromPrimitives : reader:(ReadState -&gt; string -&gt; &#39;T) * writer:(WriteState -&gt; string -&gt; &#39;T -&gt; unit) * ?cacheByRef:bool * ?useWithSubtypes:bool -&gt; Pickler&lt;&#39;T&gt;</div>
+<div class="tip" id="fs154">Multiple items<br />type RecursiveClass =<br />&#160;&#160;new : ?nested:RecursiveClass -&gt; RecursiveClass<br />&#160;&#160;member Value : RecursiveClass option<br />&#160;&#160;static member CreatePickler : resolver:IPicklerResolver -&gt; Pickler&lt;RecursiveClass&gt;<br /><br />Full name: Tutorial.RecursiveClass<br /><br />--------------------<br />new : ?nested:RecursiveClass -&gt; RecursiveClass</div>
+<div class="tip" id="fs155">val nested : RecursiveClass option</div>
+<div class="tip" id="fs156">member RecursiveClass.Value : RecursiveClass option<br /><br />Full name: Tutorial.RecursiveClass.Value</div>
+<div class="tip" id="fs157">static member RecursiveClass.CreatePickler : resolver:IPicklerResolver -&gt; Pickler&lt;RecursiveClass&gt;<br /><br />Full name: Tutorial.RecursiveClass.CreatePickler</div>
+<div class="tip" id="fs158">val self : Pickler&lt;RecursiveClass&gt;</div>
+<div class="tip" id="fs159">val x : RecursiveClass option</div>
+<div class="tip" id="fs160">val rc : RecursiveClass</div>
+<div class="tip" id="fs161">property RecursiveClass.Value: RecursiveClass option</div>
+<div class="tip" id="fs162">val p : Pickler&lt;RecursiveClass&gt;<br /><br />Full name: Tutorial.p</div>
+<div class="tip" id="fs163">static member FsPickler.GeneratePickler : unit -&gt; Pickler&lt;&#39;T&gt;<br />static member FsPickler.GeneratePickler : t:System.Type -&gt; Pickler</div>
+<div class="tip" id="fs164">val hash : Hashing.HashResult<br /><br />Full name: Tutorial.hash</div>
+<div class="tip" id="fs165">static member FsPickler.ComputeHash : value:&#39;T * ?hashFactory:Hashing.IHashStreamFactory -&gt; Hashing.HashResult</div>
+<div class="tip" id="fs166">static member FsPickler.ComputeSize : value:&#39;T -&gt; int64</div>
 <div class="tip" id="fs167">static member FsPickler.VisitObject : visitor:IObjectVisitor * graph:&#39;T -&gt; unit</div>
-<div class="tip" id="fs168">val types : System.Type []<br /><br />Full name: Tutorial.types</div>
-<div class="tip" id="fs169">static member FsPickler.GatherTypesInObjectGraph : graph:obj -&gt; System.Type []</div>
-<div class="tip" id="fs170">val box : value:&#39;T -&gt; obj<br /><br />Full name: Microsoft.FSharp.Core.Operators.box</div>
-<div class="tip" id="fs171">type IPickleFormatProvider =<br />&#160;&#160;interface<br />&#160;&#160;&#160;&#160;abstract member CreateReader : Stream * Encoding * leaveOpen:bool -&gt; IPickleFormatReader<br />&#160;&#160;&#160;&#160;abstract member CreateWriter : Stream * Encoding * leaveOpen:bool -&gt; IPickleFormatWriter<br />&#160;&#160;&#160;&#160;abstract member DefaultEncoding : Encoding<br />&#160;&#160;&#160;&#160;abstract member Name : string<br />&#160;&#160;end<br /><br />Full name: Tutorial.IPickleFormatProvider</div>
-<div class="tip" id="fs172">abstract member IPickleFormatProvider.Name : string<br /><br />Full name: Tutorial.IPickleFormatProvider.Name</div>
-<div class="tip" id="fs173">abstract member IPickleFormatProvider.DefaultEncoding : Encoding<br /><br />Full name: Tutorial.IPickleFormatProvider.DefaultEncoding</div>
-<div class="tip" id="fs174">type Encoding =<br />&#160;&#160;member BodyName : string<br />&#160;&#160;member Clone : unit -&gt; obj<br />&#160;&#160;member CodePage : int<br />&#160;&#160;member DecoderFallback : DecoderFallback with get, set<br />&#160;&#160;member EncoderFallback : EncoderFallback with get, set<br />&#160;&#160;member EncodingName : string<br />&#160;&#160;member Equals : value:obj -&gt; bool<br />&#160;&#160;member GetByteCount : chars:char[] -&gt; int + 3 overloads<br />&#160;&#160;member GetBytes : chars:char[] -&gt; byte[] + 5 overloads<br />&#160;&#160;member GetCharCount : bytes:byte[] -&gt; int + 2 overloads<br />&#160;&#160;...<br /><br />Full name: System.Text.Encoding</div>
-<div class="tip" id="fs175">abstract member IPickleFormatProvider.CreateReader : Stream * Encoding * leaveOpen:bool -&gt; IPickleFormatReader<br /><br />Full name: Tutorial.IPickleFormatProvider.CreateReader</div>
-<div class="tip" id="fs176">type bool = System.Boolean<br /><br />Full name: Microsoft.FSharp.Core.bool</div>
-<div class="tip" id="fs177">type IPickleFormatReader =<br />&#160;&#160;interface<br />&#160;&#160;&#160;&#160;inherit IDisposable<br />&#160;&#160;&#160;&#160;abstract member BeginReadObject : tag:string -&gt; ObjectFlags<br />&#160;&#160;&#160;&#160;abstract member BeginReadRoot : tag:string -&gt; unit<br />&#160;&#160;&#160;&#160;abstract member EndReadObject : unit -&gt; unit<br />&#160;&#160;&#160;&#160;abstract member EndReadRoot : unit -&gt; unit<br />&#160;&#160;&#160;&#160;abstract member ReadBigInteger : tag:string -&gt; bigint<br />&#160;&#160;&#160;&#160;abstract member ReadBoolean : tag:string -&gt; bool<br />&#160;&#160;&#160;&#160;abstract member ReadByte : tag:string -&gt; byte<br />&#160;&#160;&#160;&#160;abstract member ReadBytes : tag:string -&gt; byte []<br />&#160;&#160;&#160;&#160;abstract member ReadCachedObjectId : unit -&gt; int64<br />&#160;&#160;&#160;&#160;...<br />&#160;&#160;end<br /><br />Full name: Nessos.FsPickler.IPickleFormatReader</div>
-<div class="tip" id="fs178">abstract member IPickleFormatProvider.CreateWriter : Stream * Encoding * leaveOpen:bool -&gt; IPickleFormatWriter<br /><br />Full name: Tutorial.IPickleFormatProvider.CreateWriter</div>
-<div class="tip" id="fs179">type IPickleFormatWriter =<br />&#160;&#160;interface<br />&#160;&#160;&#160;&#160;inherit IDisposable<br />&#160;&#160;&#160;&#160;abstract member BeginWriteObject : tag:string -&gt; objectFlags:ObjectFlags -&gt; unit<br />&#160;&#160;&#160;&#160;abstract member BeginWriteRoot : tag:string -&gt; unit<br />&#160;&#160;&#160;&#160;abstract member EndWriteObject : unit -&gt; unit<br />&#160;&#160;&#160;&#160;abstract member EndWriteRoot : unit -&gt; unit<br />&#160;&#160;&#160;&#160;abstract member WriteBigInteger : tag:string -&gt; value:bigint -&gt; unit<br />&#160;&#160;&#160;&#160;abstract member WriteBoolean : tag:string -&gt; value:bool -&gt; unit<br />&#160;&#160;&#160;&#160;abstract member WriteByte : tag:string -&gt; value:byte -&gt; unit<br />&#160;&#160;&#160;&#160;abstract member WriteBytes : tag:string -&gt; value:byte [] -&gt; unit<br />&#160;&#160;&#160;&#160;abstract member WriteCachedObjectId : id:int64 -&gt; unit<br />&#160;&#160;&#160;&#160;...<br />&#160;&#160;end<br /><br />Full name: Nessos.FsPickler.IPickleFormatWriter</div>
+<div class="tip" id="fs168">type IObjectVisitor =<br />&#160;&#160;interface<br />&#160;&#160;&#160;&#160;abstract member Visit : &#39;T -&gt; unit<br />&#160;&#160;end<br /><br />Full name: Tutorial.IObjectVisitor</div>
+<div class="tip" id="fs169">abstract member IObjectVisitor.Visit : &#39;T -&gt; unit<br /><br />Full name: Tutorial.IObjectVisitor.Visit</div>
+<div class="tip" id="fs170">namespace System.Text</div>
+<div class="tip" id="fs171">val types : System.Type []<br /><br />Full name: Tutorial.types</div>
+<div class="tip" id="fs172">static member FsPickler.GatherTypesInObjectGraph : graph:obj -&gt; System.Type []</div>
+<div class="tip" id="fs173">val box : value:&#39;T -&gt; obj<br /><br />Full name: Microsoft.FSharp.Core.Operators.box</div>
+<div class="tip" id="fs174">type IPickleFormatProvider =<br />&#160;&#160;interface<br />&#160;&#160;&#160;&#160;abstract member CreateReader : Stream * Encoding * leaveOpen:bool -&gt; IPickleFormatReader<br />&#160;&#160;&#160;&#160;abstract member CreateWriter : Stream * Encoding * leaveOpen:bool -&gt; IPickleFormatWriter<br />&#160;&#160;&#160;&#160;abstract member DefaultEncoding : Encoding<br />&#160;&#160;&#160;&#160;abstract member Name : string<br />&#160;&#160;end<br /><br />Full name: Tutorial.IPickleFormatProvider</div>
+<div class="tip" id="fs175">abstract member IPickleFormatProvider.Name : string<br /><br />Full name: Tutorial.IPickleFormatProvider.Name</div>
+<div class="tip" id="fs176">abstract member IPickleFormatProvider.DefaultEncoding : Encoding<br /><br />Full name: Tutorial.IPickleFormatProvider.DefaultEncoding</div>
+<div class="tip" id="fs177">type Encoding =<br />&#160;&#160;member BodyName : string<br />&#160;&#160;member Clone : unit -&gt; obj<br />&#160;&#160;member CodePage : int<br />&#160;&#160;member DecoderFallback : DecoderFallback with get, set<br />&#160;&#160;member EncoderFallback : EncoderFallback with get, set<br />&#160;&#160;member EncodingName : string<br />&#160;&#160;member Equals : value:obj -&gt; bool<br />&#160;&#160;member GetByteCount : chars:char[] -&gt; int + 3 overloads<br />&#160;&#160;member GetBytes : chars:char[] -&gt; byte[] + 5 overloads<br />&#160;&#160;member GetCharCount : bytes:byte[] -&gt; int + 2 overloads<br />&#160;&#160;...<br /><br />Full name: System.Text.Encoding</div>
+<div class="tip" id="fs178">abstract member IPickleFormatProvider.CreateReader : Stream * Encoding * leaveOpen:bool -&gt; IPickleFormatReader<br /><br />Full name: Tutorial.IPickleFormatProvider.CreateReader</div>
+<div class="tip" id="fs179">type bool = System.Boolean<br /><br />Full name: Microsoft.FSharp.Core.bool</div>
+<div class="tip" id="fs180">type IPickleFormatReader =<br />&#160;&#160;interface<br />&#160;&#160;&#160;&#160;inherit IDisposable<br />&#160;&#160;&#160;&#160;abstract member BeginReadObject : tag:string -&gt; ObjectFlags<br />&#160;&#160;&#160;&#160;abstract member BeginReadRoot : tag:string -&gt; unit<br />&#160;&#160;&#160;&#160;abstract member EndReadObject : unit -&gt; unit<br />&#160;&#160;&#160;&#160;abstract member EndReadRoot : unit -&gt; unit<br />&#160;&#160;&#160;&#160;abstract member ReadBigInteger : tag:string -&gt; bigint<br />&#160;&#160;&#160;&#160;abstract member ReadBoolean : tag:string -&gt; bool<br />&#160;&#160;&#160;&#160;abstract member ReadByte : tag:string -&gt; byte<br />&#160;&#160;&#160;&#160;abstract member ReadBytes : tag:string -&gt; byte []<br />&#160;&#160;&#160;&#160;abstract member ReadCachedObjectId : unit -&gt; int64<br />&#160;&#160;&#160;&#160;...<br />&#160;&#160;end<br /><br />Full name: Nessos.FsPickler.IPickleFormatReader</div>
+<div class="tip" id="fs181">abstract member IPickleFormatProvider.CreateWriter : Stream * Encoding * leaveOpen:bool -&gt; IPickleFormatWriter<br /><br />Full name: Tutorial.IPickleFormatProvider.CreateWriter</div>
+<div class="tip" id="fs182">type IPickleFormatWriter =<br />&#160;&#160;interface<br />&#160;&#160;&#160;&#160;inherit IDisposable<br />&#160;&#160;&#160;&#160;abstract member BeginWriteObject : tag:string -&gt; objectFlags:ObjectFlags -&gt; unit<br />&#160;&#160;&#160;&#160;abstract member BeginWriteRoot : tag:string -&gt; unit<br />&#160;&#160;&#160;&#160;abstract member EndWriteObject : unit -&gt; unit<br />&#160;&#160;&#160;&#160;abstract member EndWriteRoot : unit -&gt; unit<br />&#160;&#160;&#160;&#160;abstract member WriteBigInteger : tag:string -&gt; value:bigint -&gt; unit<br />&#160;&#160;&#160;&#160;abstract member WriteBoolean : tag:string -&gt; value:bool -&gt; unit<br />&#160;&#160;&#160;&#160;abstract member WriteByte : tag:string -&gt; value:byte -&gt; unit<br />&#160;&#160;&#160;&#160;abstract member WriteBytes : tag:string -&gt; value:byte [] -&gt; unit<br />&#160;&#160;&#160;&#160;abstract member WriteCachedObjectId : id:int64 -&gt; unit<br />&#160;&#160;&#160;&#160;...<br />&#160;&#160;end<br /><br />Full name: Nessos.FsPickler.IPickleFormatWriter</div>
 
         </div>
         <div class="span3">
@@ -862,6 +868,9 @@ by exploiting its pickler infrastructure. This can be done by calling the method
             
             <li class="nav-header">Getting started</li>
             <li><a href="/FsPickler/tutorial.html">Sample tutorial</a></li>
+
+            <li class="nav-header">Technical Overview</li>
+            <li><a href="/FsPickler/overview.html">Technical Overview</a></li>
 
             <li class="nav-header">Documentation</li>
             <li><a href="/FsPickler/reference/index.html">API Reference</a></li>
