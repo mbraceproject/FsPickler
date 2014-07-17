@@ -176,14 +176,14 @@ that offers functionality for text-based serialization:</p>
 Picklers are strongly typed and perform serialization without reflection
 or intermediate boxings.</p>
 
-<p>There are two kinds of picklers: 
- <em> </em>primitive<em> or </em>atomic* picklers that are self-contained definitions 
-   for simple values like primitives or strings.</p>
+<p>There are two kinds of picklers:</p>
 
 <ul>
-<li><em>composite</em> picklers which are derived from composition of simpler types.
+<li><p><em>primitive</em> or <em>atomic</em> picklers that are self-contained definitions 
+for simple values like primitives or strings.</p></li>
+<li><p><em>composite</em> picklers which are derived from composition of simpler types.
 Composite picklers are generated using <em>pickler combinators</em>; functions taking a collection
-of picklers as inputs yielding a composite result.</li>
+of picklers as inputs yielding a composite result.</p></li>
 </ul>
 
 <p>FsPickler is essentially an automated pickler generation framework: picklers are generated at runtime
