@@ -1,14 +1,20 @@
 ## FsPickler
 
 FsPickler is a general-purpose serialization library that focuses on completeness and performance. 
-It supports multiple, pluggable serialization formats including Xml, JSON and BSON. 
+It supports multiple, pluggable serialization formats including Binary, Xml, JSON and BSON. 
 The library is based on the functional programming concept of 
 [pickler combinators](http://lambda-the-ultimate.org/node/2243) 
 which has been adapted to accommodate the object oriented nature of the .NET framework.
 
+Packages of the library are available on Nuget [[1](http://www.nuget.org/packages/FsPickler),[2](http://www.nuget.org/packages/FsPickler.Json),[3](http://www.nuget.org/packages/FsPickler.CSharp)].
+
 ### Documentation
 
-Detailed documentation, tutorials and benchmarks can be found [here](http://nessos.github.io/FsPickler/).
+* [Tutorial](http://nessos.github.io/FsPickler/tutorial.html) A short introduction to FsPickler.
+* [Performance](https://github.com/nessos/FsPickler/wiki/Performance) Benchmarks comparing FsPickler to other established serialization libraries.
+* [API Reference](http://nessos.github.io/FsPickler/reference/index.html) Auto-generated library documentation.
+
+All documentation and related material can be found [here](http://nessos.github.io/FsPickler/).
 
 ### Build Status
 
