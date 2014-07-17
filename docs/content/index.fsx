@@ -44,14 +44,14 @@ binary.UnPickle<int option list> pickle
 ## Why FsPickler?
 
 The principal motivation behind creating FsPickler is the need for a
-library that offers efficient, correct and complete support for serializable
-objects in the .NET framework. It is aimed at providing a foundation for
-communication of arbitrary objects between .NET processes.
+library that provides efficient, correct and complete serialization of
+objects in the CLR and mono runtime. It is aimed at providing a foundation for
+large-scale distributed computation that is based on the .NET framework.
 
 FsPickler is ideally suited for serializing:
 
  * Large and complex objects, such as dictionaries, trees and cyclic objects.
- * Abstract classes, inherited classes, delegates and closures.
+ * Abstract classes, subtypes, nulls, delegates and closures.
  * ISerializable, IDeserializationCallback or attribute-based serializable types.
  * F# unions, records and quotations.
  * Inaccessible types or types unknown at compile time.
@@ -59,7 +59,7 @@ FsPickler is ideally suited for serializing:
 FsPickler is NOT:
 
  * a general-purpose XML/JSON/BSON framework.
- * designed for cross-platform communication.
+ * a library designed for cross-platform communication.
 
 ## Documentation & Technical Overview
 
@@ -69,8 +69,11 @@ A collection of tutorials, technical overviews and API references of the library
 
  * [Technical Overview](overview.html) a walkthrough of the library's implementation details.
 
+ * [Performance](https://github.com/nessos/FsPickler/wiki/Performance) a collection of benchmarks comparing FsPickler
+   to other established serialization libraries.
+
  * [API Reference](reference/index.html) contains automatically generated documentation for all types, modules
-   and functions in the library. This includes additional brief samples on using most of the functions.
+   and functions in the library.
  
 ## Contributing and copyright
 

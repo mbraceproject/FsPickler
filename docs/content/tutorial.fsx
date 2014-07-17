@@ -80,7 +80,7 @@ FsPickler offers support for on-demand sequence serialization/deserialization:
 
 *)
 
-let seq = Seq.initInfinite id |> Seq.map string |> Seq.take 100
+let seq = Seq.initInfinite string |> Seq.take 100
 
 let length = binary.SerializeSequence(stream, seq) // returns the length of serialized elements
 let seq' = binary.DeserializeSequence<int>(stream) // lazy deserialization IEnumerable
@@ -109,13 +109,14 @@ which defines the serialization/deserialization rules for a given type.
 Picklers are strongly typed and perform serialization without reflection
 or intermediate boxings.
 
-There are two kinds of picklers: 
- * *primitive* or *atomic* picklers that are self-contained definitions 
-   for simple values like primitives or strings.
+There are two kinds of picklers:
 
- * *composite* picklers which are derived from composition of simpler types.
-    Composite picklers are generated using *pickler combinators*; functions taking a collection
-    of picklers as inputs yielding a composite result.
+ * Primitive or atomic picklers that are self-contained definitions 
+   for simple values like primitives, strings or timespans.
+
+ * Composite picklers which are derived from composition of simpler types.
+   They are generated using *pickler combinators*, functions taking a collection
+   of picklers as inputs yielding a composite result.
 
 FsPickler is essentially an automated pickler generation framework: picklers are generated at runtime
 using a combination of reflection and dynamic IL generation. Picklers are cached upon creation, hence the
@@ -294,7 +295,7 @@ type CustomClass<'T, 'S> (x : 'T, y : 'S) =
 (**
 
 This tells FsPickler to generate a pickler for the given type using
-that particular factory method. It should be noted that the ``read``/``write``
+that particular factory method. It should be noted that the ``Read``/``Write``
 operations are not commutative, hence care should be taken so that ordering is matched. 
 The ``IPicklerResolver`` argument provides a handle to the pickler generator and can be used recursively:
 
