@@ -2,7 +2,8 @@
 
 FsPickler is a general-purpose serialization library that focuses on completeness and performance. 
 It supports multiple, pluggable serialization formats including Xml, JSON and BSON. 
-The library is based on the functional programming concept of pickler combinators 
+The library is based on the functional programming concept of 
+[pickler combinators](http://lambda-the-ultimate.org/node/2243) 
 which has been adapted to accommodate the object oriented nature of the .NET framework.
 
 ### Documentation
