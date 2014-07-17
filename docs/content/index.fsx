@@ -63,7 +63,14 @@ FsPickler is NOT:
 
 ## Documentation & Technical Overview
 
-Coming soon.
+A collection of tutorials, technical overviews and API references of the library.
+
+ * [Tutorial](tutorial.html) Contains a walkthrough of the basic functionalities found in the library.
+
+ * [Technical Overview](overview.html) a walkthrough of the library's implementation details.
+
+ * [API Reference](reference/index.html) contains automatically generated documentation for all types, modules
+   and functions in the library. This includes additional brief samples on using most of the functions.
  
 ## Contributing and copyright
 

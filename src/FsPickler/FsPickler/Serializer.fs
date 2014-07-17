@@ -27,6 +27,10 @@
 
         member internal __.Resolver = resolver
         member internal __.ReflectionCache = reflectionCache
+
+        /// <summary>
+        ///     Description of the pickle format used by the serializer.
+        /// </summary>
         member __.PickleFormat = formatProvider.Name
 
         /// <summary>Serialize value to the underlying stream.</summary>
