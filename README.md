@@ -6,11 +6,11 @@ The library is based on the functional programming concept of
 [pickler combinators](http://lambda-the-ultimate.org/node/2243) 
 which has been adapted to accommodate the object oriented nature of the .NET framework.
 
-### Documentation
+## Documentation
 
 Detailed documentation, tutorials and benchmarks can be found [here](http://nessos.github.io/FsPickler/).
 
-### Build Status
+## Build Status
 
 Head (branch `master`), Build & Unit tests
 
