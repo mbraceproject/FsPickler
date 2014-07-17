@@ -10,11 +10,11 @@ Packages of the library are available on Nuget [[1](http://www.nuget.org/package
 
 ### Documentation
 
-All documentation, tutorials and benchmarks can be found [here](http://nessos.github.io/FsPickler/).
-
 * [Tutorial](http://nessos.github.io/FsPickler/tutorial.html) A short introduction to FsPickler.
 * [Performance](https://github.com/nessos/FsPickler/wiki/Performance) Benchmarks comparing FsPickler to other established serialization libraries.
 * [API Reference](http://nessos.github.io/FsPickler/reference/index.html) Auto-generated library documentation.
+
+All documentation and related material can be found [here](http://nessos.github.io/FsPickler/).
 
 ### Build Status
 
