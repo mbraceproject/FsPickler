@@ -1,3 +1,7 @@
+### 0.9.8
+* API improvements.
+* Added XML documentation.
+
 #### 0.9.7
 * Add support for BSON format.
 

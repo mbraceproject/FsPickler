@@ -83,6 +83,7 @@
     <Compile Include="JsonFormat.fs" />
     <Compile Include="BsonFormat.fs" />
     <Compile Include="JsonSerializer.fs" />
+    <Compile Include="Combinators.fs" />
     <None Include="Test.fsx" />
     <None Include="packages.config" />
   </ItemGroup>
