@@ -57,12 +57,21 @@
         member c.GetParameterTypes() = c.GetParameters() |> Array.map (fun p -> p.ParameterType)
 
     let private memberNameRegex = new System.Text.RegularExpressions.Regex(@"[^a-zA-Z0-9]")
+    let getNormalizedName (text : string) = 
+        match memberNameRegex.Replace(text, "") with
+        | name when String.IsNullOrEmpty name -> raise <| new FormatException(sprintf "invalid tag name '%s'" text)
+        | name -> name
+
     type MemberInfo with
         /// normalizes member name into a serialializable string.
-        member m.NormalizedName = memberNameRegex.Replace(m.Name, "")
+        member m.NormalizedName = getNormalizedName m.Name
 
     let containsAttr<'T when 'T :> Attribute> (m : MemberInfo) =
         m.GetCustomAttributes(typeof<'T>, true) |> Seq.isEmpty |> not
+
+    let tryGetAttr<'T when 'T :> Attribute> (m : MemberInfo) =
+        m.GetCustomAttributes(typeof<'T>, true) 
+        |> Seq.tryPick (function :? 'T as t -> Some t | _ -> None)
 
     let wrapDelegate<'Dele when 'Dele :> Delegate> (ms : MethodInfo []) =
         let wrap m = Delegate.CreateDelegate(typeof<'Dele>, m) :?> 'Dele
@@ -71,12 +80,15 @@
     let inline getStreamingContext (x : ^T when ^T : (member StreamingContext : StreamingContext)) =
         ( ^T : (member StreamingContext : StreamingContext) x)
 
-    let rec isISerializable (t : Type) =
-        if typeof<ISerializable>.IsAssignableFrom t then true
+    /// correctly resolves if type is assignable to interface
+    let rec isAssignableFrom (interfaceTy : Type) (ty : Type) =
+        if interfaceTy.IsAssignableFrom ty then true
         else
-            match t.BaseType with
+            match ty.BaseType with
             | null -> false
-            | bt -> isISerializable bt
+            | bt -> isAssignableFrom interfaceTy bt
+
+    let isISerializable (t : Type) = isAssignableFrom typeof<ISerializable> t
 
     /// returns all methods of type `StreamingContext -> unit` and given Attribute
     let getSerializationMethods<'Attr when 'Attr :> Attribute> (ms : MethodInfo []) =
@@ -94,21 +106,18 @@
     let isNullableType(t : Type) =
         t.IsGenericType && t.GetGenericTypeDefinition() = typedefof<Nullable<_>>
 
-    /// walks up the type hierarchy, gathering all instance fields
-    let gatherFields (t : Type) =
+    /// walks up the type hierarchy, gathering all instance members
+    let gatherMembers (t : Type) =
         // resolve conflicts, index by declaring type and field name
-        let gathered = ref Map.empty<string * string, (* index *) int * FieldInfo>
+        let gathered = ref Map.empty<string * string, (* index *) int * MemberInfo>
         let i = ref 0
 
-        let isSerializableField (f : FieldInfo) =
-            not (f.IsLiteral || f.IsNotSerialized)
-
         let rec gather (t : Type) =
-            let fields = t.GetFields(allFields)
-            for f in fields do
-                let k = f.DeclaringType.AssemblyQualifiedName, f.Name
-                if isSerializableField f && not <| gathered.Value.ContainsKey k then
-                    gathered := gathered.Value.Add(k, (!i, f))
+            let members = t.GetMembers(allFields)
+            for m in members do
+                let k = m.DeclaringType.AssemblyQualifiedName, m.ToString()
+                if not <| gathered.Value.ContainsKey k then
+                    gathered := gathered.Value.Add(k, (!i, m))
                     incr i
 
             match t.BaseType with
@@ -121,9 +130,18 @@
         gathered.Value 
         |> Map.toSeq
         |> Seq.map snd
-        |> Seq.sortBy fst // sort by index; this is to preserve field serialization ordering
+        |> Seq.sortBy fst // sort by index; this is to preserve member serialization ordering
         |> Seq.map snd
         |> Seq.toArray
+
+    let gatherSerializableFields (t : Type) =
+        let isSerializableField (m : MemberInfo) =
+            match m with
+            | :? FieldInfo as f when not (f.IsLiteral || f.IsNotSerialized) -> Some f
+            | _ -> None
+
+        t |> gatherMembers |> Array.choose isSerializableField
+            
 
 
 
@@ -205,7 +223,7 @@
             // leaves with open hiearchies are treated as recursive by definition
             elif not t.IsSealed then true
             else
-                gatherFields t
+                gatherSerializableFields t
                 |> Seq.map (fun f -> f.FieldType)
                 |> Seq.distinct
                 |> Seq.exists (aux (d+1) ((d,false,true,t) :: traversed))
@@ -231,6 +249,6 @@
             |> Seq.distinct
             |> Seq.forall(fun f -> isOfFixedSize f.PropertyType)
         else
-            gatherFields t
+            gatherSerializableFields t
             |> Seq.distinct
             |> Seq.forall (fun f -> isOfFixedSize f.FieldType)

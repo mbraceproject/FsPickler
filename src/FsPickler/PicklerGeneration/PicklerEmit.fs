@@ -78,7 +78,7 @@
                                     (picklers : EnvItem<Pickler []>)
                                     (parent : EnvItem<'T>) (ilGen : ILGenerator) =
 
-            let isStruct = fields.Length > 0 && fields.[0].DeclaringType.IsValueType
+            let isStruct = typeof<'T>.IsValueType
 
             for i = 0 to fields.Length - 1 do
                 let f = fields.[i]
@@ -119,6 +119,33 @@
                 ilGen.EmitCall(OpCodes.Call, m, null)
                 // perform serialization
                 emitSerialize m.ReturnType ilGen
+
+        let emitDeserializeProperties (properties : PropertyInfo [])
+                                        (tags : string [])
+                                        (reader : EnvItem<ReadState>)
+                                        (picklers : EnvItem<Pickler []>)
+                                        (parent : EnvItem<'T>) (ilGen : ILGenerator) =
+
+            let isStruct = typeof<'T>.IsValueType
+
+            for i = 0 to properties.Length - 1 do
+                let p = properties.[i]
+                let m = p.GetSetMethod(true)
+                // load parent object to the stack
+                if isStruct then parent.LoadAddress ()
+                else
+                    parent.Load ()
+
+                // load typed pickler to the stack
+                emitLoadPickler picklers p.PropertyType i ilGen
+                // load reader to the stack
+                reader.Load ()
+                // load field name
+                ilGen.Emit(OpCodes.Ldstr, tags.[i])
+                // deserialize and load to the stack
+                emitDeserialize p.PropertyType ilGen
+                // call the property setter
+                ilGen.EmitCall(OpCodes.Call, m, null)
 
         /// deserialize fields, pass to factory method and push to stack
         let emitDeserializeAndConstruct (factory : Choice<MethodInfo,ConstructorInfo>)

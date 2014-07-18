@@ -20,13 +20,14 @@
         | Primitive = 2
         | Class = 3
         | ISerializable = 4
-        | Delegate = 5
-        | Enum = 6
-        | Nullable = 7
-        | Array = 8
-        | Tuple = 9
-        | FSharpType = 10
-        | Dictionary = 11
+        | DataContract = 5
+        | Delegate = 6
+        | Enum = 7
+        | Nullable = 8
+        | Array = 9
+        | Tuple = 10
+        | FSharpType = 11
+        | Dictionary = 12
 
     [<AbstractClass>]
     type TypeShape internal () =
@@ -64,6 +65,11 @@
         inherit TypeShape<'T>()
         override __.Shape = Shape.ISerializable
         override __.Accept (v : ITypeShapeVisitor<'R>) = v.ISerializable<'T> ()
+
+    and ShapeDataContract<'T> () =
+        inherit TypeShape<'T> ()
+        override __.Shape = Shape.DataContract
+        override __.Accept (v : ITypeShapeVisitor<'R>) = v.DataContract<'T> ()
 
     and ShapeDelegate<'T when 'T :> Delegate> () =
         inherit TypeShape<'T>()
@@ -228,6 +234,7 @@
         abstract Abstract<'T> : unit -> 'R
         abstract Class<'T when 'T : not struct> : unit -> 'R
         abstract ISerializable<'T when 'T :> ISerializable> : unit -> 'R
+        abstract DataContract<'T> : unit -> 'R
         abstract Delegate<'D when 'D :> Delegate> : unit -> 'R
         abstract Enum<'Enum, 'Underlying when 'Enum : enum<'Underlying>> : unit -> 'R
 
@@ -408,6 +415,8 @@
 
                 elif typeof<Delegate>.IsAssignableFrom t then
                     activate1 typedefof<ShapeDelegate<_>> t
+                elif containsAttr<DataContractAttribute> t then
+                    activate1 typedefof<ShapeDataContract<_>> t
                 elif isISerializable t then
                     activate1 typedefof<ShapeISerializable<_>> t
                 else

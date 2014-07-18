@@ -129,6 +129,23 @@
                 | :? GenericISerializableClass<'T> as y -> x.X = y.X && x.Y = y.Y
                 | _ -> false
 
+        [<DataContract>]
+        type DataContractClass<'T> =
+            
+            val mutable private x : 'T
+            val mutable private y : string
+
+            new(x : 'T, y : string) = { x = x ; y = y }
+
+            [<DataMember>]
+            member __.A
+                with get () = __.x
+                and set (t : 'T) = __.x <- t
+
+            member __.B
+                with get () = __.y
+                and set (t : string) = __.y <- t
+
         [<CustomPickler>]
         type ClassWithPicklerFactory (x : int) =
 

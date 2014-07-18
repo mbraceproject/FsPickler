@@ -14,7 +14,7 @@
     /// <summary>
     ///     Json format deserializer
     /// </summary>
-    type JsonPickleReader internal (jsonReader : JsonReader, omitHeader, isTopLevelSequence, leaveOpen) =
+    type internal JsonPickleReader (jsonReader : JsonReader, omitHeader, isTopLevelSequence, leaveOpen) =
 
         do
             jsonReader.CloseInput <- not leaveOpen

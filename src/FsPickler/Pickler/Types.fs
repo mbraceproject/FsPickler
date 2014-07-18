@@ -31,12 +31,13 @@
         | Object                = 1uy
         | ReflectionType        = 2uy
         | FieldSerialization    = 3uy
-        | ISerializable         = 4uy
-        | Array                 = 5uy
-        | FSharpValue           = 6uy // tuples, records and DUs
-        | Delegate              = 7uy
-        | Combinator            = 8uy
-        | UserDefined           = 9uy
+        | DataContract          = 4uy
+        | ISerializable         = 5uy
+        | Array                 = 6uy
+        | FSharpValue           = 7uy // tuples, records and DUs
+        | Delegate              = 8uy
+        | Combinator            = 9uy
+        | UserDefined           = 10uy
 
     /// Specifies runtime properties of serialized objects.
 
@@ -235,7 +236,7 @@
             let message =
                 match message with
                 | None -> sprintf "Error generating pickler for type '%O'." t
-                | Some msg -> sprintf "Error generating pickler for type '%O': %s." t msg
+                | Some msg -> sprintf "Error generating pickler for type '%O': %s" t msg
 
             { 
                 inherit FsPicklerException(message, defaultArg inner null)

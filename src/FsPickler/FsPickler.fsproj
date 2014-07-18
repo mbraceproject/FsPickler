@@ -112,8 +112,9 @@
     <Compile Include="Combinators\Collections.fs" />
     <Compile Include="PicklerGeneration\TypeShape.fs" />
     <Compile Include="PicklerGeneration\PicklerEmit.fs" />
-    <Compile Include="PicklerGeneration\FieldPicklerGen.fs" />
-    <Compile Include="PicklerGeneration\ISerializableGen.fs" />
+    <Compile Include="PicklerGeneration\FieldPickler.fs" />
+    <Compile Include="PicklerGeneration\ISerializablePickler.fs" />
+    <Compile Include="PicklerGeneration\DataContractPickler.fs" />
     <Compile Include="PicklerGeneration\FSharpTypeGen.fs" />
     <Compile Include="PicklerGeneration\CustomPickler.fs" />
     <Compile Include="PicklerGeneration\PicklerFactory.fs" />
@@ -138,6 +139,7 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
+    <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />

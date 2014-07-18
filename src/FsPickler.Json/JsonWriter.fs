@@ -11,7 +11,7 @@
     /// <summary>
     ///     Json format serializer.
     /// </summary>
-    type JsonPickleWriter internal (jsonWriter : JsonWriter, omitHeader, indented, isTopLevelSequence, separator, leaveOpen) =
+    type internal JsonPickleWriter (jsonWriter : JsonWriter, omitHeader, indented, isTopLevelSequence, separator, leaveOpen) =
 
         do 
             jsonWriter.Formatting <- if indented then Formatting.Indented else Formatting.None

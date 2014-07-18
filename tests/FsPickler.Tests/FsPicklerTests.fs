@@ -515,6 +515,14 @@
         member __.``6. Custom: Generic ISerializable class`` () = testEquals <| GenericISerializableClass<int * string>(42, "fortyTwo", (42, "fortyTwo"))
 
         [<Test ; Category("Custom types")>] 
+        member __.``6. Custom: Data Contract class`` () =
+            let value = new DataContractClass<int option>(Some 42, "value")
+            let value' = testRoundtrip value
+            value.A |> should equal value'.A
+            value.B |> should not' (equal value'.B)
+
+
+        [<Test ; Category("Custom types")>] 
         member __.``6. Custom: struct`` () =
             let s = new StructType(42, "foobar") |> testRoundtrip
             s.X |> should equal 42

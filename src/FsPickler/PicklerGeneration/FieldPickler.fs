@@ -21,7 +21,8 @@
 
         static member Create<'T when 'T : struct>(resolver : IPicklerResolver) =
 
-            let fields = gatherFields typeof<'T>
+            let t = typeof<'T>
+            let fields = gatherSerializableFields t
             let picklers = fields |> Array.map (fun f -> resolver.Resolve f.FieldType)
             let tags = fields |> Array.map (fun f -> f.NormalizedName)
 
@@ -79,13 +80,13 @@
                 raise <| new NonSerializableTypeException(typeof<'T>)
 
             let fields = 
-                gatherFields typeof<'T>
+                gatherSerializableFields typeof<'T>
                 |> Array.filter (not << containsAttr<NonSerializedAttribute>)
 
             let picklers = fields |> Array.map (fun f -> resolver.Resolve f.FieldType)
             let tags = fields |> Array.map (fun f -> f.NormalizedName)
 
-            let isDeserializationCallback = typeof<IDeserializationCallback>.IsAssignableFrom typeof<'T>
+            let isDeserializationCallback = isAssignableFrom typeof<IDeserializationCallback> typeof<'T>
 
             let allMethods = typeof<'T>.GetMethods(allMembers)
             let onSerializing = allMethods |> getSerializationMethods<OnSerializingAttribute>
