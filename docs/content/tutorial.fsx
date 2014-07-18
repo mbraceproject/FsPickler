@@ -55,7 +55,7 @@ that is byte arrays containing the serialized values:
 *)
 
 let pickle = binary.Pickle <@ 1 + 1 @>
-binary.UnPickle<Quotations.Expr> pickle
+binary.UnPickle<Quotations.Expr<int>> pickle
 
 (**
 
