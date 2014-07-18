@@ -51,14 +51,19 @@ large-scale distributed computation that is based on the .NET framework.
 FsPickler is ideally suited for serializing:
 
  * Large and complex objects, such as dictionaries, trees and cyclic objects.
+
  * Abstract classes, subtypes, nulls, delegates and closures.
- * ISerializable, DataContract or attribute-based serializable types.
+
+ * ISerializable, DataContract or attribute-based serialization.
+
  * F# unions, records and quotations.
+
  * Inaccessible types or types unknown at compile time.
 
 FsPickler is NOT:
 
  * a general-purpose Xml/JSON/BSON framework.
+
  * a library designed for cross-platform communication.
 
 ## Documentation & Technical Overview
