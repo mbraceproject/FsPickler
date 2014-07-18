@@ -53,18 +53,25 @@
             let picklers = properties |> Array.map (fun p -> resolver.Resolve p.PropertyType)
             let names = dataContractInfo |> Array.map (fun (attr,p) -> match attr.Name with null -> p.NormalizedName | name -> getNormalizedName name)
 
+            let isDeserializationCallback = isAssignableFrom typeof<IDeserializationCallback> typeof<'T>
+
+            let allMethods = typeof<'T>.GetMethods(allMembers)
+            let onSerializing = allMethods |> getSerializationMethods<OnSerializingAttribute>
+            let onSerialized = allMethods |> getSerializationMethods<OnSerializedAttribute>
+            let onDeserializing = allMethods |> getSerializationMethods<OnDeserializingAttribute>
+            let onDeserialized = allMethods |> getSerializationMethods<OnDeserializedAttribute>
+
 #if EMIT_IL
-            let writer =
-                if properties.Length = 0 then (fun _ _ _ -> ()) 
-                else
-                    let dele =
-                        DynamicMethod.compileAction3<Pickler [], WriteState, 'T> "dataContractSerializer" (fun picklers writer parent ilGen ->
+            let writerDele =
+                DynamicMethod.compileAction3<Pickler [], WriteState, 'T> "dataContractSerializer" (fun picklers writer parent ilGen ->
 
-                            emitSerializeProperties properties names writer picklers parent ilGen
+                    emitSerializationMethodCalls onSerializing (Choice1Of2 writer) parent ilGen
 
-                            ilGen.Emit OpCodes.Ret)
+                    emitSerializeProperties properties names writer picklers parent ilGen
 
-                    fun w t v -> dele.Invoke(picklers, w, v)
+                    emitSerializationMethodCalls onSerialized (Choice1Of2 writer) parent ilGen
+
+                    ilGen.Emit OpCodes.Ret)
 
             let readerDele =
                 DynamicMethod.compileFunc2<Pickler [], ReadState, 'T> "dataContractDeserializer" (fun picklers reader ilGen ->
@@ -73,27 +80,46 @@
                     emitObjectInitializer typeof<'T> ilGen
                     value.Store ()
 
+                    emitSerializationMethodCalls onDeserializing (Choice2Of2 reader) value ilGen
+
                     emitDeserializeProperties properties names reader picklers value ilGen
+
+                    emitSerializationMethodCalls onDeserialized (Choice2Of2 reader) value ilGen
+
+                    if isDeserializationCallback then emitDeserializationCallback value ilGen
 
                     value.Load ()
                     ilGen.Emit OpCodes.Ret
                 )
 
+            let writer w t v = writerDele.Invoke(picklers, w, v)
             let reader r t = readerDele.Invoke(picklers, r)
                 
 #else
-            let writer (w : WriteState) (tag : string) (value : 'T) =
+            let inline run (ms : MethodInfo []) (x : obj) w =
+                for i = 0 to ms.Length - 1 do 
+                    ms.[i].Invoke(x, [| getStreamingContext w :> obj |]) |> ignore
+
+            let writer (w : WriteState) (tag : string) (t : 'T) =
+                run onSerializing t w
+
                 for i = 0 to properties.Length - 1 do
-                    let v = properties.[i].GetValue value
-                    picklers.[i].UntypedWrite w names.[i] v
+                    let value = properties.[i].GetValue t
+                    picklers.[i].UntypedWrite w names.[i] value
+
+                run onSerialized t w
 
             let reader (r : ReadState) (tag : string) =
-                let value = FormatterServices.GetUninitializedObject(t) |> fastUnbox<'T>
-                for i = 0 to properties.Length - 1 do
-                    let v = picklers.[i].UntypedRead r names.[i]
-                    properties.[i].SetValue(value, v)
+                let t = FormatterServices.GetUninitializedObject(t) |> fastUnbox<'T>
+                run onDeserializing t r
 
-                value
+                for i = 0 to properties.Length - 1 do
+                    let value = picklers.[i].UntypedRead r names.[i]
+                    properties.[i].SetValue(t, value)
+
+                run onDeserialized t r
+                if isDeserializationCallback then (fastUnbox<IDeserializationCallback> t).OnDeserialization null
+                t
 #endif
 
             CompositePickler.Create(reader, writer, PicklerInfo.DataContract, cacheByRef = cacheByRef, useWithSubtypes = false)
