@@ -51,7 +51,7 @@
 
             let properties = dataContractInfo |> Array.map snd
             let picklers = properties |> Array.map (fun p -> resolver.Resolve p.PropertyType)
-            let names = dataContractInfo |> Array.map (fun (attr,p) -> match attr.Name with null -> p.NormalizedName | name -> getNormalizedName name)
+            let names = dataContractInfo |> Array.map (fun (attr,p) -> match attr.Name with null | "" -> p.NormalizedName | name -> getNormalizedName name)
 
             let isDeserializationCallback = isAssignableFrom typeof<IDeserializationCallback> typeof<'T>
 

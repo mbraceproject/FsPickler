@@ -1,3 +1,6 @@
+### 0.9.9
+* Add DataContract serialization support.
+
 ### 0.9.8
 * API improvements.
 * Added XML documentation.

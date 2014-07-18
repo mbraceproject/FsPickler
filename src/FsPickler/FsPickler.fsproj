@@ -112,7 +112,7 @@
     <Compile Include="Combinators\Collections.fs" />
     <Compile Include="PicklerGeneration\TypeShape.fs" />
     <Compile Include="PicklerGeneration\PicklerEmit.fs" />
-    <Compile Include="PicklerGeneration\FieldPickler.fs" />
+    <Compile Include="PicklerGeneration\FieldPicklers.fs" />
     <Compile Include="PicklerGeneration\ISerializablePickler.fs" />
     <Compile Include="PicklerGeneration\DataContractPickler.fs" />
     <Compile Include="PicklerGeneration\FSharpTypeGen.fs" />
