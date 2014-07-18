@@ -52,7 +52,7 @@ FsPickler is ideally suited for serializing:
 
  * Large and complex objects, such as dictionaries, trees and cyclic objects.
  * Abstract classes, subtypes, nulls, delegates and closures.
- * ISerializable, IDeserializationCallback or attribute-based serializable types.
+ * ISerializable, DataContract or attribute-based serializable types.
  * F# unions, records and quotations.
  * Inaccessible types or types unknown at compile time.
 
