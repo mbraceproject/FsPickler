@@ -38,6 +38,7 @@
             member __.Class<'T when 'T : not struct> () = ClassFieldPickler.Create<'T> resolver :> Pickler
             member __.ISerializable<'T when 'T :> ISerializable> () = ISerializablePickler.Create<'T> resolver :> Pickler
             member __.DataContract<'T> () = DataContractPickler.Create<'T> resolver :> Pickler
+            member __.CustomPickler<'T> () = CustomPickler.Create<'T> resolver :> Pickler
             member __.Struct<'T when 'T : struct> () = StructFieldPickler.Create<'T> resolver :> Pickler
             member __.Delegate<'T when 'T :> Delegate> () = DelegatePickler.Create<'T> resolver :> Pickler
             member __.Enum<'E, 'U when 'E : enum<'U>> () = EnumPickler.Create<'E,'U> resolver :> Pickler

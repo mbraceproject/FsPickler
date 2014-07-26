@@ -21,13 +21,14 @@
         | Class = 3
         | ISerializable = 4
         | DataContract = 5
-        | Delegate = 6
-        | Enum = 7
-        | Nullable = 8
-        | Array = 9
-        | Tuple = 10
-        | FSharpType = 11
-        | Dictionary = 12
+        | CustomPickler = 6
+        | Delegate = 7
+        | Enum = 8
+        | Nullable = 9
+        | Array = 10
+        | Tuple = 11
+        | FSharpType = 12
+        | Dictionary = 13
 
     [<AbstractClass>]
     type TypeShape internal () =
@@ -70,6 +71,11 @@
         inherit TypeShape<'T> ()
         override __.Shape = Shape.DataContract
         override __.Accept (v : ITypeShapeVisitor<'R>) = v.DataContract<'T> ()
+
+    and ShapeCustomPickler<'T> () =
+        inherit TypeShape<'T> ()
+        override __.Shape = Shape.CustomPickler
+        override __.Accept (v : ITypeShapeVisitor<'R>) = v.CustomPickler<'T> ()
 
     and ShapeDelegate<'T when 'T :> Delegate> () =
         inherit TypeShape<'T>()
@@ -235,6 +241,7 @@
         abstract Class<'T when 'T : not struct> : unit -> 'R
         abstract ISerializable<'T when 'T :> ISerializable> : unit -> 'R
         abstract DataContract<'T> : unit -> 'R
+        abstract CustomPickler<'T> : unit -> 'R
         abstract Delegate<'D when 'D :> Delegate> : unit -> 'R
         abstract Enum<'Enum, 'Underlying when 'Enum : enum<'Underlying>> : unit -> 'R
 
@@ -364,6 +371,9 @@
                 | 7 -> activate typedefof<ShapeTuple<_,_,_,_,_,_,_>> gas
                 | 8 -> activate typedefof<ShapeTuple<_,_,_,_,_,_,_,_>> gas
                 | _ -> raise UnSupportedShape
+
+            elif containsAttr<CustomPicklerAttribute> t then
+                activate1 typedefof<ShapeCustomPickler<_>> t
 
             elif FSharpType.IsUnion(t, allMembers) then
                 match t with

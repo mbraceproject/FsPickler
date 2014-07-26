@@ -76,17 +76,7 @@
                 else
                     None
 
-            // step 2: check for [<CustomPickler>] attributes
-            let result =
-                match result with
-                | Some _ -> result
-                | None ->
-                    if containsAttr<CustomPicklerAttribute> t then
-                        Some <| CustomPickler.Create(t, resolver)
-                    else
-                        None
-
-            // step 3: consult the pickler factory.
+            // step 2: consult the pickler factory.
             let pickler =
                 match result with
                 | Some r -> r
@@ -94,7 +84,7 @@
                     let factory = new PicklerFactory(resolver)
                     shape.Accept factory
 
-            // step 4; pickler generation complete, copy data to uninitialized binding and return it
+            // step 3; pickler generation complete, copy data to uninitialized binding and return it
             p0.Unpack
                 {
                     // should be IPicklerUnpacker<unit> but F# does not allow this
