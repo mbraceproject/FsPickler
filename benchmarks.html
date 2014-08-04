@@ -36,53 +36,56 @@
 <h1>Performance</h1>
 
 <p>How does FsPickler compare against other .Net serialization libraries in terms of performance? 
-In this section we present a few microbenchmarks: we compared FsPickler against <code>BinaryFormatter</code>, 
-<code>NetDataContractSerializer</code>, <code>Json.Net</code>, ServiceStack's <code>TypeSerializer</code> and <code>ProtoBuf-Net</code>. 
+In this section we present a few microbenchmarks: we compared FsPickler against 
+<a href="http://msdn.microsoft.com/en-us/library/system.runtime.serialization.formatters.binary.binaryformatter.aspx">BinaryFormatter</a>, 
+<a href="http://msdn.microsoft.com/en-us/library/system.runtime.serialization.netdatacontractserializer.aspx">NetDataContractSerializer</a>, 
+<a href="http://james.newtonking.com/json">Json.Net</a>, <a href="https://www.nuget.org/packages/ServiceStack.Text/4.0.15">ServiceStack.Text</a> and
+<a href="https://code.google.com/p/protobuf-net/">ProtoBuf-Net</a>. 
 Code used to run the tests is available in the 
 <a href="https://github.com/nessos/FsPickler/tree/master/tests/FsPickler.PerfTests">FsPickler.PerfTests</a> project. 
 Performance testing was done using the <a href="https://github.com/eiriktsarpalis/PerfUtil">PerfUtil</a> library. 
 Serializers that do not appear in charts failed to execute the roundtrip. 
 Benchmarks are indicative and in no way scientific.</p>
 
-<h2>Execution Time</h2>
+<h2>1. Execution Time</h2>
 
-<h3>Test 1: System.Tuple</h3>
+<h3>System.Tuple</h3>
 
 <img src="benchmarks/time/tuple.png" />
 
-<h3>Test 2: Array of Tuples</h3>
+<h3>Array of Tuples</h3>
 
 <img src="benchmarks/time/tupleArray.png" />
 
-<h3>Test 3: Simple Record Class</h3>
+<h3>Simple Record Class</h3>
 
 <img src="benchmarks/time/class.png" />
 
-<h3>Test 4: ISerializable Class</h3>
+<h3>ISerializable Class</h3>
 
 <img src="benchmarks/time/iserializable.png" />
 
-<h3>Test 5: Generic Dictionary</h3>
+<h3>Generic Dictionary</h3>
 
 <img src="benchmarks/time/dictionary.png" />
 
-<h3>Test 6: Binary Tree</h3>
+<h3>Binary Tree</h3>
 
 <img src="benchmarks/time/binaryTree.png" />
 
-<h3>Test 7: F# list</h3>
+<h3>F# list</h3>
 
 <img src="benchmarks/time/list.png" />
 
-<h3>Test 8: Array 3D (float, 200 x 200 x 200)</h3>
+<h3>Array 3D (float, 200 x 200 x 200)</h3>
 
 <img src="benchmarks/time/array3D.png" />
 
-<h3>Test 9: F# Quotation</h3>
+<h3>F# Quotation</h3>
 
 <img src="benchmarks/time/quotation.png" />
 
-<h3>Test 10: Random object graph (n = 500, Pb = 20%)</h3>
+<h3>Random object graph (n = 500, Pb = 20%)</h3>
 
 <img src="benchmarks/time/random.png" />
 
