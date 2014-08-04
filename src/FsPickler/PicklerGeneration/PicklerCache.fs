@@ -42,7 +42,7 @@
             let ok, p = dict.TryGetValue t
             if ok then p
             else
-                generatePickler cache t
+                YParametric cache resolvePickler t
 
         interface IPicklerResolver with
             member r.IsSerializable (t : Type) = (resolve t).IsValue
