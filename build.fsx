@@ -267,7 +267,7 @@ Target "Default" DoNothing
   ==> "AssemblyInfo"
   ==> "Prepare"
   ==> "Build"
-//  ==> "RunTests"
+  ==> "RunTests"
   ==> "Default"
 
 "Default"
@@ -280,5 +280,5 @@ Target "Default" DoNothing
   ==> "NuGet -- FsPickler.CSharp"
   ==> "Release"
 
-RunTargetOrDefault "Release"
-//RunTargetOrDefault "Default"
+//RunTargetOrDefault "Release"
+RunTargetOrDefault "Default"
