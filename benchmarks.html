@@ -42,12 +42,14 @@ In this section we present a few microbenchmarks: we compared FsPickler against
 <a href="http://james.newtonking.com/json">Json.Net</a>, <a href="https://www.nuget.org/packages/ServiceStack.Text/4.0.15">ServiceStack.Text</a> and
 <a href="https://code.google.com/p/protobuf-net/">ProtoBuf-Net</a>. 
 Code used to run the tests is available in the 
-<a href="https://github.com/nessos/FsPickler/tree/master/tests/FsPickler.PerfTests">FsPickler.PerfTests</a> project. 
-Performance testing was done using the <a href="https://github.com/eiriktsarpalis/PerfUtil">PerfUtil</a> library. 
-Serializers that do not appear in charts failed to execute the roundtrip. 
-Benchmarks are indicative and in no way scientific.</p>
+<a href="https://github.com/nessos/FsPickler/tree/master/tests/FsPickler.PerfTests">FsPickler.PerfTests</a> project.</p>
 
-<h2>1. Execution Time</h2>
+<h2>Execution Time</h2>
+
+<p>The first set of tests measures execution time.
+Performance testing was done using the <a href="https://github.com/eiriktsarpalis/PerfUtil">PerfUtil</a> library. 
+Libraries not appearing in the charts failed to serialize the tested objects.
+Benchmarks are indicative and in no way scientific.</p>
 
 <h3>System.Tuple</h3>
 
@@ -88,6 +90,55 @@ Benchmarks are indicative and in no way scientific.</p>
 <h3>Random object graph (n = 500, Pb = 20%)</h3>
 
 <img src="benchmarks/time/random.png" />
+
+<h2>Serialization Size</h2>
+
+<p>The second set of tests compare the size (in bytes) of serialized objects.
+Libraries not appearing in the charts failed to serialize the tested objects.</p>
+
+<h2>System.Integer</h2>
+
+<img src="benchmarks/size/integer.png" />
+
+<h2>System.Tuple</h2>
+
+<img src="benchmarks/size/pair.png" />
+
+<h2>Integer Array</h2>
+
+<img src="benchmarks/size/intarray.png" />
+
+<h2>3D float Array (100x100x100)</h2>
+
+<img src="benchmarks/size/array.png" />
+
+<h2>F# Integer List</h2>
+
+<img src="benchmarks/size/intlist.png" />
+
+<h2>F# List of Pairs</h2>
+
+<img src="benchmarks/size/pairlist.png" />
+
+<h2>Record</h2>
+
+<img src="benchmarks/size/record.png" />
+
+<h2>Dictionary of Records</h2>
+
+<img src="benchmarks/size/dictionary.png" />
+
+<h2>Exception (with stacktrace)</h2>
+
+<img src="benchmarks/size/exception.png" />
+
+<h2>Binary tree (balanced, depth = 10)</h2>
+
+<img src="benchmarks/size/bintree.png" />
+
+<h2>F# Quotation</h2>
+
+<img src="benchmarks/size/quotation.png" />
 
 
         </div>
