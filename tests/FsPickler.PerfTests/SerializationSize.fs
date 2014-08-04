@@ -49,9 +49,19 @@
         let plot (id : string) (t : 'T) =
             let results = 
                 serializers 
-                |> List.choose (fun s -> tryGetSize s t |> Option.map (fun r -> s.Name, r))
+                |> List.choose (fun s -> tryGetSize s t |> Option.map (fun r -> s.Name, float r))
 
-            Chart.Bar(results, Name = id, ?Title = None, YTitle = "bytes")
+            let mean = 
+                results
+                |> Seq.sumBy snd
+                |> fun s -> s / float results.Length
+
+            let title, data =
+                if mean < 1024. then "bytes", results
+                elif mean < 1024. * 1024. then "KiB", results |> List.map (fun (n,d) -> n, d / 1024.)
+                else "MiB", results |> List.map (fun (n,d) -> n, d / (1024. * 1024.))
+
+            Chart.Bar(data, Name = id, ?Title = None, YTitle = title)
             |> Chart.WithYAxis(MajorGrid = dashGrid) 
             |> Chart.WithXAxis(MajorGrid = dashGrid)
             |> fun ch -> ch.ShowChart()
