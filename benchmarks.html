@@ -48,7 +48,7 @@ Code used to run the tests is available in the
 
 <p>The first set of tests measures execution time.
 Performance testing was done using the <a href="https://github.com/eiriktsarpalis/PerfUtil">PerfUtil</a> library. 
-Libraries not appearing in the charts failed to serialize the tested objects.
+Libraries not appearing in charts failed to serialize the tested objects.
 Benchmarks are indicative and in no way scientific.</p>
 
 <h3>System.Tuple</h3>
@@ -94,49 +94,49 @@ Benchmarks are indicative and in no way scientific.</p>
 <h2>Serialization Size</h2>
 
 <p>The second set of tests compare the size (in bytes) of serialized objects.
-Libraries not appearing in the charts failed to serialize the tested objects.</p>
+Libraries not appearing in charts failed to serialize the tested objects.</p>
 
-<h2>System.Integer</h2>
+<h3>System.Integer</h3>
 
 <img src="benchmarks/size/integer.png" />
 
-<h2>System.Tuple</h2>
+<h3>System.Tuple</h3>
 
 <img src="benchmarks/size/pair.png" />
 
-<h2>Integer Array</h2>
+<h3>Integer Array (10^6 elements)</h3>
 
 <img src="benchmarks/size/intarray.png" />
 
-<h2>3D float Array (100x100x100)</h2>
+<h3>3D float Array (100x100x100)</h3>
 
 <img src="benchmarks/size/array.png" />
 
-<h2>F# Integer List</h2>
+<h3>F# Integer List (1000 elements)</h3>
 
 <img src="benchmarks/size/intlist.png" />
 
-<h2>F# List of Pairs</h2>
+<h3>F# List of Pairs (1000 elements)</h3>
 
 <img src="benchmarks/size/pairlist.png" />
 
-<h2>Record</h2>
+<h3>Record</h3>
 
 <img src="benchmarks/size/record.png" />
 
-<h2>Dictionary of Records</h2>
+<h3>Dictionary of Records (1000 entries)</h3>
 
 <img src="benchmarks/size/dictionary.png" />
 
-<h2>Exception (with stacktrace)</h2>
+<h3>Exception (with stacktrace)</h3>
 
 <img src="benchmarks/size/exception.png" />
 
-<h2>Binary tree (balanced, depth = 10)</h2>
+<h3>Binary tree (balanced, depth = 10)</h3>
 
 <img src="benchmarks/size/bintree.png" />
 
-<h2>F# Quotation</h2>
+<h3>F# Quotation</h3>
 
 <img src="benchmarks/size/quotation.png" />
 
