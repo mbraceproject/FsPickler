@@ -48,6 +48,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{69847FBC
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "content", "content", "{E2C73A7A-643B-48D0-9DBB-581778FC8C6D}"
 	ProjectSection(SolutionItems) = preProject
+		docs\content\benchmarks.md = docs\content\benchmarks.md
 		docs\content\index.fsx = docs\content\index.fsx
 		docs\content\overview.fsx = docs\content\overview.fsx
 		docs\content\tutorial.fsx = docs\content\tutorial.fsx
@@ -57,6 +58,43 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "files", "files", "{BE768967
 	ProjectSection(SolutionItems) = preProject
 		docs\files\img\fsharp.png = docs\files\img\fsharp.png
 		docs\files\img\nessos.png = docs\files\img\nessos.png
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "benchmarks", "benchmarks", "{2A53832A-B4CA-414B-8654-718F098E6B2D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "time", "time", "{7453C829-5B0A-4F2A-A59E-710C02C14852}"
+	ProjectSection(SolutionItems) = preProject
+		docs\files\benchmarks\time\array3D.png = docs\files\benchmarks\time\array3D.png
+		docs\files\benchmarks\time\binaryTree.png = docs\files\benchmarks\time\binaryTree.png
+		docs\files\benchmarks\time\bintree.png = docs\files\benchmarks\time\bintree.png
+		docs\files\benchmarks\time\class.png = docs\files\benchmarks\time\class.png
+		docs\files\benchmarks\time\cyclic.png = docs\files\benchmarks\time\cyclic.png
+		docs\files\benchmarks\time\dictionary.png = docs\files\benchmarks\time\dictionary.png
+		docs\files\benchmarks\time\fsharpBinTree.png = docs\files\benchmarks\time\fsharpBinTree.png
+		docs\files\benchmarks\time\fsharpForest.png = docs\files\benchmarks\time\fsharpForest.png
+		docs\files\benchmarks\time\iserializable.png = docs\files\benchmarks\time\iserializable.png
+		docs\files\benchmarks\time\list.png = docs\files\benchmarks\time\list.png
+		docs\files\benchmarks\time\mutual.png = docs\files\benchmarks\time\mutual.png
+		docs\files\benchmarks\time\quotation.png = docs\files\benchmarks\time\quotation.png
+		docs\files\benchmarks\time\random.png = docs\files\benchmarks\time\random.png
+		docs\files\benchmarks\time\tuple.png = docs\files\benchmarks\time\tuple.png
+		docs\files\benchmarks\time\tupleArray.png = docs\files\benchmarks\time\tupleArray.png
+		docs\files\benchmarks\time\type.png = docs\files\benchmarks\time\type.png
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "size", "size", "{1D64570E-7C74-484F-A8C1-3A634511F172}"
+	ProjectSection(SolutionItems) = preProject
+		docs\files\benchmarks\size\array.png = docs\files\benchmarks\size\array.png
+		docs\files\benchmarks\size\bintree.png = docs\files\benchmarks\size\bintree.png
+		docs\files\benchmarks\size\dictionary.png = docs\files\benchmarks\size\dictionary.png
+		docs\files\benchmarks\size\exception.png = docs\files\benchmarks\size\exception.png
+		docs\files\benchmarks\size\intarray.png = docs\files\benchmarks\size\intarray.png
+		docs\files\benchmarks\size\integer.png = docs\files\benchmarks\size\integer.png
+		docs\files\benchmarks\size\intlist.png = docs\files\benchmarks\size\intlist.png
+		docs\files\benchmarks\size\pair.png = docs\files\benchmarks\size\pair.png
+		docs\files\benchmarks\size\pairlist.png = docs\files\benchmarks\size\pairlist.png
+		docs\files\benchmarks\size\quotation.png = docs\files\benchmarks\size\quotation.png
+		docs\files\benchmarks\size\record.png = docs\files\benchmarks\size\record.png
 	EndProjectSection
 EndProject
 Global
@@ -118,5 +156,8 @@ Global
 		{69847FBC-4407-48A7-9109-C07D3164F29A} = {D0FD949B-2995-4392-AD02-E9C69BA9DFE0}
 		{E2C73A7A-643B-48D0-9DBB-581778FC8C6D} = {D0FD949B-2995-4392-AD02-E9C69BA9DFE0}
 		{BE768967-0DE8-4FB3-83EA-2841CB790B9E} = {D0FD949B-2995-4392-AD02-E9C69BA9DFE0}
+		{2A53832A-B4CA-414B-8654-718F098E6B2D} = {BE768967-0DE8-4FB3-83EA-2841CB790B9E}
+		{7453C829-5B0A-4F2A-A59E-710C02C14852} = {2A53832A-B4CA-414B-8654-718F098E6B2D}
+		{1D64570E-7C74-484F-A8C1-3A634511F172} = {2A53832A-B4CA-414B-8654-718F098E6B2D}
 	EndGlobalSection
 EndGlobal

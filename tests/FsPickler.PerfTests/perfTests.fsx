@@ -138,7 +138,7 @@ let plot yaxis (metric : PerfResult -> float) (results : PerfResult list) =
 let plotTime (results : TestSession list) = 
     results 
     |> TestSession.groupByTest
-    |> Map.iter (fun _ rs -> plot "miliseconds" (fun r -> r.Elapsed.TotalMilliseconds) rs)
+    |> Map.iter (fun _ rs -> plot "milliseconds" (fun r -> r.Elapsed.TotalMilliseconds) rs)
 
 let plotGC (results : TestSession list) =
     results

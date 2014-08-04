@@ -260,17 +260,17 @@ Target "Release" DoNothing
 
 Target "Prepare" DoNothing
 Target "PrepareRelease" DoNothing
-Target "All" DoNothing
+Target "Default" DoNothing
 
 "Clean"
   ==> "RestorePackages"
   ==> "AssemblyInfo"
   ==> "Prepare"
   ==> "Build"
-  ==> "RunTests"
-  ==> "All"
+//  ==> "RunTests"
+  ==> "Default"
 
-"All"
+"Default"
   ==> "PrepareRelease"
   ==> "Build - NET40"
   ==> "GenerateDocs"
@@ -280,5 +280,5 @@ Target "All" DoNothing
   ==> "NuGet -- FsPickler.CSharp"
   ==> "Release"
 
-//RunTargetOrDefault "Release"
-RunTargetOrDefault "All"
+RunTargetOrDefault "Release"
+//RunTargetOrDefault "Default"
