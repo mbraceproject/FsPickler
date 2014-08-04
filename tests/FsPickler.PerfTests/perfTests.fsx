@@ -27,49 +27,18 @@ open ProtoBuf
 [<AutoOpen>]
 module PerfTests =
 
-    [<ProtoContract(ImplicitFields = ImplicitFields.AllFields)>]
-    type Entry(id : int, name : string, surname : string, age : int, data : byte [], date : DateTime) =
-
-        new () = new Entry(0, "John", "Smith", 42, [| 1uy .. 100uy |], DateTime.Now)
-        member __.Id = id
-        member __.Name = name
-        member __.Surname = surname
-        member __.Age = age
-        member __.Data = data
-        member __.Date = date
-
-    [<Sealed>]
-    [<ProtoContract(ImplicitFields = ImplicitFields.AllFields)>]
-    type Tree<'T> (value : 'T, children : Tree<'T> []) =
-        
-        new () = Tree<'T>(Unchecked.defaultof<'T>, [||])
-        
-        member __.Value = value
-        member __.Children = children
-
-        member __.NodeCount =
-            1 + (children |> Array.sumBy(fun c -> c.NodeCount))
-
-    let mkEntry (id : int) = new Entry(id, "John", "Smith", 42, [| 1uy .. 100uy |], DateTime.Now)
-
-    let entry = mkEntry 0
+    type Marker = class end
 
     let entries = new System.Collections.Generic.Dictionary<int, _> ()
     
     for i in 1 .. 1000 do
-        entries.Add(i, mkEntry i)
-
-    let rec mkTree (size : int) =
-        if size = 0 then Tree(entry,[||])
-        else
-            let children = Array.init 3 (fun _ -> mkTree (size - 1))
-            Tree(entry,children)
+        entries.Add(i, new Entry())
 
     let largeTree = mkTree 8
 
     [<PerfTest>]
     let ``Generic Class`` (s : ISerializer) =
-        Serializer.roundtrips 100000 entry s
+        Serializer.roundtrips 100000 (Entry()) s
 
     [<PerfTest>]
     let ``Dictionary of Generic Classes`` (s : ISerializer) =
@@ -136,7 +105,7 @@ module RandomGraph =
 
 
 
-let tests = PerfTest<ISerializer>.OfModuleMarker<PerfTests.Entry> ()
+let tests = PerfTest<ISerializer>.OfModuleMarker<PerfTests.Marker> ()
 let cyclic = PerfTest<ISerializer>.OfModuleMarker<RandomGraph.Marker> ()
 
 let fspBinary = FsPickler.initBinary()

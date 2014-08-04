@@ -7,9 +7,12 @@
     open System.Reflection
     open System.Runtime.Serialization
 
+    open ProtoBuf
+
     open Nessos.FsPickler
     open Nessos.FsPickler.Combinators
 
+    [<AutoOpen>]
     module TestTypes =
 
         type Peano =
@@ -91,3 +94,46 @@
         let stringValue = 
             "Lorem ipsum dolor sit amet, consectetur adipisicing elit, 
                 sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+
+        [<ProtoContract(ImplicitFields = ImplicitFields.AllFields)>]
+        type Entry(id : int, name : string, surname : string, age : int, data : byte [], date : DateTime) =
+
+            new () = new Entry(0, "John", "Smith", 42, [| 1uy .. 100uy |], DateTime.Now)
+            member __.Id = id
+            member __.Name = name
+            member __.Surname = surname
+            member __.Age = age
+            member __.Data = data
+            member __.Date = date
+
+        [<Sealed>]
+        [<ProtoContract(ImplicitFields = ImplicitFields.AllFields)>]
+        type ClassTree<'T> (value : 'T, children : ClassTree<'T> []) =
+        
+            new () = ClassTree<'T>(Unchecked.defaultof<'T>, [||])
+        
+            member __.Value = value
+            member __.Children = children
+
+            member __.NodeCount =
+                1 + (children |> Array.sumBy(fun c -> c.NodeCount))
+
+        let rec mkClassTree (size : int) =
+            if size = 0 then ClassTree(Entry(),[||])
+            else
+                let children = Array.init 3 (fun _ -> mkClassTree (size - 1))
+                ClassTree(Entry(),children)
+
+        let mkExceptionWithStackTrace() =
+            let rec dive d =
+                if d = 0 then failwith "boom!"
+                else
+                    1 + dive (d - 1)
+
+            let e = 
+                try dive 42 |> ignore ; None
+                with e -> Some e
+
+            match e with
+            | None -> failwith "error"
+            | Some e -> e
