@@ -74,7 +74,7 @@ A collection of tutorials, technical overviews and API references of the library
 
  * [Technical Overview](overview.html) A walkthrough of the library's implementation details.
 
- * [Performance](https://github.com/nessos/FsPickler/wiki/Performance) Benchmarks comparing FsPickler
+ * [Performance](benchmarks.html) Benchmarks comparing FsPickler
    to other established serialization libraries.
 
  * [API Reference](reference/index.html) contains automatically generated documentation for all types, modules
