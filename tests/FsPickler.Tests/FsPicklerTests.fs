@@ -385,7 +385,7 @@
 
         [<Test; Category("FsPickler Generic tests")>]
         member __.``5. Object: boxed array`` () =
-            testEquals <| [| box 1 ; box "test" ; box true ; box 16I ; box (1,"1") ; box DateTime.Now |]
+            testEquals <| [| box 1 ; box "test" ; box true ; box 3.14 ; box (1,"1") ; box DateTime.Now |]
 
         [<Test; Category("FsPickler Generic tests")>]
         member __.``5. Object: should correctly deserialize boxed arrays`` () =
