@@ -15,6 +15,7 @@ open Nessos.FsPickler.Tests.SerializationSize
 plot "integer" 1
 plot "pair" (42, "lorem ipsum")
 plot "int list (1000 elements)" [1..1000]
+plot "int array (1000000 elements)" [|1 .. 1000000|]
 plot "list of pairs (1000 elements)" <| List.init 1000 (fun i -> (i, string i))
 plot "3D float array (100x100x100)" <| Array3D.init 100 100 100 (fun i j k -> i + 100 * j + 100000 * k)
 plot "exception with stacktrace" <| mkExceptionWithStackTrace()

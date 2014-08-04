@@ -19,11 +19,18 @@
                 new ServiceStackTypeSerializer() :> ISerializer
             ]
 
+        let reflectEquals (x : 'T) (y : 'T) =
+            if obj.ReferenceEquals(x, null) then obj.ReferenceEquals(y, null)
+            else
+                x.GetType() = y.GetType() && x.ToString() = y.ToString()
+
         let tryGetSize (s : ISerializer) (t : 'T) =
             try 
                 let p = Serializer.write s t
                 let r = Serializer.read s p : 'T
-                Some p.Length
+                if reflectEquals t r then Some p.Length
+                else
+                    None
             with _ -> None
 
         let report (id : string) (t : 'T) =
