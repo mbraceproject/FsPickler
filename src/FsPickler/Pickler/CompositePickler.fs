@@ -311,6 +311,27 @@
     and internal CompositePickler =
 
         /// <summary>
+        ///     Creates an empty composite pickler for given type.
+        /// </summary>
+        static member CreateUninitialized<'T> () = new CompositePickler<'T> ()
+
+        /// <summary>
+        ///     Initializes a CompositePickler by copying fields from a source pickler
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="target"></param>
+        static member Copy(source : Pickler, target : Pickler) =
+            target.Unpack {
+                new IPicklerUnpacker<bool> with
+                    member __.Apply (p : Pickler<'T>) =
+                        match p with
+                        | :? CompositePickler<'T> as cp -> cp.InitializeFrom source ; true
+                        | _ -> 
+                            let msg = sprintf "expected CompositePickler but was '%O'" <| p.GetType()
+                            invalidArg "target" <| msg
+            } |> ignore
+
+        /// <summary>
         ///     Primary constructor for definining a materialized composite pickler
         /// </summary>
         /// <param name="reader">deserialization lambda.</param>

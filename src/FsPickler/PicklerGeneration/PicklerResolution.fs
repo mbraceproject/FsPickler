@@ -34,11 +34,11 @@
         recurse t
 
 
-
     /// reflection - based pickler resolution
-    let resolvePickler (registerUninitializedPickler : Type -> Exn<Pickler> -> unit) (self : Type -> Exn<Pickler>) (t : Type) =
-
-        let mkResolver () =
+    let resolvePickler (earlyRegister : Type -> Exn<Pickler> -> unit) (self : Type -> Exn<Pickler>) (t : Type) =
+        
+        // the inner IPicklerResolver simply encapsulates recursive calls to this method
+        let resolver =
             {
                 new IPicklerResolver with
                     member __.IsSerializable t = (self t).IsValue
@@ -55,19 +55,16 @@
             with :? InsufficientExecutionStackException ->
                 raise <| new PicklerGenerationException(t, "insufficient execution stack.")
 
-            // resolve shape of given type
+            // step 1: resolve shape of given type
             let shape = 
                 try TypeShape.resolve t
                 with UnSupportedShape -> raise <| NonSerializableTypeException(t)
 
-            // create an uninitialized pickler instance and register to the local cache
-            let p0 = UninitializedPickler.Create shape
-            do registerUninitializedPickler t (Success p0)
+            // step 2: create an uninitialized pickler instance and register to the local cache
+            let p0 = PicklerFactory.CreateUninitialized shape
+            do earlyRegister t (Success p0)
 
-            // initialize a local pickler resolver instance
-            let resolver = mkResolver ()
-
-            // step 1: subtype pickler resolution
+            // step 3: subtype pickler resolution
             let result =
                 if t.BaseType <> null then
                     match resolver.Resolve t.BaseType with
@@ -76,26 +73,14 @@
                 else
                     None
 
-            // step 2: consult the pickler factory.
-            let pickler =
+            // step 4: consult the pickler factory.
+            let p =
                 match result with
-                | Some r -> r
-                | None ->
-                    let factory = new PicklerFactory(resolver)
-                    shape.Accept factory
+                | Some p -> p
+                | None -> PicklerFactory.Create resolver shape
 
-            // step 3; pickler generation complete, copy data to uninitialized binding and return it
-            p0.Unpack
-                {
-                    // should be IPicklerUnpacker<unit> but F# does not allow this
-                    new IPicklerUnpacker<bool> with
-                        member __.Apply<'T> (p : Pickler<'T>) =
-                            match p with
-                            | :? CompositePickler<'T> as p -> p.InitializeFrom pickler ; true
-                            | _ -> 
-                                let msg = sprintf "Unexpected pickler implementation '%O'" <| p.GetType()
-                                raise <| new PicklerGenerationException(p.Type, msg)
-                } |> ignore
+            // step 5; pickler generation complete, copy data to uninitialized binding
+            CompositePickler.Copy(p, p0)
 
             Success p0
 
