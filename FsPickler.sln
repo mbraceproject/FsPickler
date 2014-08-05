@@ -92,6 +92,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "size", "size", "{1D64570E-7
 		docs\files\benchmarks\size\integer.png = docs\files\benchmarks\size\integer.png
 		docs\files\benchmarks\size\intlist.png = docs\files\benchmarks\size\intlist.png
 		docs\files\benchmarks\size\pair.png = docs\files\benchmarks\size\pair.png
+		docs\files\benchmarks\size\pairarray.png = docs\files\benchmarks\size\pairarray.png
 		docs\files\benchmarks\size\pairlist.png = docs\files\benchmarks\size\pairlist.png
 		docs\files\benchmarks\size\quotation.png = docs\files\benchmarks\size\quotation.png
 		docs\files\benchmarks\size\record.png = docs\files\benchmarks\size\record.png

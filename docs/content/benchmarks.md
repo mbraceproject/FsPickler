@@ -73,11 +73,15 @@ Libraries not appearing in charts failed to serialize the tested objects.
 
 <img src="benchmarks/size/intarray.png" />
 
+### Pair Array (10000 elements)
+
+<img src="benchmarks/size/pairarray.png" />
+
 ### 3D float Array (100x100x100)
 
 <img src="benchmarks/size/array.png" />
 
-### F# Integer List (1000 elements)
+### F# List of Integers (1000 elements)
 
 <img src="benchmarks/size/intlist.png" />
 
