@@ -27,6 +27,9 @@
         /// stackless raise operator
         let inline raise (e: System.Exception) = (# "throw" e : 'U #)
 
+        /// hashset constructor
+        let hset (ts : seq<'T>) = new HashSet<_>(ts)
+
         // bad implementation: would be safer using ExceptionDispatchInfo but would break compatibility with 4.0
         let rec inline reraise' (e : #exn) =
             do remoteStackTraceField.SetValue(e, e.StackTrace + System.Environment.NewLine)

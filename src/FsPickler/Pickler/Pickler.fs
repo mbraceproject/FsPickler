@@ -14,13 +14,17 @@
     type Pickler internal (t : Type) =
 
         let typeKind = TypeKind.compute t
-        let isFixedSize = isOfFixedSize t
-        let isRecursive =
-#if OPTIMIZE_FSHARP
-            isRecursiveType true t
-#else
-            isRecursiveType false self.Type
-#endif
+        let isRecursive = 
+            try isRecursiveType t
+            with 
+            | PolymorphicRecursiveException t' when t = t' -> 
+                let msg = "type is polymorphic recursive."
+                raise <| NonSerializableTypeException(t, msg)
+            | PolymorphicRecursiveException t' ->
+                let msg = sprintf "contains polymorphic recursive type '%O'." t'
+                raise <| NonSerializableTypeException(t, msg)
+
+        let isFixedSize = isOfFixedSize isRecursive t
 
         member __.Type = t
         member __.TypeKind = typeKind

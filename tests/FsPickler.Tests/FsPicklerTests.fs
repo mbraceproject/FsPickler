@@ -404,7 +404,55 @@
             shouldFailwith<NonSerializableTypeException>(fun () -> pickler.Pickle m |> ignore)
 
         [<Test; Category("FsPickler Generic tests")>]
-        member __.``5. Object: cyclic object`` () = testReflected <| CyclicClass()
+        member __.``5. Object: Correctly resolve recursive types`` () =
+            isRecursive<int> |> should equal false
+            isRecursive<DateTime> |> should equal false
+            isRecursive<bigint> |> should equal false
+            isRecursive<string> |> should equal false
+            isRecursive<Type> |> should equal false
+            isRecursive<int * string []> |> should equal false
+            isRecursive<Type option * string []> |> should equal false
+            isRecursive<Record> |> should equal false
+            isRecursive<SimpleDU> |> should equal false
+            isRecursive<GenericClass<GenericClass<int>>> |> should equal false
+
+            isRecursive<obj> |> should equal true
+            isRecursive<Peano> |> should equal true
+            isRecursive<int list> |> should equal true
+            isRecursive<int -> int> |> should equal true
+            isRecursive<RecursiveClass> |> should equal true
+            isRecursive<CyclicClass> |> should equal true
+            isRecursive<SimpleISerializableClass> |> should equal true
+            isRecursive<GenericISerializableClass<int>> |> should equal true
+
+        [<Test; Category("FsPickler Generic tests")>]
+        member __.``5. Object: Correctly resolve finite types`` () =
+            isFixedSize<int> |> should equal true
+            isFixedSize<DateTime> |> should equal true
+            isFixedSize<int * byte * (int * int64 * DateTime)> |> should equal true
+            isFixedSize<string> |> should equal false
+            isFixedSize<Type> |> should equal true
+            isFixedSize<int * string []> |> should equal false
+            isFixedSize<Type option * string []> |> should equal false
+            isFixedSize<Record> |> should equal false
+            isFixedSize<SimpleDU> |> should equal false
+            isFixedSize<GenericClass<GenericClass<int>>> |> should equal true
+
+            isFixedSize<obj> |> should equal false
+            isFixedSize<Peano> |> should equal false
+            isFixedSize<bigint> |> should equal false
+            isFixedSize<int list> |> should equal false
+            isFixedSize<int -> int> |> should equal false
+            isFixedSize<RecursiveClass> |> should equal false
+            isFixedSize<SimpleISerializableClass> |> should equal false
+
+        [<Test; Category("FsPickler Generic tests")>]
+        member __.``5. Object: detect polymorphic recursive types`` () =
+            FsPickler.IsSerializableType<PolyRec<int>> () |> should equal false
+            FsPickler.IsSerializableType<PolyRec<int> ref> () |> should equal false
+            FsPickler.IsSerializableType<APoly<int, string>> () |> should equal false
+            FsPickler.IsSerializableType<BPoly<int>> () |> should equal false
+            FsPickler.IsSerializableType<PseudoPolyRec<int>> () |> should equal true
 
         [<Test; Category("FsPickler Generic tests")>]
         member __.``5. Object: cyclic array`` () = 

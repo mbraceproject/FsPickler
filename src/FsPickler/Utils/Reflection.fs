@@ -25,7 +25,6 @@
     [<Literal>]
     let allConstructors = BindingFlags.Instance ||| BindingFlags.NonPublic ||| BindingFlags.Public
 
-
     type Delegate with
         static member CreateDelegate<'T when 'T :> Delegate> (m : MethodInfo) =
             System.Delegate.CreateDelegate(typeof<'T>, m) :?> 'T
@@ -151,104 +150,123 @@
     // A type t is defined as being *recursive* iff either of the following properties hold:
     //     a) t is not sealed or ISerializable,
     //     b) there exists t -> t' such that t' is recursive
-    //     c) there exists a chain (t -> t1 -> ... -> tn) so that t <: tn
+    //     c) there exists t ->* t' so that t <: t'
     //
-    // A type is recursive iff its instances admit recursive object graphs.
-    //
-    // F# union types are treated specially since recursive bindings cannot be created under normal circumstances
-    // for instance, the
-    //
-    //      type Rec = Rec of Rec
-    //
-    // is flagged as non-recursive since defining instances of this type is impossible in F#.
-    // However,
-    //
-    //     type Rec = { Rec : Rec }
-    //
-    // is flagged as recursive since a recursive definition is actually possible in F#.
-    // Finally, the
-    //
-    //     type Func = Func of (int -> int)
-    //
-    // is flagged as recursive since recursive bindings *can* be made, for example
-    // `let rec f = Func (fun x -> let (Func f0) = f in f0 x + 1)`
+    // A type is recursive iff its instances admit cyclic object graphs.
 
-    let isRecursiveType excludeUnionRecTypes (t : Type) =
-        let rec aux d (traversed : (int * bool * bool * Type) list) (t : Type) =
+    exception PolymorphicRecursiveException of Type
 
-            if t.IsValueType then false
-            elif typeof<MemberInfo>.IsAssignableFrom t then false
-            elif isISerializable t then true
-            else
+    //
+    // Detect polymorphic recursion patterns
+    //
 
-            let recAncestors = traversed |> List.filter (fun (_,_,_,t') -> t.IsAssignableFrom t') 
+    let isPolymorphicRecursive (t : Type) =
+        let rec aux traversed (t : Type) =
+            if t.IsGenericType then
+                let gt = t.GetGenericTypeDefinition()
 
-            if recAncestors.Length > 0 then
-                if excludeUnionRecTypes then
-                    // recursive F# union types marked as 'recursive' only if intertwined with non-union(mutable) types
-                    // e.g. 'type Peano = Zero | Succ of Peano ref' is recursive
-                    let isRecType (d : int, isUnion : bool, _, _ : Type) =
-                        if isUnion then
-                            traversed |> List.exists (fun (i,_,isMutable,_) -> i > d && isMutable)
-                        else
-                            true
-                                
+                // eliminate simple recursion patterns
+                if traversed |> List.exists((=) t) then None else
 
-                    List.exists isRecType recAncestors
+                // determine if polymorphic recursive
+                let polyRecAncestors =
+                    traversed
+                    |> List.filter (fun t' -> t'.GetGenericTypeDefinition() = gt)
+                    |> List.length
+
+                if polyRecAncestors > 1 then Some gt else
+
+                // traverse fields
+                if FSharpType.IsUnion(t, allMembers) then
+                    FSharpType.GetUnionCases(t, allMembers)
+                    |> Seq.collect (fun u -> u.GetFields() |> Seq.map (fun p -> p.PropertyType))
+                    |> Seq.distinct
+                    |> Seq.tryPick (aux (t :: traversed))
                 else
-                    true
+                    gatherSerializableFields t
+                    |> Seq.map (fun f -> f.FieldType)
+                    |> Seq.distinct
+                    |> Seq.tryPick (aux (t :: traversed))
 
             elif t.IsArray || t.IsByRef || t.IsPointer then
-                aux (d+1) ((d,false,true,t) :: traversed) <| t.GetElementType()
+                aux traversed <| t.GetElementType()
+            else
+                None
+
+        if t.IsGenericType then
+            let gt = t.GetGenericTypeDefinition()
+            match aux [] gt with
+            | Some gt' when gt = gt' -> true
+            | _ -> false
+        else
+            false
+
+    let isRecursiveType (t : Type) =
+        let primitives = 
+            hset [ 
+                typeof<string> ; typeof<Guid> ; typeof<DateTime> ; typeof<TimeSpan>
+                typeof<decimal> ; typeof<bigint> ; typeof<unit> ; typeof<DBNull>
+            ]
+
+        let rec aux (traversed : Type list) (t : Type) =
+            if t.IsPrimitive then false
+            elif primitives.Contains t then false
+            elif typeof<MemberInfo>.IsAssignableFrom t then false
+            elif isISerializable t then true
+            // check for cyclic type dependencies
+            elif traversed |> List.exists (fun t' -> isAssignableFrom t t') then true else
+
+            // detect polymorphic recursion patterns
+            if isPolymorphicRecursive t then raise <| PolymorphicRecursiveException t
+
+            // continue with traversal
+            if t.IsArray || t.IsByRef || t.IsPointer then
+                aux (t :: traversed) <| t.GetElementType()
             elif FSharpType.IsUnion(t, allMembers) then
                 FSharpType.GetUnionCases(t, allMembers)
-                |> Seq.map (fun u -> u.GetFields() |> Seq.map (fun p -> p.PropertyType))
-                |> Seq.concat
+                |> Seq.collect (fun u -> u.GetFields() |> Seq.map (fun p -> p.PropertyType))
                 |> Seq.distinct
-                |> Seq.exists (aux (d+1) ((d,true,false,t) :: traversed))
+                |> Seq.exists (aux (t :: traversed))
 #if OPTIMIZE_FSHARP
             // System.Tuple is not sealed, but inheriting is not an idiomatic pattern in F#
             elif FSharpType.IsTuple t then
-                t.GetFields(allFields)
-                |> Seq.map (fun f -> f.FieldType)
+                FSharpType.GetTupleElements t
                 |> Seq.distinct
-                |> Seq.exists (aux (d+1) ((d,false,false,t) :: traversed))
+                |> Seq.exists (aux (t :: traversed))
 #endif
-            elif FSharpType.IsRecord(t, allMembers) then
-                FSharpType.GetRecordFields(t, allMembers)
-                |> Seq.map (fun p -> p.CanWrite, p.PropertyType)
-                |> Seq.distinct
-                |> Seq.exists (fun (isMutable, t') -> aux (d+1) ((d,false,isMutable,t) :: traversed) t')
-
             // leaves with open hiearchies are treated as recursive by definition
             elif not t.IsSealed then true
             else
                 gatherSerializableFields t
                 |> Seq.map (fun f -> f.FieldType)
                 |> Seq.distinct
-                |> Seq.exists (aux (d+1) ((d,false,true,t) :: traversed))
+                |> Seq.exists (aux (t :: traversed))
 
-        aux 0 [] t
+        aux [] t
 
 
     //
-    //  types like int * bool, int option, string, etc have object graphs of fixed scale
+    //  types like int * bool, int option, etc have object graphs of fixed size
     //  types like arrays, rectypes, or non-sealed types can have instances of arbitrary graph size
     //
 
-    let rec isOfFixedSize (t : Type) =
-        if t.IsPrimitive then true
-        elif t = typeof<string> then true
-        elif typeof<MemberInfo>.IsAssignableFrom t then true
+    let isOfFixedSize isRecursive (t : Type) =
 
-        elif t.IsArray then false
-        elif isRecursiveType false t then false
-        elif FSharpType.IsUnion(t, allMembers) then
-            FSharpType.GetUnionCases(t, allMembers)
-            |> Seq.collect(fun u -> u.GetFields())
-            |> Seq.distinct
-            |> Seq.forall(fun f -> isOfFixedSize f.PropertyType)
+        let rec aux (t : Type) =
+            if t.IsPrimitive then true
+            elif typeof<MemberInfo>.IsAssignableFrom t then true
+            elif t = typeof<string> then false
+            elif t.IsArray then false
+            elif FSharpType.IsUnion(t, allMembers) then
+                FSharpType.GetUnionCases(t, allMembers)
+                |> Seq.collect(fun u -> u.GetFields())
+                |> Seq.distinct
+                |> Seq.forall(fun f -> aux f.PropertyType)
+            else
+                gatherSerializableFields t
+                |> Seq.distinct
+                |> Seq.forall (fun f -> aux f.FieldType)
+
+        if isRecursive then false
         else
-            gatherSerializableFields t
-            |> Seq.distinct
-            |> Seq.forall (fun f -> isOfFixedSize f.FieldType)
+            aux t

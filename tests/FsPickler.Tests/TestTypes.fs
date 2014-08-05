@@ -81,6 +81,7 @@
             member __.Value = string x + y
             override __.Equals y = match y with :? SimpleClass as y -> y.Value = __.Value | _ -> false
 
+        [<Sealed>]
         type GenericClass<'T when 'T : equality>(x : 'T) =
             member __.Value = x
             override __.Equals y = match y with :? GenericClass<'T> as y -> y.Value = __.Value | _ -> false
@@ -227,6 +228,16 @@
         type Class(x : int, y : string) =
             member __.X = x
             member __.Y = y
+
+        type PolyRec<'T> = V of PolyRec<'T option>
+
+        type APoly<'T, 'S> = { B : BPoly<'T> }
+        and BPoly<'X> = { A : APoly<'X option, int> }
+
+        type PseudoPolyRec<'T> = V of PseudoPolyRec<bool * int>
+
+        let isRecursive<'T> = FsPickler.GeneratePickler<'T>().IsRecursiveType
+        let isFixedSize<'T> = FsPickler.GeneratePickler<'T>().IsOfFixedSize
 
 
         type Node<'T> = { Value : 'T ; mutable Neigh : Node<'T> list }
