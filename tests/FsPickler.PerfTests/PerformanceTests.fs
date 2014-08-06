@@ -1,6 +1,7 @@
 ﻿namespace Nessos.FsPickler.Tests
 
     open System
+    open System.Collections.Generic
 
     open PerfUtil
 
@@ -12,185 +13,171 @@
 
         type Marker = class end
 
-        [<PerfTest>]
-        let ``Value: Int`` s = roundtrips 10000 42 s
+        let guid = Guid.NewGuid()
 
-        [<PerfTest>]
-        let ``Value: Boolean`` s = roundtrips 10000 true s
+        [<PerfTest(1000)>]
+        let ``Value: Guid`` s = roundtrip guid s
 
-        [<PerfTest>]
-        let ``Value: Float`` s = roundtrips 10000 3.14 s
+        let date = DateTime.Now
 
-        [<PerfTest>]
-        let ``Value: Decimal`` s = roundtrips 10000 1231231.121M s
+        [<PerfTest(1000)>]
+        let ``Value: DateTime`` s = roundtrip date s
 
-        [<PerfTest>]
-        let ``Value: Guid`` s = roundtrips 1000 (Guid.NewGuid()) s
-
-        [<PerfTest>]
-        let ``Value: DateTime`` s = roundtrips 1000 DateTime.Now s
-
-        [<PerfTest>]
-        let ``Value: String`` s = roundtrips 10000 stringValue s
+        [<PerfTest(10000)>]
+        let ``Value: String`` s = roundtrip stringValue s
 
 
         let boxed = box ([| 1 .. 1000 |], "lorem ipsum")
 
-        [<PerfTest>]
-        let ``Boxed Object`` s =
-            roundtrips 1000 boxed s
+        [<PerfTest(1000)>]
+        let ``Boxed Object`` s = roundtrip boxed s
 
-        [<PerfTest>]
-        let ``Class: Simple F# Class`` s =
-            let c = new Class(42, stringValue)
-            roundtrips 10000 c s
+        let fsClass = new Class(42, stringValue)
 
-        [<PerfTest>]
-        let ``Class: ISerializable`` s =
-            let c = new SerializableClass<_>(42, stringValue, [|1..1000|])
-            roundtrips 10000 c s
+        [<PerfTest(10000)>]
+        let ``Class: Simple F# Class`` s = roundtrip fsClass s
 
-        [<PerfTest>]
-        let ``Subtype Resolution`` s =
-            let x = box(Some 42)
-            for i = 0  to 10000 do
-                Serializer.write s x |> ignore
+        let serializableClass = new SerializableClass<_>(42, stringValue, [|1..1000|])
 
-        [<PerfTest>]
-        let ``Array: Float`` s =
-            let bigFlt = Array.init 100000 (fun i -> float i)
-            roundtrips 10 bigFlt s
+        [<PerfTest(10000)>]
+        let ``Class: ISerializable`` s = roundtrip serializableClass s
 
-        [<PerfTest>]
-        let ``Array: Int`` s =
-            let bigFlt = Array.init 100000 id
-            roundtrips 10 bigFlt s
+        let boxedClass = box(Some 42)
 
+        [<PerfTest(10000)>]
+        let ``Subtype Resolution`` s = roundtrip boxedClass s
+
+        let floatArray = Array.init 100000 (fun i -> float i)
+
+        [<PerfTest(10)>]
+        let ``Array: Float`` s = roundtrip floatArray s
+
+        let intArray = Array.init 100000 id
+
+        [<PerfTest(10)>]
+        let ``Array: Int`` s = roundtrip intArray s
+
+        let stringArray = Array.init 10000 (fun i -> stringValue + string i)
         
-        [<PerfTest>]
-        let ``Array: String`` s =
-            let bigArr = Array.init 10000 (fun i -> stringValue + string i)
-            roundtrips 100 bigArr s
+        [<PerfTest(100)>]
+        let ``Array: String`` s = roundtrip stringArray s
 
-        [<PerfTest>]
-        let ``Array: Key-Value Pairs`` s =
-            let kvarr = [|1..10000|] |> Array.map (fun i -> i, string i)
-            roundtrips 100 kvarr s
+        let kvarr = [|1..10000|] |> Array.map (fun i -> i, string i)
 
-        [<PerfTest>]
-        let ``Array: Discriminated Unions`` s = 
-            roundtrips 100 [| for i in 1 .. 10000 -> (Something ("asdasdasdas", i)) |] s
+        [<PerfTest(100)>]
+        let ``Array: Key-Value Pairs`` s = roundtrip kvarr s
 
-        [<PerfTest>]
-        let ``Array: Objects`` s =
-            let array = 
-                [| 
-                    box 2; box 3; box "hello" ; box <| Some 3; box(2,3) ; 
-                    box <| new Class(2, stringValue) ; box <| new SerializableClass<int option>(2, stringValue, Some 12); 
-                    box stringValue 
-                |]
+        let duArray = [| for i in 1 .. 10000 -> (Something ("asdasdasdas", i)) |]
 
-            roundtrips 1000 array s
+        [<PerfTest(100)>]
+        let ``Array: Discriminated Unions`` s = roundtrip duArray s
 
-        [<PerfTest>]
-        let ``Array: Rank-3 Float`` s =
-            let arr = Array3D.init 100 100 100 (fun i j k -> float (i * j + k))
-            roundtrips 10 arr s
+        let objArray = 
+            [| 
+                box 2; box 3; box "hello" ; box <| Some 3; box(2,3) ; 
+                box <| new Class(2, stringValue) ; box <| new SerializableClass<int option>(2, stringValue, Some 12); 
+                box stringValue 
+            |]
 
-        [<PerfTest>]
-        let ``.NET Dictionary`` s =
-            let dict = new System.Collections.Generic.Dictionary<string, int>()
-            for i = 0 to 1000 do dict.Add(string i, i)
-            roundtrips 100 dict s
+        [<PerfTest(1000)>]
+        let ``Array: Objects`` s = roundtrip objArray s
 
-        [<PerfTest>]
-        let ``.NET Stack`` s =
-            let stack = new System.Collections.Generic.Stack<string> ()
-            for i = 0 to 1000 do stack.Push <| string i
-            roundtrips 100 stack s
 
-        [<PerfTest>]
-        let ``.NET List`` s =
-            let list = new System.Collections.Generic.List<string * int>()
-            for i = 0 to 1000 do list.Add (string i, i)
-            roundtrips 100 list s
+        let array3D = Array3D.init 100 100 100 (fun i j k -> float (i * j + k))
 
-        [<PerfTest>]
-        let ``.NET Set`` s =
-            let set = new System.Collections.Generic.SortedSet<string> ()
-            for i = 0 to 1000 do set.Add (string i) |> ignore
-            roundtrips 100 set s
+        [<PerfTest(10)>]
+        let ``Array: Rank-3 Float`` s = roundtrip array3D s
 
-        [<PerfTest>]
-        let ``FSharp: Tuple Small`` s = roundtrips 10000 (1, DateTime.Now,"hello") s
+        let bclDict = dict [ for i in 1 .. 1000 -> (string i, i)]
 
-        [<PerfTest>]
+        [<PerfTest(100)>]
+        let ``.NET Dictionary`` s = roundtrip bclDict s
+
+        let bclStack = new Stack<string>([for i in 1 .. 1000 -> string i])
+
+        [<PerfTest(100)>]
+        let ``.NET Stack`` s = roundtrip bclStack s
+
+        let bclList = new List<string * int>([for i in 1 .. 1000 -> string i, i])
+
+        [<PerfTest(100)>]
+        let ``.NET List`` s = roundtrip bclList s
+
+        let bclSet = new SortedSet<_>([for i in 1 .. 1000 -> string i])
+
+        [<PerfTest(100)>]
+        let ``.NET Set`` s = roundtrip bclSet s
+
+        let smallTuple = (1, DateTime.Now,"hello")
+
+        [<PerfTest(10000)>]
+        let ``FSharp: Tuple Small`` s = roundtrip smallTuple s
+
+        let largeTuple = (stringValue, 1, 2, 3, true, "", Some(3.14, [2]), 3, 2, 1, stringValue)
+
+        [<PerfTest(10000)>]
         let ``FSharp: Tuple Large`` s =
-            let tuple = (stringValue, 1, 2, 3, true, "", Some(3.14, [2]), 3, 2, 1, stringValue)
-            roundtrips 10000 tuple s
+            roundtrip largeTuple s
 
-        [<PerfTest>]
-        let ``FSharp: List Int`` s = roundtrips 1000 [1..1000] s
+        let intList = [1..1000]
 
-        [<PerfTest>]
-        let ``FSharp: List String`` s =
-            let smallLst = [ for i in 1 .. 1000 -> stringValue + string i ]
-            roundtrips 1000 smallLst s
+        [<PerfTest(1000)>]
+        let ``FSharp: List Int`` s = roundtrip intList s
 
-        [<PerfTest>]
-        let ``FSharp: List Key-Value`` s =
-            roundtrips 1000 [ for i in 1 .. 1000 -> (string i, i) ] s
+        let stringList = [ for i in 1 .. 1000 -> stringValue + string i ]
 
-        [<PerfTest>]
-        let ``FSharp: List Nested`` s =
-            let nestedLst = let n = [1..1000] in [for _ in 1 .. 100 -> n]
-            roundtrips 1000 nestedLst s
+        [<PerfTest(1000)>]
+        let ``FSharp: List String`` s = roundtrip stringList s
 
-        [<PerfTest>]
-        let ``FSharp: Union`` s =
-            let u = SomethingElse(stringValue, 42, box (Some 42))
-            roundtrips 10000 u s
+        let pairList = [ for i in 1 .. 1000 -> (string i, i) ]
 
-        [<PerfTest>]
-        let ``FSharp: Record`` s =
-            let r = { Int = 42 ; String = stringValue ; Tuple = (13, "") }
-            roundtrips 10000 r s
+        [<PerfTest(1000)>]
+        let ``FSharp: List Key-Value`` s = roundtrip pairList s
 
-        [<PerfTest>]
-        let ``FSharp: Peano Rectype`` s =
-            let int2Peano n =
-                let rec aux pred = 
-                    function
-                    | 0 -> pred
-                    | n -> aux (Succ pred) (n-1)
+        let nestedLst = let n = [1..1000] in [for _ in 1 .. 100 -> n]
 
-                aux Zero n
+        [<PerfTest(1000)>]
+        let ``FSharp: List Nested`` s = roundtrip nestedLst s
 
-            roundtrips 100 (int2Peano 100) s
+        let union = SomethingElse(stringValue, 42, box (Some 42))
 
-        [<PerfTest>]
-        let ``FSharp: Curried Function`` s =
-            let clo = (@) [ Some([1..100], Set.ofList [1..100]) ]
-            roundtrips 1000 clo s
+        [<PerfTest(10000)>]
+        let ``FSharp: Union`` s = roundtrip union s
 
-        [<PerfTest>]
-        let ``FSharp: Binary Tree`` s = roundtrips 100 (mkTree 10) s
+        let record = { Int = 42 ; String = stringValue ; Tuple = (13, "") }
+
+        [<PerfTest(10000)>]
+        let ``FSharp: Record`` s = roundtrip record s
+
+        let peano = int2Peano 100
+
+        [<PerfTest(100)>]
+        let ``FSharp: Peano Rectype`` s = roundtrip peano s
+
+        let closure = (@) [ Some([1..100], Set.ofList [1..100]) ]
+
+        [<PerfTest(1000)>]
+        let ``FSharp: Curried Function`` s = roundtrip closure s
+
+        let binTree = mkTree 10
+
+        [<PerfTest(100)>]
+        let ``FSharp: Binary Tree`` s = roundtrip binTree s
 
         let intSet = [1..1000] |> List.map string |> set
 
-        [<PerfTest>]
-        let ``FSharp: Set`` s = roundtrips 1000 intSet s
+        [<PerfTest(1000)>]
+        let ``FSharp: Set`` s = roundtrip intSet s
 
-        [<PerfTest>]
-        let ``FSharp: Map`` s = 
-            let map = [1..1000] |> Seq.map (fun i -> (string i,i)) |> Map.ofSeq
-            roundtrips 1000 map s
+        let fsMap = [1..1000] |> Seq.map (fun i -> (string i,i)) |> Map.ofSeq
 
+        [<PerfTest(1000)>]
+        let ``FSharp: Map`` s = roundtrip fsMap s
 
-        let t = typeof<int * string option * Map<int * string [], string ref option>>
+        let testType = typeof<int * string option * Map<int * string [], string ref option>>
 
-        [<PerfTest>]
-        let ``Reflection: Type`` s = roundtrips 1000 t s
+        [<PerfTest(1000)>]
+        let ``Reflection: Type`` s = roundtrip testType s
 
         let quotationSmall = <@ fun x -> pown 2 x @>
 
@@ -213,20 +200,8 @@
                 }
             @>
 
-        [<PerfTest>]
-        let ``FSharp: Quotation Small`` s = 
-            let q' = roundtrip quotationSmall s
-            // some serializers succeed, producing invalid output, force exception in this case.
-            if q'.ToString() <> quotationSmall.ToString() then
-                invalidOp "invalid quotation roundtrip"
+        [<PerfTest(10000)>]
+        let ``FSharp: Quotation Small`` s = roundtrip quotationSmall s
 
-            roundtrips 10000 quotationSmall s
-
-        [<PerfTest>]
-        let ``FSharp: Quotation Large`` s =
-            let q' = roundtrip quotationLarge s
-            // some serializers succeed, producing invalid output, force exception in this case.
-            if q'.ToString() <> quotationLarge.ToString() then
-                invalidOp "invalid quotation roundtrip"
-
-            roundtrips 1000 quotationLarge s
+        [<PerfTest(1000)>]
+        let ``FSharp: Quotation Large`` s = roundtrip quotationLarge s

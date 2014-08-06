@@ -12,11 +12,11 @@
             [
                 FsPickler.initBinary()
                 FsPickler.initJson()
-                new BinaryFormatterSerializer() :> ISerializer
-                new NetDataContractSerializer() :> ISerializer
-                new JsonDotNetSerializer() :> ISerializer
-                new ProtoBufSerializer() :> ISerializer
-                new ServiceStackTypeSerializer() :> ISerializer
+                new BinaryFormatterSerializer() :> Serializer
+                new NetDataContractSerializer() :> Serializer
+                new JsonDotNetSerializer() :> Serializer
+                new ProtoBufSerializer() :> Serializer
+                new ServiceStackTypeSerializer() :> Serializer
             ]
 
         let reflectEquals (x : 'T) (y : 'T) =
@@ -24,7 +24,7 @@
             else
                 x.GetType() = y.GetType() && x.ToString() = y.ToString()
 
-        let tryGetSize (s : ISerializer) (t : 'T) =
+        let tryGetSize (s : Serializer) (t : 'T) =
             try 
                 let p = Serializer.write s t
                 let r = Serializer.read s p : 'T

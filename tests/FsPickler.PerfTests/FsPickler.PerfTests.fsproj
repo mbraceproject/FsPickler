@@ -81,7 +81,7 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="Newtonsoft.Json">
-      <HintPath>..\..\packages\Newtonsoft.Json.6.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <HintPath>..\..\packages\Newtonsoft.Json.6.0.4\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="nunit.framework">
@@ -89,11 +89,11 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="PerfUtil">
-      <HintPath>..\..\packages\PerfUtil.0.1.5\lib\net40\PerfUtil.dll</HintPath>
+      <HintPath>..\..\packages\PerfUtil.0.1.7\lib\net40\PerfUtil.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="PerfUtil.NUnit">
-      <HintPath>..\..\packages\PerfUtil.NUnit.0.1.5\lib\net40\PerfUtil.NUnit.dll</HintPath>
+      <HintPath>..\..\packages\PerfUtil.NUnit.0.1.7\lib\net40\PerfUtil.NUnit.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="protobuf-net">
@@ -101,7 +101,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="ServiceStack.Text">
-      <HintPath>..\..\packages\ServiceStack.Text.4.0.21\lib\net40\ServiceStack.Text.dll</HintPath>
+      <HintPath>..\..\packages\ServiceStack.Text.4.0.24\lib\net40\ServiceStack.Text.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />

@@ -10,7 +10,7 @@
 
     [<AbstractClass>]
     type PerfTester () =
-        inherit NUnitPerf<ISerializer> ()
+        inherit NUnitPerf<Serializer> ()
 
         let tests = PerfTest.OfModuleMarker<PerformanceTests.Marker> ()
 
@@ -21,16 +21,16 @@
         inherit PerfTester()
 
         let fsp = FsPickler.initBinary()
-        let bfs = new BinaryFormatterSerializer() :> ISerializer
-        let ndc = new NetDataContractSerializer() :> ISerializer
-        let jdn = new JsonDotNetSerializer() :> ISerializer
-        let bdn = new JsonDotNetBsonSerializer () :> ISerializer
-        let pbn = new ProtoBufSerializer() :> ISerializer
-        let ssj = new ServiceStackJsonSerializer() :> ISerializer
-        let sst = new ServiceStackTypeSerializer() :> ISerializer
+        let bfs = new BinaryFormatterSerializer() :> Serializer
+        let ndc = new NetDataContractSerializer() :> Serializer
+        let jdn = new JsonDotNetSerializer() :> Serializer
+        let bdn = new JsonDotNetBsonSerializer () :> Serializer
+        let pbn = new ProtoBufSerializer() :> Serializer
+        let ssj = new ServiceStackJsonSerializer() :> Serializer
+        let sst = new ServiceStackTypeSerializer() :> Serializer
 
         let comparer = new WeightedComparer(spaceFactor = 0.2, leastAcceptableImprovementFactor = 1.)
-        let tester = new ImplementationComparer<_>(fsp, [bfs;ndc;jdn;bdn;pbn;ssj;sst], throwOnError = true, comparer = comparer)
+        let tester = new ImplementationComparer<_>(fsp, [bfs;ndc;jdn;bdn;pbn;ssj;sst], throwOnError = true, warmup = true, comparer = comparer)
 
         override __.PerfTester = tester :> _
         
@@ -43,7 +43,7 @@
         let bson = FsPickler.initBson()
         let xml = FsPickler.initXml()
 
-        let tester = new ImplementationComparer<_>(binary, [json ; bson; xml], throwOnError = false)
+        let tester = new ImplementationComparer<_>(binary, [json ; bson; xml], warmup = true, throwOnError = false)
 
         override __.PerfTester = tester :> _
 
@@ -58,8 +58,8 @@
         let version = typeof<FsPickler>.Assembly.GetName().Version
         let comparer = new WeightedComparer(spaceFactor = 0.2, leastAcceptableImprovementFactor = 0.8)
         let tester = 
-            new PastImplementationComparer<ISerializer>(
-                fsp, version, historyFile = persistenceFile, throwOnError = true, comparer = comparer)
+            new PastImplementationComparer<Serializer>(
+                fsp, version, historyFile = persistenceFile, throwOnError = true, warmup = true, comparer = comparer)
 
         override __.PerfTester = tester :> _
 

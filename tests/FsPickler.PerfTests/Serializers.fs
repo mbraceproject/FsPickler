@@ -15,16 +15,41 @@
 
     open PerfUtil
 
-    type ISerializer =
-        inherit ITestable
+    /// A MemoryStream that never closes
+    [<AllowNullLiteral>]
+    type ImmortalMemoryStream() =
+        inherit MemoryStream()
+        override __.Close() = ()
+
+    /// A Serializer implementation abstraction for performance tests
+
+    [<AbstractClass>]
+    type Serializer () =
+        // use the same stream for every repeat of a given test
+        // this is to factor out the performance overhead introduced
+        // by MemoryStream
+        let mutable m : ImmortalMemoryStream = null
+
+        member s.TestRoundTrip (t : 'T) =
+            m.Position <- 0L
+            s.Serialize (m, t)
+            m.Position <- 0L
+            s.Deserialize<'T> m
+
+        abstract Name : string
         abstract Serialize : Stream * 'T -> unit
         abstract Deserialize : Stream -> 'T
+
+        interface ITestable with
+            member __.Name = __.Name
+            member __.Init () = m <- new ImmortalMemoryStream()
+            member __.Fini () = m <- null
 
 
     module FsPickler =
         let wrap (fsp : FsPicklerSerializer) =
             {
-                new ISerializer with
+                new Serializer() with
                     member __.Name = sprintf "FsPickler.%s" fsp.PickleFormat
                     member __.Serialize(stream : Stream, x : 'T) = fsp.Serialize(stream, x)
                     member __.Deserialize<'T>(stream : Stream) = fsp.Deserialize<'T> stream
@@ -36,98 +61,80 @@
         let initBson() = wrap <| FsPickler.CreateBson()
 
     type BinaryFormatterSerializer () =
+        inherit Serializer ()
         let bfs = new BinaryFormatter()
 
-        interface ISerializer with
-            member __.Name = "BinaryFormatter"
-            member __.Serialize(stream : Stream, x : 'T) = bfs.Serialize(stream, x)
-            member __.Deserialize(stream : Stream) = bfs.Deserialize stream :?> 'T
+        override __.Name = "BinaryFormatter"
+        override __.Serialize(stream : Stream, x : 'T) = bfs.Serialize(stream, x)
+        override __.Deserialize(stream : Stream) = bfs.Deserialize stream :?> 'T
 
     type NetDataContractSerializer () =
+        inherit Serializer ()
         let ndc = new System.Runtime.Serialization.NetDataContractSerializer()
 
-        interface ISerializer with
-            member __.Name = "NetDataContractSerializer"
-            member __.Serialize(stream : Stream, x : 'T) = ndc.Serialize(stream, x)
-            member __.Deserialize(stream : Stream) = ndc.Deserialize stream :?> 'T
+        override __.Name = "NetDataContractSerializer"
+        override __.Serialize(stream : Stream, x : 'T) = ndc.Serialize(stream, x)
+        override __.Deserialize(stream : Stream) = ndc.Deserialize stream :?> 'T
 
     type JsonDotNetSerializer () =
+        inherit Serializer ()
         let jdn = Newtonsoft.Json.JsonSerializer.Create()
         
-        interface ISerializer with
-            member __.Name = "Json.Net"
-            member __.Serialize(stream : Stream, x : 'T) =
-                use writer = new System.IO.StreamWriter(stream)
-                jdn.Serialize(writer, x)
-                writer.Flush()
-            member __.Deserialize(stream : Stream) : 'T =
-                use reader = new System.IO.StreamReader(stream)
-                jdn.Deserialize(reader, typeof<'T>) :?> 'T
+        override __.Name = "Json.Net"
+        override __.Serialize(stream : Stream, x : 'T) =
+            use writer = new System.IO.StreamWriter(stream)
+            jdn.Serialize(writer, x)
+            writer.Flush()
+        override __.Deserialize(stream : Stream) : 'T =
+            use reader = new System.IO.StreamReader(stream)
+            jdn.Deserialize(reader, typeof<'T>) :?> 'T
 
     type JsonDotNetBsonSerializer () =
+        inherit Serializer()
         let jdn = Newtonsoft.Json.JsonSerializer.Create()
         
-        interface ISerializer with
-            member __.Name = "Json.Net (Bson)"
-            member __.Serialize(stream : Stream, x : 'T) =
-                use writer = new BsonWriter(stream)
-                jdn.Serialize(writer, x)
-                writer.Flush()
+        override __.Name = "Json.Net (Bson)"
+        override __.Serialize(stream : Stream, x : 'T) =
+            use writer = new BsonWriter(stream)
+            jdn.Serialize(writer, x)
+            writer.Flush()
 
-            member __.Deserialize(stream : Stream) : 'T =
-                use reader = new BsonReader(stream)
-                jdn.Deserialize(reader, typeof<'T>) :?> 'T
+        override __.Deserialize(stream : Stream) : 'T =
+            use reader = new BsonReader(stream)
+            jdn.Deserialize(reader, typeof<'T>) :?> 'T
 
     type ServiceStackJsonSerializer () =
-        
-        interface ISerializer with
-            member __.Name = "ServiceStack.JsonSerializer"
-            member __.Serialize(stream : Stream, x : 'T) = JsonSerializer.SerializeToStream(x, stream)
-            member __.Deserialize(stream : Stream) = JsonSerializer.DeserializeFromStream<'T>(stream)
+        inherit Serializer ()
+
+        override __.Name = "ServiceStack.JsonSerializer"
+        override __.Serialize(stream : Stream, x : 'T) = JsonSerializer.SerializeToStream(x, stream)
+        override __.Deserialize(stream : Stream) = JsonSerializer.DeserializeFromStream<'T>(stream)
 
     type ServiceStackTypeSerializer () =
+        inherit Serializer ()
 
-        interface ISerializer with
-            member __.Name = "ServiceStack.TypeSerializer"
-            member __.Serialize(stream : Stream, x : 'T) = TypeSerializer.SerializeToStream(x, stream)
-            member __.Deserialize(stream : Stream) = TypeSerializer.DeserializeFromStream<'T>(stream)
+        override __.Name = "ServiceStack.TypeSerializer"
+        override __.Serialize(stream : Stream, x : 'T) = TypeSerializer.SerializeToStream(x, stream)
+        override __.Deserialize(stream : Stream) = TypeSerializer.DeserializeFromStream<'T>(stream)
 
 
     type ProtoBufSerializer () =
+        inherit Serializer ()
         
-        interface ISerializer with
-            member __.Name = "ProtoBuf-Net"
-            member __.Serialize(stream : Stream, x : 'T) = ProtoBuf.Serializer.Serialize(stream, x)
-            member __.Deserialize(stream : Stream) = ProtoBuf.Serializer.Deserialize<'T>(stream)
+        override __.Name = "ProtoBuf-Net"
+        override __.Serialize(stream : Stream, x : 'T) = ProtoBuf.Serializer.Serialize(stream, x)
+        override __.Deserialize(stream : Stream) = ProtoBuf.Serializer.Deserialize<'T>(stream)
 
-
+    [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
     module Serializer =
         
-        let write (s : ISerializer) (x : 'T) =
+        let inline write (s : Serializer) (x : 'T) =
             use m = new MemoryStream()
             s.Serialize(m, x)
             m.ToArray()
 
-        let read (s : ISerializer) (bytes : byte []) =
+        let inline read (s : Serializer) (bytes : byte []) =
             use m = new MemoryStream(bytes)
             s.Deserialize m : 'T
 
-        type ImmortalMemoryStream() =
-            inherit MemoryStream()
-            override __.Close() = ()
-
-        let roundtrip (x : 'T) (s : ISerializer) =
-            use m = new ImmortalMemoryStream()
-            s.Serialize(m, x)
-            m.Position <- 0L
-            s.Deserialize<'T> m
-
-        let roundtrips times (x : 'T) (s : ISerializer) =
-            use m = new ImmortalMemoryStream()
-
-            for i = 1 to times do
-                m.Position <- 0L
-                s.Serialize(m, x)
-                m.Position <- 0L
-                let _ = s.Deserialize<'T> m
-                ()
+        let inline roundtrip (x : 'T) (s : Serializer) = s.TestRoundTrip x

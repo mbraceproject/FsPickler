@@ -21,13 +21,13 @@ open Nessos.FsPickler.Tests
 
 open FSharp.Charting
 
-open ProtoBuf
-
 
 [<AutoOpen>]
 module PerfTests =
 
     type Marker = class end
+    
+    let entry = Entry()
 
     let entries = new System.Collections.Generic.Dictionary<int, _> ()
     
@@ -36,64 +36,57 @@ module PerfTests =
 
     let largeTree = mkTree 8
 
-    [<PerfTest>]
-    let ``Generic Class`` (s : ISerializer) =
-        Serializer.roundtrips 100000 (Entry()) s
+    [<PerfTest(100000)>]
+    let ``Generic Class`` (s : Serializer) = Serializer.roundtrip entry s
 
-    [<PerfTest>]
-    let ``Dictionary of Generic Classes`` (s : ISerializer) =
-        Serializer.roundtrips 100 entries s
+    [<PerfTest(100)>]
+    let ``Dictionary of Generic Classes`` (s : Serializer) = Serializer.roundtrip entries s
 
-    [<PerfTest>]
-    let ``Balanced Binary tree of depth 10`` (s : ISerializer) =
-        Serializer.roundtrips 100 largeTree s
+    [<PerfTest(100)>]
+    let ``Balanced Binary tree of depth 10`` (s : Serializer) = Serializer.roundtrip largeTree s
 
     let tuple = (1,"lorem ipsum",[|1..100|],4, (1,42), System.Guid.NewGuid())
 
-    [<PerfTest>]
-    let ``System.Tuple`` s = Serializer.roundtrips 1000 tuple s
+    [<PerfTest(1000)>]
+    let ``System.Tuple`` s = Serializer.roundtrip tuple s
 
     let list = [1..2000]
 
-    [<PerfTest>]
-    let ``F# List`` s = Serializer.roundtrips 1000 list s
+    [<PerfTest(1000)>]
+    let ``F# List`` s = Serializer.roundtrip list s
 
-    [<PerfTest>]
-    let ``F# Quotation`` s = 
-        let q' = Serializer.roundtrip PerformanceTests.quotationLarge s
-        if PerformanceTests.quotationLarge.ToString() <> q'.ToString() then
-            failwithf "'%s' produces invalid roundtrip" s.Name
-        Serializer.roundtrips 100 PerformanceTests.quotationLarge s
+    [<PerfTest(100)>]
+    let ``F# Quotation`` s = Serializer.roundtrip PerformanceTests.quotationLarge s
 
     let iserializable = new TestTypes.SerializableClass<_>(42, "lorem ipsum", [|1..1000|])
 
-    [<PerfTest>]
-    let ``ISerializable Class`` s = Serializer.roundtrips 1000 iserializable s
+    [<PerfTest(1000)>]
+    let ``ISerializable Class`` s = Serializer.roundtrip iserializable s
 
     let fsharpBin = TestTypes.mkTree 10
 
-    [<PerfTest>]
-    let ``F# Binary Tree`` s = Serializer.roundtrips 100 fsharpBin s
+    [<PerfTest(100)>]
+    let ``F# Binary Tree`` s = Serializer.roundtrip fsharpBin s
 
     let forest = TestTypes.nForest 5 5 
 
-    [<PerfTest>]
-    let ``F# mutual recursive types`` s = Serializer.roundtrips 100 forest s
+    [<PerfTest(100)>]
+    let ``F# mutual recursive types`` s = Serializer.roundtrip forest s
 
     let kvArr = [|1..10000|] |> Array.map (fun i -> (i,string i))
 
-    [<PerfTest>]
-    let ``Array of tuples`` s = Serializer.roundtrips 100 kvArr s
+    [<PerfTest(100)>]
+    let ``Array of tuples`` s = Serializer.roundtrip kvArr s
 
     let tyArray = Array.init 10 (fun i -> if i % 2 = 0 then typeof<int> else typeof<int * string option []>)
 
-    [<PerfTest>]
-    let ``System.Type`` s = Serializer.roundtrips 10000 tyArray s
+    [<PerfTest(10000)>]
+    let ``System.Type`` s = Serializer.roundtrip tyArray s
 
     let array = Array3D.init 200 200 200 (fun i j k -> float <| i + 1000 * j + 1000000 * k)
 
     [<PerfTest>]
-    let ``200 x 200 x 200 double array`` s = Serializer.roundtrips 1 array s
+    let ``200 x 200 x 200 double array`` s = Serializer.roundtrip array s
 
 module RandomGraph =
     type Marker = class end
@@ -101,28 +94,28 @@ module RandomGraph =
     let graph = Nessos.FsPickler.Tests.TestTypes.createRandomGraph 0.2 500
 
     [<PerfTest>]
-    let ``Random object graph (n=500,P=20%)`` s = Serializer.roundtrips 1 graph s
+    let ``Random object graph (n=500,P=20%)`` s = Serializer.roundtrip graph s
 
 
 
-let tests = PerfTest<ISerializer>.OfModuleMarker<PerfTests.Marker> ()
-let cyclic = PerfTest<ISerializer>.OfModuleMarker<RandomGraph.Marker> ()
+let tests = PerfTest<Serializer>.OfModuleMarker<PerfTests.Marker> ()
+let cyclic = PerfTest<Serializer>.OfModuleMarker<RandomGraph.Marker> ()
 
 let fspBinary = FsPickler.initBinary()
 let fspXml = FsPickler.initXml()
 let fspJson = FsPickler.initJson()
-let bfs = new BinaryFormatterSerializer() :> ISerializer
-let ndc = new NetDataContractSerializer() :> ISerializer
-let jdn = new JsonDotNetSerializer() :> ISerializer
-let pbn = new ProtoBufSerializer() :> ISerializer
-let ssj = new ServiceStackJsonSerializer() :> ISerializer
-let sst = new ServiceStackTypeSerializer() :> ISerializer
+let bfs = new BinaryFormatterSerializer() :> Serializer
+let ndc = new NetDataContractSerializer() :> Serializer
+let jdn = new JsonDotNetSerializer() :> Serializer
+let pbn = new ProtoBufSerializer() :> Serializer
+let ssj = new ServiceStackJsonSerializer() :> Serializer
+let sst = new ServiceStackTypeSerializer() :> Serializer
 
 let allSerializers = [fspXml;fspJson;bfs;ndc;jdn;pbn;ssj;sst]
 let cyclicOnly = [fspXml;fspJson;bfs]
 
-let mkTester () = new ImplementationComparer<ISerializer>(fspBinary, allSerializers) :> PerformanceTester<ISerializer>
-let mkCyclicGraphTester () = new ImplementationComparer<ISerializer>(fspBinary, cyclicOnly) :> PerformanceTester<ISerializer>
+let mkTester () = new ImplementationComparer<Serializer>(fspBinary, allSerializers) :> PerformanceTester<Serializer>
+let mkCyclicGraphTester () = new ImplementationComparer<Serializer>(fspBinary, cyclicOnly) :> PerformanceTester<Serializer>
 
 
 let dashGrid = ChartTypes.Grid(LineColor = Color.Gainsboro, LineDashStyle = ChartDashStyle.Dash)
@@ -144,7 +137,6 @@ let plotGC (results : TestSession list) =
     results
     |> TestSession.groupByTest
     |> Map.iter (fun _ rs -> plot "GC Collections (gen0)" (fun r -> float r.GcDelta.[0]) rs)
-
 
 let results = PerfTest.run mkTester tests
 let cyclicResults = PerfTest.run mkCyclicGraphTester cyclic

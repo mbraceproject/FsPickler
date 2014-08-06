@@ -19,7 +19,13 @@
             | Zero
             | Succ of Peano
 
-        let rec int2Peano n = match n with 0 -> Zero | n -> Succ(int2Peano(n-1))
+        let int2Peano n =
+            let rec aux pred = 
+                function
+                | 0 -> pred
+                | n -> aux (Succ pred) (n-1)
+
+            aux Zero n
 
         type BinTree<'T> =
             | Leaf
