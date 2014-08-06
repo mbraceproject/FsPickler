@@ -1,3 +1,6 @@
+### 0.9.10
+* Improve recursive type detection.
+
 ### 0.9.9
 * Add DataContract serialization support.
 
