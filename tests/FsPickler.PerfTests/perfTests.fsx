@@ -55,6 +55,11 @@ module PerfTests =
     [<PerfTest(1000)>]
     let ``F# List`` s = Serializer.roundtrip list s
 
+    let tupleList = [1..1000] |> List.map (fun i -> string i,i)
+
+    [<PerfTest(1000)>]
+    let ``F# List of Pairs`` s = Serializer.roundtrip tupleList s
+
     [<PerfTest(100)>]
     let ``F# Quotation`` s = Serializer.roundtrip PerformanceTests.quotationLarge s
 

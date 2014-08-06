@@ -40,13 +40,21 @@ Benchmarks are indicative and in no way scientific.
 
 <img src="benchmarks/time/binaryTree.png" />
 
-### F# list
+### F# list of integers
 
 <img src="benchmarks/time/list.png" />
+
+### F# list of tuples
+
+<img src="benchmarks/time/pairList.png" />
 
 ### Array 3D (float, 200 x 200 x 200)
 
 <img src="benchmarks/time/array3D.png" />
+
+### F# mutual recursive types
+
+<img src="benchmarks/time/fsharpForest.png" />
 
 ### F# Quotation
 
