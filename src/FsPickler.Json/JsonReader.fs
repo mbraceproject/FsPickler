@@ -161,8 +161,7 @@
 
             member __.ReadGuid tag = 
                 if isBsonReader then 
-                    let bytes = jsonReader.ReadPrimitiveAs<byte []> (omitTag ()) tag
-                    Guid(bytes)
+                    jsonReader.ReadPrimitiveAs<Guid> (omitTag ()) tag
                 else
                     jsonReader.ReadPrimitiveAs<string> (omitTag ()) tag |> Guid.Parse
 
