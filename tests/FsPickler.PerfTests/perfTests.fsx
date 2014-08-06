@@ -114,8 +114,8 @@ let sst = new ServiceStackTypeSerializer() :> Serializer
 let allSerializers = [fspXml;fspJson;bfs;ndc;jdn;pbn;ssj;sst]
 let cyclicOnly = [fspXml;fspJson;bfs]
 
-let mkTester () = new ImplementationComparer<Serializer>(fspBinary, allSerializers) :> PerformanceTester<Serializer>
-let mkCyclicGraphTester () = new ImplementationComparer<Serializer>(fspBinary, cyclicOnly) :> PerformanceTester<Serializer>
+let mkTester () = new ImplementationComparer<Serializer>(fspBinary, allSerializers, warmup = true) :> PerformanceTester<Serializer>
+let mkCyclicGraphTester () = new ImplementationComparer<Serializer>(fspBinary, cyclicOnly, warmup = true) :> PerformanceTester<Serializer>
 
 
 let dashGrid = ChartTypes.Grid(LineColor = Color.Gainsboro, LineDashStyle = ChartDashStyle.Dash)
