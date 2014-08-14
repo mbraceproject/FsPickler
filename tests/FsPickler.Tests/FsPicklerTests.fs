@@ -404,6 +404,12 @@
             shouldFailwith<NonSerializableTypeException>(fun () -> pickler.Pickle m |> ignore)
 
         [<Test; Category("FsPickler Generic tests")>]
+        member __.``5. Object: pickler generation order should not affect result`` () =
+            // see type definitions on an explanation of what this test checks
+            FsPickler.IsSerializableType<Foo> () |> should equal false
+            FsPickler.IsSerializableType<Bar> () |> should equal false
+
+        [<Test; Category("FsPickler Generic tests")>]
         member __.``5. Object: Correctly resolve recursive types`` () =
             isRecursive<int> |> should equal false
             isRecursive<DateTime> |> should equal false

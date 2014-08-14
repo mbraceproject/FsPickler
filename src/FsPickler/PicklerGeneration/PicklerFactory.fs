@@ -78,5 +78,5 @@
         static member CreateUninitialized (shape : TypeShape) =
             shape.Accept {
                 new ITypeVisitor<Pickler> with
-                    member __.Visit<'T> () = new CompositePickler<'T> () :> Pickler
+                    member __.Visit<'T> () = CompositePickler.CreateUninitialized<'T> () :> Pickler
             }

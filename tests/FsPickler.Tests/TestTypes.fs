@@ -260,6 +260,27 @@
             toAdjacencyMap g1 = toAdjacencyMap g2
 
 
+        // the following types test a certain pickler generation ordering condition:
+        // in certain versions of FsPickler, if 'Foo' is to be generated
+        // *before* 'Bar', then 'Bar' would be saved in cache as serializable,
+        // only to cause exceptions at serialization time.
+        // this of course is a bug.
+
+        type Foo =
+            {
+                Bar : Bar
+                Baz : Baz option // Baz field causes an exception, but only after 'Bar' 
+                                 // has placed in global cache with a dependency on 'Foo'.
+            }
+
+        and Bar =
+            {
+                Foo : Foo option
+            }
+
+        and [<AutoSerializable(false)>] Baz = class end
+
+
         // automated large-scale object generation
         let generateSerializableObjects (assembly : Assembly) =
             let filterType (t : Type) =
