@@ -1,3 +1,6 @@
+### 0.9.11
+* Bug fixes.
+
 ### 0.9.10
 * Improve recursive type detection.
 

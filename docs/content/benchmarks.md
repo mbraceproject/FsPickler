@@ -48,7 +48,7 @@ Benchmarks are indicative and in no way scientific.
 
 <img src="benchmarks/time/pairList.png" />
 
-### Array 3D (float, 200 x 200 x 200)
+### 3D float Array (200 x 200 x 200)
 
 <img src="benchmarks/time/array3D.png" />
 
