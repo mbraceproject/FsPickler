@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8"/>
-    <title>Technical Overview [Draft]
+    <title>Technical Overview
 </title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <meta name="description" content="A general-purpose serialization library for .NET"/>
@@ -33,7 +33,7 @@
       <div class="row">
         <div class="span9" id="main">
           
-<h1>Technical Overview [Draft]</h1>
+<h1>Technical Overview</h1>
 
 <p>This article discusses the general topic of serialization in .NET
 and gives an overview of the implementation details in FsPickler.</p>
@@ -46,12 +46,40 @@ as being problematic or even broken. This is mainly for the following reasons:</
 <ul>
 <li><p>There is no type or runtime support for serialization. 
 Rather, serializers are library implementations that mostly depend
-on the reflection system to extrapolate the serialization rules for
+on the reflection system to extrapolate serialization rules for
 each type (resulting in runtime errors if this is not possible).</p></li>
-<li><p>Even in the BCL itself, there is confusion as to how serialization rules
-are to be specified. It comes with a multitude of dated, unsafe, mutually exclusive
-and naturally inefficient design patterns.</p></li>
+<li><p>There is confusion as to which is the prefered design pattern for serialization.
+The BCL comes with a multitude of dated, unsafe, mutually exclusive
+and naturally inefficient patterns.</p></li>
 </ul>
+
+<h3>BCL Serialization patterns</h3>
+
+<p>The BCL comes with the following patterns for defining serializable types:</p>
+
+<ul>
+<li><p>Field-based serialization: objects are pickled by serializing the contents 
+of their fields. This behaviour is tuned by applying an assortment of attributes
+such as <code>Serialized</code>, <code>NonSerialized</code>, <code>OnSerializing</code>, <code>OnDeserialized</code>, etc and
+implementing the <code>IDeserializationCallback</code> interface. This is arguably the most
+loathed serialization pattern, since it is extremely sensitive to internal implementation details.
+Incidentally, this is the pattern of choice for most F# generated types.</p></li>
+<li><p>Property-based or <a href="http://msdn.microsoft.com/en-us/library/ms733127.aspx">DataContract</a> 
+serialization: objects are pickled by serializing the contents
+of specially flagged properties. Properties should be settable and are usually required to be
+public. In most cases, a parameterless constructor is also necessary. Property-based serialization
+is probably the most popular pattern.</p></li>
+<li><p><a href="http://msdn.microsoft.com/en-us/library/system.runtime.serialization.iserializable.aspx">ISerializable</a> 
+types: possibly intended as a type-safe replacement of field-based serialization.
+It fails to live up to this role, mostly due to the nature of interfaces; it still requires a
+special constructor for deserialization which, if missing, would result in a runtime error.
+It is a particularly verbose pattern, resulting in a lot of boilerplate code.
+Its dynamic nature also makes it impossible to reason about the components it serializes a priori.
+It is however an indispensible pattern, since it is used by many BCL types, most important being
+exception types, whose metadata is impossible to replicate without <code>ISerializable</code>.</p></li>
+</ul>
+
+<h3>Serialization Libraries</h3>
 
 <p>The BCL ships with a couple of general-purpose serializer libraries but these either suffer
 from obsolescence (e.g. <a href="http://msdn.microsoft.com/en-us/library/system.runtime.serialization.formatters.binary.binaryformatter.aspx">BinaryFormatter</a>) 
@@ -71,33 +99,7 @@ offered by their BCL counterparts. In particular most of them:</p>
 <li><p>have limited or nonexistent support for F# types.</p></li>
 </ul>
 
-<h3>BCL Serialization patterns</h3>
-
-<p>The BCL comes with the following patterns for defining serializable types:</p>
-
-<ul>
-<li><p>Field-based serialization: objects are pickled by serializing the contents 
-of their fields. This behaviour is tuned by applying an assortment of attributes
-such as <code>Serialized</code>, <code>NonSerialized</code>, <code>OnSerializing</code>, <code>OnDeserialized</code>, etc and
-implementing the <code>IDeserializationCallback</code> interface. This is arguably the most
-loathed serialization pattern, since it is extremely sensitive to internal implementation details.
-Incidentally, this is the pattern of choice for most of the F# compiler and <code>FSharp.Core</code> library.</p></li>
-<li><p>Property-based or <a href="http://msdn.microsoft.com/en-us/library/ms733127.aspx">DataContract</a> 
-serialization: objects are pickled by serializing the contents
-of specially flagged properties. Properties should be settable and are usually required to be
-public. In most cases, a parameterless constructor is also necessary. Property-based serialization
-is probably the most popular pattern.</p></li>
-<li><p><a href="http://msdn.microsoft.com/en-us/library/system.runtime.serialization.iserializable.aspx">ISerializable</a> 
-types: possibly intended as a type-safe replacement of field-based serialization.
-It fails to live up to this role, mostly due to the nature of interfaces; it still requires a
-special constructor for deserialization which, if missing, would result in a runtime error.
-It is a particularly verbose pattern, resulting in much boilerplate.
-Its dynamic nature also makes it impossible to reason about the components it serializes a priori.
-It is however an indispensible pattern, since it is used by many BCL types, most important being
-exception types, whose metadata is impossible to replicate without <code>ISerializable</code>.</p></li>
-</ul>
-
-<h2>FsPickler Motivation</h2>
+<h2>FsPickler : Motivation</h2>
 
 <p>The need for a new serialization library was realized while developing for 
 <a href="http://nessos.github.io/MBrace/">MBrace</a>. MBrace is a framework for distributed
@@ -174,11 +176,11 @@ without any reliance on reflection.</p>
 <p>Pickler combinators were originally described in Andrew Kennedy's 
 <a href="http://research.microsoft.com/pubs/64036/picklercombinators.pdf">paper of the same name</a>.
 The combinators presented are sufficient for things like algebraic data types,
-but picklers would still have to be composed manually by the implementor.
-Being focused on Haskell, these pickler combinators
-lack support for constructs that are inherently related to object-oriented runtimes.
-FsPickler extends the concept so that <code>null</code>, subtyping and cyclic graphs
-are accommodated.</p>
+but picklers would still have to be composed manually by the implementor.</p>
+
+<p>FsPickler extends the concept of picklers so that object-oriented features
+of the .NET framework are accommodated: null references, cyclic objects
+and subtype polymorphism.</p>
 
 <p>FsPickler is essentially an automated pickler generation framework: picklers are generated at runtime
 and on demand using a combination of reflection and dynamic IL generation. Picklers are cached for 
@@ -189,7 +191,7 @@ future use, hence the cost of generation has a constant price.</p>
 has been undertaken by the Scala community. There are differences of approach however, 
 since that library utilizes the metaprogramming facility offered by scala.</p>
 
-<h2>Types Serialized by FsPickler</h2>
+<h2>Serializable Types</h2>
 
 <p>So what qualifies as a serializable type in FsPickler?
 The short answer would be any type <code>'T</code> for which we present an instance of type <code>Pickler&lt;'T&gt;</code>.
@@ -220,8 +222,8 @@ typically by calling</p>
 </tr>
 </table>
 
-<p>Primitive types and <code>string</code> evaluate to true, however types like
-pointers, COM objects and MarshalByRef objects evaluate to false.
+<p>Primitive types and <code>string</code> are serializable
+but pointers, COM objects and <code>MarshalByRefObject</code> types are not.
 A composite type is serializable if and only if it carries the <code>Serializable</code> attribute
 and moreover satisfies either of the following:</p>
 
@@ -232,15 +234,9 @@ and moreover satisfies either of the following:</p>
 <li><p>carries the <code>DataContract</code> attribute and all designated properties are of 
 serializable type and settable. Parameterless constructors or public properties are not required.</p></li>
 <li><p>carries the <code>CustomPickler</code> attribute and an accompanying pickler factory method.</p></li>
-<li><p>is neither of the above and all designated fields are of serializable type.
-Parameterless constructors or public fields are not required.</p></li>
+<li>is neither of the above and all designated fields are of serializable type.
+Parameterless constructors or public fields are not required.</li>
 </ul>
-
-<p>By the above definition it can be deduced that <code>System.Object</code> is serializable:
-FsPickler will readily produce an instance of type <code>Pickler&lt;obj&gt;</code>.
-Absurd as this may sound, this is how picklers are reconciled with subtyping.
-In essense, a pickler of a given type denotes that a value is <em>possibly serializable</em>.
-For every non-sealed class, a non-serializable inheriting class can be constructed.</p>
 
 <div class="tip" id="fs1">namespace Nessos</div>
 <div class="tip" id="fs2">namespace Nessos.FsPickler</div>
