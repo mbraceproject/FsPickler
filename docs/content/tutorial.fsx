@@ -90,14 +90,14 @@ Seq.toArray seq' // evaluation forces full deserialization
 
 ## Picklers and Pickler combinators
 
-A pickler is essentially a record
+A pickler is essentially the type
 
 *)
 
 type Pickler<'T> =
     {
-        Write : WriteState -> string -> 'T -> unit
-        Read  : ReadState  -> string -> 'T
+        Write : WriteState -> 'T -> unit
+        Read  : ReadState  -> 'T
     }
 
 (*** hide ***) 
@@ -119,8 +119,8 @@ There are two kinds of picklers:
    of picklers as inputs yielding a composite result.
 
 FsPickler is essentially an automated pickler generation framework: picklers are generated at runtime
-using a combination of reflection and dynamic IL generation. Picklers are cached upon creation, hence the
-cost of generation has a constant price.
+and on demand using a combination of reflection and dynamic IL generation. Picklers are cached for 
+future use, hence the cost of generation has a constant price.
 
 Moreover, the library provides an experimental combinator module that allows direct manipulation
 of picklers in a more functional style:
