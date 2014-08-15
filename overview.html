@@ -38,13 +38,13 @@
 <p>This article discusses the general topic of serialization in .NET
 and gives an overview of the implementation details in FsPickler.</p>
 
-<h2>Serialization in .NET framework</h2>
+<h2>Serialization in the .NET framework</h2>
 
-<p>When it comes to the .NET framework the story of serialization is one
-of confusion and neglect. This is mainly because of the following reasons:</p>
+<p>Serialization in the .NET framework is something often considered
+as being problematic or even broken. This is mainly for the following reasons:</p>
 
 <ul>
-<li><p>There is no type system or runtime support for serialization. 
+<li><p>There is no type or runtime support for serialization. 
 Rather, serializers are library implementations that mostly depend
 on the reflection system to extrapolate the serialization rules for
 each type (resulting in runtime errors if this is not possible).</p></li>
@@ -55,30 +55,30 @@ mostly broken and invariably slow design patterns.</p></li>
 
 <p>The BCL ships with a couple of general-purpose serializer libraries but these either suffer
 from obsolescence (e.g. <a href="http://msdn.microsoft.com/en-us/library/system.runtime.serialization.formatters.binary.binaryformatter.aspx">BinaryFormatter</a>) 
-or are ridiculously slow (<a href="http://msdn.microsoft.com/en-us/library/system.runtime.serialization.netdatacontractserializer.aspx">NetDataContractSerializer</a>).</p>
+or are painfully slow (<a href="http://msdn.microsoft.com/en-us/library/system.runtime.serialization.netdatacontractserializer.aspx">NetDataContractSerializer</a>).</p>
 
 <p>Many third-party libraries have emerged attempting to address the issue of performance, some with success.
 However, experience shows that such libraries hardly achieve the level of generalization
-offered by their BCL counterparts. In particular, most of them:</p>
+offered by their BCL counterparts. In particular most of them:</p>
 
 <ul>
 <li><p>offer sketchy or no support for reflection types, like <code>MemberInfo</code>.</p></li>
 <li><p>require library-specific dependencies for serializable type definitions.</p></li>
 <li><p>do not support inaccessible types/constructors/properties.</p></li>
 <li><p>fail to properly address the issue of subtype polymorphism.</p></li>
-<li><p>do not support relatively obscure types of the CLR, like multi-dimensional arrays or delegates.</p></li>
+<li><p>do not support types like multi-dimensional arrays or delegates.</p></li>
 <li><p>fail to address the issue of cyclic objects.</p></li>
 <li><p>have limited or nonexistent support for F# types.</p></li>
 </ul>
 
-<h3>.NET Serialization patterns</h3>
+<h3>BCL Serialization patterns</h3>
 
 <p>The BCL comes with the following patterns for defining serializable types:</p>
 
 <ul>
 <li><p>Field-based serialization: objects are pickled by serializing the contents 
 of their fields. This behaviour is tuned by applying an assortment of attributes
-such as <code>Serialized</code>, <code>NonSerialized</code>, <code>OnSerializing</code>, <code>OnDeserialized</code> and
+such as <code>Serialized</code>, <code>NonSerialized</code>, <code>OnSerializing</code>, <code>OnDeserialized</code>, etc and
 implementing the <code>IDeserializationCallback</code> interface. This is arguably the most
 loathed serialization pattern, since it is extremely sensitive to internal implementation details.
 Incidentally, this is the pattern of choice used by the F# compiler and the <code>FSharp.Core</code> library.</p></li>
@@ -86,7 +86,7 @@ Incidentally, this is the pattern of choice used by the F# compiler and the <cod
 serialization: objects are pickled by serializing the contents
 of specially flagged properties. Properties should be settable and are usually required to be
 public. In most cases, a parameterless constructor is also necessary. Property-based serialization
-is probably the most popular serialization pattern nowadays.</p></li>
+is probably the most popular pattern.</p></li>
 <li><p><a href="http://msdn.microsoft.com/en-us/library/system.runtime.serialization.iserializable.aspx">ISerializable</a> 
 types: possibly intended as a type-safe replacement of field-based serialization.
 It fails to live up to this role, mostly due to the nature of interfaces; it still requires a
@@ -104,18 +104,18 @@ exception types, whose metadata is impossible to replicate without <code>ISerial
 computation and big data that is essentially built on the idea of a distributed
 continuation monad. To be able to distribute continuations, you need to be able to
 serialize closures. The inherently intrinsic and arbitrary nature of closures means 
-that they are not supported by any serialization library apart from a few BCL provided ones.</p>
-
-<p>Initially, we started using NetDataContractSerializer as our library of choice,
+that they are not supported by most serialization libraries.
+Initially, we started using NetDataContractSerializer as our library of choice,
 but this eventually took its toll on the overall performance of the framework,
 thus we decided to build a new library from scratch.</p>
 
 <p>FsPickler was created with two goals in mind: performance and completeness.
-Importantly, it was conceived as .NET serializer, rather than an F# serializer:
-if it is a .NET object meant to be serializable, it should be serializable by FsPickler.
+Importantly, it was conceived as a .NET serializer, rather than an F# serializer:
+if it is a .NET object designed to be serialized, it should be serializable in FsPickler.
 In that sense, it was designed with a goal to embrace the imperfect world that is
-the .NET framework in its totality, albeit with an eye for correctness.
-At this point, I should acknowledge Anton Tayanovskyy and his great little F#
+the .NET framework in its totality, albeit with an eye for correctness.</p>
+
+<p>At this point, I should acknowledge Anton Tayanovskyy and his great little F#
 snippet <a href="http://www.fssnip.net/6u">Union-Friendly Generic Binary Serializer</a>
 which was the sole initial inspiration for this library.</p>
 
@@ -130,9 +130,6 @@ pickler combinators. A <em>pickler</em> is essentially the type:</p>
 <span class="l">3: </span>
 <span class="l">4: </span>
 <span class="l">5: </span>
-<span class="l">6: </span>
-<span class="l">7: </span>
-<span class="l">8: </span>
 </pre>
 </td>
 <td class="snippet"><pre class="fssnip">
@@ -140,10 +137,7 @@ pickler combinators. A <em>pickler</em> is essentially the type:</p>
     {
         <span onmouseout="hideTip(event, 'fs6', 8)" onmouseover="showTip(event, 'fs6', 8)" class="i">Write</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs7', 9)" onmouseover="showTip(event, 'fs7', 9)" class="i">WriteState</span> <span class="k">-&gt;</span> <span class="o">&#39;</span><span class="i">T</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs8', 10)" onmouseover="showTip(event, 'fs8', 10)" class="i">unit</span>
         <span onmouseout="hideTip(event, 'fs9', 11)" onmouseover="showTip(event, 'fs9', 11)" class="i">Read</span>  <span class="o">:</span> <span onmouseout="hideTip(event, 'fs10', 12)" onmouseover="showTip(event, 'fs10', 12)" class="i">ReadState</span>  <span class="k">-&gt;</span> <span class="o">&#39;</span><span class="i">T</span>
-    }
-<span class="c">//</span>
-<span class="c">//(*** hide ***)</span>
-<span class="c">//open Nessos.FsPickler</span></pre>
+    }</pre>
 </td>
 </tr>
 </table>
@@ -180,9 +174,8 @@ without any reliance on reflection.</p>
 <p>Pickler combinators were originally described in Andrew Kennedy's 
 <a href="http://research.microsoft.com/pubs/64036/picklercombinators.pdf">paper of the same name</a>.
 The combinators presented are sufficient for things like algebraic data types,
-but picklers would still have to be composed manually by the implementor.</p>
-
-<p>Being originally described for Haskell, the aforementioned pickler combinators
+but picklers would still have to be composed manually by the implementor.
+Being focused on Haskell, these pickler combinators
 lack support for constructs that are inherently related to object-oriented runtimes.
 FsPickler extends the concept so that <code>null</code>, subtyping and cyclic graphs
 are accommodated.</p>
@@ -229,9 +222,8 @@ typically by calling</p>
 </table>
 
 <p>Primitive types and <code>string</code> obviously evaluate to true, however things like
-pointers, COMObjects and MarshalByRefObjects and pointers evaluate to false.</p>
-
-<p>A non-trivial type is serializable if and only if it carries the <code>Serializable</code> attribute
+pointers, COM objects and MarshalByRef objects evaluate to false.
+A composite type is serializable if and only if it carries the <code>Serializable</code> attribute
 and moreover satisfies either of the following:</p>
 
 <ul>
