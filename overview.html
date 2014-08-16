@@ -147,8 +147,8 @@ A pickler is essentially the type:</p>
 </table>
 
 <p>The <code>Write</code> and <code>Read</code> functions represent serialization and deserialization 
-implementations for values of type <code>'T</code>. When compared to prevailing .NET serialization patterns, 
-picklers are exceptionally fast since they directly handle the serialized value
+implementations for values of type <code>'T</code>. When compared to other .NET serializers, 
+picklers prove exceptionally fast since they directly handle the serialized value
 without any reliance on reflection-based resolution.</p>
 
 <p>Pickler combinators are functions that operate on picklers, generating picklers of more complex types. 
@@ -181,7 +181,7 @@ picklers are generated at runtime and on demand using a combination of reflectio
 dynamic IL generation. Picklers are cached for future use, hence the cost of generation 
 has a constant price.</p>
 
-<p>Moreover, FsPickler extends the concept of picklers so that features particular to the
+<p>Moreover, it extends the concept of picklers so that features particular to the
 .NET framework are accommodated: object orientation and subtype polymorphism, 
 null references and cyclic objects.</p>
 
@@ -194,28 +194,15 @@ since this mostly relies on the metaprogramming facility offered by scala.</p>
 
 <p>So what qualifies as a serializable type in FsPickler?
 The short answer would be any type <code>'T</code> for which we present an instance of <code>Pickler&lt;'T&gt;</code>.
-To make the question more meaningful, we should really be asking what types can receive
-auto-generated picklers. This is something that can only be answered at runtime,
-typically by calling</p>
+To make the question more meaningful: for what types does the library auto-generate picklers? 
+This is something that can only be answered at runtime, typically by calling</p>
 
 <table class="pre"><tr><td class="lines"><pre class="fssnip">
 <span class="l">1: </span>
 </pre>
 </td>
 <td class="snippet"><pre class="fssnip">
-<span class="k">let</span> <span onmouseout="hideTip(event, 'fs25', 46)" onmouseover="showTip(event, 'fs25', 46)" class="i">pickler</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs26', 47)" onmouseover="showTip(event, 'fs26', 47)" class="i">FsPickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs27', 48)" onmouseover="showTip(event, 'fs27', 48)" class="i">GeneratePickler</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs4', 49)" onmouseover="showTip(event, 'fs4', 49)" class="i">SomeType</span><span class="o">&gt;</span> ()</pre>
-</td>
-</tr>
-</table>
-
-<p>or by asking</p>
-
-<table class="pre"><tr><td class="lines"><pre class="fssnip">
-<span class="l">1: </span>
-</pre>
-</td>
-<td class="snippet"><pre class="fssnip">
-<span onmouseout="hideTip(event, 'fs26', 50)" onmouseover="showTip(event, 'fs26', 50)" class="i">FsPickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs28', 51)" onmouseover="showTip(event, 'fs28', 51)" class="i">IsSerializableType</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs4', 52)" onmouseover="showTip(event, 'fs4', 52)" class="i">SomeType</span><span class="o">&gt;</span> ()</pre>
+<span onmouseout="hideTip(event, 'fs25', 46)" onmouseover="showTip(event, 'fs25', 46)" class="i">FsPickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs26', 47)" onmouseover="showTip(event, 'fs26', 47)" class="i">IsSerializableType</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs4', 48)" onmouseover="showTip(event, 'fs4', 48)" class="i">SomeType</span><span class="o">&gt;</span> ()</pre>
 </td>
 </tr>
 </table>
@@ -259,10 +246,8 @@ Parameterless constructors or public fields are not required.</li>
 <div class="tip" id="fs22">val l : int</div>
 <div class="tip" id="fs23">Pickler.Read: ReadState -&gt; int</div>
 <div class="tip" id="fs24">val init : count:int -&gt; initializer:(int -&gt; &#39;T) -&gt; &#39;T []<br /><br />Full name: Microsoft.FSharp.Collections.Array.init</div>
-<div class="tip" id="fs25">val pickler : Pickler&lt;SomeType&gt;<br /><br />Full name: Overview.pickler</div>
-<div class="tip" id="fs26">type FsPickler =<br />&#160;&#160;private new : unit -&gt; FsPickler<br />&#160;&#160;static member Clone : t:&#39;T -&gt; &#39;T<br />&#160;&#160;static member ComputeHash : value:&#39;T * ?hashFactory:IHashStreamFactory -&gt; HashResult<br />&#160;&#160;static member ComputeSize : value:&#39;T -&gt; int64<br />&#160;&#160;static member CreateBinary : ?forceLittleEndian:bool * ?typeConverter:ITypeNameConverter -&gt; BinarySerializer<br />&#160;&#160;static member CreateXml : ?typeConverter:ITypeNameConverter * ?indent:bool -&gt; XmlSerializer<br />&#160;&#160;static member GatherObjectsInGraph : graph:obj -&gt; obj []<br />&#160;&#160;static member GatherTypesInObjectGraph : graph:obj -&gt; Type []<br />&#160;&#160;static member GeneratePickler : unit -&gt; Pickler&lt;&#39;T&gt;<br />&#160;&#160;static member GeneratePickler : t:Type -&gt; Pickler<br />&#160;&#160;...<br /><br />Full name: Nessos.FsPickler.FsPickler</div>
-<div class="tip" id="fs27">static member FsPickler.GeneratePickler : unit -&gt; Pickler&lt;&#39;T&gt;<br />static member FsPickler.GeneratePickler : t:System.Type -&gt; Pickler</div>
-<div class="tip" id="fs28">static member FsPickler.IsSerializableType : unit -&gt; bool<br />static member FsPickler.IsSerializableType : t:System.Type -&gt; bool</div>
+<div class="tip" id="fs25">type FsPickler =<br />&#160;&#160;private new : unit -&gt; FsPickler<br />&#160;&#160;static member Clone : t:&#39;T -&gt; &#39;T<br />&#160;&#160;static member ComputeHash : value:&#39;T * ?hashFactory:IHashStreamFactory -&gt; HashResult<br />&#160;&#160;static member ComputeSize : value:&#39;T -&gt; int64<br />&#160;&#160;static member CreateBinary : ?forceLittleEndian:bool * ?typeConverter:ITypeNameConverter -&gt; BinarySerializer<br />&#160;&#160;static member CreateXml : ?typeConverter:ITypeNameConverter * ?indent:bool -&gt; XmlSerializer<br />&#160;&#160;static member GatherObjectsInGraph : graph:obj -&gt; obj []<br />&#160;&#160;static member GatherTypesInObjectGraph : graph:obj -&gt; Type []<br />&#160;&#160;static member GeneratePickler : unit -&gt; Pickler&lt;&#39;T&gt;<br />&#160;&#160;static member GeneratePickler : t:Type -&gt; Pickler<br />&#160;&#160;...<br /><br />Full name: Nessos.FsPickler.FsPickler</div>
+<div class="tip" id="fs26">static member FsPickler.IsSerializableType : unit -&gt; bool<br />static member FsPickler.IsSerializableType : t:System.Type -&gt; bool</div>
 
         </div>
         <div class="span3">
