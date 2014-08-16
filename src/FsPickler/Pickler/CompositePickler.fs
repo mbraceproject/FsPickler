@@ -204,7 +204,6 @@
                                 formatter.EndWriteObject ()
 
                             objStack.Pop () |> ignore
-                            cyclicObjects.Remove id |> ignore
                         else
                             if p.m_SkipHeaderWrite then
                                 p.m_Writer state tag value
