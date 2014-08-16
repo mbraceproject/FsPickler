@@ -30,7 +30,7 @@ as being problematic or even broken. This is mainly for the following reasons:
     on the reflection system to extrapolate serialization rules for
     each type (resulting in runtime errors if this is not possible).
 
-  * There is confusion as to which is the prefered methodology for when
+  * There is confusion as to which is the prefered methodology when
     defining serialization semantics for new types.
     The BCL comes with a multitude of dated, unsafe, mutually exclusive
     and naturally inefficient approaches.
@@ -104,7 +104,7 @@ if it is a .NET object designed to be serialized, it should be serializable in F
 In that sense, it was designed with a goal to embrace the imperfect world that is
 the .NET framework in its totality, albeit with an eye for correctness.
 
-At this point, we should acknowledge Anton Tayanovskyy and his great little F#
+At this point, I should acknowledge Anton Tayanovskyy and his nice little F#
 snippet [Union-Friendly Generic Binary Serializer](http://www.fssnip.net/6u)
 which served as the initial inspiration for this library.
 
@@ -186,7 +186,7 @@ and moreover satisfies either of the following:
 
   * is array/nullable/tuple/enum of serializable element types.
 
-  * implements the `ISerializable` attribute and has a matching constructor implementation.
+  * implements the `ISerializable` interface and has a matching constructor implementation.
 
   * carries the `DataContract` attribute and all designated properties are of 
     serializable type and settable. Parameterless constructors or public properties are not required.
@@ -266,13 +266,8 @@ I will attempt to explain by giving a simplified example:
 *)
 
 [<AbstractClass>]
-type TypeShape () =
-    abstract Type : Type
+type TypeShape<'T> () =
     abstract Accept : ITypeShapeVisitor<'R> -> 'R
-
-and [<AbstractClass>] TypeShape<'T> () =
-    inherit TypeShape()
-    override __.Type = typeof<'T>
 
 and ShapeInt () =
     inherit TypeShape<int> ()
@@ -311,20 +306,20 @@ and construct the shape it fits in, albeit in a packaged manner:
 *)
 
 let getShape<'T> =
-    if typeof<'T> = typeof<int> then new ShapeInt() :> TypeShape
-    elif typeof<'T> = typeof<string> then new ShapeString() :> TypeShape
+    if typeof<'T> = typeof<int> then new ShapeInt() :> obj :?> TypeShape<'T>
+    elif typeof<'T> = typeof<string> then new ShapeString() :> obj :?> TypeShape<'T>
     elif typeof<'T>.IsGenericType then
         let gt = typeof<'T>.GetGenericTypeDefinition()
         let tparams = typeof<'T>.GetGenericArguments()
         if gt = typedefof<list<_>> then
             let st = typedefof<ShapeList<_>>.MakeGenericType tparams
-            Activator.CreateInstance st :?> TypeShape
+            Activator.CreateInstance st :?> TypeShape<'T>
         elif gt = typedefof<_ * _> then
             let st = typedefof<ShapeTuple<_,_>>.MakeGenericType tparams
-            Activator.CreateInstance st :?> TypeShape
+            Activator.CreateInstance st :?> TypeShape<'T>
         elif gt = typedefof<Set<_>> then
             let st = typedefof<ShapeSet<_>>.MakeGenericType tparams
-            Activator.CreateInstance st :?> TypeShape
+            Activator.CreateInstance st :?> TypeShape<'T>
         else
             failwith "unsupported type shape."
     else
@@ -361,10 +356,10 @@ and factory : ITypeShapeVisitor<Pickler> =
 
 (**
 
-The `generate` function can now be used for auto-generating simple picklers:
+The `generate` function can now be used for auto-generating derivative picklers:
 
 *)
 
 let p1 = generate<int * string> ()
-let p2 = generate<int * string list> () 
-let p3 = generate<int * (string * (int * Set<string>) list)> ()
+let p2 = generate<int * string list list> () 
+let p3 = generate<(int * Set<string>) * (string * (int * Set<string>) list)> ()
