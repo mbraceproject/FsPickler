@@ -48,9 +48,10 @@ as being problematic or even broken. This is mainly for the following reasons:</
 Rather, serializers are library implementations that mostly depend
 on the reflection system to extrapolate serialization rules for
 each type (resulting in runtime errors if this is not possible).</p></li>
-<li><p>There is confusion as to which is the prefered methodology for serialization.
+<li><p>There is confusion as to which is the prefered methodology for when
+defining serialization semantics for new types.
 The BCL comes with a multitude of dated, unsafe, mutually exclusive
-and naturally inefficient patterns.</p></li>
+and naturally inefficient approaches.</p></li>
 </ul>
 
 <h3>BCL Serialization methods</h3>
@@ -60,23 +61,24 @@ and naturally inefficient patterns.</p></li>
 <ul>
 <li><p>Field-based serialization: objects are pickled by serializing the contents 
 of their fields. This behaviour is tuned by applying an assortment of attributes
-such as <code>Serialized</code>, <code>NonSerialized</code>, <code>OnSerializing</code>, <code>OnDeserialized</code>, etc and
-implementing the <code>IDeserializationCallback</code> interface. This is arguably the most
-loathed method, since it is sensitive to internal implementation details.
-Incidentally, this is the pattern of choice for most F# generated types.</p></li>
+such as <code>Serialized</code>, <code>NonSerialized</code>, <code>OnSerializing</code>, <code>OnDeserialized</code> and
+the <code>IDeserializationCallback</code> interface. This is arguably the most
+problematic approach, since it is sensitive to internal implementation details.
+Incidentally, this is the pattern of choice for most F# types.</p></li>
 <li><p>Property-based or <a href="http://msdn.microsoft.com/en-us/library/ms733127.aspx">DataContract</a> 
 serialization: objects are pickled by serializing the contents
 of specially flagged properties. Properties should be settable and are usually required to be
 public. In most cases, a parameterless constructor is also necessary. Property-based serialization
-is probably the most popular pattern.</p></li>
+is probably the most popular approach.</p></li>
 <li><p><a href="http://msdn.microsoft.com/en-us/library/system.runtime.serialization.iserializable.aspx">ISerializable</a> 
 types: possibly intended as a type-safe replacement of field-based serialization.
 It fails to live up to this role, mostly due to the nature of interfaces; it still requires a
 special constructor for deserialization which, if missing, would result in a runtime error.
-It is a particularly verbose pattern, resulting in a lot of boilerplate code.
+It requires separate implementations for serialization and deserialization, often leading to bugs
+and introducing lots of boilerplate code.
 Its dynamic nature also makes it impossible to reason about the components it serializes a priori.
-It is however an indispensible pattern, since it is used by many BCL types, most important being
-exception types, whose metadata is impossible to replicate without <code>ISerializable</code>.</p></li>
+It is however an indispensible pattern since it is used by many BCL types, most important being
+exceptions, whose metadata is impossible to serialize otherwise.</p></li>
 </ul>
 
 <h3>Serialization Libraries</h3>
