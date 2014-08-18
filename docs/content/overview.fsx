@@ -69,7 +69,6 @@ The BCL comes with the following patterns for defining serializable types:
 The BCL ships with a couple of general-purpose serializer libraries but these suffer either
 from obsolescence (e.g. [BinaryFormatter](http://msdn.microsoft.com/en-us/library/system.runtime.serialization.formatters.binary.binaryformatter.aspx)) 
 or performance ([NetDataContractSerializer](http://msdn.microsoft.com/en-us/library/system.runtime.serialization.netdatacontractserializer.aspx)).
-
 Many third-party libraries have emerged attempting to address these shortcomings, 
 some with success. However, most of them seem to suffer when it comes to properly
 supporting serialization of .NET objects. In particular many of them:
