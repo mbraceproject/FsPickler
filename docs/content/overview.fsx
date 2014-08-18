@@ -228,7 +228,7 @@ cannot cater to arbitrary subtype instances.
 
 For this reason, picklers will only be used to serialize values whose reflected type is identical
 to the pickler's. When coming across an object of non-sealed type, FsPickler
-will examine its reflected type; if found to differ, a new pickler will be generated
+will examine its reflected type; if found to differ, a new pickler will be
 generated on-the-fly for that particular subtype.
 
 The above implies that `obj` is serializable in FsPickler, but `Pickler<obj>`
