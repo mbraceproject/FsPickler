@@ -41,17 +41,17 @@ and gives an overview of the implementation details in FsPickler.</p>
 <h2>Serialization in the .NET framework</h2>
 
 <p>Serialization in the .NET framework is something often considered
-as being problematic or even broken. This is mainly for the following reasons:</p>
+as being problematic or even broken. This could be tracked to the following reasons:</p>
 
 <ul>
-<li><p>There is no type or runtime support for serialization. 
+<li><p>There is no runtime or type system support for serialization. 
 Rather, serializers are library implementations that mostly depend
 on the reflection system to extrapolate serialization rules for
 each type (resulting in runtime errors if this is not possible).</p></li>
 <li><p>There is confusion as to which is the prefered methodology when
-defining serialization semantics for new types.
-The BCL comes with a multitude of dated, unsafe, mutually exclusive
-and naturally inefficient approaches.</p></li>
+defining serialization semantics for types.
+The BCL itself comes with a multitude of approaches most of which are
+dated, unsafe and inefficient by design.</p></li>
 </ul>
 
 <h3>BCL Serialization methods</h3>
@@ -89,9 +89,9 @@ exceptions, whose metadata is impossible to serialize otherwise.</p></li>
 from obsolescence (e.g. <a href="http://msdn.microsoft.com/en-us/library/system.runtime.serialization.formatters.binary.binaryformatter.aspx">BinaryFormatter</a>) 
 or performance (<a href="http://msdn.microsoft.com/en-us/library/system.runtime.serialization.netdatacontractserializer.aspx">NetDataContractSerializer</a>).</p>
 
-<p>Many third-party libraries have emerged attempting to address the issue of performance, some with success.
-However, experience shows that such libraries hardly achieve the level of generalization
-offered by their BCL counterparts. In particular most of them:</p>
+<p>Many third-party libraries have emerged attempting to address these shortcomings, 
+some with success. However, most of them seem to suffer when it comes to properly
+supporting serialization of .NET objects. In particular many of them:</p>
 
 <ul>
 <li><p>offer sketchy or no support for reflection types, like <code>MemberInfo</code>.</p></li>
@@ -115,13 +115,13 @@ Initially we started using NetDataContractSerializer as our library of choice,
 but that eventually took its toll on overall performance,
 so we decided to build a new library from scratch.</p>
 
-<p>FsPickler was created with two goals in mind: performance and completeness.
+<p>FsPickler was created with two goals in mind: performance and completeness in supported objects.
 Importantly, it was conceived as a .NET serializer, rather than an F# serializer:
 if it is a .NET object designed to be serialized, it should be serializable in FsPickler.
 In that sense, it was designed with a goal to embrace the imperfect world that is
 the .NET framework in its totality, albeit with an eye for correctness.</p>
 
-<p>At this point, I should acknowledge Anton Tayanovskyy and his nice little F#
+<p>At this point, we should acknowledge Anton Tayanovskyy and his great F#
 snippet <a href="http://www.fssnip.net/6u">Union-Friendly Generic Binary Serializer</a>
 which served as the initial inspiration for this library.</p>
 
@@ -197,7 +197,8 @@ since this mostly relies on the metaprogramming facility offered by scala.</p>
 <h2>Serializable Types</h2>
 
 <p>So what qualifies as a serializable type in FsPickler?
-The short answer would be any type <code>'T</code> for which we present an instance of <code>Pickler&lt;'T&gt;</code>.
+The short answer would be any type <code>'T</code> for which we present an instance of 
+<a href="reference/nessos-fspickler-pickler-1.html"><code>Pickler&lt;'T&gt;</code></a>.
 To make the question more meaningful: for what types does the library auto-generate picklers? 
 This is something that can only be answered at runtime, typically by calling</p>
 
