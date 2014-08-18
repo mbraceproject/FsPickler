@@ -5,9 +5,10 @@
 
 (**
 
-# FsPickler : A serializer for .NET
+# FsPickler : A fast .NET object serializer
 
-FsPickler is a general-purpose serialization library that focuses on completeness and performance. 
+FsPickler is a serialization library that facilitates the distribution of .NET objects.
+The implementation focuses on performance and completeness in supported types, including F# types.
 It supports multiple, pluggable serialization formats including Binary, Xml, JSON and BSON.
 The library is based on the functional programming concept of 
 [pickler combinators](http://lambda-the-ultimate.org/node/2243)
