@@ -726,6 +726,19 @@
 
             (testRoundtrip (f 41)) 1 |> should equal 42
 
+        [<Test; Category("FSharp extension methods")>]
+        member __.``7. FSharp: extension methods`` () =
+            let t1 = Unchecked.defaultof<System.Threading.Tasks.Task>
+            let t2 = Unchecked.defaultof<System.Threading.Tasks.Task<int>>
+            testReflected 
+                <@ 
+                    async { 
+                        do! t1
+                        let! x = t2
+                        return x + 1
+                    }
+                @>
+
         [<Test; Category("FSharp type tests")>]
         member __.``7. FSharp: function closure`` () =
             let f () =

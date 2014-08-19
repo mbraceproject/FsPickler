@@ -1,6 +1,7 @@
 ﻿namespace Nessos.FsPickler.Tests
 
     open System
+    open System.Threading.Tasks
     open System.Reflection
 
     open NUnit.Framework
@@ -27,6 +28,11 @@
             | Choice3Of3 e ->
                 let msg = sprintf "An unexpected exception type was thrown\nExpected: '%s'\n but was: '%s'." (e.GetType().Name) typeof<'Exception>.Name
                 raise <| new AssertionException(msg)
+
+
+        type AsyncBuilder with
+            member ab.Bind(t : Task<'T>, cont : 'T -> Async<'S>) = ab.Bind(Async.AwaitTask t, cont)
+            member ab.Bind(t : Task, cont : unit -> Async<'S>) = ab.Bind(t.ContinueWith ignore, cont)
 
 
         type AppDomainManager private () =
