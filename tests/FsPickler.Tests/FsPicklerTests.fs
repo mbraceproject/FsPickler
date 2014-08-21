@@ -6,6 +6,7 @@
     open System.Collections.Generic
     open System.Reflection
     open System.Runtime.Serialization
+    open System.Threading.Tasks
 
     open Nessos.FsPickler
     open Nessos.FsPickler.Json
@@ -728,13 +729,14 @@
 
         [<Test; Category("FSharp extension methods")>]
         member __.``7. FSharp: extension methods`` () =
-            let t1 = Unchecked.defaultof<System.Threading.Tasks.Task>
-            let t2 = Unchecked.defaultof<System.Threading.Tasks.Task<int>>
+            testEquals <| getMemberCall <@ fun (t : Task) -> Async.AwaitTask t @>
+            testEquals <| getMemberCall <@ Stream.AsyncCopy @>
+
             testReflected 
                 <@ 
                     async { 
-                        do! t1
-                        let! x = t2
+                        do! Unchecked.defaultof<Task>
+                        let! x = Unchecked.defaultof<Task<int>>
                         return x + 1
                     }
                 @>

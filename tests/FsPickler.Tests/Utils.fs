@@ -1,8 +1,12 @@
 ﻿namespace Nessos.FsPickler.Tests
 
     open System
+    open System.IO
     open System.Threading.Tasks
     open System.Reflection
+
+    open Microsoft.FSharp.Quotations
+    open Microsoft.FSharp.Quotations.Patterns
 
     open NUnit.Framework
 
@@ -29,10 +33,28 @@
                 let msg = sprintf "An unexpected exception type was thrown\nExpected: '%s'\n but was: '%s'." (e.GetType().Name) typeof<'Exception>.Name
                 raise <| new AssertionException(msg)
 
+        let rec getMemberCall (expr : Expr) =
+            match expr with
+            | Call(_,m,_) -> m :> MemberInfo
+            | PropertyGet(_,p,_) -> p :> MemberInfo
+            | PropertySet(_,p,_,_) -> p :> MemberInfo
+            | FieldGet(_,f) -> f :> MemberInfo
+            | FieldSet(_,f,_) -> f :> MemberInfo
+            | Lambda(_,body) -> getMemberCall body
+            | Let(_,_,c) -> getMemberCall c
+            | Application(expr, _) -> getMemberCall expr
+            | _ -> invalidArg "expr" "not a member call"
+
+        type Async with
+            static member AwaitTask(t : Task) = Async.AwaitTask(t.ContinueWith ignore)
 
         type AsyncBuilder with
             member ab.Bind(t : Task<'T>, cont : 'T -> Async<'S>) = ab.Bind(Async.AwaitTask t, cont)
             member ab.Bind(t : Task, cont : unit -> Async<'S>) = ab.Bind(t.ContinueWith ignore, cont)
+
+        type Stream with
+           static member AsyncCopy(source : Stream, target : Stream) =
+            Async.AwaitTask(source.CopyToAsync(target))
 
 
         type AppDomainManager private () =
