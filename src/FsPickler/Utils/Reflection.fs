@@ -6,23 +6,18 @@
 
     open Microsoft.FSharp.Reflection
 
-
-    [<Literal>]
     let allFields = 
         BindingFlags.NonPublic ||| BindingFlags.Public ||| 
             BindingFlags.Instance ||| BindingFlags.FlattenHierarchy 
 
-    [<Literal>]
     let allMembers =
         BindingFlags.NonPublic ||| BindingFlags.Public |||
             BindingFlags.Instance ||| BindingFlags.Static |||
                 BindingFlags.FlattenHierarchy
 
-    [<Literal>]
     let allStatic =
         BindingFlags.NonPublic ||| BindingFlags.Public ||| BindingFlags.Static
 
-    [<Literal>]
     let allConstructors = BindingFlags.Instance ||| BindingFlags.NonPublic ||| BindingFlags.Public
 
     type Delegate with
