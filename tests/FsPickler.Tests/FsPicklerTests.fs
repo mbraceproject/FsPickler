@@ -838,13 +838,15 @@
         [<Test; Category("Stress tests")>]
         member __.``8. Stress test: massively auto-generated objects`` () =
             // generate serializable objects that reside in mscorlib and FSharp.Core
-            let inputData = 
-                Seq.concat
-                    [
-                        generateSerializableObjects typeof<int>.Assembly
-                        generateSerializableObjects typeof<_ option>.Assembly
-                        generateSerializableObjects <| Assembly.GetExecutingAssembly()
-                    ]
+            let inputData = seq {
+                if not runsOnMono then
+                    // as of Mono 3.8.0, performing serializations on
+                    // uninitialized BCL objects has become too unstable; eliminate.
+                    yield! generateSerializableObjects typeof<int>.Assembly
+
+                yield! generateSerializableObjects typeof<_ option>.Assembly
+                yield! generateSerializableObjects <| Assembly.GetExecutingAssembly()
+            }
 
             let test (t : Type, x : obj) =
                 try testRoundtrip x |> ignore ; None

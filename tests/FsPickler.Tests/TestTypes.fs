@@ -284,13 +284,9 @@
         // automated large-scale object generation
         let generateSerializableObjects (assembly : Assembly) =
             let filterType (t : Type) =
-                if runsOnMono && t.Namespace = "System.Reflection" then false // mono bug that kills the runtime
-                elif runsOnMono && t = typeof<System.Collections.CaseInsensitiveComparer> then false // mono bug in NoEmit build
-                elif runsOnMono && t = typeof<System.Globalization.DateTimeFormatInfo> then false // mono bug in NoEmit build
-                else
-                    // types that cause .IsSerializable to fail
-                    // should be included in testing
-                    try FsPickler.IsSerializableType t with _ -> true
+                // types that cause .IsSerializable to fail
+                // should be included in testing
+                try FsPickler.IsSerializableType t with _ -> true
 
             let tryActivate (t : Type) =
                 try Some (t, Activator.CreateInstance t)
