@@ -23,12 +23,12 @@ let authors = ["Eirik Tsarpalis"]
 let summary = "A fast serialization framework and pickler combinator library for .NET"
 
 let description = """
-    A fast, general-purpose serialization framework for .NET written in F# that doubles as a pickler combinator library.
+    A fast object serialization library for .NET written in F#.
 
-    * Based on the notion of pickler combinators.
+    * Based on the functional programming concept of pickler combinators.
     * Provides an automated pickler generation framework.
     * Offers binary, xml and json pickle formats.
-    * Support for F# types, quotations, closures and cyclic objects.
+    * Supports F# types, quotations, closures and cyclic objects.
     * Fully backwards compatible with .NET serialization and open hierarchies.
     * One of the fastest serializers for the .NET framework.
     * Full support for the mono framework.
@@ -41,7 +41,7 @@ let gitName = "FsPickler"
 let gitRaw = environVarOrDefault "gitRaw" "https://raw.github.com/nessos"
 
 
-let testAssemblies = ["bin/FsPickler.Tests.dll"]
+let testAssemblies = ["bin/FsPickler.Tests.dll" ; "bin/NoEmit/FsPickler.Tests.dll"]
 
 //
 //// --------------------------------------------------------------------------------------
@@ -92,23 +92,17 @@ Target "Clean" (fun _ ->
 
 let configuration = environVarOrDefault "Configuration" "Release"
 
-Target "Build - NET40" (fun _ ->
-    // Build the rest of the project
-    { BaseDirectory = __SOURCE_DIRECTORY__
-      Includes = [ project + ".sln" ]
-      Excludes = [] } 
-    |> MSBuild "" "Build" ["Configuration", "Release-NET40"]
-    |> Log "AppBuild-Output: "
-)
-
-Target "Build" (fun _ ->
+let build configuration () =
     // Build the rest of the project
     { BaseDirectory = __SOURCE_DIRECTORY__
       Includes = [ project + ".sln" ]
       Excludes = [] } 
     |> MSBuild "" "Build" ["Configuration", configuration]
     |> Log "AppBuild-Output: "
-)
+
+Target "Build - NoEmit" (build "NoEmit")
+Target "Build - NET40" (build "Release-NET40")
+Target "Build" (build configuration)
 
 
 // --------------------------------------------------------------------------------------
@@ -174,6 +168,7 @@ Target "NuGet -- FsPickler" (fun _ ->
                 [
                     yield! addAssembly @"lib\net45" @"..\bin\FsPickler.dll"
                     yield! addAssembly @"lib\net40" @"..\bin\net40\FsPickler.dll"
+                    yield! addAssembly @"lib\noemit" @"..\bin\NoEmit\FsPickler.dll"
                 ]
         })
         ("nuget/FsPickler.nuspec")
@@ -199,6 +194,7 @@ Target "NuGet -- FsPickler.Json" (fun _ ->
                 [
                     yield! addAssembly @"lib\net45" @"..\bin\FsPickler.Json.dll"
                     yield! addAssembly @"lib\net40" @"..\bin\net40\FsPickler.Json.dll"
+                    yield! addAssembly @"lib\noemit" @"..\bin\NoEmit\FsPickler.Json.dll"
                 ]
             
         })
@@ -230,6 +226,7 @@ Target "NuGet -- FsPickler.CSharp" (fun _ ->
                 [
                     yield! addAssembly @"lib\net45" @"..\bin\FsPickler.CSharp.dll"
                     yield! addAssembly @"lib\net40" @"..\bin\net40\FsPickler.CSharp.dll"
+                    yield! addAssembly @"lib\noemit" @"..\bin\NoEmit\FsPickler.CSharp.dll"
                 ]
         })
         ("nuget/FsPickler.nuspec")
@@ -267,6 +264,7 @@ Target "Default" DoNothing
   ==> "AssemblyInfo"
   ==> "Prepare"
   ==> "Build"
+  ==> "Build - NoEmit"
   ==> "RunTests"
   ==> "Default"
 

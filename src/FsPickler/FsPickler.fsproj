@@ -68,10 +68,11 @@
     <Tailcalls>true</Tailcalls>
     <DefineConstants>TRACE;PROTECT_STACK_OVERFLOWS;OPTIMIZE_FSHARP</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>..\..\bin\FsPickler.xml</DocumentationFile>
+    <DocumentationFile>..\..\bin\NoEmit\FsPickler.XML</DocumentationFile>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <TargetFrameworkProfile />
-    <OutputPath>..\..\bin\</OutputPath>
+    <TargetFrameworkProfile>
+    </TargetFrameworkProfile>
+    <OutputPath>..\..\bin\NoEmit</OutputPath>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release-NET40|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
