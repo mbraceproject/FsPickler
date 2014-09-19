@@ -85,7 +85,7 @@
     <Compile Include="InMemoryTests.fs" />
     <Compile Include="AppDomainTests.fs" />
     <None Include="packages.config" />
-    <None Include="app.config" />
+    <Content Include="app.config" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FsCheck">
@@ -112,8 +112,6 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
     <Reference Include="System.Runtime.Serialization" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\..\src\FsPickler.Json\FsPickler.Json.fsproj">
       <Name>FsPickler.Json</Name>
       <Project>{1dcb4ad7-2c00-4bcd-b1a5-a469f31e2cd1}</Project>

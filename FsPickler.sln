@@ -58,6 +58,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "files", "files", "{BE768967
 	ProjectSection(SolutionItems) = preProject
 		docs\files\img\fsharp.png = docs\files\img\fsharp.png
 		docs\files\img\nessos.png = docs\files\img\nessos.png
+		docs\files\style.css = docs\files\style.css
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "benchmarks", "benchmarks", "{2A53832A-B4CA-414B-8654-718F098E6B2D}"

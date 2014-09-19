@@ -188,7 +188,7 @@ Target "NuGet -- FsPickler.Json" (fun _ ->
             OutputPath = "bin"
             ToolPath = nugetPath
             AccessKey = getBuildParamOrDefault "nugetkey" ""
-            Dependencies = [("FsPickler", RequireExactly release.NugetVersion) ; ("Newtonsoft.Json", "6.0.4")] 
+            Dependencies = [("FsPickler", RequireExactly release.NugetVersion) ; ("Newtonsoft.Json", "6.0.5")] 
             Publish = hasBuildParam "nugetkey" 
             Files =
                 [
