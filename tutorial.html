@@ -33,11 +33,11 @@
       <div class="row">
         <div class="span9" id="main">
           
-<h1>An Introduction to FsPickler</h1>
+<h1><a name="An-Introduction-to-FsPickler" class="anchor" href="#An-Introduction-to-FsPickler">An Introduction to FsPickler</a></h1>
 
 <p>The following provides an overview of the basic functionalities offered by the library.</p>
 
-<h2>The core serialization API</h2>
+<h2><a name="The-core-serialization-API" class="anchor" href="#The-core-serialization-API">The core serialization API</a></h2>
 
 <p>The basic API is accessible through instances of type <a href="reference/nessos-fspickler-fspicklerserializer.html"><code>FsPicklerSerializer</code></a>
 that can be initialized as follows:</p>
@@ -105,7 +105,7 @@ that is byte arrays containing the serialized values:</p>
 </tr>
 </table>
 
-<h3>Text-based serialization</h3>
+<h3><a name="Text-based-serialization" class="anchor" href="#Text-based-serialization">Text-based serialization</a></h3>
 
 <p>The Xml and Json serializers are instances of type <a href="reference/nessos-fspickler-fspicklertextserializer.html"><code>FsPicklerTextSerializer</code></a>
 that offers functionality for text-based serialization:</p>
@@ -128,7 +128,7 @@ that offers functionality for text-based serialization:</p>
 </tr>
 </table>
 
-<h3>Sequence serialization</h3>
+<h3><a name="Sequence-serialization" class="anchor" href="#Sequence-serialization">Sequence serialization</a></h3>
 
 <p>FsPickler offers support for on-demand sequence serialization/deserialization:</p>
 
@@ -150,7 +150,7 @@ that offers functionality for text-based serialization:</p>
 </tr>
 </table>
 
-<h2>Picklers and Pickler combinators</h2>
+<h2><a name="Picklers-and-Pickler-combinators" class="anchor" href="#Picklers-and-Pickler-combinators">Picklers and Pickler combinators</a></h2>
 
 <p>A pickler is essentially the type</p>
 
@@ -337,7 +337,7 @@ like<code>wrap</code> and <code>alt</code>. Fixpoint combinators for declaring r
 </tr>
 </table>
 
-<h3>Experimental N-way Sum and Product Combinators</h3>
+<h3><a name="Experimental-N-way-Sum-and-Product-Combinators" class="anchor" href="#Experimental-N-way-Sum-and-Product-Combinators">Experimental N-way Sum and Product Combinators</a></h3>
 
 <p>N-way sum and product combinators provide an alternative pretty syntax for
 defining picklers over arbitrary discriminated unions and records.  Unfortunately
@@ -348,7 +348,7 @@ improve in the future.</p>
 F# infers them automatically. The implementation is total and purely functional,
 see this <a href="https://gist.github.com/t0yv0/6834822">gist</a> for some Coq code used to model these combinators.</p>
 
-<h4>Records / Product Types</h4>
+<h4><a name="Records-Product-Types" class="anchor" href="#Records-Product-Types">Records / Product Types</a></h4>
 
 <table class="pre"><tr><td class="lines"><pre class="fssnip">
 <span class="l"> 1: </span>
@@ -396,7 +396,7 @@ see this <a href="https://gist.github.com/t0yv0/6834822">gist</a> for some Coq c
 </tr>
 </table>
 
-<h4>Unions / Sum Types</h4>
+<h4><a name="Unions-Sum-Types" class="anchor" href="#Unions-Sum-Types">Unions / Sum Types</a></h4>
 
 <table class="pre"><tr><td class="lines"><pre class="fssnip">
 <span class="l"> 1: </span>
@@ -434,7 +434,7 @@ see this <a href="https://gist.github.com/t0yv0/6834822">gist</a> for some Coq c
 </tr>
 </table>
 
-<h2>Generating custom picklers in type definitions</h2>
+<h2><a name="Generating-custom-picklers-in-type-definitions" class="anchor" href="#Generating-custom-picklers-in-type-definitions">Generating custom picklers in type definitions</a></h2>
 
 <p>FsPickler can be instructed to use custom pickler definitions for given types
 using the following design pattern:</p>
@@ -530,11 +530,11 @@ The <code>IPicklerResolver</code> argument provides a handle to the pickler gene
 </tr>
 </table>
 
-<h2>Additional tools</h2>
+<h2><a name="Additional-tools" class="anchor" href="#Additional-tools">Additional tools</a></h2>
 
 <p>This section describes some of the additional tools offered by the library:</p>
 
-<h3>Structural Hashcodes</h3>
+<h3><a name="Structural-Hashcodes" class="anchor" href="#Structural-Hashcodes">Structural Hashcodes</a></h3>
 
 <p>FsPickler offers experimental support for structural, non-cryptographic, hashcode generation:</p>
 
@@ -586,7 +586,7 @@ large objects or complex object graphs, but it is not recommended for small valu
 </tr>
 </table>
 
-<h3>Object Graph Visitors</h3>
+<h3><a name="Object-Graph-Visitors" class="anchor" href="#Object-Graph-Visitors">Object Graph Visitors</a></h3>
 
 <p>FsPickler is capable of efficiently traversing arbitrary object graphs (as long as they are serializable)
 by exploiting its pickler infrastructure. This can be done by calling the method:</p>
@@ -641,7 +641,7 @@ by exploiting its pickler infrastructure. This can be done by calling the method
 </tr>
 </table>
 
-<h2>Defining Custom Pickle Formats</h2>
+<h2><a name="Defining-Custom-Pickle-Formats" class="anchor" href="#Defining-Custom-Pickle-Formats">Defining Custom Pickle Formats</a></h2>
 
 <p>It is possible to create user-defined pickle formats for FsPickler. One simply needs to implement the interface</p>
 
