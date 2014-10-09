@@ -100,9 +100,9 @@ let build configuration () =
     |> MSBuild "" "Build" ["Configuration", configuration]
     |> Log "AppBuild-Output: "
 
-Target "Build - Default" (build configuration)
-Target "Build - NoEmit" (build "NoEmit")
-Target "Build - NET40" (build "Release-NET40")
+Target "Build.Default" (build configuration)
+Target "Build.NoEmit" (build "NoEmit")
+Target "Build.Net40" (build "Release-NET40")
 
 // --------------------------------------------------------------------------------------
 // Run the unit tests using test runner & kill test runner when complete
@@ -147,7 +147,7 @@ let addAssembly (target : string) assembly =
         yield! includeFile false <| assembly + ".config"
     }
 
-Target "NuGet -- FsPickler" (fun _ ->
+Target "NuGet.FsPickler" (fun _ ->
     let nugetPath = ".nuget/NuGet.exe"
     NuGet (fun p -> 
         { p with   
@@ -172,7 +172,7 @@ Target "NuGet -- FsPickler" (fun _ ->
         ("nuget/FsPickler.nuspec")
 )
 
-Target "NuGet -- FsPickler.Json" (fun _ ->
+Target "NuGet.FsPickler.Json" (fun _ ->
     let nugetPath = ".nuget/NuGet.exe"
     NuGet (fun p -> 
         { p with   
@@ -198,7 +198,7 @@ Target "NuGet -- FsPickler.Json" (fun _ ->
         ("nuget/FsPickler.nuspec")
 )
 
-Target "NuGet -- FsPickler.CSharp" (fun _ ->
+Target "NuGet.FsPickler.CSharp" (fun _ ->
     let nugetPath = ".nuget/NuGet.exe"
     NuGet (fun p -> 
         { p with   
@@ -260,9 +260,9 @@ Target "Release" DoNothing
   ==> "RestorePackages"
   ==> "AssemblyInfo"
   ==> "Prepare"
-  ==> "Build - Default"
-  ==> "Build - NoEmit"
-  ==> "Build - NET40"
+  ==> "Build.Default"
+  ==> "Build.NoEmit"
+  ==> "Build.Net40"
   ==> "Build"
   ==> "RunTests"
   ==> "Default"
@@ -270,9 +270,9 @@ Target "Release" DoNothing
 "Clean"
   ==> "PrepareRelease"
   ==> "Build"
-  ==> "NuGet -- FsPickler"
-  ==> "NuGet -- FsPickler.Json"
-  ==> "NuGet -- FsPickler.CSharp"
+  ==> "NuGet.FsPickler"
+  ==> "NuGet.FsPickler.Json"
+  ==> "NuGet.FsPickler.CSharp"
   ==> "NuGet"
   ==> "GenerateDocs"
   ==> "ReleaseDocs"
