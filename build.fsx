@@ -267,9 +267,8 @@ Target "Release" DoNothing
   ==> "RunTests"
   ==> "Default"
 
-"Clean"
+"Build"
   ==> "PrepareRelease"
-  ==> "Build"
   ==> "NuGet.FsPickler"
   ==> "NuGet.FsPickler.Json"
   ==> "NuGet.FsPickler.CSharp"
