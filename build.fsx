@@ -100,10 +100,9 @@ let build configuration () =
     |> MSBuild "" "Build" ["Configuration", configuration]
     |> Log "AppBuild-Output: "
 
+Target "Build - Default" (build configuration)
 Target "Build - NoEmit" (build "NoEmit")
 Target "Build - NET40" (build "Release-NET40")
-Target "Build" (build configuration)
-
 
 // --------------------------------------------------------------------------------------
 // Run the unit tests using test runner & kill test runner when complete
@@ -168,7 +167,6 @@ Target "NuGet -- FsPickler" (fun _ ->
                 [
                     yield! addAssembly @"lib\net45" @"..\bin\FsPickler.dll"
                     yield! addAssembly @"lib\net40" @"..\bin\net40\FsPickler.dll"
-                    yield! addAssembly @"lib\noemit" @"..\bin\NoEmit\FsPickler.dll"
                 ]
         })
         ("nuget/FsPickler.nuspec")
@@ -194,7 +192,6 @@ Target "NuGet -- FsPickler.Json" (fun _ ->
                 [
                     yield! addAssembly @"lib\net45" @"..\bin\FsPickler.Json.dll"
                     yield! addAssembly @"lib\net40" @"..\bin\net40\FsPickler.Json.dll"
-                    yield! addAssembly @"lib\noemit" @"..\bin\NoEmit\FsPickler.Json.dll"
                 ]
             
         })
@@ -226,7 +223,6 @@ Target "NuGet -- FsPickler.CSharp" (fun _ ->
                 [
                     yield! addAssembly @"lib\net45" @"..\bin\FsPickler.CSharp.dll"
                     yield! addAssembly @"lib\net40" @"..\bin\net40\FsPickler.CSharp.dll"
-                    yield! addAssembly @"lib\noemit" @"..\bin\NoEmit\FsPickler.CSharp.dll"
                 ]
         })
         ("nuget/FsPickler.nuspec")
@@ -250,33 +246,36 @@ Target "ReleaseDocs" (fun _ ->
     Branches.push tempDocsDir
 )
 
-Target "Release" DoNothing
-
 // --------------------------------------------------------------------------------------
 // Run all targets by default. Invoke 'build <Target>' to override
 
 Target "Prepare" DoNothing
 Target "PrepareRelease" DoNothing
+Target "Build" DoNothing
+Target "NuGet" DoNothing
 Target "Default" DoNothing
+Target "Release" DoNothing
 
 "Clean"
   ==> "RestorePackages"
   ==> "AssemblyInfo"
   ==> "Prepare"
-  ==> "Build"
+  ==> "Build - Default"
   ==> "Build - NoEmit"
+  ==> "Build - NET40"
+  ==> "Build"
   ==> "RunTests"
   ==> "Default"
 
-"Default"
+"Clean"
   ==> "PrepareRelease"
-  ==> "Build - NET40"
-  ==> "GenerateDocs"
-  ==> "ReleaseDocs"
+  ==> "Build"
   ==> "NuGet -- FsPickler"
   ==> "NuGet -- FsPickler.Json"
   ==> "NuGet -- FsPickler.CSharp"
+  ==> "NuGet"
+  ==> "GenerateDocs"
+  ==> "ReleaseDocs"
   ==> "Release"
 
-//RunTargetOrDefault "Release"
 RunTargetOrDefault "Default"
