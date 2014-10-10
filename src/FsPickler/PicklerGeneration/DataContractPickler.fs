@@ -21,26 +21,38 @@
 
             let t = typeof<'T>
             let cacheByRef = not <| t.IsValueType
+            let properties = gatherMembers t |> Array.choose (function :? PropertyInfo as p -> Some p | _ -> None)
+            // check if data members are to be resolved by member exclusion
+            let isExclusive = properties |> Array.exists (Option.isSome << tryGetAttr<IgnoreDataMemberAttribute>)
             
-            let tryGetDataMemberInfo (m : MemberInfo) =
-                match m with
-                | :? PropertyInfo as p ->
+            let tryGetDataMemberInfo (p : PropertyInfo) =
+                // resolve if property is data member
+                let dataAttr =
                     match tryGetAttr<DataMemberAttribute> p with
+                    | Some _ as attr -> attr
+                    | None when isExclusive ->
+                        // check for ignored data member attributes
+                        if Option.isSome <| tryGetAttr<IgnoreDataMemberAttribute> p then
+                            None
+                        else
+                            // not ignored, annotate with trivial data member attribute.
+                            Some(new DataMemberAttribute())
                     | None -> None
-                    | Some _ when not p.CanRead ->
-                        let msg = sprintf "property '%s' marked as data member but missing getter." p.Name
-                        raise <| new PicklerGenerationException(t, msg)
 
-                    | Some _ when not p.CanWrite ->
-                        let msg = sprintf "property '%s' marked as data member but missing setter." p.Name
-                        raise <| new PicklerGenerationException(t, msg)
+                match dataAttr with
+                | None -> None
+                | Some _ when not p.CanRead ->
+                    let msg = sprintf "property '%s' marked as data member but missing getter." p.Name
+                    raise <| new PicklerGenerationException(t, msg)
 
-                    | Some attr -> Some(attr, p)
+                | Some _ when not p.CanWrite ->
+                    let msg = sprintf "property '%s' marked as data member but missing setter." p.Name
+                    raise <| new PicklerGenerationException(t, msg)
 
-                | _ -> None
+                | Some attr -> Some(attr, p)
 
             let dataContractInfo = 
-                gatherMembers t 
+                properties
                 |> Seq.choose tryGetDataMemberInfo
                 |> Seq.mapi (fun i v -> (i,v))
                 // sort data members: primarily specified by user-specified order

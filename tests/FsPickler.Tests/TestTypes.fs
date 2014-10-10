@@ -147,6 +147,17 @@
                 with get () = __.y
                 and set (t : string) = __.y <- t
 
+        [<DataContract>]
+        type ExclusionDataContractClass(x : int, y : string, z : bool) =
+
+            [<IgnoreDataMember>]
+            member val x = x with get, set
+
+            member val y = y with get, set
+
+            [<DataMember>]
+            member val z = z with get, set
+
         [<CustomPickler>]
         type ClassWithPicklerFactory (x : int) =
 
