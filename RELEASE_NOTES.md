@@ -1,3 +1,6 @@
+### 1.0.2
+* Add .IsSerializable checks for F# Union/Record/Exception types.
+
 ### 1.0.1
 * Treat C# compiler generated types as serializable by default.
 
