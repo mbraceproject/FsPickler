@@ -24,9 +24,6 @@
 
         let runsOnMono = lazy(Type.GetType("Mono.Runtime") <> null)
 
-        /// stackless raise operator
-        let inline raise (e: System.Exception) = (# "throw" e : 'U #)
-
         /// hashset constructor
         let hset (ts : seq<'T>) = new HashSet<_>(ts)
 
