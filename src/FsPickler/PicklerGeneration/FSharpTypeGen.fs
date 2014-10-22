@@ -23,6 +23,9 @@
     type internal FsUnionPickler =
 
         static member Create<'Union> (resolver : IPicklerResolver) =
+            if not <| typeof<'Union>.IsSerializable then
+                raise <| new NonSerializableTypeException(typeof<'Union>)
+
             // resolve tag reader methodInfo
             let tagReaderMethod =
                 match FSharpValue.PreComputeUnionTagMemberInfo(typeof<'Union>, allMembers) with
@@ -155,6 +158,8 @@
     type internal FsRecordPickler =
         
         static member Create<'Record>(resolver : IPicklerResolver) =
+            if not <| typeof<'Record>.IsSerializable then
+                raise <| new NonSerializableTypeException(typeof<'Record>)
 
             let fields = FSharpType.GetRecordFields(typeof<'Record>, allMembers)
             let ctor = FSharpValue.PreComputeRecordConstructorInfo(typeof<'Record>, allMembers)
@@ -209,6 +214,9 @@
     type internal FsExceptionPickler =
         
         static member Create<'Exception when 'Exception :> exn>(resolver : IPicklerResolver) =
+            if not <| typeof<'Exception>.IsSerializable then
+                raise <| new NonSerializableTypeException(typeof<'Exception>)
+
             // the default ISerializable pickler that handles exception metadata serialization
             let defPickler = ISerializablePickler.Create<'Exception>(resolver) :?> CompositePickler<'Exception>
             // separately serialize exception fields
