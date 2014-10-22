@@ -212,7 +212,7 @@
             // the default ISerializable pickler that handles exception metadata serialization
             let defPickler = ISerializablePickler.Create<'Exception>(resolver) :?> CompositePickler<'Exception>
             // separately serialize exception fields
-            let fields = gatherSerializableFields typeof<'Exception> |> Array.filter(fun f -> f.DeclaringType = typeof<'Exception>)
+            let fields = gatherSerializedFields typeof<'Exception> |> Array.filter(fun f -> f.DeclaringType = typeof<'Exception>)
             let fpicklers = fields |> Array.map (fun f -> resolver.Resolve f.FieldType)
             // extract tag names from properties, not fields
             let tags = FSharpType.GetExceptionFields(typeof<'Exception>, allMembers) |> Array.map (fun p -> p.Name)

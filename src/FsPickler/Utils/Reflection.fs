@@ -127,13 +127,13 @@
         |> Seq.map snd
         |> Seq.toArray
 
-    let gatherSerializableFields (t : Type) =
-        let isSerializableField (m : MemberInfo) =
+    let gatherSerializedFields (t : Type) =
+        let isSerializedField (m : MemberInfo) =
             match m with
             | :? FieldInfo as f when not (f.IsLiteral || f.IsNotSerialized) -> Some f
             | _ -> None
 
-        t |> gatherMembers |> Array.choose isSerializableField
+        t |> gatherMembers |> Array.choose isSerializedField
             
 
 
@@ -177,7 +177,7 @@
                     |> Seq.distinct
                     |> Seq.tryPick (aux (t :: traversed))
                 else
-                    gatherSerializableFields t
+                    gatherSerializedFields t
                     |> Seq.map (fun f -> f.FieldType)
                     |> Seq.distinct
                     |> Seq.tryPick (aux (t :: traversed))
@@ -231,7 +231,7 @@
             // leaves with open hiearchies are treated as recursive by definition
             elif not t.IsSealed then true
             else
-                gatherSerializableFields t
+                gatherSerializedFields t
                 |> Seq.map (fun f -> f.FieldType)
                 |> Seq.distinct
                 |> Seq.exists (aux (t :: traversed))
@@ -257,7 +257,7 @@
                 |> Seq.distinct
                 |> Seq.forall(fun f -> aux f.PropertyType)
             else
-                gatherSerializableFields t
+                gatherSerializedFields t
                 |> Seq.distinct
                 |> Seq.forall (fun f -> aux f.FieldType)
 

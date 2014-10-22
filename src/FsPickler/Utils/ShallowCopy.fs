@@ -14,7 +14,7 @@
         static let mkCopier (t : Type) =
             if t.IsValueType then invalidOp t.FullName "not a class."
 
-            let fields = gatherSerializableFields t
+            let fields = gatherSerializedFields t
 #if EMIT_IL
             let dele =
                 DynamicMethod.compileAction2<obj, obj> "shallowCopier" (fun source target ilGen ->

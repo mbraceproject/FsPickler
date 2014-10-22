@@ -22,7 +22,7 @@
         static member Create<'T when 'T : struct>(resolver : IPicklerResolver) =
 
             let t = typeof<'T>
-            let fields = gatherSerializableFields t
+            let fields = gatherSerializedFields t
             let picklers = fields |> Array.map (fun f -> resolver.Resolve f.FieldType)
             let tags = fields |> Array.map (fun f -> f.NormalizedName)
 
@@ -76,11 +76,12 @@
     type internal ClassFieldPickler =
 
         static member Create<'T when 'T : not struct>(resolver : IPicklerResolver) =
-            if not typeof<'T>.IsSerializable then
+            // compiler generated types in C# are not marked as serializable, but should in principle be treated as such.
+            if not (typeof<'T>.IsSerializable || containsAttr<System.Runtime.CompilerServices.CompilerGeneratedAttribute> typeof<'T>) then
                 raise <| new NonSerializableTypeException(typeof<'T>)
 
             let fields = 
-                gatherSerializableFields typeof<'T>
+                gatherSerializedFields typeof<'T>
                 |> Array.filter (not << containsAttr<NonSerializedAttribute>)
 
             let picklers = fields |> Array.map (fun f -> resolver.Resolve f.FieldType)
