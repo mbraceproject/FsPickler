@@ -1,3 +1,6 @@
+### 1.0.1
+* Treat C# compiler generated types as serializable by default.
+
 ### 1.0.0
 * Add support for IgnoreDataMemberAttribute.
 
