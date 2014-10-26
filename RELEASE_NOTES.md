@@ -1,3 +1,6 @@
+### 1.0.3
+* Fix support for compiler generated '__' fields.
+
 ### 1.0.2
 * Add .IsSerializable checks for F# Union/Record/Exception types.
 
