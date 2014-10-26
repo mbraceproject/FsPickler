@@ -1,6 +1,7 @@
 ﻿module internal Nessos.FsPickler.Reflection
 
     open System
+    open System.Text.RegularExpressions
     open System.Reflection
     open System.Runtime.Serialization
 
@@ -49,15 +50,11 @@
     type ConstructorInfo with
         member c.GetParameterTypes() = c.GetParameters() |> Array.map (fun p -> p.ParameterType)
 
-    let private memberNameRegex = new System.Text.RegularExpressions.Regex(@"[^a-zA-Z0-9]")
-    let getNormalizedName (text : string) = 
+    let private memberNameRegex = new Regex(@"[^a-zA-Z0-9]", RegexOptions.Compiled)
+    let getNormalizedFieldName i (text : string) = 
         match memberNameRegex.Replace(text, "") with
-        | name when String.IsNullOrEmpty name -> raise <| new FormatException(sprintf "invalid tag name '%s'" text)
+        | name when String.IsNullOrEmpty name -> sprintf "anonfield%d" i
         | name -> name
-
-    type MemberInfo with
-        /// normalizes member name into a serialializable string.
-        member m.NormalizedName = getNormalizedName m.Name
 
     let containsAttr<'T when 'T :> Attribute> (m : MemberInfo) =
         m.GetCustomAttributes(typeof<'T>, true) |> Seq.isEmpty |> not

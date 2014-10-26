@@ -24,7 +24,7 @@
             let t = typeof<'T>
             let fields = gatherSerializedFields t
             let picklers = fields |> Array.map (fun f -> resolver.Resolve f.FieldType)
-            let tags = fields |> Array.map (fun f -> f.NormalizedName)
+            let tags = fields |> Array.mapi (fun i f -> getNormalizedFieldName i f.Name)
 
 #if EMIT_IL
             let writerDele =
@@ -85,7 +85,7 @@
                 |> Array.filter (not << containsAttr<NonSerializedAttribute>)
 
             let picklers = fields |> Array.map (fun f -> resolver.Resolve f.FieldType)
-            let tags = fields |> Array.map (fun f -> f.NormalizedName)
+            let tags = fields |> Array.mapi (fun i f -> getNormalizedFieldName i f.Name)
 
             let isDeserializationCallback = isAssignableFrom typeof<IDeserializationCallback> typeof<'T>
 
