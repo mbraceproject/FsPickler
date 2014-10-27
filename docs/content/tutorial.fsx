@@ -31,6 +31,14 @@ open Nessos.FsPickler
 let binary = FsPickler.CreateBinary()
 let xml = FsPickler.CreateXml(indent = true)
 
+(**
+
+Json serialization formats can be accessed by referencing the `FsPickler.Json` project.
+If evaluating from F# interactive, make sure to [add an explicit reference to Json.Net](https://github.com/nessos/FsPickler/issues/16).
+
+*)
+
+#r "Newtonsoft.Json.dll"
 #r "FsPickler.Json.dll"
 
 open Nessos.FsPickler.Json
