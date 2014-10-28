@@ -80,6 +80,12 @@ A collection of tutorials, technical overviews and API references of the library
 
  * [API Reference](reference/index.html) contains automatically generated documentation for all types, modules
    and functions in the library.
+
+## Who uses FsPickler?
+
+* [MBrace framework](http://mbrace.net/)
+
+* [Akka.NET](http://akkadotnet.github.io/)
  
 ## Contributing and copyright
 
