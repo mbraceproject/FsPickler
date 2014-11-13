@@ -1,3 +1,6 @@
+### 1.0.4
+* Add support for ExceptionDispatchInfo serialization in the CLR.
+
 ### 1.0.3
 * Fix support for compiler generated '__' fields.
 
