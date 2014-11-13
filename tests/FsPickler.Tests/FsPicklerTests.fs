@@ -283,6 +283,21 @@
             let inner = new Exception("inner") |> addStackTrace
             __.TestException <| new Exception("outer", inner)
 
+#if NET40
+#else
+        [<Test; Category("Generic BCL Types")>]
+        member __.``4. BCL: System.Runtime.ExceptionServices.ExceptionDispatchInfo`` () =
+            let bytes = 
+                __.PickleF(fun fsp -> 
+                    let e = new Exception("message") |> addStackTrace 
+                    let edi = System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture e
+                    fsp.Pickle edi)
+
+            let edi = pickler.UnPickle<System.Runtime.ExceptionServices.ExceptionDispatchInfo> bytes
+            let e = try edi.Throw() ; failwith "impossible" with e -> e
+            e.StackTrace.Split('\n').Length |> should be (greaterThan 20)
+#endif
+
         [<Test; Category("Generic BCL Types")>]
         member __.``4. BCL: misc exceptions`` () =
             __.TestException <| new InvalidOperationException()

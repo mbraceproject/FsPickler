@@ -76,20 +76,30 @@
     type internal ClassFieldPickler =
 
         static member Create<'T when 'T : not struct>(resolver : IPicklerResolver) =
-            // compiler generated types in C# are not marked as serializable, but should in principle be treated as such.
-            if not (typeof<'T>.IsSerializable || containsAttr<System.Runtime.CompilerServices.CompilerGeneratedAttribute> typeof<'T>) then
-                raise <| new NonSerializableTypeException(typeof<'T>)
+            let ty = typeof<'T>
+            let isEDI = isExceptionDispatchInfo ty
+            let isSerializable =
+                ty.IsSerializable
+                // compiler generated types in C# are not marked as serializable, but should in principle be treated as such.
+                || containsAttr<System.Runtime.CompilerServices.CompilerGeneratedAttribute> ty
+                || isEDI
+
+            if not isSerializable then raise <| new NonSerializableTypeException(ty)
 
             let fields = 
-                gatherSerializedFields typeof<'T>
+                gatherSerializedFields ty
                 |> Array.filter (not << containsAttr<NonSerializedAttribute>)
+
+            let fields =
+                if isEDI then fields |> Array.filter (fun f -> not <| f.Name.Contains "Watson")
+                else fields
 
             let picklers = fields |> Array.map (fun f -> resolver.Resolve f.FieldType)
             let tags = fields |> Array.mapi (fun i f -> getNormalizedFieldName i f.Name)
 
-            let isDeserializationCallback = isAssignableFrom typeof<IDeserializationCallback> typeof<'T>
+            let isDeserializationCallback = isAssignableFrom typeof<IDeserializationCallback> ty
 
-            let allMethods = typeof<'T>.GetMethods(allMembers)
+            let allMethods = ty.GetMethods(allMembers)
             let onSerializing = allMethods |> getSerializationMethods<OnSerializingAttribute>
             let onSerialized = allMethods |> getSerializationMethods<OnSerializedAttribute>
             let onDeserializing = allMethods |> getSerializationMethods<OnDeserializingAttribute>

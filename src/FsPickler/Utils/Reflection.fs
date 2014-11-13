@@ -96,6 +96,9 @@
     let isNullableType(t : Type) =
         t.IsGenericType && t.GetGenericTypeDefinition() = typedefof<Nullable<_>>
 
+    let isExceptionDispatchInfo (t : Type) =
+        t.Assembly = typeof<int>.Assembly && t.FullName = "System.Runtime.ExceptionServices.ExceptionDispatchInfo"
+
     /// walks up the type hierarchy, gathering all instance members
     let gatherMembers (t : Type) =
         // resolve conflicts, index by declaring type and field name
