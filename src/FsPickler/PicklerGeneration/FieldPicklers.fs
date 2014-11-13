@@ -77,7 +77,7 @@
 
         static member Create<'T when 'T : not struct>(resolver : IPicklerResolver) =
             let ty = typeof<'T>
-            let isEDI = isExceptionDispatchInfo ty
+            let isEDI = not runsOnMono.Value && isExceptionDispatchInfo ty // ExceptionDispatchInfo serialization not supported in mono.
             let isSerializable =
                 ty.IsSerializable
                 // compiler generated types in C# are not marked as serializable, but should in principle be treated as such.
@@ -91,6 +91,7 @@
                 |> Array.filter (not << containsAttr<NonSerializedAttribute>)
 
             let fields =
+                // if ExceptionDispatchInfo, do not serialize Watson metadata.
                 if isEDI then fields |> Array.filter (fun f -> not <| f.Name.Contains "Watson")
                 else fields
 

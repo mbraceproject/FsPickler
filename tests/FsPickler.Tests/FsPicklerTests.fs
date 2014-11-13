@@ -287,15 +287,19 @@
 #else
         [<Test; Category("Generic BCL Types")>]
         member __.``4. BCL: System.Runtime.ExceptionServices.ExceptionDispatchInfo`` () =
-            let bytes = 
-                __.PickleF(fun fsp -> 
-                    let e = new Exception("message") |> addStackTrace 
-                    let edi = System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture e
-                    fsp.Pickle edi)
+            if runsOnMono then
+                FsPickler.IsSerializableType<System.Runtime.ExceptionServices.ExceptionDispatchInfo> ()
+                |> should equal false
+            else
+                let bytes = 
+                    __.PickleF(fun fsp -> 
+                        let e = new Exception("message") |> addStackTrace
+                        let edi = System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture e
+                        fsp.Pickle edi)
 
-            let edi = pickler.UnPickle<System.Runtime.ExceptionServices.ExceptionDispatchInfo> bytes
-            let e = try edi.Throw() ; failwith "impossible" with e -> e
-            e.StackTrace.Split('\n').Length |> should be (greaterThan 20)
+                let edi = pickler.UnPickle<System.Runtime.ExceptionServices.ExceptionDispatchInfo> bytes
+                let e = try edi.Throw() ; failwith "impossible" with e -> e
+                e.StackTrace.Split('\n').Length |> should be (greaterThan 20)
 #endif
 
         [<Test; Category("Generic BCL Types")>]
