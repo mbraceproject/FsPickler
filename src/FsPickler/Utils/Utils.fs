@@ -87,7 +87,8 @@
 
         type IDictionary<'K,'V> with
             member d.TryFind (k : 'K) =
-                let found, v = d.TryGetValue k
+                let mutable v = Unchecked.defaultof<'V>
+                let found = d.TryGetValue(k, &v)
                 if found then Some v else None
 
         type Map<'K,'V when 'K : comparison> with
@@ -115,7 +116,8 @@
             let cache' = new ConcurrentDictionary<'S,'T> ()
 
             member __.F(t : 'T) =
-                let found, s = cache.TryGetValue t
+                let mutable s = Unchecked.defaultof<'S>
+                let found = cache.TryGetValue(t, &s)
                 if found then s
                 else
                     let s = f t
@@ -127,7 +129,8 @@
                     s
 
             member __.G(s : 'S) =
-                let found, t = cache'.TryGetValue s
+                let mutable t = Unchecked.defaultof<'T>
+                let found = cache'.TryGetValue(s, &t)
                 if found then t
                 else
                     let t = g s

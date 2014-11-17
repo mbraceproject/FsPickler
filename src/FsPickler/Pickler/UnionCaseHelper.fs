@@ -35,7 +35,8 @@
                 if obj.ReferenceEquals(case, null) then
                     raise <| new FormatException("invalid union case 'null'.")
 
-                let ok, tag = dict.TryGetValue case
+                let mutable tag = Unchecked.defaultof<int>
+                let ok = dict.TryGetValue(case, &tag)
                 if ok then tag
                 else
                     raise <| new FormatException(sprintf "invalid union case '%s'." case)

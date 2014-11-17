@@ -31,7 +31,8 @@
             {
                 new ICache<Type, Exn<Pickler>> with
                     member __.Lookup(t : Type) =
-                        let found, p = dict.TryGetValue t
+                        let mutable p = Unchecked.defaultof<Exn<Pickler>>
+                        let found = dict.TryGetValue(t, &p)
                         if found then Some p
                         else None
 
@@ -39,8 +40,9 @@
             }
 
         let resolve (t : Type) = 
-            let ok, p = dict.TryGetValue t
-            if ok then p
+            let mutable p = Unchecked.defaultof<Exn<Pickler>>
+            let found = dict.TryGetValue(t, &p)
+            if found then p
             else
                 generatePickler cache t
 

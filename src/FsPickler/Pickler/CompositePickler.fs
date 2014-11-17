@@ -287,7 +287,8 @@
                         state.ObjectCache.[id] <- value ; value
 
                     elif p.IsRecursiveType then
-                        let found, cachedInstance = state.ObjectCache.TryGetValue id
+                        let mutable cachedInstance = Unchecked.defaultof<obj>
+                        let found = state.ObjectCache.TryGetValue(id, &cachedInstance)
 
                         if found then
                             // deserialization reached root level of a cyclic object
