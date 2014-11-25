@@ -1,3 +1,6 @@
+### 1.0.5
+* Use correct serialization rules DataContract types.
+
 ### 1.0.4
 * Add support for ExceptionDispatchInfo serialization in the CLR.
 
