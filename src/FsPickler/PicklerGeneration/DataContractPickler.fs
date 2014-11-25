@@ -18,52 +18,46 @@
     type internal DataContractPickler =
 
         static member Create<'T>(resolver : IPicklerResolver) =
-
             let t = typeof<'T>
             let cacheByRef = not <| t.IsValueType
-            let properties = gatherMembers t |> Array.choose (function :? PropertyInfo as p -> Some p | _ -> None)
-            // check if data members are to be resolved by member exclusion
-            let isExclusive = properties |> Array.exists (Option.isSome << tryGetAttr<IgnoreDataMemberAttribute>)
-            
-            let tryGetDataMemberInfo (p : PropertyInfo) =
-                // resolve if property is data member
-                let dataAttr =
-                    match tryGetAttr<DataMemberAttribute> p with
-                    | Some _ as attr -> attr
-                    | None when isExclusive ->
-                        // check for ignored data member attributes
-                        if Option.isSome <| tryGetAttr<IgnoreDataMemberAttribute> p then
-                            None
-                        else
-                            // not ignored, annotate with trivial data member attribute.
-                            Some(new DataMemberAttribute())
-                    | None -> None
 
-                match dataAttr with
+            // following specs in http://msdn.microsoft.com/en-us/library/ms733127%28v=vs.110%29.aspx
+            let tryGetDataMemberInfo (m : MemberInfo) =
+                match tryGetAttr<DataMemberAttribute> m with
                 | None -> None
-                | Some _ when not p.CanRead ->
-                    let msg = sprintf "property '%s' marked as data member but missing getter." p.Name
-                    raise <| new PicklerGenerationException(t, msg)
+                | Some attr ->
+                    match m with
+                    | :? FieldInfo as f -> Some (attr, m, f.FieldType)
+                    | :? PropertyInfo as p ->
+                        if not p.CanRead then
+                            let msg = sprintf "property '%s' marked as data member but missing getter." p.Name
+                            raise <| new PicklerGenerationException(t, msg)
+                        elif not p.CanWrite then
+                            let msg = sprintf "property '%s' marked as data member but missing setter." p.Name
+                            raise <| new PicklerGenerationException(t, msg)
 
-                | Some _ when not p.CanWrite ->
-                    let msg = sprintf "property '%s' marked as data member but missing setter." p.Name
-                    raise <| new PicklerGenerationException(t, msg)
+                        Some(attr, m, p.PropertyType)
 
-                | Some attr -> Some(attr, p)
+                    | _ -> None
 
             let dataContractInfo = 
-                properties
+                gatherMembers t
                 |> Seq.choose tryGetDataMemberInfo
                 |> Seq.mapi (fun i v -> (i,v))
                 // sort data members: primarily specified by user-specified order
                 // and secondarily by definition order
-                |> Seq.sortBy (fun (i,(attr,_)) -> (attr.Order, i))
+                |> Seq.sortBy (fun (i,(attr,_,_)) -> (attr.Order, i))
                 |> Seq.map snd
                 |> Seq.toArray
 
-            let properties = dataContractInfo |> Array.map snd
-            let picklers = properties |> Array.map (fun p -> resolver.Resolve p.PropertyType)
-            let names = dataContractInfo |> Array.mapi (fun i (attr,p) -> match attr.Name with null | "" -> getNormalizedFieldName i p.Name | name -> getNormalizedFieldName i name)
+            let members = dataContractInfo |> Array.map (fun (_,m,_) -> m)
+            let picklers = dataContractInfo |> Array.map (fun (_,_,t) -> resolver.Resolve t)
+            let names = 
+                dataContractInfo 
+                |> Array.mapi (fun i (attr,m,_) -> 
+                    match attr.Name with 
+                    | null | "" -> getNormalizedFieldName i m.Name 
+                    | name -> getNormalizedFieldName i name)
 
             let isDeserializationCallback = isAssignableFrom typeof<IDeserializationCallback> typeof<'T>
 
@@ -79,7 +73,7 @@
 
                     emitSerializationMethodCalls onSerializing (Choice1Of2 writer) parent ilGen
 
-                    emitSerializeProperties properties names writer picklers parent ilGen
+                    emitSerializeMembers members names writer picklers parent ilGen
 
                     emitSerializationMethodCalls onSerialized (Choice1Of2 writer) parent ilGen
 
@@ -94,7 +88,7 @@
 
                     emitSerializationMethodCalls onDeserializing (Choice2Of2 reader) value ilGen
 
-                    emitDeserializeProperties properties names reader picklers value ilGen
+                    emitDeserializeMembers members names reader picklers value ilGen
 
                     emitSerializationMethodCalls onDeserialized (Choice2Of2 reader) value ilGen
 
@@ -115,8 +109,13 @@
             let writer (w : WriteState) (tag : string) (t : 'T) =
                 run onSerializing t w
 
-                for i = 0 to properties.Length - 1 do
-                    let value = properties.[i].GetValue t
+                for i = 0 to members.Length - 1 do
+                    let value =
+                        match members.[i] with
+                        | :? PropertyInfo as p -> p.GetValue t
+                        | :? FieldInfo as f -> f.GetValue t
+                        | _ -> invalidOp "internal error"
+
                     picklers.[i].UntypedWrite w names.[i] value
 
                 run onSerialized t w
@@ -125,9 +124,12 @@
                 let t = FormatterServices.GetUninitializedObject(t) |> fastUnbox<'T>
                 run onDeserializing t r
 
-                for i = 0 to properties.Length - 1 do
+                for i = 0 to members.Length - 1 do
                     let value = picklers.[i].UntypedRead r names.[i]
-                    properties.[i].SetValue(t, value)
+                    match members.[i] with
+                    | :? PropertyInfo as p -> p.SetValue(t, value)
+                    | :? FieldInfo as f -> f.SetValue(t, value)
+                    | _ -> invalidOp "internal error"
 
                 run onDeserialized t r
                 if isDeserializationCallback then (fastUnbox<IDeserializationCallback> t).OnDeserialization null

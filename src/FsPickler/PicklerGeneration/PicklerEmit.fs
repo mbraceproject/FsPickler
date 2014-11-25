@@ -50,29 +50,46 @@
             let reader = getPicklerReader t
             ilGen.EmitCall(OpCodes.Callvirt, reader, null)
 
-        /// emits IL that serializes a collection of fields
-        let emitSerializeFields (fields : FieldInfo [])
-                                (tags : string [])
-                                (writer : EnvItem<WriteState>) 
-                                (picklers : EnvItem<Pickler []>) 
-                                (parent : EnvItem<'T>) (ilGen : ILGenerator) =
+        /// emits code for serializing field or property values
+        let emitSerializeMembers (members : 'MemberInfo [] when 'MemberInfo :> MemberInfo)
+                                    (tags : string []) 
+                                    (writer : EnvItem<WriteState>) 
+                                    (picklers : EnvItem<Pickler []>) 
+                                    (parent : EnvItem<'T>) (ilGen : ILGenerator) =
 
-            for i = 0 to fields.Length - 1 do
-                let f = fields.[i]
-                // load typed pickler to the stack
-                emitLoadPickler picklers f.FieldType i ilGen
-                // load writer to the stack
-                writer.Load ()
-                // load field name
-                ilGen.Emit(OpCodes.Ldstr, tags.[i])
-                // load field value to the stack
-                parent.Load ()
-                ilGen.Emit(OpCodes.Ldfld, f)
-                // perform serialization
-                emitSerialize f.FieldType ilGen
+            for i = 0 to members.Length - 1 do
+                match members.[i] :> MemberInfo with
+                | :? FieldInfo as f ->
+                    // load typed pickler to the stack
+                    emitLoadPickler picklers f.FieldType i ilGen
+                    // load writer to the stack
+                    writer.Load ()
+                    // load field name
+                    ilGen.Emit(OpCodes.Ldstr, tags.[i])
+                    // load field value to the stack
+                    parent.Load ()
+                    ilGen.Emit(OpCodes.Ldfld, f)
+                    // perform serialization
+                    emitSerialize f.FieldType ilGen
 
-        /// deserialize a collection of fields and store to parent object
-        let emitDeserializeFields (fields : FieldInfo [])
+                | :? PropertyInfo as p ->
+                    let m = p.GetGetMethod(true)
+                    // load typed pickler to the stack
+                    emitLoadPickler picklers m.ReturnType i ilGen
+                    // load writer to the stack
+                    writer.Load ()
+                    // load tag
+                    ilGen.Emit(OpCodes.Ldstr, tags.[i])
+                    // load property value to the stack
+                    parent.Load ()
+                    ilGen.EmitCall(OpCodes.Call, m, null)
+                    // perform serialization
+                    emitSerialize m.ReturnType ilGen
+
+                | _ -> invalidOp "invalid memberInfo instance."
+
+        /// emits code for deserializing field or property values
+        let emitDeserializeMembers (members : 'MemberInfo [] when 'MemberInfo :> MemberInfo)
                                     (tags : string [])
                                     (reader : EnvItem<ReadState>)
                                     (picklers : EnvItem<Pickler []>)
@@ -80,72 +97,44 @@
 
             let isStruct = typeof<'T>.IsValueType
 
-            for i = 0 to fields.Length - 1 do
-                let f = fields.[i]
-                // load parent object to the stack
-                if isStruct then parent.LoadAddress ()
-                else
-                    parent.Load ()
+            for i = 0 to members.Length - 1 do
+                match members.[i] :> MemberInfo with
+                | :? FieldInfo as f ->
+                    // load parent object to the stack
+                    if isStruct then parent.LoadAddress ()
+                    else
+                        parent.Load ()
 
-                // load typed pickler to the stack
-                emitLoadPickler picklers f.FieldType i ilGen
-                // load reader to the stack
-                reader.Load ()
-                // load field name
-                ilGen.Emit(OpCodes.Ldstr, tags.[i])
-                // deserialize and load to the stack
-                emitDeserialize f.FieldType ilGen
-                // assign value to the field
-                ilGen.Emit(OpCodes.Stfld, f)
+                    // load typed pickler to the stack
+                    emitLoadPickler picklers f.FieldType i ilGen
+                    // load reader to the stack
+                    reader.Load ()
+                    // load field name
+                    ilGen.Emit(OpCodes.Ldstr, tags.[i])
+                    // deserialize and load to the stack
+                    emitDeserialize f.FieldType ilGen
+                    // assign value to the field
+                    ilGen.Emit(OpCodes.Stfld, f)
 
-        /// serialize properties to the underlying stack
-        let emitSerializeProperties (properties : PropertyInfo [])
-                                    (tags : string [])
-                                    (writer : EnvItem<WriteState>)
-                                    (picklers : EnvItem<Pickler []>)
-                                    (parent : EnvItem<'T>) (ilGen : ILGenerator) =
+                | :? PropertyInfo as p ->
+                    let m = p.GetSetMethod(true)
+                    // load parent object to the stack
+                    if isStruct then parent.LoadAddress ()
+                    else
+                        parent.Load ()
 
-            for i = 0 to properties.Length - 1 do
-                let p = properties.[i]
-                let m = p.GetGetMethod(true)
-                // load typed pickler to the stack
-                emitLoadPickler picklers m.ReturnType i ilGen
-                // load writer to the stack
-                writer.Load ()
-                // load tag
-                ilGen.Emit(OpCodes.Ldstr, tags.[i])
-                // load property value to the stack
-                parent.Load ()
-                ilGen.EmitCall(OpCodes.Call, m, null)
-                // perform serialization
-                emitSerialize m.ReturnType ilGen
+                    // load typed pickler to the stack
+                    emitLoadPickler picklers p.PropertyType i ilGen
+                    // load reader to the stack
+                    reader.Load ()
+                    // load field name
+                    ilGen.Emit(OpCodes.Ldstr, tags.[i])
+                    // deserialize and load to the stack
+                    emitDeserialize p.PropertyType ilGen
+                    // call the property setter
+                    ilGen.EmitCall(OpCodes.Call, m, null)
 
-        let emitDeserializeProperties (properties : PropertyInfo [])
-                                        (tags : string [])
-                                        (reader : EnvItem<ReadState>)
-                                        (picklers : EnvItem<Pickler []>)
-                                        (parent : EnvItem<'T>) (ilGen : ILGenerator) =
-
-            let isStruct = typeof<'T>.IsValueType
-
-            for i = 0 to properties.Length - 1 do
-                let p = properties.[i]
-                let m = p.GetSetMethod(true)
-                // load parent object to the stack
-                if isStruct then parent.LoadAddress ()
-                else
-                    parent.Load ()
-
-                // load typed pickler to the stack
-                emitLoadPickler picklers p.PropertyType i ilGen
-                // load reader to the stack
-                reader.Load ()
-                // load field name
-                ilGen.Emit(OpCodes.Ldstr, tags.[i])
-                // deserialize and load to the stack
-                emitDeserialize p.PropertyType ilGen
-                // call the property setter
-                ilGen.EmitCall(OpCodes.Call, m, null)
+                | _ -> invalidOp "invalid memberInfo instance."
 
         /// deserialize fields, pass to factory method and push to stack
         let emitDeserializeAndConstruct (factory : Choice<MethodInfo,ConstructorInfo>)

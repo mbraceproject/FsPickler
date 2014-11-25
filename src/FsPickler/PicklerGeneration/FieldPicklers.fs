@@ -30,7 +30,7 @@
             let writerDele =
                 DynamicMethod.compileAction3<Pickler [], WriteState, 'T> "structSerializer" (fun picklers writer parent ilGen ->
 
-                    emitSerializeFields fields tags writer picklers parent ilGen
+                    emitSerializeMembers fields tags writer picklers parent ilGen
 
                     ilGen.Emit OpCodes.Ret
                 )
@@ -43,7 +43,7 @@
                     emitObjectInitializer typeof<'T> ilGen
                     value.Store ()
 
-                    emitDeserializeFields fields tags reader picklers value ilGen
+                    emitDeserializeMembers fields tags reader picklers value ilGen
 
                     value.Load ()
                     ilGen.Emit OpCodes.Ret
@@ -116,7 +116,7 @@
 
                             emitSerializationMethodCalls onSerializing (Choice1Of2 writer) value ilGen
 
-                            emitSerializeFields fields tags writer picklers value ilGen
+                            emitSerializeMembers fields tags writer picklers value ilGen
 
                             emitSerializationMethodCalls onSerialized (Choice1Of2 writer) value ilGen
                             
@@ -134,7 +134,7 @@
 
                     emitSerializationMethodCalls onDeserializing (Choice2Of2 reader) value ilGen
 
-                    emitDeserializeFields fields tags reader picklers value ilGen
+                    emitDeserializeMembers fields tags reader picklers value ilGen
 
                     emitSerializationMethodCalls onDeserialized (Choice2Of2 reader) value ilGen
 

@@ -148,15 +148,21 @@
                 and set (t : string) = __.y <- t
 
         [<DataContract>]
-        type ExclusionDataContractClass(x : int, y : string, z : bool) =
+        type FieldDataContractClass<'T> =
+            [<DataMember>]
+            val mutable private x : 'T
+            val mutable private y : string
 
-            [<IgnoreDataMember>]
-            member val x = x with get, set
+            new(x : 'T, y : string) = { x = x ; y = y }
 
-            member val y = y with get, set
+            member __.A
+                with get () = __.x
+                and set (t : 'T) = __.x <- t
 
             [<DataMember>]
-            member val z = z with get, set
+            member __.B
+                with get () = __.y
+                and set (t : string) = __.y <- t
 
         [<CustomPickler>]
         type ClassWithPicklerFactory (x : int) =

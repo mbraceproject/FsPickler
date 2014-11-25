@@ -597,12 +597,10 @@
 
         [<Test ; Category("Custom types")>] 
         member __.``6. Custom: Data Contract class with exclusion`` () =
-            let value = new ExclusionDataContractClass(42, "test", true)
+            let value = new FieldDataContractClass<_>(42, "test")
             let value' = testRoundtrip value
-            value'.x |> should not' (equal value.x)
-            value'.y |> should equal value.y
-            value'.z |> should equal value.z
-
+            value'.A |> should equal value.A
+            value'.B |> should equal value.B
 
         [<Test ; Category("Custom types")>] 
         member __.``6. Custom: struct`` () =

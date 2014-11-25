@@ -81,7 +81,7 @@
                         let _,fields,tags,_ = caseInfo.[i]
 
                         ilGen.MarkLabel label
-                        emitSerializeProperties fields tags writer picklers union ilGen
+                        emitSerializeMembers fields tags writer picklers union ilGen
                         ilGen.Emit OpCodes.Ret
                 )
 
@@ -174,7 +174,7 @@
                     let writerDele =
                         DynamicMethod.compileAction3<Pickler [], WriteState, 'Record> "recordSerializer" (fun picklers writer record ilGen ->
 
-                            emitSerializeProperties fields tags writer picklers record ilGen
+                            emitSerializeMembers fields tags writer picklers record ilGen
                             
                             ilGen.Emit OpCodes.Ret)
 
@@ -231,7 +231,7 @@
                 else
                     DynamicMethod.compileAction3<Pickler [], WriteState, 'Exception> "exceptionSerializer" (fun picklers writer value ilGen ->
 
-                        emitSerializeFields fields tags writer picklers value ilGen
+                        emitSerializeMembers fields tags writer picklers value ilGen
 
                         ilGen.Emit OpCodes.Ret
                     ) |> Some
@@ -241,7 +241,7 @@
                 else
                     DynamicMethod.compileAction3<Pickler [], ReadState, 'Exception> "exceptionDeserializer" (fun picklers reader value ilGen ->
 
-                        emitDeserializeFields fields tags reader picklers value ilGen
+                        emitDeserializeMembers fields tags reader picklers value ilGen
 
                         ilGen.Emit OpCodes.Ret
                     ) |> Some
