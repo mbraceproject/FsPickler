@@ -714,6 +714,12 @@
             Check.QuickThrowOnFail<int * (SimpleDU * Peano) option * (int * string * float) list * Set<int>> testEquals
 
         [<Test; Category("FSharp type tests")>]
+        member __.``7. FSharp: union types with reference equality`` () =
+            let r = RefEq 42
+            let (r',r'') = testRoundtrip (r,r)
+            r' |> should equal r''
+
+        [<Test; Category("FSharp type tests")>]
         member __.``7. FSharp: exception`` () =
             let mkExn () = FSharpException(42, "fortyTwo") :?> FSharpException |> addStackTrace
 

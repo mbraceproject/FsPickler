@@ -26,6 +26,9 @@
             if not <| typeof<'Union>.IsSerializable then
                 raise <| new NonSerializableTypeException(typeof<'Union>)
 
+            // Only cache by reference if typedef introduces reference equality semantics
+            let isCacheByRef = containsAttr<ReferenceEqualityAttribute> typeof<'Union>
+
             // resolve tag reader methodInfo
             let tagReaderMethod =
                 match FSharpValue.PreComputeUnionTagMemberInfo(typeof<'Union>, allMembers) with
@@ -151,7 +154,7 @@
 
                 ctor values |> fastUnbox<'Union>
 #endif
-            CompositePickler.Create(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
+            CompositePickler.Create(reader, writer, PicklerInfo.FSharpValue, cacheByRef = isCacheByRef, useWithSubtypes = true)
 
     // F# record types
 
@@ -160,6 +163,9 @@
         static member Create<'Record>(resolver : IPicklerResolver) =
             if not <| typeof<'Record>.IsSerializable then
                 raise <| new NonSerializableTypeException(typeof<'Record>)
+
+            // Only cache by reference if typedef introduces reference equality semantics
+            let isCacheByRef = containsAttr<ReferenceEqualityAttribute> typeof<'Record>
 
             let fields = FSharpType.GetRecordFields(typeof<'Record>, allMembers)
             let ctor = FSharpValue.PreComputeRecordConstructorInfo(typeof<'Record>, allMembers)
@@ -205,7 +211,7 @@
                 ctor.Invoke values |> fastUnbox<'Record>
 #endif
 
-            CompositePickler.Create(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = false)
+            CompositePickler.Create(reader, writer, PicklerInfo.FSharpValue, cacheByRef = isCacheByRef, useWithSubtypes = false)
 
 
     // F# exception types

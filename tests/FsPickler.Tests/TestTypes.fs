@@ -297,6 +297,8 @@
 
         and [<AutoSerializable(false)>] Baz = class end
 
+        [<ReferenceEquality>]
+        type RefEqualityUnion = RefEq of int
 
         // automated large-scale object generation
         let generateSerializableObjects (assembly : Assembly) =
