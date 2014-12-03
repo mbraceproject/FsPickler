@@ -83,7 +83,7 @@ A collection of tutorials, technical overviews and API references of the library
 
 ## Who uses FsPickler?
 
-* [MBrace framework](http://mbrace.net/)
+* [MBrace framework](http://m-brace.net/)
 
 * [Akka.NET](http://akkadotnet.github.io/)
  
