@@ -481,6 +481,16 @@
             FsPickler.IsSerializableType<PseudoPolyRec<int>> () |> should equal true
 
         [<Test; Category("FsPickler Generic tests")>]
+        member __.``5. Should mark subtypes of nonserializable types serializable`` () =
+            FsPickler.IsSerializableType<NonSerializable> () |> should equal false
+            FsPickler.IsSerializableType<SerializableInheritingNonSerializable> () |> should equal false
+
+        [<Test; Category("FsPickler Generic tests")>]
+        member __.``5. Should mark serializable instances of nonserializable interfaces serializable`` () =
+            FsPickler.IsSerializableType<NonSerializableInterface> () |> should equal true
+            FsPickler.IsSerializableType<SerializableImplementingNonSerializable> () |> should equal true
+
+        [<Test; Category("FsPickler Generic tests")>]
         member __.``5. Object: cyclic array`` () = 
             let cyclicArray : obj [] = 
                 let array = Array.zeroCreate<obj> 10

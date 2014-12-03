@@ -31,9 +31,14 @@
             // step 3: subtype pickler resolution
             let result =
                 if t.BaseType <> null then
-                    match resolver.Resolve t.BaseType with
-                    | p when p.UseWithSubtypes -> Some p
-                    | _ -> None
+                    let baseP = 
+                        try resolver.Resolve t.BaseType
+                        with :? NonSerializableTypeException as e ->
+                            raise <| NonSerializableTypeException(t, "has non-serializable base type.", inner = e) 
+
+                    if baseP.UseWithSubtypes then Some baseP
+                    else
+                        None
                 else
                     None
 

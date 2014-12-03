@@ -300,6 +300,21 @@
         [<ReferenceEquality>]
         type RefEqualityUnion = RefEq of int
 
+        [<AutoSerializable(false)>]
+        type NonSerializable () = class end
+
+        [<AutoSerializable(true)>]
+        type SerializableInheritingNonSerializable () =
+            inherit NonSerializable()
+
+        [<AutoSerializable(false)>]
+        type NonSerializableInterface = interface end
+
+        [<AutoSerializable(true)>]
+        type SerializableImplementingNonSerializable () =
+            interface NonSerializableInterface
+
+
         // automated large-scale object generation
         let generateSerializableObjects (assembly : Assembly) =
             let filterType (t : Type) =
