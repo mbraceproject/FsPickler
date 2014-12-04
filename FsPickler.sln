@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.30723.0
+VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FsPickler", "src\FsPickler\FsPickler.fsproj", "{3AD987BF-F0FA-40BD-9DAE-4AF3A5FE9CC7}"
 EndProject
@@ -14,6 +14,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "project", "project", "{8784
 		build.sh = build.sh
 		nuget\FsPickler.nuspec = nuget\FsPickler.nuspec
 		License.md = License.md
+		nuget-push.sh = nuget-push.sh
 		README.md = README.md
 		RELEASE_NOTES.md = RELEASE_NOTES.md
 	EndProjectSection

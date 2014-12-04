@@ -5,6 +5,32 @@
     [<AutoOpen>]
     module ExtensionMethods =
 
+        /// Object pickle with type annotation
+        type Pickle<'T> internal (bytes : byte []) =
+            /// Byte array pickle
+            member __.Bytes = bytes
+
+        type FsPicklerSerializer with
+
+            /// <summary>
+            ///     Creates a type annotated pickle for given value.
+            /// </summary>
+            /// <param name="value">Value to be pickled.</param>
+            /// <param name="streamingContext">streaming context.</param>
+            /// <param name="encoding">encoding passed to the binary writer.</param>
+            member fsp.PickleTyped(value : 'T, ?streamingContext, ?encoding) : Pickle<'T> = 
+                let bytes = fsp.Pickle(value, ?streamingContext = streamingContext, ?encoding = encoding)
+                new Pickle<'T>(bytes)
+
+            /// <summary>
+            ///     Deserializes a type annotated pickle.
+            /// </summary>
+            /// <param name="pickle">Type annotated pickle.</param>
+            /// <param name="streamingContext">streaming context.</param>
+            /// <param name="encoding">encoding passed to the binary reader.</param>
+            member fsp.UnPickleTyped(pickle : Pickle<'T>, ?streamingContext, ?encoding) : 'T =
+                fsp.UnPickle<'T>(pickle.Bytes, ?streamingContext = streamingContext, ?encoding = encoding)
+
         type Pickler with
             /// <summary>Initializes a pickler out of a pair of read/write lambdas. Unsafe pickler generation method.</summary>
             /// <param name="reader">Deserialization logic for the pickler.</param>

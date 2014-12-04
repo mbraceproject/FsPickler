@@ -1,3 +1,8 @@
+### 1.0.6
+* Change caching semantics for Custom equality DUs.
+* Improve error messages in subtypes of nonserializable types.
+* Add Pickle<T> type annotated binary serializations.
+
 ### 1.0.5
 * Use correct serialization rules DataContract types.
 

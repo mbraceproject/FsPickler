@@ -231,6 +231,7 @@
         /// <param name="pickler">Pickler to use.</param>
         /// <param name="data">Pickle.</param>
         /// <param name="streamingContext">streaming context.</param>
+        /// <param name="encoding">encoding passed to the binary writer.</param>
         member bp.UnPickle (pickler : Pickler<'T>, data : byte [], [<O;D(null)>]?streamingContext, [<O;D(null)>]?encoding) : 'T =
             unpickleBinary (fun m -> bp.Deserialize(pickler, m, ?streamingContext = streamingContext, ?encoding = encoding)) data
 

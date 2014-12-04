@@ -26,8 +26,10 @@
             if not <| typeof<'Union>.IsSerializable then
                 raise <| new NonSerializableTypeException(typeof<'Union>)
 
-            // Only cache by reference if typedef introduces reference equality semantics
-            let isCacheByRef = containsAttr<ReferenceEqualityAttribute> typeof<'Union>
+            // Only cache by reference if typedef introduces custom or reference equality semantics
+            let isCacheByRef = 
+                containsAttr<CustomEqualityAttribute> typeof<'Union> ||
+                containsAttr<ReferenceEqualityAttribute> typeof<'Union>
 
             // resolve tag reader methodInfo
             let tagReaderMethod =
@@ -165,7 +167,9 @@
                 raise <| new NonSerializableTypeException(typeof<'Record>)
 
             // Only cache by reference if typedef introduces reference equality semantics
-            let isCacheByRef = containsAttr<ReferenceEqualityAttribute> typeof<'Record>
+            let isCacheByRef = 
+                containsAttr<CustomEqualityAttribute> typeof<'Record> ||
+                containsAttr<ReferenceEqualityAttribute> typeof<'Record>
 
             let fields = FSharpType.GetRecordFields(typeof<'Record>, allMembers)
             let ctor = FSharpValue.PreComputeRecordConstructorInfo(typeof<'Record>, allMembers)
