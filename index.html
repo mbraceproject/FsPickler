@@ -121,12 +121,16 @@ and functions in the library.</p></li>
 <h2><a name="Who-uses-FsPickler" class="anchor" href="#Who-uses-FsPickler">Who uses FsPickler?</a></h2>
 
 <ul>
-<li><p><a href="http://m-brace.net/">MBrace framework</a></p></li>
-<li><p><a href="http://akkadotnet.github.io/">Akka.NET</a></p></li>
-<li><p><a href="http://suave.io/">Suave.IO</a> - we need a simple way of serialising CLR types to
+<li><p><a href="http://m-brace.net/">MBrace framework</a> - MBrace is a framework for distributed
+computation in the cloud. Its programming model uses continuations, so a library
+that supports serialization of closures was essential. FsPickler was designed out
+of this requirement.</p></li>
+<li><p><a href="http://akkadotnet.github.io/">Akka.NET</a> - Used in the Akka.FSharp library for its
+quotation serialization capabilities.</p></li>
+<li><p><a href="http://suave.io/">Suave.IO</a> - "we needed a simple way of serialising CLR types to
 put in cookies. After fighting .Net's JSONDataContractSerializer for a good while
 (it generated <code>[{"Key":"counter", "Value":"1"}]</code> when given a <code>Dictionary&lt;string, obj&gt;</code>!)
-we tried FsPickler. It was a stright success; it just worked.</p></li>
+we tried FsPickler. It was a straight success; it just worked".</p></li>
 </ul>
 
 <h2><a name="Contributing-and-copyright" class="anchor" href="#Contributing-and-copyright">Contributing and copyright</a></h2>
