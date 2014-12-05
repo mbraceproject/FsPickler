@@ -29,7 +29,7 @@ let description = """
     * Provides an automated pickler generation framework.
     * Offers binary, xml and json pickle formats.
     * Supports F# types, quotations, closures and cyclic objects.
-    * Fully backwards compatible with .NET serialization and open hierarchies.
+    * Fully compatible with .NET serialization.
     * One of the fastest serializers for the .NET framework.
     * Full support for the mono framework.
 """

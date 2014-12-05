@@ -83,14 +83,18 @@ A collection of tutorials, technical overviews and API references of the library
 
 ## Who uses FsPickler?
 
-* [MBrace framework](http://m-brace.net/)
+* [MBrace framework](http://m-brace.net/) - MBrace is a framework for distributed
+  computation in the cloud. Its programming model uses continuations, so a library
+  that supports serialization of closures was essential. FsPickler was designed out
+  of this requirement.
 
-* [Akka.NET](http://akkadotnet.github.io/)
+* [Akka.NET](http://akkadotnet.github.io/) - Used in the Akka.FSharp library for its
+  quotation serialization capabilities.
 
-* [Suave.IO](http://suave.io/) - we need a simple way of serialising CLR types to
+* [Suave.IO](http://suave.io/) - "we needed a simple way of serialising CLR types to
   put in cookies. After fighting .Net's JSONDataContractSerializer for a good while
   (it generated `[{"Key":"counter", "Value":"1"}]` when given a `Dictionary<string, obj>`!)
-  we tried FsPickler. It was a stright success; it just worked.
+  we tried FsPickler. It was a straight success; it just worked".
  
 ## Contributing and copyright
 
