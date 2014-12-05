@@ -86,6 +86,11 @@ A collection of tutorials, technical overviews and API references of the library
 * [MBrace framework](http://m-brace.net/)
 
 * [Akka.NET](http://akkadotnet.github.io/)
+
+* [Suave.IO](http://suave.io/) - we need a simple way of serialising CLR types to
+  put in cookies. After fighting .Net's JSONDataContractSerializer for a good while
+  (it generated `[{"Key":"counter", "Value":"1"}]` when given a `Dictionary<string, obj>`!)
+  we tried FsPickler. It was a stright success; it just worked.
  
 ## Contributing and copyright
 
