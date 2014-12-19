@@ -366,6 +366,25 @@ FsPickler.ComputeSize [1 .. 1000000]
 
 (**
 
+### Typed Serialization
+
+It is possible to create typed picklings of objects:
+
+*)
+
+let typedPickle = json.PickleTyped [1 .. 1000]
+
+(**
+
+this will produce a serialization annotated with the type of the original object.
+They can then be easily deserialized like so:
+
+*)
+
+let value = json.UnPickleTyped typedPickle
+
+(**
+
 ### Object Graph Visitors
 
 FsPickler is capable of efficiently traversing arbitrary object graphs (as long as they are serializable)
