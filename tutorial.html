@@ -597,6 +597,33 @@ large objects or complex object graphs, but it is not recommended for small valu
 </tr>
 </table>
 
+<h3><a name="Typed-Serialization" class="anchor" href="#Typed-Serialization">Typed Serialization</a></h3>
+
+<p>It is possible to create typed picklings of objects:</p>
+
+<table class="pre"><tr><td class="lines"><pre class="fssnip">
+<span class="l">1: </span>
+</pre>
+</td>
+<td class="snippet"><pre class="fssnip">
+<span class="k">let</span> <span onmouseout="hideTip(event, 'fs165', 452)" onmouseover="showTip(event, 'fs165', 452)" class="i">typedPickle</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs166', 453)" onmouseover="showTip(event, 'fs166', 453)" class="i">Pickle</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs58', 454)" onmouseover="showTip(event, 'fs58', 454)" class="i">int</span> <span onmouseout="hideTip(event, 'fs27', 455)" onmouseover="showTip(event, 'fs27', 455)" class="i">list</span><span class="o">&gt;</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs19', 456)" onmouseover="showTip(event, 'fs19', 456)" class="i">json</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs167', 457)" onmouseover="showTip(event, 'fs167', 457)" class="i">PickleTyped</span> [<span class="n">1</span> <span class="o">..</span> <span class="n">1000</span>]</pre>
+</td>
+</tr>
+</table>
+
+<p>this will produce a serialization annotated with the type of the original object.
+They can then be easily deserialized like so:</p>
+
+<table class="pre"><tr><td class="lines"><pre class="fssnip">
+<span class="l">1: </span>
+</pre>
+</td>
+<td class="snippet"><pre class="fssnip">
+<span class="k">let</span> <span onmouseout="hideTip(event, 'fs168', 458)" onmouseover="showTip(event, 'fs168', 458)" class="i">value</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs19', 459)" onmouseover="showTip(event, 'fs19', 459)" class="i">json</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs169', 460)" onmouseover="showTip(event, 'fs169', 460)" class="i">UnPickleTyped</span> <span onmouseout="hideTip(event, 'fs165', 461)" onmouseover="showTip(event, 'fs165', 461)" class="i">typedPickle</span></pre>
+</td>
+</tr>
+</table>
+
 <h3><a name="Object-Graph-Visitors" class="anchor" href="#Object-Graph-Visitors">Object Graph Visitors</a></h3>
 
 <p>FsPickler is capable of efficiently traversing arbitrary object graphs (as long as they are serializable)
@@ -607,7 +634,7 @@ by exploiting its pickler infrastructure. This can be done by calling the method
 </pre>
 </td>
 <td class="snippet"><pre class="fssnip">
-<span onmouseout="hideTip(event, 'fs14', 452)" onmouseover="showTip(event, 'fs14', 452)" class="i">FsPickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs165', 453)" onmouseover="showTip(event, 'fs165', 453)" class="i">VisitObject</span></pre>
+<span onmouseout="hideTip(event, 'fs14', 462)" onmouseover="showTip(event, 'fs14', 462)" class="i">FsPickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs170', 463)" onmouseover="showTip(event, 'fs170', 463)" class="i">VisitObject</span></pre>
 </td>
 </tr>
 </table>
@@ -622,9 +649,9 @@ by exploiting its pickler infrastructure. This can be done by calling the method
 </pre>
 </td>
 <td class="snippet"><pre class="fssnip">
-<span class="k">type</span> <span onmouseout="hideTip(event, 'fs166', 454)" onmouseover="showTip(event, 'fs166', 454)" class="i">IObjectVisitor</span> <span class="o">=</span>
+<span class="k">type</span> <span onmouseout="hideTip(event, 'fs171', 464)" onmouseover="showTip(event, 'fs171', 464)" class="i">IObjectVisitor</span> <span class="o">=</span>
   <span class="k">interface</span>
-    <span class="k">abstract</span> <span class="k">member</span> <span onmouseout="hideTip(event, 'fs167', 455)" onmouseover="showTip(event, 'fs167', 455)" class="i">Visit</span> <span class="o">:</span> <span class="o">&#39;</span><span class="i">T</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs54', 456)" onmouseover="showTip(event, 'fs54', 456)" class="i">unit</span>
+    <span class="k">abstract</span> <span class="k">member</span> <span onmouseout="hideTip(event, 'fs172', 465)" onmouseover="showTip(event, 'fs172', 465)" class="i">Visit</span> <span class="o">:</span> <span class="o">&#39;</span><span class="i">T</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs54', 466)" onmouseover="showTip(event, 'fs54', 466)" class="i">unit</span>
   <span class="k">end</span></pre>
 </td>
 </tr>
@@ -642,7 +669,7 @@ by exploiting its pickler infrastructure. This can be done by calling the method
 </pre>
 </td>
 <td class="snippet"><pre class="fssnip">
-<span class="k">let</span> <span onmouseout="hideTip(event, 'fs169', 463)" onmouseover="showTip(event, 'fs169', 463)" class="i">types</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs14', 464)" onmouseover="showTip(event, 'fs14', 464)" class="i">FsPickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs170', 465)" onmouseover="showTip(event, 'fs170', 465)" class="i">GatherTypesInObjectGraph</span> [<span onmouseout="hideTip(event, 'fs171', 466)" onmouseover="showTip(event, 'fs171', 466)" class="i">box</span> <span class="n">42</span> ; <span onmouseout="hideTip(event, 'fs171', 467)" onmouseover="showTip(event, 'fs171', 467)" class="i">box</span> (<span onmouseout="hideTip(event, 'fs34', 468)" onmouseover="showTip(event, 'fs34', 468)" class="i">Some</span> (<span class="n">42</span>, <span class="s">&quot;</span><span class="s">42</span><span class="s">&quot;</span>))]
+<span class="k">let</span> <span onmouseout="hideTip(event, 'fs174', 473)" onmouseover="showTip(event, 'fs174', 473)" class="i">types</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs14', 474)" onmouseover="showTip(event, 'fs14', 474)" class="i">FsPickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs175', 475)" onmouseover="showTip(event, 'fs175', 475)" class="i">GatherTypesInObjectGraph</span> [<span onmouseout="hideTip(event, 'fs176', 476)" onmouseover="showTip(event, 'fs176', 476)" class="i">box</span> <span class="n">42</span> ; <span onmouseout="hideTip(event, 'fs176', 477)" onmouseover="showTip(event, 'fs176', 477)" class="i">box</span> (<span onmouseout="hideTip(event, 'fs34', 478)" onmouseover="showTip(event, 'fs34', 478)" class="i">Some</span> (<span class="n">42</span>, <span class="s">&quot;</span><span class="s">42</span><span class="s">&quot;</span>))]
 
 <span class="c">//val types : System.Type [] =</span>
 <span class="c">//  [|Microsoft.FSharp.Collections.FSharpList`1[System.Object]; System.Int32;</span>
@@ -667,12 +694,12 @@ by exploiting its pickler infrastructure. This can be done by calling the method
 </pre>
 </td>
 <td class="snippet"><pre class="fssnip">
-<span class="k">type</span> <span onmouseout="hideTip(event, 'fs172', 469)" onmouseover="showTip(event, 'fs172', 469)" class="i">IPickleFormatProvider</span> <span class="o">=</span>
+<span class="k">type</span> <span onmouseout="hideTip(event, 'fs177', 479)" onmouseover="showTip(event, 'fs177', 479)" class="i">IPickleFormatProvider</span> <span class="o">=</span>
   <span class="k">interface</span>
-    <span class="k">abstract</span> <span class="k">member</span> <span onmouseout="hideTip(event, 'fs173', 470)" onmouseover="showTip(event, 'fs173', 470)" class="i">Name</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs61', 471)" onmouseover="showTip(event, 'fs61', 471)" class="i">string</span>
-    <span class="k">abstract</span> <span onmouseout="hideTip(event, 'fs174', 472)" onmouseover="showTip(event, 'fs174', 472)" class="i">DefaultEncoding</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs175', 473)" onmouseover="showTip(event, 'fs175', 473)" class="i">Encoding</span>
-    <span class="k">abstract</span> <span class="k">member</span> <span onmouseout="hideTip(event, 'fs176', 474)" onmouseover="showTip(event, 'fs176', 474)" class="i">CreateReader</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs6', 475)" onmouseover="showTip(event, 'fs6', 475)" class="i">Stream</span> <span class="o">*</span> <span onmouseout="hideTip(event, 'fs175', 476)" onmouseover="showTip(event, 'fs175', 476)" class="i">Encoding</span> <span class="o">*</span> <span class="i">leaveOpen</span><span class="o">:</span><span onmouseout="hideTip(event, 'fs177', 477)" onmouseover="showTip(event, 'fs177', 477)" class="i">bool</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs178', 478)" onmouseover="showTip(event, 'fs178', 478)" class="i">IPickleFormatReader</span>
-    <span class="k">abstract</span> <span class="k">member</span> <span onmouseout="hideTip(event, 'fs179', 479)" onmouseover="showTip(event, 'fs179', 479)" class="i">CreateWriter</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs6', 480)" onmouseover="showTip(event, 'fs6', 480)" class="i">Stream</span> <span class="o">*</span> <span onmouseout="hideTip(event, 'fs175', 481)" onmouseover="showTip(event, 'fs175', 481)" class="i">Encoding</span> <span class="o">*</span> <span class="i">leaveOpen</span><span class="o">:</span><span onmouseout="hideTip(event, 'fs177', 482)" onmouseover="showTip(event, 'fs177', 482)" class="i">bool</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs180', 483)" onmouseover="showTip(event, 'fs180', 483)" class="i">IPickleFormatWriter</span>
+    <span class="k">abstract</span> <span class="k">member</span> <span onmouseout="hideTip(event, 'fs178', 480)" onmouseover="showTip(event, 'fs178', 480)" class="i">Name</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs61', 481)" onmouseover="showTip(event, 'fs61', 481)" class="i">string</span>
+    <span class="k">abstract</span> <span onmouseout="hideTip(event, 'fs179', 482)" onmouseover="showTip(event, 'fs179', 482)" class="i">DefaultEncoding</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs180', 483)" onmouseover="showTip(event, 'fs180', 483)" class="i">Encoding</span>
+    <span class="k">abstract</span> <span class="k">member</span> <span onmouseout="hideTip(event, 'fs181', 484)" onmouseover="showTip(event, 'fs181', 484)" class="i">CreateReader</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs6', 485)" onmouseover="showTip(event, 'fs6', 485)" class="i">Stream</span> <span class="o">*</span> <span onmouseout="hideTip(event, 'fs180', 486)" onmouseover="showTip(event, 'fs180', 486)" class="i">Encoding</span> <span class="o">*</span> <span class="i">leaveOpen</span><span class="o">:</span><span onmouseout="hideTip(event, 'fs182', 487)" onmouseover="showTip(event, 'fs182', 487)" class="i">bool</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs183', 488)" onmouseover="showTip(event, 'fs183', 488)" class="i">IPickleFormatReader</span>
+    <span class="k">abstract</span> <span class="k">member</span> <span onmouseout="hideTip(event, 'fs184', 489)" onmouseover="showTip(event, 'fs184', 489)" class="i">CreateWriter</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs6', 490)" onmouseover="showTip(event, 'fs6', 490)" class="i">Stream</span> <span class="o">*</span> <span onmouseout="hideTip(event, 'fs180', 491)" onmouseover="showTip(event, 'fs180', 491)" class="i">Encoding</span> <span class="o">*</span> <span class="i">leaveOpen</span><span class="o">:</span><span onmouseout="hideTip(event, 'fs182', 492)" onmouseover="showTip(event, 'fs182', 492)" class="i">bool</span> <span class="k">-&gt;</span> <span onmouseout="hideTip(event, 'fs185', 493)" onmouseover="showTip(event, 'fs185', 493)" class="i">IPickleFormatWriter</span>
   <span class="k">end</span></pre>
 </td>
 </tr>
@@ -846,22 +873,27 @@ by exploiting its pickler infrastructure. This can be done by calling the method
 <div class="tip" id="fs162">val hash : Hashing.HashResult<br /><br />Full name: Tutorial.hash</div>
 <div class="tip" id="fs163">static member FsPickler.ComputeHash : value:&#39;T * ?hashFactory:Hashing.IHashStreamFactory -&gt; Hashing.HashResult</div>
 <div class="tip" id="fs164">static member FsPickler.ComputeSize : value:&#39;T -&gt; int64</div>
-<div class="tip" id="fs165">static member FsPickler.VisitObject : visitor:IObjectVisitor * graph:&#39;T -&gt; unit</div>
-<div class="tip" id="fs166">type IObjectVisitor =<br />&#160;&#160;interface<br />&#160;&#160;&#160;&#160;abstract member Visit : &#39;T -&gt; unit<br />&#160;&#160;end<br /><br />Full name: Tutorial.IObjectVisitor</div>
-<div class="tip" id="fs167">abstract member IObjectVisitor.Visit : &#39;T -&gt; unit<br /><br />Full name: Tutorial.IObjectVisitor.Visit</div>
-<div class="tip" id="fs168">namespace System.Text</div>
-<div class="tip" id="fs169">val types : System.Type []<br /><br />Full name: Tutorial.types</div>
-<div class="tip" id="fs170">static member FsPickler.GatherTypesInObjectGraph : graph:obj -&gt; System.Type []</div>
-<div class="tip" id="fs171">val box : value:&#39;T -&gt; obj<br /><br />Full name: Microsoft.FSharp.Core.Operators.box</div>
-<div class="tip" id="fs172">type IPickleFormatProvider =<br />&#160;&#160;interface<br />&#160;&#160;&#160;&#160;abstract member CreateReader : Stream * Encoding * leaveOpen:bool -&gt; IPickleFormatReader<br />&#160;&#160;&#160;&#160;abstract member CreateWriter : Stream * Encoding * leaveOpen:bool -&gt; IPickleFormatWriter<br />&#160;&#160;&#160;&#160;abstract member DefaultEncoding : Encoding<br />&#160;&#160;&#160;&#160;abstract member Name : string<br />&#160;&#160;end<br /><br />Full name: Tutorial.IPickleFormatProvider</div>
-<div class="tip" id="fs173">abstract member IPickleFormatProvider.Name : string<br /><br />Full name: Tutorial.IPickleFormatProvider.Name</div>
-<div class="tip" id="fs174">abstract member IPickleFormatProvider.DefaultEncoding : Encoding<br /><br />Full name: Tutorial.IPickleFormatProvider.DefaultEncoding</div>
-<div class="tip" id="fs175">type Encoding =<br />&#160;&#160;member BodyName : string<br />&#160;&#160;member Clone : unit -&gt; obj<br />&#160;&#160;member CodePage : int<br />&#160;&#160;member DecoderFallback : DecoderFallback with get, set<br />&#160;&#160;member EncoderFallback : EncoderFallback with get, set<br />&#160;&#160;member EncodingName : string<br />&#160;&#160;member Equals : value:obj -&gt; bool<br />&#160;&#160;member GetByteCount : chars:char[] -&gt; int + 3 overloads<br />&#160;&#160;member GetBytes : chars:char[] -&gt; byte[] + 5 overloads<br />&#160;&#160;member GetCharCount : bytes:byte[] -&gt; int + 2 overloads<br />&#160;&#160;...<br /><br />Full name: System.Text.Encoding</div>
-<div class="tip" id="fs176">abstract member IPickleFormatProvider.CreateReader : Stream * Encoding * leaveOpen:bool -&gt; IPickleFormatReader<br /><br />Full name: Tutorial.IPickleFormatProvider.CreateReader</div>
-<div class="tip" id="fs177">type bool = System.Boolean<br /><br />Full name: Microsoft.FSharp.Core.bool</div>
-<div class="tip" id="fs178">type IPickleFormatReader =<br />&#160;&#160;interface<br />&#160;&#160;&#160;&#160;inherit IDisposable<br />&#160;&#160;&#160;&#160;abstract member BeginReadObject : tag:string -&gt; ObjectFlags<br />&#160;&#160;&#160;&#160;abstract member BeginReadRoot : tag:string -&gt; unit<br />&#160;&#160;&#160;&#160;abstract member EndReadObject : unit -&gt; unit<br />&#160;&#160;&#160;&#160;abstract member EndReadRoot : unit -&gt; unit<br />&#160;&#160;&#160;&#160;abstract member ReadBigInteger : tag:string -&gt; bigint<br />&#160;&#160;&#160;&#160;abstract member ReadBoolean : tag:string -&gt; bool<br />&#160;&#160;&#160;&#160;abstract member ReadByte : tag:string -&gt; byte<br />&#160;&#160;&#160;&#160;abstract member ReadBytes : tag:string -&gt; byte []<br />&#160;&#160;&#160;&#160;abstract member ReadCachedObjectId : unit -&gt; int64<br />&#160;&#160;&#160;&#160;...<br />&#160;&#160;end<br /><br />Full name: Nessos.FsPickler.IPickleFormatReader</div>
-<div class="tip" id="fs179">abstract member IPickleFormatProvider.CreateWriter : Stream * Encoding * leaveOpen:bool -&gt; IPickleFormatWriter<br /><br />Full name: Tutorial.IPickleFormatProvider.CreateWriter</div>
-<div class="tip" id="fs180">type IPickleFormatWriter =<br />&#160;&#160;interface<br />&#160;&#160;&#160;&#160;inherit IDisposable<br />&#160;&#160;&#160;&#160;abstract member BeginWriteObject : tag:string -&gt; objectFlags:ObjectFlags -&gt; unit<br />&#160;&#160;&#160;&#160;abstract member BeginWriteRoot : tag:string -&gt; unit<br />&#160;&#160;&#160;&#160;abstract member EndWriteObject : unit -&gt; unit<br />&#160;&#160;&#160;&#160;abstract member EndWriteRoot : unit -&gt; unit<br />&#160;&#160;&#160;&#160;abstract member WriteBigInteger : tag:string -&gt; value:bigint -&gt; unit<br />&#160;&#160;&#160;&#160;abstract member WriteBoolean : tag:string -&gt; value:bool -&gt; unit<br />&#160;&#160;&#160;&#160;abstract member WriteByte : tag:string -&gt; value:byte -&gt; unit<br />&#160;&#160;&#160;&#160;abstract member WriteBytes : tag:string -&gt; value:byte [] -&gt; unit<br />&#160;&#160;&#160;&#160;abstract member WriteCachedObjectId : id:int64 -&gt; unit<br />&#160;&#160;&#160;&#160;...<br />&#160;&#160;end<br /><br />Full name: Nessos.FsPickler.IPickleFormatWriter</div>
+<div class="tip" id="fs165">val typedPickle : Pickle&lt;int list&gt;<br /><br />Full name: Tutorial.typedPickle</div>
+<div class="tip" id="fs166">type Pickle&lt;&#39;T&gt; =<br />&#160;&#160;private new : bytes:byte [] -&gt; Pickle&lt;&#39;T&gt;<br />&#160;&#160;member Bytes : byte []<br /><br />Full name: Nessos.FsPickler.ExtensionMethods.Pickle&lt;_&gt;</div>
+<div class="tip" id="fs167">member FsPicklerSerializer.PickleTyped : value:&#39;T * ?streamingContext:System.Runtime.Serialization.StreamingContext * ?encoding:System.Text.Encoding -&gt; Pickle&lt;&#39;T&gt;</div>
+<div class="tip" id="fs168">val value : int list<br /><br />Full name: Tutorial.value</div>
+<div class="tip" id="fs169">member FsPicklerSerializer.UnPickleTyped : pickle:Pickle&lt;&#39;T&gt; * ?streamingContext:System.Runtime.Serialization.StreamingContext * ?encoding:System.Text.Encoding -&gt; &#39;T</div>
+<div class="tip" id="fs170">static member FsPickler.VisitObject : visitor:IObjectVisitor * graph:&#39;T -&gt; unit</div>
+<div class="tip" id="fs171">type IObjectVisitor =<br />&#160;&#160;interface<br />&#160;&#160;&#160;&#160;abstract member Visit : &#39;T -&gt; unit<br />&#160;&#160;end<br /><br />Full name: Tutorial.IObjectVisitor</div>
+<div class="tip" id="fs172">abstract member IObjectVisitor.Visit : &#39;T -&gt; unit<br /><br />Full name: Tutorial.IObjectVisitor.Visit</div>
+<div class="tip" id="fs173">namespace System.Text</div>
+<div class="tip" id="fs174">val types : System.Type []<br /><br />Full name: Tutorial.types</div>
+<div class="tip" id="fs175">static member FsPickler.GatherTypesInObjectGraph : graph:obj -&gt; System.Type []</div>
+<div class="tip" id="fs176">val box : value:&#39;T -&gt; obj<br /><br />Full name: Microsoft.FSharp.Core.Operators.box</div>
+<div class="tip" id="fs177">type IPickleFormatProvider =<br />&#160;&#160;interface<br />&#160;&#160;&#160;&#160;abstract member CreateReader : Stream * Encoding * leaveOpen:bool -&gt; IPickleFormatReader<br />&#160;&#160;&#160;&#160;abstract member CreateWriter : Stream * Encoding * leaveOpen:bool -&gt; IPickleFormatWriter<br />&#160;&#160;&#160;&#160;abstract member DefaultEncoding : Encoding<br />&#160;&#160;&#160;&#160;abstract member Name : string<br />&#160;&#160;end<br /><br />Full name: Tutorial.IPickleFormatProvider</div>
+<div class="tip" id="fs178">abstract member IPickleFormatProvider.Name : string<br /><br />Full name: Tutorial.IPickleFormatProvider.Name</div>
+<div class="tip" id="fs179">abstract member IPickleFormatProvider.DefaultEncoding : Encoding<br /><br />Full name: Tutorial.IPickleFormatProvider.DefaultEncoding</div>
+<div class="tip" id="fs180">type Encoding =<br />&#160;&#160;member BodyName : string<br />&#160;&#160;member Clone : unit -&gt; obj<br />&#160;&#160;member CodePage : int<br />&#160;&#160;member DecoderFallback : DecoderFallback with get, set<br />&#160;&#160;member EncoderFallback : EncoderFallback with get, set<br />&#160;&#160;member EncodingName : string<br />&#160;&#160;member Equals : value:obj -&gt; bool<br />&#160;&#160;member GetByteCount : chars:char[] -&gt; int + 3 overloads<br />&#160;&#160;member GetBytes : chars:char[] -&gt; byte[] + 5 overloads<br />&#160;&#160;member GetCharCount : bytes:byte[] -&gt; int + 2 overloads<br />&#160;&#160;...<br /><br />Full name: System.Text.Encoding</div>
+<div class="tip" id="fs181">abstract member IPickleFormatProvider.CreateReader : Stream * Encoding * leaveOpen:bool -&gt; IPickleFormatReader<br /><br />Full name: Tutorial.IPickleFormatProvider.CreateReader</div>
+<div class="tip" id="fs182">type bool = System.Boolean<br /><br />Full name: Microsoft.FSharp.Core.bool</div>
+<div class="tip" id="fs183">type IPickleFormatReader =<br />&#160;&#160;interface<br />&#160;&#160;&#160;&#160;inherit IDisposable<br />&#160;&#160;&#160;&#160;abstract member BeginReadObject : tag:string -&gt; ObjectFlags<br />&#160;&#160;&#160;&#160;abstract member BeginReadRoot : tag:string -&gt; unit<br />&#160;&#160;&#160;&#160;abstract member EndReadObject : unit -&gt; unit<br />&#160;&#160;&#160;&#160;abstract member EndReadRoot : unit -&gt; unit<br />&#160;&#160;&#160;&#160;abstract member ReadBigInteger : tag:string -&gt; bigint<br />&#160;&#160;&#160;&#160;abstract member ReadBoolean : tag:string -&gt; bool<br />&#160;&#160;&#160;&#160;abstract member ReadByte : tag:string -&gt; byte<br />&#160;&#160;&#160;&#160;abstract member ReadBytes : tag:string -&gt; byte []<br />&#160;&#160;&#160;&#160;abstract member ReadCachedObjectId : unit -&gt; int64<br />&#160;&#160;&#160;&#160;...<br />&#160;&#160;end<br /><br />Full name: Nessos.FsPickler.IPickleFormatReader</div>
+<div class="tip" id="fs184">abstract member IPickleFormatProvider.CreateWriter : Stream * Encoding * leaveOpen:bool -&gt; IPickleFormatWriter<br /><br />Full name: Tutorial.IPickleFormatProvider.CreateWriter</div>
+<div class="tip" id="fs185">type IPickleFormatWriter =<br />&#160;&#160;interface<br />&#160;&#160;&#160;&#160;inherit IDisposable<br />&#160;&#160;&#160;&#160;abstract member BeginWriteObject : tag:string -&gt; objectFlags:ObjectFlags -&gt; unit<br />&#160;&#160;&#160;&#160;abstract member BeginWriteRoot : tag:string -&gt; unit<br />&#160;&#160;&#160;&#160;abstract member EndWriteObject : unit -&gt; unit<br />&#160;&#160;&#160;&#160;abstract member EndWriteRoot : unit -&gt; unit<br />&#160;&#160;&#160;&#160;abstract member WriteBigInteger : tag:string -&gt; value:bigint -&gt; unit<br />&#160;&#160;&#160;&#160;abstract member WriteBoolean : tag:string -&gt; value:bool -&gt; unit<br />&#160;&#160;&#160;&#160;abstract member WriteByte : tag:string -&gt; value:byte -&gt; unit<br />&#160;&#160;&#160;&#160;abstract member WriteBytes : tag:string -&gt; value:byte [] -&gt; unit<br />&#160;&#160;&#160;&#160;abstract member WriteCachedObjectId : id:int64 -&gt; unit<br />&#160;&#160;&#160;&#160;...<br />&#160;&#160;end<br /><br />Full name: Nessos.FsPickler.IPickleFormatWriter</div>
 
         </div>
         <div class="span3">
