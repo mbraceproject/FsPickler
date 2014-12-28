@@ -62,9 +62,9 @@
             member __.Choice<'T1,'T2> () = ChoicePickler.Create<'T1,'T2> resolver :> Pickler
             member __.Choice<'T1,'T2,'T3> () = ChoicePickler.Create<'T1,'T2,'T3> resolver :> Pickler
             member __.Choice<'T1,'T2,'T3,'T4> () = ChoicePickler.Create<'T1,'T2,'T3,'T4> resolver :> Pickler
-            member __.Choice<'T1,'T2,'T3,'T4,'T5> () = FsUnionPickler.Create<Choice<'T1,'T2,'T3,'T4,'T5>> resolver :> Pickler
-            member __.Choice<'T1,'T2,'T3,'T4,'T5,'T6> () = FsUnionPickler.Create<Choice<'T1,'T2,'T3,'T4,'T5,'T6>> resolver :> Pickler
-            member __.Choice<'T1,'T2,'T3,'T4,'T5,'T6,'T7> () = FsUnionPickler.Create<Choice<'T1,'T2,'T3,'T4,'T5,'T6,'T7>> resolver :> Pickler
+            member __.Choice<'T1,'T2,'T3,'T4,'T5> () = ChoicePickler.Create<'T1,'T2,'T3,'T4,'T5> resolver :> Pickler
+            member __.Choice<'T1,'T2,'T3,'T4,'T5,'T6> () = ChoicePickler.Create<'T1,'T2,'T3,'T4,'T5,'T6> resolver :> Pickler
+            member __.Choice<'T1,'T2,'T3,'T4,'T5,'T6,'T7> () = ChoicePickler.Create<'T1,'T2,'T3,'T4,'T5,'T6,'T7> resolver :> Pickler
 
 
     type PicklerFactory =

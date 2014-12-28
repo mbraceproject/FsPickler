@@ -655,7 +655,11 @@
         [<Test; Category("FSharp type tests")>]
         member __.``7. FSharp: choice`` () =
             Check.QuickThrowOnFail<Choice<int, string>> testEquals
-            Check.QuickThrowOnFail<Choice<float, decimal, string * int>> testEquals
+            Check.QuickThrowOnFail<Choice<float, decimal, string>> testEquals
+            Check.QuickThrowOnFail<Choice<float, decimal, string, int>> testEquals
+            Check.QuickThrowOnFail<Choice<float, decimal, string, int, string>> testEquals
+            Check.QuickThrowOnFail<Choice<float, decimal, string, int, string, float>> testEquals
+            Check.QuickThrowOnFail<Choice<float, decimal, string, int, string, float, byte>> testEquals
 
         [<Test; Category("FSharp type tests")>]
         member __.``7. FSharp: list`` () =

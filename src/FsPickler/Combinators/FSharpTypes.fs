@@ -27,6 +27,9 @@
         static let c2 = UnionCaseSerializationHelper.OfUnionType<Choice<_,_>> ()
         static let c3 = UnionCaseSerializationHelper.OfUnionType<Choice<_,_,_>> ()
         static let c4 = UnionCaseSerializationHelper.OfUnionType<Choice<_,_,_,_>> ()
+        static let c5 = UnionCaseSerializationHelper.OfUnionType<Choice<_,_,_,_,_>> ()
+        static let c6 = UnionCaseSerializationHelper.OfUnionType<Choice<_,_,_,_,_,_>> ()
+        static let c7 = UnionCaseSerializationHelper.OfUnionType<Choice<_,_,_,_,_,_,_>> ()
 
         static member Create(p1 : Pickler<'T1>, p2 : Pickler<'T2>) =
 
@@ -96,7 +99,7 @@
                     p4.Write w "Item" t4
 
             let reader (r : ReadState) (tag : string) =
-                match c3.ReadTag r.Formatter with
+                match c4.ReadTag r.Formatter with
                 | 0 -> p1.Read r "Item" |> Choice1Of4
                 | 1 -> p2.Read r "Item" |> Choice2Of4
                 | 2 -> p3.Read r "Item" |> Choice3Of4
@@ -109,6 +112,133 @@
             let p1, p2 = resolver.Resolve<'T1> (), resolver.Resolve<'T2> ()
             let p3, p4 = resolver.Resolve<'T3> (), resolver.Resolve<'T4> ()
             ChoicePickler.Create(p1, p2, p3, p4)
+
+        static member Create(p1 : Pickler<'T1>, p2 : Pickler<'T2>, p3 : Pickler<'T3>, 
+                                p4 : Pickler<'T4>, p5 : Pickler<'T5>) =
+
+            let writer (w : WriteState) (tag : string) (c : Choice<'T1, 'T2, 'T3, 'T4, 'T5>) =
+                match c with
+                | Choice1Of5 t1 -> 
+                    c5.WriteTag(w.Formatter, 0)
+                    p1.Write w "Item" t1
+                | Choice2Of5 t2 -> 
+                    c5.WriteTag(w.Formatter, 1)
+                    p2.Write w "Item" t2
+                | Choice3Of5 t3 -> 
+                    c5.WriteTag(w.Formatter, 2)
+                    p3.Write w "Item" t3
+                | Choice4Of5 t4 -> 
+                    c5.WriteTag(w.Formatter, 3)
+                    p4.Write w "Item" t4
+                | Choice5Of5 t5 ->
+                    c5.WriteTag(w.Formatter, 4)
+                    p5.Write w "Item" t5                  
+
+            let reader (r : ReadState) (tag : string) =
+                match c5.ReadTag r.Formatter with
+                | 0 -> p1.Read r "Item" |> Choice1Of5
+                | 1 -> p2.Read r "Item" |> Choice2Of5
+                | 2 -> p3.Read r "Item" |> Choice3Of5
+                | 3 -> p4.Read r "Item" |> Choice4Of5
+                | 4 -> p5.Read r "Item" |> Choice5Of5
+                | _ -> raise <| new FormatException("invalid choice branch.")
+
+            CompositePickler.Create<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
+
+        static member Create<'T1, 'T2, 'T3, 'T4, 'T5> (resolver : IPicklerResolver) =
+            let p1, p2 = resolver.Resolve<'T1> (), resolver.Resolve<'T2> ()
+            let p3, p4 = resolver.Resolve<'T3> (), resolver.Resolve<'T4> ()
+            let p5     = resolver.Resolve<'T5> ()
+            ChoicePickler.Create(p1, p2, p3, p4, p5)
+
+        static member Create(p1 : Pickler<'T1>, p2 : Pickler<'T2>, p3 : Pickler<'T3>, 
+                                p4 : Pickler<'T4>, p5 : Pickler<'T5>, p6 : Pickler<'T6>) =
+
+            let writer (w : WriteState) (tag : string) (c : Choice<'T1, 'T2, 'T3, 'T4, 'T5, 'T6>) =
+                match c with
+                | Choice1Of6 t1 -> 
+                    c6.WriteTag(w.Formatter, 0)
+                    p1.Write w "Item" t1
+                | Choice2Of6 t2 -> 
+                    c6.WriteTag(w.Formatter, 1)
+                    p2.Write w "Item" t2
+                | Choice3Of6 t3 -> 
+                    c6.WriteTag(w.Formatter, 2)
+                    p3.Write w "Item" t3
+                | Choice4Of6 t4 -> 
+                    c6.WriteTag(w.Formatter, 3)
+                    p4.Write w "Item" t4
+                | Choice5Of6 t5 ->
+                    c6.WriteTag(w.Formatter, 4)
+                    p5.Write w "Item" t5
+                | Choice6Of6 t6 ->
+                    c6.WriteTag(w.Formatter, 5)
+                    p6.Write w "Item" t6
+
+            let reader (r : ReadState) (tag : string) =
+                match c6.ReadTag r.Formatter with
+                | 0 -> p1.Read r "Item" |> Choice1Of6
+                | 1 -> p2.Read r "Item" |> Choice2Of6
+                | 2 -> p3.Read r "Item" |> Choice3Of6
+                | 3 -> p4.Read r "Item" |> Choice4Of6
+                | 4 -> p5.Read r "Item" |> Choice5Of6
+                | 5 -> p6.Read r "Item" |> Choice6Of6
+                | _ -> raise <| new FormatException("invalid choice branch.")
+
+            CompositePickler.Create<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
+
+        static member Create<'T1, 'T2, 'T3, 'T4, 'T5, 'T6> (resolver : IPicklerResolver) =
+            let p1, p2 = resolver.Resolve<'T1> (), resolver.Resolve<'T2> ()
+            let p3, p4 = resolver.Resolve<'T3> (), resolver.Resolve<'T4> ()
+            let p5, p6 = resolver.Resolve<'T5> (), resolver.Resolve<'T6> ()
+            ChoicePickler.Create(p1, p2, p3, p4, p5, p6)
+
+        static member Create(p1 : Pickler<'T1>, p2 : Pickler<'T2>, p3 : Pickler<'T3>, 
+                                p4 : Pickler<'T4>, p5 : Pickler<'T5>, p6 : Pickler<'T6>, p7 : Pickler<'T7>) =
+
+            let writer (w : WriteState) (tag : string) (c : Choice<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7>) =
+                match c with
+                | Choice1Of7 t1 -> 
+                    c7.WriteTag(w.Formatter, 0)
+                    p1.Write w "Item" t1
+                | Choice2Of7 t2 -> 
+                    c7.WriteTag(w.Formatter, 1)
+                    p2.Write w "Item" t2
+                | Choice3Of7 t3 -> 
+                    c7.WriteTag(w.Formatter, 2)
+                    p3.Write w "Item" t3
+                | Choice4Of7 t4 -> 
+                    c7.WriteTag(w.Formatter, 3)
+                    p4.Write w "Item" t4
+                | Choice5Of7 t5 ->
+                    c7.WriteTag(w.Formatter, 4)
+                    p5.Write w "Item" t5
+                | Choice6Of7 t6 ->
+                    c7.WriteTag(w.Formatter, 5)
+                    p6.Write w "Item" t6
+                | Choice7Of7 t7 ->
+                    c7.WriteTag(w.Formatter, 6)
+                    p7.Write w "Item" t7
+
+            let reader (r : ReadState) (tag : string) =
+                match c7.ReadTag r.Formatter with
+                | 0 -> p1.Read r "Item" |> Choice1Of7
+                | 1 -> p2.Read r "Item" |> Choice2Of7
+                | 2 -> p3.Read r "Item" |> Choice3Of7
+                | 3 -> p4.Read r "Item" |> Choice4Of7
+                | 4 -> p5.Read r "Item" |> Choice5Of7
+                | 5 -> p6.Read r "Item" |> Choice6Of7
+                | 6 -> p7.Read r "Item" |> Choice7Of7
+                | _ -> raise <| new FormatException("invalid choice branch.")
+
+            CompositePickler.Create<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
+
+        static member Create<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7> (resolver : IPicklerResolver) =
+            let p1, p2 = resolver.Resolve<'T1> (), resolver.Resolve<'T2> ()
+            let p3, p4 = resolver.Resolve<'T3> (), resolver.Resolve<'T4> ()
+            let p5, p6 = resolver.Resolve<'T5> (), resolver.Resolve<'T6> ()
+            let p7     = resolver.Resolve<'T7> ()
+            ChoicePickler.Create(p1, p2, p3, p4, p5, p6, p7)
 
 
     type internal FSharpRefPickler =
