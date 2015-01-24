@@ -152,75 +152,50 @@
             | Some v when not p.m_SkipVisit -> v.Visit value
             | _ -> ()
 
-            try
-                if p.m_Bypass then p.m_Writer state tag value else
+            if p.m_Bypass then p.m_Writer state tag value else
 
-                if p.TypeKind = TypeKind.Value then
-                    formatter.BeginWriteObject tag ObjectFlags.None
-                    p.m_Writer state tag value
-                    formatter.EndWriteObject ()
+            if p.TypeKind = TypeKind.Value then
+                formatter.BeginWriteObject tag ObjectFlags.None
+                p.m_Writer state tag value
+                formatter.EndWriteObject ()
 
-                elif obj.ReferenceEquals(value, null) then
-                    formatter.BeginWriteObject tag ObjectFlags.IsNull
-                    formatter.EndWriteObject ()
-                else
+            elif obj.ReferenceEquals(value, null) then
+                formatter.BeginWriteObject tag ObjectFlags.IsNull
+                formatter.EndWriteObject ()
+            else
 
 #if PROTECT_STACK_OVERFLOWS
-                do RuntimeHelpers.EnsureSufficientExecutionStack()
+            do RuntimeHelpers.EnsureSufficientExecutionStack()
 #endif
 
-                let isProperSubtype = 
-                    if p.TypeKind <= TypeKind.Sealed || p.m_UseWithSubtypes then false
-                    else
-                        let t0 = value.GetType()
-                        if t0 <> p.Type then
-                            let p0 = state.PicklerResolver.Resolve t0
-                            formatter.BeginWriteObject tag ObjectFlags.IsProperSubtype
-                            state.TypePickler.Write state "subtype" t0
-                            p0.UntypedWrite state "instance" value
-                            formatter.EndWriteObject()
-                            true
-                        else
-                            false
-
-                if isProperSubtype then () else
-
-                let isRecursive = p.IsRecursiveType
-
-                if isRecursive || p.m_IsCacheByRef then
-                    let mutable firstOccurence = false
-                    let id = state.ObjectIdGenerator.GetId(value, &firstOccurence)
-
-                    let cyclicObjects = state.CyclicObjectSet
-                    let objStack = state.ObjectStack
-
-                    if firstOccurence then
-                        if isRecursive then objStack.Push id
-
-                        if p.m_SkipHeaderWrite then
-                            p.m_Writer state tag value
-                        else
-                            formatter.BeginWriteObject tag ObjectFlags.None
-                            p.m_Writer state tag value
-                            formatter.EndWriteObject ()
-
-                        if isRecursive then objStack.Pop () |> ignore
-
-                    elif p.IsRecursiveType && p.TypeKind <> TypeKind.Array && objStack.Contains id && not <| cyclicObjects.Contains id then
-                        // came across cyclic object, record fixup-related data
-                        // cyclic objects are handled once per instance
-                        // instances of cyclic arrays are handled differently than other reference types
-
-                        do cyclicObjects.Add(id) |> ignore
-                    
-                        formatter.BeginWriteObject tag ObjectFlags.IsCyclicInstance
-                        formatter.WriteCachedObjectId id
-                        formatter.EndWriteObject()
-                    else
-                        formatter.BeginWriteObject tag ObjectFlags.IsCachedInstance
-                        formatter.WriteCachedObjectId id
-                        formatter.EndWriteObject()
+            let isProperSubtype = 
+                if p.TypeKind <= TypeKind.Sealed || p.m_UseWithSubtypes then false
                 else
+                    let t0 = value.GetType()
+                    if t0 <> p.Type then
+                        let p0 = state.PicklerResolver.Resolve t0
+                        formatter.BeginWriteObject tag ObjectFlags.IsProperSubtype
+                        state.TypePickler.Write state "subtype" t0
+                        p0.UntypedWrite state "instance" value
+                        formatter.EndWriteObject()
+                        true
+                    else
+                        false
+
+            if isProperSubtype then () else
+
+            let isRecursive = p.IsRecursiveType
+
+            if isRecursive || p.m_IsCacheByRef then
+                let mutable firstOccurence = false
+                let id = state.ObjectIdGenerator.GetId(value, &firstOccurence)
+
+                let cyclicObjects = state.CyclicObjectSet
+                let objStack = state.ObjectStack
+
+                if firstOccurence then
+                    if isRecursive then objStack.Push id
+
                     if p.m_SkipHeaderWrite then
                         p.m_Writer state tag value
                     else
@@ -228,79 +203,93 @@
                         p.m_Writer state tag value
                         formatter.EndWriteObject ()
 
-            with 
-            | :? FsPicklerException -> reraise ()
-            | e -> raise <| new FsPicklerException(sprintf "Error serializing instance of type '%O'." typeof<'T>, e)
+                    if isRecursive then objStack.Pop () |> ignore
+
+                elif p.IsRecursiveType && p.TypeKind <> TypeKind.Array && objStack.Contains id && not <| cyclicObjects.Contains id then
+                    // came across cyclic object, record fixup-related data
+                    // cyclic objects are handled once per instance
+                    // instances of cyclic arrays are handled differently than other reference types
+
+                    do cyclicObjects.Add(id) |> ignore
+                    
+                    formatter.BeginWriteObject tag ObjectFlags.IsCyclicInstance
+                    formatter.WriteCachedObjectId id
+                    formatter.EndWriteObject()
+                else
+                    formatter.BeginWriteObject tag ObjectFlags.IsCachedInstance
+                    formatter.WriteCachedObjectId id
+                    formatter.EndWriteObject()
+            else
+                if p.m_SkipHeaderWrite then
+                    p.m_Writer state tag value
+                else
+                    formatter.BeginWriteObject tag ObjectFlags.None
+                    p.m_Writer state tag value
+                    formatter.EndWriteObject ()
 
 
         override p.Read (state : ReadState) (tag : string) =
+            if p.m_Bypass then p.m_Reader state tag else
 
-            try
-                if p.m_Bypass then p.m_Reader state tag else
+            let formatter = state.Formatter
+            let flags = formatter.BeginReadObject tag
 
-                let formatter = state.Formatter
-                let flags = formatter.BeginReadObject tag
+            if ObjectFlags.hasFlag flags ObjectFlags.IsNull then 
+                formatter.EndReadObject ()
+                fastUnbox<'T> null
 
-                if ObjectFlags.hasFlag flags ObjectFlags.IsNull then 
-                    formatter.EndReadObject ()
-                    fastUnbox<'T> null
+            elif ObjectFlags.hasFlag flags ObjectFlags.IsProperSubtype then
+                let t0 = state.TypePickler.Read state "subtype"
+                let p0 = state.PicklerResolver.Resolve t0
+                let value = p0.UntypedRead state "instance" |> fastUnbox<'T>
+                formatter.EndReadObject()
+                value
 
-                elif ObjectFlags.hasFlag flags ObjectFlags.IsProperSubtype then
-                    let t0 = state.TypePickler.Read state "subtype"
-                    let p0 = state.PicklerResolver.Resolve t0
-                    let value = p0.UntypedRead state "instance" |> fastUnbox<'T>
-                    formatter.EndReadObject()
-                    value
+            elif ObjectFlags.hasFlag flags ObjectFlags.IsCyclicInstance then
+                // came across a nested instance of a cyclic object
+                // add an uninitialized object to the cache and schedule
+                // reflection-based fixup at the root level.
+                let id = formatter.ReadCachedObjectId ()
+                formatter.EndReadObject()
 
-                elif ObjectFlags.hasFlag flags ObjectFlags.IsCyclicInstance then
-                    // came across a nested instance of a cyclic object
-                    // add an uninitialized object to the cache and schedule
-                    // reflection-based fixup at the root level.
-                    let id = formatter.ReadCachedObjectId ()
-                    formatter.EndReadObject()
+                let value = FormatterServices.GetUninitializedObject(p.Type)
+                state.ObjectCache.Add(id, value)
+                fastUnbox<'T> value
 
-                    let value = FormatterServices.GetUninitializedObject(p.Type)
-                    state.ObjectCache.Add(id, value)
-                    fastUnbox<'T> value
+            elif ObjectFlags.hasFlag flags ObjectFlags.IsCachedInstance then
+                let id = formatter.ReadCachedObjectId ()
+                formatter.EndReadObject ()
+                state.ObjectCache.[id] |> fastUnbox<'T>
 
-                elif ObjectFlags.hasFlag flags ObjectFlags.IsCachedInstance then
-                    let id = formatter.ReadCachedObjectId ()
-                    formatter.EndReadObject ()
-                    state.ObjectCache.[id] |> fastUnbox<'T>
+            elif p.m_IsCacheByRef || p.IsRecursiveType then
 
-                elif p.m_IsCacheByRef || p.IsRecursiveType then
+                let id = state.NextObjectId()
+                let value = p.m_Reader state tag
+                formatter.EndReadObject()
 
-                    let id = state.NextObjectId()
-                    let value = p.m_Reader state tag
-                    formatter.EndReadObject()
+                if p.TypeKind = TypeKind.Array then
+                    // depending on the format implementation,
+                    // array picklers may or may not cache deserialized values early.
+                    // solve this ambiguity by forcing an update here.
+                    state.ObjectCache.[id] <- value ; value
 
-                    if p.TypeKind = TypeKind.Array then
-                        // depending on the format implementation,
-                        // array picklers may or may not cache deserialized values early.
-                        // solve this ambiguity by forcing an update here.
-                        state.ObjectCache.[id] <- value ; value
+                elif p.IsRecursiveType then
+                    let mutable cachedInstance : obj = null
+                    let found = state.ObjectCache.TryGetValue(id, &cachedInstance)
 
-                    elif p.IsRecursiveType then
-                        let mutable cachedInstance = Unchecked.defaultof<obj>
-                        let found = state.ObjectCache.TryGetValue(id, &cachedInstance)
-
-                        if found then
-                            // deserialization reached root level of a cyclic object
-                            // create cyclic binding by performing shallow field copying
-                            do ShallowObjectCopier.Copy p.Type value cachedInstance
-                            fastUnbox<'T> cachedInstance
-                        else
-                            state.ObjectCache.Add(id, value) ; value
+                    if found then
+                        // deserialization reached root level of a cyclic object
+                        // create cyclic binding by performing shallow field copying
+                        do ShallowObjectCopier.Copy p.Type value cachedInstance
+                        fastUnbox<'T> cachedInstance
                     else
                         state.ObjectCache.Add(id, value) ; value
                 else
-                    let value = p.m_Reader state tag
-                    formatter.EndReadObject ()
-                    value
-
-            with 
-            | :? FsPicklerException -> reraise ()
-            | e -> raise <| new FsPicklerException(sprintf "Error deserializing instance of type '%O'." typeof<'T>, e)
+                    state.ObjectCache.Add(id, value) ; value
+            else
+                let value = p.m_Reader state tag
+                formatter.EndReadObject ()
+                value
 
     and internal CompositePickler =
 

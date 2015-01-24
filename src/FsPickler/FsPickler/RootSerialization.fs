@@ -30,43 +30,52 @@
         formatP.CreateReader(reader, isSeq, leaveOpen)
 
     let writeRootObject resolver reflectionCache formatter streamingContext (pickler : Pickler<'T>) (value : 'T) =
-        let writeState = new WriteState(formatter, resolver, reflectionCache, ?streamingContext = streamingContext)
-        let typeName = reflectionCache.GetTypeSignature pickler.Type
-        formatter.BeginWriteRoot typeName
-        pickler.Write writeState "value" value
-        formatter.EndWriteRoot ()
+        try
+            let writeState = new WriteState(formatter, resolver, reflectionCache, ?streamingContext = streamingContext)
+            let typeName = reflectionCache.GetTypeSignature pickler.Type
+            formatter.BeginWriteRoot typeName
+            pickler.Write writeState "value" value
+            formatter.EndWriteRoot ()
+
+        with e ->
+            raise <| new FsPicklerException(sprintf "Error serializing object of type '%O'." typeof<'T>, e)
 
     let readRootObject resolver reflectionCache formatter streamingContext (pickler : Pickler<'T>) =
-        let readState = new ReadState(formatter, resolver, reflectionCache, ?streamingContext = streamingContext)
-        let typeName = reflectionCache.GetTypeSignature pickler.Type
+        try
+            let readState = new ReadState(formatter, resolver, reflectionCache, ?streamingContext = streamingContext)
+            let typeName = reflectionCache.GetTypeSignature pickler.Type
 
-        try formatter.BeginReadRoot typeName
-        with 
-        | :? FsPicklerException -> reraise () 
-        | e -> raise <| new InvalidPickleException("error reading from pickle.", e)
+            formatter.BeginReadRoot typeName
+            let value = pickler.Read readState "value"
+            formatter.EndReadRoot ()
+            value
 
-        let value = pickler.Read readState "value"
-        formatter.EndReadRoot ()
-        value
+        with e ->
+            raise <| new FsPicklerException(sprintf "Error deserializing object of type '%O'." typeof<'T>, e)
 
     let writeRootObjectUntyped resolver reflectionCache formatter streamingContext (pickler : Pickler) (value : obj) =
-        let writeState = new WriteState(formatter, resolver, reflectionCache, ?streamingContext = streamingContext)
-        let typeName = reflectionCache.GetTypeSignature pickler.Type
-        formatter.BeginWriteRoot typeName
-        pickler.UntypedWrite writeState "value" value
-        formatter.EndWriteRoot ()
+        try
+            let writeState = new WriteState(formatter, resolver, reflectionCache, ?streamingContext = streamingContext)
+            let typeName = reflectionCache.GetTypeSignature pickler.Type
+            formatter.BeginWriteRoot typeName
+            pickler.UntypedWrite writeState "value" value
+            formatter.EndWriteRoot ()
+
+        with e ->
+            raise <| new FsPicklerException(sprintf "Error serializing object of type '%O'." pickler.Type, e)
 
     let readRootObjectUntyped resolver reflectionCache formatter streamingContext (pickler : Pickler) =
-        let readState = new ReadState(formatter, resolver, reflectionCache, ?streamingContext = streamingContext)
-        let typeName = reflectionCache.GetTypeSignature pickler.Type
-        try formatter.BeginReadRoot typeName
-        with 
-        | :? FsPicklerException -> reraise () 
-        | e -> raise <| new InvalidPickleException("error reading from pickle.", e)
+        try
+            let readState = new ReadState(formatter, resolver, reflectionCache, ?streamingContext = streamingContext)
+            let typeName = reflectionCache.GetTypeSignature pickler.Type
+            formatter.BeginReadRoot typeName
 
-        let value = pickler.UntypedRead readState "value"
-        formatter.EndReadRoot ()
-        value
+            let value = pickler.UntypedRead readState "value"
+            formatter.EndReadRoot ()
+            value
+
+        with e ->
+            raise <| new FsPicklerException(sprintf "Error deserializing object of type '%O'." pickler.Type, e)
 
     //
     //  top-level sequence serialization
@@ -75,29 +84,30 @@
     /// serializes a sequence of objects to stream
 
     let writeTopLevelSequence resolver reflectionCache formatter streamingContext (pickler : Pickler<'T>) (values : seq<'T>) : int =
-        // write state initialization
-        let state = new WriteState(formatter, resolver, reflectionCache, ?streamingContext = streamingContext)
-        let typeName = reflectionCache.GetTypeSignature pickler.Type + " seq"
+        try
+            // write state initialization
+            let state = new WriteState(formatter, resolver, reflectionCache, ?streamingContext = streamingContext)
+            let typeName = reflectionCache.GetTypeSignature pickler.Type + " seq"
 
-        state.Formatter.BeginWriteRoot typeName
-        let length = writeUnboundedSequence pickler state "values" values
-        state.Formatter.EndWriteRoot ()
-        length
+            state.Formatter.BeginWriteRoot typeName
+            let length = writeUnboundedSequence pickler state "values" values
+            state.Formatter.EndWriteRoot ()
+            length
+
+        with e ->
+            raise <| new FsPicklerException(sprintf "Error serializing sequence of type '%O'." typeof<'T>, e)
 
     let readTopLevelSequence resolver reflectionCache formatter streamingContext (pickler : Pickler<'T>) : seq<'T> =
-        
-        // read state initialization
-        let state = new ReadState(formatter, resolver, reflectionCache, ?streamingContext = streamingContext)
-        let typeName = reflectionCache.GetTypeSignature pickler.Type + " seq"
+        try
+            // read state initialization
+            let state = new ReadState(formatter, resolver, reflectionCache, ?streamingContext = streamingContext)
+            let typeName = reflectionCache.GetTypeSignature pickler.Type + " seq"
 
-        // read stream header
-        try formatter.BeginReadRoot typeName
-        with 
-        | :? FsPicklerException -> reraise () 
-        | e -> raise <| new InvalidPickleException("error reading from pickle.", e)
-
-        readUnboundedSequenceLazy pickler state "values"
-
+            // read stream header
+            formatter.BeginReadRoot typeName
+            readUnboundedSequenceLazy pickler state "values"
+        with e ->
+            raise <| new FsPicklerException(sprintf "Error deserializing sequence of type '%O'." typeof<'T>, e)
 
 
     let writeTopLevelSequenceUntyped resolver reflectionCache formatter streamingContext (pickler : Pickler) (values : IEnumerable) : int =

@@ -55,7 +55,7 @@
                 |> Array.tryFind (fun a -> a.FullName = an.FullName)
 
             match result with
-            | None -> raise <| new FsPicklerException("FsPickler: Assembly load error.", e)
+            | None -> reraise ()
             | Some a -> a
 
 
@@ -105,7 +105,7 @@
                 let name = match t.FullName with null -> t.Name | name -> name
                 let assemblyInfo = 
                     match t.Assembly with 
-                    | null -> raise <| new FsPicklerException(sprintf "Type '%O' does not belong to assembly." t)
+                    | null -> raise <| new FileNotFoundException(sprintf "Cloud not identify assembly for type '%O'." t)
                     | a -> getAssemblyInfo a
 
                 let tI = { Name = name ; AssemblyInfo = assemblyInfo }
@@ -172,9 +172,7 @@
                 | Some tc -> tc.ToDeserializedType tI
 
             let assembly = loadAssembly tI'.AssemblyInfo
-            try assembly.GetType(tI'.Name, throwOnError = true) |> fastUnbox<MemberInfo>
-            with e ->
-                raise <| new FsPicklerException("FsPickler: Type load error.", e)
+            assembly.GetType(tI'.Name, throwOnError = true) |> fastUnbox<MemberInfo>
 
         | Array et -> et.MakeArrayType() |> fastUnbox<MemberInfo>
         | ArrayMultiDimensional (et, rk) -> et.MakeArrayType(rk) |> fastUnbox<MemberInfo>
@@ -193,8 +191,8 @@
 
             try qt.GetMethods(getFlags isStatic) |> Array.find isMatchingMethod |> fastUnbox<MemberInfo>
             with :? KeyNotFoundException -> 
-                let msg = sprintf "Cloud not load method '%s' from type '%O'." signature dt
-                raise <| new FsPicklerException(msg)
+                let msg = sprintf "Cloud not locate method '%s' in type '%O'." signature dt
+                raise <| new MissingMethodException(msg)
 
         | GenericMethodInstance(gm, mParams) -> gm.MakeGenericMethod mParams |> fastUnbox<MemberInfo>
 
@@ -207,22 +205,22 @@
             try 
                 rt.GetProperties(getFlags isStatic) |> Array.find(fun p -> p.Name = name && p.DeclaringType = dt) |> fastUnbox<MemberInfo>
             with :? KeyNotFoundException ->
-                let msg = sprintf "Cloud not load property '%s' from type '%O'." name dt
-                raise <| new FsPicklerException(msg)
+                let msg = sprintf "Cloud not locate property '%s' in type '%O'." name dt
+                raise <| new MissingMemberException(msg)
 
         | Field (dt, Some rt, name, isStatic) ->
             try 
                 rt.GetFields(getFlags isStatic) |> Array.find(fun f -> f.Name = name && f.DeclaringType = dt) |> fastUnbox<MemberInfo>
             with :? KeyNotFoundException ->
                 let msg = sprintf "Cloud not load field '%s' from type '%O'." name dt
-                raise <| new FsPicklerException(msg)
+                raise <| new MissingFieldException(msg)
 
         | Event (dt, Some rt, name, isStatic) ->
             try 
                 rt.GetEvents(getFlags isStatic) |> Array.find(fun e -> e.Name = name && e.DeclaringType = dt) |> fastUnbox<MemberInfo>
             with :? KeyNotFoundException ->
                 let msg = sprintf "Cloud not load event '%s' from type '%O'." name dt
-                raise <| new FsPicklerException(msg)
+                raise <| new MissingMemberException(msg)
 
         | Unknown (t, name) -> invalidOp <| sprintf "Cannot load '%s' of type %O." name t
 

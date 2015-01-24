@@ -420,8 +420,12 @@
 
         [<Test; Category("FsPickler Generic tests")>]
         member __.``5. Object: should fail at non-serializable type`` () =
-            let m = box <| new System.IO.MemoryStream()
-            shouldFailwith<NonSerializableTypeException>(fun () -> pickler.Pickle m |> ignore)
+            let v = [None ; Some(box <| new System.IO.MemoryStream())]
+            try
+                let _ = pickler.Pickle v
+                failAssert "Should have failed serialization."
+            with 
+            | :? FsPicklerException & InnerExn (:? NonSerializableTypeException) -> ()
 
         [<Test; Category("FsPickler Generic tests")>]
         member __.``5. Object: pickler generation order should not affect result`` () =
@@ -851,12 +855,11 @@
         //
 
         member t.TestTypeMismatch<'In, 'Out> (v : 'In) = 
-            fun () ->
-                let pickle = pickler.Pickle(Pickler.auto<'In>, v)
+            let pickle = pickler.Pickle(Pickler.auto<'In>, v)
+            try
                 let result = pickler.UnPickle<'Out>(Pickler.auto<'Out>, pickle)
-                ()
-
-            |> shouldFailwith<InvalidPickleTypeException>
+                failAssert "should have failed deserialization"
+            with :? FsPicklerException & InnerExn (:? InvalidPickleTypeException) -> ()
 
         [<Test; Category("Stress tests")>]
         member t.``8. Stress test: deserialization type mismatch`` () =
@@ -872,10 +875,8 @@
             try
                 use m = new MemoryStream(bytes)
                 let t' = pickler.Deserialize<'T>(m)
-                ()
-            with
-            | :? InvalidPickleException
-            | :? InvalidPickleTypeException -> ()
+                failwith "should have failed."
+            with :? FsPicklerException -> ()
 
         [<Test; Category("Stress tests")>]
         member t.``8. Stress test: arbitrary data deserialization`` () =

@@ -17,6 +17,8 @@
 
         let allFlags = BindingFlags.Public ||| BindingFlags.NonPublic ||| BindingFlags.Instance ||| BindingFlags.Static
 
+        let failAssert fmt = Printf.ksprintf(fun msg -> raise <| new AssertionException(msg)) fmt
+
         let shouldFailwith<'Exception when 'Exception :> exn>(f : unit -> unit) =
             let result =
                 try f () ; Choice1Of3 ()
@@ -30,8 +32,13 @@
                 raise <| new AssertionException(msg)
             | Choice2Of3 () -> ()
             | Choice3Of3 e ->
-                let msg = sprintf "An unexpected exception type was thrown\nExpected: '%s'\n but was: '%s'." (e.GetType().Name) typeof<'Exception>.Name
+                let msg = sprintf "An unexpected exception type was thrown\nExpected: '%s'\n but was: '%s'." typeof<'Exception>.Name (e.GetType().Name)
                 raise <| new AssertionException(msg)
+
+        let (|InnerExn|_|) (e : exn) =
+            match e.InnerException with
+            | null -> None
+            | ie -> Some ie
 
         let rec getMemberCall (expr : Expr) =
             match expr with

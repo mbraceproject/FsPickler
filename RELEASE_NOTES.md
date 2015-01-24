@@ -1,3 +1,7 @@
+### 1.0.7
+* Support parameterless constructors in DataContract types.
+* Improve exception messages.
+
 ### 1.0.6
 * Change caching semantics for Custom equality DUs.
 * Improve error messages in subtypes of nonserializable types.

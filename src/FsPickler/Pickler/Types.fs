@@ -203,16 +203,6 @@
 
         internal new (si : SerializationInfo, sc : StreamingContext) =
             { inherit Exception(si, sc) }
-
-    /// Raised when pickle is of invalid format.
-    type InvalidPickleException =
-        inherit FsPicklerException
-
-        new (message, ?inner) =
-            { inherit FsPicklerException(message, ?inner = inner) }
-
-        internal new (si : SerializationInfo, sc : StreamingContext) =
-            { inherit FsPicklerException(si, sc) }
             
     /// Raised when pickle is of invalid type.
     type InvalidPickleTypeException =

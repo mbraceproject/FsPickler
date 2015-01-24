@@ -212,7 +212,7 @@
                 let version = reader.["version"]
                 if version <> formatVersion then
                     let version = Version(version)
-                    let msg = sprintf "Unsupported FsPickler version %O." version
+                    let msg = sprintf "Unsupported xml format version %O." version
                     raise <| new FormatException(msg)
 
                 let sTag = reader.["type"]
