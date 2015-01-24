@@ -185,7 +185,9 @@
 
                 if isProperSubtype then () else
 
-                if p.m_IsCacheByRef || p.IsRecursiveType then
+                let isRecuresive = p.IsRecursiveType
+
+                if isRecuresive || p.m_IsCacheByRef then
                     let mutable firstOccurence = false
                     let id = state.ObjectIdGenerator.GetId(value, &firstOccurence)
 
@@ -193,25 +195,16 @@
                     let objStack = state.ObjectStack
 
                     if firstOccurence then
-                        if p.IsRecursiveType then 
-                            // push id to the symbolic stack to detect cyclic objects during traversal
-                            objStack.Push id
+                        if isRecuresive then objStack.Push id
 
-                            if p.m_SkipHeaderWrite then
-                                p.m_Writer state tag value
-                            else
-                                formatter.BeginWriteObject tag ObjectFlags.None
-                                p.m_Writer state tag value
-                                formatter.EndWriteObject ()
-
-                            objStack.Pop () |> ignore
+                        if p.m_SkipHeaderWrite then
+                            p.m_Writer state tag value
                         else
-                            if p.m_SkipHeaderWrite then
-                                p.m_Writer state tag value
-                            else
-                                formatter.BeginWriteObject tag ObjectFlags.None
-                                p.m_Writer state tag value
-                                formatter.EndWriteObject ()
+                            formatter.BeginWriteObject tag ObjectFlags.None
+                            p.m_Writer state tag value
+                            formatter.EndWriteObject ()
+
+                        if isRecuresive then objStack.Pop () |> ignore
 
                     elif p.IsRecursiveType && p.TypeKind <> TypeKind.Array && objStack.Contains id && not <| cyclicObjects.Contains id then
                         // came across cyclic object, record fixup-related data
