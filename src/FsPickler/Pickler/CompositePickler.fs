@@ -186,7 +186,8 @@
                 if isProperSubtype then () else
 
                 if p.m_IsCacheByRef || p.IsRecursiveType then
-                    let id, firstOccurence = state.ObjectIdGenerator.GetId value
+                    let mutable firstOccurence = false
+                    let id = state.ObjectIdGenerator.GetId(value, &firstOccurence)
 
                     let cyclicObjects = state.CyclicObjectSet
                     let objStack = state.ObjectStack
