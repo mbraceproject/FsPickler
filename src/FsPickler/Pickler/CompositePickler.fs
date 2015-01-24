@@ -185,9 +185,9 @@
 
                 if isProperSubtype then () else
 
-                let isRecuresive = p.IsRecursiveType
+                let isRecursive = p.IsRecursiveType
 
-                if isRecuresive || p.m_IsCacheByRef then
+                if isRecursive || p.m_IsCacheByRef then
                     let mutable firstOccurence = false
                     let id = state.ObjectIdGenerator.GetId(value, &firstOccurence)
 
@@ -195,7 +195,7 @@
                     let objStack = state.ObjectStack
 
                     if firstOccurence then
-                        if isRecuresive then objStack.Push id
+                        if isRecursive then objStack.Push id
 
                         if p.m_SkipHeaderWrite then
                             p.m_Writer state tag value
@@ -204,7 +204,7 @@
                             p.m_Writer state tag value
                             formatter.EndWriteObject ()
 
-                        if isRecuresive then objStack.Pop () |> ignore
+                        if isRecursive then objStack.Pop () |> ignore
 
                     elif p.IsRecursiveType && p.TypeKind <> TypeKind.Array && objStack.Contains id && not <| cyclicObjects.Contains id then
                         // came across cyclic object, record fixup-related data
