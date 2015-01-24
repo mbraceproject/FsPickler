@@ -164,6 +164,17 @@
                 with get () = __.y
                 and set (t : string) = __.y <- t
 
+        [<DataContract>]
+        type DataContractWithParameterlessConstructor() =
+            let x = 42
+            let mutable y = "test"
+
+            member __.Value = x
+            [<DataMember>]
+            member __.A
+                with get () = y
+                and  set y' = y <- y'
+
         [<CustomPickler>]
         type ClassWithPicklerFactory (x : int) =
 

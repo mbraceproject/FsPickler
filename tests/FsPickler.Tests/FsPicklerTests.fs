@@ -613,6 +613,13 @@
             value'.B |> should equal value.B
 
         [<Test ; Category("Custom types")>] 
+        member __.``6. Custom: Data Contract class with parameterless constructor`` () =
+            let value = new DataContractWithParameterlessConstructor()
+            let value' = testRoundtrip value
+            value'.A |> should equal value.A
+            value'.Value |> should equal value.Value
+
+        [<Test ; Category("Custom types")>] 
         member __.``6. Custom: struct`` () =
             let s = new StructType(42, "foobar") |> testRoundtrip
             s.X |> should equal 42

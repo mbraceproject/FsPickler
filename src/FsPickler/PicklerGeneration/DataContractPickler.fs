@@ -50,6 +50,8 @@
                 |> Seq.map snd
                 |> Seq.toArray
 
+            // if type has parameterless constructor, use that on deserialization
+            let ctor = t.GetConstructor(allConstructors, null, [||], [||])
             let members = dataContractInfo |> Array.map (fun (_,m,_) -> m)
             let picklers = dataContractInfo |> Array.map (fun (_,_,t) -> resolver.Resolve t)
             let names = 
@@ -83,7 +85,13 @@
                 DynamicMethod.compileFunc2<Pickler [], ReadState, 'T> "dataContractDeserializer" (fun picklers reader ilGen ->
                     // initialize empty value type
                     let value = EnvItem<'T>(ilGen)
-                    emitObjectInitializer typeof<'T> ilGen
+
+                    // use parameterless constructor, if available
+                    if ctor = null then
+                        emitObjectInitializer typeof<'T> ilGen
+                    else
+                        ilGen.Emit(OpCodes.Newobj, ctor)
+
                     value.Store ()
 
                     emitSerializationMethodCalls onDeserializing (Choice2Of2 reader) value ilGen
@@ -114,14 +122,20 @@
                         match members.[i] with
                         | :? PropertyInfo as p -> p.GetValue t
                         | :? FieldInfo as f -> f.GetValue t
-                        | _ -> invalidOp "internal error"
+                        | _ -> invalidOp "internal error on serializing '%O'." typeof<'T>
 
                     picklers.[i].UntypedWrite w names.[i] value
 
                 run onSerialized t w
 
             let reader (r : ReadState) (tag : string) =
-                let t = FormatterServices.GetUninitializedObject(t) |> fastUnbox<'T>
+                let t =
+                    // use parameterless constructor, if available
+                    if obj.ReferenceEquals(ctor, null) then
+                        FormatterServices.GetUninitializedObject(t) |> fastUnbox<'T>
+                    else
+                        ctor.Invoke(null) |> fastUnbox<'T>
+
                 run onDeserializing t r
 
                 for i = 0 to members.Length - 1 do
@@ -129,7 +143,7 @@
                     match members.[i] with
                     | :? PropertyInfo as p -> p.SetValue(t, value)
                     | :? FieldInfo as f -> f.SetValue(t, value)
-                    | _ -> invalidOp "internal error"
+                    | _ -> invalidOp <| sprintf "internal error on deserializing '%O'." typeof<'T>
 
                 run onDeserialized t r
                 if isDeserializationCallback then (fastUnbox<IDeserializationCallback> t).OnDeserialization null
