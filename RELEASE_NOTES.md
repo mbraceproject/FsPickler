@@ -1,3 +1,6 @@
+### 1.0.8
+* Changed C# project to use quasi-official FSharp.Core NuGet package
+
 ### 1.0.7
 * Support parameterless constructors in DataContract types.
 * Improve exception messages.
