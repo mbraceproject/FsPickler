@@ -23,15 +23,11 @@ let authors = ["Eirik Tsarpalis"]
 let summary = "A fast serialization framework and pickler combinator library for .NET"
 
 let description = """
-    A fast object serialization library for .NET written in F#.
-
-    * Based on the functional programming concept of pickler combinators.
-    * Provides an automated pickler generation framework.
-    * Offers binary, xml and json pickle formats.
-    * Supports F# types, quotations, closures and cyclic objects.
-    * Fully compatible with .NET serialization.
-    * One of the fastest serializers for the .NET framework.
-    * Full support for the mono framework.
+    FsPickler is a serialization library that facilitates the distribution of .NET objects. 
+    The implementation focuses on performance and completeness in supported types, including F# types. 
+    It supports multiple, pluggable serialization formats including Binary, Xml, JSON and BSON. 
+    The library is based on the functional programming concept of pickler combinators which 
+    has been adapted to accommodate the object oriented nature of the .NET framework.
 """
 
 let tags = "F# fsharp serializer binary pickler"
