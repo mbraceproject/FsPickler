@@ -214,7 +214,7 @@ Target "NuGet.FsPickler.CSharp" (fun _ ->
             AccessKey = getBuildParamOrDefault "nugetkey" ""
             Dependencies = 
                 [
-                    ("FSharp.Core.3", "0.0.2")
+                    ("FSharp.Core", "3.1.2.1")
                     ("FsPickler", RequireExactly release.NugetVersion)
                     ("FsPickler.Json", RequireExactly release.NugetVersion)
                 ] 
