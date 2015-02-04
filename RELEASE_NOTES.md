@@ -1,3 +1,6 @@
+### 1.0.9
+* Re-enable serialization reset intervals on top-level sequence serialization.
+
 ### 1.0.8
 * Changed C# project to use quasi-official FSharp.Core NuGet package
 
