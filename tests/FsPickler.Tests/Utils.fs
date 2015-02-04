@@ -61,7 +61,7 @@ module Utils =
 
     type Stream with
         static member AsyncCopy(source : Stream, target : Stream) =
-        Async.AwaitTask(source.CopyToAsync(target))
+            Async.AwaitTask(source.CopyToAsync(target))
 
 
     type AppDomainManager private () =
