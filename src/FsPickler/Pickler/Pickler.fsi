@@ -102,6 +102,7 @@ and WriteState =
         member StreamingContext : StreamingContext
         member internal Visitor : IObjectVisitor option
         member internal TypePickler : Pickler<System.Type>
+        member internal Reset : unit -> unit
     end
     
 /// Contains all state related to object deserializations
@@ -120,4 +121,5 @@ and ReadState =
         /// Streaming context to the deserialization
         member StreamingContext : StreamingContext
         member internal TypePickler : Pickler<System.Type>
+        member internal Reset : unit -> unit
     end

@@ -90,7 +90,7 @@ let writeTopLevelSequence resolver reflectionCache formatter streamingContext (p
         let typeName = reflectionCache.GetTypeSignature pickler.Type + " seq"
 
         state.Formatter.BeginWriteRoot typeName
-        let length = writeUnboundedSequence pickler state "values" values
+        let length = writeUnboundedSequence true pickler state "values" values
         state.Formatter.EndWriteRoot ()
         length
 
@@ -105,7 +105,7 @@ let readTopLevelSequence resolver reflectionCache formatter streamingContext (pi
 
         // read stream header
         formatter.BeginReadRoot typeName
-        readUnboundedSequenceLazy pickler state "values"
+        readUnboundedSequenceLazy true pickler state "values"
     with e ->
         raise <| new FsPicklerException(sprintf "Error deserializing sequence of type '%O'." typeof<'T>, e)
 

@@ -45,13 +45,22 @@ module internal SequenceUtils =
         r.Formatter.EndReadObject ()
         array
 
+    //
+    //  Sequence serialization of which length is unknown a priori
+    //
+
+    [<Literal>]
+    let sequenceStateResetThreshold = 50000
+
+    let inline isThresholdReached i = i % sequenceStateResetThreshold = sequenceStateResetThreshold - 1
 
     /// serializes a sequence of unknown length to the stream ; returns its eventual length
-
-    let writeUnboundedSequence (ep : Pickler<'T>) (w : WriteState) (tag : string) (ts : seq<'T>) : int =
+    let writeUnboundedSequence enableReset (ep : Pickler<'T>) (w : WriteState) (tag : string) (ts : seq<'T>) : int =
 
         let formatter = w.Formatter
         do formatter.BeginWriteObject tag ObjectFlags.IsSequenceHeader
+
+        let inline checkReset i = if enableReset && isThresholdReached i then w.Reset()
 
         let count =
             // specialize enumeration strategy
@@ -60,6 +69,7 @@ module internal SequenceUtils =
                 let len = array.Length
                 for i = 0 to len - 1 do
                     formatter.WriteNextSequenceElement true
+                    checkReset i
                     ep.Write w elemTag array.[i]
 
                 len
@@ -70,18 +80,21 @@ module internal SequenceUtils =
                     | [] -> i
                     | t :: rest -> 
                         formatter.WriteNextSequenceElement true
+                        checkReset i
                         ep.Write w elemTag t
                         write (i+1) rest
 
                 write 0 list
+
             | _ ->
-                let mutable cnt = 0
+                let mutable i = 0
                 for t in ts do
                     formatter.WriteNextSequenceElement true
+                    checkReset i
                     ep.Write w elemTag t
-                    cnt <- cnt + 1
+                    i <- i + 1
 
-                cnt
+                i
 
         formatter.WriteNextSequenceElement false
         formatter.EndWriteObject ()
@@ -89,37 +102,46 @@ module internal SequenceUtils =
 
     /// lazily deserialize a sequence of elements ; reserved for top-level sequence deserializations only.
 
-    let readUnboundedSequenceLazy (ep : Pickler<'T>) (r : ReadState) (tag : string) : seq<'T> =
+    [<AutoSerializable(false)>]
+    type private SequenceDeserializerEnumerator<'T>(ep : Pickler<'T>, r : ReadState, enableReset : bool) =
+        let mutable current = Unchecked.defaultof<'T>
+        let mutable i = 0
+        interface IEnumerator<'T> with
+            member __.Current = current
+            member __.Current = box current
+            member __.Dispose () = r.Formatter.Dispose()
+            member __.MoveNext () =
+                if r.Formatter.ReadNextSequenceElement () then
+                    if enableReset && isThresholdReached i then r.Reset()
+                    current <- ep.Read r elemTag
+                    i <- i + 1
+                    true
+                else
+                    r.Formatter.EndReadObject ()
+                    r.Formatter.EndReadRoot ()
+                    false
 
-        do beginReadSequence r.Formatter tag
+            member __.Reset () = raise <| NotSupportedException()
 
-        let unique = new Latch ()
-        let getEnumerator () =
+
+    [<AutoSerializable(false)>]
+    type private SequenceDeserializerEnumerable<'T>(ep : Pickler<'T>, r : ReadState, enableReset : bool) =
+        let unique = new Latch()
+        let getEnumerator() =
             if unique.Trigger() then
-                let current = ref Unchecked.defaultof<'T>
-                { 
-                    new IEnumerator<'T> with
-                        member __.Current = current.Value
-                        member __.Current = box current.Value
-                        member __.Dispose () = r.Formatter.Dispose()
-                        member __.MoveNext () =
-                            if r.Formatter.ReadNextSequenceElement () then
-                                current := ep.Read r elemTag
-                                true
-                            else
-                                r.Formatter.EndReadObject ()
-                                r.Formatter.EndReadRoot ()
-                                false
-
-                        member __.Reset () = raise <| NotSupportedException()
-                }
+                new SequenceDeserializerEnumerator<'T>(ep, r, enableReset) :> IEnumerator<'T>
             else
                 invalidOp "Deserialization enumerable can only be consumed once."
-        {
-            new IEnumerable<'T> with
-                member __.GetEnumerator () = getEnumerator ()
-                member __.GetEnumerator () = getEnumerator () :> IEnumerator
-        }
+
+        interface IEnumerable<'T> with
+            member __.GetEnumerator () = getEnumerator ()
+            member __.GetEnumerator () = getEnumerator () :> IEnumerator
+
+
+    let readUnboundedSequenceLazy enableReset (ep : Pickler<'T>) (r : ReadState) (tag : string) : seq<'T> =
+        do beginReadSequence r.Formatter tag
+        new SequenceDeserializerEnumerable<'T>(ep, r, enableReset) :> _
+
 
 open SequenceUtils
 
@@ -132,7 +154,7 @@ type internal SeqPickler =
     static member Create(ep : Pickler<'T>) =
 
         let writer (w : WriteState) (tag : string) (ts : seq<'T>) =
-            let length = writeUnboundedSequence ep w tag ts
+            let length = writeUnboundedSequence false ep w tag ts
             ()
 
         let reader (r : ReadState) (tag : string) =

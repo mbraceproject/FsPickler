@@ -78,7 +78,7 @@ and [<AutoSerializable(false)>]
 
     let sc = match streamingContext with None -> new StreamingContext() | Some sc -> sc
 
-    let idGen = new ObjectIDGenerator()
+    let mutable idGen = new ObjectIDGenerator()
     let objStack = new Stack<int64> ()
     let cyclicObjects = new HashSet<int64> ()
 
@@ -92,6 +92,10 @@ and [<AutoSerializable(false)>]
 
     member internal __.ObjectStack = objStack
     member internal __.CyclicObjectSet = cyclicObjects
+    member internal __.Reset () =
+        idGen <- new ObjectIDGenerator()
+        objStack.Clear()
+        cyclicObjects.Clear()
 
 and [<AutoSerializable(false)>] 
     ReadState internal (formatter : IPickleFormatReader, resolver : IPicklerResolver, reflectionCache : ReflectionCache, ?streamingContext) =
@@ -114,3 +118,7 @@ and [<AutoSerializable(false)>]
 
     member internal __.EarlyRegisterArray(array : Array) =
         objCache.Add(idCounter, array)
+
+    member internal __.Reset () =
+        idCounter <- 0L
+        objCache.Clear()
