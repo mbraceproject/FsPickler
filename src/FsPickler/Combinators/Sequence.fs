@@ -1,149 +1,149 @@
 ﻿namespace Nessos.FsPickler
 
-    open System
-    open System.Collections
-    open System.Collections.Generic
+open System
+open System.Collections
+open System.Collections.Generic
 
-    module internal SequenceUtils =
+module internal SequenceUtils =
 
-        [<Literal>]
-        let elemTag = "elem"
+    [<Literal>]
+    let elemTag = "elem"
 
-        /// reads a new object and ensures it is a sequence header
+    /// reads a new object and ensures it is a sequence header
 
-        let inline beginReadSequence (formatter : IPickleFormatReader) (tag : string) =
-            let flags = formatter.BeginReadObject tag
-            if not <| ObjectFlags.hasFlag flags ObjectFlags.IsSequenceHeader then
-                let msg = sprintf "Expected new array but was '%O'." flags
-                raise <| new FormatException(msg)
+    let inline beginReadSequence (formatter : IPickleFormatReader) (tag : string) =
+        let flags = formatter.BeginReadObject tag
+        if not <| ObjectFlags.hasFlag flags ObjectFlags.IsSequenceHeader then
+            let msg = sprintf "Expected new array but was '%O'." flags
+            raise <| new FormatException(msg)
 
-        /// writes a sequence whose length is known a priori
+    /// writes a sequence whose length is known a priori
 #if DEBUG
-        let writeBoundedSequence
+    let writeBoundedSequence
 #else
-        let inline writeBoundedSequence
+    let inline writeBoundedSequence
 #endif
-                (ep : Pickler<'T>) (count : int) (w : WriteState) (tag : string) (ts : seq<'T>) =
+            (ep : Pickler<'T>) (count : int) (w : WriteState) (tag : string) (ts : seq<'T>) =
 
-            w.Formatter.BeginWriteObject tag ObjectFlags.IsSequenceHeader
-            for e in ts do ep.Write w elemTag e
-            w.Formatter.EndWriteObject ()
+        w.Formatter.BeginWriteObject tag ObjectFlags.IsSequenceHeader
+        for e in ts do ep.Write w elemTag e
+        w.Formatter.EndWriteObject ()
 
 
-        /// reads a sequence whose length is known a priori
+    /// reads a sequence whose length is known a priori
 
 #if DEBUG
-        let readBoundedSequence
+    let readBoundedSequence
 #else
-        let inline readBoundedSequence
+    let inline readBoundedSequence
 #endif
-                (ep : Pickler<'T>) (count : int) (r : ReadState) (tag : string) =
+            (ep : Pickler<'T>) (count : int) (r : ReadState) (tag : string) =
 
-            do beginReadSequence r.Formatter tag
-            let array = Array.zeroCreate<'T> count
-            for i = 0 to array.Length - 1 do array.[i] <- ep.Read r elemTag
-            r.Formatter.EndReadObject ()
-            array
+        do beginReadSequence r.Formatter tag
+        let array = Array.zeroCreate<'T> count
+        for i = 0 to array.Length - 1 do array.[i] <- ep.Read r elemTag
+        r.Formatter.EndReadObject ()
+        array
 
 
-        /// serializes a sequence of unknown length to the stream ; returns its eventual length
+    /// serializes a sequence of unknown length to the stream ; returns its eventual length
 
-        let writeUnboundedSequence (ep : Pickler<'T>) (w : WriteState) (tag : string) (ts : seq<'T>) : int =
+    let writeUnboundedSequence (ep : Pickler<'T>) (w : WriteState) (tag : string) (ts : seq<'T>) : int =
 
-            let formatter = w.Formatter
-            do formatter.BeginWriteObject tag ObjectFlags.IsSequenceHeader
+        let formatter = w.Formatter
+        do formatter.BeginWriteObject tag ObjectFlags.IsSequenceHeader
 
-            let count =
-                // specialize enumeration strategy
-                match ts with
-                | :? ('T []) as array ->
-                    let len = array.Length
-                    for i = 0 to len - 1 do
-                        formatter.WriteNextSequenceElement true
-                        ep.Write w elemTag array.[i]
+        let count =
+            // specialize enumeration strategy
+            match ts with
+            | :? ('T []) as array ->
+                let len = array.Length
+                for i = 0 to len - 1 do
+                    formatter.WriteNextSequenceElement true
+                    ep.Write w elemTag array.[i]
 
-                    len
+                len
 
-                | :? ('T list) as list ->
-                    let rec write i ts =
-                        match ts with
-                        | [] -> i
-                        | t :: rest -> 
-                            formatter.WriteNextSequenceElement true
-                            ep.Write w elemTag t
-                            write (i+1) rest
-
-                    write 0 list
-                | _ ->
-                    let mutable cnt = 0
-                    for t in ts do
+            | :? ('T list) as list ->
+                let rec write i ts =
+                    match ts with
+                    | [] -> i
+                    | t :: rest -> 
                         formatter.WriteNextSequenceElement true
                         ep.Write w elemTag t
-                        cnt <- cnt + 1
+                        write (i+1) rest
 
-                    cnt
+                write 0 list
+            | _ ->
+                let mutable cnt = 0
+                for t in ts do
+                    formatter.WriteNextSequenceElement true
+                    ep.Write w elemTag t
+                    cnt <- cnt + 1
 
-            formatter.WriteNextSequenceElement false
-            formatter.EndWriteObject ()
-            count
+                cnt
 
-        /// lazily deserialize a sequence of elements ; reserved for top-level sequence deserializations only.
+        formatter.WriteNextSequenceElement false
+        formatter.EndWriteObject ()
+        count
 
-        let readUnboundedSequenceLazy (ep : Pickler<'T>) (r : ReadState) (tag : string) : seq<'T> =
+    /// lazily deserialize a sequence of elements ; reserved for top-level sequence deserializations only.
 
-            do beginReadSequence r.Formatter tag
+    let readUnboundedSequenceLazy (ep : Pickler<'T>) (r : ReadState) (tag : string) : seq<'T> =
 
-            let unique = new Latch ()
-            let getEnumerator () =
-                if unique.Trigger() then
-                    let current = ref Unchecked.defaultof<'T>
-                    { 
-                        new IEnumerator<'T> with
-                            member __.Current = current.Value
-                            member __.Current = box current.Value
-                            member __.Dispose () = r.Formatter.Dispose()
-                            member __.MoveNext () =
-                                if r.Formatter.ReadNextSequenceElement () then
-                                    current := ep.Read r elemTag
-                                    true
-                                else
-                                    r.Formatter.EndReadObject ()
-                                    r.Formatter.EndReadRoot ()
-                                    false
+        do beginReadSequence r.Formatter tag
 
-                            member __.Reset () = raise <| NotSupportedException()
-                    }
-                else
-                    invalidOp "Deserialization enumerable can only be consumed once."
-            {
-                new IEnumerable<'T> with
-                    member __.GetEnumerator () = getEnumerator ()
-                    member __.GetEnumerator () = getEnumerator () :> IEnumerator
-            }
+        let unique = new Latch ()
+        let getEnumerator () =
+            if unique.Trigger() then
+                let current = ref Unchecked.defaultof<'T>
+                { 
+                    new IEnumerator<'T> with
+                        member __.Current = current.Value
+                        member __.Current = box current.Value
+                        member __.Dispose () = r.Formatter.Dispose()
+                        member __.MoveNext () =
+                            if r.Formatter.ReadNextSequenceElement () then
+                                current := ep.Read r elemTag
+                                true
+                            else
+                                r.Formatter.EndReadObject ()
+                                r.Formatter.EndReadRoot ()
+                                false
 
-    open SequenceUtils
+                        member __.Reset () = raise <| NotSupportedException()
+                }
+            else
+                invalidOp "Deserialization enumerable can only be consumed once."
+        {
+            new IEnumerable<'T> with
+                member __.GetEnumerator () = getEnumerator ()
+                member __.GetEnumerator () = getEnumerator () :> IEnumerator
+        }
 
-    // Defines a pickler combinator for IEnumerables
-    // note that this is not the default pickling behaviour as this
-    // always forces enumeration and serialization of all elements regardless of
-    // underlying implementation
+open SequenceUtils
 
-    type internal SeqPickler =
-        static member Create(ep : Pickler<'T>) =
+// Defines a pickler combinator for IEnumerables
+// note that this is not the default pickling behaviour as this
+// always forces enumeration and serialization of all elements regardless of
+// underlying implementation
 
-            let writer (w : WriteState) (tag : string) (ts : seq<'T>) =
-                let length = writeUnboundedSequence ep w tag ts
-                ()
+type internal SeqPickler =
+    static member Create(ep : Pickler<'T>) =
 
-            let reader (r : ReadState) (tag : string) =
-                let formatter = r.Formatter
-                do beginReadSequence formatter tag
-                let ra = new ResizeArray<'T> ()
-                while formatter.ReadNextSequenceElement() do
-                    ra.Add <| ep.Read r elemTag
+        let writer (w : WriteState) (tag : string) (ts : seq<'T>) =
+            let length = writeUnboundedSequence ep w tag ts
+            ()
 
-                formatter.EndReadObject()
+        let reader (r : ReadState) (tag : string) =
+            let formatter = r.Formatter
+            do beginReadSequence formatter tag
+            let ra = new ResizeArray<'T> ()
+            while formatter.ReadNextSequenceElement() do
+                ra.Add <| ep.Read r elemTag
 
-                ra :> seq<'T>
+            formatter.EndReadObject()
 
-            CompositePickler.Create<seq<'T>>(reader, writer, PicklerInfo.Combinator, cacheByRef = false, useWithSubtypes = false, bypass = true)
+            ra :> seq<'T>
+
+        CompositePickler.Create<seq<'T>>(reader, writer, PicklerInfo.Combinator, cacheByRef = false, useWithSubtypes = false, bypass = true)
