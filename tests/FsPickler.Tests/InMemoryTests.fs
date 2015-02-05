@@ -1,15 +1,15 @@
 ﻿namespace Nessos.FsPickler.Tests
 
-    open System
-    open System.IO
+open System
+open System.IO
 
-    open NUnit.Framework
+open NUnit.Framework
 
-    open Nessos.FsPickler
+open Nessos.FsPickler
 
-    type ``InMemory Tests`` (pickleFormat : string) =
-        inherit ``FsPickler Tests`` (pickleFormat)
+type ``InMemory Tests`` (pickleFormat : string) =
+    inherit ``FsPickler Tests`` (pickleFormat)
 
-        override __.IsRemotedTest = false
-        override __.Pickle (value : 'T) = __.PicklerManager.Pickler.Pickle value
-        override __.PickleF (pickleF : FsPicklerSerializer -> byte []) = pickleF __.PicklerManager.Pickler
+    override __.IsRemotedTest = false
+    override __.Pickle (value : 'T) = __.PicklerManager.Pickler.Pickle value
+    override __.PickleF (pickleF : FsPicklerSerializer -> byte []) = pickleF __.PicklerManager.Pickler
