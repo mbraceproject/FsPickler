@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <title>Performance
+</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="A general-purpose serialization library for .NET"/>
+    <meta name="author" content="Eirik Tsarpalis"/>
+
+    <script src="https://code.jquery.com/jquery-1.8.0.js"></script>
+    <script src="https://code.jquery.com/ui/1.8.23/jquery-ui.js"></script>
+    <script src="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/js/bootstrap.min.js"></script>
+    <link href="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/css/bootstrap-combined.min.css" rel="stylesheet"/>
+
+    <link type="text/css" rel="stylesheet" href="/FsPickler/content/style.css" />
+    <script type="text/javascript" src="/FsPickler/content/tips.js"></script>
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="https://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="container">
+      <div class="masthead">
+        <ul class="nav nav-pills pull-right">
+          <li><a href="http://nessos.github.io/">nessos</a></li>
+          <li><a href="http://github.com/nessos/FsPickler">github page</a></li>
+        </ul>
+        <h3 class="muted"><a href="/FsPickler/index.html">FsPickler</a></h3>
+      </div>
+      <hr />
+      <div class="row">
+        <div class="span9" id="main">
+          
+<h1><a name="Performance" class="anchor" href="#Performance">Performance</a></h1>
+
+<p>How does FsPickler compare against other .Net serialization libraries in terms of performance? 
+In this section we present a few microbenchmarks: we compared FsPickler against 
+<a href="http://msdn.microsoft.com/en-us/library/system.runtime.serialization.formatters.binary.binaryformatter.aspx">BinaryFormatter</a>, 
+<a href="http://msdn.microsoft.com/en-us/library/system.runtime.serialization.netdatacontractserializer.aspx">NetDataContractSerializer</a>, 
+<a href="http://james.newtonking.com/json">Json.Net</a>, <a href="https://www.nuget.org/packages/ServiceStack.Text/4.0.15">ServiceStack.Text</a> and
+<a href="https://code.google.com/p/protobuf-net/">ProtoBuf-Net</a>. 
+Code used to run the tests is available in the 
+<a href="https://github.com/nessos/FsPickler/tree/master/tests/FsPickler.PerfTests">FsPickler.PerfTests</a> project.</p>
+
+<h2><a name="Execution-Time" class="anchor" href="#Execution-Time">Execution Time</a></h2>
+
+<p>The first set of tests measures execution time.
+Performance testing was done using the <a href="https://github.com/eiriktsarpalis/PerfUtil">PerfUtil</a> library. 
+Libraries not appearing in charts failed to serialize the tested objects.
+Benchmarks are indicative and in no way scientific.</p>
+
+<h3><a name="System-Tuple" class="anchor" href="#System-Tuple">System.Tuple</a></h3>
+
+<img src="benchmarks/time/tuple.png" />
+
+<h3><a name="Array-of-Tuples" class="anchor" href="#Array-of-Tuples">Array of Tuples</a></h3>
+
+<img src="benchmarks/time/tupleArray.png" />
+
+<h3><a name="Simple-Record-Class" class="anchor" href="#Simple-Record-Class">Simple Record Class</a></h3>
+
+<img src="benchmarks/time/class.png" />
+
+<h3><a name="ISerializable-Class" class="anchor" href="#ISerializable-Class">ISerializable Class</a></h3>
+
+<img src="benchmarks/time/iserializable.png" />
+
+<h3><a name="Generic-Dictionary" class="anchor" href="#Generic-Dictionary">Generic Dictionary</a></h3>
+
+<img src="benchmarks/time/dictionary.png" />
+
+<h3><a name="Binary-Tree" class="anchor" href="#Binary-Tree">Binary Tree</a></h3>
+
+<img src="benchmarks/time/binaryTree.png" />
+
+<h3><a name="F-list-of-integers" class="anchor" href="#F-list-of-integers">F# list of integers</a></h3>
+
+<img src="benchmarks/time/list.png" />
+
+<h3><a name="F-list-of-tuples" class="anchor" href="#F-list-of-tuples">F# list of tuples</a></h3>
+
+<img src="benchmarks/time/pairList.png" />
+
+<h3><a name="3D-float-Array-200-x-200-x-200" class="anchor" href="#3D-float-Array-200-x-200-x-200">3D float Array (200 x 200 x 200)</a></h3>
+
+<img src="benchmarks/time/array3D.png" />
+
+<h3><a name="F-mutual-recursive-types" class="anchor" href="#F-mutual-recursive-types">F# mutual recursive types</a></h3>
+
+<img src="benchmarks/time/fsharpForest.png" />
+
+<h3><a name="F-Quotation" class="anchor" href="#F-Quotation">F# Quotation</a></h3>
+
+<img src="benchmarks/time/quotation.png" />
+
+<h3><a name="Random-object-graph-n-500-Pb-20" class="anchor" href="#Random-object-graph-n-500-Pb-20">Random object graph (n = 500, Pb = 20%)</a></h3>
+
+<img src="benchmarks/time/random.png" />
+
+<h2><a name="Serialization-Size" class="anchor" href="#Serialization-Size">Serialization Size</a></h2>
+
+<p>The second set of tests compare the size (in bytes) of serialized objects.
+Libraries not appearing in charts failed to serialize the tested objects.</p>
+
+<h3><a name="System-Integer" class="anchor" href="#System-Integer">System.Integer</a></h3>
+
+<img src="benchmarks/size/integer.png" />
+
+<h3><a name="System-Tuple-1" class="anchor" href="#System-Tuple-1">System.Tuple</a></h3>
+
+<img src="benchmarks/size/pair.png" />
+
+<h3><a name="Integer-Array-10-6-elements" class="anchor" href="#Integer-Array-10-6-elements">Integer Array (10^6 elements)</a></h3>
+
+<img src="benchmarks/size/intarray.png" />
+
+<h3><a name="Pair-Array-10000-elements" class="anchor" href="#Pair-Array-10000-elements">Pair Array (10000 elements)</a></h3>
+
+<img src="benchmarks/size/pairarray.png" />
+
+<h3><a name="3D-float-Array-100x100x100" class="anchor" href="#3D-float-Array-100x100x100">3D float Array (100x100x100)</a></h3>
+
+<img src="benchmarks/size/array.png" />
+
+<h3><a name="F-List-of-Integers-1000-elements" class="anchor" href="#F-List-of-Integers-1000-elements">F# List of Integers (1000 elements)</a></h3>
+
+<img src="benchmarks/size/intlist.png" />
+
+<h3><a name="F-List-of-Pairs-1000-elements" class="anchor" href="#F-List-of-Pairs-1000-elements">F# List of Pairs (1000 elements)</a></h3>
+
+<img src="benchmarks/size/pairlist.png" />
+
+<h3><a name="Record" class="anchor" href="#Record">Record</a></h3>
+
+<img src="benchmarks/size/record.png" />
+
+<h3><a name="Dictionary-of-Records-1000-entries" class="anchor" href="#Dictionary-of-Records-1000-entries">Dictionary of Records (1000 entries)</a></h3>
+
+<img src="benchmarks/size/dictionary.png" />
+
+<h3><a name="Exception-with-stacktrace" class="anchor" href="#Exception-with-stacktrace">Exception (with stacktrace)</a></h3>
+
+<img src="benchmarks/size/exception.png" />
+
+<h3><a name="Binary-tree-balanced-depth-10" class="anchor" href="#Binary-tree-balanced-depth-10">Binary tree (balanced, depth = 10)</a></h3>
+
+<img src="benchmarks/size/bintree.png" />
+
+<h3><a name="F-Quotation-1" class="anchor" href="#F-Quotation-1">F# Quotation</a></h3>
+
+<img src="benchmarks/size/quotation.png" />
+
+
+        </div>
+        <div class="span3">
+          <a target="_blank" href="http://www.nessos.gr/">
+      <img src="/FsPickler/img/nessos.png" alt="F# Project" style="width:150px;margin:10px" /> 
+      </a>
+          <ul class="nav nav-list" id="menu" style="margin-top: 20px;">
+            <li class="nav-header">FsPickler</li>
+            <li><a href="/FsPickler/index.html">Home page</a></li>
+            <li class="divider"></li>
+            <li><a href="http://www.nuget.org/packages/FsPickler">Get Library via NuGet</a></li>
+            <li><a href="http://github.com/nessos/FsPickler">Source Code on GitHub</a></li>
+            <li><a href="http://github.com/nessos/FsPickler/blob/master/License.md">License</a></li>
+            <li><a href="http://github.com/nessos/FsPickler/blob/master/RELEASE_NOTES.md">Release Notes</a></li>
+
+            <li class="nav-header">Documentation</li>
+            <li><a href="/FsPickler/tutorial.html">Tutorial</a></li>
+            <li><a href="/FsPickler/overview.html">Technical Overview</a></li>
+            <li><a href="/FsPickler/benchmarks.html">Performance</a></li>
+            <li><a href="/FsPickler/reference/index.html">API Reference</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <a href="http://github.com/nessos/FsPickler"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_gray_6d6d6d.png" alt="Fork me on GitHub"/></a>
+  </body>
+  </html>
