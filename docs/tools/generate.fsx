@@ -27,6 +27,7 @@ let info =
 #r "../../packages/FAKE/tools/FakeLib.dll"
 #r "RazorEngine.dll"
 #r "FSharp.Literate.dll"
+#r "FSharp.Markdown.dll"
 #r "FSharp.CodeFormat.dll"
 #r "FSharp.MetadataFormat.dll"
 open Fake
@@ -87,8 +88,8 @@ let buildDocumentation () =
         layoutRoots = layoutRoots, generateAnchors = true )
 
 // Generate
+ensureDirectory output
 CleanDir output
-CreateDir output
 copyFiles()
 buildDocumentation()
 buildReference()
