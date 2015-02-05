@@ -1,8 +1,16 @@
-﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "paket", "paket", "{2FC26D10-021B-4487-AE72-6CFC1346239A}"
+	ProjectSection(SolutionItems) = preProject
+		.paket\paket.bootstrapper.exe = .paket\paket.bootstrapper.exe
+		paket.dependencies = paket.dependencies
+		.paket\paket.exe = .paket\paket.exe
+		paket.lock = paket.lock
+		.paket\paket.targets = .paket\paket.targets
+	EndProjectSection
+EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FsPickler", "src\FsPickler\FsPickler.fsproj", "{3AD987BF-F0FA-40BD-9DAE-4AF3A5FE9CC7}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "project", "project", "{87846678-C0AD-48CD-8D7D-4224116EEB73}"
@@ -12,18 +20,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "project", "project", "{8784
 		build.cmd = build.cmd
 		build.fsx = build.fsx
 		build.sh = build.sh
-		nuget\FsPickler.nuspec = nuget\FsPickler.nuspec
 		License.md = License.md
 		nuget-push.sh = nuget-push.sh
 		README.md = README.md
 		RELEASE_NOTES.md = RELEASE_NOTES.md
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{E60ECF0B-A852-4698-A98B-8663920A63F3}"
-	ProjectSection(SolutionItems) = preProject
-		.nuget\NuGet.Config = .nuget\NuGet.Config
-		.nuget\NuGet.exe = .nuget\NuGet.exe
-		.nuget\packages.config = .nuget\packages.config
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{109340B6-EAF7-4DDC-9D6C-F51A3E6E747F}"
@@ -43,7 +43,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{69847FBC-4407-48A7-9109-C07D3164F29A}"
 	ProjectSection(SolutionItems) = preProject
 		docs\tools\generate.fsx = docs\tools\generate.fsx
-		docs\tools\packages.config = docs\tools\packages.config
 		docs\tools\templates\template.cshtml = docs\tools\templates\template.cshtml
 	EndProjectSection
 EndProject
@@ -98,6 +97,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "size", "size", "{1D64570E-7
 		docs\files\benchmarks\size\record.png = docs\files\benchmarks\size\record.png
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "nuget", "nuget", "{26FC9A01-314E-4B57-8193-2164E903528A}"
+	ProjectSection(SolutionItems) = preProject
+		nuget\FsPickler.nuspec = nuget\FsPickler.nuspec
+		nuget-push.sh = nuget-push.sh
+		nuget\NuGet.Config = nuget\NuGet.Config
+		nuget\NuGet.exe = nuget\NuGet.exe
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -149,6 +156,7 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{2FC26D10-021B-4487-AE72-6CFC1346239A} = {87846678-C0AD-48CD-8D7D-4224116EEB73}
 		{3AD987BF-F0FA-40BD-9DAE-4AF3A5FE9CC7} = {23BFC6E5-8581-44C7-B9C6-A42F06DCD6A6}
 		{50CBCEEF-24DD-454F-A3A3-AC1759883311} = {109340B6-EAF7-4DDC-9D6C-F51A3E6E747F}
 		{EC89A90F-5EBF-40FB-B4F3-1A8F2D224A20} = {109340B6-EAF7-4DDC-9D6C-F51A3E6E747F}
@@ -160,5 +168,6 @@ Global
 		{2A53832A-B4CA-414B-8654-718F098E6B2D} = {BE768967-0DE8-4FB3-83EA-2841CB790B9E}
 		{7453C829-5B0A-4F2A-A59E-710C02C14852} = {2A53832A-B4CA-414B-8654-718F098E6B2D}
 		{1D64570E-7C74-484F-A8C1-3A634511F172} = {2A53832A-B4CA-414B-8654-718F098E6B2D}
+		{26FC9A01-314E-4B57-8193-2164E903528A} = {87846678-C0AD-48CD-8D7D-4224116EEB73}
 	EndGlobalSection
 EndGlobal

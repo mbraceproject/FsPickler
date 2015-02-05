@@ -71,11 +71,6 @@ Target "AssemblyInfo" (fun _ ->
 // --------------------------------------------------------------------------------------
 // Clean build results & restore NuGet packages
 
-Target "RestorePackages" (fun _ ->
-    !! "./**/packages.config"
-    |> Seq.iter (RestorePackage (fun p -> { p with ToolPath = "./.nuget/NuGet.exe" }))
-)
-
 Target "Clean" (fun _ ->
     CleanDirs <| !! "./**/bin/"
     CleanDir "./tools/output"
@@ -104,15 +99,10 @@ Target "Build.Net40" (build "Release-NET40")
 // Run the unit tests using test runner & kill test runner when complete
 
 Target "RunTests" (fun _ ->
-    let nunitVersion = GetPackageVersion "packages" "NUnit.Runners"
-    let nunitPath = sprintf "packages/NUnit.Runners.%s/tools" nunitVersion
-    ActivateFinalTarget "CloseTestRunner"
-
     testAssemblies
     |> NUnit (fun p ->
         { p with
             Framework = "v4.0.30319"
-            ToolPath = nunitPath
             DisableShadowCopy = true
             TimeOut = TimeSpan.FromMinutes 20.
             OutputFile = "TestResults.xml" })
@@ -144,7 +134,7 @@ let addAssembly (target : string) assembly =
     }
 
 Target "NuGet.FsPickler" (fun _ ->
-    let nugetPath = ".nuget/NuGet.exe"
+    let nugetPath = "nuget/NuGet.exe"
     NuGet (fun p -> 
         { p with   
             Authors = authors
@@ -169,7 +159,7 @@ Target "NuGet.FsPickler" (fun _ ->
 )
 
 Target "NuGet.FsPickler.Json" (fun _ ->
-    let nugetPath = ".nuget/NuGet.exe"
+    let nugetPath = "nuget/NuGet.exe"
     NuGet (fun p -> 
         { p with   
             Authors = authors
@@ -195,7 +185,7 @@ Target "NuGet.FsPickler.Json" (fun _ ->
 )
 
 Target "NuGet.FsPickler.CSharp" (fun _ ->
-    let nugetPath = ".nuget/NuGet.exe"
+    let nugetPath = "nuget/NuGet.exe"
     NuGet (fun p -> 
         { p with   
             Authors = authors
@@ -253,7 +243,6 @@ Target "Default" DoNothing
 Target "Release" DoNothing
 
 "Clean"
-  ==> "RestorePackages"
   ==> "AssemblyInfo"
   ==> "Prepare"
   ==> "Build.Default"
