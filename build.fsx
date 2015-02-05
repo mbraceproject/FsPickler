@@ -134,7 +134,6 @@ let addAssembly (target : string) assembly =
     }
 
 Target "NuGet.FsPickler" (fun _ ->
-    let nugetPath = "nuget/NuGet.exe"
     NuGet (fun p -> 
         { p with   
             Authors = authors
@@ -145,7 +144,6 @@ Target "NuGet.FsPickler" (fun _ ->
             ReleaseNotes = String.concat " " release.Notes
             Tags = tags
             OutputPath = "bin"
-            ToolPath = nugetPath
             AccessKey = getBuildParamOrDefault "nugetkey" ""
             Dependencies = []
             Publish = hasBuildParam "nugetkey" 
@@ -159,7 +157,6 @@ Target "NuGet.FsPickler" (fun _ ->
 )
 
 Target "NuGet.FsPickler.Json" (fun _ ->
-    let nugetPath = "nuget/NuGet.exe"
     NuGet (fun p -> 
         { p with   
             Authors = authors
@@ -170,7 +167,6 @@ Target "NuGet.FsPickler.Json" (fun _ ->
             ReleaseNotes = String.concat " " release.Notes
             Tags = tags
             OutputPath = "bin"
-            ToolPath = nugetPath
             AccessKey = getBuildParamOrDefault "nugetkey" ""
             Dependencies = [("FsPickler", RequireExactly release.NugetVersion) ; ("Newtonsoft.Json", "6.0.5")] 
             Publish = hasBuildParam "nugetkey" 
@@ -185,7 +181,6 @@ Target "NuGet.FsPickler.Json" (fun _ ->
 )
 
 Target "NuGet.FsPickler.CSharp" (fun _ ->
-    let nugetPath = "nuget/NuGet.exe"
     NuGet (fun p -> 
         { p with   
             Authors = authors
@@ -196,7 +191,6 @@ Target "NuGet.FsPickler.CSharp" (fun _ ->
             ReleaseNotes = String.concat " " release.Notes
             Tags = tags
             OutputPath = "bin"
-            ToolPath = nugetPath
             AccessKey = getBuildParamOrDefault "nugetkey" ""
             Dependencies = 
                 [

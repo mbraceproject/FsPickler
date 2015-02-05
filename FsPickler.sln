@@ -20,6 +20,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "project", "project", "{8784
 		build.cmd = build.cmd
 		build.fsx = build.fsx
 		build.sh = build.sh
+		nuget\FsPickler.nuspec = nuget\FsPickler.nuspec
 		License.md = License.md
 		nuget-push.sh = nuget-push.sh
 		README.md = README.md
@@ -97,14 +98,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "size", "size", "{1D64570E-7
 		docs\files\benchmarks\size\record.png = docs\files\benchmarks\size\record.png
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "nuget", "nuget", "{26FC9A01-314E-4B57-8193-2164E903528A}"
-	ProjectSection(SolutionItems) = preProject
-		nuget\FsPickler.nuspec = nuget\FsPickler.nuspec
-		nuget-push.sh = nuget-push.sh
-		nuget\NuGet.Config = nuget\NuGet.Config
-		nuget\NuGet.exe = nuget\NuGet.exe
-	EndProjectSection
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -168,6 +161,5 @@ Global
 		{2A53832A-B4CA-414B-8654-718F098E6B2D} = {BE768967-0DE8-4FB3-83EA-2841CB790B9E}
 		{7453C829-5B0A-4F2A-A59E-710C02C14852} = {2A53832A-B4CA-414B-8654-718F098E6B2D}
 		{1D64570E-7C74-484F-A8C1-3A634511F172} = {2A53832A-B4CA-414B-8654-718F098E6B2D}
-		{26FC9A01-314E-4B57-8193-2164E903528A} = {87846678-C0AD-48CD-8D7D-4224116EEB73}
 	EndGlobalSection
 EndGlobal
