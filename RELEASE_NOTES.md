@@ -1,3 +1,6 @@
+### 1.0.10
+* Add clone method to FsPicklerSerializer.
+
 ### 1.0.9
 * Re-enable serialization reset intervals on top-level sequence serialization.
 

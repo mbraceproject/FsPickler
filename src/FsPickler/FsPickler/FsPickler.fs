@@ -50,12 +50,8 @@ type FsPickler private () =
     /// <summary>
     ///     Creates a deep clone of given object.
     /// </summary>
-    /// <param name="t"></param>
-    static member Clone (t : 'T) =
-        use m = new System.IO.MemoryStream()
-        defaultSerializer.Value.Serialize(m, t, leaveOpen = true)
-        m.Position <- 0L
-        defaultSerializer.Value.Deserialize<'T>(m)
+    /// <param name="value">Value to be cloned.</param>
+    static member Clone<'T>(value : 'T) : 'T = defaultSerializer.Value.Clone(value)
 
     /// <summary>Compute size in bytes for given input.</summary>
     /// <param name="value">input value.</param>
