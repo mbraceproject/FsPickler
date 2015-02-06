@@ -1,3 +1,6 @@
+### 1.0.11
+* Fine tune ObjectIdGenerator reset interval at top-level sequence serializations.
+
 ### 1.0.10
 * Add clone method to FsPicklerSerializer.
 
