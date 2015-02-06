@@ -558,6 +558,12 @@ type ``FsPickler Tests`` (format : string) as self =
         __.TestSequenceRoundtrip records
 
     [<Test; Category("FsPickler Generic tests")>]
+    member __.``5. Object: rec sequence`` () =
+        let mkRec () = let rec r = { Rec = r } in r
+        let recSeq = seq { for i in 1 .. 1000000 -> mkRec () }
+        __.TestSequenceRoundtrip recSeq
+
+    [<Test; Category("FsPickler Generic tests")>]
     member self.``5. Object: sequence pickler`` () =
         let data =
             self.PickleF(fun p ->

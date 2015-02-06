@@ -95,7 +95,8 @@ and WriteState =
         member internal CyclicObjectSet : HashSet<int64>
         member internal ObjectStack : Stack<int64>
         member internal Formatter : IPickleFormatWriter
-        member internal ObjectIdGenerator : ObjectIDGenerator
+        member internal GetObjectId : obj:obj * firstTime:byref<bool> -> int64
+        member internal ObjectCount : int64
         member internal PicklerResolver : IPicklerResolver
         member internal ReflectionCache : ReflectionCache
         /// Streaming context to the serialization
@@ -116,6 +117,7 @@ and ReadState =
         member internal EarlyRegisterArray : array:System.Array -> unit
         member internal Formatter : IPickleFormatReader
         member internal ObjectCache : Dictionary<int64,obj>
+        member internal ObjectCount : int64
         member internal PicklerResolver : IPicklerResolver
         member internal ReflectionCache : ReflectionCache.ReflectionCache
         /// Streaming context to the deserialization

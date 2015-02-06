@@ -78,6 +78,7 @@ and [<AutoSerializable(false)>]
 
     let sc = match streamingContext with None -> new StreamingContext() | Some sc -> sc
 
+    let mutable objCount = 0L
     let mutable idGen = new ObjectIDGenerator()
     let objStack = new Stack<int64> ()
     let cyclicObjects = new HashSet<int64> ()
@@ -88,11 +89,16 @@ and [<AutoSerializable(false)>]
     member internal __.Visitor = visitor
     member internal __.ReflectionCache = reflectionCache
     member internal __.TypePickler = tyPickler
-    member internal __.ObjectIdGenerator = idGen
+    member internal __.GetObjectId(obj:obj, firstTime:byref<bool>) =
+        let id = idGen.GetId(obj, &firstTime)
+        if firstTime then objCount <- id
+        id
 
+    member internal __.ObjectCount = objCount
     member internal __.ObjectStack = objStack
     member internal __.CyclicObjectSet = cyclicObjects
     member internal __.Reset () =
+        objCount <- 0L
         idGen <- new ObjectIDGenerator()
         objStack.Clear()
         cyclicObjects.Clear()
@@ -115,6 +121,8 @@ and [<AutoSerializable(false)>]
     member internal __.NextObjectId () =
         idCounter <- idCounter + 1L
         idCounter
+
+    member internal __.ObjectCount = idCounter
 
     member internal __.EarlyRegisterArray(array : Array) =
         objCache.Add(idCounter, array)

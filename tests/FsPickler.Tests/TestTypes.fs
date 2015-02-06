@@ -218,7 +218,13 @@ module TestTypes =
         | 0 -> Leaf
         | n -> Node(string n, mkTree(n-1), mkTree(n-1))
 
+    [<CustomEquality ; NoComparison>]
     type Rec = { Rec : Rec }
+    with
+        override r.Equals o =
+            match o with
+            | :? Rec as r' -> obj.ReferenceEquals(r, r.Rec) = obj.ReferenceEquals(r', r'.Rec)
+            | _ -> false
 
     type BoxedArrays = { A : seq<int> ; B : seq<int> }
 

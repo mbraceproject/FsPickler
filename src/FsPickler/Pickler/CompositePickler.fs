@@ -188,7 +188,7 @@ type internal CompositePickler<'T> =
 
         if isRecursive || p.m_IsCacheByRef then
             let mutable firstOccurence = false
-            let id = state.ObjectIdGenerator.GetId(value, &firstOccurence)
+            let id = state.GetObjectId(value, &firstOccurence)
 
             let cyclicObjects = state.CyclicObjectSet
             let objStack = state.ObjectStack

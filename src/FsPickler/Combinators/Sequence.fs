@@ -49,10 +49,12 @@ module internal SequenceUtils =
     //  Sequence serialization of which length is unknown a priori
     //
 
+    // number of objects after which to reset cache state in sequence serialization
+    // this relates to an ObjectIdGenerator performance issue that hits as the number
+    // of cached objects increases. See https://github.com/nessos/FsPickler/issues/38 for more.
+    // Resetting the cache is safe when serializing top-level sequences.
     [<Literal>]
-    let sequenceStateResetThreshold = 50000
-
-    let inline isThresholdReached i = i % sequenceStateResetThreshold = sequenceStateResetThreshold - 1
+    let objectCountResetThreshold = 50000L
 
     /// serializes a sequence of unknown length to the stream ; returns its eventual length
     let writeUnboundedSequence enableReset (ep : Pickler<'T>) (w : WriteState) (tag : string) (ts : seq<'T>) : int =
@@ -60,7 +62,7 @@ module internal SequenceUtils =
         let formatter = w.Formatter
         do formatter.BeginWriteObject tag ObjectFlags.IsSequenceHeader
 
-        let inline checkReset i = if enableReset && isThresholdReached i then w.Reset()
+        let inline checkReset () = if enableReset && w.ObjectCount > objectCountResetThreshold then w.Reset()
 
         let count =
             // specialize enumeration strategy
@@ -69,7 +71,7 @@ module internal SequenceUtils =
                 let len = array.Length
                 for i = 0 to len - 1 do
                     formatter.WriteNextSequenceElement true
-                    checkReset i
+                    checkReset ()
                     ep.Write w elemTag array.[i]
 
                 len
@@ -80,7 +82,7 @@ module internal SequenceUtils =
                     | [] -> i
                     | t :: rest -> 
                         formatter.WriteNextSequenceElement true
-                        checkReset i
+                        checkReset ()
                         ep.Write w elemTag t
                         write (i+1) rest
 
@@ -90,7 +92,7 @@ module internal SequenceUtils =
                 let mutable i = 0
                 for t in ts do
                     formatter.WriteNextSequenceElement true
-                    checkReset i
+                    checkReset ()
                     ep.Write w elemTag t
                     i <- i + 1
 
@@ -112,7 +114,7 @@ module internal SequenceUtils =
             member __.Dispose () = r.Formatter.Dispose()
             member __.MoveNext () =
                 if r.Formatter.ReadNextSequenceElement () then
-                    if enableReset && isThresholdReached i then r.Reset()
+                    if enableReset && r.ObjectCount > objectCountResetThreshold then r.Reset()
                     current <- ep.Read r elemTag
                     i <- i + 1
                     true
