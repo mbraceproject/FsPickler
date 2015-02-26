@@ -146,14 +146,11 @@ let gatherSerializedFields (t : Type) =
 //     b) there exists t -> t' such that t' is recursive
 //     c) there exists t ->* t' so that t <: t'
 //
-// A type is recursive iff its instances admit cyclic object graphs.
+// A reference type is recursive iff its instances admit cyclic object graphs.
 
 exception PolymorphicRecursiveException of Type
 
-//
-// Detect polymorphic recursion patterns
-//
-
+/// Detect polymorphic recursion patterns
 let isPolymorphicRecursive (t : Type) =
     let rec aux traversed (t : Type) =
         if t.IsGenericType then
@@ -195,18 +192,12 @@ let isPolymorphicRecursive (t : Type) =
     else
         false
 
+/// Checks if type is 'recursive' according to above definition
+/// Note that type must additionally be a reference type for this to be meaningful.
 let isRecursiveType (t : Type) =
-    let primitives = 
-        hset [ 
-            typeof<string> ; typeof<Guid> ; typeof<DateTime> ; typeof<TimeSpan>
-            typeof<decimal> ; typeof<bigint> ; typeof<unit> ; typeof<DBNull>
-        ]
-
     let rec aux (traversed : Type list) (t : Type) =
         if t.IsPrimitive then false
-        elif primitives.Contains t then false
         elif typeof<MemberInfo>.IsAssignableFrom t then false
-        elif isISerializable t then true
         // check for cyclic type dependencies
         elif traversed |> List.exists (fun t' -> isAssignableFrom t t') then true else
 
@@ -241,7 +232,7 @@ let isRecursiveType (t : Type) =
 
 //
 //  types like int * bool, int option, etc have object graphs of fixed size
-//  types like arrays, rectypes, or non-sealed types can have instances of arbitrary graph size
+//  types like strings, arrays, rectypes, or non-sealed types can have instances of arbitrary graph size
 //
 
 let isOfFixedSize isRecursive (t : Type) =
@@ -263,4 +254,5 @@ let isOfFixedSize isRecursive (t : Type) =
 
     if isRecursive then false
     else
+        // not recursive, check for arrays and strings in the type graph
         aux t

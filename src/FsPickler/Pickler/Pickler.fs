@@ -24,11 +24,14 @@ type Pickler internal (t : Type) =
             let msg = sprintf "contains polymorphic recursive type '%O'." t'
             raise <| NonSerializableTypeException(t, msg)
 
-    let isFixedSize = isOfFixedSize isRecursive t
+    let isOfFixedSize = isOfFixedSize isRecursive t
+    // In order for a type to be considered recursive,
+    // it must additionally be a reference type
+    let isRecursive = isRecursive && not t.IsValueType
 
     member __.Type = t
     member __.TypeKind = typeKind
-    member __.IsOfFixedSize = isFixedSize
+    member __.IsOfFixedSize = isOfFixedSize
     member __.IsRecursiveType = isRecursive
 
     abstract ImplementationType : Type

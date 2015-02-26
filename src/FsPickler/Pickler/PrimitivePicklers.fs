@@ -135,7 +135,7 @@ type GuidPickler () =
         reader.Formatter.ReadGuid tag
 
 [<AutoSerializable(false)>]
-type DatePickler () =
+type DateTimePickler () =
     inherit PrimitivePickler<DateTime> ()
 
     override __.Write (writer : WriteState) (tag : string) (date : DateTime) =
@@ -210,7 +210,7 @@ module PrimitivePicklers =
     let mkChar () = new CharPickler () :> Pickler<char>
     let mkBytes () = new ByteArrayPickler () :> Pickler<byte []>
     let mkGuid () = new GuidPickler () :> Pickler<Guid>
-    let mkDate () = new DatePickler () :> Pickler<DateTime>
+    let mkDate () = new DateTimePickler () :> Pickler<DateTime>
     let mkTimeSpan () = new TimeSpanPickler () :> Pickler<TimeSpan>
     let mkBigInt () = new BigIntPickler () :> Pickler<bigint>
     let mkDBNull () = new DBNullPickler () :> Pickler<DBNull>

@@ -437,6 +437,7 @@ type ``FsPickler Tests`` (format : string) as self =
     member __.``5. Object: Correctly resolve recursive types`` () =
         isRecursive<int> |> should equal false
         isRecursive<DateTime> |> should equal false
+        isRecursive<DateTimeOffset> |> should equal false
         isRecursive<bigint> |> should equal false
         isRecursive<string> |> should equal false
         isRecursive<Type> |> should equal false
@@ -459,6 +460,7 @@ type ``FsPickler Tests`` (format : string) as self =
     member __.``5. Object: Correctly resolve finite types`` () =
         isFixedSize<int> |> should equal true
         isFixedSize<DateTime> |> should equal true
+        isFixedSize<DateTimeOffset> |> should equal true
         isFixedSize<int * byte * (int * int64 * DateTime)> |> should equal true
         isFixedSize<string> |> should equal false
         isFixedSize<Type> |> should equal true

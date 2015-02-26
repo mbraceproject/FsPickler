@@ -232,12 +232,7 @@ type internal CompositePickler<'T> =
         let formatter = state.Formatter
         let flags = formatter.BeginReadObject tag
 
-        if p.TypeKind <= TypeKind.Value then
-            let value = p.m_Reader state tag
-            formatter.EndReadObject ()
-            value
-
-        elif ObjectFlags.hasFlag flags ObjectFlags.IsNull then 
+        if ObjectFlags.hasFlag flags ObjectFlags.IsNull then 
             formatter.EndReadObject ()
             fastUnbox<'T> null
 
