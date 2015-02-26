@@ -15,8 +15,6 @@ open System
 open System.Runtime.CompilerServices
 open System.Runtime.Serialization
 
-open Nessos.FsPickler.Reflection
-
 [<AutoSerializable(false)>]
 type internal CompositePickler<'T> =
     inherit Pickler<'T>
@@ -234,7 +232,12 @@ type internal CompositePickler<'T> =
         let formatter = state.Formatter
         let flags = formatter.BeginReadObject tag
 
-        if ObjectFlags.hasFlag flags ObjectFlags.IsNull then 
+        if p.TypeKind <= TypeKind.Value then
+            let value = p.m_Reader state tag
+            formatter.EndReadObject ()
+            value
+
+        elif ObjectFlags.hasFlag flags ObjectFlags.IsNull then 
             formatter.EndReadObject ()
             fastUnbox<'T> null
 
