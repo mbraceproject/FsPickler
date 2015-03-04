@@ -1,3 +1,6 @@
+### 1.0.13
+* Performance fix related to serialization of primitive arrays to binary format.
+
 ### 1.0.12
 * Fix issue relating to deserialization of ISerializable structs inside large object graphs.
 * Revise .IsRecursive and .IsOfFixedSize predicate resolution algorithms.

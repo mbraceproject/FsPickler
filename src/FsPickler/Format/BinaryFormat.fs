@@ -173,7 +173,7 @@ type BinaryPickleWriter internal (stream : Stream, encoding : Encoding, leaveOpe
         // in an element-by-element basis. This ensures that all serialization
         // is passed through BinaryWriter that always uses little endian.
         member __.IsPrimitiveArraySerializationSupported = not forceLittleEndian
-        member __.WritePrimitiveArray _ array = (*bw.Flush() ;*) blockCopy(array, stream) (*; stream.Flush()*)
+        member __.WritePrimitiveArray _ array = blockCopy(array, stream)
 
         member __.Dispose () = bw.Dispose()
 
