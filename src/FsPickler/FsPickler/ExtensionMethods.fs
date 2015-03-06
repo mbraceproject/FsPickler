@@ -1,5 +1,8 @@
 ﻿namespace Nessos.FsPickler
 
+open System
+open System.Runtime.Serialization
+
 /// F# Extension methods for FsPickler
 
 [<AutoOpen>]
@@ -44,3 +47,58 @@ module ExtensionMethods =
             let cacheByRef = defaultArg cacheByRef (not typeof<'T>.IsValueType)
             let useWithSubtypes = defaultArg useWithSubtypes false
             CompositePickler.Create(reader, writer, PicklerInfo.UserDefined, cacheByRef = cacheByRef, useWithSubtypes = useWithSubtypes)
+
+
+    type SerializationInfo with
+        /// <summary>
+        ///     Adds value of given type to SerializationInfo instance.
+        /// </summary>
+        /// <param name="name">Name for value.</param>
+        /// <param name="value">Input value.</param>
+        member inline sI.AddValue<'T>(name : string, value : 'T) : unit =
+            sI.AddValue(name, value, typeof<'T>)
+
+        /// <summary>
+        ///     Gets value of given type and provided name from SerializationInfo instance.
+        /// </summary>
+        /// <param name="name">Name for value.</param>
+        member inline sI.GetValue<'T>(name : string) : 'T =
+            sI.GetValue(name, typeof<'T>) :?> 'T
+
+        /// <summary>
+        ///     Try getting value of provided type and name from SerializationInfo instance.
+        ///     Returns 'None' if not found.
+        /// </summary>
+        /// <param name="name">Name for value.</param>
+        member sI.TryGetValue<'T>(name : string) : 'T option =
+            // we use linear traversal; that's ok since entry count
+            // is typically small and this is how it's done in the
+            // proper SerializationInfo.GetValue() implementation.
+            let e = sI.GetEnumerator()
+            let mutable found = false
+            let mutable entry = Unchecked.defaultof<SerializationEntry>
+            while not found && e.MoveNext() do
+                entry <- e.Current
+                found <- entry.Name = name && entry.ObjectType = typeof<'T>
+
+            if found then Some (entry.Value :?> 'T)
+            else None
+
+        /// <summary>
+        ///     Try getting value of provided name from SerializationInfo instance.
+        ///     Returns 'None' if not found.
+        /// </summary>
+        /// <param name="name">Name for value.</param>
+        member sI.TryGetValueObj(name : string) : obj option =
+            // we use linear traversal; that's ok since entry count
+            // is typically small and this is how it's done in the
+            // proper SerializationInfo.GetValue() implementation.
+            let e = sI.GetEnumerator()
+            let mutable found = false
+            let mutable entry = Unchecked.defaultof<SerializationEntry>
+            while not found && e.MoveNext() do
+                entry <- e.Current
+                found <- entry.Name = name
+
+            if found then Some entry.Value
+            else None

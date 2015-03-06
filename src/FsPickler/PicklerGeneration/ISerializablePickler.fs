@@ -15,7 +15,10 @@ open Nessos.FsPickler.Emit
 open Nessos.FsPickler.PicklerEmit
 #endif
 
+[<AutoOpen>]
 module private ISerializableUtils =
+
+    let inline mkSerializationInfo<'T> () = new SerializationInfo(typeof<'T>, new FormatterConverter())
 
     let inline writeSerializationEntry (w : WriteState) (entry : SerializationEntry) =
         let formatter = w.Formatter
@@ -35,6 +38,47 @@ module private ISerializableUtils =
         let value = op.UntypedRead r "Value"
         sI.AddValue(name, value)
         formatter.EndReadObject()
+
+    let inline writeSerializationInfo (w : WriteState) (sI : SerializationInfo) =
+        let enum = sI.GetEnumerator()
+        let formatter = w.Formatter
+
+        if formatter.PreferLengthPrefixInSequences then
+            formatter.WriteInt32 "memberCount" sI.MemberCount
+            formatter.BeginWriteObject "serializationEntries" ObjectFlags.IsSequenceHeader
+
+            while enum.MoveNext() do
+                writeSerializationEntry w enum.Current
+
+            formatter.EndWriteObject ()
+
+        else
+            formatter.BeginWriteObject "serializationEntries" ObjectFlags.IsSequenceHeader
+
+            while enum.MoveNext() do
+                formatter.WriteNextSequenceElement true
+                writeSerializationEntry w enum.Current
+
+            formatter.WriteNextSequenceElement false
+            formatter.EndWriteObject ()
+
+    let inline readSerializationInfo<'T> (r : ReadState) =
+        let sI = mkSerializationInfo<'T> ()
+        let formatter = r.Formatter
+
+        if formatter.PreferLengthPrefixInSequences then
+            let memberCount = formatter.ReadInt32 "memberCount"
+            let _ = formatter.BeginReadObject "serializationEntries"
+            for i = 1 to memberCount do
+                readSerializationEntry r sI
+            formatter.EndReadObject ()
+        else
+            let _ = formatter.BeginReadObject "serializationEntries"
+            while formatter.ReadNextSequenceElement() do
+                readSerializationEntry r sI
+            formatter.EndReadObject ()
+
+        sI
 
 type internal ISerializablePickler =
 
@@ -64,55 +108,30 @@ type internal ISerializablePickler =
                 ctorInfo.Invoke [| si :> obj ; sc :> obj |] |> fastUnbox<'T>
 #endif
             let writer (w : WriteState) (tag : string) (t : 'T) =
-                let formatter = w.Formatter
-
                 run onSerializing w t
-                let sI = new SerializationInfo(typeof<'T>, new FormatterConverter())
+                let sI = mkSerializationInfo<'T> ()
                 t.GetObjectData(sI, w.StreamingContext)
-
-                let enum = sI.GetEnumerator()
-
-                if formatter.PreferLengthPrefixInSequences then
-                    formatter.WriteInt32 "memberCount" sI.MemberCount
-                    formatter.BeginWriteObject "serializationEntries" ObjectFlags.IsSequenceHeader
-
-                    while enum.MoveNext() do
-                        ISerializableUtils.writeSerializationEntry w enum.Current
-
-                    formatter.EndWriteObject ()
-
-                else
-                    formatter.BeginWriteObject "serializationEntries" ObjectFlags.IsSequenceHeader
-
-                    while enum.MoveNext() do
-                        formatter.WriteNextSequenceElement true
-                        ISerializableUtils.writeSerializationEntry w enum.Current
-
-                    formatter.WriteNextSequenceElement false
-                    formatter.EndWriteObject ()
-
+                writeSerializationInfo w sI
                 run onSerialized w t
 
             let reader (r : ReadState) (tag : string) =
-                let formatter = r.Formatter
-                let sI = new SerializationInfo(typeof<'T>, new FormatterConverter())
-
-                if formatter.PreferLengthPrefixInSequences then
-                    let memberCount = formatter.ReadInt32 "memberCount"
-                    let _ = formatter.BeginReadObject "serializationEntries"
-                    for i = 1 to memberCount do
-                        ISerializableUtils.readSerializationEntry r sI
-                    formatter.EndReadObject ()
-                else
-                    let _ = formatter.BeginReadObject "serializationEntries"
-                    while formatter.ReadNextSequenceElement() do
-                        ISerializableUtils.readSerializationEntry r sI
-                    formatter.EndReadObject ()
-
+                let sI = readSerializationInfo<'T> r
                 let t = create sI r.StreamingContext
-
                 run onDeserialized r t
                 if isDeserializationCallback then (fastUnbox<IDeserializationCallback> t).OnDeserialization null
                 t
 
             CompositePickler.Create(reader, writer, PicklerInfo.ISerializable, cacheByRef = true, useWithSubtypes = false)
+
+    /// SerializationInfo-based pickler combinator
+    static member FromSerializationInfo<'T>(ctor : SerializationInfo -> 'T, proj : SerializationInfo -> 'T -> unit) : Pickler<'T> =
+        let writer (state : WriteState) (tag : string) (t : 'T) =
+            let sI = mkSerializationInfo<'T> ()
+            do proj sI t
+            writeSerializationInfo state sI
+
+        let reader (state : ReadState) (tag : string) =
+            let sI = readSerializationInfo<'T> state
+            ctor sI
+
+        CompositePickler.Create(reader, writer, PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = false)

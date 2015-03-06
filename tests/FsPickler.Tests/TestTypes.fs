@@ -197,6 +197,16 @@ module TestTypes =
                 |> Pickler.pair Pickler.int
                 |> Pickler.wrap (fun (_,y) -> new ClassWithCombinators(42,y)) (fun c -> c.Value))
 
+
+    [<CustomPickler>]
+    type RecordWithISerializableCombinators =
+        { Name : string ; DoB : int ; DoD : int option }
+    with
+        static member CreatePickler (_ : IPicklerResolver) =
+            Pickler.fromSerializationInfo
+                        (fun sI -> { Name = sI.GetString "Name" ; DoB = sI.GetInt32 "DateOfBirth" ; DoD = sI.GetValue "DateOfDeath" })
+                        (fun sI r -> sI.AddValue("Name", r.Name) ; sI.AddValue("DateOfDeath", r.DoD) ; sI.AddValue("DateOfBirth", r.DoB + 1))
+
         
     let addStackTrace (e : 'exn) =
         let rec dive n =

@@ -2,6 +2,7 @@
 
 open System
 open System.IO
+open System.Runtime.Serialization
 
 open Nessos.FsPickler
 open Nessos.FsPickler.PrimitivePicklers
@@ -128,6 +129,10 @@ module Pickler =
     let wrap recover convert p = WrapPickler.Create(p, recover, convert)
     /// alt combinator: choose from list of pickler combinators using tag reader
     let alt tagReader ps = AltPickler.Create(tagReader, ps)
+
+    /// Pickler combinator based on SerializationInfo
+    let fromSerializationInfo (ctor : SerializationInfo -> 'T) (proj : SerializationInfo -> 'T -> unit) =
+        ISerializablePickler.FromSerializationInfo(ctor, proj)
 
     /// F# function combinator
     let func<'T, 'U> = AbstractPickler.Create<'T -> 'U> ()

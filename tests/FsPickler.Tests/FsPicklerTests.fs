@@ -651,7 +651,15 @@ type ``FsPickler Tests`` (format : string) as self =
 
         z.Value |> snd |> Option.map (fun x -> x.Value) |> Option.get |> fst |> should equal 42
 
-
+    [<Test ; Category("Custom types")>] 
+    member __.``6. Custom: record with ISerializable combinator`` () =
+        Check.QuickThrowOnFail(
+            fun (r : RecordWithISerializableCombinators) ->
+                let r' = testRoundtrip r
+                r'.Name |> should equal r.Name
+                // custom pickler increments date of birth by one
+                r'.DoB |> should equal (r.DoB + 1)
+                r'.DoD |> should equal r.DoD)
 
 
 
