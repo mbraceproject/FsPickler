@@ -213,6 +213,34 @@ Node([1],[Leaf ; Leaf]) |> Json.pickle tree
 
 (**
 
+### SerializationInfo Picklers
+
+It is possible to define picklers that serialise objects using [SerializationInfo](https://msdn.microsoft.com/en-us/library/system.runtime.serialization.serializationinfo%28v=vs.110%29.aspx).
+For example, consider the record:
+
+*)
+
+type Name = { FirstName : string ; MiddleName : string option ; Surname : string }
+
+(**
+
+We can define a SerializationInfo based pickler using the following combinator:
+
+*)
+
+let nameP =
+    Pickler.fromSerializationInfo
+                (fun si -> 
+                    { FirstName = si.GetValue "First Name"
+                      MiddleName = si.TryGetValue "Middle Name"
+                      Surname = si.GetValue "Last Name" })
+                (fun si p -> 
+                    si.AddValue("First Name", p.FirstName)
+                    si.AddValue("Last Name", p.Surname)
+                    match p.MiddleName with Some mn -> si.AddValue("Middle Name", mn) | None -> ())
+
+(**
+
 ### Experimental N-way Sum and Product Combinators
 
 N-way sum and product combinators provide an alternative pretty syntax for
