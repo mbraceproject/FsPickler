@@ -1,3 +1,6 @@
+### 1.0.15
+* Improve SerializationInfo extension methods.
+
 ### 1.0.14
 * Implement Pickler.fromSerializationInfo combinator.
 
