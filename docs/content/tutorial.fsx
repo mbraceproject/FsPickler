@@ -231,13 +231,13 @@ We can define a SerializationInfo based pickler using the following combinator:
 let nameP =
     Pickler.fromSerializationInfo
                 (fun si -> 
-                    { FirstName = si.GetValue "First Name"
-                      MiddleName = si.TryGetValue "Middle Name"
-                      Surname = si.GetValue "Last Name" })
+                    { FirstName = si.Get "First Name"
+                      MiddleName = si.TryGet "Middle Name"
+                      Surname = si.Get "Last Name" })
                 (fun si p -> 
-                    si.AddValue("First Name", p.FirstName)
-                    si.AddValue("Last Name", p.Surname)
-                    match p.MiddleName with Some mn -> si.AddValue("Middle Name", mn) | None -> ())
+                    si.Add("First Name", p.FirstName)
+                    si.Add("Last Name", p.Surname)
+                    match p.MiddleName with Some mn -> si.Add("Middle Name", mn) | None -> ())
 
 (**
 

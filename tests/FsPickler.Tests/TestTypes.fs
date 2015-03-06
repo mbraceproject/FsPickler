@@ -204,8 +204,8 @@ module TestTypes =
     with
         static member CreatePickler (_ : IPicklerResolver) =
             Pickler.fromSerializationInfo
-                        (fun sI -> { Name = sI.GetString "Name" ; DoB = sI.GetInt32 "DateOfBirth" ; DoD = sI.GetValue "DateOfDeath" })
-                        (fun sI r -> sI.AddValue("Name", r.Name) ; sI.AddValue("DateOfDeath", r.DoD) ; sI.AddValue("DateOfBirth", r.DoB + 1))
+                        (fun sI -> { Name = sI.GetString "Name" ; DoB = sI.GetInt32 "DateOfBirth" ; DoD = sI.TryGet "DateOfDeath" })
+                        (fun sI r -> sI.AddValue("Name", r.Name) ; r.DoD |> Option.iter (fun d -> sI.AddValue("DateOfDeath", d)) ; sI.AddValue("DateOfBirth", r.DoB + 1))
 
         
     let addStackTrace (e : 'exn) =

@@ -55,14 +55,14 @@ module ExtensionMethods =
         /// </summary>
         /// <param name="name">Name for value.</param>
         /// <param name="value">Input value.</param>
-        member inline sI.AddValue<'T>(name : string, value : 'T) : unit =
+        member inline sI.Add<'T>(name : string, value : 'T) : unit =
             sI.AddValue(name, value, typeof<'T>)
 
         /// <summary>
         ///     Gets value of given type and provided name from SerializationInfo instance.
         /// </summary>
         /// <param name="name">Name for value.</param>
-        member inline sI.GetValue<'T>(name : string) : 'T =
+        member inline sI.Get<'T>(name : string) : 'T =
             sI.GetValue(name, typeof<'T>) :?> 'T
 
         /// <summary>
@@ -70,7 +70,7 @@ module ExtensionMethods =
         ///     Returns 'None' if not found.
         /// </summary>
         /// <param name="name">Name for value.</param>
-        member sI.TryGetValue<'T>(name : string) : 'T option =
+        member sI.TryGet<'T>(name : string) : 'T option =
             // we use linear traversal; that's ok since entry count
             // is typically small and this is how it's done in the
             // proper SerializationInfo.GetValue() implementation.
@@ -79,9 +79,10 @@ module ExtensionMethods =
             let mutable entry = Unchecked.defaultof<SerializationEntry>
             while not found && e.MoveNext() do
                 entry <- e.Current
-                found <- entry.Name = name && entry.ObjectType = typeof<'T>
+                found <- entry.Name = name
 
-            if found then Some (entry.Value :?> 'T)
+            if found && entry.ObjectType = typeof<'T> then
+                Some (entry.Value :?> 'T)
             else None
 
         /// <summary>
@@ -89,7 +90,7 @@ module ExtensionMethods =
         ///     Returns 'None' if not found.
         /// </summary>
         /// <param name="name">Name for value.</param>
-        member sI.TryGetValueObj(name : string) : obj option =
+        member sI.TryGetObj(name : string) : obj option =
             // we use linear traversal; that's ok since entry count
             // is typically small and this is how it's done in the
             // proper SerializationInfo.GetValue() implementation.
