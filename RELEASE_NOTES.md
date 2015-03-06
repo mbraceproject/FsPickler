@@ -1,3 +1,6 @@
+### 1.0.14
+* Implement Pickler.fromSerializationInfo combinator.
+
 ### 1.0.13
 * Performance fix related to serialization of primitive arrays to binary format.
 
