@@ -2,7 +2,7 @@
 #r "FsPickler.dll"
 
 open Nessos.FsPickler
-open Nessos.FsPickler.Combinators
+open Nessos.FsPickler.Combinators 
 
 let qPickler = Pickler.auto<Quotations.Expr<int>>
 
