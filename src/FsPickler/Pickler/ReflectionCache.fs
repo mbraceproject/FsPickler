@@ -43,21 +43,16 @@ type CompositeMemberInfo =
 let loadAssembly (aI : AssemblyInfo) =
     let an = aI.ToAssemblyName()
 
-    try Assembly.Load an
-    with :? FileNotFoundException | :? FileLoadException as e ->
+    // first, query AppDomain for loaded assembly of given qualified name
+    let loadedAssembly =
+        System.AppDomain.CurrentDomain.GetAssemblies()
+        |> Array.tryFind (fun a -> a.FullName = an.FullName)
 
-        // in certain cases, such as when assemblies are loaded through reflection
-        // Assembly.Load may fail even if already found in AppDomain
-        // Resolve this by performing a direct query on the AppDomain.
-
-        let result =
-            System.AppDomain.CurrentDomain.GetAssemblies()
-            |> Array.tryFind (fun a -> a.FullName = an.FullName)
-
-        match result with
-        | None -> reraise ()
-        | Some a -> a
-
+    match loadedAssembly with
+    | Some la -> la
+    | None -> 
+        // resort to CLR loader mechanism if nothing found.
+        Assembly.Load an
 
 //
 //  MemberInfo Loading Code
