@@ -1,3 +1,6 @@
+### 1.0.16
+* Refine assembly loading code.
+
 ### 1.0.15
 * Improve SerializationInfo extension methods.
 
