@@ -1,3 +1,6 @@
+### 1.0.17
+* Fix support for ISerializable structs.
+
 ### 1.0.16
 * Refine assembly loading code.
 

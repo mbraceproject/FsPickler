@@ -1,5 +1,4 @@
 source https://www.nuget.org/api/v2
-source C:\Users\eirik\SkyDrive\Development\Nuget
 
 nuget Nuget.CommandLine 2.8.3
 nuget FsCheck 1.0.0
