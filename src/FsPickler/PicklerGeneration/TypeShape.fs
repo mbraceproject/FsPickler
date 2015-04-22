@@ -413,7 +413,6 @@ module TypeShape =
                 let et = t.GetGenericArguments().[0]
                 activate1 typedefof<ShapeNullable<_>> et
 
-            elif t.IsValueType then activate1 typedefof<ShapeStruct<_>> t
             elif t.IsArray then
                 let et = t.GetElementType()
                 match t.GetArrayRank() with
@@ -429,5 +428,7 @@ module TypeShape =
                 activate1 typedefof<ShapeDataContract<_>> t
             elif isISerializable t then
                 activate1 typedefof<ShapeISerializable<_>> t
+            elif t.IsValueType then 
+                activate1 typedefof<ShapeStruct<_>> t
             else
                 activate1 typedefof<ShapeClass<_>> t

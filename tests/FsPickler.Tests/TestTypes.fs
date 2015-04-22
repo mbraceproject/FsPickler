@@ -341,6 +341,20 @@ module TestTypes =
     type SerializableImplementingNonSerializable () =
         interface NonSerializableInterface
 
+    [<Struct>]
+    type SerializableStruct(x : int, y : int) =
+        member __.X = x
+        member __.Y = y
+
+        static member DeserializedY = 42
+
+        private new (si : SerializationInfo, sc : StreamingContext) =
+            let x = si.GetInt32("x")
+            new SerializableStruct(x, SerializableStruct.DeserializedY)
+            
+        interface ISerializable with
+            member __.GetObjectData(si : SerializationInfo, sc : StreamingContext) =
+                si.AddValue("x", x)
 
     // automated large-scale object generation
     let generateSerializableObjects (assembly : Assembly) =

@@ -608,6 +608,13 @@ type ``FsPickler Tests`` (format : string) as self =
     member __.``6. Custom: Simple ISerializable class`` () = testEquals <| SimpleISerializableClass(42, "fortyTwo")
 
     [<Test ; Category("Custom types")>] 
+    member __.``6. Custom: Simple ISerializable struct`` () = 
+        let x = new SerializableStruct(10, SerializableStruct.DeserializedY + 20)
+        let x' = testRoundtrip x
+        x'.X |> should equal x.X
+        x'.Y |> should equal SerializableStruct.DeserializedY
+
+    [<Test ; Category("Custom types")>] 
     member __.``6. Custom: Generic ISerializable class`` () = testEquals <| GenericISerializableClass<int * string>(42, "fortyTwo", (42, "fortyTwo"))
 
     [<Test ; Category("Custom types")>] 
