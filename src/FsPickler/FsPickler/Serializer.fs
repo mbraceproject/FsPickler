@@ -20,7 +20,7 @@ type internal DAttribute = System.Runtime.InteropServices.DefaultParameterValueA
 ///     An abstract class containg the basic serialization API.
 /// </summary>
 [<AbstractClass>]
-type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?typeConverter) =
+type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?typeConverter : ITypeNameConverter) =
 
     let resolver = PicklerCache.Instance :> IPicklerResolver
     let reflectionCache = ReflectionCache.Create(?tyConv = typeConverter)

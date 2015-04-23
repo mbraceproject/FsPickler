@@ -92,7 +92,7 @@ module private BinaryFormatUtils =
 /// <summary>
 ///     Binary format serializer.
 /// </summary>
-type BinaryPickleWriter internal (stream : Stream, encoding : Encoding, leaveOpen, forceLittleEndian) =
+type BinaryPickleWriter internal (stream : Stream, encoding : Encoding, leaveOpen : bool, forceLittleEndian : bool) =
 
 #if NET40
     do if leaveOpen then raise <| new NotSupportedException("'leaveOpen' not supported in .NET 40.")
@@ -180,7 +180,7 @@ type BinaryPickleWriter internal (stream : Stream, encoding : Encoding, leaveOpe
 /// <summary>
 ///     Binary format deserializer.
 /// </summary>
-and BinaryPickleReader internal (stream : Stream, encoding, leaveOpen) =
+and BinaryPickleReader internal (stream : Stream, encoding : Encoding, leaveOpen : bool) =
 
 #if NET40
     do if leaveOpen then raise <| new NotSupportedException("'leaveOpen' not supported in .NET 40.")

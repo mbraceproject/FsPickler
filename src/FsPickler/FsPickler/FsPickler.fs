@@ -17,14 +17,14 @@ type FsPickler private () =
     /// </summary>
     /// <param name="forceLittleEndian">Force little-endian encoding in primitive arrays but is slower. Defaults to false.</param>
     /// <param name="tyConv">optional type name converter implementation.</param>
-    static member CreateBinary([<O;D(null)>] ?forceLittleEndian, [<O;D(null)>] ?typeConverter) = 
+    static member CreateBinary([<O;D(null)>] ?forceLittleEndian : bool, [<O;D(null)>] ?typeConverter : ITypeNameConverter) = 
         new BinarySerializer(?forceLittleEndian = forceLittleEndian, ?typeConverter = typeConverter)
 
     /// <summary>
     ///     Create a new XML pickler instance.
     /// </summary>
     /// <param name="tyConv">optional type name converter implementation.</param>
-    static member CreateXml([<O;D(null)>]?typeConverter, [<O;D(null)>]?indent) = 
+    static member CreateXml([<O;D(null)>]?typeConverter : ITypeNameConverter, [<O;D(null)>]?indent : bool) = 
         new XmlSerializer(?typeConverter = typeConverter, ?indent = indent)
 
     /// Decides if given type is serializable by FsPickler
