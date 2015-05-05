@@ -277,19 +277,15 @@ type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?
 
     /// <summary>Compute size and hashcode for given input.</summary>
     /// <param name="value">input value.</param>
-    /// <param name="pickler">use specific pickler for hash computation.</param>
     /// <param name="hashFactory">the hashing algorithm to be used. MurMur3 by default.</param>
-    member bp.ComputeHash<'T>(value : 'T, [<O;D(null)>] ?pickler : Pickler<'T>, [<O;D(null)>] ?hashFactory : IHashStreamFactory) =
+    member bp.ComputeHash<'T>(value : 'T, [<O;D(null)>] ?hashFactory : IHashStreamFactory) =
         let hashStream = 
             match hashFactory with 
             | Some h -> h.Create()
             | None -> new MurMur3Stream() :> HashStream
 
-        let signature = reflectionCache.GetTypeSignature typeof<'T>
-
-        match pickler with
-        | None -> bp.Serialize(hashStream, value)
-        | Some p -> bp.Serialize(p, hashStream, value)
+        let signature = reflectionCache.GetTypeSignature (if obj.ReferenceEquals(value,null) then typeof<'T> else value.GetType())
+        bp.Serialize<obj>(hashStream, value)
 
         {
             Algorithm = hashStream.HashAlgorithm
