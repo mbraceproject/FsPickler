@@ -1,3 +1,6 @@
+### 1.0.18
+* Sanitize hashcode generation logic.
+
 ### 1.0.17
 * Fix support for ISerializable structs.
 
