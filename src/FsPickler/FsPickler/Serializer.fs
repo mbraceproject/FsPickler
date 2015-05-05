@@ -284,7 +284,7 @@ type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?
             | Some h -> h.Create()
             | None -> new MurMur3Stream() :> HashStream
 
-        let signature = reflectionCache.GetTypeSignature (if obj.ReferenceEquals(value,null) then typeof<'T> else value.GetType())
+        let signature = reflectionCache.GetTypeSignature (if obj.ReferenceEquals(value,null) then typeof<obj> else value.GetType())
         bp.Serialize<obj>(hashStream, value)
 
         {
