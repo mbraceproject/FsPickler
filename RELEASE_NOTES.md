@@ -1,3 +1,6 @@
+### 1.0.19
+* Implement IObjectReference support.
+
 ### 1.0.18
 * Sanitize hashcode generation logic.
 
