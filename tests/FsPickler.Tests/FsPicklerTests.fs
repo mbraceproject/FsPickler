@@ -615,7 +615,46 @@ type ``FsPickler Tests`` (format : string) as self =
         x'.Y |> should equal SerializableStruct.DeserializedY
 
     [<Test ; Category("Custom types")>] 
+    member __.``6. Custom: ISerializable object missing constructor`` () = 
+        fun () ->
+            let x = new ISerializableMissingCtor(42)
+            let x' = testRoundtrip x
+            ()
+
+        |> shouldFailwith<FsPicklerException>
+
+    [<Test ; Category("Custom types")>] 
     member __.``6. Custom: Generic ISerializable class`` () = testEquals <| GenericISerializableClass<int * string>(42, "fortyTwo", (42, "fortyTwo"))
+
+    [<Test ; Category("Custom types")>] 
+    member __.``6. Custom: ISerializable class with IObjectReference template`` () = 
+        let x = new ObjRef1(0)
+        let x' = testRoundtrip x
+        x'.Value |> should equal 42
+
+    [<Test ; Category("Custom types")>] 
+    member __.``6. Custom: ISerializable class with IObjectReference object`` () = 
+        let x = new ObjRef2(-1)
+        let x' = testRoundtrip x
+        x'.Value |> should equal -1
+
+    [<Test ; Category("Custom types")>] 
+    member __.``6. Custom: ISerializable class implementing IObjectReference`` () = 
+        let x = new ObjRef3(0)
+        let x' = testRoundtrip x
+        x'.Value |> should equal 42
+
+    [<Test ; Category("Custom types")>] 
+    member __.``6. Custom: POCO implementing IObjectReference`` () = 
+        let x = new PocoObjRef(0)
+        let x' = testRoundtrip x
+        x'.Value |> should equal 42
+
+    [<Test ; Category("Custom types")>] 
+    member __.``6. Custom: Data Contract class implementing IObjectReference`` () = 
+        let x = new DataContractObjRef(0)
+        let x' = testRoundtrip x
+        x'.Value |> should equal 42
 
     [<Test ; Category("Custom types")>] 
     member __.``6. Custom: Data Contract class`` () =

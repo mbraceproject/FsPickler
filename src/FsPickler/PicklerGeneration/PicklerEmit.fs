@@ -21,6 +21,7 @@ module internal PicklerEmit =
         let readerCtx = typeof<ReadState>.GetProperty("StreamingContext").GetGetMethod(true)
         let objInitializer = typeof<FormatterServices>.GetMethod("GetUninitializedObject", BindingFlags.Public ||| BindingFlags.Static)
         let deserializationCallBack = typeof<IDeserializationCallback>.GetMethod("OnDeserialization")
+        let getRealObject = typeof<IObjectReference>.GetMethod("GetRealObject")
         let picklerT = typedefof<Pickler<_>>
         let getTypedPickler (t : Type) = picklerT.MakeGenericType [|t|]
         let getPicklerWriter (t : Type) = getTypedPickler(t).GetMethod("Write")
@@ -201,6 +202,15 @@ module internal PicklerEmit =
         ilGen.Emit(OpCodes.Castclass, typeof<IDeserializationCallback>)
         ilGen.Emit OpCodes.Ldnull
         ilGen.EmitCall(OpCodes.Callvirt, deserializationCallBack, null)
+
+    /// emit a call to the 'OnDeserialization' method on given value
+    let emitObjectReferenceResolver<'T, 'S> (value : EnvItem<'T>) (state : EnvItem<ReadState>) (ilGen : ILGenerator) =
+        value.Load ()
+        ilGen.Emit(OpCodes.Castclass, typeof<IObjectReference>)
+        state.Load()
+        ilGen.EmitCall(OpCodes.Call, readerCtx, null)
+        ilGen.EmitCall(OpCodes.Callvirt, getRealObject, null)
+        ilGen.Emit(OpCodes.Castclass, typeof<'S>)
 
     /// wraps call to ISerializable constructor in a dynamic method
     let wrapISerializableConstructor<'T> (ctor : ConstructorInfo) =

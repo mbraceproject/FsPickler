@@ -62,6 +62,7 @@ type internal DataContractPickler =
                 | name -> getNormalizedFieldName i name)
 
         let isDeserializationCallback = isAssignableFrom typeof<IDeserializationCallback> typeof<'T>
+        let isObjectReference = isAssignableFrom typeof<IObjectReference> typeof<'T>
 
         let allMethods = typeof<'T>.GetMethods(allMembers)
         let onSerializing = allMethods |> getSerializationMethods<OnSerializingAttribute>
@@ -102,7 +103,11 @@ type internal DataContractPickler =
 
                 if isDeserializationCallback then emitDeserializationCallback value ilGen
 
-                value.Load ()
+                if isObjectReference then 
+                    emitObjectReferenceResolver<'T, 'T> value reader ilGen
+                else
+                    value.Load ()
+
                 ilGen.Emit OpCodes.Ret
             )
 
@@ -147,7 +152,10 @@ type internal DataContractPickler =
 
             run onDeserialized t r
             if isDeserializationCallback then (fastUnbox<IDeserializationCallback> t).OnDeserialization null
-            t
+            if isObjectReference then 
+                (fastUnbox<IObjectReference> t).GetRealObject r.StreamingContext :?> 'T
+            else
+                t
 #endif
 
         CompositePickler.Create(reader, writer, PicklerInfo.DataContract, cacheByRef = cacheByRef, useWithSubtypes = false)

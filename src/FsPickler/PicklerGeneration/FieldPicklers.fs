@@ -99,6 +99,7 @@ type internal ClassFieldPickler =
         let tags = fields |> Array.mapi (fun i f -> getNormalizedFieldName i f.Name)
 
         let isDeserializationCallback = isAssignableFrom typeof<IDeserializationCallback> ty
+        let isObjectReference = isAssignableFrom typeof<IObjectReference> typeof<'T>
 
         let allMethods = ty.GetMethods(allMembers)
         let onSerializing = allMethods |> getSerializationMethods<OnSerializingAttribute>
@@ -140,7 +141,11 @@ type internal ClassFieldPickler =
 
                 if isDeserializationCallback then emitDeserializationCallback value ilGen
 
-                value.Load ()
+                if isObjectReference then 
+                    emitObjectReferenceResolver<'T, 'T> value reader ilGen
+                else
+                    value.Load ()
+
                 ilGen.Emit OpCodes.Ret
             )
 
@@ -171,7 +176,10 @@ type internal ClassFieldPickler =
 
             run onDeserialized t r
             if isDeserializationCallback then (fastUnbox<IDeserializationCallback> t).OnDeserialization null
-            t
+            if isObjectReference then 
+                (fastUnbox<IObjectReference> t).GetRealObject r.StreamingContext :?> 'T
+            else
+                t
 #endif
 
         CompositePickler.Create(reader, writer, PicklerInfo.FieldSerialization, cacheByRef = true, useWithSubtypes = false)

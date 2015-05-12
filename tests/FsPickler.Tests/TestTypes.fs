@@ -304,6 +304,65 @@ module TestTypes =
         toAdjacencyMap g1 = toAdjacencyMap g2
 
 
+    type ISerializableMissingCtor(x : int) =
+        member __.Value = x
+        interface ISerializable with
+            member __.GetObjectData(s:SerializationInfo,_:StreamingContext) =
+                s.AddValue("value", x)
+
+    type ObjRef1(x : int) =
+        member __.Value = x
+
+        interface ISerializable with    
+            member __.GetObjectData(s:SerializationInfo,_:StreamingContext) =
+                s.SetType typeof<ObjRefHelper1>
+
+    and ObjRefHelper1 =
+        interface IObjectReference with
+            member __.GetRealObject _ = new ObjRef1(42) :> obj
+
+    type ObjRef2(x : int) =
+        member __.Value = x
+
+        interface ISerializable with    
+            member __.GetObjectData(s:SerializationInfo,_:StreamingContext) =
+                s.SetType typeof<ObjRefHelper2>
+                s.AddValue("value",x)
+
+    and ObjRefHelper2 private (s:SerializationInfo, c:StreamingContext) =
+        let value = s.GetInt32 "value"
+        interface IObjectReference with
+            member __.GetRealObject _ = new ObjRef2(value) :> obj
+
+    type ObjRef3(x : int) =
+        private new (s:SerializationInfo, c:StreamingContext) = new ObjRef3(s.GetInt32 "value")
+        member __.Value = x
+
+        interface ISerializable with
+            member __.GetObjectData(s:SerializationInfo,_:StreamingContext) =
+                s.AddValue("value",x)
+
+        interface IObjectReference with
+            member __.GetRealObject _ = new ObjRef3(42) :> obj
+
+    type PocoObjRef(x : int) =
+        member __.Value = x
+
+        interface IObjectReference with
+            member __.GetRealObject _ = new PocoObjRef(42) :> obj
+
+    [<DataContract>]
+    type DataContractObjRef(x : int) =
+        let mutable x = x
+
+        [<DataMember>]
+        member __.Value 
+            with get () = x
+            and set y = x <- y
+
+        interface IObjectReference with
+            member __.GetRealObject _ = new DataContractObjRef(42) :> obj
+
     // the following types test a certain pickler generation ordering condition:
     // in certain versions of FsPickler, if 'Foo' is to be generated
     // *before* 'Bar', then 'Bar' would be saved in cache as serializable,

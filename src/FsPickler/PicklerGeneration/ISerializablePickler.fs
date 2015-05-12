@@ -83,21 +83,49 @@ module private ISerializableUtils =
 type internal ISerializablePickler =
 
     static member Create<'T when 'T :> ISerializable>(resolver : IPicklerResolver) =
+        let allMethods = typeof<'T>.GetMethods(allMembers)
+        let onSerializing = allMethods |> getSerializationMethods<OnSerializingAttribute> |> wrapDelegate<Action<'T, StreamingContext>>
+        let onSerialized = allMethods |> getSerializationMethods<OnSerializedAttribute> |> wrapDelegate<Action<'T, StreamingContext>>
+        let onDeserialized = allMethods |> getSerializationMethods<OnDeserializedAttribute> |> wrapDelegate<Action<'T, StreamingContext>>
+
+        let isDeserializationCallback = isAssignableFrom typeof<IDeserializationCallback> typeof<'T>
+        let isObjectReference = isAssignableFrom typeof<IObjectReference> typeof<'T>
+
+        let entryP = resolver.Resolve<SerializationEntry> ()
+
+        let inline run (dele : Action<'T, StreamingContext> []) w x =
+            for d in dele do d.Invoke(x, getStreamingContext w)
+
         match typeof<'T>.TryGetConstructor [| typeof<SerializationInfo> ; typeof<StreamingContext> |] with
-        | None -> raise <| new NonSerializableTypeException(typeof<'T>, "is ISerializable but does not implement constructor with parameters (SerializationInfo, StreamingContext).")
+        | None -> 
+            let writer (w : WriteState) (tag : string) (t : 'T) =
+                run onSerializing w t
+                let sI = mkSerializationInfo<'T> ()
+                t.GetObjectData(sI, w.StreamingContext)
+                if not <| isAssignableFrom typeof<IObjectReference> sI.ObjectType then
+                    raise <| new NonSerializableTypeException(typeof<'T>, "is ISerializable but does not implement deserialization constructor or use IObjectReference.")
+                w.TypePickler.Write w "ObjectType" sI.ObjectType
+                writeSerializationInfo w sI
+                run onSerialized w t
+
+            let reader (r : ReadState) (tag : string) =
+                let objectType = r.TypePickler.Read r "ObjectType"
+                let sI = readSerializationInfo<'T> r
+                let objectRef =
+                    match objectType.TryGetConstructor [| typeof<SerializationInfo> ; typeof<StreamingContext> |] with
+                    | None -> FormatterServices.GetUninitializedObject(objectType) :?> IObjectReference
+                    | Some ctor -> 
+                        sI.SetType objectType
+                        ctor.Invoke [| sI :> obj ; r.StreamingContext :> obj |] :?> IObjectReference
+
+                let t = objectRef.GetRealObject r.StreamingContext :?> 'T
+                run onDeserialized r t
+                if isDeserializationCallback then (fastUnbox<IDeserializationCallback> t).OnDeserialization null
+                t
+
+            CompositePickler.Create(reader, writer, PicklerInfo.ISerializable, cacheByRef = true, useWithSubtypes = false)
+
         | Some ctorInfo ->
-            let allMethods = typeof<'T>.GetMethods(allMembers)
-            let onSerializing = allMethods |> getSerializationMethods<OnSerializingAttribute> |> wrapDelegate<Action<'T, StreamingContext>>
-            let onSerialized = allMethods |> getSerializationMethods<OnSerializedAttribute> |> wrapDelegate<Action<'T, StreamingContext>>
-            let onDeserialized = allMethods |> getSerializationMethods<OnDeserializedAttribute> |> wrapDelegate<Action<'T, StreamingContext>>
-
-            let isDeserializationCallback = typeof<IDeserializationCallback>.IsAssignableFrom typeof<'T>
-
-            let entryP = resolver.Resolve<SerializationEntry> ()
-
-            let inline run (dele : Action<'T, StreamingContext> []) w x =
-                for d in dele do
-                    d.Invoke(x, getStreamingContext w)
 
 #if EMIT_IL
             let ctorDele = wrapISerializableConstructor<'T> ctorInfo
@@ -119,7 +147,10 @@ type internal ISerializablePickler =
                 let t = create sI r.StreamingContext
                 run onDeserialized r t
                 if isDeserializationCallback then (fastUnbox<IDeserializationCallback> t).OnDeserialization null
-                t
+                if isObjectReference then 
+                    (fastUnbox<IObjectReference> t).GetRealObject r.StreamingContext :?> 'T
+                else
+                    t
 
             CompositePickler.Create(reader, writer, PicklerInfo.ISerializable, cacheByRef = true, useWithSubtypes = false)
 
