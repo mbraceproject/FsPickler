@@ -10,9 +10,8 @@ namespace Nessos.CsPickler
     {
         public static FSharpOption<Encoding> GetEncoding(Encoding e)
         {
-            if (e == null) e = Encoding.UTF8;
-
-            return new FSharpOption<Encoding>(e);
+            if (e == null) return FSharpOption<Encoding>.None;
+            else return new FSharpOption<Encoding>(e);
         }
 
         public static FSharpOption<StreamingContext> GetStreamingContext(Object context)

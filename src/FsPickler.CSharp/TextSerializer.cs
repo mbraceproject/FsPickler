@@ -37,7 +37,7 @@ namespace Nessos.CsPickler
             var sc = Utils.GetStreamingContext(streamingContext);
             var lo = Utils.GetLeaveOpen(leaveOpen);
 
-            _textPickler.Serialize<T>(writer, value, sc, lo);
+            _textPickler.Serialize<T>(writer, value, streamingContext: sc, leaveOpen: lo);
         }
 
         /// <summary>
@@ -53,7 +53,7 @@ namespace Nessos.CsPickler
             var sc = Utils.GetStreamingContext(streamingContext);
             var lo = Utils.GetLeaveOpen(leaveOpen);
 
-            return _textPickler.Deserialize<T>(reader, sc, lo);
+            return _textPickler.Deserialize<T>(reader, streamingContext: sc, leaveOpen: lo);
         }
 
 
@@ -68,7 +68,7 @@ namespace Nessos.CsPickler
         {
             var sc = Utils.GetStreamingContext(streamingContext);
 
-            return _textPickler.PickleToString<T>(value, sc);
+            return _textPickler.PickleToString<T>(value, streamingContext: sc);
         }
 
         /// <summary>
@@ -82,7 +82,7 @@ namespace Nessos.CsPickler
         {
             var sc = Utils.GetStreamingContext(streamingContext);
 
-            return _textPickler.UnPickleOfString<T>(pickle, sc);
+            return _textPickler.UnPickleOfString<T>(pickle, streamingContext: sc);
         }
     }
 }

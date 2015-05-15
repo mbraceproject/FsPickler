@@ -15,7 +15,7 @@ module Json =
     /// <param name="pickler">utilized pickler.</param>
     /// <param name="value">input value.</param>
     let pickle (pickler : Pickler<'T>) (value : 'T) : string =
-        jsonSerializer.Value.PickleToString (pickler, value)
+        jsonSerializer.Value.PickleToString (value, pickler = pickler)
 
     /// <summary>
     ///     Unpickles a value from Json.
@@ -23,7 +23,7 @@ module Json =
     /// <param name="pickler">utilized pickler.</param>
     /// <param name="pickle">input pickle.</param>
     let unpickle (pickler : Pickler<'T>) (pickle : string) : 'T =
-        jsonSerializer.Value.UnPickleOfString (pickler, pickle)
+        jsonSerializer.Value.UnPickleOfString (pickle, pickler = pickler)
 
 
 /// Bson pickling methods
@@ -38,7 +38,7 @@ module Bson =
     /// <param name="pickler">utilized pickler.</param>
     /// <param name="value">input value.</param>
     let pickle (pickler : Pickler<'T>) (value : 'T) : byte [] =
-        bsonPickler.Value.Pickle (pickler, value)
+        bsonPickler.Value.Pickle (value, pickler = pickler)
 
     /// <summary>
     ///     Unpickles a value from bson.
@@ -46,4 +46,4 @@ module Bson =
     /// <param name="pickler">utilized pickler.</param>
     /// <param name="pickle">input pickle.</param>
     let unpickle (pickler : Pickler<'T>) (pickle : byte []) : 'T =
-        bsonPickler.Value.UnPickle (pickler, pickle)
+        bsonPickler.Value.UnPickle (pickle, pickler = pickler)

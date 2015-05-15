@@ -85,7 +85,7 @@ type FsPickler private () =
         let visitor =
             {
                 new IObjectVisitor with
-                    member __.Visit (value : 'T) = 
+                    member __.Visit (_, value : 'T) = 
                         match box value with
                         | null -> ()
                         | :? Type as t -> gathered.Add t |> ignore
@@ -110,7 +110,7 @@ type FsPickler private () =
         let visitor =
             {
                 new IObjectVisitor with
-                    member __.Visit (value : 'T) = 
+                    member __.Visit (_, value : 'T) =
                         match box value with
                         | null -> ()
                         | v -> gathered.Add v |> ignore

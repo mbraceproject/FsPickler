@@ -147,7 +147,7 @@ type internal CompositePickler<'T> =
         let formatter = state.Formatter
 
         match state.Visitor with
-        | Some v when not p.m_SkipVisit -> v.Visit value
+        | Some v when not p.m_SkipVisit -> v.Visit (p, value)
         | _ -> ()
 
         if p.m_Bypass then p.m_Writer state tag value else
@@ -192,16 +192,23 @@ type internal CompositePickler<'T> =
             let objStack = state.ObjectStack
 
             if firstOccurence then
-                if isRecursive then objStack.Push id
+                match state.Sifter with
+                | Some sifter when sifter.SiftValue(p, value) ->
+                    formatter.BeginWriteObject tag ObjectFlags.IsSiftedValue
+                    formatter.WriteCachedObjectId id
+                    formatter.EndWriteObject()
 
-                if p.m_SkipHeaderWrite then
-                    p.m_Writer state tag value
-                else
-                    formatter.BeginWriteObject tag ObjectFlags.None
-                    p.m_Writer state tag value
-                    formatter.EndWriteObject ()
+                | _ ->
+                    if isRecursive then objStack.Push id
 
-                if isRecursive then objStack.Pop () |> ignore
+                    if p.m_SkipHeaderWrite then
+                        p.m_Writer state tag value
+                    else
+                        formatter.BeginWriteObject tag ObjectFlags.None
+                        p.m_Writer state tag value
+                        formatter.EndWriteObject ()
+
+                    if isRecursive then objStack.Pop () |> ignore
 
             elif p.IsRecursiveType && p.TypeKind <> TypeKind.Array && objStack.Contains id && not <| cyclicObjects.Contains id then
                 // came across cyclic object, record fixup-related data
@@ -258,6 +265,17 @@ type internal CompositePickler<'T> =
             let id = formatter.ReadCachedObjectId ()
             formatter.EndReadObject ()
             state.ObjectCache.[id] |> fastUnbox<'T>
+
+        elif ObjectFlags.hasFlag flags ObjectFlags.IsSiftedValue then
+            let id = formatter.ReadCachedObjectId ()
+            formatter.EndReadObject ()
+            try state.ObjectCache.[id] |> fastUnbox<'T>
+            with 
+            | :? System.Collections.Generic.KeyNotFoundException ->
+                raise <| new FsPicklerException(sprintf "Write state missing sifted object of id '%d'." id)
+            | :? InvalidCastException ->
+                let result = match state.ObjectCache.[id] with null -> "null" | o -> o.GetType().ToString()
+                raise <| new FsPicklerException(sprintf "Sifted object of id '%d' was expected to be of type '%O' but was '%O'." id typeof<'T> result)
 
         elif p.m_IsCacheByRef || p.IsRecursiveType then
 

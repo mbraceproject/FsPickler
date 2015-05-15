@@ -13,7 +13,10 @@ open Nessos.FsPickler
 module internal Utils =
 
     [<Literal>]
-    let jsonFormatVersion = "0.9.6"
+    let v0960 = "0.9.6"
+
+    [<Literal>]
+    let jsonFormatVersion = "1.0.20"
 
     let inline fastUnbox<'T> (x : obj) = 
         Microsoft.FSharp.Core.LanguagePrimitives.IntrinsicFunctions.UnboxFast<'T> x
@@ -29,6 +32,9 @@ module internal Utils =
         if flags.HasFlag ObjectFlags.IsProperSubtype then
             tokens.Add "subtype"
 
+        if flags.HasFlag ObjectFlags.IsSiftedValue then
+            tokens.Add "hole"
+
         String.concat "," tokens
 
     let inline parseFlagCsv (csv : string) =
@@ -39,6 +45,7 @@ module internal Utils =
             | "cached" -> flags <- flags ||| ObjectFlags.IsCachedInstance
             | "cyclic" -> flags <- flags ||| ObjectFlags.IsCyclicInstance
             | "subtype" -> flags <- flags ||| ObjectFlags.IsProperSubtype
+            | "hole" -> flags <- flags ||| ObjectFlags.IsSiftedValue
             | _ -> raise <| new FormatException(sprintf "invalid pickle flag '%s'." t)
 
         flags

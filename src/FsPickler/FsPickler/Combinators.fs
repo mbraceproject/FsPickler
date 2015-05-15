@@ -20,7 +20,7 @@ module Binary =
     /// <param name="pickler">utilized pickler.</param>
     /// <param name="value">input value.</param>
     let pickle (pickler : Pickler<'T>) (value : 'T) : byte [] =
-        binarySerializer.Value.Pickle (pickler, value)
+        binarySerializer.Value.Pickle (value, pickler = pickler)
 
     /// <summary>
     ///     Unpickles a values from binary.
@@ -28,7 +28,7 @@ module Binary =
     /// <param name="pickler">utilized pickler.</param>
     /// <param name="pickle">input pickle.</param>
     let unpickle (pickler : Pickler<'T>) (pickle : byte []) =
-        binarySerializer.Value.UnPickle (pickler, pickle)
+        binarySerializer.Value.UnPickle (pickle, pickler = pickler)
 
 /// Xml pickling methods
 
@@ -50,7 +50,7 @@ module Xml =
     /// <param name="pickler">utilized pickler.</param>
     /// <param name="pickle">input pickle.</param>
     let unpickle (pickler : Pickler<'T>) (pickle : string) =
-        xmlSerializer.Value.UnPickleOfString (pickler, pickle)
+        xmlSerializer.Value.UnPickleOfString (pickle, pickler = pickler)
 
 
 /// Pickler combinator definitions

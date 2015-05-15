@@ -10,8 +10,13 @@ open Microsoft.FSharp.Core.LanguagePrimitives
 
 module private XmlUtils =
 
+    // past format versions
+
     [<Literal>]
-    let formatVersion = "0.9.6.0"
+    let v0960 = "0.9.6.0" // as defined in FsPickler 0.9.6.0
+
+    [<Literal>]
+    let formatVersion = "1.0.20"
 
     let inline escapeString (value : string) = SecurityElement.Escape value
     let inline unEscapeString (value : string) =
@@ -36,6 +41,9 @@ module private XmlUtils =
         if ObjectFlags.hasFlag flags ObjectFlags.IsSequenceHeader then
             tokens.Add "sequence"
 
+        if ObjectFlags.hasFlag flags ObjectFlags.IsSiftedValue then
+            tokens.Add "hole"
+
         String.concat "," tokens
 
     let inline parseFlagCsv (csv : string) =
@@ -51,6 +59,7 @@ module private XmlUtils =
             | "cyclic" -> flags <- flags ||| ObjectFlags.IsCyclicInstance
             | "subtype" -> flags <- flags ||| ObjectFlags.IsProperSubtype
             | "sequence" -> flags <- flags ||| ObjectFlags.IsSequenceHeader
+            | "hole" -> flags <- flags ||| ObjectFlags.IsSiftedValue
             | _ -> raise <| new FormatException(sprintf "invalid pickle flag '%s'." t)
 
         flags
@@ -210,7 +219,7 @@ type XmlPickleReader internal (textReader : TextReader, leaveOpen) =
             reader.ReadElementName "FsPickler"
 
             let version = reader.["version"]
-            if version <> formatVersion then
+            if version <> formatVersion && version <> v0960 then
                 let version = Version(version)
                 let msg = sprintf "Unsupported xml format version %O." version
                 raise <| new FormatException(msg)

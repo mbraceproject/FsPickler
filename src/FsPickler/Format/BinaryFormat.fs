@@ -13,8 +13,13 @@ open Nessos.FsPickler
 [<AutoOpen>]
 module private BinaryFormatUtils =
 
+    // past format versions
+
     [<Literal>]
-    let formatVersion = 0960us // As specified in FsPickler v. 0.9.6.0
+    let v0960 = 0960us // As specified in FsPickler v. 0.9.6.0
+
+    [<Literal>]
+    let formatVersion = 1020us // As specified in FsPickler v. 1.0.20
 
     // each object is serialized with a 32 bit header 
     // of which the first 24 are a fixed identifier
@@ -200,7 +205,7 @@ and BinaryPickleReader internal (stream : Stream, encoding : Encoding, leaveOpen
                 raise <| new InvalidDataException("invalid stream initialization bytes.")
 
             let version = br.ReadUInt16()
-            if version <> formatVersion then
+            if version <> formatVersion && version <> v0960 then
                 raise <| new FormatException(sprintf "unsupported binary format version '%d'." version)
 
             let codePage = br.ReadInt32()

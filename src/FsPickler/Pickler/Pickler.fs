@@ -64,7 +64,10 @@ and IPicklerUnpacker<'U> =
     abstract Apply : Pickler<'T> -> 'U
 
 and IObjectVisitor =
-    abstract Visit<'T> : 'T -> unit
+    abstract Visit<'T> : pickler:Pickler<'T> * value:'T -> unit
+
+and IObjectSifter =
+    abstract member SiftValue<'T> : pickler:Pickler<'T> * value:'T -> bool
 
 and IPicklerResolver =
     abstract IsSerializable : Type -> bool
@@ -75,7 +78,7 @@ and IPicklerResolver =
 
 and [<AutoSerializable(false)>] 
     WriteState internal (formatter : IPickleFormatWriter, resolver : IPicklerResolver, 
-                            reflectionCache : ReflectionCache, ?streamingContext, ?visitor : IObjectVisitor) =
+                            reflectionCache : ReflectionCache, ?streamingContext, ?visitor : IObjectVisitor, ?sifter : IObjectSifter) =
 
     let tyPickler = resolver.Resolve<Type> ()
 
@@ -90,6 +93,7 @@ and [<AutoSerializable(false)>]
     member __.StreamingContext = sc
     member internal __.Formatter = formatter
     member internal __.Visitor = visitor
+    member internal __.Sifter = sifter
     member internal __.ReflectionCache = reflectionCache
     member internal __.TypePickler = tyPickler
     member internal __.GetObjectId(obj:obj, firstTime:byref<bool>) =
@@ -107,12 +111,18 @@ and [<AutoSerializable(false)>]
         cyclicObjects.Clear()
 
 and [<AutoSerializable(false)>] 
-    ReadState internal (formatter : IPickleFormatReader, resolver : IPicklerResolver, reflectionCache : ReflectionCache, ?streamingContext) =
+    ReadState internal (formatter : IPickleFormatReader, resolver : IPicklerResolver, reflectionCache : ReflectionCache, 
+                            ?streamingContext : StreamingContext, ?sifted : (int64 * obj) []) =
         
     let sc = match streamingContext with None -> new StreamingContext() | Some sc -> sc
 
     let mutable idCounter = 0L
     let objCache = new Dictionary<int64, obj> ()
+    do 
+        match sifted with
+        | None -> ()
+        | Some s -> for id,value in s do objCache.Add(id, value)
+
     let tyPickler = resolver.Resolve<Type> ()
 
     member internal __.PicklerResolver = resolver

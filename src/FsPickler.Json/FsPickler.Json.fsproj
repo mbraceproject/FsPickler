@@ -81,7 +81,7 @@
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
-    <Compile Include="Utils.fs" />
+    <Compile Include="Common.fs" />
     <Compile Include="JsonWriter.fs" />
     <Compile Include="JsonReader.fs" />
     <Compile Include="JsonFormat.fs" />

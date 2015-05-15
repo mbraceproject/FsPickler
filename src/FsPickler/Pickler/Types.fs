@@ -48,6 +48,7 @@ type ObjectFlags =
     | IsCachedInstance      = 4uy
     | IsCyclicInstance      = 8uy
     | IsSequenceHeader      = 16uy
+    | IsSiftedValue         = 32uy
         
 
         

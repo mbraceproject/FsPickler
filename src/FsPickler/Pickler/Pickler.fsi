@@ -68,7 +68,23 @@ and internal IPicklerUnpacker<'U> =
 /// Object graph visitor abstraction.
 and IObjectVisitor =
     interface
-        abstract member Visit<'T> : 'T -> unit
+        /// <summary>
+        ///     Visit provided value inside an object graph.
+        /// </summary>
+        /// <param name="pickler">Pickler used for traversal. Used for metadata reference.</param>
+        /// <param name="value">Value that is being visited.</param>
+        abstract member Visit<'T> : pickler:Pickler<'T> * value:'T -> unit
+    end
+
+/// Object graph sifting predicate.
+and IObjectSifter =
+    interface
+        /// <summary>
+        ///     Decides on sifting action to be performed on provided node in an object graph.
+        /// </summary>
+        /// <param name="pickler">Pickler used for traversal. Used for metadata reference.</param>
+        /// <param name="value">Value that is being visited.</param>
+        abstract member SiftValue<'T> : pickler:Pickler<'T> * value:'T -> bool
     end
     
 /// Provides access to automated pickler generation facility.
@@ -90,7 +106,7 @@ and WriteState =
     class
         internal new : 
             formatter:IPickleFormatWriter * resolver:IPicklerResolver * reflectionCache:ReflectionCache * 
-                ?streamingContext:StreamingContext * ?visitor : IObjectVisitor -> WriteState
+                ?streamingContext:StreamingContext * ?visitor : IObjectVisitor * ?sifter : IObjectSifter -> WriteState
 
         member internal CyclicObjectSet : HashSet<int64>
         member internal ObjectStack : Stack<int64>
@@ -102,6 +118,7 @@ and WriteState =
         /// Streaming context to the serialization
         member StreamingContext : StreamingContext
         member internal Visitor : IObjectVisitor option
+        member internal Sifter : IObjectSifter option
         member internal TypePickler : Pickler<System.Type>
         member internal Reset : unit -> unit
     end
@@ -111,7 +128,7 @@ and ReadState =
     class
         internal new : 
             formatter:IPickleFormatReader * resolver:IPicklerResolver * 
-                reflectionCache:ReflectionCache * ?streamingContext:StreamingContext-> ReadState
+                reflectionCache:ReflectionCache * ?streamingContext:StreamingContext * ?sifted:(int64 * obj)[] -> ReadState
 
         member internal NextObjectId : unit -> int64
         member internal EarlyRegisterArray : array:System.Array -> unit

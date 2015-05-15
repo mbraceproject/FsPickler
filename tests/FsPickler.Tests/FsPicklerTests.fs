@@ -579,13 +579,13 @@ type ``FsPickler Tests`` (format : string) as self =
                             incr state
                     }
 
-                let data = p.Pickle(seqPickler, sequence)
+                let data = p.Pickle(sequence, pickler = seqPickler)
 
                 !state |> should equal 100
 
                 data)
 
-        pickler.UnPickle(Pickler.seq Pickler.int, data) 
+        pickler.UnPickle(data, pickler = Pickler.seq Pickler.int) 
         |> Seq.length 
         |> should equal 100
 
@@ -771,9 +771,9 @@ type ``FsPickler Tests`` (format : string) as self =
             self.PickleF(fun p ->
                 let n = int2Peano 100
                 let pp = mkPeanoPickler()
-                p.Pickle(pp, n))
+                p.Pickle(n, pickler = pp))
 
-        pickler.UnPickle(mkPeanoPickler(), data) |> should equal (int2Peano 100)
+        pickler.UnPickle(data, pickler = mkPeanoPickler()) |> should equal (int2Peano 100)
 
     [<Test; Category("FSharp type tests")>]
     member self.``7. FSharp: combinator-based mutual recursive union`` () =
@@ -782,9 +782,9 @@ type ``FsPickler Tests`` (format : string) as self =
                 let tp,_ = getTreeForestPicklers Pickler.int
                 let t = nTree 6
 
-                p.Pickle(tp, t))
+                p.Pickle(t, pickler = tp))
 
-        pickler.UnPickle(getTreeForestPicklers Pickler.int |> fst, data)
+        pickler.UnPickle(data, pickler = (getTreeForestPicklers Pickler.int |> fst))
         |> should equal (nTree 6)
 
     [<Test; Category("FSharp type tests")>]
@@ -917,9 +917,9 @@ type ``FsPickler Tests`` (format : string) as self =
     //
 
     member t.TestTypeMismatch<'In, 'Out> (v : 'In) = 
-        let pickle = pickler.Pickle(Pickler.auto<'In>, v)
+        let pickle = pickler.Pickle(v, Pickler.auto<'In>)
         try
-            let result = pickler.UnPickle<'Out>(Pickler.auto<'Out>, pickle)
+            let result = pickler.UnPickle<'Out>(pickle, Pickler.auto<'Out>)
             failAssert "should have failed deserialization"
         with :? FsPicklerException & InnerExn (:? InvalidPickleTypeException) -> ()
 

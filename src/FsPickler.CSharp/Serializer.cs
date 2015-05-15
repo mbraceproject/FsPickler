@@ -40,7 +40,7 @@ namespace Nessos.CsPickler
             var sc = Utils.GetStreamingContext(streamingContext);
             var lo = Utils.GetLeaveOpen(leaveOpen);
 
-            _pickler.Serialize<T>(stream, value, sc, e, lo);
+            _pickler.Serialize<T>(stream, value, streamingContext:sc, encoding:e, leaveOpen:lo);
         }
 
         /// <summary>
@@ -59,7 +59,7 @@ namespace Nessos.CsPickler
             var sc = Utils.GetStreamingContext(streamingContext);
             var lo = Utils.GetLeaveOpen(leaveOpen);
 
-            return _pickler.Deserialize<T>(stream, sc, e, lo);
+            return _pickler.Deserialize<T>(stream, streamingContext: sc, encoding: e, leaveOpen: lo);
         }
 
         /// <summary>
@@ -75,7 +75,7 @@ namespace Nessos.CsPickler
             var e = Utils.GetEncoding(encoding);
             var sc = Utils.GetStreamingContext(streamingContext);
 
-            return _pickler.Pickle<T>(value, sc, e);
+            return _pickler.Pickle<T>(value, streamingContext: sc, encoding: e);
         }
 
         /// <summary>
@@ -91,7 +91,7 @@ namespace Nessos.CsPickler
             var e = Utils.GetEncoding(encoding);
             var sc = Utils.GetStreamingContext(streamingContext);
 
-            return _pickler.UnPickle<T>(pickle, sc, e);
+            return _pickler.UnPickle<T>(pickle, streamingContext: sc, encoding: e);
         }
     }
 }
