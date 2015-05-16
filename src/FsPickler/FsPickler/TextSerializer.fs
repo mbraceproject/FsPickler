@@ -49,25 +49,6 @@ type FsPicklerTextSerializer (formatProvider : ITextPickleFormatProvider, [<O;D(
         use formatter = initTextReader formatProvider reader false leaveOpen
         readRootObject resolver reflectionCache formatter streamingContext None pickler
 
-    /// <summary>
-    ///     Pickles given value to string.
-    /// </summary>
-    /// <param name="value">Value to pickle.</param>
-    /// <param name="pickler">Pickler used for serialization. Defaults to auto-generated pickler.</param>
-    /// <param name="streamingContext">Streaming context for serialization state. Defaults to the empty streaming context.</param>
-    member f.PickleToString (value : 'T, [<O;D(null)>]?pickler : Pickler<'T>, [<O;D(null)>]?streamingContext : StreamingContext) : string =
-        pickleString (fun m v -> f.Serialize(m, v, ?pickler = pickler, ?streamingContext = streamingContext)) value
-
-    /// <summary>
-    ///     Unpickles value from string.
-    /// </summary>
-    /// <param name="pickle">Input pickle.</param>
-    /// <param name="pickler">Pickler used for deserialization. Defaults to auto-generated pickler.</param>
-    /// <param name="streamingContext">Streaming context for deserialization state. Defaults to the empty streaming context.</param>
-    member f.UnPickleOfString (pickle : string, [<O;D(null)>]?pickler : Pickler<'T>, [<O;D(null)>]?streamingContext) : 'T =
-        unpickleString (fun m -> f.Deserialize(m, ?pickler = pickler, ?streamingContext = streamingContext)) pickle
-
-
     /// <summary>Evaluates and serializes a sequence of objects to the underlying stream.</summary>
     /// <param name="writer">Target text writer.</param>
     /// <param name="sequence">Input sequence to be evaluated and serialized.</param>
@@ -130,6 +111,50 @@ type FsPicklerTextSerializer (formatProvider : ITextPickleFormatProvider, [<O;D(
         let pickler = match pickler with None -> resolver.Resolve<'T> () | Some p -> p
         use reader = initTextReader formatProvider reader false leaveOpen
         readRootObject resolver reflectionCache reader streamingContext (Some sifted) pickler
+
+    /// <summary>
+    ///     Pickles given value to string.
+    /// </summary>
+    /// <param name="value">Value to pickle.</param>
+    /// <param name="pickler">Pickler used for serialization. Defaults to auto-generated pickler.</param>
+    /// <param name="streamingContext">Streaming context for serialization state. Defaults to the empty streaming context.</param>
+    member f.PickleToString (value : 'T, [<O;D(null)>]?pickler : Pickler<'T>, [<O;D(null)>]?streamingContext : StreamingContext) : string =
+        pickleString (fun m v -> f.Serialize(m, v, ?pickler = pickler, ?streamingContext = streamingContext)) value
+
+    /// <summary>
+    ///     Unpickles value from string.
+    /// </summary>
+    /// <param name="pickle">Input pickle.</param>
+    /// <param name="pickler">Pickler used for deserialization. Defaults to auto-generated pickler.</param>
+    /// <param name="streamingContext">Streaming context for deserialization state. Defaults to the empty streaming context.</param>
+    member f.UnPickleOfString (pickle : string, [<O;D(null)>]?pickler : Pickler<'T>, [<O;D(null)>]?streamingContext) : 'T =
+        unpickleString (fun m -> f.Deserialize(m, ?pickler = pickler, ?streamingContext = streamingContext)) pickle
+
+    /// <summary>
+    ///     Pickles value to string, excluding objects mandated by the provided IObjectSifter instance.
+    ///     Values excluded from serialization will be returned tagged by their ids. 
+    ////    Sifted objects will have to be provided on deserialization along with their accompanying id's.
+    /// </summary>
+    /// <param name="value">Value to be serialized.</param>
+    /// <param name="sifter">User supplied sifter implementation. Used to specify which nodes in the object graph are to be excluded from serialization.</param>
+    /// <param name="pickler">Pickler used for element deserialization. Defaults to auto-generated pickler.</param>
+    /// <param name="streamingContext">Streaming context for serialization state. Defaults to the empty streaming context.</param>
+    /// <returns>Pickled value along with sifted values along with their graph ids.</returns>
+    member f.PickleToStringSifted<'T>(value:'T, sifter : IObjectSifter, [<O;D(null)>]?pickler : Pickler<'T>, [<O;D(null)>]?streamingContext : StreamingContext) : string * (int64 * obj) [] =
+        use sw = new StringWriter()
+        let sifted = f.SerializeSifted<'T>(sw, value, sifter, ?pickler = pickler, ?streamingContext = streamingContext)
+        sw.ToString(), sifted
+
+    /// <summary>
+    ///     Unpickles a sifted value, filling in sifted holes from the serialized using supplied objects.
+    /// </summary>
+    /// <param name="pickle">Pickle to deserialize.</param>
+    /// <param name="sifted">Object-id pairs used for filling sifted holes in serialization.</param>
+    /// <param name="pickler">Pickler used for element deserialization. Defaults to auto-generated pickler.</param>
+    /// <param name="streamingContext">Streaming context for serialization state. Defaults to the empty streaming context.</param>
+    member bp.UnPickleOfStringSifted<'T>(pickle : string, sifted : (int64 * obj) [], [<O;D(null)>]?pickler : Pickler<'T>, [<O;D(null)>]?streamingContext : StreamingContext) : 'T =
+        use sr = new StringReader(pickle)
+        bp.DeserializeSifted<'T>(sr, sifted, ?pickler = pickler, ?streamingContext = streamingContext)
 
     //
     //  Untyped API

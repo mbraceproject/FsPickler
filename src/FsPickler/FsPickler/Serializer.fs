@@ -67,27 +67,6 @@ type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?
         use reader = initStreamReader formatProvider stream encoding false leaveOpen
         readRootObject resolver reflectionCache reader streamingContext None pickler
 
-    /// <summary>
-    ///     Pickles given value to byte array.
-    /// </summary>
-    /// <param name="value">Value to pickle.</param>
-    /// <param name="pickler">Pickler used for element serialization. Defaults to auto-generated pickler.</param>
-    /// <param name="streamingContext">Streaming context for serialization state. Defaults to the empty streaming context.</param>
-    /// <param name="encoding">Text encoding used by the serializer.</param>
-    member bp.Pickle<'T>(value : 'T, [<O;D(null)>]?pickler : Pickler<'T>, [<O;D(null)>]?streamingContext : StreamingContext, [<O;D(null)>]?encoding : Encoding) : byte [] =
-        pickleBinary (fun m v -> bp.Serialize(m, v, ?pickler = pickler, ?streamingContext = streamingContext, ?encoding = encoding)) value
-
-
-    /// <summary>
-    ///     Unpickles value using given pickler.
-    /// </summary>
-    /// <param name="data">Pickle to deserialize.</param>
-    /// <param name="pickler">Pickler used for element serialization. Defaults to auto-generated pickler.</param>
-    /// <param name="streamingContext">Streaming context for deserialization state. Defaults to the empty streaming context.</param>
-    /// <param name="encoding">Text encoding used by the deserializer.</param>
-    member bp.UnPickle<'T> (data : byte [], [<O;D(null)>]?pickler : Pickler<'T>, [<O;D(null)>]?streamingContext : StreamingContext, [<O;D(null)>]?encoding : Encoding) : 'T =
-        unpickleBinary (fun m -> bp.Deserialize(m, ?pickler = pickler, ?streamingContext = streamingContext, ?encoding = encoding)) data
-
     /// <summary>Serialize a sequence of objects to the underlying stream.</summary>
     /// <param name="stream">Target write stream.</param>
     /// <param name="sequence">Input sequence to be evaluated and serialized.</param>
@@ -119,8 +98,9 @@ type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?
         readTopLevelSequence resolver reflectionCache reader streamingContext pickler
 
     /// <summary>
-    ///     Serializes a value to stream, excluding values mandated by the provided IObjectSifter instance.
-    ///     Values excluded from serialization will be returned tagged by their ids.
+    ///     Serializes a value to stream, excluding objects mandated by the provided IObjectSifter instance.
+    ///     Values excluded from serialization will be returned tagged by their ids. 
+    ////    Sifted objects will have to be provided on deserialization along with their accompanying id's.
     /// </summary>
     /// <param name="stream">Target write stream.</param>
     /// <param name="value">Value to be serialized.</param>
@@ -155,6 +135,61 @@ type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?
         let pickler = match pickler with None -> resolver.Resolve<'T> () | Some p -> p
         use reader = initStreamReader formatProvider stream encoding false leaveOpen
         readRootObject resolver reflectionCache reader streamingContext (Some sifted) pickler
+
+    /// <summary>
+    ///     Pickles given value to byte array.
+    /// </summary>
+    /// <param name="value">Value to pickle.</param>
+    /// <param name="pickler">Pickler used for element serialization. Defaults to auto-generated pickler.</param>
+    /// <param name="streamingContext">Streaming context for serialization state. Defaults to the empty streaming context.</param>
+    /// <param name="encoding">Text encoding used by the serializer.</param>
+    member bp.Pickle<'T>(value : 'T, [<O;D(null)>]?pickler : Pickler<'T>, [<O;D(null)>]?streamingContext : StreamingContext, [<O;D(null)>]?encoding : Encoding) : byte [] =
+        pickleBinary (fun m v -> bp.Serialize(m, v, ?pickler = pickler, ?streamingContext = streamingContext, ?encoding = encoding)) value
+
+
+    /// <summary>
+    ///     Unpickles value using given pickler.
+    /// </summary>
+    /// <param name="data">Pickle to deserialize.</param>
+    /// <param name="pickler">Pickler used for element serialization. Defaults to auto-generated pickler.</param>
+    /// <param name="streamingContext">Streaming context for deserialization state. Defaults to the empty streaming context.</param>
+    /// <param name="encoding">Text encoding used by the deserializer.</param>
+    member bp.UnPickle<'T> (data : byte [], [<O;D(null)>]?pickler : Pickler<'T>, [<O;D(null)>]?streamingContext : StreamingContext, [<O;D(null)>]?encoding : Encoding) : 'T =
+        unpickleBinary (fun m -> bp.Deserialize(m, ?pickler = pickler, ?streamingContext = streamingContext, ?encoding = encoding)) data
+
+
+    /// <summary>
+    ///     Pickles value to bytes, excluding objects mandated by the provided IObjectSifter instance.
+    ///     Values excluded from serialization will be returned tagged by their ids. 
+    ////    Sifted objects will have to be provided on deserialization along with their accompanying id's.
+    /// </summary>
+    /// <param name="value">Value to be serialized.</param>
+    /// <param name="sifter">User supplied sifter implementation. Used to specify which nodes in the object graph are to be excluded from serialization.</param>
+    /// <param name="pickler">Pickler used for element deserialization. Defaults to auto-generated pickler.</param>
+    /// <param name="streamingContext">Streaming context for serialization state. Defaults to the empty streaming context.</param>
+    /// <param name="encoding">Text encoding used by the serializer.</param>
+    /// <returns>Pickled value along with sifted values along with their graph ids.</returns>
+    member bp.PickleSifted<'T>(value:'T, sifter : IObjectSifter, 
+                                                    [<O;D(null)>]?pickler : Pickler<'T>, [<O;D(null)>]?streamingContext : StreamingContext, 
+                                                    [<O;D(null)>]?encoding : Encoding) : byte [] * (int64 * obj) [] =
+        use m = new MemoryStream()
+        let sifted = bp.SerializeSifted(m, value, sifter, ?pickler = pickler, ?streamingContext = streamingContext, ?encoding = encoding)
+        m.ToArray(), sifted
+
+    /// <summary>
+    ///     Unpickles a sifted value, filling in sifted holes from the serialized using supplied objects.
+    /// </summary>
+    /// <param name="data">Pickle to deserialize.</param>
+    /// <param name="sifted">Object-id pairs used for filling sifted holes in serialization.</param>
+    /// <param name="pickler">Pickler used for element deserialization. Defaults to auto-generated pickler.</param>
+    /// <param name="streamingContext">Streaming context for serialization state. Defaults to the empty streaming context.</param>
+    /// <param name="encoding">Text encoding used by the serializer.</param>
+    member bp.UnPickleSifted<'T>(pickle : byte[], sifted : (int64 * obj) [],
+                                                    [<O;D(null)>]?pickler : Pickler<'T>, [<O;D(null)>]?streamingContext : StreamingContext, 
+                                                    [<O;D(null)>]?encoding : Encoding) : 'T =
+        use m = new MemoryStream(pickle)
+        bp.DeserializeSifted<'T>(m, sifted, ?pickler = pickler, ?streamingContext = streamingContext, ?encoding = encoding)
+
 
     //
     //  Untyped API
