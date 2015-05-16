@@ -10,13 +10,13 @@ open Nessos.FsPickler
 #nowarn "1204"
 
 [<AutoOpen>]
-module internal Utils =
+module internal Common =
 
     [<Literal>]
-    let v0960 = "0.9.6"
+    let formatv0960 = "0.9.6"
 
     [<Literal>]
-    let jsonFormatVersion = "1.0.20"
+    let formatv1100 = "1.1.0"
 
     let inline fastUnbox<'T> (x : obj) = 
         Microsoft.FSharp.Core.LanguagePrimitives.IntrinsicFunctions.UnboxFast<'T> x

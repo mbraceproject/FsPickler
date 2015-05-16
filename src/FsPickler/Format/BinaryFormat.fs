@@ -16,10 +16,10 @@ module private BinaryFormatUtils =
     // past format versions
 
     [<Literal>]
-    let v0960 = 0960us // As specified in FsPickler v. 0.9.6.0
+    let formatv0960 = 0960us // As specified in FsPickler v. 0.9.6.0
 
     [<Literal>]
-    let formatVersion = 1020us // As specified in FsPickler v. 1.0.20
+    let formatv1100 = 1100us // As specified in FsPickler v. 1.1.0.0
 
     // each object is serialized with a 32 bit header 
     // of which the first 24 are a fixed identifier
@@ -109,7 +109,7 @@ type BinaryPickleWriter internal (stream : Stream, encoding : Encoding, leaveOpe
     interface IPickleFormatWriter with
         member __.BeginWriteRoot (tag : string) =
             bw.Write initValue
-            bw.Write formatVersion
+            bw.Write formatv1100
             bw.Write encoding.CodePage
 
             if forceLittleEndian then 
@@ -205,7 +205,7 @@ and BinaryPickleReader internal (stream : Stream, encoding : Encoding, leaveOpen
                 raise <| new InvalidDataException("invalid stream initialization bytes.")
 
             let version = br.ReadUInt16()
-            if version <> formatVersion && version <> v0960 then
+            if version <> formatv1100 && version <> formatv0960 then
                 raise <| new FormatException(sprintf "unsupported binary format version '%d'." version)
 
             let codePage = br.ReadInt32()
