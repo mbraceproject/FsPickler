@@ -589,6 +589,36 @@ type ``FsPickler Tests`` (format : string) as self =
         |> Seq.length 
         |> should equal 100
 
+    [<Test; Category("FsPickler Generic tests")>]
+    member __.``5. Object: simple sifting`` () =
+        let graph : (int * int []) option * int [] option option list = (Some (1, [|1 .. 100|]), [None; None ; Some None; Some (Some [|12|])])
+        let sifter = { new IObjectSifter with member __.SiftValue(p,_) = p.TypeKind = TypeKind.Array }
+        use m = new MemoryStream()
+        let sifted = pickler.SerializeSifted(m, graph, sifter, leaveOpen = true)
+        sifted.Length |> should equal 2
+        m.Position <- 0L
+        pickler.DeserializeSifted<(int * int []) option * int [] option option list>(m, sifted) |> should equal graph
+
+    [<Test; Category("FsPickler Generic tests")>]
+    member __.``5. Object: random sifting`` () =
+        let r = new System.Random()
+        let randomSifter = { new IObjectSifter with member __.SiftValue(_,_) = r.Next(0,5) = 0 }
+        Check.QuickThrowOnFail(fun (tree : ListTree<int>) ->
+            use m = new MemoryStream()
+            let sifted = pickler.SerializeSifted(m, tree, randomSifter, leaveOpen = true)
+            m.Position <- 0L
+            pickler.DeserializeSifted<ListTree<int>>(m, sifted) |> should equal tree)
+
+    [<Test; Category("FsPickler Generic tests"); Repeat(5)>]
+    member __.``5. Object: random graph sifting`` () =
+        let g = createRandomGraph 0.4 30
+        let r = new System.Random()
+        let randomSifter = { new IObjectSifter with member __.SiftValue(_,_) = r.Next(0,5) = 0 }
+        use m = new MemoryStream()
+        let sifted = pickler.SerializeSifted(m, g, randomSifter, leaveOpen = true)
+        m.Position <- 0L
+        let g' = pickler.DeserializeSifted<Graph<int>>(m, sifted)
+        areEqualGraphs g g' |> should equal true
 
     //
     //  Custom types

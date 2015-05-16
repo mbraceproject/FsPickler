@@ -88,12 +88,14 @@ and [<AutoSerializable(false)>]
     let mutable idGen = new ObjectIDGenerator()
     let objStack = new Stack<int64> ()
     let cyclicObjects = new HashSet<int64> ()
+    let sifted = new ResizeArray<int64 * obj> ()
 
     member internal __.PicklerResolver = resolver
     member __.StreamingContext = sc
     member internal __.Formatter = formatter
     member internal __.Visitor = visitor
     member internal __.Sifter = sifter
+    member internal __.Sifted = sifted
     member internal __.ReflectionCache = reflectionCache
     member internal __.TypePickler = tyPickler
     member internal __.GetObjectId(obj:obj, firstTime:byref<bool>) =

@@ -51,7 +51,8 @@ type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?
 
         let pickler = match pickler with None -> resolver.Resolve<'T> () | Some p -> p
         use writer = initStreamWriter formatProvider stream encoding false leaveOpen
-        writeRootObject resolver reflectionCache writer streamingContext pickler value
+        let _ = writeRootObject resolver reflectionCache writer streamingContext None pickler value
+        ()
 
     /// <summary>Deserialize value of given type from the underlying stream.</summary>
     /// <param name="stream">Source read stream.</param>
@@ -64,7 +65,7 @@ type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?
 
         let pickler = match pickler with None -> resolver.Resolve<'T> () | Some p -> p
         use reader = initStreamReader formatProvider stream encoding false leaveOpen
-        readRootObject resolver reflectionCache reader streamingContext pickler
+        readRootObject resolver reflectionCache reader streamingContext None pickler
 
     /// <summary>
     ///     Pickles given value to byte array.
@@ -117,6 +118,43 @@ type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?
         let reader = initStreamReader formatProvider stream encoding true leaveOpen
         readTopLevelSequence resolver reflectionCache reader streamingContext pickler
 
+    /// <summary>
+    ///     Serializes a value to stream, excluding values mandated by the provided IObjectSifter instance.
+    ///     Values excluded from serialization will be returned tagged by their ids.
+    /// </summary>
+    /// <param name="stream">Target write stream.</param>
+    /// <param name="value">Value to be serialized.</param>
+    /// <param name="sifter">User supplied sifter implementation. Used to specify which nodes in the object graph are to be excluded from serialization.</param>
+    /// <param name="pickler">Pickler used for element deserialization. Defaults to auto-generated pickler.</param>
+    /// <param name="streamingContext">Streaming context for serialization state. Defaults to the empty streaming context.</param>
+    /// <param name="encoding">Text encoding used by the serializer.</param>
+    /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to false.</param>
+    /// <returns>Sifted values along with their graph ids.</returns>
+    member __.SerializeSifted<'T>(stream : Stream, value:'T, sifter : IObjectSifter, 
+                                                    [<O;D(null)>]?pickler : Pickler<'T>, [<O;D(null)>]?streamingContext : StreamingContext, 
+                                                    [<O;D(null)>]?encoding : Encoding, [<O;D(null)>]?leaveOpen : bool) : (int64 * obj) [] =
+
+        let pickler = match pickler with None -> resolver.Resolve<'T>() | Some p -> p
+        use writer = initStreamWriter formatProvider stream encoding false leaveOpen
+        let state = writeRootObject resolver reflectionCache writer streamingContext (Some sifter) pickler value
+        state.Sifted.ToArray()
+
+    /// <summary>
+    ///     Deserializes a sifted value from stream, filling in sifted holes from the serialized using supplied objects.
+    /// </summary>
+    /// <param name="stream">Source read stream.</param>
+    /// <param name="sifted">Object-id pairs used for filling sifted holes in serialization.s</param>
+    /// <param name="pickler">Pickler used for element deserialization. Defaults to auto-generated pickler.</param>
+    /// <param name="streamingContext">Streaming context for serialization state. Defaults to the empty streaming context.</param>
+    /// <param name="encoding">Text encoding used by the serializer.</param>
+    /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to false.</param>
+    member __.DeserializeSifted<'T>(stream : Stream, sifted : (int64 * obj) [],
+                                                    [<O;D(null)>]?pickler : Pickler<'T>, [<O;D(null)>]?streamingContext : StreamingContext, 
+                                                    [<O;D(null)>]?encoding : Encoding, [<O;D(null)>]?leaveOpen : bool) : 'T =
+
+        let pickler = match pickler with None -> resolver.Resolve<'T> () | Some p -> p
+        use reader = initStreamReader formatProvider stream encoding false leaveOpen
+        readRootObject resolver reflectionCache reader streamingContext (Some sifted) pickler
 
     //
     //  Untyped API
@@ -133,7 +171,8 @@ type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?
     member __.SerializeUntyped(stream : Stream, value : obj, pickler : Pickler, [<O;D(null)>]?streamingContext : StreamingContext, 
                                                 [<O;D(null)>]?encoding : Encoding, [<O;D(null)>]?leaveOpen : bool) : unit =
         use writer = initStreamWriter formatProvider stream encoding false leaveOpen
-        writeRootObjectUntyped resolver reflectionCache writer streamingContext pickler value
+        let _ = writeRootObjectUntyped resolver reflectionCache writer streamingContext None pickler value
+        ()
 
     /// <summary>Deserialize untyped object from the underlying stream with provided pickler.</summary>
     /// <param name="stream">Source read stream.</param>
@@ -145,7 +184,7 @@ type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?
                                                                 [<O;D(null)>]?encoding : Encoding, [<O;D(null)>]?leaveOpen : bool) : obj =
 
         use reader = initStreamReader formatProvider stream encoding false leaveOpen
-        readRootObjectUntyped resolver reflectionCache reader streamingContext pickler
+        readRootObjectUntyped resolver reflectionCache reader streamingContext None pickler
 
     /// <summary>Serialize an untyped sequence of objects to the underlying stream.</summary>
     /// <param name="elementType">element type used in sequence.</param>

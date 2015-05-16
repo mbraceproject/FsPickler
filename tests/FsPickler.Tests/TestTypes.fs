@@ -228,6 +228,10 @@ module TestTypes =
         | 0 -> Leaf
         | n -> Node(string n, mkTree(n-1), mkTree(n-1))
 
+    type ListTree<'T> =
+        | Leaf
+        | Branch of 'T * ListTree<'T> list
+
     [<CustomEquality ; NoComparison>]
     type Rec = { Rec : Rec }
     with

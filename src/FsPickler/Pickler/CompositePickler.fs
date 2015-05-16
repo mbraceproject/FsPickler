@@ -194,8 +194,8 @@ type internal CompositePickler<'T> =
             if firstOccurence then
                 match state.Sifter with
                 | Some sifter when sifter.SiftValue(p, value) ->
+                    state.Sifted.Add(id, box value)
                     formatter.BeginWriteObject tag ObjectFlags.IsSiftedValue
-                    formatter.WriteCachedObjectId id
                     formatter.EndWriteObject()
 
                 | _ ->
@@ -267,8 +267,8 @@ type internal CompositePickler<'T> =
             state.ObjectCache.[id] |> fastUnbox<'T>
 
         elif ObjectFlags.hasFlag flags ObjectFlags.IsSiftedValue then
-            let id = formatter.ReadCachedObjectId ()
             formatter.EndReadObject ()
+            let id = state.NextObjectId()
             try state.ObjectCache.[id] |> fastUnbox<'T>
             with 
             | :? System.Collections.Generic.KeyNotFoundException ->

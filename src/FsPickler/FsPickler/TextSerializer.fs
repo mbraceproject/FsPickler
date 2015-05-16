@@ -34,7 +34,8 @@ type FsPicklerTextSerializer (formatProvider : ITextPickleFormatProvider, [<O;D(
 
         let pickler = match pickler with None -> resolver.Resolve<'T> () | Some p -> p
         use formatter = initTextWriter formatProvider writer false leaveOpen
-        writeRootObject resolver reflectionCache formatter streamingContext pickler value
+        let _ = writeRootObject resolver reflectionCache formatter streamingContext None pickler value
+        ()
 
     /// <summary>Deserialize value of given type from the underlying stream.</summary>
     /// <param name="reader">source reader.</param>
@@ -46,7 +47,7 @@ type FsPicklerTextSerializer (formatProvider : ITextPickleFormatProvider, [<O;D(
 
         let pickler = match pickler with None -> resolver.Resolve<'T> () | Some p -> p
         use formatter = initTextReader formatProvider reader false leaveOpen
-        readRootObject resolver reflectionCache formatter streamingContext pickler
+        readRootObject resolver reflectionCache formatter streamingContext None pickler
 
     /// <summary>
     ///     Pickles given value to string.
@@ -94,6 +95,42 @@ type FsPicklerTextSerializer (formatProvider : ITextPickleFormatProvider, [<O;D(
         let formatter = initTextReader formatProvider reader true leaveOpen
         readTopLevelSequence resolver reflectionCache formatter streamingContext pickler
 
+    /// <summary>
+    ///     Serializes a value to text writer, excluding values mandated by the provided IObjectSifter instance.
+    ///     Values excluded from serialization will be returned tagged by their ids.
+    /// </summary>
+    /// <param name="stream">Target write stream.</param>
+    /// <param name="value">Value to be serialized.</param>
+    /// <param name="sifter">User supplied sifter implementation. Used to specify which nodes in the object graph are to be excluded from serialization.</param>
+    /// <param name="pickler">Pickler used for element deserialization. Defaults to auto-generated pickler.</param>
+    /// <param name="streamingContext">Streaming context for serialization state. Defaults to the empty streaming context.</param>
+    /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to false.</param>
+    /// <returns>Sifted values along with their graph ids.</returns>
+    member __.SerializeSifted<'T>(writer : TextWriter, value:'T, sifter : IObjectSifter, 
+                                                    [<O;D(null)>]?pickler : Pickler<'T>, [<O;D(null)>]?streamingContext : StreamingContext, 
+                                                    [<O;D(null)>]?leaveOpen : bool) : (int64 * obj) [] =
+
+        let pickler = match pickler with None -> resolver.Resolve<'T>() | Some p -> p
+        use writer = initTextWriter formatProvider writer false leaveOpen
+        let state = writeRootObject resolver reflectionCache writer streamingContext (Some sifter) pickler value
+        state.Sifted.ToArray()
+
+    /// <summary>
+    ///     Deserializes a sifted value from stream, filling in sifted holes from the serialized using supplied objects.
+    /// </summary>
+    /// <param name="reader">Source text reader.</param>
+    /// <param name="sifted">Object-id pairs used for filling sifted holes in serialization.s</param>
+    /// <param name="pickler">Pickler used for element deserialization. Defaults to auto-generated pickler.</param>
+    /// <param name="streamingContext">Streaming context for serialization state. Defaults to the empty streaming context.</param>
+    /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to false.</param>
+    member __.DeserializeSifted<'T>(reader : TextReader, sifted : (int64 * obj) [],
+                                                    [<O;D(null)>]?pickler : Pickler<'T>, [<O;D(null)>]?streamingContext : StreamingContext, 
+                                                    [<O;D(null)>]?leaveOpen : bool) : 'T =
+
+        let pickler = match pickler with None -> resolver.Resolve<'T> () | Some p -> p
+        use reader = initTextReader formatProvider reader false leaveOpen
+        readRootObject resolver reflectionCache reader streamingContext (Some sifted) pickler
+
     //
     //  Untyped API
     //
@@ -107,7 +144,8 @@ type FsPicklerTextSerializer (formatProvider : ITextPickleFormatProvider, [<O;D(
     /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to false.</param>
     member __.SerializeUntyped(writer : TextWriter, value : obj, pickler : Pickler, [<O;D(null)>]?streamingContext : StreamingContext, [<O;D(null)>]?leaveOpen : bool) : unit =
         use formatter = initTextWriter formatProvider writer false leaveOpen
-        writeRootObjectUntyped resolver reflectionCache formatter streamingContext pickler value
+        let _ = writeRootObjectUntyped resolver reflectionCache formatter streamingContext None pickler value
+        ()
 
     /// <summary>Deserialize object of given type from the underlying stream.</summary>
     /// <param name="reader">Source text reader.</param>
@@ -116,7 +154,7 @@ type FsPicklerTextSerializer (formatProvider : ITextPickleFormatProvider, [<O;D(
     /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to false.</param>
     member __.DeserializeUntyped(reader : TextReader, pickler : Pickler, [<O;D(null)>]?streamingContext : StreamingContext, [<O;D(null)>]?leaveOpen : bool) : obj =
         use formatter = initTextReader formatProvider reader false leaveOpen
-        readRootObjectUntyped resolver reflectionCache formatter streamingContext pickler
+        readRootObjectUntyped resolver reflectionCache formatter streamingContext None pickler
 
     /// <summary>Evaluate and serialize a sequence of objects to the underlying stream.</summary>
     /// <param name="writer">Target text writer.</param>

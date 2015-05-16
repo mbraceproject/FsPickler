@@ -80,7 +80,7 @@ and IObjectVisitor =
 and IObjectSifter =
     interface
         /// <summary>
-        ///     Decides on sifting action to be performed on provided node in an object graph.
+        ///     Predicate deciding whether provided object is to be sifted from serialization.
         /// </summary>
         /// <param name="pickler">Pickler used for traversal. Used for metadata reference.</param>
         /// <param name="value">Value that is being visited.</param>
@@ -119,6 +119,7 @@ and WriteState =
         member StreamingContext : StreamingContext
         member internal Visitor : IObjectVisitor option
         member internal Sifter : IObjectSifter option
+        member internal Sifted : ResizeArray<int64 * obj>
         member internal TypePickler : Pickler<System.Type>
         member internal Reset : unit -> unit
     end

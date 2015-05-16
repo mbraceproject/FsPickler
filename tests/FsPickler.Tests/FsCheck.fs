@@ -39,6 +39,14 @@ type FsPicklerGenerators =
 
             
 type Check =
-    // quick check methods with explicit type annotation
-    static member QuickThrowOnFail<'T> (f : 'T -> unit) = Check.QuickThrowOnFailure f
-    static member QuickThrowOnFail<'T> (f : 'T -> bool) = Check.QuickThrowOnFailure f
+    /// quick check methods with explicit type annotation
+    static member QuickThrowOnFail<'T> (f : 'T -> unit, ?maxRuns) = 
+        match maxRuns with
+        | None -> Check.QuickThrowOnFailure f
+        | Some mxrs -> Check.One({ Config.QuickThrowOnFailure with MaxTest = mxrs }, f)
+
+    /// quick check methods with explicit type annotation
+    static member QuickThrowOnFail<'T> (f : 'T -> bool, ?maxRuns) = 
+        match maxRuns with
+        | None -> Check.QuickThrowOnFailure f
+        | Some mxrs -> Check.One({ Config.QuickThrowOnFailure with MaxTest = mxrs }, f)
