@@ -19,6 +19,7 @@ module internal PicklerEmit =
         let typeFromHandle = typeof<Type>.GetMethod("GetTypeFromHandle")
         let writerCtx = typeof<WriteState>.GetProperty("StreamingContext").GetGetMethod(true)
         let readerCtx = typeof<ReadState>.GetProperty("StreamingContext").GetGetMethod(true)
+        let clonerCtx  = typeof<CloneState>.GetProperty("StreamingContext").GetGetMethod(true)
         let objInitializer = typeof<FormatterServices>.GetMethod("GetUninitializedObject", BindingFlags.Public ||| BindingFlags.Static)
         let deserializationCallBack = typeof<IDeserializationCallback>.GetMethod("OnDeserialization")
         let getRealObject = typeof<IObjectReference>.GetMethod("GetRealObject")
@@ -26,6 +27,7 @@ module internal PicklerEmit =
         let getTypedPickler (t : Type) = picklerT.MakeGenericType [|t|]
         let getPicklerWriter (t : Type) = getTypedPickler(t).GetMethod("Write")
         let getPicklerReader (t : Type) = getTypedPickler(t).GetMethod("Read")
+        let getPicklerCloner (t : Type) = getTypedPickler(t).GetMethod("Clone")
         let getWriteFormatter = typeof<WriteState>.GetProperty("Formatter", allMembers).GetGetMethod(true)
         let getReadFormatter = typeof<ReadState>.GetProperty("Formatter", allMembers).GetGetMethod(true)
         let stringWriter = typeof<IPickleFormatWriter>.GetMethod("WriteString")
@@ -50,6 +52,12 @@ module internal PicklerEmit =
     let emitDeserialize (t : Type) (ilGen : ILGenerator) =
         let reader = getPicklerReader t
         ilGen.EmitCall(OpCodes.Callvirt, reader, null)
+
+    /// emit IL that clones an object
+    /// last 3 items in stack: Pickler<'T> ; CloneState ; 'T
+    let emitClone (t : Type) (ilGen : ILGenerator) =
+        let cloner = getPicklerCloner t
+        ilGen.EmitCall(OpCodes.Callvirt, cloner, null)
 
     /// emits code for serializing field or property values
     let emitSerializeMembers (members : 'MemberInfo [] when 'MemberInfo :> MemberInfo)
@@ -137,6 +145,64 @@ module internal PicklerEmit =
 
             | _ -> invalidOp "invalid memberInfo instance."
 
+    /// emits code for deserializing field or property values
+    let emitCloneMembers (members : 'MemberInfo [] when 'MemberInfo :> MemberInfo)
+                            (cloner : EnvItem<CloneState>)
+                            (picklers : EnvItem<Pickler []>)
+                            (source : EnvItem<'T>) (target : EnvItem<'T>) (ilGen : ILGenerator) =
+
+        let isStruct = typeof<'T>.IsValueType
+
+        for i = 0 to members.Length - 1 do
+            match members.[i] :> MemberInfo with
+            | :? FieldInfo as f ->
+                // load target object to the stack
+                if isStruct then target.LoadAddress ()
+                else
+                    target.Load ()
+
+                // load typed pickler to the stack
+                emitLoadPickler picklers f.FieldType i ilGen
+                // load cloner state to the stack
+                cloner.Load ()
+                // load source object to the stack
+                if isStruct then source.LoadAddress ()
+                else
+                    source.Load ()
+
+                // load field value
+                ilGen.Emit(OpCodes.Ldfld, f)
+                // clone value
+                emitClone f.FieldType ilGen
+                // assign value to the field
+                ilGen.Emit(OpCodes.Stfld, f)
+
+            | :? PropertyInfo as p ->
+                let g = p.GetGetMethod(true)
+                let s = p.GetSetMethod(true)
+                // load target object to the stack
+                if isStruct then target.LoadAddress ()
+                else
+                    target.Load ()
+
+                // load typed pickler to the stack
+                emitLoadPickler picklers p.PropertyType i ilGen
+                // load cloner state to the stack
+                cloner.Load ()
+                // load source object to the stack
+                if isStruct then source.LoadAddress ()
+                else
+                    source.Load ()
+
+                // load source value
+                ilGen.EmitCall(OpCodes.Call, g, null)
+                // clone value
+                emitClone p.PropertyType ilGen
+                // call the property setter
+                ilGen.EmitCall(OpCodes.Call, s, null)
+
+            | _ -> invalidOp "invalid memberInfo instance."
+
     /// deserialize fields, pass to factory method and push to stack
     let emitDeserializeAndConstruct (factory : Choice<MethodInfo,ConstructorInfo>)
                                     (fparams : Type [])
@@ -161,6 +227,33 @@ module internal PicklerEmit =
         | Choice1Of2 f -> ilGen.EmitCall(OpCodes.Call, f, null)
         | Choice2Of2 c -> ilGen.Emit(OpCodes.Newobj, c)
 
+    /// deserialize fields, pass to factory method and push to stack
+    let emitCloneAndConstruct (factory : Choice<MethodInfo,ConstructorInfo>)
+                                    (fields :  PropertyInfo [])
+                                    (cloner : EnvItem<CloneState>)
+                                    (picklers : EnvItem<Pickler []>)
+                                    (source : EnvItem<'T>) (ilGen : ILGenerator) =
+
+        for i = 0 to fields.Length - 1 do
+            let f = fields.[i]
+            let getter = f.GetGetMethod(true)
+
+            // load typed pickler to the stack
+            emitLoadPickler picklers f.PropertyType i ilGen
+            // load cloner state to the stack
+            cloner.Load ()
+            // load source object to the stack
+            source.Load ()
+            // load source value
+            ilGen.EmitCall(OpCodes.Call, getter, null)
+            // clone value
+            emitClone f.PropertyType ilGen
+
+        // call factory method
+        match factory with
+        | Choice1Of2 f -> ilGen.EmitCall(OpCodes.Call, f, null)
+        | Choice2Of2 c -> ilGen.Emit(OpCodes.Newobj, c)
+
 
     /// push an uninitialized object of type 't' to the stack
     let emitObjectInitializer (t : Type) (ilGen : ILGenerator) =
@@ -176,7 +269,7 @@ module internal PicklerEmit =
             ilGen.Emit(OpCodes.Castclass, t)
 
     /// calls a predefined collection of serialization methods on given value
-    let emitSerializationMethodCalls (methods : MethodInfo []) (wOr : Choice<EnvItem<WriteState>, EnvItem<ReadState>>)
+    let emitSerializationMethodCalls (methods : MethodInfo []) (wOr : Choice<EnvItem<WriteState>, EnvItem<ReadState>, EnvItem<CloneState>>)
                                         (value : EnvItem<'T>) (ilGen : ILGenerator) =
 
         if methods.Length = 0 then () else
@@ -185,8 +278,9 @@ module internal PicklerEmit =
         let ctx = EnvItem<StreamingContext>(ilGen)
 
         match wOr with
-        | Choice1Of2 w -> w.Load () ; ilGen.EmitCall(OpCodes.Call, writerCtx, null)
-        | Choice2Of2 r -> r.Load () ; ilGen.EmitCall(OpCodes.Call, readerCtx, null)
+        | Choice1Of3 w -> w.Load () ; ilGen.EmitCall(OpCodes.Call, writerCtx, null)
+        | Choice2Of3 r -> r.Load () ; ilGen.EmitCall(OpCodes.Call, readerCtx, null)
+        | Choice3Of3 c -> c.Load () ; ilGen.EmitCall(OpCodes.Call, clonerCtx, null)
 
         ctx.Store ()
 
@@ -204,11 +298,12 @@ module internal PicklerEmit =
         ilGen.EmitCall(OpCodes.Callvirt, deserializationCallBack, null)
 
     /// emit a call to the 'OnDeserialization' method on given value
-    let emitObjectReferenceResolver<'T, 'S> (value : EnvItem<'T>) (state : EnvItem<ReadState>) (ilGen : ILGenerator) =
+    let emitObjectReferenceResolver<'T, 'S> (value : EnvItem<'T>) (state : Choice<EnvItem<ReadState>, EnvItem<CloneState>>) (ilGen : ILGenerator) =
         value.Load ()
         ilGen.Emit(OpCodes.Castclass, typeof<IObjectReference>)
-        state.Load()
-        ilGen.EmitCall(OpCodes.Call, readerCtx, null)
+        match state with
+        | Choice1Of2 reader -> reader.Load() ; ilGen.EmitCall(OpCodes.Call, readerCtx, null)
+        | Choice2Of2 cloner -> cloner.Load() ; ilGen.EmitCall(OpCodes.Call, clonerCtx, null)
         ilGen.EmitCall(OpCodes.Callvirt, getRealObject, null)
         ilGen.Emit(OpCodes.Castclass, typeof<'S>)
 

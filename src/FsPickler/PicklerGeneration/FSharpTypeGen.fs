@@ -124,8 +124,41 @@ type internal FsUnionPickler =
                     ilGen.Emit OpCodes.Ret
             )
 
+        let clonerDele =
+            DynamicMethod.compileFunc3<Pickler [] [], CloneState, 'Union, 'Union> "unionCloner" (fun picklerss state source ilGen ->
+                let tag = EnvItem<int>(ilGen)
+                let picklers = EnvItem<Pickler []>(ilGen)
+
+                let labels = Array.init caseInfo.Length (fun _ -> ilGen.DefineLabel())
+
+                // read union tag
+                source.Load ()
+                ilGen.EmitCall(OpCodes.Call, tagReaderMethod, null)
+                tag.Store ()
+
+                // select appropriate picklers & store
+                picklerss.Load ()
+                tag.Load ()
+                ilGen.Emit OpCodes.Ldelem_Ref
+                picklers.Store ()
+
+                // make jump table
+                tag.Load ()
+                ilGen.Emit(OpCodes.Switch, labels)
+
+                // emit cases
+                for i = 0 to caseInfo.Length - 1 do
+                    let label = labels.[i]
+                    let ctor,fields,tags,_ = caseInfo.[i]
+
+                    ilGen.MarkLabel label
+                    emitCloneAndConstruct (Choice1Of2 ctor) fields state picklers source ilGen
+                    ilGen.Emit OpCodes.Ret
+            )
+
         let writer w tag u = writerDele.Invoke(picklerss, tagSerializer, w, u)
         let reader r tag = readerDele.Invoke(picklerss, tagSerializer, r)
+        let cloner c t = clonerDele.Invoke(picklerss, c, t)
 #else
         let tagReader = Delegate.CreateDelegate<Func<'Union,int>> tagReaderMethod
 
@@ -208,8 +241,16 @@ type internal FsRecordPickler =
                 emitDeserializeAndConstruct (Choice2Of2 ctor) ctorParams tags reader picklers ilGen
 
                 ilGen.Emit OpCodes.Ret)
+
+        let clonerDele =
+            DynamicMethod.compileFunc3<Pickler [], CloneState, 'Record, 'Record> "recordDeserializer" (fun picklers state source ilGen ->
+
+                emitCloneAndConstruct (Choice2Of2 ctor) fields state picklers source ilGen
+
+                ilGen.Emit OpCodes.Ret)
             
         let reader r tag = readerDele.Invoke(picklers, r)
+        let cloner c t = clonerDele.Invoke(picklers, c, t)
 #else
         let writer (w : WriteState) (tag : string) (r : 'Record) =
             for i = 0 to fields.Length - 1 do
@@ -276,6 +317,16 @@ type internal FsExceptionPickler =
                     ilGen.Emit OpCodes.Ret
                 ) |> Some
 
+        let clonerDele =
+            if fields.Length = 0 then None
+            else
+                DynamicMethod.compileAction4<Pickler [], CloneState, 'Exception, 'Exception> "exceptionCloner" (fun picklers state source target ilGen ->
+                    emitCloneMembers fields state picklers source target ilGen
+
+                    ilGen.Emit OpCodes.Ret
+                
+                ) |> Some
+
 
         let writer (w : WriteState) (tag : string) (e : 'Exception) =
             do defPickler.Writer w tag e
@@ -290,6 +341,12 @@ type internal FsExceptionPickler =
             match readerDele with
             | None -> e
             | Some d -> d.Invoke(fpicklers, r, e) ; e
+
+        let cloner (c : CloneState) (e : 'Exception) =
+            let e' = defPickler.Clone c e
+            match clonerDele with
+            | None -> e'
+            | Some d -> d.Invoke(fpicklers, c, e, e') ; e'
 #else
         let writer (w : WriteState) (_ : string) (e : 'Exception) =
             do defPickler.Writer w "exceptionData" e

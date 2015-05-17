@@ -74,11 +74,11 @@ type internal DataContractPickler =
         let writerDele =
             DynamicMethod.compileAction3<Pickler [], WriteState, 'T> "dataContractSerializer" (fun picklers writer parent ilGen ->
 
-                emitSerializationMethodCalls onSerializing (Choice1Of2 writer) parent ilGen
+                emitSerializationMethodCalls onSerializing (Choice1Of3 writer) parent ilGen
 
                 emitSerializeMembers members names writer picklers parent ilGen
 
-                emitSerializationMethodCalls onSerialized (Choice1Of2 writer) parent ilGen
+                emitSerializationMethodCalls onSerialized (Choice1Of3 writer) parent ilGen
 
                 ilGen.Emit OpCodes.Ret)
 
@@ -95,24 +95,56 @@ type internal DataContractPickler =
 
                 value.Store ()
 
-                emitSerializationMethodCalls onDeserializing (Choice2Of2 reader) value ilGen
+                emitSerializationMethodCalls onDeserializing (Choice2Of3 reader) value ilGen
 
                 emitDeserializeMembers members names reader picklers value ilGen
 
-                emitSerializationMethodCalls onDeserialized (Choice2Of2 reader) value ilGen
+                emitSerializationMethodCalls onDeserialized (Choice2Of3 reader) value ilGen
 
                 if isDeserializationCallback then emitDeserializationCallback value ilGen
 
                 if isObjectReference then 
-                    emitObjectReferenceResolver<'T, 'T> value reader ilGen
+                    emitObjectReferenceResolver<'T, 'T> value (Choice1Of2 reader) ilGen
                 else
                     value.Load ()
 
                 ilGen.Emit OpCodes.Ret
             )
 
+        let clonerDele =
+            DynamicMethod.compileFunc3<Pickler [], CloneState, 'T, 'T> "dataContractCloner" (fun picklers state value ilGen ->
+                // initialize empty value type
+                let value' = EnvItem<'T>(ilGen)
+
+                // use parameterless constructor, if available
+                if ctor = null then
+                    emitObjectInitializer typeof<'T> ilGen
+                else
+                    ilGen.Emit(OpCodes.Newobj, ctor)
+
+                value'.Store ()
+
+                emitSerializationMethodCalls onSerializing (Choice3Of3 state) value ilGen
+                emitSerializationMethodCalls onDeserializing (Choice3Of3 state) value' ilGen
+
+                emitCloneMembers members state picklers value value' ilGen
+
+                emitSerializationMethodCalls onSerialized (Choice3Of3 state) value ilGen
+                emitSerializationMethodCalls onDeserialized (Choice3Of3 state) value' ilGen
+
+                if isDeserializationCallback then emitDeserializationCallback value' ilGen
+
+                if isObjectReference then 
+                    emitObjectReferenceResolver<'T, 'T> value' (Choice2Of2 state) ilGen
+                else
+                    value'.Load ()
+
+                ilGen.Emit OpCodes.Ret
+            )
+
         let writer w t v = writerDele.Invoke(picklers, w, v)
         let reader r t = readerDele.Invoke(picklers, r)
+        let cloner s t = clonerDele.Invoke(picklers, s, t)
                 
 #else
         let inline run (ms : MethodInfo []) (x : obj) w =

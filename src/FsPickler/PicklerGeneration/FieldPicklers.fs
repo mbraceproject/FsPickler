@@ -49,15 +49,22 @@ type internal StructFieldPickler =
                 ilGen.Emit OpCodes.Ret
             )
 
-        let cloneDele =
+        let clonerDele =
             DynamicMethod.compileFunc3<Pickler [], CloneState, 'T, 'T> "structCloner" (fun picklers state value ilGen ->
+                // initialize empty value type
+                let value' = EnvItem<'T>(ilGen)
+                emitObjectInitializer typeof<'T> ilGen
+                value'.Store ()
             
-            
-                ()
+                emitCloneMembers fields state picklers value value' ilGen
+
+                value'.Load()
+                ilGen.Emit OpCodes.Ret
             )
 
         let writer (w : WriteState) (tag : string) (t : 'T) = writerDele.Invoke(picklers, w, t)
         let reader (r : ReadState) (tag : string) = readerDele.Invoke(picklers, r)
+        let cloner (c : CloneState) (t : 'T) = clonerDele.Invoke(picklers, c, t)
 
 #else
         let writer (w : WriteState) (tag : string) (t : 'T) =
@@ -76,7 +83,7 @@ type internal StructFieldPickler =
             fastUnbox<'T> t
 
         let cloner (c : CloneState) (t : 'T) =
-            let t' = FormatterServices.GetSafeUninitializedObject(typeof<'T>) |> fastUnbox<'T>
+            let t' = FormatterServices.GetUninitializedObject(typeof<'T>) |> fastUnbox<'T>
             for i = 0 to fields.Length - 1 do
                 let f = fields.[i]
                 let o = f.GetValue t
@@ -131,11 +138,11 @@ type internal ClassFieldPickler =
                 let writerDele =
                     DynamicMethod.compileAction3<Pickler [], WriteState, 'T> "classSerializer" (fun picklers writer value ilGen ->
 
-                        emitSerializationMethodCalls onSerializing (Choice1Of2 writer) value ilGen
+                        emitSerializationMethodCalls onSerializing (Choice1Of3 writer) value ilGen
 
                         emitSerializeMembers fields tags writer picklers value ilGen
 
-                        emitSerializationMethodCalls onSerialized (Choice1Of2 writer) value ilGen
+                        emitSerializationMethodCalls onSerialized (Choice1Of3 writer) value ilGen
                             
                         ilGen.Emit OpCodes.Ret)
 
@@ -149,23 +156,50 @@ type internal ClassFieldPickler =
                 emitObjectInitializer typeof<'T> ilGen
                 value.Store ()
 
-                emitSerializationMethodCalls onDeserializing (Choice2Of2 reader) value ilGen
+                emitSerializationMethodCalls onDeserializing (Choice2Of3 reader) value ilGen
 
                 emitDeserializeMembers fields tags reader picklers value ilGen
 
-                emitSerializationMethodCalls onDeserialized (Choice2Of2 reader) value ilGen
+                emitSerializationMethodCalls onDeserialized (Choice2Of3 reader) value ilGen
 
                 if isDeserializationCallback then emitDeserializationCallback value ilGen
 
                 if isObjectReference then 
-                    emitObjectReferenceResolver<'T, 'T> value reader ilGen
+                    emitObjectReferenceResolver<'T, 'T> value (Choice1Of2 reader) ilGen
                 else
                     value.Load ()
 
                 ilGen.Emit OpCodes.Ret
             )
 
+        let clonerDele =
+            DynamicMethod.compileFunc3<Pickler [], CloneState, 'T, 'T> "classCloner" (fun picklers state value ilGen ->
+                // get uninitialized object and store locally
+                let value' = EnvItem<'T>(ilGen)
+                emitObjectInitializer typeof<'T> ilGen
+                value'.Store ()
+
+                emitSerializationMethodCalls onSerializing (Choice3Of3 state) value ilGen
+                emitSerializationMethodCalls onDeserializing (Choice3Of3 state) value' ilGen
+
+                emitCloneMembers fields state picklers value value' ilGen
+
+                emitSerializationMethodCalls onSerialized (Choice3Of3 state) value ilGen
+                emitSerializationMethodCalls onDeserialized (Choice3Of3 state) value' ilGen
+
+                if isDeserializationCallback then emitDeserializationCallback value' ilGen
+
+                if isObjectReference then 
+                    emitObjectReferenceResolver<'T, 'T> value' (Choice2Of2 state) ilGen
+                else
+                    value'.Load ()
+
+                ilGen.Emit OpCodes.Ret
+
+            )
+
         let reader r (tag : string) = readerDele.Invoke(picklers, r)
+        let cloner c t = clonerDele.Invoke(picklers, c, t)
 #else
         let inline run (ms : MethodInfo []) (x : obj) w =
             for i = 0 to ms.Length - 1 do 
