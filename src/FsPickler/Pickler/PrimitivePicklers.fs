@@ -118,7 +118,7 @@ type StringPickler () =
 
     override __.Write (writer : WriteState) (tag : string) (s : string) = writer.Formatter.WriteString tag s
     override __.Read (reader : ReadState) (tag : string) = reader.Formatter.ReadString tag
-    override __.Clone (clone : CloneState) (s : string) = String.Copy s
+    override __.Clone (clone : CloneState) (s : string) = if obj.ReferenceEquals(s, null) then s else String.Copy s
 
 [<AutoSerializable(false)>]
 type ByteArrayPickler () =
@@ -126,7 +126,9 @@ type ByteArrayPickler () =
 
     override __.Write (writer : WriteState) (tag : string) (bytes : byte []) = writer.Formatter.WriteBytes tag bytes
     override __.Read (reader : ReadState) (tag : string) = reader.Formatter.ReadBytes tag
-    override __.Clone (clone : CloneState) (bytes : byte[]) = bytes.Clone() |> fastUnbox<byte[]>
+    override __.Clone (clone : CloneState) (bytes : byte[]) = 
+        if obj.ReferenceEquals(bytes, null) then bytes 
+        else bytes.Clone() |> fastUnbox<byte[]>
 
 [<AutoSerializable(false)>]
 type GuidPickler () =

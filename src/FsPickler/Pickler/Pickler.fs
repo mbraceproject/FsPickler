@@ -87,7 +87,7 @@ and [<AutoSerializable(false)>]
 
     let sc = match streamingContext with None -> new StreamingContext() | Some sc -> sc
 
-    let mutable objCount = 0L
+    let mutable currentId = 0L
     let mutable idGen = new ObjectIDGenerator()
     let objStack = new Stack<int64> ()
     let cyclicObjects = new HashSet<int64> ()
@@ -103,15 +103,14 @@ and [<AutoSerializable(false)>]
     member internal __.TypePickler = tyPickler
     member internal __.GetObjectId(obj:obj, firstTime:byref<bool>) =
         let id = idGen.GetId(obj, &firstTime)
-        if firstTime then objCount <- id
+        if firstTime then currentId <- id
         id
 
-    // TODO : Remove?
-    member internal __.ObjectCount = objCount
+    member internal __.ObjectCount = currentId
     member internal __.ObjectStack = objStack
     member internal __.CyclicObjectSet = cyclicObjects
     member internal __.Reset () =
-        objCount <- 0L
+        currentId <- 0L
         idGen <- new ObjectIDGenerator()
         objStack.Clear()
         cyclicObjects.Clear()
@@ -122,7 +121,7 @@ and [<AutoSerializable(false)>]
         
     let sc = match streamingContext with None -> new StreamingContext() | Some sc -> sc
 
-    let mutable idCounter = 0L
+    let mutable currentId = 0L
     let objCache = new Dictionary<int64, obj> ()
     do 
         match sifted with
@@ -138,16 +137,16 @@ and [<AutoSerializable(false)>]
     member __.StreamingContext = sc
     member internal __.ObjectCache = objCache
     member internal __.NextObjectId () =
-        idCounter <- idCounter + 1L
-        idCounter
+        currentId <- currentId + 1L
+        currentId
 
-    member internal __.ObjectCount = idCounter
+    member internal __.ObjectCount = currentId
 
     member internal __.EarlyRegisterArray(array : Array) =
-        objCache.Add(idCounter, array)
+        objCache.Add(currentId, array)
 
     member internal __.Reset () =
-        idCounter <- 0L
+        currentId <- 0L
         objCache.Clear()
 
 and [<AutoSerializable(false)>] 
@@ -178,7 +177,7 @@ and [<AutoSerializable(false)>]
 //    member internal __.NextNodeId() = let nc = nodeCount in nodeCount <- nc + 1L ; nc
     member internal __.GetReferenceId(obj:obj, firstTime:byref<bool>) = 
         let id = idGen.GetId(obj, &firstTime)
-        currentId <- id
+        if firstTime then currentId <- id
         id
 
     member internal __.ObjectCache = objCache

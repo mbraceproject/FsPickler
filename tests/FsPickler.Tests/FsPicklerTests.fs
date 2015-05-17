@@ -35,6 +35,12 @@ type ``FsPickler Tests`` (format : string) as self =
         let bytes = self.Pickle x
         pickler.UnPickle<'T>(bytes)
 
+    let testClone (x : 'T) =
+        let y = FsPickler.NewClone x
+        x = y |> should equal true
+        if not <| obj.ReferenceEquals(x, null) then
+            obj.ReferenceEquals(x,y) |> should equal false
+
     let testEquals x = 
         let y = testRoundtrip x 
         y |> should equal x
@@ -58,63 +64,63 @@ type ``FsPickler Tests`` (format : string) as self =
     //  Primitive Serialization tests
     //
 
-    [<Test; Category("Primitives")>]
+    [<Test; Category("Clone")>]
     member __.``1. Primitive: bool`` () = testEquals false ; testEquals true
 
-    [<Test; Category("Primitives")>]
+    [<Test; Category("Clone")>]
     member __.``1. Primitive: byte`` () = Check.QuickThrowOnFail<byte> testEquals
 
-    [<Test; Category("Primitives")>]
+    [<Test; Category("Clone")>]
     member __.``1. Primitive: sbyte`` () = Check.QuickThrowOnFail<sbyte> testEquals
 
-    [<Test; Category("Primitives")>]
+    [<Test; Category("Clone")>]
     member __.``1. Primitive: int16`` () = Check.QuickThrowOnFail<int16> testEquals
 
-    [<Test; Category("Primitives")>]
+    [<Test; Category("Clone")>]
     member __.``1. Primitive: int32`` () = Check.QuickThrowOnFail<int32> testEquals
 
-    [<Test; Category("Primitives")>]
+    [<Test; Category("Clone")>]
     member __.``1. Primitive: int64`` () = Check.QuickThrowOnFail<int64> testEquals
 
-    [<Test; Category("Primitives")>]
+    [<Test; Category("Clone")>]
     member __.``1. Primitive: uint16`` () = Check.QuickThrowOnFail<uint16> testEquals
 
-    [<Test; Category("Primitives")>]
+    [<Test; Category("Clone")>]
     member __.``1. Primitive: uint32`` () = Check.QuickThrowOnFail<uint32> testEquals
 
-    [<Test; Category("Primitives")>]
+    [<Test; Category("Clone")>]
     member __.``1. Primitive: uint64`` () = Check.QuickThrowOnFail<uint64> testEquals
 
-    [<Test; Category("Primitives")>]
+    [<Test; Category("Clone")>]
     member __.``1. Primitive: single`` () = Check.QuickThrowOnFail<single> testEquals
 
-    [<Test; Category("Primitives")>]
+    [<Test; Category("Clone")>]
     member __.``1. Primitive: double`` () = Check.QuickThrowOnFail<double> testEquals
 
-    [<Test; Category("Primitives")>]
+    [<Test; Category("Clone")>]
     member __.``1. Primitive: decimal`` () = Check.QuickThrowOnFail<decimal> testEquals
 
-    [<Test; Category("Primitives")>]
+    [<Test; Category("Clone")>]
     member __.``1. Primitive: char`` () = Check.QuickThrowOnFail<char> testEquals
 
-    [<Test; Category("Primitives")>]
+    [<Test; Category("Clone")>]
     member __.``1. Primitive: string`` () = Check.QuickThrowOnFail<string> testEquals
 
-    [<Test; Category("Primitives")>]
+    [<Test; Category("Clone")>]
     member __.``1. Primitive: date`` () = 
         if runsOnMono then
             // Mono bug: https://bugzilla.xamarin.com/show_bug.cgi?id=20457
-            Check.QuickThrowOnFail<DateTime> (fun d -> testRoundtrip d |> ignore)
+            Check.QuickThrowOnFail<DateTime> (fun d -> let d' = testRoundtrip d in d.ToString() = d'.ToString())
         else
             Check.QuickThrowOnFail<DateTime> testEquals
 
-    [<Test; Category("Primitives")>]
+    [<Test; Category("Clone")>]
     member __.``1. Primitive: System.TimeSpan`` () = Check.QuickThrowOnFail<TimeSpan> testEquals
 
-    [<Test; Category("Primitives")>]
+    [<Test; Category("Clone")>]
     member __.``1. Primitive: System.Guid`` () = Check.QuickThrowOnFail<Guid> testEquals
 
-    [<Test; Category("Primitives")>]
+    [<Test; Category("Clone")>]
     member __.``1. Primitive: bigint`` () = 
         if runsOnMono then
             // Mono bug: https://bugzilla.xamarin.com/show_bug.cgi?id=20456
@@ -942,6 +948,81 @@ type ``FsPickler Tests`` (format : string) as self =
         testReflected quot
 
 
+    [<Test; Category("Clone")>]
+    member __.``8. Clone: bool`` () = testClone false ; testClone true
+
+    [<Test; Category("Clone")>]
+    member __.``8. Clone: byte`` () = Check.QuickThrowOnFail<byte> testClone
+
+    [<Test; Category("Clone")>]
+    member __.``8. Clone: int32`` () = Check.QuickThrowOnFail<int32> testClone
+
+    [<Test; Category("Clone")>]
+    member __.``8. Clone: string`` () = Check.QuickThrowOnFail<string> testClone
+
+    [<Test; Category("Clone")>]
+    member __.``8. Clone: byte []`` () = testClone (null : byte []) ; Check.QuickThrowOnFail<byte []> testClone
+
+    [<Test; Category("Clone")>]
+    member __.``8. Clone: array`` () = 
+        testClone (null : int [])
+        Check.QuickThrowOnFail<int []> testClone
+        Check.QuickThrowOnFail<int [,]> testClone
+        Check.QuickThrowOnFail<int [,,]> testClone
+        Check.QuickThrowOnFail<int [,,,]> testClone
+
+    [<Test; Category("Clone")>]
+    member __.``8. Clone: tuple`` () = 
+        Check.QuickThrowOnFail<int * string> testClone
+        Check.QuickThrowOnFail<int * string * int option * string * int list * string []> testClone
+
+    [<Test; Category("Clone")>]
+    member __.``8. Clone: quotation`` () = 
+        let quot =
+            <@
+                do int2Peano 42 |> ignore
+
+                async {
+                    let rec fibAsync n =
+                        async {
+                            match n with
+                            | _ when n < 0 -> return invalidArg "negative" "n"
+                            | _ when n < 2 -> return n
+                            | n ->
+                                let! fn = fibAsync (n-1)
+                                let! fnn = fibAsync (n-2)
+                                return fn + fnn
+                        }
+
+                    let! values = [1..100] |> Seq.map fibAsync |> Async.Parallel
+                    return Seq.sum values
+                }
+            @>
+
+        let quot' = FsPickler.NewClone quot
+        quot'.ToString() |> should equal (quot.ToString())
+        
+    [<Test; Category("Clone")>]
+    member __.``8. Clone: caching`` () = 
+        let x = obj ()
+        let y,z = FsPickler.NewClone ((x,x))
+        obj.ReferenceEquals(y,z) |> should equal true
+
+    [<Test; Category("Clone")>]
+    member __.``8. Clone: recursive objects`` () = 
+        let x = Array.zeroCreate<obj> 10
+        for i = 0 to 9 do x.[i] <- box x
+        let y = FsPickler.NewClone x
+        for z in y do obj.ReferenceEquals(z,y) |> should equal true
+
+    [<Test; Category("Clone"); Repeat(5)>]
+    member __.``8. Clone: random graph`` () = 
+        let g = createRandomGraph 0.7 20
+        let g' = FsPickler.NewClone g
+        obj.ReferenceEquals(g,g') |> should equal false
+        areEqualGraphs g g' |> should equal true
+
+
     //
     //  Stress tests
     //
@@ -954,7 +1035,7 @@ type ``FsPickler Tests`` (format : string) as self =
         with :? FsPicklerException & InnerExn (:? InvalidPickleTypeException) -> ()
 
     [<Test; Category("Stress tests")>]
-    member t.``8. Stress test: deserialization type mismatch`` () =
+    member t.``9. Stress test: deserialization type mismatch`` () =
         match pickler with
         | :? JsonSerializer as jsp when jsp.OmitHeader -> ()
         | _ ->
@@ -971,7 +1052,7 @@ type ``FsPickler Tests`` (format : string) as self =
         with :? FsPicklerException -> ()
 
     [<Test; Category("Stress tests")>]
-    member t.``8. Stress test: arbitrary data deserialization`` () =
+    member t.``9. Stress test: arbitrary data deserialization`` () =
         match pickler with
         | :? JsonSerializer as jsp when jsp.OmitHeader -> ()
         | _ ->
@@ -981,7 +1062,7 @@ type ``FsPickler Tests`` (format : string) as self =
             Check.QuickThrowOnFail (fun bs -> t.TestDeserializeInvalidData<int * string option> bs)
 
     [<Test; Category("Stress tests")>]
-    member __.``8. Stress test: massively auto-generated objects`` () =
+    member __.``9. Stress test: massively auto-generated objects`` () =
         // generate serializable objects that reside in mscorlib and FSharp.Core
         let inputData = seq {
             if not runsOnMono then

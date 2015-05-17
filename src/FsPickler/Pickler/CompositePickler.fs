@@ -283,7 +283,6 @@ type internal CompositePickler<'T> =
                 raise <| new FsPicklerException(sprintf "Sifted object of id '%d' was expected to be of type '%O' but was '%O'." id typeof<'T> result)
 
         elif p.m_IsCacheByRef || p.IsRecursiveType then
-
             let id = state.NextObjectId()
             let value = p.m_Reader state tag
             formatter.EndReadObject()
@@ -337,7 +336,6 @@ type internal CompositePickler<'T> =
             p0.UntypedClone state value |> fastUnbox<'T>
 
         elif p.IsRecursiveType || p.m_IsCacheByRef then
-
             let mutable firstOccurence = false
             let id = state.GetReferenceId(value, &firstOccurence)
 
@@ -346,11 +344,7 @@ type internal CompositePickler<'T> =
 
             if firstOccurence then
                 if p.TypeKind = TypeKind.Array then
-                    let t = p.m_Cloner state value
-                    // depending on the format implementation,
-                    // array picklers may or may not cache deserialized values early.
-                    // solve this ambiguity by forcing an update here.
-                    state.ObjectCache.[id] <- t ; t
+                    p.m_Cloner state value
 
                 elif p.IsRecursiveType then 
                     objStack.Push id
@@ -367,7 +361,8 @@ type internal CompositePickler<'T> =
                         state.ObjectCache.Add(id, t) ; t
 
                 else
-                    p.m_Cloner state value
+                    let t = p.m_Cloner state value
+                    state.ObjectCache.Add(id, t) ; t
 
             elif p.IsRecursiveType && p.TypeKind <> TypeKind.Array && objStack.Contains id && not <| cyclicObjects.Contains id then
                 do cyclicObjects.Add(id) |> ignore
@@ -375,7 +370,7 @@ type internal CompositePickler<'T> =
                 state.ObjectCache.Add(id, value)
                 fastUnbox<'T> value
             else
-                p.m_Cloner state value
+                state.ObjectCache.[id] |> fastUnbox<'T>
         else
             p.m_Cloner state value
 
