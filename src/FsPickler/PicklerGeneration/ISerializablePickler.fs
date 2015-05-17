@@ -80,6 +80,18 @@ module private ISerializableUtils =
 
         sI
 
+    let inline cloneSerializationInfo (c : CloneState) (sI : SerializationInfo) =
+        let sI' = new SerializationInfo(sI.ObjectType, new FormatterConverter())
+        let enum = sI.GetEnumerator()
+        while enum.MoveNext() do
+            let se = enum.Current
+            let ep = c.PicklerResolver.Resolve se.ObjectType
+            let o = ep.UntypedClone c se.Value
+            sI'.AddValue(se.Name, o, se.ObjectType)
+
+        sI'
+
+
 type internal ISerializablePickler =
 
     static member Create<'T when 'T :> ISerializable>(resolver : IPicklerResolver) =
@@ -123,7 +135,29 @@ type internal ISerializablePickler =
                 if isDeserializationCallback then (fastUnbox<IDeserializationCallback> t).OnDeserialization null
                 t
 
-            CompositePickler.Create(reader, writer, PicklerInfo.ISerializable, cacheByRef = true, useWithSubtypes = false)
+            let cloner (c : CloneState) (t : 'T) =
+                run onSerializing c t
+                let sI = mkSerializationInfo<'T> ()
+                t.GetObjectData(sI, c.StreamingContext)
+                if not <| isAssignableFrom typeof<IObjectReference> sI.ObjectType then
+                    raise <| new NonSerializableTypeException(typeof<'T>, "is ISerializable but does not implement deserialization constructor or use IObjectReference.")
+
+                run onSerialized c t
+
+                let objectRef =
+                    match sI.ObjectType.TryGetConstructor [| typeof<SerializationInfo> ; typeof<StreamingContext> |] with
+                    | None -> FormatterServices.GetUninitializedObject(sI.ObjectType) :?> IObjectReference
+                    | Some ctor -> 
+                        let sI' = cloneSerializationInfo c sI
+                        sI'.SetType sI.ObjectType
+                        ctor.Invoke [| sI' :> obj ; c.StreamingContext :> obj |] :?> IObjectReference
+
+                let t = objectRef.GetRealObject c.StreamingContext :?> 'T
+                run onDeserialized c t
+                if isDeserializationCallback then (fastUnbox<IDeserializationCallback> t).OnDeserialization null
+                t
+
+            CompositePickler.Create(reader, writer, cloner, PicklerInfo.ISerializable, cacheByRef = true, useWithSubtypes = false)
 
         | Some ctorInfo ->
 
@@ -152,7 +186,22 @@ type internal ISerializablePickler =
                 else
                     t
 
-            CompositePickler.Create(reader, writer, PicklerInfo.ISerializable, cacheByRef = true, useWithSubtypes = false)
+            let cloner (c : CloneState) (t : 'T) =
+                run onSerializing c t
+                let sI = mkSerializationInfo<'T> ()
+                t.GetObjectData(sI, c.StreamingContext)
+                run onSerialized c t
+
+                let sI' = cloneSerializationInfo c sI
+                let t' = create sI c.StreamingContext
+                run onDeserialized c t'
+                if isDeserializationCallback then (fastUnbox<IDeserializationCallback> t').OnDeserialization null
+                if isObjectReference then 
+                    (fastUnbox<IObjectReference> t').GetRealObject c.StreamingContext :?> 'T
+                else
+                    t'
+
+            CompositePickler.Create(reader, writer, cloner, PicklerInfo.ISerializable, cacheByRef = true, useWithSubtypes = false)
 
     /// SerializationInfo-based pickler combinator
     static member FromSerializationInfo<'T>(ctor : SerializationInfo -> 'T, proj : SerializationInfo -> 'T -> unit) : Pickler<'T> =
@@ -165,4 +214,10 @@ type internal ISerializablePickler =
             let sI = readSerializationInfo<'T> state
             ctor sI
 
-        CompositePickler.Create(reader, writer, PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = false)
+        let cloner (state : CloneState) (t: 'T) =
+            let sI = mkSerializationInfo<'T> ()
+            do proj sI t
+            let sI' = cloneSerializationInfo state sI
+            ctor sI'
+
+        CompositePickler.Create(reader, writer, cloner, PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = false)

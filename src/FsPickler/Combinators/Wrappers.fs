@@ -19,7 +19,11 @@ type internal AltPickler =
             let tag = r.Formatter.ReadInt32 "Tag"
             picklers.[tag].Read r "Value"
 
-        CompositePickler.Create<'T>(reader, writer, PicklerInfo.Combinator, cacheByRef = false)
+        let cloner (c : CloneState) (t : 'T) =
+            let tag = tagReader t
+            picklers.[tag].Clone c t
+
+        CompositePickler.Create<'T>(reader, writer, cloner, PicklerInfo.Combinator, cacheByRef = false)
 
 
 type internal WrapPickler =
@@ -32,4 +36,9 @@ type internal WrapPickler =
             let t = origin.Read r tag
             recover t
 
-        CompositePickler.Create<'S>(reader, writer, PicklerInfo.Combinator, cacheByRef = false, useWithSubtypes = false, bypass = true)
+        let cloner (c : CloneState) (s : 'S) =
+            let t = convert s
+            let t' = origin.Clone c t
+            recover t'
+
+        CompositePickler.Create<'S>(reader, writer, cloner, PicklerInfo.Combinator, cacheByRef = false, useWithSubtypes = false, bypass = true)

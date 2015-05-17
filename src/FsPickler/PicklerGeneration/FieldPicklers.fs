@@ -49,6 +49,13 @@ type internal StructFieldPickler =
                 ilGen.Emit OpCodes.Ret
             )
 
+        let cloneDele =
+            DynamicMethod.compileFunc3<Pickler [], CloneState, 'T, 'T> "structCloner" (fun picklers state value ilGen ->
+            
+            
+                ()
+            )
+
         let writer (w : WriteState) (tag : string) (t : 'T) = writerDele.Invoke(picklers, w, t)
         let reader (r : ReadState) (tag : string) = readerDele.Invoke(picklers, r)
 
@@ -67,9 +74,18 @@ type internal StructFieldPickler =
                 f.SetValue(t, o)
                 
             fastUnbox<'T> t
+
+        let cloner (c : CloneState) (t : 'T) =
+            let t' = FormatterServices.GetSafeUninitializedObject(typeof<'T>) |> fastUnbox<'T>
+            for i = 0 to fields.Length - 1 do
+                let f = fields.[i]
+                let o = f.GetValue t
+                let o' = picklers.[i].UntypedClone c o
+                f.SetValue(t', o')
+            t'
 #endif
 
-        CompositePickler.Create(reader, writer, PicklerInfo.FieldSerialization, cacheByRef = false, useWithSubtypes = false)
+        CompositePickler.Create(reader, writer, cloner, PicklerInfo.FieldSerialization, cacheByRef = false, useWithSubtypes = false)
 
 // general-purpose pickler combinator for reference types
 
@@ -180,6 +196,24 @@ type internal ClassFieldPickler =
                 (fastUnbox<IObjectReference> t).GetRealObject r.StreamingContext :?> 'T
             else
                 t
+
+        let cloner (c : CloneState) (t : 'T) =
+            let t' = FormatterServices.GetUninitializedObject(typeof<'T>) |> fastUnbox<'T>
+            run onSerializing t c
+            run onDeserializing t' c
+            for i = 0 to fields.Length - 1 do
+                let f = fields.[i]
+                let o = f.GetValue(t)
+                let o' = picklers.[i].UntypedClone c o
+                f.SetValue(t', o')
+
+            run onSerialized t c
+            run onDeserialized t' c
+            if isDeserializationCallback then (fastUnbox<IDeserializationCallback> t').OnDeserialization null
+            if isObjectReference then 
+                (fastUnbox<IObjectReference> t').GetRealObject c.StreamingContext :?> 'T
+            else
+                t
 #endif
 
-        CompositePickler.Create(reader, writer, PicklerInfo.FieldSerialization, cacheByRef = true, useWithSubtypes = false)
+        CompositePickler.Create(reader, writer, cloner, PicklerInfo.FieldSerialization, cacheByRef = true, useWithSubtypes = false)

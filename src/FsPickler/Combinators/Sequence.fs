@@ -170,4 +170,6 @@ type internal SeqPickler =
 
             ra :> seq<'T>
 
-        CompositePickler.Create<seq<'T>>(reader, writer, PicklerInfo.Combinator, cacheByRef = false, useWithSubtypes = false, bypass = true)
+        let cloner (c : CloneState) (ts : seq<'T>) = ts
+
+        CompositePickler.Create<seq<'T>>(reader, writer, cloner, PicklerInfo.Combinator, cacheByRef = false, useWithSubtypes = false, bypass = true)

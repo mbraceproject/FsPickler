@@ -18,6 +18,8 @@ type PrimitivePickler<'T> () =
     override p.UseWithSubtypes = false
 
     override p.Cast<'S> () : Pickler<'S> = raise <| new NotSupportedException("Cannot cast primitive picklers.")
+    /// valid for value types, overriden in string & byte [] primitive definitions
+    override p.Clone (state : CloneState) (t : 'T) = t
 
 [<AutoSerializable(false)>]
 type BooleanPickler () =
@@ -116,6 +118,7 @@ type StringPickler () =
 
     override __.Write (writer : WriteState) (tag : string) (s : string) = writer.Formatter.WriteString tag s
     override __.Read (reader : ReadState) (tag : string) = reader.Formatter.ReadString tag
+    override __.Clone (clone : CloneState) (s : string) = String.Copy s
 
 [<AutoSerializable(false)>]
 type ByteArrayPickler () =
@@ -123,6 +126,7 @@ type ByteArrayPickler () =
 
     override __.Write (writer : WriteState) (tag : string) (bytes : byte []) = writer.Formatter.WriteBytes tag bytes
     override __.Read (reader : ReadState) (tag : string) = reader.Formatter.ReadBytes tag
+    override __.Clone (clone : CloneState) (bytes : byte[]) = bytes.Clone() |> fastUnbox<byte[]>
 
 [<AutoSerializable(false)>]
 type GuidPickler () =

@@ -18,8 +18,8 @@ open Nessos.FsPickler.PicklerEmit
 type internal DataContractPickler =
 
     static member Create<'T>(resolver : IPicklerResolver) =
-        let t = typeof<'T>
-        let cacheByRef = not <| t.IsValueType
+        let ty = typeof<'T>
+        let cacheByRef = not <| ty.IsValueType
 
         // following specs in http://msdn.microsoft.com/en-us/library/ms733127%28v=vs.110%29.aspx
         let tryGetDataMemberInfo (m : MemberInfo) =
@@ -31,17 +31,17 @@ type internal DataContractPickler =
                 | :? PropertyInfo as p ->
                     if not p.CanRead then
                         let msg = sprintf "property '%s' marked as data member but missing getter." p.Name
-                        raise <| new PicklerGenerationException(t, msg)
+                        raise <| new PicklerGenerationException(ty, msg)
                     elif not p.CanWrite then
                         let msg = sprintf "property '%s' marked as data member but missing setter." p.Name
-                        raise <| new PicklerGenerationException(t, msg)
+                        raise <| new PicklerGenerationException(ty, msg)
 
                     Some(attr, m, p.PropertyType)
 
                 | _ -> None
 
         let dataContractInfo = 
-            gatherMembers t
+            gatherMembers ty
             |> Seq.choose tryGetDataMemberInfo
             |> Seq.mapi (fun i v -> (i,v))
             // sort data members: primarily specified by user-specified order
@@ -51,7 +51,7 @@ type internal DataContractPickler =
             |> Seq.toArray
 
         // if type has parameterless constructor, use that on deserialization
-        let ctor = t.GetConstructor(allConstructors, null, [||], [||])
+        let ctor = ty.GetConstructor(allConstructors, null, [||], [||])
         let members = dataContractInfo |> Array.map (fun (_,m,_) -> m)
         let picklers = dataContractInfo |> Array.map (fun (_,_,t) -> resolver.Resolve t)
         let names = 
@@ -137,7 +137,7 @@ type internal DataContractPickler =
             let t =
                 // use parameterless constructor, if available
                 if obj.ReferenceEquals(ctor, null) then
-                    FormatterServices.GetUninitializedObject(t) |> fastUnbox<'T>
+                    FormatterServices.GetUninitializedObject(ty) |> fastUnbox<'T>
                 else
                     ctor.Invoke(null) |> fastUnbox<'T>
 
@@ -156,6 +156,40 @@ type internal DataContractPickler =
                 (fastUnbox<IObjectReference> t).GetRealObject r.StreamingContext :?> 'T
             else
                 t
+
+        let cloner (c : CloneState) (t : 'T) =
+            let t' =
+                // use parameterless constructor, if available
+                if obj.ReferenceEquals(ctor, null) then
+                    FormatterServices.GetUninitializedObject(ty) |> fastUnbox<'T>
+                else
+                    ctor.Invoke(null) |> fastUnbox<'T>
+
+            run onSerializing t c
+            run onDeserializing t' c
+
+            for i = 0 to members.Length - 1 do
+                match members.[i] with
+                | :? PropertyInfo as p -> 
+                    let o = p.GetValue t
+                    let o' = picklers.[i].UntypedClone c o
+                    p.SetValue(t', o')
+
+                | :? FieldInfo as f -> 
+                    let o = f.GetValue t
+                    let o' = picklers.[i].UntypedClone c o
+                    f.SetValue(t', o')
+
+                | _ -> invalidOp "internal error on serializing '%O'." typeof<'T>
+
+            run onSerialized t c
+            run onDeserialized t' c
+            if isDeserializationCallback then (fastUnbox<IDeserializationCallback> t').OnDeserialization null
+            if isObjectReference then 
+                (fastUnbox<IObjectReference> t').GetRealObject c.StreamingContext :?> 'T
+            else
+                t'
+
 #endif
 
-        CompositePickler.Create(reader, writer, PicklerInfo.DataContract, cacheByRef = cacheByRef, useWithSubtypes = false)
+        CompositePickler.Create(reader, writer, cloner, PicklerInfo.DataContract, cacheByRef = cacheByRef, useWithSubtypes = false)

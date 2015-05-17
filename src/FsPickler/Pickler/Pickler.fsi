@@ -42,6 +42,7 @@ type Pickler =
 
         abstract member internal UntypedRead : state:ReadState -> tag:string -> obj
         abstract member internal UntypedWrite : state:WriteState -> tag:string -> value:obj -> unit
+        abstract member internal UntypedClone : state:WriteState -> obj -> obj
     end
 
 /// Defines serialization rules for given type parameter.
@@ -53,9 +54,11 @@ and [<AbstractClass>] Pickler<'T> =
 
         abstract member Read : state:ReadState -> tag:string -> 'T
         abstract member Write : state:WriteState -> tag:string -> value:'T -> unit
+        abstract member Clone : state:WriteState -> value:'T -> 'T
 
         override internal UntypedRead : state:ReadState -> tag:string -> obj
         override internal UntypedWrite : state:WriteState -> tag:string -> value:obj -> unit
+        override internal UntypedClone : state:WriteState -> obj -> obj
 
         override internal Unpack : IPicklerUnpacker<'R> -> 'R
     end
@@ -142,4 +145,23 @@ and ReadState =
         member StreamingContext : StreamingContext
         member internal TypePickler : Pickler<System.Type>
         member internal Reset : unit -> unit
+    end
+
+/// Contains all state related to object serializations
+and CloneState =
+    class
+        internal new : 
+            resolver:IPicklerResolver * reflectionCache:ReflectionCache * 
+                ?streamingContext:StreamingContext * ?sifter : IObjectSifter * ?sifted:(int64 * obj) [] -> WriteState
+
+        member internal CyclicObjectSet : HashSet<int64>
+        member internal ObjectStack : Stack<int64>
+        member internal GetObjectId : obj:obj * firstTime:byref<bool> -> int64
+        member internal ObjectCount : int64
+        member internal PicklerResolver : IPicklerResolver
+        member internal ReflectionCache : ReflectionCache
+        /// Streaming context to the serialization
+        member StreamingContext : StreamingContext
+        member internal Sifter : IObjectSifter option
+        member internal Sifted : ResizeArray<int64 * obj>
     end

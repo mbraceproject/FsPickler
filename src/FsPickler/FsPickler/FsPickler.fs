@@ -3,6 +3,7 @@
 open System
 open System.Reflection
 open System.Collections.Generic
+open System.Runtime.Serialization
     
 open Nessos.FsPickler.Hashing
 
@@ -52,6 +53,11 @@ type FsPickler private () =
     /// </summary>
     /// <param name="value">Value to be cloned.</param>
     static member Clone<'T>(value : 'T) : 'T = defaultSerializer.Value.Clone(value)
+
+    static member NewClone<'T> (value : 'T, ?pickler : Pickler<'T>, ?streamingContext : StreamingContext) : 'T =
+        let pickler = match pickler with None -> resolver.Value.Resolve<'T> () | Some p -> p
+        let state = new CloneState(resolver.Value, ?streamingContext = streamingContext)
+        pickler.Clone state value
 
     /// <summary>Compute size in bytes for given input.</summary>
     /// <param name="value">input value.</param>

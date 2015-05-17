@@ -87,7 +87,10 @@ type internal ListPickler =
 
                 Seq.toList ra
 
-        CompositePickler.Create<_>(reader, writer, PicklerInfo.FSharpValue, 
+        let cloner (c : CloneState) (list : 'T list) =
+            list |> List.map (ep.Clone c)
+
+        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, 
                                         cacheByRef = true, useWithSubtypes = true, skipHeaderWrite = true)
 
     static member Create<'T>(resolver : IPicklerResolver) =

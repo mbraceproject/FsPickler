@@ -11,8 +11,9 @@ type internal AbstractPickler =
     static member Create<'T> () =
         let writer _ _ = invalidOp <| sprintf "Attempting to call abstract pickler '%O'." typeof<'T>
         let reader _ = invalidOp <| sprintf "Attempting to call abstract pickler '%O'." typeof<'T>
+        let cloner _ _ = invalidOp <| sprintf "Attempting to call abstract pickler '%O'." typeof<'T>
 
-        CompositePickler.Create<'T>(reader, writer, PicklerInfo.FieldSerialization, true, false)
+        CompositePickler.Create<'T>(reader, writer, cloner, PicklerInfo.FieldSerialization, true, false)
 
 /// Enum types combinator
 
@@ -29,12 +30,16 @@ type internal EnumPickler =
             let value = pickler.Read r "value"
             Microsoft.FSharp.Core.LanguagePrimitives.EnumOfValue<'Underlying, 'Enum> value
 
-        CompositePickler.Create(reader, writer, PicklerInfo.FieldSerialization, cacheByRef = false, useWithSubtypes = false)
+        let cloner (c : CloneState) (x : 'Enum) = x
+
+        CompositePickler.Create(reader, writer, cloner, PicklerInfo.FieldSerialization, cacheByRef = false, useWithSubtypes = false)
 
 
 /// Nullable Pickler combinator
 
 type internal NullablePickler =
+
+    // TODO; add combinator
 
     static member Create<'T when 
                             'T : (new : unit -> 'T) and 
@@ -50,7 +55,11 @@ type internal NullablePickler =
             let value = pickler.Read r "value"
             Nullable<'T>(value)
 
-        CompositePickler.Create(reader, writer, PicklerInfo.FieldSerialization, cacheByRef = false, useWithSubtypes = false)
+        let cloner (c : CloneState) (x : Nullable<'T>) =
+            if x.HasValue then new Nullable<'T>(pickler.Clone c x.Value)
+            else x
+
+        CompositePickler.Create(reader, writer, cloner, PicklerInfo.FieldSerialization, cacheByRef = false, useWithSubtypes = false)
 
 /// Delegate Pickler combinator
 
@@ -87,4 +96,17 @@ type internal DelegatePickler =
                 for i = 0 to n - 1 do deleList.[i] <- delePickler.Read r "linked"
                 Delegate.Combine deleList |> fastUnbox<'Delegate>
 
-        CompositePickler.Create(reader, writer, PicklerInfo.Delegate, cacheByRef = true, useWithSubtypes = false)
+        let cloner (c : CloneState) (dele : 'Delegate) =
+            match dele.GetInvocationList() with
+            | [| _ |] ->
+                if dele.Method.IsStatic then dele.Clone() |> fastUnbox<'Delegate>
+                else
+                    let target' = objPickler.Clone c dele.Target
+                    Delegate.CreateDelegate(typeof<'Delegate>, target', dele.Method, throwOnBindFailure = true) |> fastUnbox<'Delegate>
+
+            | deleList ->
+                let deleList' = Array.zeroCreate<System.Delegate> deleList.Length
+                for i = 0 to deleList.Length - 1 do deleList'.[i] <- delePickler.Clone c deleList.[i]
+                Delegate.Combine deleList |> fastUnbox<'Delegate>
+
+        CompositePickler.Create(reader, writer, cloner, PicklerInfo.Delegate, cacheByRef = true, useWithSubtypes = false)

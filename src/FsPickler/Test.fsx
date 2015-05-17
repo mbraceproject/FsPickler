@@ -1,4 +1,4 @@
-﻿#I "../../bin/"
+﻿#I "../../bin/NoEmit/"
 #r "FsPickler.dll"
 
 open Nessos.FsPickler
@@ -18,3 +18,15 @@ let xp' = Xml.pickle fPickler (fun x -> x + 1)
 
 Binary.unpickle fPickler bp' 41
 Xml.unpickle fPickler xp' 41
+
+
+FsPickler.Clone [1 .. 100]
+
+let x = [|obj ()|]
+x.[0] <- box x
+
+type Foo = Foo
+
+FsPickler.NewClone Foo
+
+obj.ReferenceEquals(y,z)

@@ -42,7 +42,7 @@ module Xml =
     /// <param name="pickler">utilized pickler.</param>
     /// <param name="value">input value.</param>
     let pickle (pickler : Pickler<'T>) (value : 'T) : string =
-        xmlSerializer.Value.PickleToString (pickler, value) : string
+        xmlSerializer.Value.PickleToString (value, pickler = pickler) : string
 
     /// <summary>
     ///     Unpickles a values from XML.

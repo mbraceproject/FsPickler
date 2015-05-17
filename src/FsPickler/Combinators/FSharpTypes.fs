@@ -15,7 +15,12 @@ type internal OptionPickler =
             let value = ep.Read r "Some"
             Some value
 
-        CompositePickler.Create<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
+        let cloner (c : CloneState) (x : 'T option) =
+            match x with
+            | None -> None
+            | Some t -> Some(ep.Clone c t)
+
+        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
 
     static member Create<'T> (resolver : IPicklerResolver) =
         let ep = resolver.Resolve<'T> ()
@@ -48,7 +53,12 @@ type internal ChoicePickler private () =
             | 1 -> p2.Read r "Item" |> Choice2Of2
             | _ -> raise <| new FormatException("invalid choice branch.")
 
-        CompositePickler.Create<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
+        let cloner (c : CloneState) (t : Choice<'T1,'T2>) =
+            match t with
+            | Choice1Of2 t1 -> Choice1Of2(p1.Clone c t1)
+            | Choice2Of2 t2 -> Choice2Of2(p2.Clone c t2)
+
+        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
 
 
     static member Create<'T1, 'T2> (resolver : IPicklerResolver) =
@@ -75,7 +85,13 @@ type internal ChoicePickler private () =
             | 2 -> p3.Read r "Item" |> Choice3Of3
             | _ -> raise <| new FormatException("invalid choice branch.")
 
-        CompositePickler.Create<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
+        let cloner (c : CloneState) (t : Choice<'T1,'T2,'T3>) =
+            match t with
+            | Choice1Of3 t1 -> Choice1Of3(p1.Clone c t1)
+            | Choice2Of3 t2 -> Choice2Of3(p2.Clone c t2)
+            | Choice3Of3 t3 -> Choice3Of3(p3.Clone c t3)
+
+        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
 
 
     static member Create<'T1, 'T2, 'T3> (resolver : IPicklerResolver) =
@@ -106,7 +122,14 @@ type internal ChoicePickler private () =
             | 3 -> p4.Read r "Item" |> Choice4Of4
             | _ -> raise <| new FormatException("invalid choice branch.")
 
-        CompositePickler.Create<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
+        let cloner (c : CloneState) (t : Choice<'T1,'T2,'T3,'T4>) =
+            match t with
+            | Choice1Of4 t1 -> Choice1Of4(p1.Clone c t1)
+            | Choice2Of4 t2 -> Choice2Of4(p2.Clone c t2)
+            | Choice3Of4 t3 -> Choice3Of4(p3.Clone c t3)
+            | Choice4Of4 t4 -> Choice4Of4(p4.Clone c t4)
+
+        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
 
     static member Create<'T1, 'T2, 'T3, 'T4> (resolver : IPicklerResolver) =
         let p1, p2 = resolver.Resolve<'T1> (), resolver.Resolve<'T2> ()
@@ -143,7 +166,15 @@ type internal ChoicePickler private () =
             | 4 -> p5.Read r "Item" |> Choice5Of5
             | _ -> raise <| new FormatException("invalid choice branch.")
 
-        CompositePickler.Create<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
+        let cloner (c : CloneState) (t : Choice<'T1,'T2,'T3,'T4,'T5>) =
+            match t with
+            | Choice1Of5 t1 -> Choice1Of5(p1.Clone c t1)
+            | Choice2Of5 t2 -> Choice2Of5(p2.Clone c t2)
+            | Choice3Of5 t3 -> Choice3Of5(p3.Clone c t3)
+            | Choice4Of5 t4 -> Choice4Of5(p4.Clone c t4)
+            | Choice5Of5 t5 -> Choice5Of5(p5.Clone c t5)
+
+        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
 
     static member Create<'T1, 'T2, 'T3, 'T4, 'T5> (resolver : IPicklerResolver) =
         let p1, p2 = resolver.Resolve<'T1> (), resolver.Resolve<'T2> ()
@@ -185,7 +216,16 @@ type internal ChoicePickler private () =
             | 5 -> p6.Read r "Item" |> Choice6Of6
             | _ -> raise <| new FormatException("invalid choice branch.")
 
-        CompositePickler.Create<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
+        let cloner (c : CloneState) (t : Choice<'T1,'T2,'T3,'T4,'T5,'T6>) =
+            match t with
+            | Choice1Of6 t1 -> Choice1Of6(p1.Clone c t1)
+            | Choice2Of6 t2 -> Choice2Of6(p2.Clone c t2)
+            | Choice3Of6 t3 -> Choice3Of6(p3.Clone c t3)
+            | Choice4Of6 t4 -> Choice4Of6(p4.Clone c t4)
+            | Choice5Of6 t5 -> Choice5Of6(p5.Clone c t5)
+            | Choice6Of6 t6 -> Choice6Of6(p6.Clone c t6)
+
+        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
 
     static member Create<'T1, 'T2, 'T3, 'T4, 'T5, 'T6> (resolver : IPicklerResolver) =
         let p1, p2 = resolver.Resolve<'T1> (), resolver.Resolve<'T2> ()
@@ -231,7 +271,17 @@ type internal ChoicePickler private () =
             | 6 -> p7.Read r "Item" |> Choice7Of7
             | _ -> raise <| new FormatException("invalid choice branch.")
 
-        CompositePickler.Create<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
+        let cloner (c : CloneState) (t : Choice<'T1,'T2,'T3,'T4,'T5,'T6,'T7>) =
+            match t with
+            | Choice1Of7 t1 -> Choice1Of7(p1.Clone c t1)
+            | Choice2Of7 t2 -> Choice2Of7(p2.Clone c t2)
+            | Choice3Of7 t3 -> Choice3Of7(p3.Clone c t3)
+            | Choice4Of7 t4 -> Choice4Of7(p4.Clone c t4)
+            | Choice5Of7 t5 -> Choice5Of7(p5.Clone c t5)
+            | Choice6Of7 t6 -> Choice6Of7(p6.Clone c t6)
+            | Choice7Of7 t7 -> Choice7Of7(p7.Clone c t7)
+
+        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
 
     static member Create<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7> (resolver : IPicklerResolver) =
         let p1, p2 = resolver.Resolve<'T1> (), resolver.Resolve<'T2> ()
@@ -249,8 +299,10 @@ type internal FSharpRefPickler =
         let reader (r : ReadState) (tag : string) =
             { contents = ep.Read r "contents" }
 
+        let cloner (c : CloneState) (r : 'T ref) = { contents = ep.Clone c r.Value }
+
         // do not cache for performance
-        CompositePickler.Create<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = false)
+        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = false)
             
     static member Create<'T> (resolver : IPicklerResolver) =
         let ep = resolver.Resolve<'T> ()

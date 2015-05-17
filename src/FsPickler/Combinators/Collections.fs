@@ -19,7 +19,10 @@ type internal FSharpSetPickler =
             let elements = readBoundedSequence ep count r "elements"
             Set.ofArray elements
 
-        CompositePickler.Create<_>(reader, writer, PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = false)
+        let cloner (c : CloneState) (s : Set<'T>) =
+            s |> Set.map (ep.Clone c)
+
+        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = false)
             
     static member Create<'T when 'T : comparison> (resolver : IPicklerResolver) =
         let ep = resolver.Resolve<'T>()
@@ -40,7 +43,10 @@ type internal FSharpMapPickler =
             let items = readBoundedSequence tp count r "items"
             Map.ofArray items
 
-        CompositePickler.Create<_>(reader, writer, PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = false)
+        let cloner (c : CloneState) (map : Map<'K,'V>) =
+            map |> Seq.map (fun kv -> kp.Clone c kv.Key, vp.Clone c kv.Value) |> Map.ofSeq
+
+        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = false)
 
     static member Create<'K, 'V when 'K : comparison> (resolver : IPicklerResolver) =
         let kp, vp = resolver.Resolve<'K> (), resolver.Resolve<'V> ()
@@ -65,7 +71,12 @@ type internal DictionaryPickler =
             for k,v in items do dict.Add(k,v)
             dict
 
-        CompositePickler.Create<_>(reader, writer, PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = false)
+        let cloner (c : CloneState) (d : Dictionary<'K,'V>) =
+            let d' = new Dictionary<'K,'V>(d.Count)
+            for kv in d do d'.Add(kp.Clone c kv.Key, vp.Clone c kv.Value)
+            d'
+
+        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = false)
 
     static member Create<'K, 'V when 'K : equality> (resolver : IPicklerResolver) =
         let kp, vp = resolver.Resolve<'K>(), resolver.Resolve<'V>()

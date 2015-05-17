@@ -42,6 +42,7 @@ type Pickler internal (t : Type) =
 
     abstract UntypedWrite : state:WriteState -> tag:string -> value:obj -> unit
     abstract UntypedRead  : state:ReadState  -> tag:string -> obj
+    abstract UntypedClone : state:CloneState -> obj -> obj
 
     abstract Unpack : IPicklerUnpacker<'U> -> 'U
 
@@ -54,9 +55,11 @@ and
 
     abstract Write : state:WriteState -> tag:string -> value:'T -> unit
     abstract Read  : state:ReadState  -> tag:string -> 'T
+    abstract Clone : state:CloneState -> value:'T -> 'T
 
     override p.UntypedWrite (state : WriteState) (tag : string) (value : obj) = p.Write state tag (fastUnbox value)
     override p.UntypedRead (state : ReadState) (tag : string) = p.Read state tag :> _
+    override p.UntypedClone (state : CloneState) (value : obj) = p.Clone state (fastUnbox value) :> _
 
     override p.Unpack unpacker = unpacker.Apply p
 
@@ -103,6 +106,7 @@ and [<AutoSerializable(false)>]
         if firstTime then objCount <- id
         id
 
+    // TODO : Remove?
     member internal __.ObjectCount = objCount
     member internal __.ObjectStack = objStack
     member internal __.CyclicObjectSet = cyclicObjects
@@ -145,3 +149,39 @@ and [<AutoSerializable(false)>]
     member internal __.Reset () =
         idCounter <- 0L
         objCache.Clear()
+
+and [<AutoSerializable(false)>] 
+    CloneState internal (resolver : IPicklerResolver, ?streamingContext : StreamingContext) = //, ?sifter : IObjectSifter, ?sifted : (int64 * obj) []) =
+
+    let sc = match streamingContext with None -> new StreamingContext() | Some sc -> sc
+
+//    let mutable nodeCount = 0L
+    let mutable currentId = 0L
+    let mutable idGen = new ObjectIDGenerator()
+    let objStack = new Stack<int64> ()
+    let cyclicObjects = new HashSet<int64> ()
+    let objCache = new Dictionary<int64, obj> ()
+//    let outSifts = new ResizeArray<int64 * obj> ()
+//    let inSifts = 
+//        match sifted with
+//        | Some [||] | None -> None
+//        | Some sifted ->
+//            let d = new Dictionary<int64, obj> ()
+//            for i,o in sifted do d.Add(i, o)
+//            Some d
+
+    member internal __.PicklerResolver = resolver
+    member __.StreamingContext = sc
+//    member internal __.Sifter = sifter
+//    member internal __.InSifts = inSifts
+//    member internal __.OutSifts = outSifts
+//    member internal __.NextNodeId() = let nc = nodeCount in nodeCount <- nc + 1L ; nc
+    member internal __.GetReferenceId(obj:obj, firstTime:byref<bool>) = 
+        let id = idGen.GetId(obj, &firstTime)
+        currentId <- id
+        id
+
+    member internal __.ObjectCache = objCache
+    member internal __.EarlyRegisterArray(array : Array) = objCache.Add(currentId, array)
+    member internal __.ObjectStack = objStack
+    member internal __.CyclicObjectSet = cyclicObjects

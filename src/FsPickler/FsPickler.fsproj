@@ -97,7 +97,7 @@
     <Compile Include="Pickler\Types.fs" />
     <Compile Include="Pickler\PickleFormat.fs" />
     <Compile Include="Pickler\ReflectionCache.fs" />
-    <Compile Include="Pickler\Pickler.fsi" />
+    <None Include="Pickler\Pickler.fsi" />
     <Compile Include="Pickler\Pickler.fs" />
     <Compile Include="Pickler\PrimitivePicklers.fs" />
     <Compile Include="Pickler\CompositePickler.fs" />
