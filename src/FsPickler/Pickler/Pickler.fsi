@@ -42,7 +42,7 @@ type Pickler =
 
         abstract member internal UntypedRead : state:ReadState -> tag:string -> obj
         abstract member internal UntypedWrite : state:WriteState -> tag:string -> value:obj -> unit
-        abstract member internal UntypedClone : state:WriteState -> obj -> obj
+        abstract member internal UntypedClone : state:CloneState -> obj -> obj
     end
 
 /// Defines serialization rules for given type parameter.
@@ -54,11 +54,11 @@ and [<AbstractClass>] Pickler<'T> =
 
         abstract member Read : state:ReadState -> tag:string -> 'T
         abstract member Write : state:WriteState -> tag:string -> value:'T -> unit
-        abstract member Clone : state:WriteState -> value:'T -> 'T
+        abstract member Clone : state:CloneState -> value:'T -> 'T
 
         override internal UntypedRead : state:ReadState -> tag:string -> obj
         override internal UntypedWrite : state:WriteState -> tag:string -> value:obj -> unit
-        override internal UntypedClone : state:WriteState -> obj -> obj
+        override internal UntypedClone : state:CloneState -> obj -> obj
 
         override internal Unpack : IPicklerUnpacker<'R> -> 'R
     end
@@ -87,7 +87,7 @@ and IObjectSifter =
         /// </summary>
         /// <param name="pickler">Pickler used for traversal. Used for metadata reference.</param>
         /// <param name="value">Value that is being visited.</param>
-        abstract member SiftValue<'T> : pickler:Pickler<'T> * value:'T -> bool
+        abstract member Sift<'T> : pickler:Pickler<'T> * value:'T -> bool
     end
     
 /// Provides access to automated pickler generation facility.
@@ -105,7 +105,7 @@ and IPicklerResolver =
     end
 
 /// Contains all state related to object serializations
-and WriteState =
+and [<AutoSerializable(false); Sealed>] WriteState =
     class
         internal new : 
             formatter:IPickleFormatWriter * resolver:IPicklerResolver * reflectionCache:ReflectionCache * 
@@ -128,7 +128,7 @@ and WriteState =
     end
     
 /// Contains all state related to object deserializations
-and ReadState =
+and [<AutoSerializable(false); Sealed>] ReadState =
     class
         internal new : 
             formatter:IPickleFormatReader * resolver:IPicklerResolver * 
@@ -147,21 +147,25 @@ and ReadState =
         member internal Reset : unit -> unit
     end
 
-/// Contains all state related to object serializations
-and CloneState =
+/// Contains all state related to object cloning
+and [<AutoSerializable(false); Sealed>] CloneState =
     class
         internal new : 
-            resolver:IPicklerResolver * reflectionCache:ReflectionCache * 
-                ?streamingContext:StreamingContext * ?sifter : IObjectSifter * ?sifted:(int64 * obj) [] -> WriteState
+            resolver:IPicklerResolver * ?streamingContext:StreamingContext * ?sifter:IObjectSifter *
+                   ?unSiftData:((int64 * obj) [] * (int64 * int64 []) []) -> CloneState
 
+        
+        member internal EarlyRegisterArray : array:Array -> unit
+        member internal GetReferenceId : obj:obj * firstTime:byref<bool> -> int64
         member internal CyclicObjectSet : HashSet<int64>
+        member internal ObjectCache : Dictionary<int64, obj>
         member internal ObjectStack : Stack<int64>
-        member internal GetObjectId : obj:obj * firstTime:byref<bool> -> int64
-        member internal ObjectCount : int64
         member internal PicklerResolver : IPicklerResolver
-        member internal ReflectionCache : ReflectionCache
-        /// Streaming context to the serialization
+        /// Gets the cloning streaming context.
         member StreamingContext : StreamingContext
-        member internal Sifter : IObjectSifter option
-        member internal Sifted : ResizeArray<int64 * obj>
+        // sifting-related state
+        member internal NextNodeId : unit -> int64
+        member internal SiftData : (IObjectSifter * Dictionary<int64, (obj * ResizeArray<int64>)>) option
+        member internal CreateSift : value:'T -> Sifted<'T> * (int64 * obj) []
+        member internal UnSiftData : Dictionary<int64, int64 * obj> option
     end

@@ -36,7 +36,7 @@ type ``FsPickler Tests`` (format : string) as self =
         pickler.UnPickle<'T>(bytes)
 
     let testClone (x : 'T) =
-        let y = FsPickler.NewClone x
+        let y = FsPickler.Clone x
         x = y |> should equal true
         if not <| obj.ReferenceEquals(x, null) then
             obj.ReferenceEquals(x,y) |> should equal false
@@ -605,9 +605,34 @@ type ``FsPickler Tests`` (format : string) as self =
         |> should equal 100
 
     [<Test; Category("FsPickler Generic tests")>]
-    member __.``5. Object: simple sifting`` () =
+    member __.``5. Object: simple sift`` () =
         let graph : (int * int []) option * int [] option option list = (Some (1, [|1 .. 100|]), [None; None ; Some None; Some (Some [|12|])])
-        let sifter = { new IObjectSifter with member __.SiftValue(p,_) = p.TypeKind = TypeKind.Array }
+        let sifter = { new IObjectSifter with member __.Sift(p,_) = p.TypeKind = TypeKind.Array }
+        let sifted, values = FsPickler.Sift(graph, sifter)
+        values.Length |> should equal 2
+        FsPickler.UnSift(sifted, values) |> should equal graph
+
+    [<Test; Category("FsPickler Generic tests")>]
+    member __.``5. Object: random sift`` () =
+        let r = new System.Random()
+        let randomSifter = { new IObjectSifter with member __.Sift(_,_) = r.Next(0,5) = 0 }
+        Check.QuickThrowOnFail(fun (tree : ListTree<int>) ->
+            let sifted, values = FsPickler.Sift(tree, randomSifter)
+            FsPickler.UnSift(sifted, values) |> should equal tree)
+
+    [<Test; Category("FsPickler Generic tests"); Repeat(5)>]
+    member __.``5. Object: random graph sifting`` () =
+        let g = createRandomGraph 0.4 30
+        let r = new System.Random()
+        let randomSifter = { new IObjectSifter with member __.Sift(_,_) = r.Next(0,5) = 0 }
+        let sifted, values = FsPickler.Sift(g, randomSifter)
+        let g' = FsPickler.UnSift(sifted, values)
+        areEqualGraphs g g' |> should equal true
+
+    [<Test; Category("FsPickler Generic tests")>]
+    member __.``5. Object: simple sift serialization`` () =
+        let graph : (int * int []) option * int [] option option list = (Some (1, [|1 .. 100|]), [None; None ; Some None; Some (Some [|12|])])
+        let sifter = { new IObjectSifter with member __.Sift(p,_) = p.TypeKind = TypeKind.Array }
         use m = new MemoryStream()
         let sifted = pickler.SerializeSifted(m, graph, sifter, leaveOpen = true)
         sifted.Length |> should equal 2
@@ -615,9 +640,9 @@ type ``FsPickler Tests`` (format : string) as self =
         pickler.DeserializeSifted<(int * int []) option * int [] option option list>(m, sifted) |> should equal graph
 
     [<Test; Category("FsPickler Generic tests")>]
-    member __.``5. Object: random sifting`` () =
+    member __.``5. Object: random sift serialization`` () =
         let r = new System.Random()
-        let randomSifter = { new IObjectSifter with member __.SiftValue(_,_) = r.Next(0,5) = 0 }
+        let randomSifter = { new IObjectSifter with member __.Sift(_,_) = r.Next(0,5) = 0 }
         Check.QuickThrowOnFail(fun (tree : ListTree<int>) ->
             use m = new MemoryStream()
             let sifted = pickler.SerializeSifted(m, tree, randomSifter, leaveOpen = true)
@@ -625,10 +650,10 @@ type ``FsPickler Tests`` (format : string) as self =
             pickler.DeserializeSifted<ListTree<int>>(m, sifted) |> should equal tree)
 
     [<Test; Category("FsPickler Generic tests"); Repeat(5)>]
-    member __.``5. Object: random graph sifting`` () =
+    member __.``5. Object: random graph sift serialization`` () =
         let g = createRandomGraph 0.4 30
         let r = new System.Random()
-        let randomSifter = { new IObjectSifter with member __.SiftValue(_,_) = r.Next(0,5) = 0 }
+        let randomSifter = { new IObjectSifter with member __.Sift(_,_) = r.Next(0,5) = 0 }
         use m = new MemoryStream()
         let sifted = pickler.SerializeSifted(m, g, randomSifter, leaveOpen = true)
         m.Position <- 0L
@@ -967,7 +992,7 @@ type ``FsPickler Tests`` (format : string) as self =
     member __.``8. Clone: int32`` () = Check.QuickThrowOnFail<int32> testClone
 
     [<Test; Category("Clone")>]
-    member __.``8. Clone: string`` () = Check.QuickThrowOnFail<string> (fun s -> let s' = FsPickler.NewClone s in s = s')
+    member __.``8. Clone: string`` () = Check.QuickThrowOnFail<string> (fun s -> let s' = FsPickler.Clone s in s = s')
 
     [<Test; Category("Clone")>]
     member __.``8. Clone: byte []`` () = testClone (null : byte []) ; Check.QuickThrowOnFail<byte []> testClone
@@ -1008,26 +1033,26 @@ type ``FsPickler Tests`` (format : string) as self =
                 }
             @>
 
-        let quot' = FsPickler.NewClone quot
+        let quot' = FsPickler.Clone quot
         quot'.ToString() |> should equal (quot.ToString())
         
     [<Test; Category("Clone")>]
     member __.``8. Clone: caching`` () = 
         let x = obj ()
-        let y,z = FsPickler.NewClone ((x,x))
+        let y,z = FsPickler.Clone ((x,x))
         obj.ReferenceEquals(y,z) |> should equal true
 
     [<Test; Category("Clone")>]
     member __.``8. Clone: recursive objects`` () = 
         let x = Array.zeroCreate<obj> 10
         for i = 0 to 9 do x.[i] <- box x
-        let y = FsPickler.NewClone x
+        let y = FsPickler.Clone x
         for z in y do obj.ReferenceEquals(z,y) |> should equal true
 
     [<Test; Category("Clone"); Repeat(5)>]
     member __.``8. Clone: random graph`` () = 
         let g = createRandomGraph 0.7 20
-        let g' = FsPickler.NewClone g
+        let g' = FsPickler.Clone g
         obj.ReferenceEquals(g,g') |> should equal false
         areEqualGraphs g g' |> should equal true
 

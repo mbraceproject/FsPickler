@@ -70,7 +70,7 @@ and IObjectVisitor =
     abstract Visit<'T> : pickler:Pickler<'T> * value:'T -> unit
 
 and IObjectSifter =
-    abstract member SiftValue<'T> : pickler:Pickler<'T> * value:'T -> bool
+    abstract member Sift<'T> : pickler:Pickler<'T> * value:'T -> bool
 
 and IPicklerResolver =
     abstract IsSerializable : Type -> bool
@@ -79,7 +79,7 @@ and IPicklerResolver =
     abstract Resolve : Type -> Pickler
     abstract Resolve<'T> : unit -> Pickler<'T>
 
-and [<AutoSerializable(false)>] 
+and [<AutoSerializable(false); Sealed>]
     WriteState internal (formatter : IPickleFormatWriter, resolver : IPicklerResolver, 
                             reflectionCache : ReflectionCache, ?streamingContext, ?visitor : IObjectVisitor, ?sifter : IObjectSifter) =
 
@@ -115,7 +115,7 @@ and [<AutoSerializable(false)>]
         objStack.Clear()
         cyclicObjects.Clear()
 
-and [<AutoSerializable(false)>] 
+and [<AutoSerializable(false); Sealed>]
     ReadState internal (formatter : IPickleFormatReader, resolver : IPicklerResolver, reflectionCache : ReflectionCache, 
                             ?streamingContext : StreamingContext, ?sifted : (int64 * obj) []) =
         
@@ -149,32 +149,48 @@ and [<AutoSerializable(false)>]
         currentId <- 0L
         objCache.Clear()
 
-and [<AutoSerializable(false)>] 
-    CloneState internal (resolver : IPicklerResolver, ?streamingContext : StreamingContext) = //, ?sifter : IObjectSifter, ?sifted : (int64 * obj) []) =
+and [<AutoSerializable(false); Sealed>] 
+    CloneState internal (resolver : IPicklerResolver, ?streamingContext : StreamingContext, 
+                                ?sifter : IObjectSifter, ?unSiftData : (int64 * obj) [] * (int64 * int64[]) []) =
 
     let sc = match streamingContext with None -> new StreamingContext() | Some sc -> sc
 
-//    let mutable nodeCount = 0L
     let mutable currentId = 0L
     let mutable idGen = new ObjectIDGenerator()
     let objStack = new Stack<int64> ()
     let cyclicObjects = new HashSet<int64> ()
     let objCache = new Dictionary<int64, obj> ()
-//    let outSifts = new ResizeArray<int64 * obj> ()
-//    let inSifts = 
-//        match sifted with
-//        | Some [||] | None -> None
-//        | Some sifted ->
-//            let d = new Dictionary<int64, obj> ()
-//            for i,o in sifted do d.Add(i, o)
-//            Some d
+
+    let mutable nodeCount = 0L
+
+    let siftData =
+        match sifter with
+        | Some s -> 
+            let state = new Dictionary<int64, obj * ResizeArray<int64>>()
+            Some(s, state)
+        | None -> None
+        
+    // merges usift metadata and values in a single dictionary
+    let unsiftData = 
+        match unSiftData with
+        | Some(_, [||]) | None -> None
+        | Some(values, indices) ->
+            let vdict = new Dictionary<int64, int64 * obj> ()
+            for (id,_) as v in values do vdict.Add(id, v)
+            let dict = new Dictionary<int64, int64 * obj> ()
+            for id,is in indices do
+                let mutable value = Unchecked.defaultof<int64 * obj>
+                if vdict.TryGetValue(id, &value) then
+                    for i in is do dict.Add(i, value)
+                else
+                    let msg = sprintf "Expected could not locate unsift value for id %d." id
+                    invalidArg "values" msg
+
+            Some dict
+
+    member __.StreamingContext = sc
 
     member internal __.PicklerResolver = resolver
-    member __.StreamingContext = sc
-//    member internal __.Sifter = sifter
-//    member internal __.InSifts = inSifts
-//    member internal __.OutSifts = outSifts
-//    member internal __.NextNodeId() = let nc = nodeCount in nodeCount <- nc + 1L ; nc
     member internal __.GetReferenceId(obj:obj, firstTime:byref<bool>) = 
         let id = idGen.GetId(obj, &firstTime)
         if firstTime then currentId <- id
@@ -184,3 +200,22 @@ and [<AutoSerializable(false)>]
     member internal __.EarlyRegisterArray(array : Array) = objCache.Add(currentId, array)
     member internal __.ObjectStack = objStack
     member internal __.CyclicObjectSet = cyclicObjects
+
+    member internal __.NextNodeId() = let nc = nodeCount in nodeCount <- nc + 1L ; nc
+    member internal __.UnSiftData = unsiftData
+    member internal __.SiftData = siftData
+    /// Creates a sift pair using provided sifted value.
+    member internal __.CreateSift (value : 'T) = 
+        let _,dict = Option.get siftData
+        let indices = Array.zeroCreate<int64 * int64 []> dict.Count
+        let values = Array.zeroCreate<int64 * obj> dict.Count
+        let mutable i = 0
+        for kv in dict do
+            let id = kv.Key
+            let obj, ra = kv.Value
+            indices.[i] <- id, ra.ToArray()
+            values.[i] <- id, obj
+            i <- i + 1
+
+        let sift = new Sifted<'T>(value, indices)
+        sift, values

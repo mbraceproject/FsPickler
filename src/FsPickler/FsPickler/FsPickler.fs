@@ -49,15 +49,58 @@ type FsPickler private () =
     //
 
     /// <summary>
-    ///     Creates a deep clone of given object.
+    ///     Performs an in-memory, deep cloning of provided serializable object graph.
+    ///     Cloning is performed on a node-to-node basis and does not make use of intermediate
+    ///     serialization buffers.
     /// </summary>
     /// <param name="value">Value to be cloned.</param>
-    static member Clone<'T>(value : 'T) : 'T = defaultSerializer.Value.Clone(value)
-
-    static member NewClone<'T> (value : 'T, ?pickler : Pickler<'T>, ?streamingContext : StreamingContext) : 'T =
+    /// <param name="pickler">Pickler used for cloning. Defaults to auto-generated pickler.</param>
+    /// <param name="streamingContext">Streaming context used for cloning. Defaults to null streaming context.</param>
+    static member Clone<'T> (value : 'T, ?pickler : Pickler<'T>, ?streamingContext : StreamingContext) : 'T =
         let pickler = match pickler with None -> resolver.Value.Resolve<'T> () | Some p -> p
         let state = new CloneState(resolver.Value, ?streamingContext = streamingContext)
         pickler.Clone state value
+
+    /// <summary>
+    ///     Creates a clone of the provided object graph, sifting objects from the graph as specified by the provided sifter implementation.
+    ///     Only reference types can be sifted from a graph.
+    /// </summary>
+    /// <param name="value">Value to be sifted.</param>
+    /// <param name="sifter">Sifting predicate implementation.</param>
+    /// <param name="pickler">Pickler to be used for traversal. Defaults to auto-generated pickler.</param>
+    /// <param name="streamingContext">Streaming context used for cloning. Defaults to null streaming context.</param>
+    /// <returns>A sifted wrapper together with all objects that have been sifted.</returns>
+    static member Sift<'T>(value : 'T, sifter : IObjectSifter, ?pickler : Pickler<'T>, ?streamingContext : StreamingContext) : Sifted<'T> * (int64 * obj) [] =
+        let pickler = match pickler with None -> resolver.Value.Resolve<'T> () | Some p -> p
+        let state = new CloneState(resolver.Value, ?streamingContext = streamingContext, sifter = sifter)
+        let sifted = pickler.Clone state value
+        state.CreateSift(sifted)
+
+    /// <summary>
+    ///     Creates a clone of the provided object graph, sifting objects from the graph as specified by the provided sifter implementation.
+    ///     Only reference types can be sifted from a graph.
+    /// </summary>
+    /// <param name="value">Value to be sifted.</param>
+    /// <param name="sifter">Sifting predicate implementation.</param>
+    /// <param name="pickler">Pickler to be used for traversal. Defaults to auto-generated pickler.</param>
+    /// <param name="streamingContext">Streaming context used for cloning. Defaults to null streaming context.</param>
+    /// <returns>A sifted wrapper together with all objects that have been sifted.</returns>
+    static member Sift<'T>(value : 'T, sifter : obj -> bool, ?pickler : Pickler<'T>, ?streamingContext : StreamingContext) : Sifted<'T> * (int64 * obj) [] =
+        let sifter = { new IObjectSifter with member __.Sift(_,t) = sifter t }
+        FsPickler.Sift(value, sifter, ?pickler = pickler, ?streamingContext = streamingContext)
+
+    /// <summary>
+    ///     Unsifts a provided object graph with given values.
+    /// </summary>
+    /// <param name="sifted">Sifted object graph to be unsifted.</param>
+    /// <param name="values">Values to be pushed in sift holes.</param>
+    /// <param name="pickler">Pickler to be used for traversal. Defaults to auto-generated pickler.</param>
+    /// <param name="streamingContext">Streaming context used for cloning. Defaults to null streaming context.</param>
+    /// <returns>An unsifted object graph.</returns>
+    static member UnSift<'T>(sifted : Sifted<'T>, values:(int64 * obj) [], ?pickler : Pickler<'T>, ?streamingContext : StreamingContext) : 'T =
+        let pickler = match pickler with None -> resolver.Value.Resolve<'T> () | Some p -> p
+        let state = new CloneState(resolver.Value, ?streamingContext = streamingContext, unSiftData = (values, sifted.SiftedIndices))
+        pickler.Clone state sifted.Value
 
     /// <summary>Compute size in bytes for given input.</summary>
     /// <param name="value">input value.</param>

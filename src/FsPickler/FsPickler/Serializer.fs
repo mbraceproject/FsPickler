@@ -275,16 +275,6 @@ type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?
     //  Misc tools
     //
 
-    /// <summary>
-    ///     Creates a deep clone of given serializable object.
-    /// </summary>
-    /// <param name="value">Value to be cloned.</param>
-    member bp.Clone<'T> (value : 'T) : 'T =
-        use m = new System.IO.MemoryStream()
-        bp.Serialize(m, value, leaveOpen = true)
-        m.Position <- 0L
-        bp.Deserialize<'T>(m)
-
     /// <summary>Compute size and hashcode for given input.</summary>
     /// <param name="value">input value.</param>
     /// <param name="hashFactory">the hashing algorithm to be used. MurMur3 by default.</param>
