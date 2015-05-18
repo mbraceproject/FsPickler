@@ -16,7 +16,7 @@ module internal Common =
     let formatv0960 = "0.9.6"
 
     [<Literal>]
-    let formatv1100 = "1.1.0"
+    let formatv1200 = "1.2.0"
 
     let inline fastUnbox<'T> (x : obj) = 
         Microsoft.FSharp.Core.LanguagePrimitives.IntrinsicFunctions.UnboxFast<'T> x

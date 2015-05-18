@@ -25,4 +25,4 @@ All documentation and related material can be found [here](http://nessos.github.
 Head (branch `master`), Build & Unit tests
 
 * Windows/.NET [![Build status](https://ci.appveyor.com/api/projects/status/vwthnxgal50ua8ej/branch/master)](https://ci.appveyor.com/project/nessos/fspickler)
-* Mac OS X/Mono 3.4 [![Build Status](https://travis-ci.org/nessos/FsPickler.png?branch=master)](https://travis-ci.org/nessos/FsPickler/branches)
+* Mac OS X/Mono 3.12 [![Build Status](https://travis-ci.org/nessos/FsPickler.png?branch=master)](https://travis-ci.org/nessos/FsPickler/branches)

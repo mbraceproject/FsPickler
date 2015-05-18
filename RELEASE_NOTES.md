@@ -1,3 +1,8 @@
+### 1.2.0
+* Add fast cloning support.
+* Add object sifting support.
+* Serializer API overhaul.
+
 ### 1.0.19
 * Implement IObjectReference support.
 

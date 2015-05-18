@@ -40,9 +40,9 @@ type internal JsonPickleReader (jsonReader : JsonReader, omitHeader, isTopLevelS
             else
                 do jsonReader.MoveNext()
                 let version = jsonReader.ReadPrimitiveAs<string> false "FsPickler"
-                if version <> formatv1100 && version <> formatv0960 then
+                if version <> formatv1200 then
                     let v = Version(version)
-                    raise <| new FormatException(sprintf "Unsupported json format version %O." version)
+                    raise <| new FormatException(sprintf "Unsupported json format version '%O'." version)
 
                 let sTag = jsonReader.ReadPrimitiveAs<string> false "type"
                 if tag <> sTag then
