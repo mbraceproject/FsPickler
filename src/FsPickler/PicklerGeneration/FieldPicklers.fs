@@ -83,13 +83,14 @@ type internal StructFieldPickler =
             fastUnbox<'T> t
 
         let cloner (c : CloneState) (t : 'T) =
-            let t' = FormatterServices.GetUninitializedObject(typeof<'T>) |> fastUnbox<'T>
+            let t' = FormatterServices.GetUninitializedObject(typeof<'T>)
             for i = 0 to fields.Length - 1 do
                 let f = fields.[i]
                 let o = f.GetValue t
                 let o' = picklers.[i].UntypedClone c o
                 f.SetValue(t', o')
-            t'
+
+            fastUnbox<'T> t'
 #endif
 
         CompositePickler.Create(reader, writer, cloner, PicklerInfo.FieldSerialization, cacheByRef = false, useWithSubtypes = false)
