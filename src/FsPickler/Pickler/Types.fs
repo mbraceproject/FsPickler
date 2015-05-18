@@ -14,8 +14,8 @@ open Nessos.FsPickler.Reflection
 type TypeKind =
     | Primitive             = 0uy
     | Char                  = 1uy // char is a special primitive that should be serialized w.r.t. encoding
-    | String                = 2uy
-    | Enum                  = 3uy
+    | Enum                  = 2uy
+    | String                = 3uy
     | Value                 = 4uy
     | Nullable              = 5uy
     | Array                 = 6uy

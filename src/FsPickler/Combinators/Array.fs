@@ -110,11 +110,14 @@ type internal ArrayPickler =
                 ra.ToArray()
 
         let cloner (c : CloneState) (array : 'T []) =
-            let array' = Array.zeroCreate<'T> array.Length
-            c.EarlyRegisterArray array'
-            for i = 0 to array.Length - 1 do
-                array'.[i] <- ep.Clone c array.[i]
-            array'
+            if ep.TypeKind <= TypeKind.Enum then
+                array.Clone() |> fastUnbox<_>
+            else
+                let array' = Array.zeroCreate<'T> array.Length
+                c.EarlyRegisterArray array'
+                for i = 0 to array.Length - 1 do
+                    array'.[i] <- ep.Clone c array.[i]
+                array'
 
         CompositePickler.Create(reader, writer, cloner, PicklerInfo.Array, cacheByRef = true, useWithSubtypes = false, skipHeaderWrite = true)
 
@@ -157,15 +160,18 @@ type internal ArrayPickler =
             array
 
         let cloner (c : CloneState) (array : 'T [,]) =
-            let l1 = array.GetLength 0
-            let l2 = array.GetLength 1
-            let array' = Array2D.zeroCreate<'T> l1 l2
-            c.EarlyRegisterArray array'
-            for i = 0 to l1 - 1 do
-                for j = 0 to l2 - 1 do
-                    array'.[i,j] <- ep.Clone c array.[i,j]
+            if ep.TypeKind <= TypeKind.Enum then
+                array.Clone() |> fastUnbox<_>
+            else
+                let l1 = array.GetLength 0
+                let l2 = array.GetLength 1
+                let array' = Array2D.zeroCreate<'T> l1 l2
+                c.EarlyRegisterArray array'
+                for i = 0 to l1 - 1 do
+                    for j = 0 to l2 - 1 do
+                        array'.[i,j] <- ep.Clone c array.[i,j]
 
-            array'
+                array'
 
         CompositePickler.Create(reader, writer, cloner, PicklerInfo.Array, cacheByRef = true, useWithSubtypes = false, skipHeaderWrite = false)
 
@@ -211,17 +217,20 @@ type internal ArrayPickler =
             array
 
         let cloner (c : CloneState) (array : 'T [,,]) =
-            let l1 = array.GetLength 0
-            let l2 = array.GetLength 1
-            let l3 = array.GetLength 2
-            let array' = Array3D.zeroCreate<'T> l1 l2 l3
-            c.EarlyRegisterArray array'
-            for i = 0 to l1 - 1 do
-                for j = 0 to l2 - 1 do
-                    for k = 0 to l3 - 1 do
-                        array'.[i,j,k] <- ep.Clone c array.[i,j,k]
+            if ep.TypeKind <= TypeKind.Enum then
+                array.Clone() |> fastUnbox<_>
+            else
+                let l1 = array.GetLength 0
+                let l2 = array.GetLength 1
+                let l3 = array.GetLength 2
+                let array' = Array3D.zeroCreate<'T> l1 l2 l3
+                c.EarlyRegisterArray array'
+                for i = 0 to l1 - 1 do
+                    for j = 0 to l2 - 1 do
+                        for k = 0 to l3 - 1 do
+                            array'.[i,j,k] <- ep.Clone c array.[i,j,k]
 
-            array'
+                array'
 
         CompositePickler.Create(reader, writer, cloner, PicklerInfo.Array, cacheByRef = true, useWithSubtypes = false, skipHeaderWrite = false)
 
@@ -270,19 +279,22 @@ type internal ArrayPickler =
             array
 
         let cloner (c : CloneState) (array : 'T [,,,]) =
-            let l1 = array.GetLength 0
-            let l2 = array.GetLength 1
-            let l3 = array.GetLength 2
-            let l4 = array.GetLength 3
-            let array' = Array4D.zeroCreate<'T> l1 l2 l3 l4
-            c.EarlyRegisterArray array'
-            for i = 0 to l1 - 1 do
-                for j = 0 to l2 - 1 do
-                    for k = 0 to l3 - 1 do
-                        for l = 0 to l4 - 1 do
-                        array'.[i,j,k,l] <- ep.Clone c array.[i,j,k,l]
+            if ep.TypeKind <= TypeKind.Enum then
+                array.Clone() |> fastUnbox<_>
+            else
+                let l1 = array.GetLength 0
+                let l2 = array.GetLength 1
+                let l3 = array.GetLength 2
+                let l4 = array.GetLength 3
+                let array' = Array4D.zeroCreate<'T> l1 l2 l3 l4
+                c.EarlyRegisterArray array'
+                for i = 0 to l1 - 1 do
+                    for j = 0 to l2 - 1 do
+                        for k = 0 to l3 - 1 do
+                            for l = 0 to l4 - 1 do
+                            array'.[i,j,k,l] <- ep.Clone c array.[i,j,k,l]
 
-            array'
+                array'
 
         CompositePickler.Create(reader, writer, cloner, PicklerInfo.Array, cacheByRef = true, useWithSubtypes = false, skipHeaderWrite = false)
 
