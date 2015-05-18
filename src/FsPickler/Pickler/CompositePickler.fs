@@ -146,6 +146,7 @@ type internal CompositePickler<'T> =
 
     member internal p.Writer = p.m_Writer
     member internal p.Reader = p.m_Reader
+    member internal p.Cloner = p.m_Cloner
 
     override p.Write (state : WriteState) (tag : string) (value : 'T) =
 

@@ -343,7 +343,7 @@ type internal FsExceptionPickler =
             | Some d -> d.Invoke(fpicklers, r, e) ; e
 
         let cloner (c : CloneState) (e : 'Exception) =
-            let e' = defPickler.Clone c e
+            let e' = defPickler.Cloner c e
             match clonerDele with
             | None -> e'
             | Some d -> d.Invoke(fpicklers, c, e, e') ; e'
@@ -366,7 +366,7 @@ type internal FsExceptionPickler =
             e
 
         let cloner (c : CloneState) (e : 'Exception) =
-            let e' = defPickler.Clone c e
+            let e' = defPickler.Cloner c e
 
             for i = 0 to fields.Length - 1 do
                 let f = fields.[i]
