@@ -193,7 +193,7 @@ type internal ISerializablePickler =
                 run onSerialized c t
 
                 let sI' = cloneSerializationInfo c sI
-                let t' = create sI c.StreamingContext
+                let t' = create sI' c.StreamingContext
                 run onDeserialized c t'
                 if isDeserializationCallback then (fastUnbox<IDeserializationCallback> t').OnDeserialization null
                 if isObjectReference then 

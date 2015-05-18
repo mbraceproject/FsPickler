@@ -24,7 +24,7 @@ open FsCheck
 [<TestFixture(PickleFormat.Json)>]
 [<TestFixture(PickleFormat.Json_Headerless)>]
 [<TestFixture(PickleFormat.Bson)>]
-type ``FsPickler Tests`` (format : string) as self =
+type ``FsPickler Serializer Tests`` (format : string) as self =
 
     let _ = Arb.register<FsPicklerGenerators> ()
 
@@ -34,12 +34,6 @@ type ``FsPickler Tests`` (format : string) as self =
     let testRoundtrip (x : 'T) = 
         let bytes = self.Pickle x
         pickler.UnPickle<'T>(bytes)
-
-    let testClone (x : 'T) =
-        let y = FsPickler.Clone x
-        x = y |> should equal true
-        if not <| obj.ReferenceEquals(x, null) then
-            obj.ReferenceEquals(x,y) |> should equal false
 
     let testEquals x = 
         let y = testRoundtrip x 
@@ -64,49 +58,49 @@ type ``FsPickler Tests`` (format : string) as self =
     //  Primitive Serialization tests
     //
 
-    [<Test; Category("Clone")>]
+    [<Test; Category("Primitives")>]
     member __.``1. Primitive: bool`` () = testEquals false ; testEquals true
 
-    [<Test; Category("Clone")>]
+    [<Test; Category("Primitives")>]
     member __.``1. Primitive: byte`` () = Check.QuickThrowOnFail<byte> testEquals
 
-    [<Test; Category("Clone")>]
+    [<Test; Category("Primitives")>]
     member __.``1. Primitive: sbyte`` () = Check.QuickThrowOnFail<sbyte> testEquals
 
-    [<Test; Category("Clone")>]
+    [<Test; Category("Primitives")>]
     member __.``1. Primitive: int16`` () = Check.QuickThrowOnFail<int16> testEquals
 
-    [<Test; Category("Clone")>]
+    [<Test; Category("Primitives")>]
     member __.``1. Primitive: int32`` () = Check.QuickThrowOnFail<int32> testEquals
 
-    [<Test; Category("Clone")>]
+    [<Test; Category("Primitives")>]
     member __.``1. Primitive: int64`` () = Check.QuickThrowOnFail<int64> testEquals
 
-    [<Test; Category("Clone")>]
+    [<Test; Category("Primitives")>]
     member __.``1. Primitive: uint16`` () = Check.QuickThrowOnFail<uint16> testEquals
 
-    [<Test; Category("Clone")>]
+    [<Test; Category("Primitives")>]
     member __.``1. Primitive: uint32`` () = Check.QuickThrowOnFail<uint32> testEquals
 
-    [<Test; Category("Clone")>]
+    [<Test; Category("Primitives")>]
     member __.``1. Primitive: uint64`` () = Check.QuickThrowOnFail<uint64> testEquals
 
-    [<Test; Category("Clone")>]
+    [<Test; Category("Primitives")>]
     member __.``1. Primitive: single`` () = Check.QuickThrowOnFail<single> testEquals
 
-    [<Test; Category("Clone")>]
+    [<Test; Category("Primitives")>]
     member __.``1. Primitive: double`` () = Check.QuickThrowOnFail<double> testEquals
 
-    [<Test; Category("Clone")>]
+    [<Test; Category("Primitives")>]
     member __.``1. Primitive: decimal`` () = Check.QuickThrowOnFail<decimal> testEquals
 
-    [<Test; Category("Clone")>]
+    [<Test; Category("Primitives")>]
     member __.``1. Primitive: char`` () = Check.QuickThrowOnFail<char> testEquals
 
-    [<Test; Category("Clone")>]
+    [<Test; Category("Primitives")>]
     member __.``1. Primitive: string`` () = Check.QuickThrowOnFail<string> testEquals
 
-    [<Test; Category("Clone")>]
+    [<Test; Category("Primitives")>]
     member __.``1. Primitive: date`` () = 
         if runsOnMono then
             // Mono bug: https://bugzilla.xamarin.com/show_bug.cgi?id=20457
@@ -114,13 +108,13 @@ type ``FsPickler Tests`` (format : string) as self =
         else
             Check.QuickThrowOnFail<DateTime> testEquals
 
-    [<Test; Category("Clone")>]
+    [<Test; Category("Primitives")>]
     member __.``1. Primitive: System.TimeSpan`` () = Check.QuickThrowOnFail<TimeSpan> testEquals
 
-    [<Test; Category("Clone")>]
+    [<Test; Category("Primitives")>]
     member __.``1. Primitive: System.Guid`` () = Check.QuickThrowOnFail<Guid> testEquals
 
-    [<Test; Category("Clone")>]
+    [<Test; Category("Primitives")>]
     member __.``1. Primitive: bigint`` () = 
         if runsOnMono then
             // Mono bug: https://bugzilla.xamarin.com/show_bug.cgi?id=20456
@@ -443,75 +437,6 @@ type ``FsPickler Tests`` (format : string) as self =
         | :? FsPicklerException & InnerExn (:? NonSerializableTypeException) -> ()
 
     [<Test; Category("FsPickler Generic tests")>]
-    member __.``5. Object: pickler generation order should not affect result`` () =
-        // see type definitions on an explanation of what this test checks
-        FsPickler.IsSerializableType<Foo> () |> should equal false
-        FsPickler.IsSerializableType<Bar> () |> should equal false
-
-    [<Test; Category("FsPickler Generic tests")>]
-    member __.``5. Object: Correctly resolve recursive types`` () =
-        isRecursive<int> |> should equal false
-        isRecursive<DateTime> |> should equal false
-        isRecursive<DateTimeOffset> |> should equal false
-        isRecursive<bigint> |> should equal false
-        isRecursive<string> |> should equal false
-        isRecursive<Type> |> should equal false
-        isRecursive<int * string []> |> should equal false
-        isRecursive<Type option * string []> |> should equal false
-        isRecursive<Record> |> should equal false
-        isRecursive<SimpleDU> |> should equal false
-        isRecursive<GenericClass<GenericClass<int>>> |> should equal false
-
-        isRecursive<obj> |> should equal true
-        isRecursive<Peano> |> should equal true
-        isRecursive<int list> |> should equal true
-        isRecursive<int -> int> |> should equal true
-        isRecursive<RecursiveClass> |> should equal true
-        isRecursive<CyclicClass> |> should equal true
-        isRecursive<SimpleISerializableClass> |> should equal true
-        isRecursive<GenericISerializableClass<int>> |> should equal true
-
-    [<Test; Category("FsPickler Generic tests")>]
-    member __.``5. Object: Correctly resolve finite types`` () =
-        isFixedSize<int> |> should equal true
-        isFixedSize<DateTime> |> should equal true
-        isFixedSize<DateTimeOffset> |> should equal true
-        isFixedSize<int * byte * (int * int64 * DateTime)> |> should equal true
-        isFixedSize<string> |> should equal false
-        isFixedSize<Type> |> should equal true
-        isFixedSize<int * string []> |> should equal false
-        isFixedSize<Type option * string []> |> should equal false
-        isFixedSize<Record> |> should equal false
-        isFixedSize<SimpleDU> |> should equal false
-        isFixedSize<GenericClass<GenericClass<int>>> |> should equal true
-
-        isFixedSize<obj> |> should equal false
-        isFixedSize<Peano> |> should equal false
-        isFixedSize<bigint> |> should equal false
-        isFixedSize<int list> |> should equal false
-        isFixedSize<int -> int> |> should equal false
-        isFixedSize<RecursiveClass> |> should equal false
-        isFixedSize<SimpleISerializableClass> |> should equal false
-
-    [<Test; Category("FsPickler Generic tests")>]
-    member __.``5. Object: detect polymorphic recursive types`` () =
-        FsPickler.IsSerializableType<PolyRec<int>> () |> should equal false
-        FsPickler.IsSerializableType<PolyRec<int> ref> () |> should equal false
-        FsPickler.IsSerializableType<APoly<int, string>> () |> should equal false
-        FsPickler.IsSerializableType<BPoly<int>> () |> should equal false
-        FsPickler.IsSerializableType<PseudoPolyRec<int>> () |> should equal true
-
-    [<Test; Category("FsPickler Generic tests")>]
-    member __.``5. Should mark subtypes of nonserializable types serializable`` () =
-        FsPickler.IsSerializableType<NonSerializable> () |> should equal false
-        FsPickler.IsSerializableType<SerializableInheritingNonSerializable> () |> should equal false
-
-    [<Test; Category("FsPickler Generic tests")>]
-    member __.``5. Should mark serializable instances of nonserializable interfaces serializable`` () =
-        FsPickler.IsSerializableType<NonSerializableInterface> () |> should equal true
-        FsPickler.IsSerializableType<SerializableImplementingNonSerializable> () |> should equal true
-
-    [<Test; Category("FsPickler Generic tests")>]
     member __.``5. Object: cyclic array`` () = 
         let cyclicArray : obj [] = 
             let array = Array.zeroCreate<obj> 10
@@ -603,31 +528,6 @@ type ``FsPickler Tests`` (format : string) as self =
         pickler.UnPickle(data, pickler = Pickler.seq Pickler.int) 
         |> Seq.length 
         |> should equal 100
-
-    [<Test; Category("FsPickler Generic tests")>]
-    member __.``5. Object: simple sift`` () =
-        let graph : (int * int []) option * int [] option option list = (Some (1, [|1 .. 100|]), [None; None ; Some None; Some (Some [|12|])])
-        let sifter = { new IObjectSifter with member __.Sift(p,_) = p.TypeKind = TypeKind.Array }
-        let sifted, values = FsPickler.Sift(graph, sifter)
-        values.Length |> should equal 2
-        FsPickler.UnSift(sifted, values) |> should equal graph
-
-    [<Test; Category("FsPickler Generic tests")>]
-    member __.``5. Object: random sift`` () =
-        let r = new System.Random()
-        let randomSifter = { new IObjectSifter with member __.Sift(_,_) = r.Next(0,5) = 0 }
-        Check.QuickThrowOnFail(fun (tree : ListTree<int>) ->
-            let sifted, values = FsPickler.Sift(tree, randomSifter)
-            FsPickler.UnSift(sifted, values) |> should equal tree)
-
-    [<Test; Category("FsPickler Generic tests"); Repeat(5)>]
-    member __.``5. Object: random graph sifting`` () =
-        let g = createRandomGraph 0.4 30
-        let r = new System.Random()
-        let randomSifter = { new IObjectSifter with member __.Sift(_,_) = r.Next(0,5) = 0 }
-        let sifted, values = FsPickler.Sift(g, randomSifter)
-        let g' = FsPickler.UnSift(sifted, values)
-        areEqualGraphs g g' |> should equal true
 
     [<Test; Category("FsPickler Generic tests")>]
     member __.``5. Object: simple sift serialization`` () =
@@ -982,81 +882,6 @@ type ``FsPickler Tests`` (format : string) as self =
         testReflected quot
 
 
-    [<Test; Category("Clone")>]
-    member __.``8. Clone: bool`` () = testClone false ; testClone true
-
-    [<Test; Category("Clone")>]
-    member __.``8. Clone: byte`` () = Check.QuickThrowOnFail<byte> testClone
-
-    [<Test; Category("Clone")>]
-    member __.``8. Clone: int32`` () = Check.QuickThrowOnFail<int32> testClone
-
-    [<Test; Category("Clone")>]
-    member __.``8. Clone: string`` () = Check.QuickThrowOnFail<string> (fun s -> let s' = FsPickler.Clone s in s = s')
-
-    [<Test; Category("Clone")>]
-    member __.``8. Clone: byte []`` () = testClone (null : byte []) ; Check.QuickThrowOnFail<byte []> testClone
-
-    [<Test; Category("Clone")>]
-    member __.``8. Clone: array`` () = 
-        testClone (null : int [])
-        Check.QuickThrowOnFail<int []> testClone
-        Check.QuickThrowOnFail<int [,]> testClone
-        Check.QuickThrowOnFail<int [,,]> testClone
-        Check.QuickThrowOnFail<int [,,,]> testClone
-
-    [<Test; Category("Clone")>]
-    member __.``8. Clone: tuple`` () = 
-        Check.QuickThrowOnFail<int * string> testClone
-        Check.QuickThrowOnFail<int * string * int option * string * int list * string []> testClone
-
-    [<Test; Category("Clone")>]
-    member __.``8. Clone: quotation`` () = 
-        let quot =
-            <@
-                do int2Peano 42 |> ignore
-
-                async {
-                    let rec fibAsync n =
-                        async {
-                            match n with
-                            | _ when n < 0 -> return invalidArg "negative" "n"
-                            | _ when n < 2 -> return n
-                            | n ->
-                                let! fn = fibAsync (n-1)
-                                let! fnn = fibAsync (n-2)
-                                return fn + fnn
-                        }
-
-                    let! values = [1..100] |> Seq.map fibAsync |> Async.Parallel
-                    return Seq.sum values
-                }
-            @>
-
-        let quot' = FsPickler.Clone quot
-        quot'.ToString() |> should equal (quot.ToString())
-        
-    [<Test; Category("Clone")>]
-    member __.``8. Clone: caching`` () = 
-        let x = obj ()
-        let y,z = FsPickler.Clone ((x,x))
-        obj.ReferenceEquals(y,z) |> should equal true
-
-    [<Test; Category("Clone")>]
-    member __.``8. Clone: recursive objects`` () = 
-        let x = Array.zeroCreate<obj> 10
-        for i = 0 to 9 do x.[i] <- box x
-        let y = FsPickler.Clone x
-        for z in y do obj.ReferenceEquals(z,y) |> should equal true
-
-    [<Test; Category("Clone"); Repeat(5)>]
-    member __.``8. Clone: random graph`` () = 
-        let g = createRandomGraph 0.7 20
-        let g' = FsPickler.Clone g
-        obj.ReferenceEquals(g,g') |> should equal false
-        areEqualGraphs g g' |> should equal true
-
-
     //
     //  Stress tests
     //
@@ -1069,7 +894,7 @@ type ``FsPickler Tests`` (format : string) as self =
         with :? FsPicklerException & InnerExn (:? InvalidPickleTypeException) -> ()
 
     [<Test; Category("Stress tests")>]
-    member t.``9. Stress test: deserialization type mismatch`` () =
+    member t.``8. Stress test: deserialization type mismatch`` () =
         match pickler with
         | :? JsonSerializer as jsp when jsp.OmitHeader -> ()
         | _ ->
@@ -1086,7 +911,7 @@ type ``FsPickler Tests`` (format : string) as self =
         with :? FsPicklerException -> ()
 
     [<Test; Category("Stress tests")>]
-    member t.``9. Stress test: arbitrary data deserialization`` () =
+    member t.``8. Stress test: arbitrary data deserialization`` () =
         match pickler with
         | :? JsonSerializer as jsp when jsp.OmitHeader -> ()
         | _ ->
@@ -1096,7 +921,7 @@ type ``FsPickler Tests`` (format : string) as self =
             Check.QuickThrowOnFail (fun bs -> t.TestDeserializeInvalidData<int * string option> bs)
 
     [<Test; Category("Stress tests")>]
-    member __.``9. Stress test: massively auto-generated objects`` () =
+    member __.``8. Stress test: massively auto-generated objects`` () =
         // generate serializable objects that reside in mscorlib and FSharp.Core
         let inputData = seq {
             if not runsOnMono then

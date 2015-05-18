@@ -250,11 +250,12 @@ module TestTypes =
 
     type TestDelegate = delegate of unit -> unit
 
-    and DeleCounter () =
-        static let mutable cnt = 0
+    and DeleCounter =
+        [<DefaultValue; ThreadStatic>]
+        static val mutable private cnt : int
         static member Value 
-            with get () = cnt
-            and set i = cnt <- i
+            with get () = DeleCounter.cnt
+            and set i = DeleCounter.cnt <- i
 
     [<Struct>]
     type StructType(x : int, y : string) =

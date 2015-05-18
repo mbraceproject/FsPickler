@@ -39,14 +39,10 @@ type internal EnumPickler =
 
 type internal NullablePickler =
 
-    // TODO; add combinator
-
     static member Create<'T when 
                             'T : (new : unit -> 'T) and 
                             'T : struct and 
-                            'T :> ValueType> (resolver : IPicklerResolver) =
-
-        let pickler = resolver.Resolve<'T> ()
+                            'T :> ValueType> (pickler : Pickler<'T>) =
 
         let writer (w : WriteState) (tag : string) (x : Nullable<'T>) =
             pickler.Write w "value" x.Value
@@ -60,6 +56,13 @@ type internal NullablePickler =
             else x
 
         CompositePickler.Create(reader, writer, cloner, PicklerInfo.FieldSerialization, cacheByRef = false, useWithSubtypes = false)
+
+    static member Create<'T when 
+                            'T : (new : unit -> 'T) and 
+                            'T : struct and 
+                            'T :> ValueType> (resolver : IPicklerResolver) =
+
+        NullablePickler.Create<'T>(resolver.Resolve())
 
 /// Delegate Pickler combinator
 

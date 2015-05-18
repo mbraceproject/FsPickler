@@ -10,7 +10,7 @@ open Nessos.FsPickler
 #if REMOTE_TESTS
 
 type ``AppDomain Tests`` (pickleFormat : string) as self =
-    inherit ``FsPickler Tests`` (pickleFormat)
+    inherit ``FsPickler Serializer Tests`` (pickleFormat)
 
     let remotePickler = self.PicklerManager.GetRemoteSerializer()
 

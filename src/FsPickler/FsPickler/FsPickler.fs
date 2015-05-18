@@ -56,7 +56,7 @@ type FsPickler private () =
     /// <param name="value">Value to be cloned.</param>
     /// <param name="pickler">Pickler used for cloning. Defaults to auto-generated pickler.</param>
     /// <param name="streamingContext">Streaming context used for cloning. Defaults to null streaming context.</param>
-    static member Clone<'T> (value : 'T, ?pickler : Pickler<'T>, ?streamingContext : StreamingContext) : 'T =
+    static member Clone<'T> (value : 'T,  [<O;D(null)>]?pickler : Pickler<'T>,  [<O;D(null)>]?streamingContext : StreamingContext) : 'T =
         let pickler = match pickler with None -> resolver.Value.Resolve<'T> () | Some p -> p
         let state = new CloneState(resolver.Value, ?streamingContext = streamingContext)
         pickler.Clone state value
@@ -70,7 +70,7 @@ type FsPickler private () =
     /// <param name="pickler">Pickler to be used for traversal. Defaults to auto-generated pickler.</param>
     /// <param name="streamingContext">Streaming context used for cloning. Defaults to null streaming context.</param>
     /// <returns>A sifted wrapper together with all objects that have been sifted.</returns>
-    static member Sift<'T>(value : 'T, sifter : IObjectSifter, ?pickler : Pickler<'T>, ?streamingContext : StreamingContext) : Sifted<'T> * (int64 * obj) [] =
+    static member Sift<'T>(value : 'T, sifter : IObjectSifter,  [<O;D(null)>]?pickler : Pickler<'T>, [<O;D(null)>]?streamingContext : StreamingContext) : Sifted<'T> * (int64 * obj) [] =
         let pickler = match pickler with None -> resolver.Value.Resolve<'T> () | Some p -> p
         let state = new CloneState(resolver.Value, ?streamingContext = streamingContext, sifter = sifter)
         let sifted = pickler.Clone state value
@@ -85,7 +85,7 @@ type FsPickler private () =
     /// <param name="pickler">Pickler to be used for traversal. Defaults to auto-generated pickler.</param>
     /// <param name="streamingContext">Streaming context used for cloning. Defaults to null streaming context.</param>
     /// <returns>A sifted wrapper together with all objects that have been sifted.</returns>
-    static member Sift<'T>(value : 'T, sifter : obj -> bool, ?pickler : Pickler<'T>, ?streamingContext : StreamingContext) : Sifted<'T> * (int64 * obj) [] =
+    static member Sift<'T>(value : 'T, sifter : obj -> bool, [<O;D(null)>]?pickler : Pickler<'T>, [<O;D(null)>]?streamingContext : StreamingContext) : Sifted<'T> * (int64 * obj) [] =
         let sifter = { new IObjectSifter with member __.Sift(_,t) = sifter t }
         FsPickler.Sift(value, sifter, ?pickler = pickler, ?streamingContext = streamingContext)
 
@@ -97,7 +97,7 @@ type FsPickler private () =
     /// <param name="pickler">Pickler to be used for traversal. Defaults to auto-generated pickler.</param>
     /// <param name="streamingContext">Streaming context used for cloning. Defaults to null streaming context.</param>
     /// <returns>An unsifted object graph.</returns>
-    static member UnSift<'T>(sifted : Sifted<'T>, values:(int64 * obj) [], ?pickler : Pickler<'T>, ?streamingContext : StreamingContext) : 'T =
+    static member UnSift<'T>(sifted : Sifted<'T>, values:(int64 * obj) [], [<O;D(null)>]?pickler : Pickler<'T>, [<O;D(null)>]?streamingContext : StreamingContext) : 'T =
         let pickler = match pickler with None -> resolver.Value.Resolve<'T> () | Some p -> p
         let state = new CloneState(resolver.Value, ?streamingContext = streamingContext, unSiftData = (values, sifted.SiftedIndices))
         pickler.Clone state sifted.Value
@@ -122,7 +122,7 @@ type FsPickler private () =
     /// <summary>Compute size and hashcode for given input.</summary>
     /// <param name="value">input value.</param>
     /// <param name="hashFactory">the hashing algorithm to be used. MurMur3 by default.</param>
-    static member ComputeHash<'T>(value : 'T, [<O;D(null)>] ?hashFactory : IHashStreamFactory) =
+    static member ComputeHash<'T>(value : 'T, [<O;D(null)>]?hashFactory : IHashStreamFactory) =
         defaultSerializer.Value.ComputeHash(value, ?hashFactory = hashFactory)
 
     /// <summary>

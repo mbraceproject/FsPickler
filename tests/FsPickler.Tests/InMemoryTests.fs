@@ -8,7 +8,7 @@ open NUnit.Framework
 open Nessos.FsPickler
 
 type ``InMemory Tests`` (pickleFormat : string) =
-    inherit ``FsPickler Tests`` (pickleFormat)
+    inherit ``FsPickler Serializer Tests`` (pickleFormat)
 
     override __.IsRemotedTest = false
     override __.Pickle (value : 'T) = __.PicklerManager.Pickler.Pickle value

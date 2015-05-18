@@ -99,6 +99,8 @@ module Pickler =
     let quad f g h i = TuplePickler.Create(f,g,h,i)
     /// option pickler combinator
     let option (f : Pickler<'T>) = OptionPickler.Create f
+    /// nullable pickler combinator
+    let nullable (f : Pickler<'T>) = NullablePickler.Create f
     /// Choice<_,_> pickler combinator
     let choice2 f g = ChoicePickler.Create(f,g)
     /// Choice<_,_,_> pickler combinator
