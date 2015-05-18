@@ -104,7 +104,7 @@ Target "RunTests" (fun _ ->
         { p with
             Framework = "v4.0.30319"
             DisableShadowCopy = true
-            TimeOut = TimeSpan.FromMinutes 20.
+            TimeOut = TimeSpan.FromMinutes 30.
             OutputFile = "TestResults.xml" })
 )
 

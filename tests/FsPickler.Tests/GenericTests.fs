@@ -161,7 +161,10 @@ module ``Generic Tests`` =
 
     [<Test; Category("Clone")>]
     let ``2. Clone: struct`` () = 
-        Check.QuickThrowOnFail<int * string>(fun (x,y) -> new StructType(x,y) |> testCloneEq)
+        let c = new StructType(42,"42")
+        let c' = clone c
+        c'.X |> should equal c.X
+        c'.Y |> should equal c.Y
 
     [<Test; Category("Clone")>]
     let ``2. Clone: simple class`` () = 

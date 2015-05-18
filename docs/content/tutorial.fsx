@@ -364,7 +364,7 @@ This section describes some of the additional tools offered by the library:
 
 ### Object Cloning
 
-FsPickler 1.1 adds support for fast cloning of serializable objects. 
+FsPickler 1.2 adds support for fast cloning of serializable objects. 
 This is done in a node-per-node basis, without the need for serialization formats and intermediate buffers.
 
 *)
@@ -428,7 +428,7 @@ let value = json.UnPickleTyped typedPickle
 (**
 ### Object Sifting
 
-FsPickler 1.1 comes with a 'sifting' functionality which allows serialization/cloning while omitting specified
+FsPickler 1.2 comes with a 'sifting' functionality which allows serialization/cloning while omitting specified
 instances from an object graph. For example, consider the object graph
 
 *)
