@@ -18,7 +18,6 @@ type PrimitivePickler<'T> () =
     override p.UseWithSubtypes = false
 
     override p.Cast<'S> () : Pickler<'S> = raise <| new NotSupportedException("Cannot cast primitive picklers.")
-    /// valid for value types, overriden in string & byte [] primitive definitions
     override p.Clone (state : CloneState) (t : 'T) = t
 
 [<AutoSerializable(false)>]
@@ -118,7 +117,8 @@ type StringPickler () =
 
     override __.Write (writer : WriteState) (tag : string) (s : string) = writer.Formatter.WriteString tag s
     override __.Read (reader : ReadState) (tag : string) = reader.Formatter.ReadString tag
-    override __.Clone (clone : CloneState) (s : string) = if obj.ReferenceEquals(s, null) then s else String.Copy s
+    // strings are effectively immutable, avoid cloning.
+//    override __.Clone (clone : CloneState) (s : string) = if obj.ReferenceEquals(s, null) then s else String.Copy s
 
 [<AutoSerializable(false)>]
 type GuidPickler () =

@@ -967,7 +967,7 @@ type ``FsPickler Tests`` (format : string) as self =
     member __.``8. Clone: int32`` () = Check.QuickThrowOnFail<int32> testClone
 
     [<Test; Category("Clone")>]
-    member __.``8. Clone: string`` () = Check.QuickThrowOnFail<string> testClone
+    member __.``8. Clone: string`` () = Check.QuickThrowOnFail<string> (fun s -> let s' = FsPickler.NewClone s in s = s')
 
     [<Test; Category("Clone")>]
     member __.``8. Clone: byte []`` () = testClone (null : byte []) ; Check.QuickThrowOnFail<byte []> testClone
