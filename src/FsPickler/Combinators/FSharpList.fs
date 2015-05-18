@@ -90,8 +90,7 @@ type internal ListPickler =
         let cloner (c : CloneState) (list : 'T list) =
             list |> List.map (ep.Clone c)
 
-        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, 
-                                        cacheByRef = true, useWithSubtypes = true, skipHeaderWrite = true)
+        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, useWithSubtypes = true, skipHeaderWrite = true)
 
     static member Create<'T>(resolver : IPicklerResolver) =
         let ep = resolver.Resolve<'T> ()

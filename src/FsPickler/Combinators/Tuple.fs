@@ -19,10 +19,10 @@ type internal TuplePickler =
             new Tuple<'T1>(t')
 
 #if OPTIMIZE_FSHARP
-        // do not cache or apply subtype resolution for performance
-        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
+        // do not apply subtype resolution for performance
+        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, useWithSubtypes = true)
 #else
-        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, cacheByRef = true, useWithSubtypes = false)
+        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, useWithSubtypes = false)
 #endif
 
     static member Create<'T1> (resolver : IPicklerResolver) =
@@ -46,10 +46,10 @@ type internal TuplePickler =
             (t1',t2')
 
 #if OPTIMIZE_FSHARP
-        // do not cache or apply subtype resolution for performance
-        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
+        // do not apply subtype resolution for performance
+        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, useWithSubtypes = true)
 #else
-        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, cacheByRef = true, useWithSubtypes = false)
+        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, useWithSubtypes = false)
 #endif
 
     static member Create<'T1, 'T2> (resolver : IPicklerResolver) =
@@ -77,10 +77,10 @@ type internal TuplePickler =
             (t1',t2',t3')
 
 #if OPTIMIZE_FSHARP
-        // do not cache or apply subtype resolution for performance
-        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
+        // do not apply subtype resolution for performance
+        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, useWithSubtypes = true)
 #else
-        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, cacheByRef = true, useWithSubtypes = false)
+        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, useWithSubtypes = false)
 #endif
 
     static member Create<'T1, 'T2, 'T3> (resolver : IPicklerResolver) =
@@ -113,10 +113,10 @@ type internal TuplePickler =
             (t1',t2',t3',t4')
 
 #if OPTIMIZE_FSHARP
-        // do not cache or apply subtype resolution for performance
-        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
+        // do not apply subtype resolution for performance
+        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, useWithSubtypes = true)
 #else
-        CompositePickler.Create<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = true, useWithSubtypes = false)
+        CompositePickler.Create<_>(reader, writer, PicklerInfo.FSharpValue, useWithSubtypes = false)
 #endif
 
     static member Create<'T1, 'T2, 'T3, 'T4> (resolver : IPicklerResolver) =
@@ -153,10 +153,10 @@ type internal TuplePickler =
             (t1',t2',t3',t4',t5')
 
 #if OPTIMIZE_FSHARP
-        // do not cache or apply subtype resolution for performance
-        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
+        // do not apply subtype resolution for performance
+        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, useWithSubtypes = true)
 #else
-        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, cacheByRef = true, useWithSubtypes = false)
+        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, useWithSubtypes = false)
 #endif
 
     static member Create<'T1, 'T2, 'T3, 'T4, 'T5> (resolver : IPicklerResolver) =
@@ -197,10 +197,10 @@ type internal TuplePickler =
             (t1',t2',t3',t4',t5',t6')
 
 #if OPTIMIZE_FSHARP
-        // do not cache or apply subtype resolution for performance
-        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
+        // do not apply subtype resolution for performance
+        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, useWithSubtypes = true)
 #else
-        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, cacheByRef = true, useWithSubtypes = false)
+        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, useWithSubtypes = false)
 #endif
 
     static member Create<'T1, 'T2, 'T3, 'T4, 'T5, 'T6> (resolver : IPicklerResolver) =
@@ -248,10 +248,10 @@ type internal TuplePickler =
             (t1',t2',t3',t4',t5',t6',t7')
 
 #if OPTIMIZE_FSHARP
-        // do not cache or apply subtype resolution for performance
-        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
+        // do not apply subtype resolution for performance
+        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, useWithSubtypes = true)
 #else
-        CompositePickler.Create<_>(reader, writer, PicklerInfo.FSharpValue, cacheByRef = true, useWithSubtypes = false)
+        CompositePickler.Create<_>(reader, writer, PicklerInfo.FSharpValue, useWithSubtypes = false)
 #endif
 
     static member Create<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7> (resolver : IPicklerResolver) =
@@ -302,10 +302,10 @@ type internal TuplePickler =
             new Tuple<_,_,_,_,_,_,_,_>(t1',t2',t3',t4',t5',t6',t7',rest')
 
 #if OPTIMIZE_FSHARP
-        // do not cache or apply subtype resolution for performance
-        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
+        // do not apply subtype resolution for performance
+        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, useWithSubtypes = true)
 #else
-        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, cacheByRef = true, useWithSubtypes = false)
+        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, useWithSubtypes = false)
 #endif
 
     static member Create<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'TRest> (resolver : IPicklerResolver) =

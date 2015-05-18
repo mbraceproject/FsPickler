@@ -22,7 +22,7 @@ type internal FSharpSetPickler =
         let cloner (c : CloneState) (s : Set<'T>) =
             s |> Set.map (ep.Clone c)
 
-        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = false)
+        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.Combinator, useWithSubtypes = true)
             
     static member Create<'T when 'T : comparison> (resolver : IPicklerResolver) =
         let ep = resolver.Resolve<'T>()
@@ -46,7 +46,7 @@ type internal FSharpMapPickler =
         let cloner (c : CloneState) (map : Map<'K,'V>) =
             map |> Seq.map (fun kv -> kp.Clone c kv.Key, vp.Clone c kv.Value) |> Map.ofSeq
 
-        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = false)
+        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.Combinator, useWithSubtypes = true)
 
     static member Create<'K, 'V when 'K : comparison> (resolver : IPicklerResolver) =
         let kp, vp = resolver.Resolve<'K> (), resolver.Resolve<'V> ()
@@ -76,7 +76,7 @@ type internal DictionaryPickler =
             for kv in d do d'.Add(kp.Clone c kv.Key, vp.Clone c kv.Value)
             d'
 
-        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = false)
+        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.Combinator, useWithSubtypes = false)
 
     static member Create<'K, 'V when 'K : equality> (resolver : IPicklerResolver) =
         let kp, vp = resolver.Resolve<'K>(), resolver.Resolve<'V>()

@@ -10,20 +10,26 @@ type internal AltPickler =
             
         let picklers = List.toArray picklers
 
-        let writer (w : WriteState) (tag : string) (t : 'T) =
+        let writer (w : WriteState) (id : string) (t : 'T) =
             let tag = tagReader t
             do w.Formatter.WriteInt32 "Tag" tag
-            picklers.[tag].Write w "Value" t
+            match picklers.[tag] with
+            | :? CompositePickler<'T> as cp -> cp.Writer w id t
+            | p -> p.Write w id t
 
-        let reader (r : ReadState) (tag : string) =
+        let reader (r : ReadState) (id : string) =
             let tag = r.Formatter.ReadInt32 "Tag"
-            picklers.[tag].Read r "Value"
+            match picklers.[tag] with
+            | :? CompositePickler<'T> as cp -> cp.Reader r id
+            | p -> p.Read r id
 
         let cloner (c : CloneState) (t : 'T) =
             let tag = tagReader t
-            picklers.[tag].Clone c t
+            match picklers.[tag] with
+            | :? CompositePickler<'T> as cp -> cp.Clone c t
+            | p -> p.Clone c t
 
-        CompositePickler.Create<'T>(reader, writer, cloner, PicklerInfo.Combinator, cacheByRef = false)
+        CompositePickler.Create<'T>(reader, writer, cloner, PicklerInfo.Combinator)
 
 
 type internal WrapPickler =
@@ -41,4 +47,4 @@ type internal WrapPickler =
             let t' = origin.Clone c t
             recover t'
 
-        CompositePickler.Create<'S>(reader, writer, cloner, PicklerInfo.Combinator, cacheByRef = false, useWithSubtypes = false, bypass = true)
+        CompositePickler.Create<'S>(reader, writer, cloner, PicklerInfo.Combinator, cacheByRef = false, bypass = true)

@@ -93,7 +93,7 @@ type internal StructFieldPickler =
             fastUnbox<'T> t'
 #endif
 
-        CompositePickler.Create(reader, writer, cloner, PicklerInfo.FieldSerialization, cacheByRef = false, useWithSubtypes = false)
+        CompositePickler.Create(reader, writer, cloner, PicklerInfo.FieldSerialization)
 
 // general-purpose pickler combinator for reference types
 
@@ -251,4 +251,4 @@ type internal ClassFieldPickler =
                 t'
 #endif
 
-        CompositePickler.Create(reader, writer, cloner, PicklerInfo.FieldSerialization, cacheByRef = true, useWithSubtypes = false)
+        CompositePickler.Create(reader, writer, cloner, PicklerInfo.FieldSerialization)

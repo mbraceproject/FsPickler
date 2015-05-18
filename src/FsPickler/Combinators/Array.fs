@@ -38,7 +38,7 @@ type internal ArrayPickler =
         let reader (r : ReadState) (tag : string) = r.Formatter.ReadBytes tag
         let cloner (c : CloneState) (bytes : byte []) = bytes.Clone() |> fastUnbox<byte []>
 
-        CompositePickler.Create(reader, writer, cloner, PicklerInfo.Array, cacheByRef = true, useWithSubtypes = false, skipHeaderWrite = false)
+        CompositePickler.Create(reader, writer, cloner, PicklerInfo.Array, skipHeaderWrite = false)
 
     static member Create (ep : Pickler<'T>) : Pickler<'T []> =
             
@@ -119,7 +119,7 @@ type internal ArrayPickler =
                     array'.[i] <- ep.Clone c array.[i]
                 array'
 
-        CompositePickler.Create(reader, writer, cloner, PicklerInfo.Array, cacheByRef = true, useWithSubtypes = false, skipHeaderWrite = true)
+        CompositePickler.Create(reader, writer, cloner, PicklerInfo.Array, skipHeaderWrite = true)
 
     static member Create2D<'T> (ep : Pickler<'T>) =
             
@@ -173,7 +173,7 @@ type internal ArrayPickler =
 
                 array'
 
-        CompositePickler.Create(reader, writer, cloner, PicklerInfo.Array, cacheByRef = true, useWithSubtypes = false, skipHeaderWrite = false)
+        CompositePickler.Create(reader, writer, cloner, PicklerInfo.Array, skipHeaderWrite = false)
 
 
     static member Create3D<'T> (ep : Pickler<'T>) =
@@ -232,7 +232,7 @@ type internal ArrayPickler =
 
                 array'
 
-        CompositePickler.Create(reader, writer, cloner, PicklerInfo.Array, cacheByRef = true, useWithSubtypes = false, skipHeaderWrite = false)
+        CompositePickler.Create(reader, writer, cloner, PicklerInfo.Array, skipHeaderWrite = false)
 
 
     static member Create4D<'T> (ep : Pickler<'T>) =
@@ -296,7 +296,7 @@ type internal ArrayPickler =
 
                 array'
 
-        CompositePickler.Create(reader, writer, cloner, PicklerInfo.Array, cacheByRef = true, useWithSubtypes = false, skipHeaderWrite = false)
+        CompositePickler.Create(reader, writer, cloner, PicklerInfo.Array, skipHeaderWrite = false)
 
     static member GetInterface () = { new ReflectionPicklers.IArrayPickler with member __.Create ep = ArrayPickler.Create ep }
 

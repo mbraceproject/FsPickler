@@ -55,7 +55,7 @@ type internal NullablePickler =
             if x.HasValue then new Nullable<'T>(x.Value)
             else x
 
-        CompositePickler.Create(reader, writer, cloner, PicklerInfo.FieldSerialization, cacheByRef = false, useWithSubtypes = false)
+        CompositePickler.Create(reader, writer, cloner, PicklerInfo.FieldSerialization)
 
     static member Create<'T when 
                             'T : (new : unit -> 'T) and 
@@ -112,4 +112,4 @@ type internal DelegatePickler =
                 for i = 0 to deleList.Length - 1 do deleList'.[i] <- delePickler.Clone c deleList.[i]
                 Delegate.Combine deleList |> fastUnbox<'Delegate>
 
-        CompositePickler.Create(reader, writer, cloner, PicklerInfo.Delegate, cacheByRef = true, useWithSubtypes = false)
+        CompositePickler.Create(reader, writer, cloner, PicklerInfo.Delegate)

@@ -45,9 +45,7 @@ module ExtensionMethods =
             if typeof<'T>.IsPrimitive then
                 invalidArg typeof<'T>.FullName "defining custom picklers for primitives not supported."
 
-            let cacheByRef = defaultArg cacheByRef (not typeof<'T>.IsValueType)
-            let useWithSubtypes = defaultArg useWithSubtypes false
-            CompositePickler.Create(reader, writer, cloner, PicklerInfo.UserDefined, cacheByRef = cacheByRef, useWithSubtypes = useWithSubtypes)
+            CompositePickler.Create(reader, writer, cloner, PicklerInfo.UserDefined, ?cacheByRef = cacheByRef, ?useWithSubtypes = useWithSubtypes)
 
 
     type SerializationInfo with

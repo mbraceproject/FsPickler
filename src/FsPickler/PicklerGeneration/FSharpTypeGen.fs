@@ -26,11 +26,6 @@ type internal FsUnionPickler =
         if not <| typeof<'Union>.IsSerializable then
             raise <| new NonSerializableTypeException(typeof<'Union>)
 
-        // Only cache by reference if typedef introduces custom or reference equality semantics
-        let isCacheByRef = 
-            containsAttr<CustomEqualityAttribute> typeof<'Union> ||
-            containsAttr<ReferenceEqualityAttribute> typeof<'Union>
-
         // resolve tag reader methodInfo
         let tagReaderMethod =
             match FSharpValue.PreComputeUnionTagMemberInfo(typeof<'Union>, allMembers) with
@@ -199,7 +194,7 @@ type internal FsUnionPickler =
 
             ctor values' |> fastUnbox<'Union>
 #endif
-        CompositePickler.Create(reader, writer, cloner, PicklerInfo.FSharpValue, cacheByRef = isCacheByRef, useWithSubtypes = true)
+        CompositePickler.Create(reader, writer, cloner, PicklerInfo.FSharpValue, useWithSubtypes = true)
 
 // F# record types
 
@@ -208,11 +203,6 @@ type internal FsRecordPickler =
     static member Create<'Record>(resolver : IPicklerResolver) =
         if not <| typeof<'Record>.IsSerializable then
             raise <| new NonSerializableTypeException(typeof<'Record>)
-
-        // Only cache by reference if typedef introduces reference equality semantics
-        let isCacheByRef = 
-            containsAttr<CustomEqualityAttribute> typeof<'Record> ||
-            containsAttr<ReferenceEqualityAttribute> typeof<'Record>
 
         let fields = FSharpType.GetRecordFields(typeof<'Record>, allMembers)
         let ctor = FSharpValue.PreComputeRecordConstructorInfo(typeof<'Record>, allMembers)
@@ -276,7 +266,7 @@ type internal FsRecordPickler =
                 
 #endif
 
-        CompositePickler.Create(reader, writer, cloner, PicklerInfo.FSharpValue, cacheByRef = isCacheByRef, useWithSubtypes = false)
+        CompositePickler.Create(reader, writer, cloner, PicklerInfo.FSharpValue)
 
 
 // F# exception types
@@ -376,4 +366,4 @@ type internal FsExceptionPickler =
 
             e'
 #endif
-        CompositePickler.Create(reader, writer, cloner, PicklerInfo.FSharpValue, cacheByRef = true, useWithSubtypes = true)
+        CompositePickler.Create(reader, writer, cloner, PicklerInfo.FSharpValue, useWithSubtypes = true)

@@ -157,7 +157,7 @@ type internal ISerializablePickler =
                 if isDeserializationCallback then (fastUnbox<IDeserializationCallback> t').OnDeserialization null
                 t'
 
-            CompositePickler.Create(reader, writer, cloner, PicklerInfo.ISerializable, cacheByRef = true, useWithSubtypes = false)
+            CompositePickler.Create(reader, writer, cloner, PicklerInfo.ISerializable)
 
         | Some ctorInfo ->
 
@@ -201,7 +201,7 @@ type internal ISerializablePickler =
                 else
                     t'
 
-            CompositePickler.Create(reader, writer, cloner, PicklerInfo.ISerializable, cacheByRef = true, useWithSubtypes = false)
+            CompositePickler.Create(reader, writer, cloner, PicklerInfo.ISerializable)
 
     /// SerializationInfo-based pickler combinator
     static member FromSerializationInfo<'T>(ctor : SerializationInfo -> 'T, proj : SerializationInfo -> 'T -> unit) : Pickler<'T> =
@@ -220,4 +220,4 @@ type internal ISerializablePickler =
             let sI' = cloneSerializationInfo state sI
             ctor sI'
 
-        CompositePickler.Create(reader, writer, cloner, PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = false)
+        CompositePickler.Create(reader, writer, cloner, PicklerInfo.Combinator)

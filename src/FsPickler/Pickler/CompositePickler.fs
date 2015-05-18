@@ -36,7 +36,7 @@ type internal CompositePickler<'T> =
     val mutable private m_Bypass : bool
     val mutable private m_SkipVisit : bool
 
-    private new (reader, writer, cloner, nested : Pickler option, picklerInfo, cacheByRef, ?useWithSubtypes, ?skipHeaderWrite, ?bypass, ?skipVisit) =
+    private new (reader, writer, cloner, nested : Pickler option, picklerInfo, ?cacheByRef, ?useWithSubtypes, ?skipHeaderWrite, ?bypass, ?skipVisit) =
         {
             inherit Pickler<'T> ()
 
@@ -50,7 +50,7 @@ type internal CompositePickler<'T> =
 
             m_PicklerInfo = picklerInfo
 
-            m_IsCacheByRef = cacheByRef
+            m_IsCacheByRef = match cacheByRef with Some c -> c || base.IsRecursiveType | None -> base.TypeKind > TypeKind.Value
             m_UseWithSubtypes = defaultArg useWithSubtypes false
             m_SkipHeaderWrite = defaultArg skipHeaderWrite false
             m_Bypass = defaultArg bypass false
@@ -68,8 +68,8 @@ type internal CompositePickler<'T> =
     /// <param name="skipHeaderWrite">skip header serialization of instances.</param>
     /// <param name="bypass">pickle using serialization/deserialization lambdas directly.</param>
     /// <param name="skipVisit">do not apply visitor to instances if specified.</param>
-    new (reader, writer, cloner, picklerInfo, cacheByRef, ?useWithSubtypes, ?skipHeaderWrite, ?bypass, ?skipVisit) =
-        new CompositePickler<'T>(reader, writer, cloner, None, picklerInfo, cacheByRef, ?useWithSubtypes = useWithSubtypes, 
+    new (reader, writer, cloner, picklerInfo, ?cacheByRef, ?useWithSubtypes, ?skipHeaderWrite, ?bypass, ?skipVisit) =
+        new CompositePickler<'T>(reader, writer, cloner, None, picklerInfo, ?cacheByRef = cacheByRef, ?useWithSubtypes = useWithSubtypes, 
                                                     ?skipHeaderWrite = skipHeaderWrite, ?bypass = bypass, ?skipVisit = skipVisit)
 
     /// <summary>
@@ -185,10 +185,7 @@ type internal CompositePickler<'T> =
             p0.UntypedWrite state "instance" value
             formatter.EndWriteObject()
 
-        else
-
-        let isRecursive = p.IsRecursiveType
-        if isRecursive || p.m_IsCacheByRef then
+        elif p.m_IsCacheByRef then
             let mutable firstOccurence = false
             let id = state.GetObjectId(value, &firstOccurence)
 
@@ -204,7 +201,7 @@ type internal CompositePickler<'T> =
                     formatter.EndWriteObject()
 
                 | _ ->
-                    if isRecursive then objStack.Push id
+                    if p.IsRecursiveType then objStack.Push id
 
                     if p.m_SkipHeaderWrite then
                         p.m_Writer state tag value
@@ -213,9 +210,9 @@ type internal CompositePickler<'T> =
                         p.m_Writer state tag value
                         formatter.EndWriteObject ()
 
-                    if isRecursive then objStack.Pop () |> ignore
+                    if p.IsRecursiveType then objStack.Pop () |> ignore
 
-            elif isRecursive && p.TypeKind <> TypeKind.Array && objStack.Contains id && not <| cyclicObjects.Contains id then
+            elif p.IsRecursiveType && p.TypeKind <> TypeKind.Array && objStack.Contains id && not <| cyclicObjects.Contains id then
                 // came across cyclic object, record fixup-related data
                 // cyclic objects are handled once per instance
                 // instances of cyclic arrays are handled differently than other reference types
@@ -282,7 +279,7 @@ type internal CompositePickler<'T> =
                 let result = match state.ObjectCache.[id] with null -> "null" | o -> o.GetType().ToString()
                 raise <| new FsPicklerException(sprintf "Sifted object of id '%d' was expected to be of type '%O' but was '%O'." id typeof<'T> result)
 
-        elif p.m_IsCacheByRef || p.IsRecursiveType then
+        elif p.m_IsCacheByRef then
             let id = state.NextObjectId()
             let value = p.m_Reader state tag
             formatter.EndReadObject()
@@ -353,7 +350,7 @@ type internal CompositePickler<'T> =
             let p0 = state.PicklerResolver.Resolve subtype
             p0.UntypedClone state value |> fastUnbox<'T>
 
-        elif p.IsRecursiveType || p.m_IsCacheByRef then
+        elif p.m_IsCacheByRef then
             let mutable firstOccurence = false
             let id = state.GetReferenceId(value, &firstOccurence)
 
@@ -445,8 +442,8 @@ and internal CompositePickler =
     /// <param name="skipHeaderWrite">skip header serialization of instances.</param>
     /// <param name="bypass">pickle using serialization/deserialization lambdas directly.</param>
     /// <param name="skipVisit">do not apply visitor to instances if specified.</param>
-    static member Create<'T>(reader, writer, cloner, picklerInfo, cacheByRef : bool, ?useWithSubtypes : bool, ?skipHeaderWrite : bool, ?bypass : bool, ?skipVisit : bool) =
-        new CompositePickler<'T>(reader, writer, cloner, picklerInfo, cacheByRef = cacheByRef, ?useWithSubtypes = useWithSubtypes, 
+    static member Create<'T>(reader, writer, cloner, picklerInfo, ?cacheByRef : bool, ?useWithSubtypes : bool, ?skipHeaderWrite : bool, ?bypass : bool, ?skipVisit : bool) =
+        new CompositePickler<'T>(reader, writer, cloner, picklerInfo, ?cacheByRef = cacheByRef, ?useWithSubtypes = useWithSubtypes, 
                                                     ?skipHeaderWrite = skipHeaderWrite, ?bypass = bypass, ?skipVisit = skipVisit) :> Pickler<'T>
 
     static member ObjectPickler =
