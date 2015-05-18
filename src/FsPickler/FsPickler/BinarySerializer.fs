@@ -14,7 +14,7 @@ type BinarySerializer =
     /// </summary>
     /// <param name="forceLittleEndian">Force little-endian encoding in primitive arrays but is slower. Defaults to false.</param>
     /// <param name="typeConverter">Define a custom type name converter.</param>
-    new ([<O;D(null)>]?forceLittleEndian, [<O;D(null)>] ?typeConverter) =
+    new ([<O;D(null)>]?forceLittleEndian : bool, [<O;D(null)>] ?typeConverter : ITypeNameConverter) =
         let forceLittleEndian = defaultArg forceLittleEndian false
         let format = new BinaryPickleFormatProvider(forceLittleEndian)
         { 

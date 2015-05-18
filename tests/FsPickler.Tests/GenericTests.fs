@@ -129,10 +129,10 @@ module ``Generic Tests`` =
     let ``2. Clone: int32`` () = Check.QuickThrowOnFail<int32> (testCloneEq, maxRuns = 10)
 
     [<Test; Category("Clone")>]
-    let ``2. Clone: string`` () = Check.QuickThrowOnFail<string> (fun s -> let s' = clone s in s = s')
+    let ``2. Clone: string`` () = Check.QuickThrowOnFail<string> testCloneEq
 
     [<Test; Category("Clone")>]
-    let ``2. Clone: byte []`` () = testCloneRefEq (null : byte []) ; Check.QuickThrowOnFail<byte []> testCloneRefEq
+    let ``2. Clone: byte []`` () = Check.QuickThrowOnFail<byte []> testCloneRefEq
 
     [<Test; Category("Clone")>]
     let ``2. Clone: array`` () = 
@@ -185,8 +185,8 @@ module ``Generic Tests`` =
         let d = new FieldDataContractClass<_>((1,2), "42")
         let d' = clone d
         d'.A |> should equal d.A
-        d'.B |> should equal d'.B
         d'.A |> isNotSameTo d.A
+        d'.B |> should equal d'.B
 
     [<Test; Category("Clone")>]
     let ``2. Clone: field datacontract with parameterless ctor`` () = 
@@ -231,6 +231,7 @@ module ``Generic Tests`` =
         Check.QuickThrowOnFail<SimpleDU> testCloneEq
         Check.QuickThrowOnFail<Peano> (function Zero -> testCloneEq Zero | Succ _ as p -> testCloneRefEq p)
         Check.QuickThrowOnFail<Forest<int>> testCloneEq
+        Check.QuickThrowOnFail<Either<int,int>> (testCloneRefEq, maxRuns = 10)
 
     [<Test; Category("Clone")>]
     let ``2. Clone: tuple`` () = 

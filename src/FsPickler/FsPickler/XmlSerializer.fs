@@ -14,7 +14,7 @@ type XmlSerializer =
     /// </summary>
     /// <param name="indent">Enable indentation of output XML pickles.</param>
     /// <param name="typeConverter">Define a custom type name converter.</param>
-    new ([<O;D(null)>] ?indent, [<O;D(null)>] ?typeConverter) =
+    new ([<O;D(null)>] ?indent : bool, [<O;D(null)>] ?typeConverter : ITypeNameConverter) =
         let xml = new XmlPickleFormatProvider(defaultArg indent false)
         { 
             inherit FsPicklerTextSerializer(xml, ?typeConverter = typeConverter)

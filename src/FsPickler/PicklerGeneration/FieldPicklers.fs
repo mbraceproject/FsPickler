@@ -248,7 +248,7 @@ type internal ClassFieldPickler =
             if isObjectReference then 
                 (fastUnbox<IObjectReference> t').GetRealObject c.StreamingContext :?> 'T
             else
-                t
+                t'
 #endif
 
         CompositePickler.Create(reader, writer, cloner, PicklerInfo.FieldSerialization, cacheByRef = true, useWithSubtypes = false)

@@ -24,6 +24,8 @@ module TestTypes =
         | Zero
         | Succ of Peano
 
+    type Either<'T,'S> = L of 'T | R of 'S
+
     let rec int2Peano n = match n with 0 -> Zero | n -> Succ(int2Peano(n-1))
 
     let mkPeanoPickler () =

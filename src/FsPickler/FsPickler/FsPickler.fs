@@ -29,19 +29,19 @@ type FsPickler private () =
         new XmlSerializer(?typeConverter = typeConverter, ?indent = indent)
 
     /// Decides if given type is serializable by FsPickler
-    static member IsSerializableType (t : Type) = 
-        resolver.Value.IsSerializable t
-
-    /// Decides if given type is serializable by FsPickler
-    static member IsSerializableType<'T> () = 
+    static member IsSerializableType<'T> () : bool = 
         resolver.Value.IsSerializable<'T> ()
 
+    /// Decides if given type is serializable by FsPickler
+    static member IsSerializableType (t : Type) : bool = 
+        resolver.Value.IsSerializable t
+
     /// Auto generates a pickler for given type variable
-    static member GeneratePickler<'T> () = 
+    static member GeneratePickler<'T> () : Pickler<'T> = 
         resolver.Value.Resolve<'T> ()
         
     /// Auto generates a pickler for given type
-    static member GeneratePickler (t : Type) = 
+    static member GeneratePickler (t : Type) : Pickler = 
         resolver.Value.Resolve t
 
     //
@@ -56,7 +56,7 @@ type FsPickler private () =
     /// <param name="value">Value to be cloned.</param>
     /// <param name="pickler">Pickler used for cloning. Defaults to auto-generated pickler.</param>
     /// <param name="streamingContext">Streaming context used for cloning. Defaults to null streaming context.</param>
-    static member Clone<'T> (value : 'T,  [<O;D(null)>]?pickler : Pickler<'T>,  [<O;D(null)>]?streamingContext : StreamingContext) : 'T =
+    static member Clone<'T> (value : 'T, [<O;D(null)>]?pickler : Pickler<'T>, [<O;D(null)>]?streamingContext : StreamingContext) : 'T =
         let pickler = match pickler with None -> resolver.Value.Resolve<'T> () | Some p -> p
         let state = new CloneState(resolver.Value, ?streamingContext = streamingContext)
         pickler.Clone state value
@@ -70,7 +70,7 @@ type FsPickler private () =
     /// <param name="pickler">Pickler to be used for traversal. Defaults to auto-generated pickler.</param>
     /// <param name="streamingContext">Streaming context used for cloning. Defaults to null streaming context.</param>
     /// <returns>A sifted wrapper together with all objects that have been sifted.</returns>
-    static member Sift<'T>(value : 'T, sifter : IObjectSifter,  [<O;D(null)>]?pickler : Pickler<'T>, [<O;D(null)>]?streamingContext : StreamingContext) : Sifted<'T> * (int64 * obj) [] =
+    static member Sift<'T>(value : 'T, sifter : IObjectSifter, [<O;D(null)>]?pickler : Pickler<'T>, [<O;D(null)>]?streamingContext : StreamingContext) : Sifted<'T> * (int64 * obj) [] =
         let pickler = match pickler with None -> resolver.Value.Resolve<'T> () | Some p -> p
         let state = new CloneState(resolver.Value, ?streamingContext = streamingContext, sifter = sifter)
         let sifted = pickler.Clone state value

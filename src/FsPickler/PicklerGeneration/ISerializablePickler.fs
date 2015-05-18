@@ -152,10 +152,10 @@ type internal ISerializablePickler =
                         sI'.SetType sI.ObjectType
                         ctor.Invoke [| sI' :> obj ; c.StreamingContext :> obj |] :?> IObjectReference
 
-                let t = objectRef.GetRealObject c.StreamingContext :?> 'T
-                run onDeserialized c t
-                if isDeserializationCallback then (fastUnbox<IDeserializationCallback> t).OnDeserialization null
-                t
+                let t' = objectRef.GetRealObject c.StreamingContext :?> 'T
+                run onDeserialized c t'
+                if isDeserializationCallback then (fastUnbox<IDeserializationCallback> t').OnDeserialization null
+                t'
 
             CompositePickler.Create(reader, writer, cloner, PicklerInfo.ISerializable, cacheByRef = true, useWithSubtypes = false)
 
