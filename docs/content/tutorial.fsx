@@ -317,13 +317,13 @@ type CustomClass<'T, 'S> (x : 'T, y : 'S) =
         let xp = resolver.Resolve<'T> ()
         let yp = resolver.Resolve<'S> ()
 
-        let writer (w : WriteState) (tag : string) (c : CustomClass<'T,'S>) =
-            xp.Write w tag c.X
-            yp.Write w tag c.Y
+        let writer (w : WriteState) (_ : string) (c : CustomClass<'T,'S>) =
+            xp.Write w "X" c.X
+            yp.Write w "Y" c.Y
 
-        let reader (r : ReadState) (tag : string) =
-            let x = xp.Read r tag
-            let y = yp.Read r tag
+        let reader (r : ReadState) (_ : string) =
+            let x = xp.Read r "X"
+            let y = yp.Read r "Y"
             new CustomClass<_,_>(x,y)
 
         Pickler.FromPrimitives(reader, writer)
