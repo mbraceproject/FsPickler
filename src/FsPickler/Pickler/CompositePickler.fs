@@ -171,25 +171,23 @@ type internal CompositePickler<'T> =
 #if PROTECT_STACK_OVERFLOWS
         do RuntimeHelpers.EnsureSufficientExecutionStack()
 #endif
+        let mutable isProperSubtype = false
+        let mutable subtype = Unchecked.defaultof<Type>
+        if p.TypeKind > TypeKind.Sealed && not p.m_UseWithSubtypes then
+            subtype <- value.GetType()
+            if subtype <> p.Type then
+                isProperSubtype <- true
 
-        let isProperSubtype = 
-            if p.TypeKind <= TypeKind.Sealed || p.m_UseWithSubtypes then false
-            else
-                let t0 = value.GetType()
-                if t0 <> p.Type then
-                    let p0 = state.PicklerResolver.Resolve t0
-                    formatter.BeginWriteObject tag ObjectFlags.IsProperSubtype
-                    state.TypePickler.Write state "subtype" t0
-                    p0.UntypedWrite state "instance" value
-                    formatter.EndWriteObject()
-                    true
-                else
-                    false
+        if isProperSubtype then
+            let p0 = state.PicklerResolver.Resolve subtype
+            formatter.BeginWriteObject tag ObjectFlags.IsProperSubtype
+            state.TypePickler.Write state "subtype" subtype
+            p0.UntypedWrite state "instance" value
+            formatter.EndWriteObject()
 
-        if isProperSubtype then () else
+        else
 
         let isRecursive = p.IsRecursiveType
-
         if isRecursive || p.m_IsCacheByRef then
             let mutable firstOccurence = false
             let id = state.GetObjectId(value, &firstOccurence)
@@ -217,7 +215,7 @@ type internal CompositePickler<'T> =
 
                     if isRecursive then objStack.Pop () |> ignore
 
-            elif p.IsRecursiveType && p.TypeKind <> TypeKind.Array && objStack.Contains id && not <| cyclicObjects.Contains id then
+            elif isRecursive && p.TypeKind <> TypeKind.Array && objStack.Contains id && not <| cyclicObjects.Contains id then
                 // came across cyclic object, record fixup-related data
                 // cyclic objects are handled once per instance
                 // instances of cyclic arrays are handled differently than other reference types
