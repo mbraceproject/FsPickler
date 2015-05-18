@@ -21,5 +21,5 @@ let pickle = jsp.PickleToString <@ 1 + 1 @>
 jsp.UnPickleOfString<Quotations.Expr<int>> pickle
 
 let graph = [None ;None; Some [|1;2;3|]]
-let pickle, sifted = jsp.PickleToStringSifted(graph, sifter = { new IObjectSifter with member __.SiftValue(_,v) = match box v with :? System.Array -> true | _ -> false })
+let pickle, sifted = jsp.PickleToStringSifted(graph, function :? System.Array -> true | _ -> false )
 jsp.UnPickleOfStringSifted<int [] option list>(pickle, sifted)
