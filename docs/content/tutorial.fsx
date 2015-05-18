@@ -317,16 +317,19 @@ type CustomClass<'T, 'S> (x : 'T, y : 'S) =
         let xp = resolver.Resolve<'T> ()
         let yp = resolver.Resolve<'S> ()
 
-        let writer (w : WriteState) (_ : string) (c : CustomClass<'T,'S>) =
-            xp.Write w "X" c.X
-            yp.Write w "Y" c.Y
+        let writer (ws : WriteState) (_ : string) (c : CustomClass<'T,'S>) =
+            xp.Write ws "X" c.X
+            yp.Write ws "Y" c.Y
 
-        let reader (r : ReadState) (_ : string) =
-            let x = xp.Read r "X"
-            let y = yp.Read r "Y"
+        let reader (rs : ReadState) (_ : string) =
+            let x = xp.Read rs "X"
+            let y = yp.Read rs "Y"
             new CustomClass<_,_>(x,y)
 
-        Pickler.FromPrimitives(reader, writer)
+        let cloner (cs : CloneState) (c : CustomClass<'T,'S>) =
+            new CustomClass<_,_>(xp.Clone cs c.X, yp.Clone cs c.Y)
+
+        Pickler.FromPrimitives(reader, writer, cloner)
 
 (**
 
@@ -358,6 +361,17 @@ RecursiveClass(RecursiveClass()) |> Json.pickle p |> Json.unpickle p
 ## Additional tools
 
 This section describes some of the additional tools offered by the library:
+
+### Object Cloning
+
+FsPickler 1.1 adds support for fast cloning of serializable objects. 
+This is done in a node-per-node basis, without the need for serialization formats and intermediate buffers.
+
+*)
+
+let clonedValue = FsPickler.Clone [Choice1Of2 "foo" ; Choice2Of2 ['b';'a';'r']]
+
+(**
 
 ### Structural Hashcodes
 
@@ -410,6 +424,56 @@ They can then be easily deserialized like so:
 *)
 
 let value = json.UnPickleTyped typedPickle
+
+(**
+### Object Sifting
+
+FsPickler 1.1 comes with a 'sifting' functionality which allows serialization/cloning while omitting specified
+instances from an object graph. For example, consider the object graph
+
+*)
+
+let large = [|1..100000000|]
+let graph = Some [large; large; large; [|1;2;3|]]
+
+(**
+
+The size of the object becomes evident when running
+
+*)
+
+FsPickler.ComputeSize graph
+//val it : int64 = 400000175L
+
+(**
+
+Supposing we knew that the size of the graph was being bloated by large arrays,
+we can use FsPickler to optimize serialization by sifting away occurences from the object graph.
+
+*)
+
+let siftedGraph, siftedValues = FsPickler.Sift(graph, function :? (int []) as ts -> ts.Length > 100 | _ -> false)
+// val siftedGraph : Sifted<int [] list option> =
+//   Sift: Some [null; null; null; [|1;2;3|]]
+
+(**
+
+This will return a sifted clone of the original object as well as a collection of all objects that were sifted
+from the original input. The sifted copy encapsulated in a wrapper type so that it cannot be consumed while in its partial state.
+The original input graph will not be mutated in any way. We can verify that the size of the sifted object has been reduced:
+
+*)
+
+FsPickler.ComputeSize siftedGraph
+//val it : int64 = 242L
+
+(**
+
+Sifted objects can be put back together by calling
+
+*)
+
+let reconstructed = FsPickler.UnSift(siftedGraph, siftedValues)
 
 (**
 
