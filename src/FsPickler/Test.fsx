@@ -18,3 +18,7 @@ let xp' = Xml.pickle fPickler (fun x -> x + 1)
 
 Binary.unpickle fPickler bp' 41
 Xml.unpickle fPickler xp' 41
+
+let graph = [None ;None; Some [|1;2;3|]]
+let pickle, sifted = jsp.PickleToStringSifted(graph, function :? System.Array -> true | _ -> false )
+jsp.UnPickleOfStringSifted<int [] option list>(pickle, sifted)

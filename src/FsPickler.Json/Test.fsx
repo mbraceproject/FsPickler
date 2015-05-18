@@ -19,7 +19,3 @@ jsp.PickleToString [A 42 ; B("test", 0) ; C]
 
 let pickle = jsp.PickleToString <@ 1 + 1 @>
 jsp.UnPickleOfString<Quotations.Expr<int>> pickle
-
-let graph = [None ;None; Some [|1;2;3|]]
-let pickle, sifted = jsp.PickleToStringSifted(graph, function :? System.Array -> true | _ -> false )
-jsp.UnPickleOfStringSifted<int [] option list>(pickle, sifted)
