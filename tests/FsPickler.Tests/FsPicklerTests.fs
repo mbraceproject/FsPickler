@@ -245,6 +245,15 @@ type ``FsPickler Tests`` (format : string) as self =
     member __.``3. Array: byte []`` () = __.CheckArray<byte []> ()
 
     [<Test; Category("Generic BCL Types")>]
+    member __.``3. Array: byte [] caching`` () =
+        let xs = [|1 .. 100|]
+        let ys,zs = testRoundtrip(xs,xs)
+        let refEq = obj.ReferenceEquals(ys,zs)
+        let bs = [|1uy .. 100uy|]
+        let ys,zs = testRoundtrip(bs,bs)
+        obj.ReferenceEquals(ys,zs) |> should equal refEq
+
+    [<Test; Category("Generic BCL Types")>]
     member __.``3. Array: int * string`` () = __.CheckArray<int * string> ()
 
     [<Test; Category("Generic BCL Types")>]

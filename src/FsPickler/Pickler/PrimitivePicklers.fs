@@ -121,16 +121,6 @@ type StringPickler () =
     override __.Clone (clone : CloneState) (s : string) = if obj.ReferenceEquals(s, null) then s else String.Copy s
 
 [<AutoSerializable(false)>]
-type ByteArrayPickler () =
-    inherit PrimitivePickler<byte []> ()
-
-    override __.Write (writer : WriteState) (tag : string) (bytes : byte []) = writer.Formatter.WriteBytes tag bytes
-    override __.Read (reader : ReadState) (tag : string) = reader.Formatter.ReadBytes tag
-    override __.Clone (clone : CloneState) (bytes : byte[]) = 
-        if obj.ReferenceEquals(bytes, null) then bytes 
-        else bytes.Clone() |> fastUnbox<byte[]>
-
-[<AutoSerializable(false)>]
 type GuidPickler () =
     inherit PrimitivePickler<Guid> ()
 
@@ -214,7 +204,6 @@ module PrimitivePicklers =
     let mkDecimal () = new DecimalPickler () :> Pickler<decimal>
     let mkString () = new StringPickler () :> Pickler<string>
     let mkChar () = new CharPickler () :> Pickler<char>
-    let mkBytes () = new ByteArrayPickler () :> Pickler<byte []>
     let mkGuid () = new GuidPickler () :> Pickler<Guid>
     let mkDate () = new DateTimePickler () :> Pickler<DateTime>
     let mkTimeSpan () = new TimeSpanPickler () :> Pickler<TimeSpan>
@@ -228,6 +217,6 @@ module PrimitivePicklers =
         [|
             uc mkBoolean ; uc mkByte ; uc mkSByte ; uc mkInt16 ; uc mkInt32 ; uc mkInt64
             uc mkUInt16 ; uc mkUInt32 ; uc mkUInt64 ; uc mkSingle ; uc mkDouble ; uc mkDecimal
-            uc mkString ; uc mkChar ; uc mkBytes ; uc mkGuid ; uc mkDate ; uc mkTimeSpan
-            uc mkBigInt ; uc mkDBNull ; uc mkUnit
+            uc mkString ; uc mkChar ; uc mkGuid ; uc mkDate ; uc mkTimeSpan ; uc mkBigInt ; 
+            uc mkDBNull ; uc mkUnit
         |]

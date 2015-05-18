@@ -22,6 +22,7 @@ type internal PicklerCache private () =
         seq {  
             yield CompositePickler.ObjectPickler :> Pickler
             yield! PrimitivePicklers.mkAll ()
+            yield ArrayPickler.CreateByteArrayPickler() :> Pickler
             yield! mkReflectionPicklers <| ArrayPickler.GetInterface()
         } |> Seq.map (fun p -> KeyValuePair(p.Type, Success p))
 

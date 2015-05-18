@@ -80,7 +80,7 @@ module Pickler =
     let guid = PrimitivePicklers.mkGuid ()
     let dateTime = PrimitivePicklers.mkDate ()
     let timeSpan = PrimitivePicklers.mkTimeSpan ()
-    let bytes = PrimitivePicklers.mkBytes ()
+    let bytes = ArrayPickler.CreateByteArrayPickler()
     let bigint = PrimitivePicklers.mkBigInt ()
 
     /// the default System.Object pickler

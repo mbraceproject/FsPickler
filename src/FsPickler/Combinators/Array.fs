@@ -33,6 +33,13 @@ module private ArrayPicklerUtils =
 
 type internal ArrayPickler =
 
+    static member CreateByteArrayPickler () : Pickler<byte []> =
+        let writer (w : WriteState) (tag : string) (bytes : byte []) = w.Formatter.WriteBytes tag bytes
+        let reader (r : ReadState) (tag : string) = r.Formatter.ReadBytes tag
+        let cloner (c : CloneState) (bytes : byte []) = bytes.Clone() |> fastUnbox<byte []>
+
+        CompositePickler.Create(reader, writer, cloner, PicklerInfo.Array, cacheByRef = true, useWithSubtypes = false, skipHeaderWrite = false)
+
     static member Create (ep : Pickler<'T>) : Pickler<'T []> =
             
         let writer (w : WriteState) (tag : string) (array : 'T []) =
