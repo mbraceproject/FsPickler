@@ -36,7 +36,10 @@ type internal ArrayPickler =
     static member CreateByteArrayPickler () : Pickler<byte []> =
         let writer (w : WriteState) (tag : string) (bytes : byte []) = w.Formatter.WriteBytes tag bytes
         let reader (r : ReadState) (tag : string) = r.Formatter.ReadBytes tag
-        let cloner (c : CloneState) (bytes : byte []) = bytes.Clone() |> fastUnbox<byte []>
+        let cloner (c : CloneState) (bytes : byte []) = 
+            let bytes' = bytes.Clone() |> fastUnbox<byte []>
+            c.EarlyRegisterArray bytes'
+            bytes'
 
         CompositePickler.Create(reader, writer, cloner, PicklerInfo.Array, skipHeaderWrite = false)
 

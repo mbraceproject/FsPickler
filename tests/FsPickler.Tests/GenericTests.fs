@@ -148,6 +148,8 @@ module ``Generic Tests`` =
 
     [<Test; Category("Clone")>]
     let ``2. Clone: cached array`` () = 
+        let xs = [|1uy .. 10uy|]
+        testCloneRef [|for i in 1 .. 100 -> xs|]
         let xs = [|1 .. 10|]
         testCloneRef [|for i in 1 .. 100 -> xs|]
         let xs = [|"test"|]
