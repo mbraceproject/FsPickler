@@ -73,6 +73,9 @@ module internal Utils =
             | Success x -> try Success <| f x with e -> Error e
             | Error e -> Error e
 
+    module Option =
+        let inline isSome (ts : 'T option) = match ts with None -> false | Some _ -> true
+
     let inline denull x = if x = null then None else Some x
 
     let inline fastUnbox<'T> (x : obj) = 

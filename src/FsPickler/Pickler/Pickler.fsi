@@ -137,6 +137,7 @@ and [<AutoSerializable(false); Sealed>] ReadState =
         member internal NextObjectId : unit -> int64
         member internal EarlyRegisterArray : array:System.Array -> unit
         member internal Formatter : IPickleFormatReader
+        member internal IsUnSifting : bool
         member internal ObjectCache : Dictionary<int64,obj>
         member internal ObjectCount : int64
         member internal PicklerResolver : IPicklerResolver

@@ -320,7 +320,7 @@ module ``Generic Tests`` =
         let xs = Array.init 10 (fun _ -> tuple)
         let calls = ref 0
         let sifted, values = FsPickler.Sift(xs, fun o -> if obj.ReferenceEquals(o,tuple) then incr calls ; true else false)
-        calls.Value |> should equal 10
+        calls.Value |> should equal 1
         values.Length |> should equal 1
         FsPickler.UnSift(sifted, values) |> should equal xs
 

@@ -122,6 +122,7 @@ and [<AutoSerializable(false); Sealed>]
     let sc = match streamingContext with None -> new StreamingContext() | Some sc -> sc
 
     let mutable currentId = 0L
+    let isUnsifting = Option.isSome sifted
     let objCache = new Dictionary<int64, obj> ()
     do 
         match sifted with
@@ -131,6 +132,7 @@ and [<AutoSerializable(false); Sealed>]
     let tyPickler = resolver.Resolve<Type> ()
 
     member internal __.PicklerResolver = resolver
+    member internal __.IsUnSifting = isUnsifting
     member internal __.Formatter = formatter
     member internal __.TypePickler = tyPickler
     member internal __.ReflectionCache = reflectionCache
