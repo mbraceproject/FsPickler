@@ -101,5 +101,21 @@ namespace Nessos.CsPickler
         {
             FSP.VisitObject<T>(visitor, graph);
         }
+
+
+        /// <summary>
+        ///     Performs an in-memory, deep cloning of provided serializable object graph.
+        ///     Cloning is performed on a node-to-node basis and does not make use of intermediate
+        ///     serialization buffers.
+        /// </summary>
+        /// <typeparam name="T">graph type.</typeparam>
+        /// <param name="graph">object to be cloned.</param>
+        /// <param name="streamingContext">payload object for StreamingContext; defaults to null.</param>
+        /// <returns>Clone of provided object graph.</returns>
+        public static T Clone<T>(T graph, Object streamingContext = null)
+        {
+            var sc = Utils.GetStreamingContext(streamingContext);
+            return FSP.Clone<T>(graph, streamingContext: sc);
+        }
     }
 }
