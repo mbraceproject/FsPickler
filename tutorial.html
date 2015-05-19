@@ -735,10 +735,12 @@ instances from an object graph. For example, consider the object graph</p>
 <table class="pre"><tr><td class="lines"><pre class="fssnip">
 <span class="l">1: </span>
 <span class="l">2: </span>
+<span class="l">3: </span>
 </pre>
 </td>
 <td class="snippet"><pre class="fssnip">
 <span onmouseout="hideTip(event, 'fs14', 518)" onmouseover="showTip(event, 'fs14', 518)" class="t">FsPickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs184', 519)" onmouseover="showTip(event, 'fs184', 519)" class="f">ComputeSize</span> <span onmouseout="hideTip(event, 'fs190', 520)" onmouseover="showTip(event, 'fs190', 520)" class="i">graph</span>
+
 <span class="c">//val it : int64 = 400000175L</span>
 </pre>
 </td>
@@ -753,11 +755,13 @@ we can use FsPickler to optimize serialization by sifting away occurences from t
 <span class="l">2: </span>
 <span class="l">3: </span>
 <span class="l">4: </span>
+<span class="l">5: </span>
 </pre>
 </td>
 <td class="snippet"><pre class="fssnip">
 <span class="k">let</span> <span onmouseout="hideTip(event, 'fs191', 521)" onmouseover="showTip(event, 'fs191', 521)" class="f">sifter</span> <span class="o">=</span> <span class="k">function</span> <span class="o">:?</span> (<span onmouseout="hideTip(event, 'fs58', 522)" onmouseover="showTip(event, 'fs58', 522)" class="t">int</span> []) <span class="k">as</span> <span class="i">ts</span> <span class="k">-&gt;</span> <span class="i">ts</span><span class="o">.</span><span class="i">Length</span> <span class="o">&gt;</span> <span class="n">100</span> | _ <span class="k">-&gt;</span> <span class="k">false</span>
 <span class="k">let</span> <span onmouseout="hideTip(event, 'fs192', 523)" onmouseover="showTip(event, 'fs192', 523)" class="i">siftedGraph</span>, <span onmouseout="hideTip(event, 'fs193', 524)" onmouseover="showTip(event, 'fs193', 524)" class="i">siftedValues</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs14', 525)" onmouseover="showTip(event, 'fs14', 525)" class="t">FsPickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs194', 526)" onmouseover="showTip(event, 'fs194', 526)" class="f">Sift</span>(<span onmouseout="hideTip(event, 'fs190', 527)" onmouseover="showTip(event, 'fs190', 527)" class="i">graph</span>, <span onmouseout="hideTip(event, 'fs191', 528)" onmouseover="showTip(event, 'fs191', 528)" class="f">sifter</span>)
+
 <span class="c">// val siftedGraph : Sifted&lt;int [] list option&gt; =</span>
 <span class="c">//   Sift: Some [null; null; null; [|1;2;3|]]</span>
 </pre>
@@ -772,10 +776,12 @@ The original input graph will not be mutated in any way. We can verify that the 
 <table class="pre"><tr><td class="lines"><pre class="fssnip">
 <span class="l">1: </span>
 <span class="l">2: </span>
+<span class="l">3: </span>
 </pre>
 </td>
 <td class="snippet"><pre class="fssnip">
 <span onmouseout="hideTip(event, 'fs14', 529)" onmouseover="showTip(event, 'fs14', 529)" class="t">FsPickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs184', 530)" onmouseover="showTip(event, 'fs184', 530)" class="f">ComputeSize</span> <span onmouseout="hideTip(event, 'fs192', 531)" onmouseover="showTip(event, 'fs192', 531)" class="i">siftedGraph</span>
+
 <span class="c">//val it : int64 = 242L</span>
 </pre>
 </td>
