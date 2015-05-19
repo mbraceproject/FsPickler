@@ -540,6 +540,22 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
         pickler.DeserializeSifted<(int * int []) option * int [] option option list>(m, sifted) |> should equal graph
 
     [<Test; Category("FsPickler Generic tests")>]
+    member __.``5. Object: tuple sift serialization`` () =
+        // test that values are sifted even if they are not cached by reference
+        let tuple = (42,"42")
+        let p = FsPickler.GeneratePickler<int * string> ()
+        p.IsCacheByRef |> should equal false
+        let xs = Array.init 10 (fun _ -> tuple)
+        let calls = ref 0
+        use m = new MemoryStream()
+        let sifter = { new IObjectSifter with member __.Sift(_,o) = if obj.ReferenceEquals(o,tuple) then incr calls ; true else false }
+        let values = pickler.SerializeSifted(m, xs, sifter, leaveOpen = true)
+        calls.Value |> should equal 1
+        values.Length |> should equal 1
+        m.Position <- 0L
+        pickler.DeserializeSifted<(int * string)[]>(m, values) |> should equal xs
+
+    [<Test; Category("FsPickler Generic tests")>]
     member __.``5. Object: random sift serialization`` () =
         let r = new System.Random()
         let randomSifter = { new IObjectSifter with member __.Sift(_,_) = r.Next(0,5) = 0 }
