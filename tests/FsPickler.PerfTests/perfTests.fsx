@@ -144,6 +144,10 @@ let plotGC (results : TestSession list) =
     |> TestSession.groupByTest
     |> Map.iter (fun _ rs -> plot "GC Collections (gen0)" (fun r -> float r.GcDelta.[0]) rs)
 
+//
+//  Run the tests
+//
+
 let results = PerfTest.run mkTester tests
 let cyclicResults = PerfTest.run mkCyclicGraphTester cyclic
 
