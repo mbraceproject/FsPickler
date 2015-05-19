@@ -170,7 +170,8 @@ let isPolymorphicRecursive (t : Type) =
             // traverse fields
             if FSharpType.IsUnion(t, allMembers) then
                 FSharpType.GetUnionCases(t, allMembers)
-                |> Seq.collect (fun u -> u.GetFields() |> Seq.map (fun p -> p.PropertyType))
+                |> Seq.collect (fun u -> u.GetFields())
+                |> Seq.map (fun p -> p.PropertyType)
                 |> Seq.distinct
                 |> Seq.tryPick (aux (t :: traversed))
             else
@@ -209,7 +210,8 @@ let isRecursiveType (t : Type) =
             aux (t :: traversed) <| t.GetElementType()
         elif FSharpType.IsUnion(t, allMembers) then
             FSharpType.GetUnionCases(t, allMembers)
-            |> Seq.collect (fun u -> u.GetFields() |> Seq.map (fun p -> p.PropertyType))
+            |> Seq.collect (fun u -> u.GetFields())
+            |> Seq.map (fun p -> p.PropertyType)
             |> Seq.distinct
             |> Seq.exists (aux (t :: traversed))
 #if OPTIMIZE_FSHARP
@@ -245,12 +247,14 @@ let isOfFixedSize isRecursive (t : Type) =
         elif FSharpType.IsUnion(t, allMembers) then
             FSharpType.GetUnionCases(t, allMembers)
             |> Seq.collect(fun u -> u.GetFields())
+            |> Seq.map (fun f -> f.PropertyType)
             |> Seq.distinct
-            |> Seq.forall(fun f -> aux f.PropertyType)
+            |> Seq.forall aux
         else
             gatherSerializedFields t
+            |> Seq.map (fun f -> f.FieldType)
             |> Seq.distinct
-            |> Seq.forall (fun f -> aux f.FieldType)
+            |> Seq.forall aux
 
     if isRecursive then false
     else

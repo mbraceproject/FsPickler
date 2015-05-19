@@ -227,12 +227,27 @@ type internal CompositePickler<'T> =
                 formatter.WriteCachedObjectId id
                 formatter.EndWriteObject()
         else
-            if p.m_SkipHeaderWrite then
-                p.m_Writer state tag value
-            else
-                formatter.BeginWriteObject tag ObjectFlags.None
-                p.m_Writer state tag value
-                formatter.EndWriteObject ()
+            // check if value should be sifted from serialization
+            match state.Sifter with
+            | Some sifter when sifter.Sift(p, value) ->
+                let mutable firstOccurence = false
+                let id = state.GetObjectId(value, &firstOccurence)
+                if firstOccurence then
+                    state.Sifted.Add(id, box value)
+                    formatter.BeginWriteObject tag ObjectFlags.IsSiftedValue
+                    formatter.EndWriteObject()
+                else
+                    formatter.BeginWriteObject tag ObjectFlags.IsCachedInstance
+                    formatter.WriteCachedObjectId id
+                    formatter.EndWriteObject()
+
+            | _ ->
+                if p.m_SkipHeaderWrite then
+                    p.m_Writer state tag value
+                else
+                    formatter.BeginWriteObject tag ObjectFlags.None
+                    p.m_Writer state tag value
+                    formatter.EndWriteObject ()
 
 
     override p.Read (state : ReadState) (tag : string) =
@@ -406,7 +421,21 @@ type internal CompositePickler<'T> =
             else
                 state.ObjectCache.[id] |> fastUnbox<'T>
         else
-            p.m_Cloner state value
+            match state.SiftData with
+            | Some(sifter, container) when sifter.Sift(p, value) ->
+                let mutable firstOccurence = false
+                let id = state.GetReferenceId(value, &firstOccurence)
+                if firstOccurence then
+                    let ra = new ResizeArray<int64> ()
+                    container.Add(id, (box value, ra))
+                    ra.Add nodeId
+                else
+                    let _,ra = container.[id]
+                    ra.Add nodeId
+
+                fastUnbox<'T> null
+
+            | _ -> p.m_Cloner state value
 
 and internal CompositePickler =
 

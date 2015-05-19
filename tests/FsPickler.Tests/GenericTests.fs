@@ -312,6 +312,19 @@ module ``Generic Tests`` =
         FsPickler.UnSift(sifted, values) |> should equal graph
 
     [<Test; Category("Sift")>]
+    let ``3. Object: tuple sifting`` () =
+        // test that values are sifted even if they are not cached by reference
+        let tuple = (1,2,3,4,5,6,7,8)
+        let p = FsPickler.GeneratePickler (tuple.GetType())
+        p.IsCacheByRef |> should equal false
+        let xs = Array.init 10 (fun _ -> tuple)
+        let calls = ref 0
+        let sifted, values = FsPickler.Sift(xs, fun o -> if obj.ReferenceEquals(o,tuple) then incr calls ; true else false)
+        calls.Value |> should equal 10
+        values.Length |> should equal 1
+        FsPickler.UnSift(sifted, values) |> should equal xs
+
+    [<Test; Category("Sift")>]
     let ``3. Object: random sift`` () =
         let r = new System.Random()
         let randomSifter = { new IObjectSifter with member __.Sift(_,_) = r.Next(0,5) = 0 }
