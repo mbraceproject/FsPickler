@@ -433,8 +433,9 @@ instances from an object graph. For example, consider the object graph
 
 *)
 
+let small = [|1..10|]
 let large = [|1..100000000|]
-let graph = Some [large; large; large; [|1;2;3|]]
+let graph = Some [small; large; small; large]
 
 (**
 
@@ -443,7 +444,8 @@ The size of the object becomes evident when running
 *)
 
 FsPickler.ComputeSize graph
-//val it : int64 = 400000175L
+
+//val it : int64 = 400000203L
 
 (**
 
@@ -452,9 +454,22 @@ we can use FsPickler to optimize serialization by sifting away occurences from t
 
 *)
 
-let siftedGraph, siftedValues = FsPickler.Sift(graph, function :? (int []) as ts -> ts.Length > 100 | _ -> false)
-// val siftedGraph : Sifted<int [] list option> =
-//   Sift: Some [null; null; null; [|1;2;3|]]
+let sifter : obj -> bool = function :? (int []) as ts -> ts.Length > 100 | _ -> false
+let siftedGraph, siftedValues = FsPickler.Sift(graph, sifter)
+
+//val siftedValues : (int64 * obj) [] =
+//  [|(4L,
+//     [|1; 2; 3; 4; 5; 6; 7; 8; 9; 10; 11; 12; 13; 14; 15; 16; 17; 18; 19; 20;
+//       21; 22; 23; 24; 25; 26; 27; 28; 29; 30; 31; 32; 33; 34; 35; 36; 37; 38;
+//       39; 40; 41; 42; 43; 44; 45; 46; 47; 48; 49; 50; 51; 52; 53; 54; 55; 56;
+//       57; 58; 59; 60; 61; 62; 63; 64; 65; 66; 67; 68; 69; 70; 71; 72; 73; 74;
+//       75; 76; 77; 78; 79; 80; 81; 82; 83; 84; 85; 86; 87; 88; 89; 90; 91; 92;
+//       93; 94; 95; 96; 97; 98; 99; 100; ...|])|]
+//
+//val siftedGraph : Sifted<int [] list option> =
+//  Sift: Some
+//  [[|1; 2; 3; 4; 5; 6; 7; 8; 9; 10|]; null; [|1; 2; 3; 4; 5; 6; 7; 8; 9; 10|];
+//   null]
 
 (**
 
@@ -465,7 +480,8 @@ The original input graph will not be mutated in any way. We can verify that the 
 *)
 
 FsPickler.ComputeSize siftedGraph
-//val it : int64 = 242L
+
+//val it : int64 = 270L
 
 (**
 

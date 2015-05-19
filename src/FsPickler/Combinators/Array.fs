@@ -111,7 +111,9 @@ type internal ArrayPickler =
 
         let cloner (c : CloneState) (array : 'T []) =
             if ep.TypeKind <= TypeKind.Enum then
-                array.Clone() |> fastUnbox<_>
+                let array' = array.Clone() |> fastUnbox<'T[]>
+                c.EarlyRegisterArray array'
+                array'
             else
                 let array' = Array.zeroCreate<'T> array.Length
                 c.EarlyRegisterArray array'
@@ -161,7 +163,9 @@ type internal ArrayPickler =
 
         let cloner (c : CloneState) (array : 'T [,]) =
             if ep.TypeKind <= TypeKind.Enum then
-                array.Clone() |> fastUnbox<_>
+                let array' = array.Clone() |> fastUnbox<'T[,]>
+                c.EarlyRegisterArray array'
+                array'
             else
                 let l1 = array.GetLength 0
                 let l2 = array.GetLength 1
@@ -218,7 +222,9 @@ type internal ArrayPickler =
 
         let cloner (c : CloneState) (array : 'T [,,]) =
             if ep.TypeKind <= TypeKind.Enum then
-                array.Clone() |> fastUnbox<_>
+                let array' = array.Clone() |> fastUnbox<'T[,,]>
+                c.EarlyRegisterArray array'
+                array'
             else
                 let l1 = array.GetLength 0
                 let l2 = array.GetLength 1
@@ -280,7 +286,9 @@ type internal ArrayPickler =
 
         let cloner (c : CloneState) (array : 'T [,,,]) =
             if ep.TypeKind <= TypeKind.Enum then
-                array.Clone() |> fastUnbox<_>
+                let array' = array.Clone() |> fastUnbox<'T[,,,]>
+                c.EarlyRegisterArray array'
+                array'
             else
                 let l1 = array.GetLength 0
                 let l2 = array.GetLength 1

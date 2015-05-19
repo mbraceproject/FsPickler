@@ -30,6 +30,10 @@ module ``Generic Tests`` =
         else
             Assert.IsNotNull actual
             Assert.AreNotSame(expected, actual) 
+
+    let testCloneRef (x : 'T) =
+        let y = FsPickler.Clone x
+        y |> isNotSameTo x
     
     let testCloneEq (x : 'T) =
         let y = FsPickler.Clone x
@@ -141,6 +145,13 @@ module ``Generic Tests`` =
         Check.QuickThrowOnFail<string [,]> (testCloneRefEq, maxRuns = 10)
         Check.QuickThrowOnFail<string [,,]> (testCloneRefEq, maxRuns = 10)
         Check.QuickThrowOnFail<string [,,,]> (testCloneRefEq, maxRuns = 10)
+
+    [<Test; Category("Clone")>]
+    let ``2. Clone: cached array`` () = 
+        let xs = [|1 .. 10|]
+        testCloneRef [|for i in 1 .. 100 -> xs|]
+        let xs = [|"test"|]
+        testCloneRef [|for i in 1 .. 100 -> xs|]
 
     [<Test; Category("Clone")>]
     let ``2. Clone: optional`` () = 
