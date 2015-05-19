@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8"/>
-    <title>IgnoreStrongNamesConverter - FsPickler</title>
+    <title>IObjectSifter - FsPickler</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <meta name="description" content=""/>
     <meta name="author" content="Eirik Tsarpalis"/>
@@ -35,33 +35,34 @@
 
 
 
-<h1>IgnoreStrongNamesConverter</h1>
+<h1>IObjectSifter</h1>
 <div class="xmldoc">
-<p>Defines a type conversion scheme in which strong assembly info is dropped 
-at deserialization.</p>
+<p>Object graph sifting predicate.</p>
 </div>
-  <h3>Constructors</h3>
+  <h3>Instance members</h3>
   <table class="table table-bordered member-list">
     <thead>
-      <tr><td>Constructor</td><td>Description</td></tr>
+      <tr><td>Instance member</td><td>Description</td></tr>
     </thead>
     <tbody>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '210', 210)" onmouseover="showTip(event, '210', 210)">
-            new(ignoreVersion)
+          <code onmouseout="hideTip(event, '138', 138)" onmouseover="showTip(event, '138', 138)">
+            Sift(pickler, value)
           </code>
-          <div class="tip" id="210">
-            <strong>Signature:</strong> (ignoreVersion:bool option) -&gt; IgnoreStrongNamesConverter<br />
-                      </div>
+          <div class="tip" id="138">
+            <strong>Signature:</strong> (pickler:Pickler&lt;&#39;T&gt; * value:&#39;T) -&gt; bool<br />
+              <strong>Modifiers:</strong> abstract<br />
+                          <strong>Type parameters:</strong> 'T          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/Pickler/Types.fs#L180-180" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/Pickler/Pickler.fs#L73-73" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          
+          <p>Predicate deciding whether provided object is to be sifted from serialization.</p>
+
         </td>
       </tr>
     </tbody>
