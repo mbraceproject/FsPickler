@@ -24,6 +24,8 @@ module TestTypes =
         | Zero
         | Succ of Peano
 
+    type GenericDU<'T> = GValue of 'T
+
     type Either<'T,'S> = L of 'T | R of 'S
 
     let rec int2Peano n = match n with 0 -> Zero | n -> Succ(int2Peano(n-1))
@@ -59,6 +61,15 @@ module TestTypes =
         else
             Cons(nTree d, nForest d (l-1))
 
+    type Enum =
+        | EnumA = 0
+        | EnumB = 1
+        | EnumC = 2
+
+    type CharEnum =
+        | CEnumA = 'a'
+        | CEnumB = 'b'
+        | CEnumC = 'c'
 
     let getTreeForestPicklers (elementPickler : Pickler<'T>) =
         Pickler.fix2(fun treeP forestP ->
@@ -84,9 +95,8 @@ module TestTypes =
         override __.Equals y = match y with :? SimpleClass as y -> y.Value = __.Value | _ -> false
 
     [<Sealed>]
-    type GenericClass<'T when 'T : equality>(x : 'T) =
+    type GenericClass<'T>(x : 'T) =
         member __.Value = x
-        override __.Equals y = match y with :? GenericClass<'T> as y -> y.Value = __.Value | _ -> false
 
     type RecursiveClass(x : RecursiveClass option) =
         member __.Value = x
@@ -264,6 +274,10 @@ module TestTypes =
         member __.X = x
         member __.Y = y
 
+    [<Struct>]
+    type GenericStruct<'T>(value : 'T) =
+        member __.Value = value
+
     type DU = 
         | Nothing 
         | Something of string * int
@@ -275,6 +289,8 @@ module TestTypes =
 
     type Record =
         { Int : int ; String : string ; Tuple : int * string }
+
+    type GenericRecord<'T> = { GValue : 'T }
 
 
     type Class(x : int, y : string) =

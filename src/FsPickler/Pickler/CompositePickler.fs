@@ -50,7 +50,7 @@ type internal CompositePickler<'T> =
 
             m_PicklerInfo = picklerInfo
 
-            m_IsCacheByRef = match cacheByRef with Some c -> c || base.IsRecursiveType | None -> base.TypeKind > TypeKind.Value
+            m_IsCacheByRef = match cacheByRef with Some c -> c || base.IsRecursiveType | None -> base.Kind > Kind.String
             m_UseWithSubtypes = defaultArg useWithSubtypes false
             m_SkipHeaderWrite = defaultArg skipHeaderWrite false
             m_Bypass = defaultArg bypass false
@@ -149,16 +149,14 @@ type internal CompositePickler<'T> =
     member internal p.Cloner = p.m_Cloner
 
     override p.Write (state : WriteState) (tag : string) (value : 'T) =
-
         let formatter = state.Formatter
 
         match state.Visitor with
         | Some v when not p.m_SkipVisit -> v.Visit (p, value)
         | _ -> ()
 
-        if p.m_Bypass then p.m_Writer state tag value else
-
-        if p.TypeKind = TypeKind.Value then
+        if p.m_Bypass then p.m_Writer state tag value
+        elif p.Kind <= Kind.Value then
             formatter.BeginWriteObject tag ObjectFlags.None
             p.m_Writer state tag value
             formatter.EndWriteObject ()
@@ -173,7 +171,7 @@ type internal CompositePickler<'T> =
 #endif
         let mutable isProperSubtype = false
         let mutable subtype = Unchecked.defaultof<Type>
-        if p.TypeKind > TypeKind.Sealed && not p.m_UseWithSubtypes then
+        if p.Kind > Kind.Sealed && not p.m_UseWithSubtypes then
             subtype <- value.GetType()
             if subtype <> p.Type then
                 isProperSubtype <- true
@@ -189,9 +187,6 @@ type internal CompositePickler<'T> =
             let mutable firstOccurence = false
             let id = state.GetObjectId(value, &firstOccurence)
 
-            let cyclicObjects = state.CyclicObjectSet
-            let objStack = state.ObjectStack
-
             if firstOccurence then
                 // check if value should be sifted from serialization
                 match state.Sifter with
@@ -201,7 +196,7 @@ type internal CompositePickler<'T> =
                     formatter.EndWriteObject()
 
                 | _ ->
-                    if p.IsRecursiveType then objStack.Push id
+                    if p.IsRecursiveType then state.ObjectStack.Push id
 
                     if p.m_SkipHeaderWrite then
                         p.m_Writer state tag value
@@ -210,14 +205,13 @@ type internal CompositePickler<'T> =
                         p.m_Writer state tag value
                         formatter.EndWriteObject ()
 
-                    if p.IsRecursiveType then objStack.Pop () |> ignore
+                    if p.IsRecursiveType then state.ObjectStack.Pop () |> ignore
 
-            elif p.IsRecursiveType && p.TypeKind <> TypeKind.Array && objStack.Contains id && not <| cyclicObjects.Contains id then
+            elif p.IsRecursiveType && p.Kind <> Kind.Array && not <| state.CyclicObjectSet.Contains id && state.ObjectStack.Contains id then
                 // came across cyclic object, record fixup-related data
                 // cyclic objects are handled once per instance
                 // instances of cyclic arrays are handled differently than other reference types
-
-                do cyclicObjects.Add(id) |> ignore
+                do state.CyclicObjectSet.Add(id) |> ignore
                     
                 formatter.BeginWriteObject tag ObjectFlags.IsCyclicInstance
                 formatter.WriteCachedObjectId id
@@ -259,9 +253,9 @@ type internal CompositePickler<'T> =
             let id = formatter.ReadCachedObjectId ()
             formatter.EndReadObject()
 
-            let value = FormatterServices.GetUninitializedObject(p.Type)
+            let value = FormatterServices.GetUninitializedObject p.Type |> fastUnbox<'T>
             state.ObjectCache.Add(id, value)
-            fastUnbox<'T> value
+            value
 
         elif ObjectFlags.hasFlag flags ObjectFlags.IsCachedInstance then
             let id = formatter.ReadCachedObjectId ()
@@ -277,14 +271,16 @@ type internal CompositePickler<'T> =
                 raise <| new FsPicklerException(sprintf "Write state missing sifted object of id '%d'." id)
             | :? InvalidCastException ->
                 let result = match state.ObjectCache.[id] with null -> "null" | o -> o.GetType().ToString()
-                raise <| new FsPicklerException(sprintf "Sifted object of id '%d' was expected to be of type '%O' but was '%O'." id typeof<'T> result)
+                let msg = sprintf "Sifted object of id '%d' was expected to be of type '%O' but was '%O'." id typeof<'T> result
+                raise <| new FsPicklerException(msg)
 
+        // force caching on all reference types in case of sift mode
         elif p.m_IsCacheByRef || state.IsUnSifting then
             let id = state.NextObjectId()
             let value = p.m_Reader state tag
             formatter.EndReadObject()
 
-            if p.TypeKind = TypeKind.Array then
+            if p.Kind = Kind.Array then
                 // depending on the format implementation,
                 // array picklers may or may not cache deserialized values early.
                 // solve this ambiguity by forcing an update here.
@@ -297,8 +293,9 @@ type internal CompositePickler<'T> =
                 if found then
                     // deserialization reached root level of a cyclic object
                     // create cyclic binding by performing shallow field copying
-                    do ShallowObjectCopier.Copy p.Type value cachedInstance
-                    fastUnbox<'T> cachedInstance
+                    let cachedInstance = fastUnbox<'T> cachedInstance
+                    do ShallowObjectCopier<'T>.Copy value cachedInstance
+                    cachedInstance
                 else
                     state.ObjectCache.Add(id, value) ; value
             else
@@ -309,7 +306,7 @@ type internal CompositePickler<'T> =
             value
 
     override p.Clone (state : CloneState) (value : 'T) : 'T =
-        if p.m_Bypass || p.TypeKind = TypeKind.Value  then p.m_Cloner state value else
+        if p.m_Bypass || p.Kind <= Kind.Value  then p.m_Cloner state value else
 
         // create a unique id for node in graph that is object
         // this differs from the id generated by the ObjectIdGenerator
@@ -340,7 +337,7 @@ type internal CompositePickler<'T> =
 #endif
         let mutable isProperSubtype = false
         let mutable subtype = Unchecked.defaultof<Type>
-        if p.TypeKind > TypeKind.Sealed && not p.m_UseWithSubtypes then
+        if p.Kind > Kind.Sealed && not p.m_UseWithSubtypes then
             let t0 = value.GetType()
             if t0 <> p.Type then
                 isProperSubtype <- true
@@ -350,6 +347,7 @@ type internal CompositePickler<'T> =
             let p0 = state.PicklerResolver.Resolve subtype
             p0.UntypedClone state value |> fastUnbox<'T>
 
+        // force caching on all reference types in case of sift mode
         elif p.m_IsCacheByRef || Option.isSome state.SiftData then
             let mutable firstOccurence = false
             let id = state.GetReferenceId(value, &firstOccurence)
@@ -365,32 +363,31 @@ type internal CompositePickler<'T> =
                         isSifted <- true
                 else
                     let mutable contents = Unchecked.defaultof<obj * ResizeArray<int64>>
-                    let ok = container.TryGetValue(id, &contents)
-                    if ok then
+                    if container.TryGetValue(id, &contents) then
                         (snd contents).Add nodeId
                         isSifted <- true
+
             | None -> ()
 
-            if isSifted then fastUnbox<'T> null else
-
-            let cyclicObjects = state.CyclicObjectSet
-            let objStack = state.ObjectStack
-
-            if firstOccurence then
-                if p.TypeKind = TypeKind.Array then
+            if isSifted then fastUnbox<'T> null
+            elif firstOccurence then
+                // cyclic arrays require special logic which is
+                // contained in the picklers, access directly from here.
+                if p.Kind = Kind.Array then
                     p.m_Cloner state value
 
                 elif p.IsRecursiveType then 
-                    objStack.Push id
+                    state.ObjectStack.Push id
                     let t = p.m_Cloner state value
-                    let _ = objStack.Pop ()
+                    let _ = state.ObjectStack.Pop ()
                     let mutable cachedInstance : obj = null
                     let found = state.ObjectCache.TryGetValue(id, &cachedInstance)
                     if found then
                         // deserialization reached root level of a cyclic object
                         // create cyclic binding by performing shallow field copying
-                        do ShallowObjectCopier.Copy p.Type t cachedInstance
-                        fastUnbox<'T> cachedInstance
+                        let cachedInstance = fastUnbox<'T> cachedInstance
+                        do ShallowObjectCopier<'T>.Copy t cachedInstance
+                        cachedInstance
                     else
                         state.ObjectCache.Add(id, t) ; t
 
@@ -398,11 +395,11 @@ type internal CompositePickler<'T> =
                     let t = p.m_Cloner state value
                     state.ObjectCache.Add(id, t) ; t
 
-            elif p.IsRecursiveType && p.TypeKind <> TypeKind.Array && objStack.Contains id && not <| cyclicObjects.Contains id then
-                do cyclicObjects.Add(id) |> ignore
-                let value = FormatterServices.GetUninitializedObject(p.Type)
+            elif p.IsRecursiveType && p.Kind <> Kind.Array && state.ObjectStack.Contains id && not <| state.CyclicObjectSet.Contains id then
+                do state.CyclicObjectSet.Add(id) |> ignore
+                let value = FormatterServices.GetUninitializedObject p.Type |> fastUnbox<'T>
                 state.ObjectCache.Add(id, value)
-                fastUnbox<'T> value
+                value
             else
                 state.ObjectCache.[id] |> fastUnbox<'T>
         else

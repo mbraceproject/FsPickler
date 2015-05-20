@@ -10,31 +10,26 @@ open System.Reflection.Emit
 open Nessos.FsPickler.Emit
 #endif
 
-type internal ShallowObjectCopier private () =  
-    static let mkCopier (t : Type) =
+type internal ShallowObjectCopier<'T> private () =
+    static let copier : Action<'T, 'T> =
+        let t = typeof<'T>
         if t.IsValueType then invalidOp t.FullName "not a class."
-
         let fields = gatherSerializedFields t
+
 #if EMIT_IL
-        let dele =
-            DynamicMethod.compileAction2<obj, obj> "shallowCopier" (fun source target ilGen ->
-                for f in fields do
-                    target.Load()
-                    source.Load()
-                    ilGen.Emit(OpCodes.Ldfld, f)
-                    ilGen.Emit(OpCodes.Stfld, f)
+        DynamicMethod.compileAction2<'T, 'T> "shallowCopier" (fun source target ilGen ->
+            for f in fields do
+                target.Load()
+                source.Load()
+                ilGen.Emit(OpCodes.Ldfld, f)
+                ilGen.Emit(OpCodes.Stfld, f)
 
-                ilGen.Emit OpCodes.Ret
-            )
-
-        fun (src : obj) (tgt : obj) -> dele.Invoke(src,tgt)
+            ilGen.Emit OpCodes.Ret)
 #else
-        fun src dst ->
+        new Action<'T,'T>(fun src dst ->
             for f in fields do
                 let v = f.GetValue(src)
-                f.SetValue(dst, v)
+                f.SetValue(dst, v))
 #endif
-    static let mkCopierMemoized = memoize mkCopier
 
-    static member Copy (t : Type) (source : obj) (target : obj) = 
-        mkCopierMemoized t source target
+    static member Copy (source : 'T) (target : 'T) = copier.Invoke(source, target)

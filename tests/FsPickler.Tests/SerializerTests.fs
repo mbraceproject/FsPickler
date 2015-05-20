@@ -222,6 +222,9 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
     member __.``3. Array: System.Guid`` () = __.CheckArray<Guid> ()
 
     [<Test; Category("Generic BCL Types")>]
+    member __.``3. Array: enum`` () = __.CheckArray<Enum> () ; __.CheckArray<CharEnum> ()
+
+    [<Test; Category("Generic BCL Types")>]
     member __.``3. Array: System.DateTime`` () = 
         if runsOnMono then
             // Mono Bug: https://bugzilla.xamarin.com/show_bug.cgi?id=20457
@@ -532,7 +535,7 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
     [<Test; Category("FsPickler Generic tests")>]
     member __.``5. Object: simple sift serialization`` () =
         let graph : (int * int []) option * int [] option option list = (Some (1, [|1 .. 100|]), [None; None ; Some None; Some (Some [|12|])])
-        let sifter = { new IObjectSifter with member __.Sift(p,_) = p.TypeKind = TypeKind.Array }
+        let sifter = { new IObjectSifter with member __.Sift(p,_) = p.Kind = Kind.Array }
         use m = new MemoryStream()
         let sifted = pickler.SerializeSifted(m, graph, sifter, leaveOpen = true)
         sifted.Length |> should equal 2
@@ -585,7 +588,10 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
     member __.``6. Custom: simple class`` () = testEquals <| SimpleClass(42, "fortyTwo")
 
     [<Test ; Category("Custom types")>] 
-    member __.``6. Custom: generic class`` () = testEquals <| new GenericClass<string * int>("fortyTwo", 42)
+    member __.``6. Custom: generic class`` () = 
+        let gc = new GenericClass<string * int>("fortyTwo", 42)
+        let gc' = testRoundtrip gc
+        gc'.Value |> should equal gc.Value
 
     [<Test ; Category("Custom types")>] 
     member __.``6. Custom: recursive class`` () = testEquals <| RecursiveClass(Some (RecursiveClass(None)))

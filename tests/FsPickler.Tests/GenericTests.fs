@@ -32,18 +32,21 @@ module ``Generic Tests`` =
             Assert.AreNotSame(expected, actual) 
 
     let testCloneRef (x : 'T) =
-        let y = FsPickler.Clone x
+        let y = clone x
         y |> isNotSameTo x
     
     let testCloneEq (x : 'T) =
-        let y = FsPickler.Clone x
+        let y = clone x
         y |> should equal x
 
     let testCloneRefEq (x : 'T) =
-        let y = FsPickler.Clone x
+        let y = clone x
         y |> should equal x
         y |> isNotSameTo x
-        
+
+    let testClonePayload (proj : 'T -> 'S) (t : 'T) =
+        let t' = clone t
+        proj t' |> isNotSameTo (proj t)
 
     //
     //  Pickler generation tests
@@ -135,16 +138,24 @@ module ``Generic Tests`` =
     [<Test; Category("Clone")>]
     let ``2. Clone: string`` () = Check.QuickThrowOnFail<string> testCloneEq
 
-    [<Test; Category("Clone")>]
-    let ``2. Clone: byte []`` () = Check.QuickThrowOnFail<byte []> testCloneRefEq
+    let checkArray<'T> () =
+        testCloneRefEq (null : 'T [])
+        Check.QuickThrowOnFail<'T []> (testCloneRefEq, maxRuns = 10)
+        Check.QuickThrowOnFail<'T [,]> (testCloneRefEq, maxRuns = 10)
+        Check.QuickThrowOnFail<'T [,,]> (testCloneRefEq, maxRuns = 10)
+        Check.QuickThrowOnFail<'T [,,,]> (testCloneRefEq, maxRuns = 10)
 
     [<Test; Category("Clone")>]
-    let ``2. Clone: array`` () = 
-        testCloneRefEq (null : int [])
-        Check.QuickThrowOnFail<string []> (testCloneRefEq, maxRuns = 10)
-        Check.QuickThrowOnFail<string [,]> (testCloneRefEq, maxRuns = 10)
-        Check.QuickThrowOnFail<string [,,]> (testCloneRefEq, maxRuns = 10)
-        Check.QuickThrowOnFail<string [,,,]> (testCloneRefEq, maxRuns = 10)
+    let ``2. Clone: array int`` () = checkArray<int> ()
+
+    [<Test; Category("Clone")>]
+    let ``2. Clone: array string`` () = checkArray<string> ()
+
+    [<Test; Category("Clone")>]
+    let ``2. Clone: array byte`` () = checkArray<byte> ()
+
+    [<Test; Category("Clone")>]
+    let ``2. Clone: array enum`` () = checkArray<Enum> () ; checkArray<CharEnum> ()
 
     [<Test; Category("Clone")>]
     let ``2. Clone: cached array`` () = 
@@ -154,23 +165,29 @@ module ``Generic Tests`` =
         testCloneRef [|for i in 1 .. 100 -> xs|]
         let xs = [|"test"|]
         testCloneRef [|for i in 1 .. 100 -> xs|]
+        [|obj()|] |> testClonePayload (fun xs -> xs.[0])
 
     [<Test; Category("Clone")>]
     let ``2. Clone: optional`` () = 
         Check.QuickThrowOnFail<int option> (testCloneRefEq, maxRuns = 10)
+        Some (obj()) |> testClonePayload (fun o -> o.Value)
 
     [<Test; Category("Clone")>]
     let ``2. Clone: ref`` () = 
         Check.QuickThrowOnFail<int ref> (testCloneRefEq, maxRuns = 10)
+        ref (obj()) |> testClonePayload (fun r -> r.Value)
 
     [<Test; Category("Clone")>]
     let ``2. Clone: Nullable`` () = 
         Check.QuickThrowOnFail<Nullable<int>> (testCloneEq, maxRuns = 10)
+        let s = new GenericStruct<_>(obj())
+        new Nullable<_>(s) |> testClonePayload (fun n -> n.Value.Value)
 
     [<Test; Category("Clone")>]
     let ``2. Clone: list`` () = 
         // unions encode certain branches as singletons
         Check.QuickThrowOnFail<int list> (function [] as l -> testCloneEq l | _ as l -> testCloneRefEq l)
+        [obj()] |> testClonePayload List.head
 
     [<Test; Category("Clone")>]
     let ``2. Clone: struct`` () = 
@@ -178,12 +195,19 @@ module ``Generic Tests`` =
         let c' = clone c
         c'.X |> should equal c.X
         c'.Y |> should equal c.Y
+        new GenericStruct<_>(obj()) |> testClonePayload (fun s -> s.Value)
 
     [<Test; Category("Clone")>]
     let ``2. Clone: simple class`` () = 
         let c = new SimpleClass(42, "42")
         let c' = clone c
         c'.Value |> should equal c.Value
+
+    [<Test; Category("Clone")>]
+    let ``2. Clone: generic class`` () = 
+        let gc = new GenericClass<_>(obj())
+        testCloneRef gc
+        gc |> testClonePayload (fun c -> c.Value)
 
     [<Test; Category("Clone")>]
     let ``2. Clone: simple datacontract`` () = 
@@ -236,15 +260,19 @@ module ``Generic Tests`` =
 
     [<Test; Category("Clone")>]
     let ``2. Clone: record`` () = 
-        Check.QuickThrowOnFail<Record> testCloneRefEq
+        Check.QuickThrowOnFail<Record> (testCloneRefEq, maxRuns = 10)
+        Check.QuickThrowOnFail<Record> (testCloneRefEq, maxRuns = 10)
+        { GValue = obj() } |> testClonePayload (fun r -> r.GValue)
 
     [<Test; Category("Clone")>]
     let ``2. Clone: union`` () = 
         // unions encode certain branches as singletons
         Check.QuickThrowOnFail<SimpleDU> testCloneEq
+        Check.QuickThrowOnFail<GenericDU<int>> (testCloneEq, maxRuns = 10)
         Check.QuickThrowOnFail<Peano> (function Zero -> testCloneEq Zero | Succ _ as p -> testCloneRefEq p)
         Check.QuickThrowOnFail<Forest<int>> testCloneEq
         Check.QuickThrowOnFail<Either<int,int>> (testCloneRefEq, maxRuns = 10)
+        GValue(obj()) |> testClonePayload (function GValue v -> v)
 
     [<Test; Category("Clone")>]
     let ``2. Clone: tuple`` () = 
@@ -256,6 +284,7 @@ module ``Generic Tests`` =
         Check.QuickThrowOnFail<int * string * string * string * string * string>(testCloneRefEq, maxRuns = 10)
         Check.QuickThrowOnFail<int * string * string * string * string * string * string>(testCloneRefEq, maxRuns = 10)
         Check.QuickThrowOnFail<int * string * string * string * string * string * string * string>(testCloneRefEq, maxRuns = 10)
+        (obj(),obj()) |> testClonePayload fst
 
     [<Test; Category("Clone")>]
     let ``2. Clone: choice`` () = 
@@ -265,6 +294,7 @@ module ``Generic Tests`` =
         Check.QuickThrowOnFail<Choice<int,int,int,int,int>>(testCloneRefEq, maxRuns = 10)
         Check.QuickThrowOnFail<Choice<int,int,int,int,int,int>>(testCloneRefEq, maxRuns = 10)
         Check.QuickThrowOnFail<Choice<int,int,int,int,int,int,int>>(testCloneRefEq, maxRuns = 10)
+        Choice1Of2 (obj()) |> testClonePayload(function Choice1Of2 v -> v | _ -> failwith "error")
 
     [<Test; Category("Clone")>]
     let ``2. Clone: quotation`` () = 
@@ -319,7 +349,7 @@ module ``Generic Tests`` =
     [<Test; Category("Sift")>]
     let ``3. Object: simple sift`` () =
         let graph : (int * int []) option * int [] option option list = (Some (1, [|1 .. 100|]), [None; None ; Some None; Some (Some [|12|])])
-        let sifter = { new IObjectSifter with member __.Sift(p,_) = p.TypeKind = TypeKind.Array }
+        let sifter = { new IObjectSifter with member __.Sift(p,_) = p.Kind = Kind.Array }
         let sifted, values = FsPickler.Sift(graph, sifter)
         values.Length |> should equal 2
         FsPickler.UnSift(sifted, values) |> should equal graph

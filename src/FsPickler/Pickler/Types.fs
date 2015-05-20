@@ -9,15 +9,14 @@ open System.Runtime.Serialization
 open Nessos.FsPickler.Utils
 open Nessos.FsPickler.Reflection
 
-/// Defines a type stratification.
-
-type TypeKind =
+/// Defines a stratification of .NET types from simplest to more complex.
+type Kind =
     | Primitive             = 0uy
     | Char                  = 1uy // char is a special primitive that should be serialized w.r.t. encoding
     | Enum                  = 2uy
-    | String                = 3uy
-    | Nullable              = 4uy
-    | Value                 = 5uy
+    | Value                 = 3uy
+    | Nullable              = 4uy // Nullable is a value type which can be null
+    | String                = 5uy
     | Array                 = 6uy
     | Sealed                = 7uy
     | NonSealed             = 8uy
@@ -25,7 +24,6 @@ type TypeKind =
     | Delegate              = 10uy
 
 /// Pickler generation metadata.
-
 type PicklerInfo =
     | Primitive             = 0uy
     | Object                = 1uy
@@ -40,7 +38,6 @@ type PicklerInfo =
     | UserDefined           = 10uy
 
 /// Specifies runtime properties of serialized objects.
-
 type ObjectFlags = 
     | None                  = 0uy
     | IsNull                = 1uy
@@ -50,26 +47,24 @@ type ObjectFlags =
     | IsSequenceHeader      = 16uy
     | IsSiftedValue         = 32uy
         
-
-        
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module internal ObjectFlags =
     let inline hasFlag (flags : ObjectFlags) (flag : ObjectFlags) = flags &&& flag = flag
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module internal TypeKind =
+module internal Kind =
     /// builds type info enumeration out of reflection info
     let compute (t : Type) =
-        if t = typeof<char> then TypeKind.Char
-        elif t.IsPrimitive then TypeKind.Primitive
-        elif t = typeof<string> then TypeKind.String
-        elif t.IsEnum then TypeKind.Enum
-        elif isNullableType t then TypeKind.Nullable
-        elif t.IsValueType then TypeKind.Value
-        elif t.IsArray then TypeKind.Array
-        elif t.IsSealed then TypeKind.Sealed
-        elif t.IsAbstract then TypeKind.Abstract
-        else TypeKind.NonSealed
+        if t = typeof<char> then Kind.Char
+        elif t.IsPrimitive then Kind.Primitive
+        elif t = typeof<string> then Kind.String
+        elif t.IsEnum then Kind.Enum
+        elif isNullableType t then Kind.Nullable
+        elif t.IsValueType then Kind.Value
+        elif t.IsArray then Kind.Array
+        elif t.IsSealed then Kind.Sealed
+        elif t.IsAbstract then Kind.Abstract
+        else Kind.NonSealed
 
 
 /// Specifies that the pickler for this type is to be generated using

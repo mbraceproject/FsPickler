@@ -52,7 +52,7 @@ type internal NullablePickler =
             Nullable<'T>(value)
 
         let cloner (c : CloneState) (x : Nullable<'T>) =
-            if x.HasValue then new Nullable<'T>(x.Value)
+            if x.HasValue then Nullable<'T>(pickler.Clone c x.Value)
             else x
 
         CompositePickler.Create(reader, writer, cloner, PicklerInfo.FieldSerialization)

@@ -13,7 +13,7 @@ open Nessos.FsPickler.ReflectionCache
 [<AutoSerializable(false)>]
 type Pickler internal (t : Type) =
 
-    let typeKind = TypeKind.compute t
+    let typeKind = Kind.compute t
     let isRecursive = 
         try isRecursiveType t
         with 
@@ -30,7 +30,7 @@ type Pickler internal (t : Type) =
     let isRecursive = isRecursive && not t.IsValueType
 
     member __.Type = t
-    member __.TypeKind = typeKind
+    member __.Kind = typeKind
     member __.IsOfFixedSize = isOfFixedSize
     member __.IsRecursiveType = isRecursive
 

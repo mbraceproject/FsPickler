@@ -29,7 +29,7 @@ type Pickler =
         member IsRecursiveType : bool
 
         /// Pickler type classification
-        member TypeKind : TypeKind
+        member Kind : Kind
 
         /// Pickler generation metadata.
         abstract member PicklerInfo : PicklerInfo

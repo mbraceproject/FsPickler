@@ -10,7 +10,7 @@ open Nessos.FsPickler.SequenceUtils
 module private ArrayPicklerUtils =
         
     let inline isPrimitiveSerialized (fmt : ^Formatter) (ep : Pickler) =
-        ep.TypeKind = TypeKind.Primitive && 
+        ep.Kind = Kind.Primitive && 
             (^Formatter : (member IsPrimitiveArraySerializationSupported : bool) fmt)
 
     let lengthTags = [|0..10|] |> Array.map (sprintf "length-%d")
@@ -113,7 +113,7 @@ type internal ArrayPickler =
                 ra.ToArray()
 
         let cloner (c : CloneState) (array : 'T []) =
-            if ep.TypeKind <= TypeKind.Enum then
+            if ep.Kind <= Kind.Enum then
                 let array' = array.Clone() |> fastUnbox<'T[]>
                 c.EarlyRegisterArray array'
                 array'
@@ -165,7 +165,7 @@ type internal ArrayPickler =
             array
 
         let cloner (c : CloneState) (array : 'T [,]) =
-            if ep.TypeKind <= TypeKind.Enum then
+            if ep.Kind <= Kind.Enum then
                 let array' = array.Clone() |> fastUnbox<'T[,]>
                 c.EarlyRegisterArray array'
                 array'
@@ -224,7 +224,7 @@ type internal ArrayPickler =
             array
 
         let cloner (c : CloneState) (array : 'T [,,]) =
-            if ep.TypeKind <= TypeKind.Enum then
+            if ep.Kind <= Kind.Enum then
                 let array' = array.Clone() |> fastUnbox<'T[,,]>
                 c.EarlyRegisterArray array'
                 array'
@@ -288,7 +288,7 @@ type internal ArrayPickler =
             array
 
         let cloner (c : CloneState) (array : 'T [,,,]) =
-            if ep.TypeKind <= TypeKind.Enum then
+            if ep.Kind <= Kind.Enum then
                 let array' = array.Clone() |> fastUnbox<'T[,,,]>
                 c.EarlyRegisterArray array'
                 array'

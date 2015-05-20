@@ -12,7 +12,7 @@ type internal ListPickler =
 
             let formatter = w.Formatter
 
-            if ep.TypeKind = TypeKind.Primitive && formatter.IsPrimitiveArraySerializationSupported then
+            if ep.Kind <= Kind.Enum && formatter.IsPrimitiveArraySerializationSupported then
                 // use primitive serialization support by format to bulk-serialize array
                 // serialize as object and prefix with length
                 formatter.BeginWriteObject tag ObjectFlags.None
@@ -60,7 +60,7 @@ type internal ListPickler =
         let reader (r : ReadState) (tag : string) =
             let formatter = r.Formatter
 
-            if ep.TypeKind = TypeKind.Primitive && formatter.IsPrimitiveArraySerializationSupported then
+            if ep.Kind <= Kind.Enum && formatter.IsPrimitiveArraySerializationSupported then
                 // use primitive serialization support by format to bulk-deserialize array
                 let length = r.Formatter.ReadInt32 "length"
                 let array = Array.zeroCreate<'T> length
