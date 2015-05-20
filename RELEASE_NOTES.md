@@ -1,3 +1,6 @@
+### 1.2.1
+* Bugfixes.
+
 ### 1.2.0
 * Add fast cloning support.
 * Add object sifting support.
