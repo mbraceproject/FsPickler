@@ -91,6 +91,13 @@ module private ISerializableUtils =
 
         sI'
 
+    let inline acceptSerializationInfo (v : VisitState) (sI : SerializationInfo) =
+        let enum = sI.GetEnumerator()
+        while enum.MoveNext() do
+            let se = enum.Current
+            let ep = v.PicklerResolver.Resolve se.ObjectType
+            ep.UntypedAccept v se.Value
+
 
 type internal ISerializablePickler =
 
@@ -157,7 +164,14 @@ type internal ISerializablePickler =
                 if isDeserializationCallback then (fastUnbox<IDeserializationCallback> t').OnDeserialization null
                 t'
 
-            CompositePickler.Create(reader, writer, cloner, PicklerInfo.ISerializable)
+            let accepter (v : VisitState) (t : 'T) =
+                run onSerializing v t
+                let sI = mkSerializationInfo<'T> ()
+                t.GetObjectData(sI, v.StreamingContext)
+                run onSerialized v t
+                acceptSerializationInfo v sI
+
+            CompositePickler.Create(reader, writer, cloner, accepter, PicklerInfo.ISerializable)
 
         | Some ctorInfo ->
 
@@ -201,7 +215,14 @@ type internal ISerializablePickler =
                 else
                     t'
 
-            CompositePickler.Create(reader, writer, cloner, PicklerInfo.ISerializable)
+            let accepter (v : VisitState) (t : 'T) =
+                run onSerializing v t
+                let sI = mkSerializationInfo<'T> ()
+                t.GetObjectData(sI, v.StreamingContext)
+                run onSerialized v t
+                acceptSerializationInfo v sI
+
+            CompositePickler.Create(reader, writer, cloner, accepter, PicklerInfo.ISerializable)
 
     /// SerializationInfo-based pickler combinator
     static member FromSerializationInfo<'T>(ctor : SerializationInfo -> 'T, proj : SerializationInfo -> 'T -> unit) : Pickler<'T> =
@@ -220,4 +241,9 @@ type internal ISerializablePickler =
             let sI' = cloneSerializationInfo state sI
             ctor sI'
 
-        CompositePickler.Create(reader, writer, cloner, PicklerInfo.Combinator)
+        let accepter (v : VisitState) (t : 'T) =
+            let sI = mkSerializationInfo<'T> ()
+            do proj sI t
+            acceptSerializationInfo v sI
+
+        CompositePickler.Create(reader, writer, cloner, accepter, PicklerInfo.Combinator)

@@ -91,9 +91,16 @@ type internal StructFieldPickler =
                 f.SetValue(t', o')
 
             fastUnbox<'T> t'
+
+        let accepter (v : VisitState) (t : 'T) =
+            let t' = FormatterServices.GetUninitializedObject(typeof<'T>)
+            for i = 0 to fields.Length - 1 do
+                let f = fields.[i]
+                let o = f.GetValue t
+                picklers.[i].UntypedAccept v o
 #endif
 
-        CompositePickler.Create(reader, writer, cloner, PicklerInfo.FieldSerialization)
+        CompositePickler.Create(reader, writer, cloner, accepter, PicklerInfo.FieldSerialization)
 
 // general-purpose pickler combinator for reference types
 
@@ -249,6 +256,14 @@ type internal ClassFieldPickler =
                 (fastUnbox<IObjectReference> t').GetRealObject c.StreamingContext :?> 'T
             else
                 t'
+
+        let accepter (v : VisitState) (t : 'T) =
+            run onSerializing t v
+            for i = 0 to fields.Length - 1 do
+                let f = fields.[i]
+                let o = f.GetValue(t)
+                picklers.[i].UntypedAccept v o
+            run onSerialized t v
 #endif
 
-        CompositePickler.Create(reader, writer, cloner, PicklerInfo.FieldSerialization)
+        CompositePickler.Create(reader, writer, cloner, accepter, PicklerInfo.FieldSerialization)

@@ -197,6 +197,7 @@ module TestTypes =
                 (fun _ _ -> ClassWithPicklerFactory(42)),
                 (fun _ _ _ -> ()),
                 (fun _ _ -> new ClassWithPicklerFactory(42)),
+                (fun _ _ -> ()),
                     true, false)
 
     [<CustomPickler>]

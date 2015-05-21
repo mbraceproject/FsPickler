@@ -111,13 +111,11 @@ type FsPickler private () =
     /// </summary>
     /// <param name="visitor">Visitor implementation.</param>
     /// <param name="graph">Object graph.</param>
-    static member VisitObject(visitor : IObjectVisitor, graph : 'T) =
-        let resolver = defaultSerializer.Value.Resolver
-        let cache = defaultSerializer.Value.ReflectionCache
-        let pickler = resolver.Resolve<'T> ()
-        use nullFormat = new NullPickleWriter()
-        let state = new WriteState(nullFormat, resolver, cache, visitor = visitor)
-        pickler.Write state "value" graph
+    static member VisitObject(visitor : IObjectVisitor, graph : 'T, [<O;D(null)>]?pickler:Pickler<'T>, [<O;D(null)>]?streamingContext:StreamingContext) =
+        let resolver = resolver.Value
+        let pickler = match pickler with None -> resolver.Resolve<'T> () | Some p -> p
+        let state = new VisitState(resolver, visitor, ?streamingContext = streamingContext)
+        pickler.Accept state graph
 
     /// <summary>Compute size and hashcode for given input.</summary>
     /// <param name="value">input value.</param>

@@ -20,7 +20,12 @@ type internal OptionPickler =
             | None -> None
             | Some t -> Some(ep.Clone c t)
 
-        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
+        let accepter (v : VisitState) (x : 'T option) =
+            match x with
+            | None -> ()
+            | Some t -> ep.Accept v t
+
+        CompositePickler.Create<_>(reader, writer, cloner, accepter, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
 
     static member Create<'T> (resolver : IPicklerResolver) =
         let ep = resolver.Resolve<'T> ()
@@ -58,7 +63,12 @@ type internal ChoicePickler private () =
             | Choice1Of2 t1 -> Choice1Of2(p1.Clone c t1)
             | Choice2Of2 t2 -> Choice2Of2(p2.Clone c t2)
 
-        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
+        let accepter (v : VisitState) (t : Choice<'T1,'T2>) =
+            match t with
+            | Choice1Of2 t1 -> p1.Accept v t1
+            | Choice2Of2 t2 -> p2.Accept v t2
+
+        CompositePickler.Create<_>(reader, writer, cloner, accepter, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
 
 
     static member Create<'T1, 'T2> (resolver : IPicklerResolver) =
@@ -91,7 +101,13 @@ type internal ChoicePickler private () =
             | Choice2Of3 t2 -> Choice2Of3(p2.Clone c t2)
             | Choice3Of3 t3 -> Choice3Of3(p3.Clone c t3)
 
-        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
+        let accepter (v : VisitState) (t : Choice<'T1,'T2,'T3>) =
+            match t with
+            | Choice1Of3 t1 -> p1.Accept v t1
+            | Choice2Of3 t2 -> p2.Accept v t2
+            | Choice3Of3 t3 -> p3.Accept v t3
+
+        CompositePickler.Create<_>(reader, writer, cloner, accepter, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
 
 
     static member Create<'T1, 'T2, 'T3> (resolver : IPicklerResolver) =
@@ -129,7 +145,14 @@ type internal ChoicePickler private () =
             | Choice3Of4 t3 -> Choice3Of4(p3.Clone c t3)
             | Choice4Of4 t4 -> Choice4Of4(p4.Clone c t4)
 
-        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
+        let accepter (v : VisitState) (t : Choice<'T1,'T2,'T3,'T4>) =
+            match t with
+            | Choice1Of4 t1 -> p1.Accept v t1
+            | Choice2Of4 t2 -> p2.Accept v t2
+            | Choice3Of4 t3 -> p3.Accept v t3
+            | Choice4Of4 t4 -> p4.Accept v t4
+
+        CompositePickler.Create<_>(reader, writer, cloner, accepter, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
 
     static member Create<'T1, 'T2, 'T3, 'T4> (resolver : IPicklerResolver) =
         let p1, p2 = resolver.Resolve<'T1> (), resolver.Resolve<'T2> ()
@@ -174,7 +197,15 @@ type internal ChoicePickler private () =
             | Choice4Of5 t4 -> Choice4Of5(p4.Clone c t4)
             | Choice5Of5 t5 -> Choice5Of5(p5.Clone c t5)
 
-        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
+        let accepter (v : VisitState) (t : Choice<'T1,'T2,'T3,'T4,'T5>) =
+            match t with
+            | Choice1Of5 t1 -> p1.Accept v t1
+            | Choice2Of5 t2 -> p2.Accept v t2
+            | Choice3Of5 t3 -> p3.Accept v t3
+            | Choice4Of5 t4 -> p4.Accept v t4
+            | Choice5Of5 t5 -> p5.Accept v t5
+
+        CompositePickler.Create<_>(reader, writer, cloner, accepter, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
 
     static member Create<'T1, 'T2, 'T3, 'T4, 'T5> (resolver : IPicklerResolver) =
         let p1, p2 = resolver.Resolve<'T1> (), resolver.Resolve<'T2> ()
@@ -225,7 +256,16 @@ type internal ChoicePickler private () =
             | Choice5Of6 t5 -> Choice5Of6(p5.Clone c t5)
             | Choice6Of6 t6 -> Choice6Of6(p6.Clone c t6)
 
-        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
+        let accepter (v : VisitState) (t : Choice<'T1,'T2,'T3,'T4,'T5,'T6>) =
+            match t with
+            | Choice1Of6 t1 -> p1.Accept v t1
+            | Choice2Of6 t2 -> p2.Accept v t2
+            | Choice3Of6 t3 -> p3.Accept v t3
+            | Choice4Of6 t4 -> p4.Accept v t4
+            | Choice5Of6 t5 -> p5.Accept v t5
+            | Choice6Of6 t6 -> p6.Accept v t6
+
+        CompositePickler.Create<_>(reader, writer, cloner, accepter, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
 
     static member Create<'T1, 'T2, 'T3, 'T4, 'T5, 'T6> (resolver : IPicklerResolver) =
         let p1, p2 = resolver.Resolve<'T1> (), resolver.Resolve<'T2> ()
@@ -281,7 +321,17 @@ type internal ChoicePickler private () =
             | Choice6Of7 t6 -> Choice6Of7(p6.Clone c t6)
             | Choice7Of7 t7 -> Choice7Of7(p7.Clone c t7)
 
-        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
+        let accepter (v : VisitState) (t : Choice<'T1,'T2,'T3,'T4,'T5,'T6,'T7>) =
+            match t with
+            | Choice1Of7 t1 -> p1.Accept v t1
+            | Choice2Of7 t2 -> p2.Accept v t2
+            | Choice3Of7 t3 -> p3.Accept v t3
+            | Choice4Of7 t4 -> p4.Accept v t4
+            | Choice5Of7 t5 -> p5.Accept v t5
+            | Choice6Of7 t6 -> p6.Accept v t6
+            | Choice7Of7 t7 -> p7.Accept v t7
+
+        CompositePickler.Create<_>(reader, writer, cloner, accepter, PicklerInfo.FSharpValue, cacheByRef = false, useWithSubtypes = true)
 
     static member Create<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7> (resolver : IPicklerResolver) =
         let p1, p2 = resolver.Resolve<'T1> (), resolver.Resolve<'T2> ()
@@ -301,8 +351,10 @@ type internal FSharpRefPickler =
 
         let cloner (c : CloneState) (r : 'T ref) = { contents = ep.Clone c r.Value }
 
+        let accepter (v : VisitState) (r : 'T ref) = ep.Accept v r.Value
+
         // do not cache for performance
-        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, cacheByRef = false)
+        CompositePickler.Create<_>(reader, writer, cloner, accepter, PicklerInfo.FSharpValue, cacheByRef = false)
             
     static member Create<'T> (resolver : IPicklerResolver) =
         let ep = resolver.Resolve<'T> ()

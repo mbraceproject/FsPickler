@@ -36,20 +36,19 @@ let mkReflectionPicklers (arrayPickler : IArrayPickler) =
                 PublicKeyToken = pkt
             }
 
-        new CompositePickler<_>(reader, writer, (fun _ aI -> aI), PicklerInfo.ReflectionType, cacheByRef = true, skipVisit = true)
+        new CompositePickler<_>(reader, writer, (fun _ aI -> aI), ignore2, PicklerInfo.ReflectionType, cacheByRef = true, skipVisit = true)
 
     let assemblyPickler =
         CompositePickler.Create(
             (fun r t -> let aI = assemblyInfoPickler.Reader r t in r.ReflectionCache.LoadAssembly aI),
             (fun w t a -> let aI = w.ReflectionCache.GetAssemblyInfo a in assemblyInfoPickler.Writer w t aI),
-            (fun c a -> a),
-                PicklerInfo.ReflectionType, cacheByRef = true, useWithSubtypes = true)
+            (fun c a -> a), (fun _ _ -> ()), PicklerInfo.ReflectionType, cacheByRef = true, useWithSubtypes = true)
 
     let assemblyNamePickler =
         CompositePickler.Create(
             (fun r t -> let aI = assemblyInfoPickler.Reader r t in aI.ToAssemblyName()),
             (fun w t an -> let aI = AssemblyInfo.OfAssemblyName an in assemblyInfoPickler.Writer w t aI),
-            (fun c an -> an.Clone() |> fastUnbox<_>),
+            (fun c an -> an.Clone() |> fastUnbox<_>), ignore2,
                 PicklerInfo.ReflectionType, cacheByRef = true, useWithSubtypes = true)
 
     let stringArrayPickler = arrayPickler.Create <| PrimitivePicklers.mkString()
@@ -255,7 +254,7 @@ let mkReflectionPicklers (arrayPickler : IArrayPickler) =
         r.ReflectionCache.LoadMemberInfo cMemberInfo
 
     and memberInfoPickler = 
-        CompositePickler.Create(memberInfoReader, memberInfoWriter, (fun c mI -> mI), PicklerInfo.ReflectionType, useWithSubtypes = true, cacheByRef = true)
+        CompositePickler.Create(memberInfoReader, memberInfoWriter, (fun c mI -> mI), ignore2, PicklerInfo.ReflectionType, useWithSubtypes = true, cacheByRef = true)
 
     and typePickler = memberInfoPickler.Cast<Type> ()
     and methodInfoPickler = memberInfoPickler.Cast<MethodInfo> ()

@@ -212,7 +212,7 @@ type internal DataContractPickler =
                     let o' = picklers.[i].UntypedClone c o
                     f.SetValue(t', o')
 
-                | _ -> invalidOp "internal error on serializing '%O'." typeof<'T>
+                | _ -> invalidOp "internal error on cloning '%O'." typeof<'T>
 
             run onSerialized t c
             run onDeserialized t' c
@@ -222,6 +222,20 @@ type internal DataContractPickler =
             else
                 t'
 
+        let accepter (v : VisitState) (t : 'T) =
+            run onSerializing t v
+
+            for i = 0 to members.Length - 1 do
+                let value =
+                    match members.[i] with
+                    | :? PropertyInfo as p -> p.GetValue t
+                    | :? FieldInfo as f -> f.GetValue t
+                    | _ -> invalidOp "internal error on visiting '%O'." typeof<'T>
+
+                picklers.[i].UntypedAccept v value
+
+            run onSerialized t v
+
 #endif
 
-        CompositePickler.Create(reader, writer, cloner, PicklerInfo.DataContract, cacheByRef = cacheByRef, useWithSubtypes = false)
+        CompositePickler.Create(reader, writer, cloner, accepter, PicklerInfo.DataContract, cacheByRef = cacheByRef, useWithSubtypes = false)

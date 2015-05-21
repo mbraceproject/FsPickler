@@ -26,10 +26,14 @@ type internal AltPickler =
         let cloner (c : CloneState) (t : 'T) =
             let tag = tagReader t
             match picklers.[tag] with
-            | :? CompositePickler<'T> as cp -> cp.Clone c t
+            | :? CompositePickler<'T> as cp -> cp.Cloner c t
             | p -> p.Clone c t
 
-        CompositePickler.Create<'T>(reader, writer, cloner, PicklerInfo.Combinator)
+        let accepter (c : VisitState) (t : 'T) =
+            let tag = tagReader t
+            picklers.[tag].Accept c t
+
+        CompositePickler.Create<'T>(reader, writer, cloner, accepter, PicklerInfo.Combinator, skipVisit = true)
 
 
 type internal WrapPickler =
@@ -47,4 +51,8 @@ type internal WrapPickler =
             let t' = origin.Clone c t
             recover t'
 
-        CompositePickler.Create<'S>(reader, writer, cloner, PicklerInfo.Combinator, cacheByRef = false, bypass = true)
+        let accepter (v : VisitState) (s : 'S) =
+            let t = convert s
+            origin.Accept v t
+
+        CompositePickler.Create<'S>(reader, writer, cloner, accepter, PicklerInfo.Combinator, cacheByRef = false, bypass = true, skipVisit = true)

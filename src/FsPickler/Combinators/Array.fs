@@ -41,7 +41,7 @@ type internal ArrayPickler =
             c.EarlyRegisterArray bytes'
             bytes'
 
-        CompositePickler.Create(reader, writer, cloner, PicklerInfo.Array, skipHeaderWrite = false)
+        CompositePickler.Create(reader, writer, cloner, ignore2, PicklerInfo.Array, skipHeaderWrite = false)
 
     static member Create (ep : Pickler<'T>) : Pickler<'T []> =
             
@@ -124,7 +124,11 @@ type internal ArrayPickler =
                     array'.[i] <- ep.Clone c array.[i]
                 array'
 
-        CompositePickler.Create(reader, writer, cloner, PicklerInfo.Array, skipHeaderWrite = true)
+        let accepter (v : VisitState) (array : 'T[]) =
+            for i = 0 to array.Length - 1 do
+                ep.Accept v array.[i]
+
+        CompositePickler.Create(reader, writer, cloner, accepter, PicklerInfo.Array, skipHeaderWrite = true)
 
     static member Create2D<'T> (ep : Pickler<'T>) =
             
@@ -180,7 +184,12 @@ type internal ArrayPickler =
 
                 array'
 
-        CompositePickler.Create(reader, writer, cloner, PicklerInfo.Array, skipHeaderWrite = false)
+        let accepter (v : VisitState) (array : 'T[,]) =
+            for i = 0 to array.GetLength 0 - 1 do
+                for j = 0 to array.GetLength 1 - 1 do
+                    ep.Accept v array.[i,j]
+
+        CompositePickler.Create(reader, writer, cloner, accepter, PicklerInfo.Array, skipHeaderWrite = false)
 
 
     static member Create3D<'T> (ep : Pickler<'T>) =
@@ -241,7 +250,13 @@ type internal ArrayPickler =
 
                 array'
 
-        CompositePickler.Create(reader, writer, cloner, PicklerInfo.Array, skipHeaderWrite = false)
+        let accepter (v : VisitState) (array : 'T[,,]) =
+            for i = 0 to array.GetLength 0 - 1 do
+                for j = 0 to array.GetLength 1 - 1 do
+                    for k = 0 to array.GetLength 2 - 1 do
+                        ep.Accept v array.[i,j,k]
+
+        CompositePickler.Create(reader, writer, cloner, accepter, PicklerInfo.Array, skipHeaderWrite = false)
 
 
     static member Create4D<'T> (ep : Pickler<'T>) =
@@ -307,7 +322,14 @@ type internal ArrayPickler =
 
                 array'
 
-        CompositePickler.Create(reader, writer, cloner, PicklerInfo.Array, skipHeaderWrite = false)
+        let accepter (v : VisitState) (array : 'T[,,,]) =
+            for i = 0 to array.GetLength 0 - 1 do
+                for j = 0 to array.GetLength 1 - 1 do
+                    for k = 0 to array.GetLength 2 - 1 do
+                        for l = 0 to array.GetLength 3 - 1 do
+                            ep.Accept v array.[i,j,k,l]
+
+        CompositePickler.Create(reader, writer, cloner, accepter, PicklerInfo.Array, skipHeaderWrite = false)
 
     static member GetInterface () = { new ReflectionPicklers.IArrayPickler with member __.Create ep = ArrayPickler.Create ep }
 

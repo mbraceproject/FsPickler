@@ -42,7 +42,8 @@ type Pickler internal (t : Type) =
 
     abstract UntypedWrite : state:WriteState -> tag:string -> value:obj -> unit
     abstract UntypedRead  : state:ReadState  -> tag:string -> obj
-    abstract UntypedClone : state:CloneState -> obj -> obj
+    abstract UntypedClone : state:CloneState -> value:obj -> obj
+    abstract UntypedAccept : state:VisitState -> value:obj -> unit
 
     abstract Unpack : IPicklerUnpacker<'U> -> 'U
 
@@ -56,10 +57,12 @@ and
     abstract Write : state:WriteState -> tag:string -> value:'T -> unit
     abstract Read  : state:ReadState  -> tag:string -> 'T
     abstract Clone : state:CloneState -> value:'T -> 'T
+    abstract Accept : state:VisitState -> value:'T -> unit
 
     override p.UntypedWrite (state : WriteState) (tag : string) (value : obj) = p.Write state tag (fastUnbox value)
     override p.UntypedRead (state : ReadState) (tag : string) = p.Read state tag :> _
     override p.UntypedClone (state : CloneState) (value : obj) = p.Clone state (fastUnbox value) :> _
+    override p.UntypedAccept(state : VisitState) (value : obj) = p.Accept state (fastUnbox value)
 
     override p.Unpack unpacker = unpacker.Apply p
 
@@ -81,7 +84,7 @@ and IPicklerResolver =
 
 and [<AutoSerializable(false); Sealed>]
     WriteState internal (formatter : IPickleFormatWriter, resolver : IPicklerResolver, 
-                            reflectionCache : ReflectionCache, ?streamingContext, ?visitor : IObjectVisitor, ?sifter : IObjectSifter) =
+                            reflectionCache : ReflectionCache, ?streamingContext, ?sifter : IObjectSifter) =
 
     let tyPickler = resolver.Resolve<Type> ()
 
@@ -96,7 +99,6 @@ and [<AutoSerializable(false); Sealed>]
     member internal __.PicklerResolver = resolver
     member __.StreamingContext = sc
     member internal __.Formatter = formatter
-    member internal __.Visitor = visitor
     member internal __.Sifter = sifter
     member internal __.Sifted = sifted
     member internal __.ReflectionCache = reflectionCache
@@ -221,3 +223,17 @@ and [<AutoSerializable(false); Sealed>]
 
         let sift = new Sifted<'T>(value, indices)
         sift, values
+
+and [<AutoSerializable(false); Sealed>]
+    VisitState internal (resolver : IPicklerResolver, visitor : IObjectVisitor, ?streamingContext : StreamingContext) =
+
+    let sc = match streamingContext with None -> new StreamingContext() | Some sc -> sc
+
+    let mutable idGen = new ObjectIDGenerator()
+    let objStack = new Stack<int64> ()
+    let cyclicObjects = new HashSet<int64> ()
+
+    member __.StreamingContext = sc
+    member internal __.PicklerResolver = resolver
+    member internal __.Visitor = visitor
+    member internal __.ObjectIDGenerator = idGen

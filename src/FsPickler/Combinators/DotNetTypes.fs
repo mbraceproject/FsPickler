@@ -12,8 +12,9 @@ type internal AbstractPickler =
         let writer _ _ = invalidOp <| sprintf "Attempting to call abstract pickler '%O'." typeof<'T>
         let reader _ = invalidOp <| sprintf "Attempting to call abstract pickler '%O'." typeof<'T>
         let cloner _ _ = invalidOp <| sprintf "Attempting to call abstract pickler '%O'." typeof<'T>
+        let accepter _ _ = invalidOp <| sprintf "Attempting to call abstract pickler '%O'." typeof<'T>
 
-        CompositePickler.Create<'T>(reader, writer, cloner, PicklerInfo.FieldSerialization, true, false)
+        CompositePickler.Create<'T>(reader, writer, cloner, accepter, PicklerInfo.FieldSerialization, true, false)
 
 /// Enum types combinator
 
@@ -32,7 +33,7 @@ type internal EnumPickler =
 
         let cloner (c : CloneState) (x : 'Enum) = x
 
-        CompositePickler.Create(reader, writer, cloner, PicklerInfo.FieldSerialization, cacheByRef = false, useWithSubtypes = false)
+        CompositePickler.Create(reader, writer, cloner, ignore2, PicklerInfo.FieldSerialization, cacheByRef = false, useWithSubtypes = false)
 
 
 /// Nullable Pickler combinator
@@ -55,7 +56,10 @@ type internal NullablePickler =
             if x.HasValue then Nullable<'T>(pickler.Clone c x.Value)
             else x
 
-        CompositePickler.Create(reader, writer, cloner, PicklerInfo.FieldSerialization)
+        let accepter (v : VisitState) (x : Nullable<'T>) =
+            if x.HasValue then pickler.Accept v x.Value
+
+        CompositePickler.Create(reader, writer, cloner, accepter, PicklerInfo.FieldSerialization)
 
     static member Create<'T when 
                             'T : (new : unit -> 'T) and 
@@ -112,4 +116,15 @@ type internal DelegatePickler =
                 for i = 0 to deleList.Length - 1 do deleList'.[i] <- delePickler.Clone c deleList.[i]
                 Delegate.Combine deleList |> fastUnbox<'Delegate>
 
-        CompositePickler.Create(reader, writer, cloner, PicklerInfo.Delegate)
+        let accepter (v : VisitState) (dele : 'Delegate) =
+            match dele.GetInvocationList () with
+            | [| _ |] ->
+                memberInfoPickler.Accept v dele.Method
+
+                if not <| dele.Method.IsStatic then
+                    objPickler.Accept v dele.Target
+
+            | deleList ->
+                for i = 0 to deleList.Length - 1 do delePickler.Accept v deleList.[i]
+
+        CompositePickler.Create(reader, writer, cloner, accepter, PicklerInfo.Delegate)

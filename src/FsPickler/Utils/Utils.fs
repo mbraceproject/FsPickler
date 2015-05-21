@@ -26,6 +26,8 @@ module internal Utils =
     /// hashset constructor
     let hset (ts : seq<'T>) = new HashSet<_>(ts)
 
+    let inline ignore2 _ _ = ()
+
     // bad implementation: would be safer using ExceptionDispatchInfo but would break compatibility with 4.0
     let rec inline reraise' (e : #exn) =
         do remoteStackTraceField.SetValue(e, e.StackTrace + System.Environment.NewLine)

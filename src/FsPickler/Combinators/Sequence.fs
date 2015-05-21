@@ -173,4 +173,7 @@ type internal SeqPickler =
         let cloner (c : CloneState) (ts : seq<'T>) =
             ts |> Seq.map (ep.Clone c) |> Seq.toArray :> seq<'T>
 
-        CompositePickler.Create<seq<'T>>(reader, writer, cloner, PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = true, bypass = true)
+        let accepter (v : VisitState) (ts : seq<'T>) =
+            for t in ts do ep.Accept v t
+
+        CompositePickler.Create<seq<'T>>(reader, writer, cloner, accepter, PicklerInfo.Combinator, cacheByRef = true, useWithSubtypes = true, bypass = true)

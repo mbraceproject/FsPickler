@@ -90,7 +90,11 @@ type internal ListPickler =
         let cloner (c : CloneState) (list : 'T list) =
             list |> List.map (ep.Clone c)
 
-        CompositePickler.Create<_>(reader, writer, cloner, PicklerInfo.FSharpValue, useWithSubtypes = true, skipHeaderWrite = true)
+        let accepter (v : VisitState) (list : 'T list) =
+            let rec aux = function [] -> () | t :: rest -> ep.Accept v t ; aux rest
+            aux list
+
+        CompositePickler.Create<_>(reader, writer, cloner, accepter, PicklerInfo.FSharpValue, useWithSubtypes = true, skipHeaderWrite = true)
 
     static member Create<'T>(resolver : IPicklerResolver) =
         let ep = resolver.Resolve<'T> ()

@@ -191,15 +191,23 @@ type internal FsUnionPickler =
 
         let cloner (c : CloneState) (u : 'Union) =
             let tag = tagReader.Invoke u
-            let ctor,reader,_,tags,picklers = caseInfo.[tag]
+            let ctor,reader,_,_,picklers = caseInfo.[tag]
             let values = reader u
             let values' = Array.zeroCreate<obj> values.Length
             for i = 0 to picklers.Length - 1 do
                 values'.[i] <- picklers.[i].UntypedClone c values.[i]
 
             ctor values' |> fastUnbox<'Union>
+
+        let accepter (v : VisitState) (u : 'Union) =
+            let tag = tagReader.Invoke u
+            let _,reader,_,_,picklers = caseInfo.[tag]
+            let values = reader u
+            for i = 0 to picklers.Length - 1 do
+                picklers.[i].UntypedAccept v values.[i]
+            
 #endif
-        CompositePickler.Create(reader, writer, cloner, PicklerInfo.FSharpValue, cacheByRef = isCacheByRef, useWithSubtypes = true)
+        CompositePickler.Create(reader, writer, cloner, accepter, PicklerInfo.FSharpValue, cacheByRef = isCacheByRef, useWithSubtypes = true)
 
 // F# record types
 
@@ -273,10 +281,16 @@ type internal FsRecordPickler =
                 values.[i] <- picklers.[i].UntypedClone c o
 
             ctor.Invoke values |> fastUnbox<'Record>
+
+        let accepter (v : VisitState) (r : 'Record) =
+            for i = 0 to fields.Length - 1 do
+                let f = fields.[i]
+                let o = f.GetValue r
+                picklers.[i].UntypedAccept v o
                 
 #endif
 
-        CompositePickler.Create(reader, writer, cloner, PicklerInfo.FSharpValue, cacheByRef = isCacheByRef)
+        CompositePickler.Create(reader, writer, cloner, accepter, PicklerInfo.FSharpValue, cacheByRef = isCacheByRef)
 
 
 // F# exception types
@@ -375,5 +389,14 @@ type internal FsExceptionPickler =
                 f.SetValue(e', o')
 
             e'
+
+        let accepter (v : VisitState) (e : 'Exception) =
+            defPickler.Accept v e
+
+            for i = 0 to fields.Length - 1 do
+                let f = fields.[i]
+                let o = f.GetValue e
+                fpicklers.[i].UntypedAccept v o
+
 #endif
-        CompositePickler.Create(reader, writer, cloner, PicklerInfo.FSharpValue, useWithSubtypes = true)
+        CompositePickler.Create(reader, writer, cloner, accepter, PicklerInfo.FSharpValue, useWithSubtypes = true)
