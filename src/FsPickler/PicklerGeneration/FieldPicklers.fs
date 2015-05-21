@@ -62,6 +62,17 @@ type internal StructFieldPickler =
                 ilGen.Emit OpCodes.Ret
             )
 
+        let accepter =
+            if fields.Length = 0 then ignore2
+            else
+                let accepterDele =
+                    DynamicMethod.compileAction3<Pickler [], VisitState, 'T> "structAccepter" (fun picklers state value ilGen ->
+                        emitAcceptMembers fields state picklers value ilGen
+                        ilGen.Emit OpCodes.Ret
+                    )
+
+                fun v t -> accepterDele.Invoke(picklers, v, t)
+
         let writer (w : WriteState) (tag : string) (t : 'T) = writerDele.Invoke(picklers, w, t)
         let reader (r : ReadState) (tag : string) = readerDele.Invoke(picklers, r)
         let cloner (c : CloneState) (t : 'T) = clonerDele.Invoke(picklers, c, t)
@@ -146,11 +157,11 @@ type internal ClassFieldPickler =
                 let writerDele =
                     DynamicMethod.compileAction3<Pickler [], WriteState, 'T> "classSerializer" (fun picklers writer value ilGen ->
 
-                        emitSerializationMethodCalls onSerializing (Choice1Of3 writer) value ilGen
+                        emitSerializationMethodCalls onSerializing (Choice1Of4 writer) value ilGen
 
                         emitSerializeMembers fields tags writer picklers value ilGen
 
-                        emitSerializationMethodCalls onSerialized (Choice1Of3 writer) value ilGen
+                        emitSerializationMethodCalls onSerialized (Choice1Of4 writer) value ilGen
                             
                         ilGen.Emit OpCodes.Ret)
 
@@ -164,11 +175,11 @@ type internal ClassFieldPickler =
                 emitObjectInitializer typeof<'T> ilGen
                 value.Store ()
 
-                emitSerializationMethodCalls onDeserializing (Choice2Of3 reader) value ilGen
+                emitSerializationMethodCalls onDeserializing (Choice2Of4 reader) value ilGen
 
                 emitDeserializeMembers fields tags reader picklers value ilGen
 
-                emitSerializationMethodCalls onDeserialized (Choice2Of3 reader) value ilGen
+                emitSerializationMethodCalls onDeserialized (Choice2Of4 reader) value ilGen
 
                 if isDeserializationCallback then emitDeserializationCallback value ilGen
 
@@ -187,13 +198,13 @@ type internal ClassFieldPickler =
                 emitObjectInitializer typeof<'T> ilGen
                 value'.Store ()
 
-                emitSerializationMethodCalls onSerializing (Choice3Of3 state) value ilGen
-                emitSerializationMethodCalls onDeserializing (Choice3Of3 state) value' ilGen
+                emitSerializationMethodCalls onSerializing (Choice3Of4 state) value ilGen
+                emitSerializationMethodCalls onDeserializing (Choice3Of4 state) value' ilGen
 
                 emitCloneMembers fields state picklers value value' ilGen
 
-                emitSerializationMethodCalls onSerialized (Choice3Of3 state) value ilGen
-                emitSerializationMethodCalls onDeserialized (Choice3Of3 state) value' ilGen
+                emitSerializationMethodCalls onSerialized (Choice3Of4 state) value ilGen
+                emitSerializationMethodCalls onDeserialized (Choice3Of4 state) value' ilGen
 
                 if isDeserializationCallback then emitDeserializationCallback value' ilGen
 
@@ -205,6 +216,19 @@ type internal ClassFieldPickler =
                 ilGen.Emit OpCodes.Ret
 
             )
+
+        let accepter =
+            if fields.Length = 0 then ignore2
+            else
+                let accepterDele =
+                    DynamicMethod.compileAction3<Pickler [], VisitState, 'T> "classAccepter" (fun picklers state value ilGen ->
+                        emitSerializationMethodCalls onSerializing (Choice4Of4 state) value ilGen
+                        emitAcceptMembers fields state picklers value ilGen
+                        emitSerializationMethodCalls onSerialized (Choice4Of4 state) value ilGen
+                        ilGen.Emit OpCodes.Ret
+                    )
+
+                fun v t -> accepterDele.Invoke(picklers, v,t)
 
         let reader r (tag : string) = readerDele.Invoke(picklers, r)
         let cloner c t = clonerDele.Invoke(picklers, c, t)

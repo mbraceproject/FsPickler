@@ -74,11 +74,11 @@ type internal DataContractPickler =
         let writerDele =
             DynamicMethod.compileAction3<Pickler [], WriteState, 'T> "dataContractSerializer" (fun picklers writer parent ilGen ->
 
-                emitSerializationMethodCalls onSerializing (Choice1Of3 writer) parent ilGen
+                emitSerializationMethodCalls onSerializing (Choice1Of4 writer) parent ilGen
 
                 emitSerializeMembers members names writer picklers parent ilGen
 
-                emitSerializationMethodCalls onSerialized (Choice1Of3 writer) parent ilGen
+                emitSerializationMethodCalls onSerialized (Choice1Of4 writer) parent ilGen
 
                 ilGen.Emit OpCodes.Ret)
 
@@ -95,11 +95,11 @@ type internal DataContractPickler =
 
                 value.Store ()
 
-                emitSerializationMethodCalls onDeserializing (Choice2Of3 reader) value ilGen
+                emitSerializationMethodCalls onDeserializing (Choice2Of4 reader) value ilGen
 
                 emitDeserializeMembers members names reader picklers value ilGen
 
-                emitSerializationMethodCalls onDeserialized (Choice2Of3 reader) value ilGen
+                emitSerializationMethodCalls onDeserialized (Choice2Of4 reader) value ilGen
 
                 if isDeserializationCallback then emitDeserializationCallback value ilGen
 
@@ -124,13 +124,13 @@ type internal DataContractPickler =
 
                 value'.Store ()
 
-                emitSerializationMethodCalls onSerializing (Choice3Of3 state) value ilGen
-                emitSerializationMethodCalls onDeserializing (Choice3Of3 state) value' ilGen
+                emitSerializationMethodCalls onSerializing (Choice3Of4 state) value ilGen
+                emitSerializationMethodCalls onDeserializing (Choice3Of4 state) value' ilGen
 
                 emitCloneMembers members state picklers value value' ilGen
 
-                emitSerializationMethodCalls onSerialized (Choice3Of3 state) value ilGen
-                emitSerializationMethodCalls onDeserialized (Choice3Of3 state) value' ilGen
+                emitSerializationMethodCalls onSerialized (Choice3Of4 state) value ilGen
+                emitSerializationMethodCalls onDeserialized (Choice3Of4 state) value' ilGen
 
                 if isDeserializationCallback then emitDeserializationCallback value' ilGen
 
@@ -141,6 +141,22 @@ type internal DataContractPickler =
 
                 ilGen.Emit OpCodes.Ret
             )
+
+        let accepter =
+            if members.Length = 0 then ignore2
+            else
+                let accepterDele =
+                    DynamicMethod.compileAction3<Pickler [], VisitState, 'T> "dataContractAccepter" (fun picklers state value ilGen ->
+
+                        emitSerializationMethodCalls onSerializing (Choice4Of4 state) value ilGen
+
+                        emitAcceptMembers members state picklers value ilGen
+
+                        emitSerializationMethodCalls onSerialized (Choice4Of4 state) value ilGen
+
+                        ilGen.Emit OpCodes.Ret)
+
+                fun v t -> accepterDele.Invoke(picklers, v, t)
 
         let writer w t v = writerDele.Invoke(picklers, w, v)
         let reader r t = readerDele.Invoke(picklers, r)
