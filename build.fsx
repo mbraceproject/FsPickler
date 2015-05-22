@@ -208,6 +208,15 @@ Target "NuGet.FsPickler.CSharp" (fun _ ->
         ("nuget/FsPickler.nuspec")
 )
 
+Target "PaketNuGet" (fun _ ->    
+    Paket.Pack (fun p -> 
+        { p with 
+            ToolPath = ".paket/paket.exe" 
+            OutputPath = "bin/"
+            Version = release.NugetVersion
+            ReleaseNotes = toLines release.Notes })
+)
+
 // Doc generation
 
 Target "GenerateDocs" (fun _ ->
@@ -251,10 +260,10 @@ Target "Release" DoNothing
 
 "Build"
   ==> "PrepareRelease"
-  ==> "NuGet.FsPickler"
-  ==> "NuGet.FsPickler.Json"
-  ==> "NuGet.FsPickler.CSharp"
-  ==> "NuGet"
+//  ==> "NuGet.FsPickler"
+//  ==> "NuGet.FsPickler.Json"
+//  ==> "NuGet.FsPickler.CSharp"
+  ==> "PaketNuGet"
   ==> "GenerateDocs"
   ==> "ReleaseDocs"
   ==> "Release"

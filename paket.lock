@@ -1,12 +1,12 @@
 NUGET
   remote: https://www.nuget.org/api/v2
   specs:
-    FAKE (3.28.7)
+    FAKE (3.33.0)
     FsCheck (1.0.0)
     FSharp.Charting (0.90.6)
     FSharp.Compiler.Service (0.0.89)
     FSharp.Core (3.1.2.1)
-    FSharp.Formatting (2.9.1)
+    FSharp.Formatting (2.9.6)
       FSharp.Compiler.Service (>= 0.0.87)
       FSharpVSPowerTools.Core (1.8.0)
     FSharpVSPowerTools.Core (1.8.0)

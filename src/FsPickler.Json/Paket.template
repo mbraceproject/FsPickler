@@ -1,0 +1,28 @@
+﻿type project
+id FsPickler.Json
+description
+    FsPickler is a serialization library that facilitates the distribution of .NET objects. 
+    The implementation focuses on performance and completeness in supported types, including F# types. 
+    It supports multiple, pluggable serialization formats including Binary, Xml, JSON and BSON. 
+    The library is based on the functional programming concept of pickler combinators which 
+    has been adapted to accommodate the object oriented nature of the .NET framework.
+version
+    1.2.2
+authors
+    Eirik Tsarpalis
+releasenotes
+    RELEASE NOTES
+summary
+    A fast serialization framework and pickler combinator library for .NET
+licenseurl https://github.com/nessos/FsPickler/blob/master/License.md
+projecturl https://github.com/nessos/FsPickler
+iconurl https://avatars1.githubusercontent.com/u/5538081
+tags
+    F#, fsharp, serializer, pickler, binary, json, xml
+files
+    ../../bin/FsPickler.Json.dll ==> lib/net45
+    ../../bin/FsPickler.Json.pdb ==> lib/net45
+    ../../bin/FsPickler.Json.xml ==> lib/net45
+    ../../bin/net40/FsPickler.Json.dll ==> lib/net40
+    ../../bin/net40/FsPickler.Json.pdb ==> lib/net40
+    ../../bin/net40/FsPickler.Json.xml ==> lib/net40
