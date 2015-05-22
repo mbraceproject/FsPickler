@@ -22,3 +22,9 @@ Xml.unpickle fPickler xp' 41
 let graph = [None ;None; Some [|1;2;3|]]
 let pickle, sifted = jsp.PickleToStringSifted(graph, function :? System.Array -> true | _ -> false )
 jsp.UnPickleOfStringSifted<int [] option list>(pickle, sifted)
+
+open System
+
+let v = 1 :> ValueType
+
+typeof<ValueType>.IsValueType

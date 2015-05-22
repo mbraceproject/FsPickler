@@ -409,11 +409,31 @@ type internal CompositePickler<'T> =
             p.m_Cloner state value
 
     override p.Accept (state : VisitState) (value : 'T) =
-        // pre-order traversal
-        if not p.m_SkipVisit then state.Visitor.Visit(p, value)
+        if state.IsCancelled then () else
 
-        if p.m_Bypass || p.Kind <= Kind.Value || obj.ReferenceEquals(value, null) then 
-            p.m_Accepter state value
+        let inline acceptNode () =
+            let preorder = state.VisitOrder.HasFlag VisitOrder.PreOrder
+            let mutable shouldContinue = true
+
+            if preorder && not p.m_SkipVisit then
+                shouldContinue <- 
+                    match state.Visitor with
+                    | :? IFixedObjectVisitor<'T> as fv -> fv.VisitFixed(p, value)
+                    | v -> v.Visit(p,value)
+
+                if not shouldContinue then 
+                    state.IsCancelled <- true
+
+            // visit children
+            if shouldContinue then p.m_Accepter state value
+
+            if not preorder && not p.m_SkipVisit then
+                shouldContinue <- state.Visitor.Visit(p, value)
+                if not shouldContinue then 
+                    state.IsCancelled <- true
+
+        if p.Kind <= Kind.Value || obj.ReferenceEquals(value, null) then 
+            acceptNode ()
         else
 
 #if PROTECT_STACK_OVERFLOWS
@@ -433,9 +453,9 @@ type internal CompositePickler<'T> =
         elif p.m_IsCacheByRef then
             let mutable firstOccurence = false
             let id = state.ObjectIDGenerator.GetId(value, &firstOccurence)
-            if firstOccurence then p.m_Accepter state value
+            if firstOccurence then acceptNode ()
         else
-            p.m_Accepter state value
+            acceptNode ()
 
 and internal CompositePickler =
 

@@ -70,7 +70,11 @@ and IPicklerUnpacker<'U> =
     abstract Apply : Pickler<'T> -> 'U
 
 and IObjectVisitor =
-    abstract Visit<'T> : pickler:Pickler<'T> * value:'T -> unit
+    abstract Visit<'T> : pickler:Pickler<'T> * value:'T -> bool
+
+and IFixedObjectVisitor<'T> =
+    inherit IObjectVisitor
+    abstract VisitFixed : pickler:Pickler<'T> * value:'T -> bool
 
 and IObjectSifter =
     abstract member Sift<'T> : pickler:Pickler<'T> * value:'T -> bool
@@ -225,15 +229,19 @@ and [<AutoSerializable(false); Sealed>]
         sift, values
 
 and [<AutoSerializable(false); Sealed>]
-    VisitState internal (resolver : IPicklerResolver, visitor : IObjectVisitor, ?streamingContext : StreamingContext) =
+    VisitState internal (resolver : IPicklerResolver, visitor : IObjectVisitor, ?visitOrder : VisitOrder, ?streamingContext : StreamingContext) =
 
     let sc = match streamingContext with None -> new StreamingContext() | Some sc -> sc
 
+    let mutable isCancelled = false
     let mutable idGen = new ObjectIDGenerator()
-    let objStack = new Stack<int64> ()
-    let cyclicObjects = new HashSet<int64> ()
+    let visitOrder = defaultArg visitOrder VisitOrder.PreOrder
 
     member __.StreamingContext = sc
+    member internal __.VisitOrder = visitOrder
     member internal __.PicklerResolver = resolver
     member internal __.Visitor = visitor
     member internal __.ObjectIDGenerator = idGen
+    member internal __.IsCancelled
+        with get () = isCancelled
+        and set s = isCancelled <- s

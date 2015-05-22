@@ -143,6 +143,8 @@ type FsPickler private () =
                             match value.GetType() with
                             | null -> ()
                             | t -> gathered.Add t |> ignore
+
+                        true // continue traversal
             }
 
         do FsPickler.VisitObject(visitor, graph)
@@ -161,6 +163,8 @@ type FsPickler private () =
                         match box value with
                         | null -> ()
                         | v -> gathered.Add v |> ignore
+
+                        true // continue traversal
             }
 
         do FsPickler.VisitObject(visitor, graph)

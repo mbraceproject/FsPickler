@@ -46,6 +46,10 @@ type ObjectFlags =
     | IsCyclicInstance      = 8uy
     | IsSequenceHeader      = 16uy
     | IsSiftedValue         = 32uy
+
+type VisitOrder =
+    | PreOrder = 1uy
+    | PostOrder = 2uy
         
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module internal ObjectFlags =

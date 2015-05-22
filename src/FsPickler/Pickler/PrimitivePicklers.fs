@@ -19,7 +19,14 @@ type PrimitivePickler<'T> () =
 
     override p.Cast<'S> () : Pickler<'S> = raise <| new NotSupportedException("Cannot cast primitive picklers.")
     override p.Clone (state : CloneState) (t : 'T) = t
-    override p.Accept (state : VisitState) (t : 'T) = state.Visitor.Visit(p,t)
+    override p.Accept (state : VisitState) (t : 'T) = 
+        if not state.IsCancelled then
+            let shouldContinue = 
+                match state.Visitor with
+                | :? IFixedObjectVisitor<'T> as fv -> fv.VisitFixed(p,t)
+                | v -> state.Visitor.Visit(p,t)
+
+            if not shouldContinue then state.IsCancelled <- true
 
 [<AutoSerializable(false)>]
 type BooleanPickler () =
