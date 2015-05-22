@@ -428,7 +428,11 @@ type internal CompositePickler<'T> =
             if shouldContinue then p.m_Accepter state value
 
             if not preorder && not p.m_SkipVisit then
-                shouldContinue <- state.Visitor.Visit(p, value)
+                shouldContinue <- 
+                    match state.Visitor with
+                    | :? ISpecializedObjectVisitor<'T> as fv -> fv.VisitSpecialized(p, value)
+                    | v -> v.Visit(p,value)
+
                 if not shouldContinue then 
                     state.IsCancelled <- true
 
