@@ -1,3 +1,8 @@
+### 1.2.2
+* Rewrite visitor implementation and API.
+* Minor API changes.
+* Bugfixes.
+
 ### 1.2.1
 * Bugfixes.
 
