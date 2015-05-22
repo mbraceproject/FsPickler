@@ -48,11 +48,51 @@
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '234', 234)" onmouseover="showTip(event, '234', 234)">
+          <code onmouseout="hideTip(event, '235', 235)" onmouseover="showTip(event, '235', 235)">
+            Accept(state value)
+          </code>
+          <div class="tip" id="235">
+            <strong>Signature:</strong> state:VisitState -&gt; value:&#39;T -&gt; unit<br />
+              <strong>Modifiers:</strong> abstract<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/Pickler/Pickler.fs#L60-60" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Accepts visitor for traversal of child nodes of given value.</p>
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '236', 236)" onmouseover="showTip(event, '236', 236)">
             Clone(state value)
           </code>
-          <div class="tip" id="234">
+          <div class="tip" id="236">
             <strong>Signature:</strong> state:CloneState -&gt; value:&#39;T -&gt; &#39;T<br />
+              <strong>Modifiers:</strong> abstract<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/Pickler/Pickler.fs#L59-59" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Clones a value using the underlying cloning state.</p>
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '237', 237)" onmouseover="showTip(event, '237', 237)">
+            Read(state tag)
+          </code>
+          <div class="tip" id="237">
+            <strong>Signature:</strong> state:ReadState -&gt; tag:string -&gt; &#39;T<br />
               <strong>Modifiers:</strong> abstract<br />
                       </div>
         </td>
@@ -61,17 +101,18 @@
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          
+          <p>Deserializes a value with provided tag from reader state.</p>
+
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '235', 235)" onmouseover="showTip(event, '235', 235)">
-            Read(state tag)
+          <code onmouseout="hideTip(event, '238', 238)" onmouseover="showTip(event, '238', 238)">
+            Write(state tag value)
           </code>
-          <div class="tip" id="235">
-            <strong>Signature:</strong> state:ReadState -&gt; tag:string -&gt; &#39;T<br />
+          <div class="tip" id="238">
+            <strong>Signature:</strong> state:WriteState -&gt; tag:string -&gt; value:&#39;T -&gt; unit<br />
               <strong>Modifiers:</strong> abstract<br />
                       </div>
         </td>
@@ -80,26 +121,8 @@
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          
-        </td>
-      </tr>
-      <tr>
-        <td class="member-name">
+          <p>Serializes a value with provided tag to the underlying writer state.</p>
 
-          <code onmouseout="hideTip(event, '236', 236)" onmouseover="showTip(event, '236', 236)">
-            Write(state tag value)
-          </code>
-          <div class="tip" id="236">
-            <strong>Signature:</strong> state:WriteState -&gt; tag:string -&gt; value:&#39;T -&gt; unit<br />
-              <strong>Modifiers:</strong> abstract<br />
-                      </div>
-        </td>
-        <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/Pickler/Pickler.fs#L56-56" class="github-link">
-              <img src="../content/img/github.png" class="normal" />
-              <img src="../content/img/github-blue.png" class="hover" />
-            </a>
-          
         </td>
       </tr>
     </tbody>
