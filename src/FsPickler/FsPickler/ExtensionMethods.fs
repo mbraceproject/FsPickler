@@ -38,12 +38,18 @@ module ExtensionMethods =
         /// <summary>Initializes a pickler out of a pair of read/write lambdas. Unsafe pickler generation method.</summary>
         /// <param name="reader">Deserialization logic for the pickler.</param>
         /// <param name="writer">Serialization logic for the pickler.</param>
-        /// <param name="cloner">In-memory cloning logic for the pickler.</param>
+        /// <param name="cloner">In-memory cloning logic for the pickler. Defaults to no cloning implementation.</param>
+        /// <param name="accepter">Visitor accepting function for the descendand nodes of the graph. Defaults to no visitor implementation.</param>
         /// <param name="cacheByRef">Specifies whether objects serialized by this pickler should be cached by reference.</param>
         /// <param name="useWithSubtypes">Specifies whether pickler should also apply for all subtypes.</param>
-        static member FromPrimitives<'T>(reader : ReadState -> string -> 'T, writer : WriteState -> string -> 'T -> unit, cloner : CloneState -> 'T -> 'T, accepter : VisitState -> 'T -> unit, ?cacheByRef, ?useWithSubtypes) =
-            if typeof<'T>.IsPrimitive then
+        static member FromPrimitives<'T>(reader : ReadState -> 'T, writer : WriteState -> 'T -> unit, ?cloner : CloneState -> 'T -> 'T, ?accepter : VisitState -> 'T -> unit, ?cacheByRef, ?useWithSubtypes) =
+            if typeof<'T>.IsPrimitive || typeof<'T> = typeof<string> then
                 invalidArg typeof<'T>.FullName "defining custom picklers for primitives not supported."
+
+            let reader r (tag : string) = reader r
+            let writer w (tag : string) (t : 'T) = writer w t
+            let cloner = match cloner with Some c -> c | None -> fun _ _ -> invalidOp <| sprintf "User-defined pickler of type '%O' does not implement a cloning function." typeof<'T>
+            let accepter = match accepter with Some a -> a | None -> fun _ _ -> invalidOp <| sprintf "User-defined pickler of type '%O' does not implement a visitor function." typeof<'T>
 
             CompositePickler.Create(reader, writer, cloner, accepter, PicklerInfo.UserDefined, ?cacheByRef = cacheByRef, ?useWithSubtypes = useWithSubtypes)
 

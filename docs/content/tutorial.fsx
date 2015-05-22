@@ -317,19 +317,16 @@ type CustomClass<'T, 'S> (x : 'T, y : 'S) =
         let xp = resolver.Resolve<'T> ()
         let yp = resolver.Resolve<'S> ()
 
-        let writer (ws : WriteState) (_ : string) (c : CustomClass<'T,'S>) =
+        let writer (ws : WriteState) (c : CustomClass<'T,'S>) =
             xp.Write ws "X" c.X
             yp.Write ws "Y" c.Y
 
-        let reader (rs : ReadState) (_ : string) =
+        let reader (rs : ReadState) =
             let x = xp.Read rs "X"
             let y = yp.Read rs "Y"
             new CustomClass<_,_>(x,y)
 
-        let cloner (cs : CloneState) (c : CustomClass<'T,'S>) =
-            new CustomClass<_,_>(xp.Clone cs c.X, yp.Clone cs c.Y)
-
-        Pickler.FromPrimitives(reader, writer, cloner)
+        Pickler.FromPrimitives(reader, writer)
 
 (**
 
@@ -510,7 +507,7 @@ which takes as input a serializable object graph and a so-called object visitor:
 
 type IObjectVisitor =
   interface
-    abstract member Visit : 'T -> unit
+    abstract member Visit : Pickler<'T> * 'T -> bool
   end
 
 (*** hide ***)
@@ -526,10 +523,10 @@ A few applications of this are provided by the core library:
 
 let types = FsPickler.GatherTypesInObjectGraph [box 42 ; box (Some (42, "42"))]
 
-//val types : System.Type [] =
+//val types : Type [] =
 //  [|Microsoft.FSharp.Collections.FSharpList`1[System.Object]; System.Int32;
 //    Microsoft.FSharp.Core.FSharpOption`1[System.Tuple`2[System.Int32,System.String]];
-//    System.Tuple`2[System.Int32,System.String]|]
+//    System.Tuple`2[System.Int32,System.String]; System.String|]
 
 (**
 

@@ -72,9 +72,9 @@ and IPicklerUnpacker<'U> =
 and IObjectVisitor =
     abstract Visit<'T> : pickler:Pickler<'T> * value:'T -> bool
 
-and IFixedObjectVisitor<'T> =
+and ISpecializedObjectVisitor<'T> =
     inherit IObjectVisitor
-    abstract VisitFixed : pickler:Pickler<'T> * value:'T -> bool
+    abstract VisitSpecialized : pickler:Pickler<'T> * value:'T -> bool
 
 and IObjectSifter =
     abstract member Sift<'T> : pickler:Pickler<'T> * value:'T -> bool

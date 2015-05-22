@@ -23,7 +23,7 @@ type PrimitivePickler<'T> () =
         if not state.IsCancelled then
             let shouldContinue = 
                 match state.Visitor with
-                | :? IFixedObjectVisitor<'T> as fv -> fv.VisitFixed(p,t)
+                | :? ISpecializedObjectVisitor<'T> as fv -> fv.VisitSpecialized(p,t)
                 | v -> state.Visitor.Visit(p,t)
 
             if not shouldContinue then state.IsCancelled <- true

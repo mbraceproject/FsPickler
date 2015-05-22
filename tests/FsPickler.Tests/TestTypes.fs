@@ -194,11 +194,8 @@ module TestTypes =
 
         static member CreatePickler (resolver : IPicklerResolver) =
             Pickler.FromPrimitives(
-                (fun _ _ -> ClassWithPicklerFactory(42)),
-                (fun _ _ _ -> ()),
-                (fun _ _ -> new ClassWithPicklerFactory(42)),
-                (fun _ _ -> ()),
-                    true, false)
+                (fun _ -> ClassWithPicklerFactory(42)),
+                (fun _ _ -> ()), cacheByRef = true, useWithSubtypes = false)
 
     [<CustomPickler>]
     type ClassWithCombinators (x : int, y : ClassWithCombinators option) =

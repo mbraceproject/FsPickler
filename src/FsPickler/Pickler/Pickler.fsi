@@ -42,7 +42,8 @@ type Pickler =
 
         abstract member internal UntypedRead : state:ReadState -> tag:string -> obj
         abstract member internal UntypedWrite : state:WriteState -> tag:string -> value:obj -> unit
-        abstract member internal UntypedClone : state:CloneState -> obj -> obj
+        abstract member internal UntypedClone : state:CloneState -> value:obj -> obj
+        abstract member internal UntypedAccept : state:VisitState -> value:obj -> unit
     end
 
 /// Defines serialization rules for given type parameter.
@@ -52,13 +53,39 @@ and [<AbstractClass>] Pickler<'T> =
         inherit Pickler
         internal new : unit -> Pickler<'T>
 
+        /// <summary>
+        ///     Deserializes a value with provided tag from reader state.
+        /// </summary>
+        /// <param name="state">Object deserialization state.</param>
+        /// <param name="tag">String identifier for value.</param>
         abstract member Read : state:ReadState -> tag:string -> 'T
+
+        /// <summary>
+        ///     Serializes a value with provided tag to the underlying writer state.
+        /// </summary>
+        /// <param name="state">Object serialization state.</param>
+        /// <param name="tag">String identifier for value.</param>
+        /// <param name="value">Value to be serialized.</param>
         abstract member Write : state:WriteState -> tag:string -> value:'T -> unit
+
+        /// <summary>
+        ///     Clones a value using the underlying cloning state.
+        /// </summary>
+        /// <param name="state">Object cloning state.</param>
+        /// <param name="value">Value to be cloned.</param>
         abstract member Clone : state:CloneState -> value:'T -> 'T
+
+        /// <summary>
+        ///     Accepts visitor for traversal of child nodes of given value.
+        /// </summary>
+        /// <param name="state">Visitor state.</param>
+        /// <param name="value">Value to be visited.</param>
+        abstract member Accept : state:VisitState -> value:'T -> unit
 
         override internal UntypedRead : state:ReadState -> tag:string -> obj
         override internal UntypedWrite : state:WriteState -> tag:string -> value:obj -> unit
         override internal UntypedClone : state:CloneState -> obj -> obj
+        override internal UntypedAccept : state:VisitState -> value:obj -> unit
 
         override internal Unpack : IPicklerUnpacker<'R> -> 'R
     end
@@ -76,7 +103,20 @@ and IObjectVisitor =
         /// </summary>
         /// <param name="pickler">Pickler used for traversal. Used for metadata reference.</param>
         /// <param name="value">Value that is being visited.</param>
-        abstract member Visit<'T> : pickler:Pickler<'T> * value:'T -> unit
+        abstract member Visit<'T> : pickler:Pickler<'T> * value:'T -> bool
+    end
+
+/// Specialized object visitor abstraction.
+and ISpecializedObjectVisitor<'T> =
+    interface
+        inherit IObjectVisitor
+
+        /// <summary>
+        ///     Visit value inside an object graph that matches given type.
+        /// </summary>
+        /// <param name="pickler">Pickler used for traversal. Used for metadata reference.</param>
+        /// <param name="value">Value that is being visited.</param>
+        abstract VisitSpecialized : pickler:Pickler<'T> * value:'T -> bool
     end
 
 /// Object graph sifting predicate.
@@ -109,7 +149,7 @@ and [<AutoSerializable(false); Sealed>] WriteState =
     class
         internal new : 
             formatter:IPickleFormatWriter * resolver:IPicklerResolver * reflectionCache:ReflectionCache * 
-                ?streamingContext:StreamingContext * ?visitor : IObjectVisitor * ?sifter : IObjectSifter -> WriteState
+                ?streamingContext:StreamingContext * ?sifter : IObjectSifter -> WriteState
 
         member internal CyclicObjectSet : HashSet<int64>
         member internal ObjectStack : Stack<int64>
@@ -120,7 +160,6 @@ and [<AutoSerializable(false); Sealed>] WriteState =
         member internal ReflectionCache : ReflectionCache
         /// Streaming context to the serialization
         member StreamingContext : StreamingContext
-        member internal Visitor : IObjectVisitor option
         member internal Sifter : IObjectSifter option
         member internal Sifted : ResizeArray<int64 * obj>
         member internal TypePickler : Pickler<System.Type>
@@ -169,4 +208,21 @@ and [<AutoSerializable(false); Sealed>] CloneState =
         member internal SiftData : (IObjectSifter * Dictionary<int64, (obj * ResizeArray<int64>)>) option
         member internal CreateSift : value:'T -> Sifted<'T> * (int64 * obj) []
         member internal UnSiftData : Dictionary<int64, int64 * obj> option
+    end
+
+/// Contains all state related to object visiting
+and [<AutoSerializable(false); Sealed>] VisitState =
+    class
+        internal new : 
+            resolver:IPicklerResolver * visitor:IObjectVisitor *
+                ?visitOrder:VisitOrder * ?streamingContext:StreamingContext -> VisitState
+
+        member internal IsCancelled : bool
+        member internal ObjectIDGenerator : ObjectIDGenerator
+        member internal PicklerResolver : IPicklerResolver
+        /// Gets the visiting streaming context.
+        member StreamingContext : StreamingContext
+        member internal VisitOrder : VisitOrder
+        member internal Visitor : IObjectVisitor
+        member internal IsCancelled : bool with set
     end

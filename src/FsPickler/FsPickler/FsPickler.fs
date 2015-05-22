@@ -111,10 +111,15 @@ type FsPickler private () =
     /// </summary>
     /// <param name="visitor">Visitor implementation.</param>
     /// <param name="graph">Object graph.</param>
-    static member VisitObject(visitor : IObjectVisitor, graph : 'T, [<O;D(null)>]?pickler:Pickler<'T>, [<O;D(null)>]?streamingContext:StreamingContext) =
+    /// <param name="pickler">Pickler to be used for traversal. Defaults to auto-generated pickler.</param>
+    /// <param name="streamingContext">Streaming context used for cloning. Defaults to null streaming context.</param>
+    /// <param name="visitOrder">Object graph traversal order. Defaults to pre-order traversal.</param>
+    static member VisitObject(visitor : IObjectVisitor, graph : 'T, [<O;D(null)>]?pickler:Pickler<'T>, 
+                                [<O;D(null)>]?streamingContext:StreamingContext, [<O;D(null)>]?visitOrder:VisitOrder) =
+
         let resolver = resolver.Value
         let pickler = match pickler with None -> resolver.Resolve<'T> () | Some p -> p
-        let state = new VisitState(resolver, visitor, ?streamingContext = streamingContext)
+        let state = new VisitState(resolver, visitor, ?streamingContext = streamingContext, ?visitOrder = visitOrder)
         pickler.Accept state graph
 
     /// <summary>Compute size and hashcode for given input.</summary>
@@ -132,19 +137,25 @@ type FsPickler private () =
         let visitor =
             {
                 new IObjectVisitor with
-                    member __.Visit (_, value : 'T) = 
-                        match box value with
-                        | null -> ()
-                        | :? Type as t -> gathered.Add t |> ignore
-                        | :? MemberInfo as m when m.DeclaringType <> null ->
-                            gathered.Add m.DeclaringType |> ignore
-
-                        | value -> 
+                    member __.Visit (p, value : 'T) =
+                        // avoid boxing value types
+                        if p.Kind <= Kind.Value then 
                             match value.GetType() with
                             | null -> ()
                             | t -> gathered.Add t |> ignore
+                        else
+                            match box value with
+                            | null -> ()
+                            | :? Type as t -> gathered.Add t |> ignore
+                            | :? MemberInfo as m when m.DeclaringType <> null ->
+                                gathered.Add m.DeclaringType |> ignore
 
-                        true // continue traversal
+                            | value -> 
+                                match value.GetType() with
+                                | null -> ()
+                                | t -> gathered.Add t |> ignore
+
+                        true // always continue traversal
             }
 
         do FsPickler.VisitObject(visitor, graph)
@@ -159,7 +170,7 @@ type FsPickler private () =
         let visitor =
             {
                 new IObjectVisitor with
-                    member __.Visit (_, value : 'T) =
+                    member __.Visit (p : Pickler<'T>, value : 'T) =
                         match box value with
                         | null -> ()
                         | v -> gathered.Add v |> ignore
