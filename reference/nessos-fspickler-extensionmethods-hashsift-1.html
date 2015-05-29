@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8"/>
-    <title>BsonSerializer - FsPickler</title>
+    <title>HashSift<'T> - FsPickler</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <meta name="description" content=""/>
     <meta name="author" content="Eirik Tsarpalis"/>
@@ -35,32 +35,33 @@
 
 
 
-<h1>BsonSerializer</h1>
+<h1>HashSift<'T></h1>
 <div class="xmldoc">
-<p>BSON pickler instance.</p>
+<p>Contains a sifted graph whose sifted values are distinguished by hashcode.</p>
 </div>
-  <h3>Constructors</h3>
+  <h3>Instance members</h3>
   <table class="table table-bordered member-list">
     <thead>
-      <tr><td>Constructor</td><td>Description</td></tr>
+      <tr><td>Instance member</td><td>Description</td></tr>
     </thead>
     <tbody>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '294', 294)" onmouseover="showTip(event, '294', 294)">
-            new(typeConverter)
+          <code onmouseout="hideTip(event, '69', 69)" onmouseover="showTip(event, '69', 69)">
+            Hashes
           </code>
-          <div class="tip" id="294">
-            <strong>Signature:</strong> (typeConverter:ITypeNameConverter option) -&gt; BsonSerializer<br />
+          <div class="tip" id="69">
+            <strong>Signature:</strong> HashResult []<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler.Json/JsonSerializer.fs#L64-64" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/ExtensionMethods.fs#L28-28" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          
+          <p>Collection of all hashes of objects sifted from object graph.</p>
+
         </td>
       </tr>
     </tbody>
