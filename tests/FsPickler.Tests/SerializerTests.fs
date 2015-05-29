@@ -579,6 +579,15 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
         let g' = pickler.DeserializeSifted<Graph<int>>(m, sifted)
         areEqualGraphs g g' |> should equal true
 
+    [<Test; Category("FsPickler Generic tests"); Repeat(5)>]
+    member __.``5. Object: hash sifting`` () =
+        let mkArray N = [| for i in 1 .. N -> (string i, i) |]
+        let graph = [mkArray 1 ; mkArray 2 ; mkArray 5000 ; mkArray 4999 ; mkArray 2 ; mkArray 5000]
+        let sifted, values = pickler.HashSift(graph, fun obj hash -> hash.Length > 5000L && match obj with :? System.Array -> true | _ -> false)
+        sifted.Hashes.Length |> should equal 2
+        values.Length |> should equal 2
+        pickler.HashUnsift(sifted, values) = graph |> should equal true
+
     //
     //  Custom types
     //

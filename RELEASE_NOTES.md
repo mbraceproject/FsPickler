@@ -1,3 +1,6 @@
+### 1.2.4
+* Implement Hashcode-based sifting extensions.
+
 ### 1.2.3
 * Revise IObjectSifter API.
 

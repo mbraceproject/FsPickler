@@ -196,9 +196,11 @@ type IgnoreStrongNamesConverter (?ignoreVersion) =
 type Sifted<'T> internal (value : 'T, siftedIndices : (int64 * int64 [])[]) =
     [<DataMember(Name = "Value")>]
     let value = value
+    // int64 * int64 [] defines an object reference id 
+    // together with its matching graph node ids
     [<DataMember(Name = "Indices")>]
     let siftedIndices = siftedIndices
-    /// Number of objects that have been sifted from object.
+    /// Number of objects that have been sifted from parent graph.
     member __.SiftCount = siftedIndices.Length
     member internal __.Value = value
     member internal __.SiftedIndices = siftedIndices
