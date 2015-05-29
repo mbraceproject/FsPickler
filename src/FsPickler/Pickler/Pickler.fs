@@ -77,7 +77,7 @@ and ISpecializedObjectVisitor<'T> =
     abstract VisitSpecialized : pickler:Pickler<'T> * value:'T -> bool
 
 and IObjectSifter =
-    abstract member Sift<'T> : pickler:Pickler<'T> * value:'T -> bool
+    abstract member Sift<'T> : pickler:Pickler<'T> * id:int64 * value:'T -> bool
 
 and IPicklerResolver =
     abstract IsSerializable : Type -> bool

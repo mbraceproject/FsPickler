@@ -86,7 +86,7 @@ type FsPickler private () =
     /// <param name="streamingContext">Streaming context used for cloning. Defaults to null streaming context.</param>
     /// <returns>A sifted wrapper together with all objects that have been sifted.</returns>
     static member Sift<'T>(value : 'T, sifter : obj -> bool, [<O;D(null)>]?pickler : Pickler<'T>, [<O;D(null)>]?streamingContext : StreamingContext) : Sifted<'T> * (int64 * obj) [] =
-        let sifter = { new IObjectSifter with member __.Sift(_,t) = sifter t }
+        let sifter = { new IObjectSifter with member __.Sift(_,_,t) = sifter t }
         FsPickler.Sift(value, sifter, ?pickler = pickler, ?streamingContext = streamingContext)
 
     /// <summary>

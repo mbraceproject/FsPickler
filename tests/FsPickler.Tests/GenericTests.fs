@@ -349,7 +349,7 @@ module ``Generic Tests`` =
     [<Test; Category("Sift")>]
     let ``3. Object: simple sift`` () =
         let graph : (int * int []) option * int [] option option list = (Some (1, [|1 .. 100|]), [None; None ; Some None; Some (Some [|12|])])
-        let sifter = { new IObjectSifter with member __.Sift(p,_) = p.Kind = Kind.Array }
+        let sifter = { new IObjectSifter with member __.Sift(p,_,_) = p.Kind = Kind.Array }
         let sifted, values = FsPickler.Sift(graph, sifter)
         values.Length |> should equal 2
         FsPickler.UnSift(sifted, values) |> should equal graph
@@ -370,7 +370,7 @@ module ``Generic Tests`` =
     [<Test; Category("Sift")>]
     let ``3. Object: random sift`` () =
         let r = new System.Random()
-        let randomSifter = { new IObjectSifter with member __.Sift(_,_) = r.Next(0,5) = 0 }
+        let randomSifter = { new IObjectSifter with member __.Sift(_,_,_) = r.Next(0,5) = 0 }
         Check.QuickThrowOnFail(fun (tree : ListTree<int>) ->
             let sifted, values = FsPickler.Sift(tree, randomSifter)
             FsPickler.UnSift(sifted, values) |> should equal tree)
@@ -379,7 +379,7 @@ module ``Generic Tests`` =
     let ``3. Object: random graph sifting`` () =
         let g = createRandomGraph 0.4 30
         let r = new System.Random()
-        let randomSifter = { new IObjectSifter with member __.Sift(_,_) = r.Next(0,5) = 0 }
+        let randomSifter = { new IObjectSifter with member __.Sift(_,_,_) = r.Next(0,5) = 0 }
         let sifted, values = FsPickler.Sift(g, randomSifter)
         let g' = FsPickler.UnSift(sifted, values)
         areEqualGraphs g g' |> should equal true

@@ -126,8 +126,9 @@ and IObjectSifter =
         ///     Predicate deciding whether provided object is to be sifted from serialization.
         /// </summary>
         /// <param name="pickler">Pickler used for traversal. Used for metadata reference.</param>
+        /// <param name="id">Object id for current value.</param>
         /// <param name="value">Value that is being visited.</param>
-        abstract member Sift<'T> : pickler:Pickler<'T> * value:'T -> bool
+        abstract member Sift<'T> : pickler:Pickler<'T> * id:int64 * value:'T -> bool
     end
     
 /// Provides access to automated pickler generation facility.

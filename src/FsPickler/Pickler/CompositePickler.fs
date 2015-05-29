@@ -193,7 +193,7 @@ type internal CompositePickler<'T> =
             if firstOccurence then
                 // check if value should be sifted from serialization
                 match state.Sifter with
-                | Some sifter when sifter.Sift(p, value) ->
+                | Some sifter when sifter.Sift(p, id, value) ->
                     state.Sifted.Add(id, box value)
                     formatter.BeginWriteObject tag ObjectFlags.IsSiftedValue
                     formatter.EndWriteObject()
@@ -359,7 +359,7 @@ type internal CompositePickler<'T> =
             match state.SiftData with
             | Some(sifter, container) ->
                 if firstOccurence then
-                    if sifter.Sift(p, value) then
+                    if sifter.Sift(p, id, value) then
                         let ra = new ResizeArray<int64> ()
                         container.Add(id, (box value, ra))
                         ra.Add nodeId

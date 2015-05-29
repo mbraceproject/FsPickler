@@ -535,7 +535,7 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
     [<Test; Category("FsPickler Generic tests")>]
     member __.``5. Object: simple sift serialization`` () =
         let graph : (int * int []) option * int [] option option list = (Some (1, [|1 .. 100|]), [None; None ; Some None; Some (Some [|12|])])
-        let sifter = { new IObjectSifter with member __.Sift(p,_) = p.Kind = Kind.Array }
+        let sifter = { new IObjectSifter with member __.Sift(p,_,_) = p.Kind = Kind.Array }
         use m = new MemoryStream()
         let sifted = pickler.SerializeSifted(m, graph, sifter, leaveOpen = true)
         sifted.Length |> should equal 2
@@ -551,7 +551,7 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
         let xs = Array.init 10 (fun _ -> tuple)
         let calls = ref 0
         use m = new MemoryStream()
-        let sifter = { new IObjectSifter with member __.Sift(_,o) = if obj.ReferenceEquals(o,tuple) then incr calls ; true else false }
+        let sifter = { new IObjectSifter with member __.Sift(_,_,o) = if obj.ReferenceEquals(o,tuple) then incr calls ; true else false }
         let values = pickler.SerializeSifted(m, xs, sifter, leaveOpen = true)
         calls.Value |> should equal 1
         values.Length |> should equal 1
@@ -561,7 +561,7 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
     [<Test; Category("FsPickler Generic tests")>]
     member __.``5. Object: random sift serialization`` () =
         let r = new System.Random()
-        let randomSifter = { new IObjectSifter with member __.Sift(_,_) = r.Next(0,5) = 0 }
+        let randomSifter = { new IObjectSifter with member __.Sift(_,_,_) = r.Next(0,5) = 0 }
         Check.QuickThrowOnFail(fun (tree : ListTree<int>) ->
             use m = new MemoryStream()
             let sifted = pickler.SerializeSifted(m, tree, randomSifter, leaveOpen = true)
@@ -572,7 +572,7 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
     member __.``5. Object: random graph sift serialization`` () =
         let g = createRandomGraph 0.4 30
         let r = new System.Random()
-        let randomSifter = { new IObjectSifter with member __.Sift(_,_) = r.Next(0,5) = 0 }
+        let randomSifter = { new IObjectSifter with member __.Sift(_,_,_) = r.Next(0,5) = 0 }
         use m = new MemoryStream()
         let sifted = pickler.SerializeSifted(m, g, randomSifter, leaveOpen = true)
         m.Position <- 0L
