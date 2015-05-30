@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8"/>
-    <title>IPickleFormatProvider - FsPickler</title>
+    <title>EnsureSerializableAttribute - FsPickler</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <meta name="description" content=""/>
     <meta name="author" content="Eirik Tsarpalis"/>
@@ -35,94 +35,34 @@
 
 
 
-<h1>IPickleFormatProvider</h1>
+<h1>EnsureSerializableAttribute</h1>
 <div class="xmldoc">
-<p>Factory abstraction for binary pickle formats.</p>
+<p>FsPickler-specific attribute used to denote that class should be
+treated as serializable. Useful when using target frameworks
+where SerializableAttribute is not available.</p>
 </div>
-  <h3>Instance members</h3>
+  <h3>Constructors</h3>
   <table class="table table-bordered member-list">
     <thead>
-      <tr><td>Instance member</td><td>Description</td></tr>
+      <tr><td>Constructor</td><td>Description</td></tr>
     </thead>
     <tbody>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '144', 144)" onmouseover="showTip(event, '144', 144)">
-            CreateReader(...)
+          <code onmouseout="hideTip(event, '88', 88)" onmouseover="showTip(event, '88', 88)">
+            new()
           </code>
-          <div class="tip" id="144">
-            <strong>Signature:</strong> (Stream * Encoding * isTopLevelSequence:bool * leaveOpen:bool) -&gt; IPickleFormatReader<br />
-              <strong>Modifiers:</strong> abstract<br />
+          <div class="tip" id="88">
+            <strong>Signature:</strong> unit -&gt; EnsureSerializableAttribute<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/Pickler/PickleFormat.fs#L187-187" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/Pickler/Types.fs#L86-86" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          <p>Initializes a new format reader</p>
-
-        </td>
-      </tr>
-      <tr>
-        <td class="member-name">
-
-          <code onmouseout="hideTip(event, '145', 145)" onmouseover="showTip(event, '145', 145)">
-            CreateWriter(...)
-          </code>
-          <div class="tip" id="145">
-            <strong>Signature:</strong> (Stream * Encoding * isTopLevelSequence:bool * leaveOpen:bool) -&gt; IPickleFormatWriter<br />
-              <strong>Modifiers:</strong> abstract<br />
-                      </div>
-        </td>
-        <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/Pickler/PickleFormat.fs#L185-185" class="github-link">
-              <img src="../content/img/github.png" class="normal" />
-              <img src="../content/img/github-blue.png" class="hover" />
-            </a>
-          <p>Initializes a new format writer</p>
-
-        </td>
-      </tr>
-      <tr>
-        <td class="member-name">
-
-          <code onmouseout="hideTip(event, '146', 146)" onmouseover="showTip(event, '146', 146)">
-            DefaultEncoding
-          </code>
-          <div class="tip" id="146">
-            <strong>Signature:</strong> Encoding<br />
-              <strong>Modifiers:</strong> abstract<br />
-                      </div>
-        </td>
-        <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/Pickler/PickleFormat.fs#L182-182" class="github-link">
-              <img src="../content/img/github.png" class="normal" />
-              <img src="../content/img/github-blue.png" class="hover" />
-            </a>
-          <p>Specifies the encoding intended as default for this pickle format</p>
-
-        </td>
-      </tr>
-      <tr>
-        <td class="member-name">
-
-          <code onmouseout="hideTip(event, '147', 147)" onmouseover="showTip(event, '147', 147)">
-            Name
-          </code>
-          <div class="tip" id="147">
-            <strong>Signature:</strong> string<br />
-              <strong>Modifiers:</strong> abstract<br />
-                      </div>
-        </td>
-        <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/Pickler/PickleFormat.fs#L179-179" class="github-link">
-              <img src="../content/img/github.png" class="normal" />
-              <img src="../content/img/github-blue.png" class="hover" />
-            </a>
-          <p>Pickle format name</p>
-
+          
         </td>
       </tr>
     </tbody>
