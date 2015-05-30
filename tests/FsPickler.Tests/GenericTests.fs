@@ -122,13 +122,8 @@ module ``Generic Tests`` =
         FsPickler.IsSerializableType<SerializableImplementingNonSerializable> () |> should equal true
 
     [<Test; Category("Pickler tests")>]
-    let ``1. Should correctly generate picklers for types tagged with EnsureSerializableAttribute`` () =
-        FsPickler.IsSerializableType<NonSerializableClass> () |> should equal false
-        FsPickler.IsSerializableType<EnsureSerializableClass> () |> should equal true
-        FsPickler.IsSerializableType<EnsureSerializableUnion> () |> should equal true
-        FsPickler.IsSerializableType<EnsureSerializableRecord> () |> should equal true
-        FsPickler.IsSerializableType<EnsureSerializableException> () |> should equal true
-
+    let ``1. Should mark types carrying the SerializableAttribute serializable`` () =
+        FsPickler.IsSerializableType<SerializableOnAccountOfAttribute> () |> should equal true
     
     //
     //  Clone tests
