@@ -122,6 +122,8 @@ type internal ClassFieldPickler =
         let isEDI = not runsOnMono.Value && isExceptionDispatchInfo ty // ExceptionDispatchInfo serialization not supported in mono.
         let isSerializable =
             ty.IsSerializable
+            || containsAttr<SerializableAttribute> ty
+            || containsAttr<EnsureSerializableAttribute> ty
             // compiler generated types in C# are not marked as serializable, but should in principle be treated as such.
             || containsAttr<System.Runtime.CompilerServices.CompilerGeneratedAttribute> ty
             || isEDI

@@ -326,6 +326,18 @@ module TestTypes =
         toAdjacencyMap g1 = toAdjacencyMap g2
 
 
+    [<AutoSerializable(false)>]
+    type NonSerializableClass() = class end
+    [<AutoSerializable(false); EnsureSerializable>]
+    type EnsureSerializableClass() = class end
+    [<AutoSerializable(false); EnsureSerializable>]
+    type EnsureSerializableUnion = EnsureSerializableCtor of int
+    [<AutoSerializable(false); EnsureSerializable>]
+    type EnsureSerializableRecord = { EnsureSerializableField : int }
+    [<AutoSerializable(false); EnsureSerializable>]
+    exception EnsureSerializableException of int
+
+
     type ISerializableMissingCtor(x : int) =
         member __.Value = x
         interface ISerializable with

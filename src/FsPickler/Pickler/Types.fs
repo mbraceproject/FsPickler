@@ -78,6 +78,14 @@ module internal Kind =
 type CustomPicklerAttribute () = 
     inherit System.Attribute()
 
+/// FsPickler-specific attribute used to denote that class should be
+/// treated as serializable. Useful when using target frameworks
+/// where SerializableAttribute is not available.
+[<Sealed>]
+[<System.AttributeUsage(AttributeTargets.Class, AllowMultiple = false)>]
+type EnsureSerializableAttribute () = 
+    inherit System.Attribute()
+
 
 /// <summary>
 ///     Serialization information for named types.

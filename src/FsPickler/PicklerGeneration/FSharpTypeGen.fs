@@ -23,23 +23,29 @@ open Nessos.FsPickler.PicklerEmit
 type internal FsUnionPickler =
 
     static member Create<'Union> (resolver : IPicklerResolver) =
-        if not <| typeof<'Union>.IsSerializable then
-            raise <| new NonSerializableTypeException(typeof<'Union>)
+        let ty = typeof<'Union>
+        let isSerializable =
+            ty.IsSerializable
+            || containsAttr<SerializableAttribute> ty
+            || containsAttr<EnsureSerializableAttribute> ty
+ 
+        if not isSerializable then
+            raise <| new NonSerializableTypeException(ty)
 
         // Only cache by reference if typedef introduces custom or reference equality semantics
         let isCacheByRef = 
-            containsAttr<CustomEqualityAttribute> typeof<'Union> ||
-            containsAttr<ReferenceEqualityAttribute> typeof<'Union>
+            containsAttr<CustomEqualityAttribute> ty 
+            || containsAttr<ReferenceEqualityAttribute> ty
 
         // resolve tag reader methodInfo
         let tagReaderMethod =
-            match FSharpValue.PreComputeUnionTagMemberInfo(typeof<'Union>, allMembers) with
+            match FSharpValue.PreComputeUnionTagMemberInfo(ty, allMembers) with
             | null -> invalidOp "unexpected error"
             | :? PropertyInfo as p -> p.GetGetMethod(true)
             | :? MethodInfo as m -> m
             | _ -> invalidOp "unexpected error"
 
-        let ucis = FSharpType.GetUnionCases(typeof<'Union>, allMembers)
+        let ucis = FSharpType.GetUnionCases(ty, allMembers)
         let tagSerializer = new UnionCaseSerializationHelper(ucis |> Array.map (fun u -> u.Name))
 
 #if EMIT_IL
@@ -247,19 +253,25 @@ type internal FsUnionPickler =
 type internal FsRecordPickler =
         
     static member Create<'Record>(resolver : IPicklerResolver) =
-        if not <| typeof<'Record>.IsSerializable then
-            raise <| new NonSerializableTypeException(typeof<'Record>)
+        let ty = typeof<'Record>
+        let isSerializable =
+            ty.IsSerializable
+            || containsAttr<SerializableAttribute> ty
+            || containsAttr<EnsureSerializableAttribute> ty
+ 
+        if not isSerializable then
+            raise <| new NonSerializableTypeException(ty)
 
-        let fields = FSharpType.GetRecordFields(typeof<'Record>, allMembers)
-        let ctor = FSharpValue.PreComputeRecordConstructorInfo(typeof<'Record>, allMembers)
+        let fields = FSharpType.GetRecordFields(ty, allMembers)
+        let ctor = FSharpValue.PreComputeRecordConstructorInfo(ty, allMembers)
 
         let picklers = fields |> Array.map (fun f -> resolver.Resolve f.PropertyType)
         let tags = fields |> Array.mapi (fun i f -> getNormalizedFieldName i f.Name)
 
         // Only cache by reference if typedef introduces custom or reference equality semantics
         let isCacheByRef = 
-            containsAttr<CustomEqualityAttribute> typeof<'Record> ||
-            containsAttr<ReferenceEqualityAttribute> typeof<'Record>
+            containsAttr<CustomEqualityAttribute> ty ||
+            containsAttr<ReferenceEqualityAttribute> ty
 
 #if EMIT_IL
         let writer =
@@ -343,16 +355,22 @@ type internal FsRecordPickler =
 type internal FsExceptionPickler =
         
     static member Create<'Exception when 'Exception :> exn>(resolver : IPicklerResolver) =
-        if not <| typeof<'Exception>.IsSerializable then
-            raise <| new NonSerializableTypeException(typeof<'Exception>)
+        let ty = typeof<'Exception>
+        let isSerializable =
+            ty.IsSerializable
+            || containsAttr<SerializableAttribute> ty
+            || containsAttr<EnsureSerializableAttribute> ty
+ 
+        if not isSerializable then
+            raise <| new NonSerializableTypeException(ty)
 
         // the default ISerializable pickler that handles exception metadata serialization
         let defPickler = ISerializablePickler.Create<'Exception>(resolver) :?> CompositePickler<'Exception>
         // separately serialize exception fields
-        let fields = gatherSerializedFields typeof<'Exception> |> Array.filter(fun f -> f.DeclaringType = typeof<'Exception>)
+        let fields = gatherSerializedFields ty |> Array.filter(fun f -> f.DeclaringType = ty)
         let fpicklers = fields |> Array.map (fun f -> resolver.Resolve f.FieldType)
         // extract tag names from properties, not fields
-        let tags = FSharpType.GetExceptionFields(typeof<'Exception>, allMembers) |> Array.map (fun p -> p.Name)
+        let tags = FSharpType.GetExceptionFields(ty, allMembers) |> Array.map (fun p -> p.Name)
 
 #if EMIT_IL
         let writerDele = 
