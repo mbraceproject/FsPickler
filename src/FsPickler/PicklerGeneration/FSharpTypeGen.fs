@@ -24,7 +24,7 @@ type internal FsUnionPickler =
 
     static member Create<'Union> (resolver : IPicklerResolver) =
         let ty = typeof<'Union>
-        if not <| isReflectionSerializable ty then
+        if not (isReflectionSerializable ty || PicklerPluginRegistry.IsDeclaredSerializable ty) then
             raise <| new NonSerializableTypeException(ty)
 
         // Only cache by reference if typedef introduces custom or reference equality semantics
@@ -249,7 +249,7 @@ type internal FsRecordPickler =
         
     static member Create<'Record>(resolver : IPicklerResolver) =
         let ty = typeof<'Record>
-        if not <| isReflectionSerializable ty then
+        if not (isReflectionSerializable ty || PicklerPluginRegistry.IsDeclaredSerializable ty) then
             raise <| new NonSerializableTypeException(ty)
 
         let fields = FSharpType.GetRecordFields(ty, allMembers)
@@ -346,7 +346,7 @@ type internal FsExceptionPickler =
         
     static member Create<'Exception when 'Exception :> exn>(resolver : IPicklerResolver) =
         let ty = typeof<'Exception>
-        if not <| isReflectionSerializable ty then
+        if not (isReflectionSerializable ty || PicklerPluginRegistry.IsDeclaredSerializable ty) then
             raise <| new NonSerializableTypeException(ty)
 
         // the default ISerializable pickler that handles exception metadata serialization

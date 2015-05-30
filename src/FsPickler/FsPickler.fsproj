@@ -111,6 +111,7 @@
     <Compile Include="Combinators\DotNetTypes.fs" />
     <Compile Include="Combinators\FSharpTypes.fs" />
     <Compile Include="Combinators\Collections.fs" />
+    <Compile Include="PicklerGeneration\PluginRegistry.fs" />
     <Compile Include="PicklerGeneration\TypeShape.fs" />
     <Compile Include="PicklerGeneration\PicklerEmit.fs" />
     <Compile Include="PicklerGeneration\FieldPicklers.fs" />
@@ -118,7 +119,7 @@
     <Compile Include="PicklerGeneration\DataContractPickler.fs" />
     <Compile Include="PicklerGeneration\FSharpTypeGen.fs" />
     <Compile Include="PicklerGeneration\CustomPickler.fs" />
-    <Compile Include="PicklerGeneration\PicklerFactory.fs" />
+    <Compile Include="PicklerGeneration\PicklerGenerator.fs" />
     <Compile Include="PicklerGeneration\PicklerResolution.fs" />
     <Compile Include="PicklerGeneration\PicklerCache.fs" />
     <Compile Include="Format\BinaryFormat.fs" />

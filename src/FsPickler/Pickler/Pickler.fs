@@ -69,6 +69,9 @@ and
 and IPicklerUnpacker<'U> =
     abstract Apply : Pickler<'T> -> 'U
 
+and IPicklerFactory<'T> =
+    abstract Create : resolver:IPicklerResolver -> Pickler<'T>
+
 and IObjectVisitor =
     abstract Visit<'T> : pickler:Pickler<'T> * value:'T -> bool
 

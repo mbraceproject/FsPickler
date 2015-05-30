@@ -77,6 +77,11 @@ and ShapeCustomPickler<'T> () =
     override __.Shape = Shape.CustomPickler
     override __.Accept (v : ITypeShapeVisitor<'R>) = v.CustomPickler<'T> ()
 
+and ShapeUserFactory<'T> () =
+    inherit TypeShape<'T> ()
+    override __.Shape = Shape.CustomPickler
+    override __.Accept (v : ITypeShapeVisitor<'R>) = v.UserFactory<'T> ()
+
 and ShapeDelegate<'T when 'T :> Delegate> () =
     inherit TypeShape<'T>()
     override __.Shape = Shape.Delegate
@@ -244,6 +249,7 @@ and ITypeShapeVisitor<'R> =
     abstract CustomPickler<'T> : unit -> 'R
     abstract Delegate<'D when 'D :> Delegate> : unit -> 'R
     abstract Enum<'Enum, 'Underlying when 'Enum : enum<'Underlying>> : unit -> 'R
+    abstract UserFactory<'T> : unit -> 'R
 
     abstract Nullable<'T when   
                             'T : (new : unit -> 'T) and 
@@ -359,6 +365,7 @@ module TypeShape =
         elif t.IsGenericParameter then raise UnSupportedShape
         elif isIntrinsicType t then raise UnSupportedShape
         elif t.IsPrimitive then activate1 typedefof<ShapePrimitive<_>> t
+        elif PicklerPluginRegistry.ContainsFactory t then activate1 typedefof<ShapeUserFactory<_>> t
         elif FSharpType.IsTuple t then
             let gas = t.GetGenericArguments()
             match gas.Length with

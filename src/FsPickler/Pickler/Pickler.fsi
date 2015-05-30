@@ -95,6 +95,14 @@ and internal IPicklerUnpacker<'U> =
         abstract member Apply : Pickler<'T> -> 'U
     end
 
+/// Pickler factory for pluggable pickler generation.
+and IPicklerFactory<'T> =
+    /// <summary>
+    ///     Creates a pickler instance using provided dependency resolver.
+    /// </summary>
+    /// <param name="resolver">Pickler resolution object.</param>
+    abstract Create : resolver:IPicklerResolver -> Pickler<'T>
+
 /// Object graph visitor abstraction.
 and IObjectVisitor =
     interface

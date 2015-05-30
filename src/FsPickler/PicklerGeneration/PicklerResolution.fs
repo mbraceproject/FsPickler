@@ -7,7 +7,7 @@ open System.Runtime.CompilerServices
 open Nessos.FsPickler
 open Nessos.FsPickler.Reflection
 open Nessos.FsPickler.TypeShape
-open Nessos.FsPickler.PicklerFactory
+open Nessos.FsPickler.PicklerGenerator
 
 /// reflection - based pickler resolution
 let resolvePickler (resolver : IPicklerResolver) (mkEarlyBinding : Pickler -> unit) (t : Type) =
@@ -25,7 +25,7 @@ let resolvePickler (resolver : IPicklerResolver) (mkEarlyBinding : Pickler -> un
             with UnSupportedShape -> raise <| NonSerializableTypeException(t)
 
         // step 2: create an uninitialized pickler instance and register to the local cache
-        let p0 = PicklerFactory.CreateUninitialized shape
+        let p0 = PicklerGenerator.CreateUninitialized shape
         do mkEarlyBinding p0
 
         // step 3: subtype pickler resolution
@@ -46,7 +46,7 @@ let resolvePickler (resolver : IPicklerResolver) (mkEarlyBinding : Pickler -> un
         let p =
             match result with
             | Some p -> p
-            | None -> PicklerFactory.Create resolver shape
+            | None -> PicklerGenerator.Create resolver shape
 
         // step 5; pickler generation complete, copy data to uninitialized binding
         CompositePickler.Copy(p, p0)
