@@ -1,4 +1,4 @@
-﻿type file
+﻿type project
 id FsPickler
 description
     FsPickler is a serialization library that facilitates the distribution of .NET objects. 

@@ -19,6 +19,8 @@ projecturl https://github.com/nessos/FsPickler
 iconurl https://avatars1.githubusercontent.com/u/5538081
 tags
     F#, fsharp, serializer, pickler, binary, json, xml
+dependencies
+	FsPickler CURRENTVERSION
 files
     ../../bin/FsPickler.Json.dll ==> lib/net45
     ../../bin/FsPickler.Json.pdb ==> lib/net45
