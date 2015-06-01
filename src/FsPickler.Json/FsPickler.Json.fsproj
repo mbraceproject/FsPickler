@@ -90,7 +90,7 @@
     <Compile Include="Combinators.fs" />
     <None Include="Test.fsx" />
     <Content Include="paket.references" />
-    <None Include="Paket.template" />
+    <None Include="paket.template" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
