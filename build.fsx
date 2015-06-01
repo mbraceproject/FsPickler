@@ -113,6 +113,7 @@ Target "NuGet" (fun _ ->
 
 Target "NuGetPush" (fun _ -> Paket.Push (fun p -> { p with WorkingDir = "bin/" }))
 
+
 // Doc generation
 
 Target "GenerateDocs" (fun _ ->
