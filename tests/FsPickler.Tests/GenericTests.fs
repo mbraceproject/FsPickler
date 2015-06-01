@@ -124,6 +124,71 @@ module ``Generic Tests`` =
     [<Test; Category("Pickler tests")>]
     let ``1. Should mark types carrying the SerializableAttribute serializable`` () =
         FsPickler.IsSerializableType<SerializableOnAccountOfAttribute> () |> should equal true
+
+    let mutable private isRunSerializableDeclarationTest = false
+    [<Test; Category("Pickler tests")>]
+    let ``1. Serializable type declaration simple test`` () =
+        // ensure test is only run once per AppDomain
+        if isRunSerializableDeclarationTest then () else
+        isRunSerializableDeclarationTest <- true
+
+        FsPickler.DeclareSerializable<DeclaredSerializableType> ()
+        let p = FsPickler.GeneratePickler<DeclaredSerializableType> ()
+        ()
+
+    let mutable private isRunPicklerFactoryTest = false
+    [<Test; Category("Pickler tests")>]
+    let ``1. Pickler factory simple test`` () =
+        // ensure test is only run once per AppDomain
+        if isRunPicklerFactoryTest then () else
+        isRunPicklerFactoryTest <- true
+
+        let factory = 
+            { new IPicklerFactory<PicklerFactoryType> with 
+                member __.Create resolver = Pickler.FromPrimitives((fun _ -> failwith ""), (fun _ _ -> failwith "")) }
+
+        FsPickler.RegisterPicklerFactory factory
+
+        let p = FsPickler.GeneratePickler<PicklerFactoryType> ()
+        p.PicklerInfo |> should equal PicklerInfo.UserDefined
+
+    let mutable private isRunPicklerConcurrencyTest = false
+    let private gen<'T> () = FsPickler.GeneratePickler<'T>() |> ignore
+    let private reg<'T> () = FsPickler.DeclareSerializable<'T> ()
+    [<Test; Category("Pickler tests")>]
+    let ``1. Pickler registry concurrency test`` () =
+        // ensure test is only run once per AppDomain
+        if isRunPicklerConcurrencyTest then () else
+        isRunPicklerConcurrencyTest <- true
+
+        // test that registration behaves correctly in conjunction
+        // with concurrent pickler generation operations.
+
+        [| 
+            gen<Foo0> ; reg<Bar0> ; 
+            gen<Foo1> ; reg<Bar1> ; 
+            gen<Foo2> ; reg<Bar2> ; 
+            gen<Foo3> ; reg<Bar3> ; 
+            gen<Foo4> ; reg<Bar4> ;
+            gen<Foo5> ; reg<Bar5> ;
+            gen<Foo6> ; reg<Bar6> ;
+            gen<Foo7> ; reg<Bar7> ;
+            gen<Foo8> ; reg<Bar8> ;
+            gen<Foo9> ; reg<Bar9> ;
+        |] |> Array.Parallel.iter (fun f -> f ())
+
+        [| 
+            gen<Bar0> ; 
+            gen<Bar1> ; 
+            gen<Bar2> ; 
+            gen<Bar3> ; 
+            gen<Bar4> ;
+            gen<Bar5> ;
+            gen<Bar6> ;
+            gen<Bar7> ;
+            gen<Bar8> ;
+            gen<Bar9> ;
+        |] |> Array.Parallel.iter (fun f -> f ())
     
     //
     //  Clone tests

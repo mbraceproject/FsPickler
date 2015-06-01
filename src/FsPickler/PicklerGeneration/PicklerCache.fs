@@ -27,8 +27,10 @@ type internal PicklerCache private () =
             yield! mkReflectionPicklers <| ArrayPickler.GetInterface()
         } |> Seq.map (fun p -> KeyValuePair(p.Type, Success p))
 
+    /// declares pickler generation locked for cache
     [<VolatileField>]
     let mutable isLocked = false
+    /// number of picklers that are currently being generated
     [<VolatileField>]
     let mutable resolutionCount = 0
 
@@ -60,11 +62,11 @@ type internal PicklerCache private () =
             finally Interlocked.Decrement &resolutionCount |> ignore
 
     /// Performs an operation while no picklers are being appended to the cache.
-    member __.WithLockedCache (f : unit -> unit) =
+    member c.WithLockedCache (f : unit -> unit) =
         // synchronize all calls to this method
-        lock cache (fun () -> 
+        lock c (fun () -> 
             // declare lock intention to pickler generation
-            isLocked <- true ; 
+            isLocked <- true ; Thread.Sleep 10
             // spinwait until all pending pickler resolutions are completed
             while resolutionCount > 0 do Thread.SpinWait(20)
             // perform operation, finally resetting lock switch

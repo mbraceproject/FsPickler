@@ -439,6 +439,34 @@ module TestTypes =
             member __.GetObjectData(si : SerializationInfo, sc : StreamingContext) =
                 si.AddValue("x", x)
 
+    [<AutoSerializable(false)>]
+    type PicklerFactoryType = class end
+
+    [<AutoSerializable(false)>]
+    type DeclaredSerializableType = class end
+
+    type Foo0 = class end
+    type Foo1 = class end
+    type Foo2 = class end
+    type Foo3 = class end
+    type Foo4 = class end
+    type Foo5 = class end
+    type Foo6 = class end
+    type Foo7 = class end
+    type Foo8 = class end
+    type Foo9 = class end
+
+    [<AutoSerializable(false)>]type Bar0 = class end
+    [<AutoSerializable(false)>]type Bar1 = class end
+    [<AutoSerializable(false)>]type Bar2 = class end
+    [<AutoSerializable(false)>]type Bar3 = class end
+    [<AutoSerializable(false)>]type Bar4 = class end
+    [<AutoSerializable(false)>]type Bar5 = class end
+    [<AutoSerializable(false)>]type Bar6 = class end
+    [<AutoSerializable(false)>]type Bar7 = class end
+    [<AutoSerializable(false)>]type Bar8 = class end
+    [<AutoSerializable(false)>]type Bar9 = class end
+
     // automated large-scale object generation
     let generateSerializableObjects (assembly : Assembly) =
         let filterType (t : Type) =
