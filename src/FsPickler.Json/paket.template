@@ -12,6 +12,8 @@ authors
     Eirik Tsarpalis
 releasenotes
     RELEASE NOTES
+copyright
+	Copyright 2015
 summary
     A fast serialization framework and pickler combinator library for .NET
 licenseurl https://github.com/nessos/FsPickler/blob/master/License.md
