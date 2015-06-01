@@ -4,7 +4,7 @@
 
 #I "packages/FAKE/tools"
 #r "packages/FAKE/tools/FakeLib.dll"
-//#load "packages/SourceLink.Fake/tools/SourceLink.fsx"
+
 open System
 open System.IO
 
@@ -12,25 +12,12 @@ open Fake
 open Fake.Git
 open Fake.ReleaseNotesHelper
 open Fake.AssemblyInfoFile
-//open SourceLink
 
 // --------------------------------------------------------------------------------------
 // Information about the project to be used at NuGet and in AssemblyInfo files
 // --------------------------------------------------------------------------------------
 
 let project = "FsPickler"
-let authors = ["Eirik Tsarpalis"]
-let summary = "A fast serialization framework and pickler combinator library for .NET"
-
-let description = """
-    FsPickler is a serialization library that facilitates the distribution of .NET objects. 
-    The implementation focuses on performance and completeness in supported types, including F# types. 
-    It supports multiple, pluggable serialization formats including Binary, Xml, JSON and BSON. 
-    The library is based on the functional programming concept of pickler combinators which 
-    has been adapted to accommodate the object oriented nature of the .NET framework.
-"""
-
-let tags = "F# fsharp serializer binary pickler"
 
 let gitHome = "https://github.com/nessos"
 let gitName = "FsPickler"
