@@ -38,6 +38,8 @@
 <h1>FsPicklerTextSerializer</h1>
 <div class="xmldoc">
 <p>An abstract class containing the text-based serialization API.</p>
+
+
 </div>
   <h3>Constructors</h3>
   <table class="table table-bordered member-list">
@@ -48,10 +50,10 @@
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '125', 125)" onmouseover="showTip(event, '125', 125)">
+          <code onmouseout="hideTip(event, '126', 126)" onmouseover="showTip(event, '126', 126)">
             new(formatProvider, typeConverter)
           </code>
-          <div class="tip" id="125">
+          <div class="tip" id="126">
             <strong>Signature:</strong> (formatProvider:ITextPickleFormatProvider * typeConverter:ITypeNameConverter option) -&gt; FsPicklerTextSerializer<br />
                       </div>
         </td>
@@ -74,10 +76,10 @@
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '126', 126)" onmouseover="showTip(event, '126', 126)">
+          <code onmouseout="hideTip(event, '127', 127)" onmouseover="showTip(event, '127', 127)">
             Deserialize(...)
           </code>
-          <div class="tip" id="126">
+          <div class="tip" id="127">
             <strong>Signature:</strong> (reader:TextReader * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option * leaveOpen:bool option) -&gt; &#39;T<br />
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
@@ -88,15 +90,17 @@
             </a>
           <p>Deserialize value of given type from the underlying stream.</p>
 
+
+
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '127', 127)" onmouseover="showTip(event, '127', 127)">
+          <code onmouseout="hideTip(event, '128', 128)" onmouseover="showTip(event, '128', 128)">
             DeserializeSequence(...)
           </code>
-          <div class="tip" id="127">
+          <div class="tip" id="128">
             <strong>Signature:</strong> (reader:TextReader * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option * leaveOpen:bool option) -&gt; seq&lt;&#39;T&gt;<br />
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
@@ -107,15 +111,17 @@
             </a>
           <p>Lazily deserialize a sequence of objects from the underlying stream.</p>
 
+
+
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '128', 128)" onmouseover="showTip(event, '128', 128)">
+          <code onmouseout="hideTip(event, '129', 129)" onmouseover="showTip(event, '129', 129)">
             DeserializeSequenceUntyped(...)
           </code>
-          <div class="tip" id="128">
+          <div class="tip" id="129">
             <strong>Signature:</strong> (reader:TextReader * pickler:Pickler * streamingContext:StreamingContext option * leaveOpen:bool option) -&gt; IEnumerable<br />
                       </div>
         </td>
@@ -126,15 +132,17 @@
             </a>
           <p>Lazily deserialize a sequence of objects from the underlying stream.</p>
 
+
+
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '129', 129)" onmouseover="showTip(event, '129', 129)">
+          <code onmouseout="hideTip(event, '130', 130)" onmouseover="showTip(event, '130', 130)">
             DeserializeSifted(...)
           </code>
-          <div class="tip" id="129">
+          <div class="tip" id="130">
             <strong>Signature:</strong> (reader:TextReader * sifted:(int64 * obj) [] * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option * leaveOpen:bool option) -&gt; &#39;T<br />
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
@@ -145,15 +153,17 @@
             </a>
           <p>Deserializes a sifted value from stream, filling in sifted holes from the serialized using supplied objects.</p>
 
+
+
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '130', 130)" onmouseover="showTip(event, '130', 130)">
+          <code onmouseout="hideTip(event, '131', 131)" onmouseover="showTip(event, '131', 131)">
             DeserializeUntyped(...)
           </code>
-          <div class="tip" id="130">
+          <div class="tip" id="131">
             <strong>Signature:</strong> (reader:TextReader * pickler:Pickler * streamingContext:StreamingContext option * leaveOpen:bool option) -&gt; obj<br />
                       </div>
         </td>
@@ -164,15 +174,17 @@
             </a>
           <p>Deserialize object of given type from the underlying stream.</p>
 
+
+
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '131', 131)" onmouseover="showTip(event, '131', 131)">
+          <code onmouseout="hideTip(event, '132', 132)" onmouseover="showTip(event, '132', 132)">
             PickleToString(...)
           </code>
-          <div class="tip" id="131">
+          <div class="tip" id="132">
             <strong>Signature:</strong> (value:&#39;T * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option) -&gt; string<br />
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
@@ -183,15 +195,17 @@
             </a>
           <p>Pickles given value to string.</p>
 
+
+
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '132', 132)" onmouseover="showTip(event, '132', 132)">
+          <code onmouseout="hideTip(event, '133', 133)" onmouseover="showTip(event, '133', 133)">
             PickleToStringSifted(...)
           </code>
-          <div class="tip" id="132">
+          <div class="tip" id="133">
             <strong>Signature:</strong> (value:&#39;T * sifter:IObjectSifter * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option) -&gt; string * (int64 * obj) []<br />
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
@@ -203,15 +217,17 @@
           <p>Pickles value to string, excluding objects mandated by the provided IObjectSifter instance.
 Values excluded from serialization will be returned tagged by their ids.</p>
 
+
+
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '133', 133)" onmouseover="showTip(event, '133', 133)">
+          <code onmouseout="hideTip(event, '134', 134)" onmouseover="showTip(event, '134', 134)">
             PickleToStringUntyped(...)
           </code>
-          <div class="tip" id="133">
+          <div class="tip" id="134">
             <strong>Signature:</strong> (value:obj * pickler:Pickler * streamingContext:StreamingContext option) -&gt; string<br />
                       </div>
         </td>
@@ -222,15 +238,17 @@ Values excluded from serialization will be returned tagged by their ids.</p>
             </a>
           <p>Pickles given value to string using provided pickler.</p>
 
+
+
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '134', 134)" onmouseover="showTip(event, '134', 134)">
+          <code onmouseout="hideTip(event, '135', 135)" onmouseover="showTip(event, '135', 135)">
             Serialize(...)
           </code>
-          <div class="tip" id="134">
+          <div class="tip" id="135">
             <strong>Signature:</strong> (writer:TextWriter * value:&#39;T * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option * leaveOpen:bool option) -&gt; unit<br />
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
@@ -241,15 +259,17 @@ Values excluded from serialization will be returned tagged by their ids.</p>
             </a>
           <p>Serialize value to the underlying writer.</p>
 
+
+
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '135', 135)" onmouseover="showTip(event, '135', 135)">
+          <code onmouseout="hideTip(event, '136', 136)" onmouseover="showTip(event, '136', 136)">
             SerializeSequence(...)
           </code>
-          <div class="tip" id="135">
+          <div class="tip" id="136">
             <strong>Signature:</strong> (writer:TextWriter * sequence:seq&lt;&#39;T&gt; * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option * leaveOpen:bool option) -&gt; int<br />
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
@@ -260,15 +280,17 @@ Values excluded from serialization will be returned tagged by their ids.</p>
             </a>
           <p>Evaluates and serializes a sequence of objects to the underlying stream.</p>
 
+
+
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '136', 136)" onmouseover="showTip(event, '136', 136)">
+          <code onmouseout="hideTip(event, '137', 137)" onmouseover="showTip(event, '137', 137)">
             SerializeSequenceUntyped(...)
           </code>
-          <div class="tip" id="136">
+          <div class="tip" id="137">
             <strong>Signature:</strong> (writer:TextWriter * sequence:IEnumerable * pickler:Pickler * streamingContext:StreamingContext option * leaveOpen:bool option) -&gt; int<br />
                       </div>
         </td>
@@ -279,15 +301,17 @@ Values excluded from serialization will be returned tagged by their ids.</p>
             </a>
           <p>Evaluate and serialize a sequence of objects to the underlying stream.</p>
 
+
+
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '137', 137)" onmouseover="showTip(event, '137', 137)">
+          <code onmouseout="hideTip(event, '138', 138)" onmouseover="showTip(event, '138', 138)">
             SerializeSifted(...)
           </code>
-          <div class="tip" id="137">
+          <div class="tip" id="138">
             <strong>Signature:</strong> (writer:TextWriter * value:&#39;T * sifter:IObjectSifter * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option * leaveOpen:bool option) -&gt; (int64 * obj) []<br />
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
@@ -299,15 +323,17 @@ Values excluded from serialization will be returned tagged by their ids.</p>
           <p>Serializes a value to text writer, excluding values mandated by the provided IObjectSifter instance.
 Values excluded from serialization will be returned tagged by their ids.</p>
 
+
+
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '138', 138)" onmouseover="showTip(event, '138', 138)">
+          <code onmouseout="hideTip(event, '139', 139)" onmouseover="showTip(event, '139', 139)">
             SerializeUntyped(...)
           </code>
-          <div class="tip" id="138">
+          <div class="tip" id="139">
             <strong>Signature:</strong> (writer:TextWriter * value:obj * pickler:Pickler * streamingContext:StreamingContext option * leaveOpen:bool option) -&gt; unit<br />
                       </div>
         </td>
@@ -318,15 +344,17 @@ Values excluded from serialization will be returned tagged by their ids.</p>
             </a>
           <p>Serialize object of given type to the underlying stream.</p>
 
+
+
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '139', 139)" onmouseover="showTip(event, '139', 139)">
+          <code onmouseout="hideTip(event, '140', 140)" onmouseover="showTip(event, '140', 140)">
             UnPickleOfString(...)
           </code>
-          <div class="tip" id="139">
+          <div class="tip" id="140">
             <strong>Signature:</strong> (pickle:string * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option) -&gt; &#39;T<br />
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
@@ -337,15 +365,17 @@ Values excluded from serialization will be returned tagged by their ids.</p>
             </a>
           <p>Unpickles value from string.</p>
 
+
+
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '140', 140)" onmouseover="showTip(event, '140', 140)">
+          <code onmouseout="hideTip(event, '141', 141)" onmouseover="showTip(event, '141', 141)">
             UnPickleOfStringSifted(...)
           </code>
-          <div class="tip" id="140">
+          <div class="tip" id="141">
             <strong>Signature:</strong> (pickle:string * sifted:(int64 * obj) [] * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option) -&gt; &#39;T<br />
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
@@ -356,15 +386,17 @@ Values excluded from serialization will be returned tagged by their ids.</p>
             </a>
           <p>Unpickles a sifted value, filling in sifted holes from the serialized using supplied objects.</p>
 
+
+
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '141', 141)" onmouseover="showTip(event, '141', 141)">
+          <code onmouseout="hideTip(event, '142', 142)" onmouseover="showTip(event, '142', 142)">
             UnPickleOfStringUntyped(...)
           </code>
-          <div class="tip" id="141">
+          <div class="tip" id="142">
             <strong>Signature:</strong> (pickle:string * pickler:Pickler * streamingContext:StreamingContext option) -&gt; obj<br />
                       </div>
         </td>
@@ -374,6 +406,8 @@ Values excluded from serialization will be returned tagged by their ids.</p>
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
           <p>Unpickle using provided pickler.</p>
+
+
 
         </td>
       </tr>

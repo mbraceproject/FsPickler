@@ -38,6 +38,8 @@
 <h1>IPickleFormatWriter</h1>
 <div class="xmldoc">
 <p>Serialization format abstraction.</p>
+
+
 </div>
   <h3>Instance members</h3>
   <table class="table table-bordered member-list">
@@ -48,10 +50,10 @@
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '177', 177)" onmouseover="showTip(event, '177', 177)">
+          <code onmouseout="hideTip(event, '178', 178)" onmouseover="showTip(event, '178', 178)">
             BeginWriteObject(tag objectFlags)
           </code>
-          <div class="tip" id="177">
+          <div class="tip" id="178">
             <strong>Signature:</strong> tag:string -&gt; objectFlags:ObjectFlags -&gt; unit<br />
               <strong>Modifiers:</strong> abstract<br />
                       </div>
@@ -63,15 +65,17 @@
             </a>
           <p>Start writing a new object to the pickle.</p>
 
+
+
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '178', 178)" onmouseover="showTip(event, '178', 178)">
+          <code onmouseout="hideTip(event, '179', 179)" onmouseover="showTip(event, '179', 179)">
             BeginWriteRoot(tag)
           </code>
-          <div class="tip" id="178">
+          <div class="tip" id="179">
             <strong>Signature:</strong> tag:string -&gt; unit<br />
               <strong>Modifiers:</strong> abstract<br />
                       </div>
@@ -83,15 +87,17 @@
             </a>
           <p>Writes the start of the pickle.</p>
 
+
+
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '179', 179)" onmouseover="showTip(event, '179', 179)">
+          <code onmouseout="hideTip(event, '180', 180)" onmouseover="showTip(event, '180', 180)">
             EndWriteObject()
           </code>
-          <div class="tip" id="179">
+          <div class="tip" id="180">
             <strong>Signature:</strong> unit -&gt; unit<br />
               <strong>Modifiers:</strong> abstract<br />
                       </div>
@@ -103,15 +109,17 @@
             </a>
           <p>End write of an object.</p>
 
+
+
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '180', 180)" onmouseover="showTip(event, '180', 180)">
+          <code onmouseout="hideTip(event, '181', 181)" onmouseover="showTip(event, '181', 181)">
             EndWriteRoot()
           </code>
-          <div class="tip" id="180">
+          <div class="tip" id="181">
             <strong>Signature:</strong> unit -&gt; unit<br />
               <strong>Modifiers:</strong> abstract<br />
                       </div>
@@ -123,15 +131,17 @@
             </a>
           <p>Writes the end of the pickle.</p>
 
+
+
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '181', 181)" onmouseover="showTip(event, '181', 181)">
+          <code onmouseout="hideTip(event, '182', 182)" onmouseover="showTip(event, '182', 182)">
             IsPrimitiveArraySerializationSupported
           </code>
-          <div class="tip" id="181">
+          <div class="tip" id="182">
             <strong>Signature:</strong> bool<br />
               <strong>Modifiers:</strong> abstract<br />
                       </div>
@@ -144,15 +154,17 @@
           <p>specifies if the format supports custom serialization for primitive arrays.
 this functionality is reserved for binary formats that use Buffer.BlockCopy</p>
 
+
+
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '182', 182)" onmouseover="showTip(event, '182', 182)">
+          <code onmouseout="hideTip(event, '183', 183)" onmouseover="showTip(event, '183', 183)">
             PreferLengthPrefixInSequences
           </code>
-          <div class="tip" id="182">
+          <div class="tip" id="183">
             <strong>Signature:</strong> bool<br />
               <strong>Modifiers:</strong> abstract<br />
                       </div>
@@ -165,15 +177,17 @@ this functionality is reserved for binary formats that use Buffer.BlockCopy</p>
           <p>Specifies if the format favors prefixing of sequence lengths where applicable.
 This is offered for performance and is mostly used by binary formats.</p>
 
+
+
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '183', 183)" onmouseover="showTip(event, '183', 183)">
+          <code onmouseout="hideTip(event, '184', 184)" onmouseover="showTip(event, '184', 184)">
             SerializeUnionCaseNames
           </code>
-          <div class="tip" id="183">
+          <div class="tip" id="184">
             <strong>Signature:</strong> bool<br />
               <strong>Modifiers:</strong> abstract<br />
                       </div>
@@ -185,15 +199,17 @@ This is offered for performance and is mostly used by binary formats.</p>
             </a>
           <p>If specified, serializes full union case name for readability.</p>
 
+
+
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '184', 184)" onmouseover="showTip(event, '184', 184)">
+          <code onmouseout="hideTip(event, '185', 185)" onmouseover="showTip(event, '185', 185)">
             WriteBigInteger(tag value)
           </code>
-          <div class="tip" id="184">
+          <div class="tip" id="185">
             <strong>Signature:</strong> tag:string -&gt; value:bigint -&gt; unit<br />
               <strong>Modifiers:</strong> abstract<br />
                       </div>
@@ -209,10 +225,10 @@ This is offered for performance and is mostly used by binary formats.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '185', 185)" onmouseover="showTip(event, '185', 185)">
+          <code onmouseout="hideTip(event, '186', 186)" onmouseover="showTip(event, '186', 186)">
             WriteBoolean(tag value)
           </code>
-          <div class="tip" id="185">
+          <div class="tip" id="186">
             <strong>Signature:</strong> tag:string -&gt; value:bool -&gt; unit<br />
               <strong>Modifiers:</strong> abstract<br />
                       </div>
@@ -228,10 +244,10 @@ This is offered for performance and is mostly used by binary formats.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '186', 186)" onmouseover="showTip(event, '186', 186)">
+          <code onmouseout="hideTip(event, '187', 187)" onmouseover="showTip(event, '187', 187)">
             WriteByte(tag value)
           </code>
-          <div class="tip" id="186">
+          <div class="tip" id="187">
             <strong>Signature:</strong> tag:string -&gt; value:byte -&gt; unit<br />
               <strong>Modifiers:</strong> abstract<br />
                       </div>
@@ -247,10 +263,10 @@ This is offered for performance and is mostly used by binary formats.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '187', 187)" onmouseover="showTip(event, '187', 187)">
+          <code onmouseout="hideTip(event, '188', 188)" onmouseover="showTip(event, '188', 188)">
             WriteBytes(tag value)
           </code>
-          <div class="tip" id="187">
+          <div class="tip" id="188">
             <strong>Signature:</strong> tag:string -&gt; (value:byte []) -&gt; unit<br />
               <strong>Modifiers:</strong> abstract<br />
                       </div>
@@ -266,10 +282,10 @@ This is offered for performance and is mostly used by binary formats.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '188', 188)" onmouseover="showTip(event, '188', 188)">
+          <code onmouseout="hideTip(event, '189', 189)" onmouseover="showTip(event, '189', 189)">
             WriteCachedObjectId(id)
           </code>
-          <div class="tip" id="188">
+          <div class="tip" id="189">
             <strong>Signature:</strong> id:int64 -&gt; unit<br />
               <strong>Modifiers:</strong> abstract<br />
                       </div>
@@ -285,10 +301,10 @@ This is offered for performance and is mostly used by binary formats.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '189', 189)" onmouseover="showTip(event, '189', 189)">
+          <code onmouseout="hideTip(event, '190', 190)" onmouseover="showTip(event, '190', 190)">
             WriteChar(tag value)
           </code>
-          <div class="tip" id="189">
+          <div class="tip" id="190">
             <strong>Signature:</strong> tag:string -&gt; value:char -&gt; unit<br />
               <strong>Modifiers:</strong> abstract<br />
                       </div>
@@ -304,10 +320,10 @@ This is offered for performance and is mostly used by binary formats.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '190', 190)" onmouseover="showTip(event, '190', 190)">
+          <code onmouseout="hideTip(event, '191', 191)" onmouseover="showTip(event, '191', 191)">
             WriteDate(tag date)
           </code>
-          <div class="tip" id="190">
+          <div class="tip" id="191">
             <strong>Signature:</strong> tag:string -&gt; date:DateTime -&gt; unit<br />
               <strong>Modifiers:</strong> abstract<br />
                       </div>
@@ -323,10 +339,10 @@ This is offered for performance and is mostly used by binary formats.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '191', 191)" onmouseover="showTip(event, '191', 191)">
+          <code onmouseout="hideTip(event, '192', 192)" onmouseover="showTip(event, '192', 192)">
             WriteDecimal(tag value)
           </code>
-          <div class="tip" id="191">
+          <div class="tip" id="192">
             <strong>Signature:</strong> tag:string -&gt; value:decimal -&gt; unit<br />
               <strong>Modifiers:</strong> abstract<br />
                       </div>
@@ -342,10 +358,10 @@ This is offered for performance and is mostly used by binary formats.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '192', 192)" onmouseover="showTip(event, '192', 192)">
+          <code onmouseout="hideTip(event, '193', 193)" onmouseover="showTip(event, '193', 193)">
             WriteDouble(tag value)
           </code>
-          <div class="tip" id="192">
+          <div class="tip" id="193">
             <strong>Signature:</strong> tag:string -&gt; value:float -&gt; unit<br />
               <strong>Modifiers:</strong> abstract<br />
                       </div>
@@ -361,10 +377,10 @@ This is offered for performance and is mostly used by binary formats.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '193', 193)" onmouseover="showTip(event, '193', 193)">
+          <code onmouseout="hideTip(event, '194', 194)" onmouseover="showTip(event, '194', 194)">
             WriteGuid(tag guid)
           </code>
-          <div class="tip" id="193">
+          <div class="tip" id="194">
             <strong>Signature:</strong> tag:string -&gt; guid:Guid -&gt; unit<br />
               <strong>Modifiers:</strong> abstract<br />
                       </div>
@@ -380,10 +396,10 @@ This is offered for performance and is mostly used by binary formats.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '194', 194)" onmouseover="showTip(event, '194', 194)">
+          <code onmouseout="hideTip(event, '195', 195)" onmouseover="showTip(event, '195', 195)">
             WriteInt16(tag value)
           </code>
-          <div class="tip" id="194">
+          <div class="tip" id="195">
             <strong>Signature:</strong> tag:string -&gt; value:int16 -&gt; unit<br />
               <strong>Modifiers:</strong> abstract<br />
                       </div>
@@ -399,10 +415,10 @@ This is offered for performance and is mostly used by binary formats.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '195', 195)" onmouseover="showTip(event, '195', 195)">
+          <code onmouseout="hideTip(event, '196', 196)" onmouseover="showTip(event, '196', 196)">
             WriteInt32(tag value)
           </code>
-          <div class="tip" id="195">
+          <div class="tip" id="196">
             <strong>Signature:</strong> tag:string -&gt; value:int32 -&gt; unit<br />
               <strong>Modifiers:</strong> abstract<br />
                       </div>
@@ -418,10 +434,10 @@ This is offered for performance and is mostly used by binary formats.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '196', 196)" onmouseover="showTip(event, '196', 196)">
+          <code onmouseout="hideTip(event, '197', 197)" onmouseover="showTip(event, '197', 197)">
             WriteInt64(tag value)
           </code>
-          <div class="tip" id="196">
+          <div class="tip" id="197">
             <strong>Signature:</strong> tag:string -&gt; value:int64 -&gt; unit<br />
               <strong>Modifiers:</strong> abstract<br />
                       </div>
@@ -437,10 +453,10 @@ This is offered for performance and is mostly used by binary formats.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '197', 197)" onmouseover="showTip(event, '197', 197)">
+          <code onmouseout="hideTip(event, '198', 198)" onmouseover="showTip(event, '198', 198)">
             WriteNextSequenceElement(hasNext)
           </code>
-          <div class="tip" id="197">
+          <div class="tip" id="198">
             <strong>Signature:</strong> hasNext:bool -&gt; unit<br />
               <strong>Modifiers:</strong> abstract<br />
                       </div>
@@ -452,15 +468,17 @@ This is offered for performance and is mostly used by binary formats.</p>
             </a>
           <p>Specifies if another sequence element is to follow in the stream.</p>
 
+
+
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '198', 198)" onmouseover="showTip(event, '198', 198)">
+          <code onmouseout="hideTip(event, '199', 199)" onmouseover="showTip(event, '199', 199)">
             WritePrimitiveArray(tag value)
           </code>
-          <div class="tip" id="198">
+          <div class="tip" id="199">
             <strong>Signature:</strong> tag:string -&gt; value:Array -&gt; unit<br />
               <strong>Modifiers:</strong> abstract<br />
                       </div>
@@ -472,15 +490,17 @@ This is offered for performance and is mostly used by binary formats.</p>
             </a>
           <p>Write primitive array contents to pickle</p>
 
+
+
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '199', 199)" onmouseover="showTip(event, '199', 199)">
+          <code onmouseout="hideTip(event, '200', 200)" onmouseover="showTip(event, '200', 200)">
             WriteSByte(tag value)
           </code>
-          <div class="tip" id="199">
+          <div class="tip" id="200">
             <strong>Signature:</strong> tag:string -&gt; value:sbyte -&gt; unit<br />
               <strong>Modifiers:</strong> abstract<br />
                       </div>
@@ -496,10 +516,10 @@ This is offered for performance and is mostly used by binary formats.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '200', 200)" onmouseover="showTip(event, '200', 200)">
+          <code onmouseout="hideTip(event, '201', 201)" onmouseover="showTip(event, '201', 201)">
             WriteSingle(tag value)
           </code>
-          <div class="tip" id="200">
+          <div class="tip" id="201">
             <strong>Signature:</strong> tag:string -&gt; value:float32 -&gt; unit<br />
               <strong>Modifiers:</strong> abstract<br />
                       </div>
@@ -515,10 +535,10 @@ This is offered for performance and is mostly used by binary formats.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '201', 201)" onmouseover="showTip(event, '201', 201)">
+          <code onmouseout="hideTip(event, '202', 202)" onmouseover="showTip(event, '202', 202)">
             WriteString(tag value)
           </code>
-          <div class="tip" id="201">
+          <div class="tip" id="202">
             <strong>Signature:</strong> tag:string -&gt; value:string -&gt; unit<br />
               <strong>Modifiers:</strong> abstract<br />
                       </div>
@@ -534,10 +554,10 @@ This is offered for performance and is mostly used by binary formats.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '202', 202)" onmouseover="showTip(event, '202', 202)">
+          <code onmouseout="hideTip(event, '203', 203)" onmouseover="showTip(event, '203', 203)">
             WriteTimeSpan(tag span)
           </code>
-          <div class="tip" id="202">
+          <div class="tip" id="203">
             <strong>Signature:</strong> tag:string -&gt; span:TimeSpan -&gt; unit<br />
               <strong>Modifiers:</strong> abstract<br />
                       </div>
@@ -553,10 +573,10 @@ This is offered for performance and is mostly used by binary formats.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '203', 203)" onmouseover="showTip(event, '203', 203)">
+          <code onmouseout="hideTip(event, '204', 204)" onmouseover="showTip(event, '204', 204)">
             WriteUInt16(tag value)
           </code>
-          <div class="tip" id="203">
+          <div class="tip" id="204">
             <strong>Signature:</strong> tag:string -&gt; value:uint16 -&gt; unit<br />
               <strong>Modifiers:</strong> abstract<br />
                       </div>
@@ -572,10 +592,10 @@ This is offered for performance and is mostly used by binary formats.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '204', 204)" onmouseover="showTip(event, '204', 204)">
+          <code onmouseout="hideTip(event, '205', 205)" onmouseover="showTip(event, '205', 205)">
             WriteUInt32(tag value)
           </code>
-          <div class="tip" id="204">
+          <div class="tip" id="205">
             <strong>Signature:</strong> tag:string -&gt; value:uint32 -&gt; unit<br />
               <strong>Modifiers:</strong> abstract<br />
                       </div>
@@ -591,10 +611,10 @@ This is offered for performance and is mostly used by binary formats.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '205', 205)" onmouseover="showTip(event, '205', 205)">
+          <code onmouseout="hideTip(event, '206', 206)" onmouseover="showTip(event, '206', 206)">
             WriteUInt64(tag value)
           </code>
-          <div class="tip" id="205">
+          <div class="tip" id="206">
             <strong>Signature:</strong> tag:string -&gt; value:uint64 -&gt; unit<br />
               <strong>Modifiers:</strong> abstract<br />
                       </div>

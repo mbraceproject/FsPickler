@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8"/>
-    <title>EnsureSerializableAttribute - FsPickler</title>
+    <title>IPicklerFactory<'T> - FsPickler</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <meta name="description" content=""/>
     <meta name="author" content="Eirik Tsarpalis"/>
@@ -35,34 +35,38 @@
 
 
 
-<h1>EnsureSerializableAttribute</h1>
+<h1>IPicklerFactory<'T></h1>
 <div class="xmldoc">
-<p>FsPickler-specific attribute used to denote that class should be
-treated as serializable. Useful when using target frameworks
-where SerializableAttribute is not available.</p>
+<p>Pickler factory for pluggable pickler generation.</p>
+
+
 </div>
-  <h3>Constructors</h3>
+  <h3>Instance members</h3>
   <table class="table table-bordered member-list">
     <thead>
-      <tr><td>Constructor</td><td>Description</td></tr>
+      <tr><td>Instance member</td><td>Description</td></tr>
     </thead>
     <tbody>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '88', 88)" onmouseover="showTip(event, '88', 88)">
-            new()
+          <code onmouseout="hideTip(event, '207', 207)" onmouseover="showTip(event, '207', 207)">
+            Create(resolver)
           </code>
-          <div class="tip" id="88">
-            <strong>Signature:</strong> unit -&gt; EnsureSerializableAttribute<br />
+          <div class="tip" id="207">
+            <strong>Signature:</strong> resolver:IPicklerResolver -&gt; Pickler&lt;&#39;T&gt;<br />
+              <strong>Modifiers:</strong> abstract<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/Pickler/Types.fs#L86-86" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/Pickler/Pickler.fs#L73-73" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          
+          <p>Creates a pickler instance using provided dependency resolver.</p>
+
+
+
         </td>
       </tr>
     </tbody>

@@ -38,6 +38,8 @@
 <h1>IPicklerResolver</h1>
 <div class="xmldoc">
 <p>Provides access to automated pickler generation facility.</p>
+
+
 </div>
   <h3>Instance members</h3>
   <table class="table table-bordered member-list">
@@ -48,51 +50,11 @@
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '206', 206)" onmouseover="showTip(event, '206', 206)">
+          <code onmouseout="hideTip(event, '208', 208)" onmouseover="showTip(event, '208', 208)">
             IsSerializable()
           </code>
-          <div class="tip" id="206">
-            <strong>Signature:</strong> unit -&gt; bool<br />
-              <strong>Modifiers:</strong> abstract<br />
-                          <strong>Type parameters:</strong> 'T          </div>
-        </td>
-        <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/Pickler/Pickler.fs#L84-84" class="github-link">
-              <img src="../content/img/github.png" class="normal" />
-              <img src="../content/img/github-blue.png" class="hover" />
-            </a>
-          <p>Identifies if instances of given type can be serialized.</p>
-
-        </td>
-      </tr>
-      <tr>
-        <td class="member-name">
-
-          <code onmouseout="hideTip(event, '207', 207)" onmouseover="showTip(event, '207', 207)">
-            IsSerializable(arg1)
-          </code>
-          <div class="tip" id="207">
-            <strong>Signature:</strong> Type -&gt; bool<br />
-              <strong>Modifiers:</strong> abstract<br />
-                      </div>
-        </td>
-        <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/Pickler/Pickler.fs#L83-83" class="github-link">
-              <img src="../content/img/github.png" class="normal" />
-              <img src="../content/img/github-blue.png" class="hover" />
-            </a>
-          <p>Identifies if instances of given type can be serialized.</p>
-
-        </td>
-      </tr>
-      <tr>
-        <td class="member-name">
-
-          <code onmouseout="hideTip(event, '208', 208)" onmouseover="showTip(event, '208', 208)">
-            Resolve()
-          </code>
           <div class="tip" id="208">
-            <strong>Signature:</strong> unit -&gt; Pickler&lt;&#39;T&gt;<br />
+            <strong>Signature:</strong> unit -&gt; bool<br />
               <strong>Modifiers:</strong> abstract<br />
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
@@ -101,7 +63,9 @@
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          <p>Attempt to generate a pickler instance for given type.</p>
+          <p>Identifies if instances of given type can be serialized.</p>
+
+
 
         </td>
       </tr>
@@ -109,10 +73,10 @@
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '209', 209)" onmouseover="showTip(event, '209', 209)">
-            Resolve(arg1)
+            IsSerializable(arg1)
           </code>
           <div class="tip" id="209">
-            <strong>Signature:</strong> Type -&gt; Pickler<br />
+            <strong>Signature:</strong> Type -&gt; bool<br />
               <strong>Modifiers:</strong> abstract<br />
                       </div>
         </td>
@@ -121,7 +85,53 @@
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
+          <p>Identifies if instances of given type can be serialized.</p>
+
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '210', 210)" onmouseover="showTip(event, '210', 210)">
+            Resolve()
+          </code>
+          <div class="tip" id="210">
+            <strong>Signature:</strong> unit -&gt; Pickler&lt;&#39;T&gt;<br />
+              <strong>Modifiers:</strong> abstract<br />
+                          <strong>Type parameters:</strong> 'T          </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/Pickler/Pickler.fs#L90-90" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
           <p>Attempt to generate a pickler instance for given type.</p>
+
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '211', 211)" onmouseover="showTip(event, '211', 211)">
+            Resolve(arg1)
+          </code>
+          <div class="tip" id="211">
+            <strong>Signature:</strong> Type -&gt; Pickler<br />
+              <strong>Modifiers:</strong> abstract<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/Pickler/Pickler.fs#L89-89" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Attempt to generate a pickler instance for given type.</p>
+
+
 
         </td>
       </tr>
