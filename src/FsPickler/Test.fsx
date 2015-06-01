@@ -18,3 +18,5 @@ let xp' = Xml.pickle fPickler (fun x -> x + 1)
 
 Binary.unpickle fPickler bp' 41
 Xml.unpickle fPickler xp' 41
+
+FsPickler.RegisterPicklerFactory { new IPicklerFactory<int> with member __.Create _ = failwith "poutsa" }

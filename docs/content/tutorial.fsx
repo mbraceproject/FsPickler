@@ -355,6 +355,69 @@ RecursiveClass(RecursiveClass()) |> Json.pickle p |> Json.unpickle p
 
 (**
 
+## Runtime pickler registration
+
+As of FsPickler 1.2.5 it is possible to register custom pickler definitions at runtime. This is possible using
+the [``IPicklerFactory<'T>``](http://nessos.github.io/FsPickler/reference/nessos-fspickler-ipicklerfactory-1.html) abstraction. 
+Consider a type declaration that has not been made serializable:
+
+*)
+
+[<AutoSerializable(false)>]
+type NonSerializable(value : int) =
+    member __.Value = value
+
+(**
+
+It is now possible to declare and register a pickler factory at a separate location
+
+*)
+
+let factory = 
+    { new IPicklerFactory<NonSerializable> with 
+        member __.Create (resolver : IPicklerResolver) =
+            let intP = resolver.Resolve<int> ()
+
+            let writer (w : WriteState) (ns : NonSerializable) =
+                intP.Write w "value" ns.Value
+
+            let reader (r : ReadState) =
+                let v = intP.Read r "value" in new NonSerializable(v)
+
+            Pickler.FromPrimitives(reader, writer) 
+    }
+
+FsPickler.RegisterPicklerFactory factory
+
+(**
+
+When resolving a pickler of this type in the future, the user-supplied implementation will be used:
+
+*)
+
+let pickler = FsPickler.GeneratePickler<NonSerializable> ()
+
+pickler.PicklerInfo // PicklerInfo.UserDefined
+
+(**
+
+Note that factory registrations need to be performed *before* FsPickler uses their types at all in the current AppDomain:
+
+```text
+System.InvalidOperationException: A pickler for type 'FSI_0004+NonSerializable' has already been generated.
+   at <StartupCode$FsPickler>.$FsPickler.RegisterPicklerFactory@54.Invoke(Unit unitVar0) in c:\Users\eirik\Development\nessos\FsPickler\src\FsPickler\FsPickler\FsPickler.fs:line 60
+   at <StartupCode$FsPickler>.$PicklerCache.f@1-2(PicklerCache c, FSharpFunc`2 f, Unit unitVar0) in c:\Users\eirik\Development\nessos\FsPickler\src\FsPickler\PicklerGeneration\PicklerCache.fs:line 73
+```
+
+If all that needs to be done is declare to FsPickler the intention of treating a type as serializable,
+we can avoid the hassle of defining a full-blown custom pickler as follows:
+
+*)
+
+FsPickler.DeclareSerializable<NonSerializable> ()
+
+(**
+
 ## Additional tools
 
 This section describes some of the additional tools offered by the library:
