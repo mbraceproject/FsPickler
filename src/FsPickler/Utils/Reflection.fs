@@ -78,6 +78,8 @@ let rec isAssignableFrom (interfaceTy : Type) (ty : Type) =
         | null -> false
         | bt -> isAssignableFrom interfaceTy bt
 
+let isReflectionSerializable (t : Type) = t.IsSerializable || containsAttr<SerializableAttribute> t
+
 let isISerializable (t : Type) = isAssignableFrom typeof<ISerializable> t
 
 /// returns all methods of type `StreamingContext -> unit` and given Attribute

@@ -1,3 +1,9 @@
+### 1.2.4
+* Implement Hashcode-based sifting extensions.
+
+### 1.2.3
+* Revise IObjectSifter API.
+
 ### 1.2.2
 * Rewrite visitor implementation and API.
 * Minor API changes.

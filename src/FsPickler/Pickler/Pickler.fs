@@ -69,6 +69,9 @@ and
 and IPicklerUnpacker<'U> =
     abstract Apply : Pickler<'T> -> 'U
 
+and IPicklerFactory<'T> =
+    abstract Create : resolver:IPicklerResolver -> Pickler<'T>
+
 and IObjectVisitor =
     abstract Visit<'T> : pickler:Pickler<'T> * value:'T -> bool
 
@@ -77,7 +80,7 @@ and ISpecializedObjectVisitor<'T> =
     abstract VisitSpecialized : pickler:Pickler<'T> * value:'T -> bool
 
 and IObjectSifter =
-    abstract member Sift<'T> : pickler:Pickler<'T> * value:'T -> bool
+    abstract member Sift<'T> : pickler:Pickler<'T> * id:int64 * value:'T -> bool
 
 and IPicklerResolver =
     abstract IsSerializable : Type -> bool

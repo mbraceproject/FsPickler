@@ -1,4 +1,4 @@
-﻿module internal Nessos.FsPickler.PicklerFactory
+﻿module internal Nessos.FsPickler.PicklerGenerator
 
 //
 //  Defines a type shape visitor that routes shapes into their
@@ -15,7 +15,7 @@ open Nessos.FsPickler.TypeShape
 
 /// Implements a pickler factory type visitor
 
-type private PicklerFactoryVisitor (resolver : IPicklerResolver) =
+type private PicklerGeneratorVisitor (resolver : IPicklerResolver) =
         
     interface ITypeShapeVisitor<Pickler> with
 
@@ -29,6 +29,7 @@ type private PicklerFactoryVisitor (resolver : IPicklerResolver) =
         member __.Struct<'T when 'T : struct> () = StructFieldPickler.Create<'T> resolver :> Pickler
         member __.Delegate<'T when 'T :> Delegate> () = DelegatePickler.Create<'T> resolver :> Pickler
         member __.Enum<'E, 'U when 'E : enum<'U>> () = EnumPickler.Create<'E,'U> resolver :> Pickler
+        member __.UserFactory<'T> () = PicklerPluginRegistry.GetPicklerFactory<'T>().Create resolver :> Pickler
 
         member __.Nullable<'T when  'T : (new : unit -> 'T) and 
                                     'T : struct and 
@@ -67,11 +68,11 @@ type private PicklerFactoryVisitor (resolver : IPicklerResolver) =
         member __.Choice<'T1,'T2,'T3,'T4,'T5,'T6,'T7> () = ChoicePickler.Create<'T1,'T2,'T3,'T4,'T5,'T6,'T7> resolver :> Pickler
 
 
-type PicklerFactory =
+type PicklerGenerator =
         
     /// Constructs a pickler for a given shape
     static member Create (resolver : IPicklerResolver) (shape : TypeShape) =
-        let factory = new PicklerFactoryVisitor(resolver)
+        let factory = new PicklerGeneratorVisitor(resolver)
         shape.Accept factory
 
     /// Constructs a blank, uninitialized pickler object

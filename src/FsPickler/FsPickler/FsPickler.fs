@@ -44,6 +44,35 @@ type FsPickler private () =
     static member GeneratePickler (t : Type) : Pickler = 
         resolver.Value.Resolve t
 
+    /// <summary>
+    ///     Registers a pickler factory for use by the pickler generation mechanism.
+    ///     Factories can only be registered before any serializations take place.
+    /// </summary>
+    /// <param name="factory">Pickler factory instance.</param>
+    static member RegisterPicklerFactory(factory : IPicklerFactory<'T>) : unit =
+        let cache = PicklerCache.Instance
+        cache.WithLockedCache (fun () ->
+            if cache.IsPicklerGenerated typeof<'T> then
+                invalidOp <| sprintf "A pickler for type '%O' has already been generated." typeof<'T>
+
+            let success = PicklerPluginRegistry.RegisterFactory factory
+            if not success then
+                invalidOp <| sprintf "A pickler plugin for type '%O' has already been registered." typeof<'T>)
+
+    /// <summary>
+    ///     Declares that supplied type should be treated as serializable.
+    ///     This is equivalent to dynamically attaching a SerializableAttribute to the type.
+    /// </summary>
+    static member DeclareSerializable<'T> () : unit =
+        let cache = PicklerCache.Instance
+        cache.WithLockedCache(fun () -> 
+            if cache.IsPicklerGenerated typeof<'T> then
+                invalidOp <| sprintf "A pickler for type '%O' has already been generated." typeof<'T>
+
+            let success = PicklerPluginRegistry.DeclareSerializable typeof<'T>
+            if not success then
+                invalidOp <| sprintf "A pickler plugin for type '%O' has already been registered." typeof<'T>)
+
     //
     // Misc utils
     //
@@ -86,7 +115,7 @@ type FsPickler private () =
     /// <param name="streamingContext">Streaming context used for cloning. Defaults to null streaming context.</param>
     /// <returns>A sifted wrapper together with all objects that have been sifted.</returns>
     static member Sift<'T>(value : 'T, sifter : obj -> bool, [<O;D(null)>]?pickler : Pickler<'T>, [<O;D(null)>]?streamingContext : StreamingContext) : Sifted<'T> * (int64 * obj) [] =
-        let sifter = { new IObjectSifter with member __.Sift(_,t) = sifter t }
+        let sifter = { new IObjectSifter with member __.Sift(_,_,t) = sifter t }
         FsPickler.Sift(value, sifter, ?pickler = pickler, ?streamingContext = streamingContext)
 
     /// <summary>
