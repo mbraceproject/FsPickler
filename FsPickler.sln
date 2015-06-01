@@ -21,7 +21,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "project", "project", "{8784
 		build.sh = build.sh
 		nuget\FsPickler.nuspec = nuget\FsPickler.nuspec
 		License.md = License.md
-		nuget-push.sh = nuget-push.sh
 		README.md = README.md
 		RELEASE_NOTES.md = RELEASE_NOTES.md
 	EndProjectSection

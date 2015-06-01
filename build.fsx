@@ -115,100 +115,7 @@ FinalTarget "CloseTestRunner" (fun _ ->
 //// --------------------------------------------------------------------------------------
 //// Build a NuGet package
 
-let addFile (target : string) (file : string) =
-    if File.Exists (Path.Combine("nuget", file)) then (file, Some target, None)
-    else raise <| new FileNotFoundException(file)
-
-let addAssembly (target : string) assembly =
-    let includeFile force file =
-        let file = file
-        if File.Exists (Path.Combine("nuget", file)) then [(file, Some target, None)]
-        elif force then raise <| new FileNotFoundException(file)
-        else []
-
-    seq {
-        yield! includeFile true assembly
-        yield! includeFile false <| Path.ChangeExtension(assembly, "pdb")
-        yield! includeFile false <| Path.ChangeExtension(assembly, "xml")
-        yield! includeFile false <| assembly + ".config"
-    }
-
-Target "NuGet.FsPickler" (fun _ ->
-    NuGet (fun p -> 
-        { p with   
-            Authors = authors
-            Project = "FsPickler"
-            Summary = summary
-            Description = description
-            Version = nugetVersion
-            ReleaseNotes = String.concat " " release.Notes
-            Tags = tags
-            OutputPath = "bin"
-            AccessKey = getBuildParamOrDefault "nugetkey" ""
-            Dependencies = []
-            Publish = hasBuildParam "nugetkey" 
-            Files =
-                [
-                    yield! addAssembly @"lib\net45" @"..\bin\FsPickler.dll"
-                    yield! addAssembly @"lib\net40" @"..\bin\net40\FsPickler.dll"
-                ]
-        })
-        ("nuget/FsPickler.nuspec")
-)
-
-Target "NuGet.FsPickler.Json" (fun _ ->
-    NuGet (fun p -> 
-        { p with   
-            Authors = authors
-            Project = "FsPickler.Json"
-            Summary = summary
-            Description = description
-            Version = nugetVersion
-            ReleaseNotes = String.concat " " release.Notes
-            Tags = tags
-            OutputPath = "bin"
-            AccessKey = getBuildParamOrDefault "nugetkey" ""
-            Dependencies = [("FsPickler", RequireExactly release.NugetVersion) ; ("Newtonsoft.Json", "6.0.5")] 
-            Publish = hasBuildParam "nugetkey" 
-            Files =
-                [
-                    yield! addAssembly @"lib\net45" @"..\bin\FsPickler.Json.dll"
-                    yield! addAssembly @"lib\net40" @"..\bin\net40\FsPickler.Json.dll"
-                ]
-            
-        })
-        ("nuget/FsPickler.nuspec")
-)
-
-Target "NuGet.FsPickler.CSharp" (fun _ ->
-    NuGet (fun p -> 
-        { p with   
-            Authors = authors
-            Project = "FsPickler.CSharp"
-            Summary = summary
-            Description = description
-            Version = nugetVersion
-            ReleaseNotes = String.concat " " release.Notes
-            Tags = tags
-            OutputPath = "bin"
-            AccessKey = getBuildParamOrDefault "nugetkey" ""
-            Dependencies = 
-                [
-                    ("FSharp.Core", "3.1.2.1")
-                    ("FsPickler", RequireExactly release.NugetVersion)
-                    ("FsPickler.Json", RequireExactly release.NugetVersion)
-                ] 
-            Publish = hasBuildParam "nugetkey" 
-            Files =
-                [
-                    yield! addAssembly @"lib\net45" @"..\bin\FsPickler.CSharp.dll"
-                    yield! addAssembly @"lib\net40" @"..\bin\net40\FsPickler.CSharp.dll"
-                ]
-        })
-        ("nuget/FsPickler.nuspec")
-)
-
-Target "PaketNuGet" (fun _ ->    
+Target "NuGet" (fun _ ->    
     Paket.Pack (fun p -> 
         { p with 
             ToolPath = ".paket/paket.exe" 
@@ -216,6 +123,8 @@ Target "PaketNuGet" (fun _ ->
             Version = release.NugetVersion
             ReleaseNotes = toLines release.Notes })
 )
+
+Target "NuGetPush" (fun _ -> Paket.Push (fun p -> { p with WorkingDir = "bin/" }))
 
 // Doc generation
 
@@ -244,7 +153,6 @@ Target "ReleaseDocs" (fun _ ->
 Target "Prepare" DoNothing
 Target "PrepareRelease" DoNothing
 Target "Build" DoNothing
-Target "NuGet" DoNothing
 Target "Default" DoNothing
 Target "Release" DoNothing
 
@@ -260,12 +168,12 @@ Target "Release" DoNothing
 
 "Build"
   ==> "PrepareRelease"
-//  ==> "NuGet.FsPickler"
-//  ==> "NuGet.FsPickler.Json"
-//  ==> "NuGet.FsPickler.CSharp"
-  ==> "PaketNuGet"
+  ==> "NuGet"
   ==> "GenerateDocs"
   ==> "ReleaseDocs"
   ==> "Release"
+
+"NuGet" 
+  ==> "NuGetPush"
 
 RunTargetOrDefault "Default"

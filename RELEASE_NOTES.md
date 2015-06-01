@@ -1,3 +1,6 @@
+### 1.2.5
+* Implement user-provided pickler factory registration.
+
 ### 1.2.4
 * Implement Hashcode-based sifting extensions.
 
