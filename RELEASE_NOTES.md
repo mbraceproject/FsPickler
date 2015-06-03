@@ -1,3 +1,6 @@
+### 1.2.6
+* Fix nuget dependency issue.
+
 ### 1.2.5
 * Implement user-provided pickler factory registration.
 
