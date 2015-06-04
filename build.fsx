@@ -44,6 +44,9 @@ Target "BuildVersion" (fun _ ->
 Target "AssemblyInfo" (fun _ ->
     let attrs =
         [ 
+            Attribute.Title project
+            Attribute.Product project
+            Attribute.Copyright "\169 Eirik Tsarpalis."
             Attribute.Version release.AssemblyVersion
             Attribute.FileVersion release.AssemblyVersion
         ] 
@@ -51,7 +54,6 @@ Target "AssemblyInfo" (fun _ ->
     CreateFSharpAssemblyInfo "src/FsPickler/AssemblyInfo.fs" attrs
     CreateFSharpAssemblyInfo "src/FsPickler.Json/AssemblyInfo.fs" attrs
     CreateCSharpAssemblyInfo "src/FsPickler.CSharp/Properties/AssemblyInfo.cs" attrs
-
 )
 
 
