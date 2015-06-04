@@ -530,3 +530,20 @@ module ``Generic Tests`` =
 
         FsPickler.VisitObject(visitor, value, visitOrder = VisitOrder.PostOrder)
         order.ToArray() |> should equal [|"2";"3";"1"|]
+
+    [<Test; Category("Sift")>]
+    let ``4. Visitor: should properly visit nulls`` () =
+        let hasFoundNull = ref false
+        let visitor =
+            {
+                new IObjectVisitor with
+                    member __.Visit(_,v) = 
+                        if obj.ReferenceEquals(v,null) then hasFoundNull := true
+                        true
+            }
+
+        let graphContainingAbstractNodeWithNull = Some ([|1;2;3|], ("test", Unchecked.defaultof<IAbstract>))
+
+        FsPickler.VisitObject(visitor, graphContainingAbstractNodeWithNull)
+
+        hasFoundNull.Value |> should equal true

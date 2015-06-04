@@ -1,3 +1,6 @@
+### 1.2.7
+* Fix null interface issue in object visitor.
+
 ### 1.2.6
 * Fix nuget dependency issue.
 

@@ -41,6 +41,8 @@ module TestTypes =
     type ClassWithGenericMethod =
         static member Method<'T,'S> () = Unchecked.defaultof<'T>, Unchecked.defaultof<'S>
 
+    type IAbstract = interface end
+
     type OverLoaded () =
         member __.A<'T> () = ()
         member __.A<'T> (x : 'T) = ()

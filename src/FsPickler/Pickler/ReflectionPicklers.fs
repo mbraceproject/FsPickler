@@ -36,7 +36,7 @@ let mkReflectionPicklers (arrayPickler : IArrayPickler) =
                 PublicKeyToken = pkt
             }
 
-        new CompositePickler<_>(reader, writer, (fun _ aI -> aI), ignore2, PicklerInfo.ReflectionType, cacheByRef = true, skipVisit = true)
+        new CompositePickler<_>(reader, writer, (fun _ aI -> aI), ignore2, PicklerInfo.ReflectionType, cacheByRef = true)
 
     let assemblyPickler =
         CompositePickler.Create(

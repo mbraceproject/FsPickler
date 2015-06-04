@@ -9,10 +9,14 @@ open Nessos.FsPickler
 
 type internal AbstractPickler =
     static member Create<'T> () =
-        let writer _ _ = invalidOp <| sprintf "Attempting to call abstract pickler '%O'." typeof<'T>
-        let reader _ = invalidOp <| sprintf "Attempting to call abstract pickler '%O'." typeof<'T>
-        let cloner _ _ = invalidOp <| sprintf "Attempting to call abstract pickler '%O'." typeof<'T>
-        let accepter _ _ = invalidOp <| sprintf "Attempting to call abstract pickler '%O'." typeof<'T>
+        let writer _ _ = invalidOp <| sprintf "internal error: attempting to consume abstract pickler '%O'." typeof<'T>
+        let reader _ = invalidOp <| sprintf "internal error: attempting to consume abstract pickler '%O'." typeof<'T>
+        let cloner _ _ = invalidOp <| sprintf "internal error: attempting to consume abstract pickler '%O'." typeof<'T>
+        let accepter (v:VisitState) (t:'T) = 
+            // abstract type visitor needs to support null instances
+            if obj.ReferenceEquals(t, null) then ()
+            else
+                invalidOp <| sprintf "internal error: attempting to consume abstract pickler '%O'." typeof<'T>
 
         CompositePickler.Create<'T>(reader, writer, cloner, accepter, PicklerInfo.FieldSerialization, true, false)
 
