@@ -1,3 +1,6 @@
+### 1.2.8
+* Add EnsureSerializable utility.
+
 ### 1.2.7
 * Fix null interface issue in object visitor.
 

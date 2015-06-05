@@ -456,14 +456,14 @@ module ``Generic Tests`` =
     //  Object visitor
     //
 
-    [<Test; Category("Sift")>]
+    [<Test; Category("Visitor")>]
     let ``4. Visitor: simple node count`` () =
         let count = ref 0
         let visitor = { new IObjectVisitor with member __.Visit(_,_) = incr count ; true }
         FsPickler.VisitObject(visitor, ((1,2), (3,4)))
         count.Value |> should equal 7
         
-    [<Test; Category("Sift")>]
+    [<Test; Category("Visitor")>]
     let ``4. Visitor: cyclic object`` () =
         let count = ref 0
         let visitor = { new IObjectVisitor with member __.Visit(_,_) = incr count ; true }
@@ -471,7 +471,7 @@ module ``Generic Tests`` =
         FsPickler.VisitObject(visitor, r)
         count.Value |> should equal 1
 
-    [<Test; Category("Sift")>]
+    [<Test; Category("Visitor")>]
     let ``4. Visitor: specialized int counter`` () =
         let count = ref 0
         let visitor = 
@@ -484,7 +484,7 @@ module ``Generic Tests`` =
         FsPickler.VisitObject(visitor, ([1 .. 49], Some 50, [51 .. 100]))
         count.Value |> should equal 5050
 
-    [<Test; Category("Sift")>]
+    [<Test; Category("Visitor")>]
     let ``4. Visitor: cancellation`` () =
         let count = ref 0
         let visitor = 
@@ -496,7 +496,7 @@ module ``Generic Tests`` =
         FsPickler.VisitObject(visitor, [for i in 1 .. 100 -> (obj(), [|1 .. 10|])])
         count.Value |> should equal 1000
 
-    [<Test; Category("Sift")>]
+    [<Test; Category("Visitor")>]
     let ``4. Visitor: specialized cancellation`` () =
         let count = ref 0
         let visitor = 
@@ -509,7 +509,7 @@ module ``Generic Tests`` =
         FsPickler.VisitObject(visitor, [for i in 1 .. 1000 -> if i = 50 then Choice1Of2 "string" else Choice2Of2 i])
         count.Value |> should equal 100
 
-    [<Test; Category("Sift")>]
+    [<Test; Category("Visitor")>]
     let ``4. Visitor: traverse order`` () =
         let value = Node("1", Node("2", Leaf, Leaf), Node("3", Leaf, Leaf))
         let order = new ResizeArray<string> ()
@@ -531,7 +531,7 @@ module ``Generic Tests`` =
         FsPickler.VisitObject(visitor, value, visitOrder = VisitOrder.PostOrder)
         order.ToArray() |> should equal [|"2";"3";"1"|]
 
-    [<Test; Category("Sift")>]
+    [<Test; Category("Visitor")>]
     let ``4. Visitor: should properly visit nulls`` () =
         let hasFoundNull = ref false
         let visitor =
@@ -547,3 +547,9 @@ module ``Generic Tests`` =
         FsPickler.VisitObject(visitor, graphContainingAbstractNodeWithNull)
 
         hasFoundNull.Value |> should equal true
+
+    [<Test; Category("Visitor")>]
+    let ``4. Visitor: ensure serializable`` () =
+        let mkGraph (o:obj) = [box 1 ; box "" ; box <| Some (42, [box 1 ; o])]
+        FsPickler.EnsureSerializable(mkGraph [1..100])
+        shouldFailwith<NonSerializableTypeException>(fun () -> FsPickler.EnsureSerializable(mkGraph (new System.Net.WebClient())))

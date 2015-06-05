@@ -161,7 +161,7 @@ type FsPickler private () =
     ///     Uses FsPickler to traverse the object graph, gathering types of objects as it goes.
     /// </summary>
     /// <param name="graph">input object graph.</param>
-    static member GatherTypesInObjectGraph(graph : obj) =
+    static member GatherTypesInObjectGraph(graph : obj) : Type [] =
         let gathered = new HashSet<Type> ()
         let visitor =
             {
@@ -194,18 +194,30 @@ type FsPickler private () =
     ///     Use FsPickler to traverse the object graph, gathering object instances as it goes.
     /// </summary>
     /// <param name="graph">input object graph.</param>
-    static member GatherObjectsInGraph (graph : obj) =
+    static member GatherObjectsInGraph (graph : obj) : obj [] =
         let gathered = new HashSet<obj> ()
         let visitor =
             {
                 new IObjectVisitor with
                     member __.Visit (p : Pickler<'T>, value : 'T) =
-                        match box value with
-                        | null -> ()
-                        | v -> gathered.Add v |> ignore
+                        if p.Kind <= Kind.Value then () 
+                        else
+                            match box value with
+                            | null -> ()
+                            | v -> gathered.Add v |> ignore
 
                         true // continue traversal
             }
 
         do FsPickler.VisitObject(visitor, graph)
         gathered |> Seq.toArray
+
+
+    /// <summary>
+    ///     Traverses the object graph, returning if serializable
+    ///     or raising an exception if not.
+    /// </summary>
+    /// <param name="graph">Graph to be checked.</param>
+    static member EnsureSerializable (graph : 'T) : unit =
+        let visitor = { new IObjectVisitor with member __.Visit (_,_) = true }
+        FsPickler.VisitObject(visitor, graph, visitOrder = VisitOrder.PreOrder)
