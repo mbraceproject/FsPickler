@@ -419,7 +419,7 @@ type internal CompositePickler<'T> =
                 shouldContinue <- 
                     match state.Visitor with
                     | :? ISpecializedObjectVisitor<'T> as fv -> fv.VisitSpecialized(p, value)
-                    | v -> v.Visit(p,value)
+                    | v -> v.Visit(p, value)
 
                 if not shouldContinue then 
                     state.IsCancelled <- true
@@ -436,8 +436,14 @@ type internal CompositePickler<'T> =
                 if not shouldContinue then 
                     state.IsCancelled <- true
 
-        if p.Kind <= Kind.Value || obj.ReferenceEquals(value, null) then 
-            acceptNode ()
+        if p.Kind <= Kind.Value then acceptNode ()
+        elif obj.ReferenceEquals(value, null) then
+            let shouldContinue =
+                match state.Visitor with
+                | :? ISpecializedObjectVisitor<'T> as fv -> fv.VisitSpecialized(p, value)
+                | v -> v.Visit(p, value)
+
+            if not shouldContinue then state.IsCancelled <- true
         else
 
 #if PROTECT_STACK_OVERFLOWS

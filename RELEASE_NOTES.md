@@ -1,3 +1,6 @@
+### 1.2.9
+* Visitor Bugfix.
+
 ### 1.2.8
 * Add EnsureSerializable utility.
 

@@ -532,7 +532,14 @@ module ``Generic Tests`` =
         order.ToArray() |> should equal [|"2";"3";"1"|]
 
     [<Test; Category("Visitor")>]
-    let ``4. Visitor: should properly visit nulls`` () =
+    let ``4. Visitor: should properly visit nulls 1`` () =
+        let visited = ref 0
+        let visitor = { new IObjectVisitor with member __.Visit(_,_) = incr visited ; true }
+        FsPickler.VisitObject(visitor, Unchecked.defaultof<SimpleClass>)
+        visited.Value |> should equal 1
+        
+    [<Test; Category("Visitor")>]
+    let ``4. Visitor: should properly visit nulls 2`` () =
         let hasFoundNull = ref false
         let visitor =
             {
@@ -552,4 +559,5 @@ module ``Generic Tests`` =
     let ``4. Visitor: ensure serializable`` () =
         let mkGraph (o:obj) = [box 1 ; box "" ; box <| Some (42, [box 1 ; o])]
         FsPickler.EnsureSerializable(mkGraph [1..100])
+        FsPickler.EnsureSerializable(mkGraph (new System.ObjectDisposedException("")))
         shouldFailwith<NonSerializableTypeException>(fun () -> FsPickler.EnsureSerializable(mkGraph (new System.Net.WebClient())))
