@@ -961,7 +961,7 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
                 yield! generateSerializableObjects typeof<int>.Assembly
 
             yield! generateSerializableObjects typeof<_ option>.Assembly
-            yield! generateSerializableObjects <| Assembly.GetExecutingAssembly()
+            yield! generateSerializableObjects typeof<FsPickler>.Assembly
         }
 
         let test (t : Type, x : obj) =
