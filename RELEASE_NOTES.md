@@ -1,3 +1,6 @@
+### 1.2.10
+* Add support for Json.NET 7.0
+
 ### 1.2.9
 * Visitor Bugfix.
 

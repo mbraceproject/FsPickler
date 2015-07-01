@@ -133,6 +133,7 @@ let plot yaxis (metric : PerfResult -> float) (results : PerfResult list) =
     |> Chart.WithYAxis(MajorGrid = dashGrid) 
     |> Chart.WithXAxis(MajorGrid = dashGrid)
     |> fun ch -> ch.ShowChart()
+    |> ignore
 
 let plotTime (results : TestSession list) = 
     results 
