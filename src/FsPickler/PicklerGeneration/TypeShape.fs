@@ -415,7 +415,7 @@ module TypeShape =
             | NotACollection ->
 
             if t.IsAbstract then activate1 typedefof<ShapeAbstract<_>> t
-            elif t.IsEnum then activate2 (getGenericEnumType()) t <| t.GetEnumUnderlyingType()
+            elif t.IsEnum then activate2 (getGenericEnumType()) t <| Enum.GetUnderlyingType t
             elif isNullableType t then
                 let et = t.GetGenericArguments().[0]
                 activate1 typedefof<ShapeNullable<_>> et
