@@ -21,18 +21,26 @@ module internal Common =
     let inline fastUnbox<'T> (x : obj) = 
         Microsoft.FSharp.Core.LanguagePrimitives.IntrinsicFunctions.UnboxFast<'T> x
 
+    module Enum =
+        /// <summary>
+        ///     Checks that set of enumeration flags has given flag
+        /// </summary>
+        /// <param name="flags">Flags to be checked.</param>
+        /// <param name="flag">Flag to be satisfied.</param>
+        let inline hasFlag flags flag = flags &&& flag = flag
+
     let inline mkFlagCsv (flags : ObjectFlags) =
-        let tokens = new ResizeArray<string>()
-        if flags.HasFlag ObjectFlags.IsCachedInstance then
+        let tokens = new ResizeArray<string>(2)
+        if Enum.hasFlag flags ObjectFlags.IsCachedInstance then
             tokens.Add "cached"
 
-        if flags.HasFlag ObjectFlags.IsCyclicInstance then
+        if Enum.hasFlag flags ObjectFlags.IsCyclicInstance then
             tokens.Add "cyclic"
 
-        if flags.HasFlag ObjectFlags.IsProperSubtype then
+        if Enum.hasFlag flags ObjectFlags.IsProperSubtype then
             tokens.Add "subtype"
 
-        if flags.HasFlag ObjectFlags.IsSiftedValue then
+        if Enum.hasFlag flags ObjectFlags.IsSiftedValue then
             tokens.Add "hole"
 
         String.concat "," tokens

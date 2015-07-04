@@ -238,18 +238,18 @@ type internal CompositePickler<'T> =
         let formatter = state.Formatter
         let flags = formatter.BeginReadObject tag
 
-        if ObjectFlags.hasFlag flags ObjectFlags.IsNull then 
+        if Enum.hasFlag flags ObjectFlags.IsNull then 
             formatter.EndReadObject ()
             fastUnbox<'T> null
 
-        elif ObjectFlags.hasFlag flags ObjectFlags.IsProperSubtype then
+        elif Enum.hasFlag flags ObjectFlags.IsProperSubtype then
             let t0 = state.TypePickler.Read state "subtype"
             let p0 = state.PicklerResolver.Resolve t0
             let value = p0.UntypedRead state "instance" |> fastUnbox<'T>
             formatter.EndReadObject()
             value
 
-        elif ObjectFlags.hasFlag flags ObjectFlags.IsCyclicInstance then
+        elif Enum.hasFlag flags ObjectFlags.IsCyclicInstance then
             // came across a nested instance of a cyclic object
             // add an uninitialized object to the cache and schedule
             // reflection-based fixup at the root level.
@@ -260,12 +260,12 @@ type internal CompositePickler<'T> =
             state.ObjectCache.Add(id, value)
             value
 
-        elif ObjectFlags.hasFlag flags ObjectFlags.IsCachedInstance then
+        elif Enum.hasFlag flags ObjectFlags.IsCachedInstance then
             let id = formatter.ReadCachedObjectId ()
             formatter.EndReadObject ()
             state.ObjectCache.[id] |> fastUnbox<'T>
 
-        elif ObjectFlags.hasFlag flags ObjectFlags.IsSiftedValue then
+        elif Enum.hasFlag flags ObjectFlags.IsSiftedValue then
             formatter.EndReadObject ()
             let id = state.NextObjectId()
             try state.ObjectCache.[id] |> fastUnbox<'T>
@@ -412,7 +412,7 @@ type internal CompositePickler<'T> =
         if state.IsCancelled then () else
 
         let inline acceptNode () =
-            let preorder = state.VisitOrder.HasFlag VisitOrder.PreOrder
+            let preorder = Enum.hasFlag state.VisitOrder VisitOrder.PreOrder
             let mutable shouldContinue = true
 
             if preorder && not p.m_SkipVisit then

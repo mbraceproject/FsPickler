@@ -78,6 +78,14 @@ module internal Utils =
     module Option =
         let inline isSome (ts : 'T option) = match ts with None -> false | Some _ -> true
 
+    module Enum =
+        /// <summary>
+        ///     Checks that set of enumeration flags has given flag
+        /// </summary>
+        /// <param name="flags">Flags to be checked.</param>
+        /// <param name="flag">Flag to be satisfied.</param>
+        let inline hasFlag flags flag = (flags &&& flag) = flag
+
     let inline denull x = if x = null then None else Some x
 
     let inline fastUnbox<'T> (x : obj) = 

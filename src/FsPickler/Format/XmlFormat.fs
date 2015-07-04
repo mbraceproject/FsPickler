@@ -24,24 +24,24 @@ module private XmlUtils =
         e.Text
 
     let inline mkFlagCsv (flags : ObjectFlags) =
-        let tokens = new ResizeArray<string>()
+        let tokens = new ResizeArray<string>(2)
 
-        if ObjectFlags.hasFlag flags ObjectFlags.IsNull then
+        if Enum.hasFlag flags ObjectFlags.IsNull then
             tokens.Add "null"
 
-        if ObjectFlags.hasFlag flags ObjectFlags.IsCachedInstance then
+        if Enum.hasFlag flags ObjectFlags.IsCachedInstance then
             tokens.Add "cached"
 
-        if ObjectFlags.hasFlag flags ObjectFlags.IsCyclicInstance then
+        if Enum.hasFlag flags ObjectFlags.IsCyclicInstance then
             tokens.Add "cyclic"
 
-        if ObjectFlags.hasFlag flags ObjectFlags.IsProperSubtype then
+        if Enum.hasFlag flags ObjectFlags.IsProperSubtype then
             tokens.Add "subtype"
 
-        if ObjectFlags.hasFlag flags ObjectFlags.IsSequenceHeader then
+        if Enum.hasFlag flags ObjectFlags.IsSequenceHeader then
             tokens.Add "sequence"
 
-        if ObjectFlags.hasFlag flags ObjectFlags.IsSiftedValue then
+        if Enum.hasFlag flags ObjectFlags.IsSiftedValue then
             tokens.Add "hole"
 
         String.concat "," tokens
@@ -243,7 +243,7 @@ type XmlPickleReader internal (textReader : TextReader, leaveOpen) =
 
             let flags = parseFlagCsv <| reader.["flags"]
 
-            if ObjectFlags.hasFlag flags ObjectFlags.IsSequenceHeader then
+            if Enum.hasFlag flags ObjectFlags.IsSequenceHeader then
                 isAtEmptySequenceHeader <- reader.IsEmptyElement
 
             match reader.["id"] with

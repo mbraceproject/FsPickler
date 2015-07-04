@@ -46,11 +46,11 @@ type internal JsonPickleWriter (jsonWriter : JsonWriter, omitHeader, indented, i
             if not <| omitTag () then
                 jsonWriter.WritePropertyName tag
 
-            if flags.HasFlag ObjectFlags.IsNull then
+            if Enum.hasFlag flags ObjectFlags.IsNull then
                 currentValueIsNull <- true
                 jsonWriter.WriteNull()
 
-            elif flags.HasFlag ObjectFlags.IsSequenceHeader then
+            elif Enum.hasFlag flags ObjectFlags.IsSequenceHeader then
                 if isTopLevelSequence && depth = 0 then
                     isTopLevelSequenceHead <- true
                 else

@@ -13,7 +13,7 @@ module internal SequenceUtils =
 
     let inline beginReadSequence (formatter : IPickleFormatReader) (tag : string) =
         let flags = formatter.BeginReadObject tag
-        if not <| ObjectFlags.hasFlag flags ObjectFlags.IsSequenceHeader then
+        if not <| Enum.hasFlag flags ObjectFlags.IsSequenceHeader then
             let msg = sprintf "Expected new array but was '%O'." flags
             raise <| new FormatException(msg)
 

@@ -50,10 +50,6 @@ type ObjectFlags =
 type VisitOrder =
     | PreOrder = 1uy
     | PostOrder = 2uy
-        
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module internal ObjectFlags =
-    let inline hasFlag (flags : ObjectFlags) (flag : ObjectFlags) = flags &&& flag = flag
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module internal Kind =
