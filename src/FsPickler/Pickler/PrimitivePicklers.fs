@@ -158,6 +158,9 @@ type TimeSpanPickler () =
     override __.Read (reader : ReadState) (tag : string) =
         reader.Formatter.ReadTimeSpan tag
 
+#if NET35
+#else
+
 [<AutoSerializable(false)>]
 type BigIntPickler () =
     inherit PrimitivePickler<bigint> ()
@@ -167,6 +170,8 @@ type BigIntPickler () =
 
     override __.Read (reader : ReadState) (tag : string) =
         reader.Formatter.ReadBigInteger tag
+
+#endif
 
 [<AutoSerializable(false)>]
 type DBNullPickler () =
@@ -215,7 +220,10 @@ module PrimitivePicklers =
     let mkGuid () = new GuidPickler () :> Pickler<Guid>
     let mkDate () = new DateTimePickler () :> Pickler<DateTime>
     let mkTimeSpan () = new TimeSpanPickler () :> Pickler<TimeSpan>
+#if NET35
+#else
     let mkBigInt () = new BigIntPickler () :> Pickler<bigint>
+#endif
     let mkDBNull () = new DBNullPickler () :> Pickler<DBNull>
     let mkUnit () = new UnitPickler<unit>(()) :> Pickler<unit>
 
@@ -225,6 +233,9 @@ module PrimitivePicklers =
         [|
             uc mkBoolean ; uc mkByte ; uc mkSByte ; uc mkInt16 ; uc mkInt32 ; uc mkInt64
             uc mkUInt16 ; uc mkUInt32 ; uc mkUInt64 ; uc mkSingle ; uc mkDouble ; uc mkDecimal
-            uc mkString ; uc mkChar ; uc mkGuid ; uc mkDate ; uc mkTimeSpan ; uc mkBigInt ; 
-            uc mkDBNull ; uc mkUnit
+            uc mkString ; uc mkChar ; uc mkGuid ; uc mkDate ; uc mkTimeSpan ; uc mkDBNull ; uc mkUnit
+#if NET35
+#else
+            uc mkBigInt
+#endif
         |]

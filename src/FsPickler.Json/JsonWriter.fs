@@ -111,7 +111,10 @@ type internal JsonPickleWriter (jsonWriter : JsonWriter, omitHeader, indented, i
 
         member __.WriteChar (tag : string) value = writePrimitive jsonWriter (omitTag ()) tag value
         member __.WriteString (tag : string) value = writePrimitive jsonWriter (omitTag ()) tag value
+#if NET35
+#else
         member __.WriteBigInteger (tag : string) value = writePrimitive jsonWriter (omitTag ()) tag (string value)
+#endif
 
         member __.WriteGuid (tag : string) value = writePrimitive jsonWriter (omitTag ()) tag value
         member __.WriteTimeSpan (tag : string) value = writePrimitive jsonWriter (omitTag ()) tag (string value)

@@ -80,8 +80,12 @@ module private ISerializableUtils =
 
         sI
 
-    let inline cloneSerializationInfo (c : CloneState) (sI : SerializationInfo) =
+    let inline cloneSerializationInfo<'T> (c : CloneState) (sI : SerializationInfo) =
+#if NET35
+        let sI' = new SerializationInfo(typeof<'T>, new FormatterConverter())
+#else
         let sI' = new SerializationInfo(sI.ObjectType, new FormatterConverter())
+#endif
         let enum = sI.GetEnumerator()
         while enum.MoveNext() do
             let se = enum.Current
@@ -117,6 +121,9 @@ type internal ISerializablePickler =
 
         match typeof<'T>.TryGetConstructor [| typeof<SerializationInfo> ; typeof<StreamingContext> |] with
         | None -> 
+#if NET35
+            raise <| new NonSerializableTypeException(typeof<'T>, "IObjectReference not supported in .net35 builds. Please implement a (SerializationInfo, StreamingContext) constructor.")
+#else
             let writer (w : WriteState) (tag : string) (t : 'T) =
                 run onSerializing w t
                 let sI = mkSerializationInfo<'T> ()
@@ -155,7 +162,7 @@ type internal ISerializablePickler =
                     match sI.ObjectType.TryGetConstructor [| typeof<SerializationInfo> ; typeof<StreamingContext> |] with
                     | None -> FormatterServices.GetUninitializedObject(sI.ObjectType) :?> IObjectReference
                     | Some ctor -> 
-                        let sI' = cloneSerializationInfo c sI
+                        let sI' = cloneSerializationInfo<'T> c sI
                         sI'.SetType sI.ObjectType
                         ctor.Invoke [| sI' :> obj ; c.StreamingContext :> obj |] :?> IObjectReference
 
@@ -172,6 +179,7 @@ type internal ISerializablePickler =
                 acceptSerializationInfo v sI
 
             CompositePickler.Create(reader, writer, cloner, accepter, PicklerInfo.ISerializable)
+#endif
 
         | Some ctorInfo ->
 
@@ -206,7 +214,7 @@ type internal ISerializablePickler =
                 t.GetObjectData(sI, c.StreamingContext)
                 run onSerialized c t
 
-                let sI' = cloneSerializationInfo c sI
+                let sI' = cloneSerializationInfo<'T> c sI
                 let t' = create sI' c.StreamingContext
                 run onDeserialized c t'
                 if isDeserializationCallback then (fastUnbox<IDeserializationCallback> t').OnDeserialization null
@@ -238,7 +246,7 @@ type internal ISerializablePickler =
         let cloner (state : CloneState) (t: 'T) =
             let sI = mkSerializationInfo<'T> ()
             do proj sI t
-            let sI' = cloneSerializationInfo state sI
+            let sI' = cloneSerializationInfo<'T> state sI
             ctor sI'
 
         let accepter (v : VisitState) (t : 'T) =

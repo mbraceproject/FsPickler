@@ -157,7 +157,10 @@ type internal JsonPickleReader (jsonReader : JsonReader, omitHeader, isTopLevelS
 
         member __.ReadChar tag = let value = jsonReader.ReadPrimitiveAs<string> (omitTag ()) tag in value.[0]
         member __.ReadString tag = jsonReader.ReadPrimitiveAs<string> (omitTag ()) tag
+#if NET35
+#else
         member __.ReadBigInteger tag = jsonReader.ReadPrimitiveAs<string> (omitTag ()) tag |> BigInteger.Parse
+#endif
 
         member __.ReadGuid tag = 
             if isBsonReader then 

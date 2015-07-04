@@ -24,8 +24,8 @@ type JsonPickleFormatProvider internal (indent, omitHeader) as self =
 
     member __.SequenceSeparator
         with get () = sequenceSeparator
-        and set sep =
-            if sep <> null && String.IsNullOrWhiteSpace sep then
+        and set (sep:string) =
+            if sep <> null && String.IsNullOrEmpty(sep.Trim()) then
                 sequenceSeparator <- sep
             else
                 invalidArg "SequenceSeparator" "should be non-null whitespace."
