@@ -302,7 +302,7 @@ type XmlPickleReader internal (textReader : TextReader, leaveOpen) =
             else
                 reader.ReadElementContentAsString() |> unEscapeString
 
-        member __.ReadGuid tag = reader.ReadElementName tag ; reader.ReadElementContentAsString() |> Guid.Parse
+        member __.ReadGuid tag = reader.ReadElementName tag ; let textGuid = reader.ReadElementContentAsString() in new Guid(textGuid)
         member __.ReadDate tag = reader.ReadElementName tag ; reader.ReadElementContentAsDateTime()
         member __.ReadTimeSpan tag = reader.ReadElementName tag ; reader.ReadElementContentAsString () |> TimeSpan.Parse
 

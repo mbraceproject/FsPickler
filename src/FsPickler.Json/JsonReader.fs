@@ -163,7 +163,8 @@ type internal JsonPickleReader (jsonReader : JsonReader, omitHeader, isTopLevelS
             if isBsonReader then 
                 jsonReader.ReadPrimitiveAs<Guid> (omitTag ()) tag
             else
-                jsonReader.ReadPrimitiveAs<string> (omitTag ()) tag |> Guid.Parse
+                let textGuid = jsonReader.ReadPrimitiveAs<string> (omitTag ()) tag 
+                new Guid(textGuid)
 
         member __.ReadTimeSpan tag = jsonReader.ReadPrimitiveAs<string> (omitTag ()) tag |> TimeSpan.Parse
         member __.ReadDecimal tag = jsonReader.ReadPrimitiveAs<string> (omitTag ()) tag |> decimal
