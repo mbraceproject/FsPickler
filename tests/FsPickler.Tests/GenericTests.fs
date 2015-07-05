@@ -63,7 +63,10 @@ module ``Generic Tests`` =
         isRecursive<int> |> should equal false
         isRecursive<DateTime> |> should equal false
         isRecursive<DateTimeOffset> |> should equal false
+#if NET35
+#else
         isRecursive<bigint> |> should equal false
+#endif
         isRecursive<string> |> should equal false
         isRecursive<Type> |> should equal false
         isRecursive<int * string []> |> should equal false
@@ -97,7 +100,10 @@ module ``Generic Tests`` =
 
         isFixedSize<obj> |> should equal false
         isFixedSize<Peano> |> should equal false
+#if NET35
+#else
         isFixedSize<bigint> |> should equal false
+#endif
         isFixedSize<int list> |> should equal false
         isFixedSize<int -> int> |> should equal false
         isFixedSize<RecursiveClass> |> should equal false

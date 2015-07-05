@@ -61,20 +61,20 @@
     <DefineConstants>TRACE;NET40</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <PlatformTarget>AnyCPU</PlatformTarget>
-    <DocumentationFile />
+    <DocumentationFile>..\..\bin\net40\FsPickler.Tests.XML</DocumentationFile>
     <Prefer32Bit>true</Prefer32Bit>
-    <OutputPath>bin\Release-NET40\</OutputPath>
+    <OutputPath>..\..\bin\net40\</OutputPath>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release-NET35|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <Tailcalls>true</Tailcalls>
-    <DefineConstants>TRACE;NET40</DefineConstants>
+    <DefineConstants>TRACE;NET40;NET35</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <PlatformTarget>AnyCPU</PlatformTarget>
-    <DocumentationFile />
+    <DocumentationFile>..\..\bin\net35\FsPickler.Tests.XML</DocumentationFile>
     <Prefer32Bit>true</Prefer32Bit>
-    <OutputPath>bin\Release-NET35\</OutputPath>
+    <OutputPath>..\..\bin\net35\</OutputPath>
   </PropertyGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '11.0'">
