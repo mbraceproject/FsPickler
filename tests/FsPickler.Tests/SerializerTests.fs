@@ -464,7 +464,7 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
         let bytes =
             self.PickleF(fun p ->
                 use m = new MemoryStream()
-                let length = p.SerializeSequence(m, xs, leaveOpen = true)
+                let length = p.SerializeSequence(m, xs)
                 m.ToArray())
 
         use m = new MemoryStream(bytes)
@@ -540,10 +540,9 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
         let graph : (int * int []) option * int [] option option list = (Some (1, [|1 .. 100|]), [None; None ; Some None; Some (Some [|12|])])
         let sifter = { new IObjectSifter with member __.Sift(p,_,_) = p.Kind = Kind.Array }
         use m = new MemoryStream()
-        let sifted = pickler.SerializeSifted(m, graph, sifter, leaveOpen = true)
+        let sifted = pickler.SerializeSifted(m, graph, sifter)
         sifted.Length |> should equal 2
-        m.Position <- 0L
-        pickler.DeserializeSifted<(int * int []) option * int [] option option list>(m, sifted) |> should equal graph
+        pickler.DeserializeSifted<(int * int []) option * int [] option option list>(m.Clone(), sifted) |> should equal graph
 
     [<Test; Category("FsPickler Generic tests")>]
     member __.``5. Object: tuple sift serialization`` () =
@@ -555,11 +554,10 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
         let calls = ref 0
         use m = new MemoryStream()
         let sifter = { new IObjectSifter with member __.Sift(_,_,o) = if obj.ReferenceEquals(o,tuple) then incr calls ; true else false }
-        let values = pickler.SerializeSifted(m, xs, sifter, leaveOpen = true)
+        let values = pickler.SerializeSifted(m, xs, sifter)
         calls.Value |> should equal 1
         values.Length |> should equal 1
-        m.Position <- 0L
-        pickler.DeserializeSifted<(int * string)[]>(m, values) |> should equal xs
+        pickler.DeserializeSifted<(int * string)[]>(m.Clone(), values) |> should equal xs
 
     [<Test; Category("FsPickler Generic tests")>]
     member __.``5. Object: random sift serialization`` () =
@@ -567,9 +565,8 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
         let randomSifter = { new IObjectSifter with member __.Sift(_,_,_) = r.Next(0,5) = 0 }
         Check.QuickThrowOnFail(fun (tree : ListTree<int>) ->
             use m = new MemoryStream()
-            let sifted = pickler.SerializeSifted(m, tree, randomSifter, leaveOpen = true)
-            m.Position <- 0L
-            pickler.DeserializeSifted<ListTree<int>>(m, sifted) |> should equal tree)
+            let sifted = pickler.SerializeSifted(m, tree, randomSifter)
+            pickler.DeserializeSifted<ListTree<int>>(m.Clone(), sifted) |> should equal tree)
 
     [<Test; Category("FsPickler Generic tests"); Repeat(5)>]
     member __.``5. Object: random graph sift serialization`` () =
@@ -577,9 +574,8 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
         let r = new System.Random()
         let randomSifter = { new IObjectSifter with member __.Sift(_,_,_) = r.Next(0,5) = 0 }
         use m = new MemoryStream()
-        let sifted = pickler.SerializeSifted(m, g, randomSifter, leaveOpen = true)
-        m.Position <- 0L
-        let g' = pickler.DeserializeSifted<Graph<int>>(m, sifted)
+        let sifted = pickler.SerializeSifted(m, g, randomSifter)
+        let g' = pickler.DeserializeSifted<Graph<int>>(m.Clone(), sifted)
         areEqualGraphs g g' |> should equal true
 
     [<Test; Category("FsPickler Generic tests"); Repeat(5)>]

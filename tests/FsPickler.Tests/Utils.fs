@@ -64,6 +64,9 @@ module Utils =
             Async.AwaitTask(source.CopyToAsync(target))
 
 
+    type MemoryStream with
+        member m.Clone() = new MemoryStream(m.ToArray())
+
     type AppDomainManager private () =
         static let container = new System.Collections.Concurrent.ConcurrentDictionary<string, AppDomain>()
 
