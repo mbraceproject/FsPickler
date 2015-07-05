@@ -30,3 +30,6 @@ files
     ../../bin/net40/FsPickler.Json.dll ==> lib/net40
     ../../bin/net40/FsPickler.Json.pdb ==> lib/net40
     ../../bin/net40/FsPickler.Json.xml ==> lib/net40
+    ../../bin/net35/FsPickler.Json.dll ==> lib/net35
+    ../../bin/net35/FsPickler.Json.pdb ==> lib/net35
+    ../../bin/net35/FsPickler.Json.xml ==> lib/net35

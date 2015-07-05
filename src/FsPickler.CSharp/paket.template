@@ -24,6 +24,8 @@ tags
 dependencies
 	FsPickler CURRENTVERSION
 	FsPickler.Json CURRENTVERSION
+references
+	FsPickler.CSharp.dll
 files
     ../../bin/FsPickler.CSharp.dll ==> lib/net45
     ../../bin/FsPickler.CSharp.pdb ==> lib/net45
@@ -31,3 +33,7 @@ files
     ../../bin/net40/FsPickler.CSharp.dll ==> lib/net40
     ../../bin/net40/FsPickler.CSharp.pdb ==> lib/net40
     ../../bin/net40/FsPickler.CSharp.xml ==> lib/net40
+	../../bin/net35/FSharp.Core.dll ==> lib/net35
+    ../../bin/net35/FsPickler.CSharp.dll ==> lib/net35
+    ../../bin/net35/FsPickler.CSharp.pdb ==> lib/net35
+    ../../bin/net35/FsPickler.CSharp.xml ==> lib/net35
