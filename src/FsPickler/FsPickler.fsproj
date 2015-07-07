@@ -134,6 +134,7 @@
     <Compile Include="FsPickler\Combinators.fs" />
     <Compile Include="FsPickler\ExtensionMethods.fs" />
     <None Include="paket.template" />
+    <None Include="paket.references" />
     <None Include="Test.fsx" />
   </ItemGroup>
   <Choose>
