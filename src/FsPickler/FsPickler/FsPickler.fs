@@ -133,7 +133,8 @@ type FsPickler private () =
 
     /// <summary>Compute size in bytes for given input.</summary>
     /// <param name="value">input value.</param>
-    static member ComputeSize<'T>(value : 'T) = defaultSerializer.Value.ComputeSize(value)
+    /// <param name="pickler">Pickler to be used for size computation. Defaults to auto-generated pickler.</param>
+    static member ComputeSize<'T>(value : 'T, [<O;D(null)>] ?pickler : Pickler<'T>) = defaultSerializer.Value.ComputeSize(value, ?pickler = pickler)
 
     /// <summary>
     ///     Visits all reference types that appear in the given object graph.
