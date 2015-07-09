@@ -1,3 +1,6 @@
+### 1.2.12
+* Add support for .net35 runtimes
+
 ### 1.2.11
 * Add missing overload in FsPickler.ComputeSize
 

@@ -4,10 +4,10 @@ using System.Reflection;
 [assembly: AssemblyTitleAttribute("FsPickler")]
 [assembly: AssemblyProductAttribute("FsPickler")]
 [assembly: AssemblyCopyrightAttribute("© Eirik Tsarpalis.")]
-[assembly: AssemblyVersionAttribute("1.2.11")]
-[assembly: AssemblyFileVersionAttribute("1.2.11")]
+[assembly: AssemblyVersionAttribute("1.2.12")]
+[assembly: AssemblyFileVersionAttribute("1.2.12")]
 namespace System {
     internal static class AssemblyVersionInformation {
-        internal const string Version = "1.2.11";
+        internal const string Version = "1.2.12";
     }
 }
