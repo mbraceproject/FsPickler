@@ -39,6 +39,7 @@ type Pickler internal (t : Type) =
     abstract PicklerInfo : PicklerInfo
     abstract IsCacheByRef : bool
     abstract UseWithSubtypes : bool
+    abstract IsCloneableOnly : bool
 
     abstract UntypedWrite : state:WriteState -> tag:string -> value:obj -> unit
     abstract UntypedRead  : state:ReadState  -> tag:string -> obj
@@ -90,8 +91,8 @@ and IPicklerResolver =
     abstract Resolve<'T> : unit -> Pickler<'T>
 
 and [<AutoSerializable(false); Sealed>]
-    WriteState internal (formatter : IPickleFormatWriter, resolver : IPicklerResolver, 
-                            reflectionCache : ReflectionCache, ?streamingContext, ?sifter : IObjectSifter) =
+    WriteState internal (formatter : IPickleFormatWriter, resolver : IPicklerResolver, reflectionCache : ReflectionCache,
+                            isHashComputation:bool, ?streamingContext, ?sifter : IObjectSifter) =
 
     let tyPickler = resolver.Resolve<Type> ()
 
@@ -104,6 +105,7 @@ and [<AutoSerializable(false); Sealed>]
     let sifted = new ResizeArray<int64 * obj> ()
 
     member internal __.PicklerResolver = resolver
+    member internal __.IsHashComputation = isHashComputation
     member __.StreamingContext = sc
     member internal __.Formatter = formatter
     member internal __.Sifter = sifter

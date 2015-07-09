@@ -55,7 +55,7 @@ module ExtensionMethods =
 
         /// <summary>
         ///    Creates a sifted copy of provided graph in which sifted values are distinguished by hash code.
-        ///     Returns a HashSift container as well as a manifest of all objects that were sifted and their hashcodes.
+        ///    Returns a HashSift container as well as a manifest of all objects that were sifted and their hashcodes.
         /// </summary>
         /// <param name="graph">Object graph to be sifted.</param>
         /// <param name="shouldSift">Predicate deciding whether supplied object should be sifted.</param>

@@ -24,3 +24,16 @@ type internal CustomPickler =
         | None ->
             let msg = sprintf "marked [<CustomPickler>] but missing static method 'CreatePickler : IPicklerResolver -> Pickler<%s>'." typeof<'T>.Name
             raise <| new NonSerializableTypeException(typeof<'T>, msg)
+
+
+type internal CloneableOnlyPickler =
+    static member Create<'T>() =
+        let writer (w : WriteState) (_ : string) (t : 'T) =
+            if not w.IsHashComputation then
+                raise <| NonSerializableTypeException(typeof<'T>)
+
+        let reader (_ : ReadState) (_ : string) = raise <| new NonSerializableTypeException(typeof<'T>)
+        let cloner (c : CloneState) (t : 'T) = t
+        let visitor (_ : VisitState) (_ : 'T) = ()
+
+        CompositePickler.Create(reader, writer, cloner, visitor, PicklerInfo.UserDefined, cacheByRef = true, isCloneableOnly = true)

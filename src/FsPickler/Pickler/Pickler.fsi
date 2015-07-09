@@ -37,6 +37,10 @@ type Pickler =
         /// Specifies if this pickler can be applied to proper subtypes.
         abstract member UseWithSubtypes : bool
 
+        /// Specifies that pickler provides logic only for object cloning/visiting/hashing
+        /// and that type is not otherwise serializable.
+        abstract member IsCloneableOnly : bool
+
         abstract member internal Cast : unit -> Pickler<'S>
         abstract member internal Unpack : IPicklerUnpacker<'U> -> 'U
 
@@ -158,8 +162,9 @@ and [<AutoSerializable(false); Sealed>] WriteState =
     class
         internal new : 
             formatter:IPickleFormatWriter * resolver:IPicklerResolver * reflectionCache:ReflectionCache * 
-                ?streamingContext:StreamingContext * ?sifter : IObjectSifter -> WriteState
+                isHashComputation:bool * ?streamingContext:StreamingContext * ?sifter : IObjectSifter -> WriteState
 
+        member internal IsHashComputation : bool
         member internal CyclicObjectSet : HashSet<int64>
         member internal ObjectStack : Stack<int64>
         member internal Formatter : IPickleFormatWriter

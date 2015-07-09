@@ -51,7 +51,7 @@ type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?
 
         let pickler = match pickler with None -> resolver.Resolve<'T> () | Some p -> p
         use writer = initStreamWriter formatProvider stream encoding false leaveOpen
-        let _ = writeRootObject resolver reflectionCache writer streamingContext None pickler value
+        let _ = writeRootObject resolver reflectionCache writer streamingContext None false pickler value
         ()
 
     /// <summary>Deserialize value of given type from the underlying stream.</summary>
@@ -80,7 +80,7 @@ type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?
 
         let pickler = match pickler with None -> resolver.Resolve<'T> () | Some p -> p
         use writer = initStreamWriter formatProvider stream encoding true leaveOpen
-        writeTopLevelSequence resolver reflectionCache writer streamingContext pickler sequence
+        writeTopLevelSequence resolver reflectionCache writer streamingContext false pickler sequence
 
 
     /// <summary>Lazily deserialize a sequence of objects from the underlying stream.</summary>
@@ -116,7 +116,7 @@ type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?
 
         let pickler = match pickler with None -> resolver.Resolve<'T>() | Some p -> p
         use writer = initStreamWriter formatProvider stream encoding false leaveOpen
-        let state = writeRootObject resolver reflectionCache writer streamingContext (Some sifter) pickler value
+        let state = writeRootObject resolver reflectionCache writer streamingContext (Some sifter) false pickler value
         state.Sifted.ToArray()
 
     /// <summary>
@@ -206,7 +206,7 @@ type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?
     member __.SerializeUntyped(stream : Stream, value : obj, pickler : Pickler, [<O;D(null)>]?streamingContext : StreamingContext, 
                                                 [<O;D(null)>]?encoding : Encoding, [<O;D(null)>]?leaveOpen : bool) : unit =
         use writer = initStreamWriter formatProvider stream encoding false leaveOpen
-        let _ = writeRootObjectUntyped resolver reflectionCache writer streamingContext None pickler value
+        let _ = writeRootObjectUntyped resolver reflectionCache writer streamingContext None false pickler value
         ()
 
     /// <summary>Deserialize untyped object from the underlying stream with provided pickler.</summary>
@@ -234,7 +234,7 @@ type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?
                                         [<O;D(null)>]?streamingContext : StreamingContext, [<O;D(null)>]?encoding : Encoding, [<O;D(null)>]?leaveOpen : bool) : int =
 
         use writer = initStreamWriter formatProvider stream encoding true leaveOpen
-        writeTopLevelSequenceUntyped resolver reflectionCache writer streamingContext pickler sequence
+        writeTopLevelSequenceUntyped resolver reflectionCache writer streamingContext false pickler sequence
 
     /// <summary>Lazily deserialize an untyped sequence of objects from the underlying stream.</summary>
     /// <param name="stream">source stream.</param>
@@ -279,13 +279,17 @@ type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?
     /// <param name="value">input value.</param>
     /// <param name="hashFactory">the hashing algorithm to be used. MurMur3 by default.</param>
     member bp.ComputeHash<'T>(value : 'T, [<O;D(null)>] ?hashFactory : IHashStreamFactory) =
+        let signature = reflectionCache.GetTypeSignature (if obj.ReferenceEquals(value,null) then typeof<obj> else value.GetType())
+        let pickler = resolver.Resolve<obj>()
         let hashStream = 
             match hashFactory with 
             | Some h -> h.Create()
             | None -> new MurMur3Stream() :> HashStream
 
-        let signature = reflectionCache.GetTypeSignature (if obj.ReferenceEquals(value,null) then typeof<obj> else value.GetType())
-        bp.Serialize<obj>(hashStream, value)
+        do
+            use writer = initStreamWriter formatProvider hashStream None false None
+            let _ = writeRootObject resolver reflectionCache writer None None true pickler (box value)
+            ()
 
         {
             Algorithm = hashStream.HashAlgorithm
@@ -298,6 +302,11 @@ type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?
     /// <param name="value">input value.</param>
     /// <param name="pickler">Pickler to be used for size computation. Defaults to auto-generated pickler.</param>
     member bp.ComputeSize<'T>(value : 'T, [<O;D(null)>] ?pickler : Pickler<'T>) =
+        let pickler = match pickler with Some p -> p | None -> resolver.Resolve<'T> ()
         let lengthCounter = new LengthCounter()
-        bp.Serialize(lengthCounter, value)
+        do
+            use writer = initStreamWriter formatProvider lengthCounter None false None
+            let _ = writeRootObject resolver reflectionCache writer None None true pickler value
+            ()
+
         lengthCounter.Length

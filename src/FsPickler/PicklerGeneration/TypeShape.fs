@@ -29,6 +29,7 @@ type Shape =
     | Tuple = 11
     | FSharpType = 12
     | Dictionary = 13
+    | CloneableOnly = 14
 
 [<AbstractClass>]
 type TypeShape internal () =
@@ -76,6 +77,11 @@ and ShapeCustomPickler<'T> () =
     inherit TypeShape<'T> ()
     override __.Shape = Shape.CustomPickler
     override __.Accept (v : ITypeShapeVisitor<'R>) = v.CustomPickler<'T> ()
+
+and ShapeCloneableOnly<'T> () =
+    inherit TypeShape<'T> ()
+    override __.Shape = Shape.CloneableOnly
+    override __.Accept (v : ITypeShapeVisitor<'R>) = v.CloneableOnly<'T> ()
 
 and ShapeUserFactory<'T> () =
     inherit TypeShape<'T> ()
@@ -247,6 +253,7 @@ and ITypeShapeVisitor<'R> =
     abstract ISerializable<'T when 'T :> ISerializable> : unit -> 'R
     abstract DataContract<'T> : unit -> 'R
     abstract CustomPickler<'T> : unit -> 'R
+    abstract CloneableOnly<'T> : unit -> 'R
     abstract Delegate<'D when 'D :> Delegate> : unit -> 'R
     abstract Enum<'Enum, 'Underlying when 'Enum : enum<'Underlying>> : unit -> 'R
     abstract UserFactory<'T> : unit -> 'R
@@ -381,6 +388,9 @@ module TypeShape =
 
         elif containsAttr<CustomPicklerAttribute> t then
             activate1 typedefof<ShapeCustomPickler<_>> t
+
+        elif containsAttr<CloneableOnlyAttribute> t then
+            activate1 typedefof<ShapeCloneableOnly<_>> t
 
         elif FSharpType.IsUnion(t, allMembers) then
             match t with

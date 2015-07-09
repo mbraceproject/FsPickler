@@ -75,8 +75,8 @@ type internal PicklerCache private () =
     member __.IsPicklerGenerated t = dict.ContainsKey t
 
     interface IPicklerResolver with
-        member r.IsSerializable (t : Type) = (resolve t).IsValue
-        member r.IsSerializable<'T> () = (resolve typeof<'T>).IsValue
+        member r.IsSerializable (t : Type) = isSerializable(resolve t)
+        member r.IsSerializable<'T> () = isSerializable(resolve typeof<'T>)
 
         member r.Resolve (t : Type) = (resolve t).Value
         member r.Resolve<'T> () = (resolve typeof<'T>).Value :?> Pickler<'T>

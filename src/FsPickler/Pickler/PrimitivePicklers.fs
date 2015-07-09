@@ -16,6 +16,7 @@ type PrimitivePickler<'T> () =
     override p.PicklerInfo = PicklerInfo.Primitive
     override p.IsCacheByRef = false
     override p.UseWithSubtypes = false
+    override p.IsCloneableOnly = false
 
     override p.Cast<'S> () : Pickler<'S> = raise <| new NotSupportedException("Cannot cast primitive picklers.")
     override p.Clone (state : CloneState) (t : 'T) = t

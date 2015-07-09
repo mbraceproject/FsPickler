@@ -34,7 +34,7 @@ type FsPicklerTextSerializer (formatProvider : ITextPickleFormatProvider, [<O;D(
 
         let pickler = match pickler with None -> resolver.Resolve<'T> () | Some p -> p
         use formatter = initTextWriter formatProvider writer false leaveOpen
-        let _ = writeRootObject resolver reflectionCache formatter streamingContext None pickler value
+        let _ = writeRootObject resolver reflectionCache formatter streamingContext None false pickler value
         ()
 
     /// <summary>Deserialize value of given type from the underlying stream.</summary>
@@ -61,7 +61,7 @@ type FsPicklerTextSerializer (formatProvider : ITextPickleFormatProvider, [<O;D(
 
         let pickler = match pickler with None -> resolver.Resolve<'T> () | Some p -> p
         use formatter = initTextWriter formatProvider writer true leaveOpen
-        writeTopLevelSequence resolver reflectionCache formatter streamingContext pickler sequence
+        writeTopLevelSequence resolver reflectionCache formatter streamingContext false pickler sequence
 
     /// <summary>Lazily deserialize a sequence of objects from the underlying stream.</summary>
     /// <param name="reader">Source text reader.</param>
@@ -93,7 +93,7 @@ type FsPicklerTextSerializer (formatProvider : ITextPickleFormatProvider, [<O;D(
 
         let pickler = match pickler with None -> resolver.Resolve<'T>() | Some p -> p
         use writer = initTextWriter formatProvider writer false leaveOpen
-        let state = writeRootObject resolver reflectionCache writer streamingContext (Some sifter) pickler value
+        let state = writeRootObject resolver reflectionCache writer streamingContext (Some sifter) false pickler value
         state.Sifted.ToArray()
 
     /// <summary>
@@ -169,7 +169,7 @@ type FsPicklerTextSerializer (formatProvider : ITextPickleFormatProvider, [<O;D(
     /// <param name="leaveOpen">Leave underlying stream open when finished. Defaults to false.</param>
     member __.SerializeUntyped(writer : TextWriter, value : obj, pickler : Pickler, [<O;D(null)>]?streamingContext : StreamingContext, [<O;D(null)>]?leaveOpen : bool) : unit =
         use formatter = initTextWriter formatProvider writer false leaveOpen
-        let _ = writeRootObjectUntyped resolver reflectionCache formatter streamingContext None pickler value
+        let _ = writeRootObjectUntyped resolver reflectionCache formatter streamingContext None false pickler value
         ()
 
     /// <summary>Deserialize object of given type from the underlying stream.</summary>
@@ -192,7 +192,7 @@ type FsPicklerTextSerializer (formatProvider : ITextPickleFormatProvider, [<O;D(
                                             [<O;D(null)>]?streamingContext : StreamingContext, [<O;D(null)>]?leaveOpen : bool) : int =
 
         use formatter = initTextWriter formatProvider writer true leaveOpen
-        writeTopLevelSequenceUntyped resolver reflectionCache formatter streamingContext pickler sequence
+        writeTopLevelSequenceUntyped resolver reflectionCache formatter streamingContext false pickler sequence
 
     /// <summary>Lazily deserialize a sequence of objects from the underlying stream.</summary>
     /// <param name="reader">source reader.</param>

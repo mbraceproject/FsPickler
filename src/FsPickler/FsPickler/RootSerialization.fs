@@ -29,9 +29,9 @@ let initTextReader (formatP : ITextPickleFormatProvider) reader isSeq leaveOpen 
     let leaveOpen = defaultArg leaveOpen false
     formatP.CreateReader(reader, isSeq, leaveOpen)
 
-let writeRootObject resolver reflectionCache formatter streamingContext sifter (pickler : Pickler<'T>) (value : 'T) =
+let writeRootObject resolver reflectionCache formatter streamingContext sifter isHash (pickler : Pickler<'T>) (value : 'T) =
     try
-        let writeState = new WriteState(formatter, resolver, reflectionCache, ?streamingContext = streamingContext, ?sifter = sifter)
+        let writeState = new WriteState(formatter, resolver, reflectionCache, isHash, ?streamingContext = streamingContext, ?sifter = sifter)
         let typeName = reflectionCache.GetTypeSignature pickler.Type
         formatter.BeginWriteRoot typeName
         pickler.Write writeState "value" value
@@ -54,9 +54,9 @@ let readRootObject resolver reflectionCache formatter streamingContext sifted (p
     with e ->
         raise <| new FsPicklerException(sprintf "Error deserializing object of type '%O'." typeof<'T>, e)
 
-let writeRootObjectUntyped resolver reflectionCache formatter streamingContext sifter (pickler : Pickler) (value : obj) =
+let writeRootObjectUntyped resolver reflectionCache formatter streamingContext sifter isHash (pickler : Pickler) (value : obj) =
     try
-        let writeState = new WriteState(formatter, resolver, reflectionCache, ?streamingContext = streamingContext, ?sifter = sifter)
+        let writeState = new WriteState(formatter, resolver, reflectionCache, isHash, ?streamingContext = streamingContext, ?sifter = sifter)
         let typeName = reflectionCache.GetTypeSignature pickler.Type
         formatter.BeginWriteRoot typeName
         pickler.UntypedWrite writeState "value" value
@@ -85,10 +85,10 @@ let readRootObjectUntyped resolver reflectionCache formatter streamingContext si
 
 /// serializes a sequence of objects to stream
 
-let writeTopLevelSequence resolver reflectionCache formatter streamingContext (pickler : Pickler<'T>) (values : seq<'T>) : int =
+let writeTopLevelSequence resolver reflectionCache formatter streamingContext isHash (pickler : Pickler<'T>) (values : seq<'T>) : int =
     try
         // write state initialization
-        let state = new WriteState(formatter, resolver, reflectionCache, ?streamingContext = streamingContext)
+        let state = new WriteState(formatter, resolver, reflectionCache, isHash, ?streamingContext = streamingContext)
         let typeName = reflectionCache.GetTypeSignature pickler.Type + " seq"
 
         state.Formatter.BeginWriteRoot typeName
@@ -112,13 +112,13 @@ let readTopLevelSequence resolver reflectionCache formatter streamingContext (pi
         raise <| new FsPicklerException(sprintf "Error deserializing sequence of type '%O'." typeof<'T>, e)
 
 
-let writeTopLevelSequenceUntyped resolver reflectionCache formatter streamingContext (pickler : Pickler) (values : IEnumerable) : int =
+let writeTopLevelSequenceUntyped resolver reflectionCache formatter streamingContext isHash (pickler : Pickler) (values : IEnumerable) : int =
     let unpacker =
         {
             new IPicklerUnpacker<int> with
                 member __.Apply (p : Pickler<'T>) =
                     writeTopLevelSequence resolver reflectionCache formatter
-                        streamingContext p (values :?> IEnumerable<'T>)
+                        streamingContext isHash p (values :?> IEnumerable<'T>)
         }
 
     pickler.Unpack unpacker

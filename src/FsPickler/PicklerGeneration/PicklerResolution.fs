@@ -9,6 +9,11 @@ open Nessos.FsPickler.Reflection
 open Nessos.FsPickler.TypeShape
 open Nessos.FsPickler.PicklerGenerator
 
+let isSerializable (result : Exn<Pickler>) =
+    match result with
+    | Success p -> not p.IsCloneableOnly
+    | Error _ -> false
+
 /// reflection - based pickler resolution
 let resolvePickler (resolver : IPicklerResolver) (mkEarlyBinding : Pickler -> unit) (t : Type) =
 
@@ -80,8 +85,8 @@ let generatePickler (globalCache : ICache<Type, Exn<Pickler>>) (t : Type) =
     let rec resolver =
         {
             new IPicklerResolver with
-                member __.IsSerializable t = (generate t).IsValue
-                member __.IsSerializable<'T> () = (generate typeof<'T>).IsValue
+                member __.IsSerializable t = isSerializable(generate t)
+                member __.IsSerializable<'T> () = isSerializable(generate typeof<'T>)
 
                 member __.Resolve t = (generate t).Value
                 member __.Resolve<'T> () = (generate typeof<'T>).Value :?> Pickler<'T>

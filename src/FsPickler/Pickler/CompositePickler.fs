@@ -36,8 +36,9 @@ type internal CompositePickler<'T> =
     val mutable private m_SkipHeaderWrite : bool
     val mutable private m_Bypass : bool
     val mutable private m_SkipVisit : bool
+    val mutable private m_IsCloneableOnly : bool
 
-    private new (reader, writer, cloner, accepter, nested : Pickler option, picklerInfo, ?cacheByRef, ?useWithSubtypes, ?skipHeaderWrite, ?bypass, ?skipVisit) =
+    private new (reader, writer, cloner, accepter, nested : Pickler option, picklerInfo, ?cacheByRef, ?useWithSubtypes, ?skipHeaderWrite, ?bypass, ?skipVisit, ?isCloneableOnly) =
         {
             inherit Pickler<'T> ()
 
@@ -57,6 +58,7 @@ type internal CompositePickler<'T> =
             m_SkipHeaderWrite = defaultArg skipHeaderWrite false
             m_Bypass = defaultArg bypass false
             m_SkipVisit = defaultArg skipVisit false
+            m_IsCloneableOnly = defaultArg isCloneableOnly false
         }
 
     /// <summary>
@@ -70,9 +72,9 @@ type internal CompositePickler<'T> =
     /// <param name="skipHeaderWrite">skip header serialization of instances.</param>
     /// <param name="bypass">pickle using serialization/deserialization lambdas directly.</param>
     /// <param name="skipVisit">do not apply visitor to instances if specified.</param>
-    new (reader, writer, cloner, accepter, picklerInfo, ?cacheByRef, ?useWithSubtypes, ?skipHeaderWrite, ?bypass, ?skipVisit) =
+    new (reader, writer, cloner, accepter, picklerInfo, ?cacheByRef, ?useWithSubtypes, ?skipHeaderWrite, ?bypass, ?skipVisit, ?isCloneableOnly) =
         new CompositePickler<'T>(reader, writer, cloner, accepter, None, picklerInfo, ?cacheByRef = cacheByRef, ?useWithSubtypes = useWithSubtypes, 
-                                                    ?skipHeaderWrite = skipHeaderWrite, ?bypass = bypass, ?skipVisit = skipVisit)
+                                                    ?skipHeaderWrite = skipHeaderWrite, ?bypass = bypass, ?skipVisit = skipVisit, ?isCloneableOnly = isCloneableOnly)
 
     /// <summary>
     ///     Uninitialized pickler constructor
@@ -96,6 +98,7 @@ type internal CompositePickler<'T> =
             m_SkipHeaderWrite = Unchecked.defaultof<_>
             m_Bypass = Unchecked.defaultof<_>
             m_SkipVisit = Unchecked.defaultof<_>
+            m_IsCloneableOnly = Unchecked.defaultof<_>
         }
 
     override p.ImplementationType = 
@@ -106,6 +109,7 @@ type internal CompositePickler<'T> =
     override p.PicklerInfo = p.m_PicklerInfo
     override p.IsCacheByRef = p.m_IsCacheByRef
     override p.UseWithSubtypes = p.m_UseWithSubtypes
+    override p.IsCloneableOnly = p.m_IsCloneableOnly
 
     override p.Cast<'S> () =
         match p.m_NestedPickler with
@@ -120,7 +124,7 @@ type internal CompositePickler<'T> =
                 let accepter = let af = p.m_Accepter in fun w x -> af w (fastUnbox<'T> x)
 
                 new CompositePickler<'S>(reader, writer, cloner, accepter, Some(p :> _), p.m_PicklerInfo, p.m_IsCacheByRef, p.m_UseWithSubtypes, 
-                                            skipHeaderWrite = p.m_SkipHeaderWrite, bypass = p.m_Bypass, skipVisit = p.m_SkipVisit) :> Pickler<'S>
+                                            skipHeaderWrite = p.m_SkipHeaderWrite, bypass = p.m_Bypass, skipVisit = p.m_SkipVisit, isCloneableOnly = p.m_IsCloneableOnly) :> Pickler<'S>
 
             else
                 let msg = sprintf "Cannot cast pickler of type '%O' to '%O'." typeof<'T> typeof<'S>
@@ -146,6 +150,7 @@ type internal CompositePickler<'T> =
                 p.m_SkipHeaderWrite <- p'.m_SkipHeaderWrite
                 p.m_Bypass <- p'.m_Bypass
                 p.m_SkipVisit <- p'.m_SkipVisit
+                p.m_IsCloneableOnly <- p'.m_IsCloneableOnly
                 p.m_IsInitialized <- true
 
         | _ -> raise <| new PicklerGenerationException(p.Type, sprintf "source pickler is of invalid type (%O)." p'.Type)
@@ -501,9 +506,9 @@ and internal CompositePickler =
     /// <param name="skipHeaderWrite">skip header serialization of instances.</param>
     /// <param name="bypass">pickle using serialization/deserialization lambdas directly.</param>
     /// <param name="skipVisit">do not apply visitor to instances if specified.</param>
-    static member Create<'T>(reader, writer, cloner, accepter, picklerInfo, ?cacheByRef : bool, ?useWithSubtypes : bool, ?skipHeaderWrite : bool, ?bypass : bool, ?skipVisit : bool) =
+    static member Create<'T>(reader, writer, cloner, accepter, picklerInfo, ?cacheByRef : bool, ?useWithSubtypes : bool, ?skipHeaderWrite : bool, ?bypass : bool, ?skipVisit : bool, ?isCloneableOnly : bool) =
         new CompositePickler<'T>(reader, writer, cloner, accepter, picklerInfo, ?cacheByRef = cacheByRef, ?useWithSubtypes = useWithSubtypes, 
-                                                    ?skipHeaderWrite = skipHeaderWrite, ?bypass = bypass, ?skipVisit = skipVisit) :> Pickler<'T>
+                                                    ?skipHeaderWrite = skipHeaderWrite, ?bypass = bypass, ?skipVisit = skipVisit, ?isCloneableOnly = isCloneableOnly) :> Pickler<'T>
 
     static member ObjectPickler =
-        CompositePickler.Create<obj>((fun _ _ -> obj ()), (fun _ _ _ -> ()), (fun _ _ -> obj ()), (fun _ _ -> ()) ,PicklerInfo.Object, cacheByRef = true)
+        CompositePickler.Create<obj>((fun _ _ -> obj ()), (fun _ _ _ -> ()), (fun _ _ -> obj ()), (fun _ _ -> ()), PicklerInfo.Object, cacheByRef = true)

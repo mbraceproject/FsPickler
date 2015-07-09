@@ -416,6 +416,16 @@ module ``Generic Tests`` =
         g' |> isNotSameTo g
         areEqualGraphs g g' |> should equal true
 
+    [<Test; Category("Pickler tests")>]
+    let ``2. Clone: cloneable only types`` () =
+        FsPickler.IsSerializableType<CloneableOnlyType> () |> should equal false
+        let cov = new CloneableOnlyType()
+        FsPickler.Clone cov |> should equal cov
+        FsPickler.ComputeHash [|cov|] |> ignore
+        FsPickler.ComputeSize [cov] |> ignore
+        fun () -> Binary.pickle Pickler.auto<_> [box 1 ; box cov] |> ignore
+        |> shouldFailwith<FsPicklerException>
+
     //
     //  In-memory sifting tests
     //

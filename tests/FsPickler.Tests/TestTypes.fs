@@ -220,6 +220,10 @@ module TestTypes =
                         (fun sI -> { Name = sI.GetString "Name" ; DoB = sI.GetInt32 "DateOfBirth" ; DoD = sI.TryGet "DateOfDeath" })
                         (fun sI r -> sI.AddValue("Name", r.Name) ; r.DoD |> Option.iter (fun d -> sI.AddValue("DateOfDeath", d)) ; sI.AddValue("DateOfBirth", r.DoB + 1))
 
+    [<CloneableOnly>]
+    type CloneableOnlyType () =
+        let cancellationToken = new System.Threading.CancellationToken()
+        member __.Value = cancellationToken
         
     let addStackTrace (e : 'exn) =
         let rec dive n =
