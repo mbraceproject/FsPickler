@@ -11,7 +11,7 @@ version
 authors
     Eirik Tsarpalis
 copyright
-	Copyright 2015
+    Copyright 2015
 releasenotes
     RELEASE NOTES
 summary
@@ -25,7 +25,7 @@ frameworkAssemblies
     System.Runtime.Serialization
     System.Xml
 references
-	FsPickler.dll
+    FsPickler.dll
 files
     ../../bin/FsPickler.dll ==> lib/net45
     ../../bin/FsPickler.pdb ==> lib/net45
@@ -33,7 +33,7 @@ files
     ../../bin/net40/FsPickler.dll ==> lib/net40
     ../../bin/net40/FsPickler.pdb ==> lib/net40
     ../../bin/net40/FsPickler.xml ==> lib/net40
-	../../bin/net35/System.Threading.dll ==> lib/net35
+    ../../bin/net35/System.Threading.dll ==> lib/net35
     ../../bin/net35/FsPickler.dll ==> lib/net35
     ../../bin/net35/FsPickler.pdb ==> lib/net35
     ../../bin/net35/FsPickler.xml ==> lib/net35

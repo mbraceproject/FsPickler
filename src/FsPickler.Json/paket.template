@@ -13,7 +13,7 @@ authors
 releasenotes
     RELEASE NOTES
 copyright
-	Copyright 2015
+    Copyright 2015
 summary
     A fast serialization framework and pickler combinator library for .NET
 licenseurl https://github.com/nessos/FsPickler/blob/master/License.md
@@ -22,7 +22,7 @@ iconurl https://avatars1.githubusercontent.com/u/5538081
 tags
     F#, fsharp, serializer, pickler, binary, json, xml
 dependencies
-	FsPickler CURRENTVERSION
+    FsPickler CURRENTVERSION
 files
     ../../bin/FsPickler.Json.dll ==> lib/net45
     ../../bin/FsPickler.Json.pdb ==> lib/net45
