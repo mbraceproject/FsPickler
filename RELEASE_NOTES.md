@@ -1,3 +1,6 @@
+### 1.2.11
+* Add missing overload in FsPickler.ComputeSize
+
 ### 1.2.10
 * Add support for Json.NET 7.0
 

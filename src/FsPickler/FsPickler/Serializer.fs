@@ -296,7 +296,8 @@ type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?
 
     /// <summary>Compute size in bytes for given input.</summary>
     /// <param name="value">input value.</param>
-    member bp.ComputeSize<'T>(value : 'T) =
+    /// <param name="pickler">Pickler to be used for size computation. Defaults to auto-generated pickler.</param>
+    member bp.ComputeSize<'T>(value : 'T, [<O;D(null)>] ?pickler : Pickler<'T>) =
         let lengthCounter = new LengthCounter()
         bp.Serialize(lengthCounter, value)
         lengthCounter.Length
