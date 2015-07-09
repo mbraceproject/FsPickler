@@ -11,7 +11,7 @@ version
 authors
     Eirik Tsarpalis
 copyright
-	Copyright 2015
+    Copyright 2015
 releasenotes
     RELEASE NOTES
 summary
@@ -22,8 +22,10 @@ iconurl https://avatars1.githubusercontent.com/u/5538081
 tags
     F#, fsharp, serializer, pickler, binary, json, xml
 dependencies
-	FsPickler CURRENTVERSION
-	FsPickler.Json CURRENTVERSION
+    FsPickler CURRENTVERSION
+    FsPickler.Json CURRENTVERSION
+references
+    FsPickler.CSharp.dll
 files
     ../../bin/FsPickler.CSharp.dll ==> lib/net45
     ../../bin/FsPickler.CSharp.pdb ==> lib/net45

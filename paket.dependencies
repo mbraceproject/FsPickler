@@ -13,3 +13,4 @@ nuget ServiceStack.Text
 nuget FSharp.Formatting
 nuget NUnit.Runners
 nuget FAKE
+nuget TaskParallelLibrary

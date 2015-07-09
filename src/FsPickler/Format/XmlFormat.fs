@@ -166,7 +166,10 @@ type XmlPickleWriter internal (textWriter : TextWriter, indent : bool, leaveOpen
             else
                 writePrimitive writer tag <| escapeString value
 
+#if NET35
+#else
         member __.WriteBigInteger (tag : string) value = writePrimitive writer tag (value.ToString())
+#endif
 
         member __.WriteGuid (tag : string) value = writePrimitive writer tag (value.ToString())
         member __.WriteDate (tag : string) value = writePrimitive writer tag value
@@ -293,7 +296,12 @@ type XmlPickleReader internal (textReader : TextReader, leaveOpen) =
         member __.ReadDouble tag = reader.ReadElementName tag ; reader.ReadElementContentAsDouble()
 
         member __.ReadChar tag = reader.ReadElementName tag ; reader.ReadElementContentAsString() |> unEscapeString |> char
+
+#if NET35
+#else
         member __.ReadBigInteger tag = reader.ReadElementName tag ; reader.ReadElementContentAsString() |> System.Numerics.BigInteger.Parse
+#endif
+
         member __.ReadString tag = 
             reader.ReadElementName tag 
             if reader.GetAttribute("null") = "true" then

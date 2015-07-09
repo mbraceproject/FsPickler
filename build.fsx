@@ -82,6 +82,7 @@ let build configuration () =
 
 Target "Build.Default" (build configuration)
 Target "Build.NoEmit" (build "NoEmit")
+Target "Build.Net35" (build "Release-NET35")
 Target "Build.Net40" (build "Release-NET40")
 
 // --------------------------------------------------------------------------------------
@@ -152,6 +153,7 @@ Target "Release" DoNothing
   ==> "Build.Default"
   ==> "Build.NoEmit"
   ==> "Build.Net40"
+  ==> "Build.Net35"
   ==> "Build"
   ==> "RunTests"
   ==> "Default"
