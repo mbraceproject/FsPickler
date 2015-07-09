@@ -152,20 +152,20 @@ Target "Release" DoNothing
   ==> "Prepare"
   ==> "Build.Default"
   ==> "Build.NoEmit"
-  ==> "Build.Net40"
-  ==> "Build.Net35"
   ==> "Build"
   ==> "RunTests"
   ==> "Default"
 
 "Build"
+  ==> "Build.Net40"
+  ==> "Build.Net35"
   ==> "PrepareRelease"
   ==> "NuGet"
   ==> "GenerateDocs"
   ==> "ReleaseDocs"
   ==> "Release"
 
-"NuGet" 
+"Release" 
   ==> "NuGetPush"
 
 RunTargetOrDefault "Default"
