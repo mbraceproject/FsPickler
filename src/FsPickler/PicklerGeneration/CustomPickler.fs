@@ -5,10 +5,9 @@ open System.Reflection
 
 open Nessos.FsPickler.Reflection
 
-//  check if type implements a static factory method : IPicklerResolver -> Pickler<DeclaringType>
-
 type internal CustomPickler =
     static member Create<'T>(resolver : IPicklerResolver) =
+        //  check if type implements a static factory method : IPicklerResolver -> Pickler<DeclaringType>
         let factoryMethod =
             match typeof<'T>.GetMethod("CreatePickler", allStatic) with
             | null -> None
@@ -27,13 +26,15 @@ type internal CustomPickler =
 
 
 type internal CloneableOnlyPickler =
+    /// Defines a pickler that forces cloneability/hashability on nonserializable types.
     static member Create<'T>() =
         let writer (w : WriteState) (_ : string) (t : 'T) =
-            if not w.IsHashComputation then
+            if w.IsHashComputation then w.Formatter.WriteInt32 "hash" <| (box t).GetHashCode()
+            else
                 raise <| NonSerializableTypeException(typeof<'T>)
 
         let reader (_ : ReadState) (_ : string) = raise <| new NonSerializableTypeException(typeof<'T>)
-        let cloner (c : CloneState) (t : 'T) = t
+        let cloner (_ : CloneState) (t : 'T) = t
         let visitor (_ : VisitState) (_ : 'T) = ()
 
         CompositePickler.Create(reader, writer, cloner, visitor, PicklerInfo.UserDefined, cacheByRef = true, isCloneableOnly = true)

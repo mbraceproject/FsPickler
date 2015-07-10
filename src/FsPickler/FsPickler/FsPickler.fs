@@ -219,6 +219,15 @@ type FsPickler private () =
     ///     or raising an exception if not.
     /// </summary>
     /// <param name="graph">Graph to be checked.</param>
-    static member EnsureSerializable (graph : 'T) : unit =
-        let visitor = { new IObjectVisitor with member __.Visit (_,_) = true }
+    /// <param name="failOnCloneableOnlyTypes">Fail on types that are declared cloneable only. Defaults to true.</param>
+    static member EnsureSerializable (graph : 'T, [<O;D(null)>] ?failOnCloneableOnlyTypes : bool) : unit =
+        let failOnCloneableOnlyTypes = defaultArg failOnCloneableOnlyTypes true
+        let visitor = 
+            { new IObjectVisitor with 
+                member __.Visit<'T> (p : Pickler<'T>, _ : 'T) : bool = 
+                    if failOnCloneableOnlyTypes && p.IsCloneableOnly then
+                        raise <| new Nessos.FsPickler.NonSerializableTypeException(typeof<'T>)
+                    else
+                        true }
+
         FsPickler.VisitObject(visitor, graph, visitOrder = VisitOrder.PreOrder)

@@ -1,3 +1,6 @@
+### 1.2.13
+* Add support for cloneable non-serializable types.
+
 ### 1.2.12
 * Add support for .net35 runtimes
 

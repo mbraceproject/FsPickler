@@ -74,7 +74,8 @@ module internal Kind =
 type CustomPicklerAttribute () = 
     inherit System.Attribute()
 
-/// Ensures that type is cloneable or visited but not serializable.
+/// Specifies that the type is not serializable but can be freely cloned/hashed
+/// by maintaining identical references when found inside object graphs.
 [<Sealed>]
 [<System.AttributeUsage(AttributeTargets.Class, AllowMultiple = false)>]
 type CloneableOnlyAttribute () = 
@@ -85,7 +86,9 @@ type CloneableOnlyAttribute () =
 /// </summary>
 type TypeInfo =
     {
+        /// Type name
         Name : string
+        /// Assembly Information
         AssemblyInfo : AssemblyInfo
     }
 

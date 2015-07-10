@@ -117,5 +117,16 @@ namespace Nessos.CsPickler
             var sc = Utils.GetStreamingContext(streamingContext);
             return FSP.Clone<T>(graph, streamingContext: sc);
         }
+
+        /// <summary>
+        ///     Traverses the object graph, returning if serializable
+        ///     or raising an exception if not.
+        /// </summary>
+        /// <typeparam name="T">Type of the object graph to be checked.</typeparam>
+        /// <param name="graph">Graph to be checked.</param>
+        public static void EnsureSerializable<T>(T graph)
+        {
+            FSP.EnsureSerializable<T>(graph);
+        }
     }
 }

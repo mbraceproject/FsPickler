@@ -425,6 +425,9 @@ module ``Generic Tests`` =
         FsPickler.ComputeSize [cov] |> ignore
         fun () -> Binary.pickle Pickler.auto<_> [box 1 ; box cov] |> ignore
         |> shouldFailwith<FsPicklerException>
+        FsPickler.EnsureSerializable(box [cov], failOnCloneableOnlyTypes = false)
+        fun () -> FsPickler.EnsureSerializable(box [cov], failOnCloneableOnlyTypes = true)
+        |> shouldFailwith<NonSerializableTypeException>
 
     //
     //  In-memory sifting tests
