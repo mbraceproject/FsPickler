@@ -1,3 +1,6 @@
+### 1.2.14
+* Support non-generic serializable type declarations.
+
 ### 1.2.13
 * Add support for cloneable non-serializable types.
 
