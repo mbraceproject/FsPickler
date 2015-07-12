@@ -64,14 +64,21 @@ type FsPickler private () =
     ///     This is equivalent to dynamically attaching a SerializableAttribute to the type.
     /// </summary>
     static member DeclareSerializable<'T> () : unit =
+        FsPickler.DeclareSerializable typeof<'T>
+
+    /// <summary>
+    ///     Declares that supplied type should be treated as serializable.
+    ///     This is equivalent to dynamically attaching a SerializableAttribute to the type.
+    /// </summary>
+    static member DeclareSerializable (t : Type) : unit =
         let cache = PicklerCache.Instance
         cache.WithLockedCache(fun () -> 
-            if cache.IsPicklerGenerated typeof<'T> then
-                invalidOp <| sprintf "A pickler for type '%O' has already been generated." typeof<'T>
+            if cache.IsPicklerGenerated t then
+                invalidOp <| sprintf "A pickler for type '%O' has already been generated." t
 
-            let success = PicklerPluginRegistry.DeclareSerializable typeof<'T>
+            let success = PicklerPluginRegistry.DeclareSerializable t
             if not success then
-                invalidOp <| sprintf "A pickler plugin for type '%O' has already been registered." typeof<'T>)
+                invalidOp <| sprintf "A pickler plugin for type '%O' has already been registered." t)
 
     //
     // Misc utils
