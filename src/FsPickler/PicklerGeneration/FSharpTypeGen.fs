@@ -286,7 +286,7 @@ type internal FsRecordPickler =
                 ilGen.Emit OpCodes.Ret)
 
         let clonerDele =
-            DynamicMethod.compileFunc3<Pickler [], CloneState, 'Record, 'Record> "recordDeserializer" (fun picklers state source ilGen ->
+            DynamicMethod.compileFunc3<Pickler [], CloneState, 'Record, 'Record> "recordCloner" (fun picklers state source ilGen ->
 
                 emitCloneAndConstruct (Choice2Of2 ctor) fields state picklers source ilGen
 
