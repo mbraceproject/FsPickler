@@ -11,6 +11,7 @@ open System.Threading.Tasks
 open Nessos.FsPickler
 open Nessos.FsPickler.Json
 open Nessos.FsPickler.Combinators
+open Nessos.FsPickler.Hashing
 
 open Nessos.FsPickler.Tests.TestTypes
 
@@ -586,6 +587,46 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
         sifted.Hashes.Length |> should equal 2
         values.Length |> should equal 2
         pickler.HashUnsift(sifted, values) = graph |> should equal true
+
+
+    [<Test; Category("FsPickler Generic tests")>]
+    member __.``5. Object: FNV1a hash collision tests`` () =
+        let hashF = new FNV1aStreamFactory()
+        let checkCollisions c N f = 
+            let collisions =
+                getHashCollisions pickler hashF N f
+                |> Array.sumBy (fun (cs,fq) -> cs * fq)
+
+            collisions |> should be (lessThanOrEqualTo c)
+
+
+        checkCollisions 10000 0 (fun i -> i)
+        checkCollisions 10000 0 (fun i -> [i])
+        checkCollisions 10000 0 (fun i -> [|(i, 1L)|])
+        checkCollisions 10000 0 (fun i -> sprintf "Lorem ipsum dolor sit amet #%d. Lorem ipsum dolor." i)
+
+        let array = [|let r = new Random() in for i in 1 .. 1000 -> r.Next()|]
+        checkCollisions 10000 0 (fun i -> (array, i, array))
+
+
+    [<Test; Category("FsPickler Generic tests")>]
+    member __.``5. Object: MurMur3 hash collision tests`` () =
+        let hashF = new MurMur3()
+        let checkCollisions c N f = 
+            let collisions =
+                getHashCollisions pickler hashF N f
+                |> Array.sumBy (fun (cs,fq) -> cs * fq)
+
+            collisions |> should be (lessThanOrEqualTo c)
+
+
+        checkCollisions 10000 0 (fun i -> i)
+        checkCollisions 10000 0 (fun i -> [i])
+        checkCollisions 10000 0 (fun i -> [|(i, 1L)|])
+        checkCollisions 10000 0 (fun i -> sprintf "Lorem ipsum dolor sit amet #%d. Lorem ipsum dolor." i)
+
+        let array = [|let r = new Random() in for i in 1 .. 1000 -> r.Next()|]
+        checkCollisions 10000 0 (fun i -> (array, i, array))
 
     //
     //  Custom types

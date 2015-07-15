@@ -9,6 +9,7 @@ open System.Runtime.Serialization
 
 open Nessos.FsPickler
 open Nessos.FsPickler.Combinators
+open Nessos.FsPickler.Hashing
 
 module TestTypes =
 
@@ -495,3 +496,13 @@ module TestTypes =
         |> Seq.filter filterType
         |> Seq.choose tryActivate
         |> Seq.filter filterObject
+
+    /// Generates hash collision data using given serializer, hash and sample data.
+    /// Returns the distribution of hash collisions.
+    let getHashCollisions (s : FsPicklerSerializer) (hf : #IHashStreamFactory) (size : int) (factory : int -> 'T) : (int * int) [] =
+        Seq.init size (fun i -> s.ComputeHash(factory i, hashFactory = hf))
+        |> Seq.countBy id
+        |> Seq.countBy snd
+        |> Seq.sortBy fst
+        |> Seq.map (fun (cs,fs) -> cs - 1, fs)
+        |> Seq.toArray
