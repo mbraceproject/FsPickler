@@ -283,17 +283,12 @@ and [<AutoSerializable(false)>]
 
 
     override __.ComputeHash () =
+        let length = uint64 length
         let mutable h1 = h1
         let mutable h2 = h2
 
-        let length =
-            // have read precisely 0 (mod 16) bytes, no need to normalize length
-            if pos = 0 && not atK2 then 
-                uint64 length
-            else
-                // have unprocessed bytes, perform a final hash operation & normalize length
-                mixBody &h1 &h2 k1 k2
-                (uint64 length / 16UL + 1UL) * 16UL
+        // have unprocessed bytes, perform a final hash operation & normalize length
+        if pos > 0 || atK2 then mixBody &h1 &h2 k1 k2
 
         h1 <- h1 ^^^ length
         h2 <- h2 ^^^ length
