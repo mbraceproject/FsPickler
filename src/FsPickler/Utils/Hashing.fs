@@ -48,7 +48,8 @@ type FNV1aStreamFactory (?bits : int) =
         member __.Create () = new FNV1aStream(?bits = bits) :> HashStream
 
 /// 64-bit Fowler-Noll-Vo hashing algorithm
-and internal FNV1aStream (?bits : int) =
+and [<AutoSerializable(false)>]
+  internal FNV1aStream (?bits : int) =
     inherit HashStream()
 
     let shift = 64 - (defaultArg bits 64)
@@ -110,9 +111,9 @@ module internal MurMur3Utils =
     let C2 = 0x4cf5ad432745937fuL
 
     let inline rotateLeft (original : uint64) (bits : int) = 
-        original <<< bits ||| original >>> (64 - bits)
+        (original <<< bits) ||| (original >>> (64 - bits))
     let inline rotateRight (original : uint64) (bits : int) = 
-        original >>> bits ||| original <<< (64 - bits)
+        (original >>> bits) ||| (original <<< (64 - bits))
 
     let inline mixkey1 (k : uint64) =
         let mutable k = k
@@ -179,7 +180,8 @@ type MurMur3(?seed) =
     interface IHashStreamFactory with
         member __.Create () = new MurMur3Stream(?seed = seed) :> HashStream
 
-and internal MurMur3Stream(?seed : uint64) =
+and [<AutoSerializable(false)>]
+  internal MurMur3Stream(?seed : uint64) =
     inherit HashStream()
 
     let mutable length = 0L
