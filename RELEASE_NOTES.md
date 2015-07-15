@@ -1,3 +1,6 @@
+### 1.2.15
+* Fix MurMur3 implementation bug.
+
 ### 1.2.14
 * Support non-generic serializable type declarations.
 
