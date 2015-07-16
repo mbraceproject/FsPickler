@@ -303,7 +303,7 @@ type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?
     /// <param name="pickler">Pickler to be used for size computation. Defaults to auto-generated pickler.</param>
     member bp.ComputeSize<'T>(value : 'T, [<O;D(null)>] ?pickler : Pickler<'T>) =
         let pickler = match pickler with Some p -> p | None -> resolver.Resolve<'T> ()
-        let lengthCounter = new LengthCounter()
+        let lengthCounter = new LengthCounterStream()
         do
             use writer = initStreamWriter formatProvider lengthCounter None false None
             let _ = writeRootObject resolver reflectionCache writer None None true pickler value

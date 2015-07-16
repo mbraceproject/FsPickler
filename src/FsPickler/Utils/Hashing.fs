@@ -317,14 +317,23 @@ and [<AutoSerializable(false)>]
         bytes
 
 
-// just compute object size, discarding any data
-type internal LengthCounter () =
-    inherit HashStream ()
+/// Stream implementation that computes object size, discarding any data
+type LengthCounterStream () =
+    inherit System.IO.Stream ()
 
     let mutable length = 0L
 
-    override __.HashAlgorithm = raise <| new NotSupportedException()
-    override __.ComputeHash () = raise <| new NotSupportedException()
+    override __.CanRead = false
+    override __.CanSeek = false
+    override __.CanTimeout = false
+    override __.CanWrite = true
+    override __.ReadTimeout = 0
+    override __.WriteTimeout = 0
+    override __.Seek(_,_) = raise <| new NotSupportedException()
+    override __.SetLength _ = raise <| new NotSupportedException()
+    override __.Read(_,_,_) = raise <| new NotSupportedException()
+    override __.Flush () = ()
+    override __.Position with set _ = raise <| new NotSupportedException()
 
     override __.Length = length
     override __.Position = length
