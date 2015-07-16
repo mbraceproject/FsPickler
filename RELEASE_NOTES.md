@@ -1,3 +1,6 @@
+### 1.2.16
+* Add hash id extention methods.
+
 ### 1.2.15
 * Fix MurMur3 implementation bug.
 

@@ -8,21 +8,28 @@ open System.IO
 [<StructuralComparison>]
 type HashResult =
     {
+        /// Hashing algorithm identifier
         Algorithm : string
+        /// Type of hashed object
         Type : string
+        /// Size of serialized object
         Length : int64
+        /// Hash data
         Hash : byte []
     }
 
 /// An immutable factory interface for HashStreams
 type IHashStreamFactory =
+    /// Create a hash streaming instance
     abstract Create : unit -> HashStream
 
 /// An abstract byte sink used as a hash generating state machine
 and [<AbstractClass>] HashStream() =
     inherit System.IO.Stream()
 
+    /// Hash algorithm identifier
     abstract HashAlgorithm : string
+    /// Generates hash based on accumulated stream data.
     abstract ComputeHash : unit -> byte []
 
     override __.CanRead = false

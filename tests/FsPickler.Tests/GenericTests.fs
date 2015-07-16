@@ -9,8 +9,9 @@ open System.Runtime.Serialization
 open System.Threading.Tasks
 
 open Nessos.FsPickler
-open Nessos.FsPickler.Json
+open Nessos.FsPickler.Hashing
 open Nessos.FsPickler.Combinators
+open Nessos.FsPickler.Json
 
 open Nessos.FsPickler.Tests.TestTypes
 
@@ -428,6 +429,12 @@ module ``Generic Tests`` =
         FsPickler.EnsureSerializable(box [cov], failOnCloneableOnlyTypes = false)
         fun () -> FsPickler.EnsureSerializable(box [cov], failOnCloneableOnlyTypes = true)
         |> shouldFailwith<NonSerializableTypeException>
+
+    [<Test; Category("Pickler tests")>]
+    let ``2. Clone: Hash id parsing`` () =
+        let hash = FsPickler.ComputeHash [1..1000]
+        let id = hash.Id
+        HashResult.Parse id |> should equal hash
 
     //
     //  In-memory sifting tests

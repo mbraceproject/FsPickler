@@ -3,6 +3,8 @@
 open System
 open System.Collections.Generic
 open System.Runtime.Serialization
+open System.Text
+open System.Text.RegularExpressions
 
 open Nessos.FsPickler.Hashing
 
@@ -189,3 +191,30 @@ module ExtensionMethods =
 
             if found then Some entry.Value
             else None
+
+
+    let private hashRegex = new Regex("^([^:]+)://([^/]*)/([0-9]+)/([^/]+)$", RegexOptions.Compiled)
+    type HashResult with
+        /// Returns a unique, case-sensitive hash identifier
+        member h.Id = 
+            (new StringBuilder())
+                .Append(h.Algorithm)
+                .Append("://")
+                .Append(h.Type)
+                .Append('/')
+                .Append(h.Length)
+                .Append('/')
+                .Append(Convert.ToBase64String h.Hash)
+                .ToString()
+
+        /// Parses hash identifier to receive a hash record
+        static member Parse(id : string) : HashResult =
+            let m = hashRegex.Match(id)
+            if not m.Success then raise <| new FormatException("Input string does not match hash id format.")
+            else
+                {
+                    Algorithm = m.Groups.[1].Value
+                    Type = m.Groups.[2].Value
+                    Length = m.Groups.[3].Value |> int64
+                    Hash = m.Groups.[4].Value |> Convert.FromBase64String
+                }
