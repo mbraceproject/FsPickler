@@ -110,10 +110,12 @@ type XmlPickleWriter internal (textWriter : TextWriter, indent : bool, leaveOpen
         settings.CloseOutput <- not leaveOpen
         settings.Indent <- indent
         settings.CheckCharacters <- false
+        settings.ConformanceLevel <- ConformanceLevel.Auto
 
     let writer = XmlWriter.Create(textWriter, settings)
         
     interface IPickleFormatWriter with
+        member __.Flush () = writer.Flush()
 
         member __.BeginWriteRoot (tag : string) = 
             writer.WriteStartDocument()

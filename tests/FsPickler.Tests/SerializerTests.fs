@@ -30,11 +30,11 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
     let _ = Arb.register<FsPicklerGenerators> ()
 
     let manager = FsPicklerManager(format)
-    let pickler = manager.Pickler
+    let serializer = manager.Serializer
 
     let testRoundtrip (x : 'T) = 
         let bytes = self.Pickle x
-        pickler.UnPickle<'T>(bytes)
+        serializer.UnPickle<'T>(bytes)
 
     let testEquals x = 
         let y = testRoundtrip x 
@@ -313,7 +313,7 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
                     let edi = System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture e
                     fsp.Pickle edi)
 
-            let edi = pickler.UnPickle<System.Runtime.ExceptionServices.ExceptionDispatchInfo> bytes
+            let edi = serializer.UnPickle<System.Runtime.ExceptionServices.ExceptionDispatchInfo> bytes
             let e = try edi.Throw() ; failwith "impossible" with e -> e
             e.StackTrace.Split('\n').Length |> should be (greaterThan 20)
 #endif
@@ -438,7 +438,7 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
     member __.``5. Object: should fail at non-serializable type`` () =
         let v = [None ; Some(box <| new System.IO.MemoryStream())]
         try
-            let _ = pickler.Pickle v
+            let _ = serializer.Pickle v
             failAssert "Should have failed serialization."
         with 
         | :? FsPicklerException & InnerExn (:? NonSerializableTypeException) -> ()
@@ -469,7 +469,7 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
                 m.ToArray())
 
         use m = new MemoryStream(bytes)
-        let xs' = pickler.DeserializeSequence<'T>(m)
+        let xs' = serializer.DeserializeSequence<'T>(m)
         use enum = xs'.GetEnumerator()
 
         for i,x in xs |> Seq.mapi (fun i x -> (i,x)) do
@@ -532,7 +532,7 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
 
                 data)
 
-        pickler.UnPickle(data, pickler = Pickler.seq Pickler.int) 
+        serializer.UnPickle(data, pickler = Pickler.seq Pickler.int) 
         |> Seq.length 
         |> should equal 100
 
@@ -541,9 +541,9 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
         let graph : (int * int []) option * int [] option option list = (Some (1, [|1 .. 100|]), [None; None ; Some None; Some (Some [|12|])])
         let sifter = { new IObjectSifter with member __.Sift(p,_,_) = p.Kind = Kind.Array }
         use m = new MemoryStream()
-        let sifted = pickler.SerializeSifted(m, graph, sifter)
+        let sifted = serializer.SerializeSifted(m, graph, sifter)
         sifted.Length |> should equal 2
-        pickler.DeserializeSifted<(int * int []) option * int [] option option list>(m.Clone(), sifted) |> should equal graph
+        serializer.DeserializeSifted<(int * int []) option * int [] option option list>(m.Clone(), sifted) |> should equal graph
 
     [<Test; Category("FsPickler Generic tests")>]
     member __.``5. Object: tuple sift serialization`` () =
@@ -555,10 +555,10 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
         let calls = ref 0
         use m = new MemoryStream()
         let sifter = { new IObjectSifter with member __.Sift(_,_,o) = if obj.ReferenceEquals(o,tuple) then incr calls ; true else false }
-        let values = pickler.SerializeSifted(m, xs, sifter)
+        let values = serializer.SerializeSifted(m, xs, sifter)
         calls.Value |> should equal 1
         values.Length |> should equal 1
-        pickler.DeserializeSifted<(int * string)[]>(m.Clone(), values) |> should equal xs
+        serializer.DeserializeSifted<(int * string)[]>(m.Clone(), values) |> should equal xs
 
     [<Test; Category("FsPickler Generic tests")>]
     member __.``5. Object: random sift serialization`` () =
@@ -566,8 +566,8 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
         let randomSifter = { new IObjectSifter with member __.Sift(_,_,_) = r.Next(0,5) = 0 }
         Check.QuickThrowOnFail(fun (tree : ListTree<int>) ->
             use m = new MemoryStream()
-            let sifted = pickler.SerializeSifted(m, tree, randomSifter)
-            pickler.DeserializeSifted<ListTree<int>>(m.Clone(), sifted) |> should equal tree)
+            let sifted = serializer.SerializeSifted(m, tree, randomSifter)
+            serializer.DeserializeSifted<ListTree<int>>(m.Clone(), sifted) |> should equal tree)
 
     [<Test; Category("FsPickler Generic tests"); Repeat(5)>]
     member __.``5. Object: random graph sift serialization`` () =
@@ -575,18 +575,18 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
         let r = new System.Random()
         let randomSifter = { new IObjectSifter with member __.Sift(_,_,_) = r.Next(0,5) = 0 }
         use m = new MemoryStream()
-        let sifted = pickler.SerializeSifted(m, g, randomSifter)
-        let g' = pickler.DeserializeSifted<Graph<int>>(m.Clone(), sifted)
+        let sifted = serializer.SerializeSifted(m, g, randomSifter)
+        let g' = serializer.DeserializeSifted<Graph<int>>(m.Clone(), sifted)
         areEqualGraphs g g' |> should equal true
 
     [<Test; Category("FsPickler Generic tests"); Repeat(5)>]
     member __.``5. Object: hash sifting`` () =
         let mkArray N = [| for i in 1 .. N -> (string i, i) |]
         let graph = [mkArray 1 ; mkArray 2 ; mkArray 5000 ; mkArray 4999 ; mkArray 2 ; mkArray 5000]
-        let sifted, values = pickler.HashSift(graph, fun obj hash -> hash.Length > 5000L && match obj with :? System.Array -> true | _ -> false)
+        let sifted, values = serializer.HashSift(graph, fun obj hash -> hash.Length > 5000L && match obj with :? System.Array -> true | _ -> false)
         sifted.Hashes.Length |> should equal 2
         values.Length |> should equal 2
-        pickler.HashUnsift(sifted, values) = graph |> should equal true
+        serializer.HashUnsift(sifted, values) = graph |> should equal true
 
 
     [<Test; Category("FsPickler Generic tests")>]
@@ -594,7 +594,7 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
         let hashF = new FNV1aStreamFactory()
         let checkCollisions c N f = 
             let collisions =
-                getHashCollisions pickler hashF N f
+                getHashCollisions serializer hashF N f
                 |> Array.sumBy (fun (cs,fq) -> cs * fq)
 
             collisions |> should be (lessThanOrEqualTo c)
@@ -614,7 +614,7 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
         let hashF = new MurMur3()
         let checkCollisions c N f = 
             let collisions =
-                getHashCollisions pickler hashF N f
+                getHashCollisions serializer hashF N f
                 |> Array.sumBy (fun (cs,fq) -> cs * fq)
 
             collisions |> should be (lessThanOrEqualTo c)
@@ -627,6 +627,31 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
 
         let array = [|let r = new Random() in for i in 1 .. 1000 -> r.Next()|]
         checkCollisions 10000 0 (fun i -> (array, i, array))
+
+    [<Test; Category("FsPickler Generic tests")>]
+    member __.``5. Object: size computation`` () =
+        let value = box [for i in 1 .. 1000 -> (string i, i)]
+        let serializationSize = 
+            use m = new MemoryStream()
+            serializer.Serialize<obj>(m, value, leaveOpen = true)
+            m.Length
+
+        serializer.ComputeSize<obj>(value) |> should equal serializationSize
+        serializer.ComputeHash(value).Length |> should equal serializationSize
+
+    [<Test; Category("FsPickler Generic tests")>]
+    member __.``5. Object: accumulated size counter`` () =
+        let computeSize n =
+            use counter = serializer.CreateSizeCounter()
+            for i = 1 to n do
+                counter.Append [1 .. 100]
+            counter.Count
+        
+        let sz100 = computeSize 100
+        let sz = computeSize 1
+
+        sz100 |> should be (greaterThan (99L * sz))
+        sz100 |> should be (lessThanOrEqualTo (100L * sz))
 
     //
     //  Custom types
@@ -817,7 +842,7 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
                 let pp = mkPeanoPickler()
                 p.Pickle(n, pickler = pp))
 
-        pickler.UnPickle(data, pickler = mkPeanoPickler()) |> should equal (int2Peano 100)
+        serializer.UnPickle(data, pickler = mkPeanoPickler()) |> should equal (int2Peano 100)
 
     [<Test; Category("FSharp type tests")>]
     member self.``7. FSharp: combinator-based mutual recursive union`` () =
@@ -828,7 +853,7 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
 
                 p.Pickle(t, pickler = tp))
 
-        pickler.UnPickle(data, pickler = (getTreeForestPicklers Pickler.int |> fst))
+        serializer.UnPickle(data, pickler = (getTreeForestPicklers Pickler.int |> fst))
         |> should equal (nTree 6)
 
     [<Test; Category("FSharp type tests")>]
@@ -859,7 +884,7 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
         // rather than copied
         let pickle = self.PickleF(fun p -> p.Pickle(mkExn()))
             
-        let e0 = pickler.UnPickle<FSharpException>(pickle)
+        let e0 = serializer.UnPickle<FSharpException>(pickle)
         let e = mkExn()
 
         e0.ToString() |> should equal (e.ToString())
@@ -961,15 +986,15 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
     //
 
     member t.TestTypeMismatch<'In, 'Out> (v : 'In) = 
-        let pickle = pickler.Pickle(v, Pickler.auto<'In>)
+        let pickle = serializer.Pickle(v, Pickler.auto<'In>)
         try
-            let result = pickler.UnPickle<'Out>(pickle, Pickler.auto<'Out>)
+            let result = serializer.UnPickle<'Out>(pickle, Pickler.auto<'Out>)
             failAssert "should have failed deserialization"
         with :? FsPicklerException & InnerExn (:? InvalidPickleTypeException) -> ()
 
     [<Test; Category("Stress tests")>]
     member t.``8. Stress test: deserialization type mismatch`` () =
-        match pickler with
+        match serializer with
         | :? JsonSerializer as jsp when jsp.OmitHeader -> ()
         | _ ->
             t.TestTypeMismatch<int, string> 42
@@ -980,13 +1005,13 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
     member t.TestDeserializeInvalidData<'T> (bytes : byte []) =
         try
             use m = new MemoryStream(bytes)
-            let t' = pickler.Deserialize<'T>(m)
+            let t' = serializer.Deserialize<'T>(m)
             failwith "should have failed."
         with :? FsPicklerException -> ()
 
     [<Test; Category("Stress tests")>]
     member t.``8. Stress test: arbitrary data deserialization`` () =
-        match pickler with
+        match serializer with
         | :? JsonSerializer as jsp when jsp.OmitHeader -> ()
         | _ ->
             Check.QuickThrowOnFail (fun bs -> t.TestDeserializeInvalidData<int> bs)

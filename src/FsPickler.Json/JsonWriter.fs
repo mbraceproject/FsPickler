@@ -30,6 +30,7 @@ type internal JsonPickleWriter (jsonWriter : JsonWriter, omitHeader, indented, i
     let omitTag () = (omitHeader && depth = 0) || arrayStack.Peek() = depth - 1
 
     interface IPickleFormatWriter with
+        member __.Flush() = jsonWriter.Flush()
             
         member __.BeginWriteRoot (tag : string) =
             if omitHeader then () else

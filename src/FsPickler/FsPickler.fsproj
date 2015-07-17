@@ -126,6 +126,7 @@
     <Compile Include="Format\BinaryFormat.fs" />
     <Compile Include="Format\XmlFormat.fs" />
     <Compile Include="FsPickler\RootSerialization.fs" />
+    <Compile Include="FsPickler\ObjectSizeCounter.fs" />
     <Compile Include="FsPickler\Serializer.fs" />
     <Compile Include="FsPickler\TextSerializer.fs" />
     <Compile Include="FsPickler\BinarySerializer.fs" />

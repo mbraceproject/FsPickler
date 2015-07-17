@@ -4,6 +4,7 @@ open System
 open System.Reflection
 open System.Collections.Generic
 open System.Runtime.Serialization
+open System.Text
     
 open Nessos.FsPickler.Hashing
 
@@ -142,6 +143,14 @@ type FsPickler private () =
     /// <param name="value">input value.</param>
     /// <param name="pickler">Pickler to be used for size computation. Defaults to auto-generated pickler.</param>
     static member ComputeSize<'T>(value : 'T, [<O;D(null)>] ?pickler : Pickler<'T>) = defaultSerializer.Value.ComputeSize(value, ?pickler = pickler)
+
+    /// <summary>
+    ///     Creates a state object used for computing accumulated sizes for multiple objects.
+    /// </summary>
+    /// <param name="encoding">Text encoding used by the serializer.</param>
+    /// <param name="resetInterval">Specifies the serialized object interval after which serialization state will be reset. Defaults to no interval.</param>
+    static member CreateSizeCounter([<O;D(null)>] ?encoding : Encoding, ?resetInterval:int64) : ObjectSizeCounter =
+        defaultSerializer.Value.CreateSizeCounter(?encoding = encoding, ?resetInterval = resetInterval)
 
     /// <summary>
     ///     Visits all reference types that appear in the given object graph.

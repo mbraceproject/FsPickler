@@ -6,6 +6,7 @@ open System.IO
 /// Hashed object result info
 [<StructuralEquality>]
 [<StructuralComparison>]
+[<AutoSerializable(true)>]
 type HashResult =
     {
         /// Hashing algorithm identifier
@@ -315,27 +316,3 @@ and [<AutoSerializable(false)>]
         uint64ToBytes bytes 8 h2
 
         bytes
-
-
-/// Stream implementation that computes object size, discarding any data
-type LengthCounterStream () =
-    inherit System.IO.Stream ()
-
-    let mutable length = 0L
-
-    override __.CanRead = false
-    override __.CanSeek = false
-    override __.CanTimeout = false
-    override __.CanWrite = true
-    override __.ReadTimeout = 0
-    override __.WriteTimeout = 0
-    override __.Seek(_,_) = raise <| new NotSupportedException()
-    override __.SetLength _ = raise <| new NotSupportedException()
-    override __.Read(_,_,_) = raise <| new NotSupportedException()
-    override __.Flush () = ()
-    override __.Position with set _ = raise <| new NotSupportedException()
-
-    override __.Length = length
-    override __.Position = length
-    override __.WriteByte _ = length <- length + 1L
-    override __.Write(_, _, count : int) = length <- length + int64 count

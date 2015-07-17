@@ -24,7 +24,7 @@ module PickleFormat =
 
 type FsPicklerManager(pickleFormat : string) =
 
-    let pickler =
+    let serializer =
         match pickleFormat with
         | PickleFormat.Binary -> FsPickler.CreateBinary() :> FsPicklerSerializer
         | PickleFormat.Xml -> FsPickler.CreateXml(indent = true) :> FsPicklerSerializer
@@ -39,14 +39,14 @@ type FsPicklerManager(pickleFormat : string) =
 
         | _ -> invalidArg "name" <| sprintf "unexpected pickler format '%s'." pickleFormat
 
-    member __.Pickler = pickler
+    member __.Serializer = serializer
 
     member __.GetRemoteSerializer() = new RemoteSerializationClient(pickleFormat)
 
     interface IPickler with
         member __.Name = pickleFormat
-        member __.Pickle (value : 'T) = pickler.Pickle(value)
-        member __.UnPickle<'T> (data : byte[]) = pickler.UnPickle<'T>(data)
+        member __.Pickle (value : 'T) = serializer.Pickle(value)
+        member __.UnPickle<'T> (data : byte[]) = serializer.UnPickle<'T>(data)
 
 
 
@@ -58,11 +58,11 @@ and RemoteSerializer (pickleFormat : string) =
 
     member __.Pickle<'T>(data : byte []) : byte [] =
         let value = fp.UnPickle<'T>(data)
-        mgr.Pickler.Pickle<'T>(value)
+        mgr.Serializer.Pickle<'T>(value)
 
     member __.PickleF(data : byte []) : byte [] =
         let serializer = fp.UnPickle<FsPicklerSerializer -> byte[]>(data)
-        serializer mgr.Pickler
+        serializer mgr.Serializer
 
 and RemoteSerializationClient (pickleFormat : string) =
     let fp = FailoverPickler.Create()

@@ -1,3 +1,6 @@
+### 1.2.17
+* Implement aggregated object size calculator.
+
 ### 1.2.16
 * Add hash id extention methods.
 

@@ -214,3 +214,27 @@ module internal Utils =
                 bs.[i] <- (toUInt hex.[2*i + 1]) ||| ((toUInt hex.[2*i]) <<< 4)
 
             bs
+
+    /// Stream implementation that computes object size, discarding any data
+    [<AutoSerializable(false)>]
+    type LengthCounterStream () =
+        inherit Stream ()
+        let mutable length = 0L
+        member __.Count = length
+
+        override __.CanRead = false
+        override __.CanSeek = false
+        override __.CanTimeout = false
+        override __.CanWrite = true
+        override __.ReadTimeout = 0
+        override __.WriteTimeout = 0
+        override __.Seek(_,_) = raise <| new NotSupportedException()
+        override __.SetLength _ = raise <| new NotSupportedException()
+        override __.Read(_,_,_) = raise <| new NotSupportedException()
+        override __.Flush () = ()
+        override __.Position with set _ = raise <| new NotSupportedException()
+
+        override __.Length = length
+        override __.Position = length
+        override __.WriteByte _ = length <- length + 1L
+        override __.Write(_, _, count : int) = length <- length + int64 count

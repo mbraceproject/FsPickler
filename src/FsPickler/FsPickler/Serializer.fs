@@ -14,9 +14,6 @@ open Nessos.FsPickler.Hashing
 open Nessos.FsPickler.ReflectionCache
 open Nessos.FsPickler.RootSerialization
 
-type internal OAttribute = System.Runtime.InteropServices.OptionalAttribute
-type internal DAttribute = System.Runtime.InteropServices.DefaultParameterValueAttribute
-
 /// <summary>
 ///     An abstract class containg the basic serialization API.
 /// </summary>
@@ -280,7 +277,6 @@ type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?
     /// <param name="hashFactory">the hashing algorithm to be used. MurMur3 by default.</param>
     member bp.ComputeHash<'T>(value : 'T, [<O;D(null)>] ?hashFactory : IHashStreamFactory) =
         let signature = reflectionCache.GetTypeSignature (if obj.ReferenceEquals(value,null) then typeof<obj> else value.GetType())
-        let pickler = resolver.Resolve<obj>()
         let hashStream = 
             match hashFactory with 
             | Some h -> h.Create()
@@ -288,6 +284,7 @@ type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?
 
         do
             use writer = initStreamWriter formatProvider hashStream None false None
+            let pickler = resolver.Resolve<obj>()
             let _ = writeRootObject resolver reflectionCache writer None None true pickler (box value)
             ()
 
@@ -309,4 +306,12 @@ type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?
             let _ = writeRootObject resolver reflectionCache writer None None true pickler value
             ()
 
-        lengthCounter.Length
+        lengthCounter.Count
+
+    /// <summary>
+    ///     Creates a state object used for computing accumulated sizes for multiple objects.
+    /// </summary>
+    /// <param name="encoding">Text encoding used by the serializer.</param>
+    /// <param name="resetInterval">Specifies the serialized object interval after which serialization state will be reset. Defaults to no interval.</param>
+    member bp.CreateSizeCounter([<O;D(null)>] ?encoding : Encoding, ?resetInterval:int64) : ObjectSizeCounter =
+        new ObjectSizeCounter(formatProvider, resolver, reflectionCache, encoding, resetInterval)

@@ -10,6 +10,8 @@ open System.IO
 type IPickleFormatWriter =
 
     inherit IDisposable
+
+    abstract Flush : unit -> unit
         
     /// <summary>
     ///     Writes the start of the pickle.
