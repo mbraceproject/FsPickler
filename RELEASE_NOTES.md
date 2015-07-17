@@ -1,3 +1,6 @@
+### 1.2.18
+* Bugfix.
+
 ### 1.2.17
 * Implement aggregated object size calculator.
 

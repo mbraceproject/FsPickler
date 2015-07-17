@@ -107,7 +107,7 @@ type BinaryPickleWriter internal (stream : Stream, encoding : Encoding, leaveOpe
 #endif
 
     interface IPickleFormatWriter with
-        member __.Flush () = stream.Flush()
+        member __.Flush () = ()
         member __.BeginWriteRoot (tag : string) =
             bw.Write initValue
             bw.Write formatv1200
