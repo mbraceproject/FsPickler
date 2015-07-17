@@ -61,7 +61,7 @@
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L95-95" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L96-96" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -84,7 +84,7 @@ serialization buffers.</p>
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L165-165" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L174-174" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -105,7 +105,7 @@ serialization buffers.</p>
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L144-144" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L145-145" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -126,7 +126,7 @@ serialization buffers.</p>
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L21-21" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L22-22" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -140,14 +140,35 @@ serialization buffers.</p>
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '96', 96)" onmouseover="showTip(event, '96', 96)">
-            CreateXml(typeConverter, indent)
+            CreateSizeCounter(...)
           </code>
           <div class="tip" id="96">
+            <strong>Signature:</strong> (encoding:Encoding option * resetInterval:int64 option) -&gt; ObjectSizeCounter<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L152-152" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Creates a state object used for computing accumulated sizes for multiple objects.</p>
+
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '97', 97)" onmouseover="showTip(event, '97', 97)">
+            CreateXml(typeConverter, indent)
+          </code>
+          <div class="tip" id="97">
             <strong>Signature:</strong> (typeConverter:ITypeNameConverter option * indent:bool option) -&gt; XmlSerializer<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L28-28" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L29-29" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -160,37 +181,15 @@ serialization buffers.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '97', 97)" onmouseover="showTip(event, '97', 97)">
+          <code onmouseout="hideTip(event, '98', 98)" onmouseover="showTip(event, '98', 98)">
             DeclareSerializable(t)
           </code>
-          <div class="tip" id="97">
+          <div class="tip" id="98">
             <strong>Signature:</strong> t:Type -&gt; unit<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L73-73" class="github-link">
-              <img src="../content/img/github.png" class="normal" />
-              <img src="../content/img/github-blue.png" class="hover" />
-            </a>
-          <p>Declares that supplied type should be treated as serializable.
-This is equivalent to dynamically attaching a SerializableAttribute to the type.</p>
-
-
-
-        </td>
-      </tr>
-      <tr>
-        <td class="member-name">
-
-          <code onmouseout="hideTip(event, '98', 98)" onmouseover="showTip(event, '98', 98)">
-            DeclareSerializable()
-          </code>
-          <div class="tip" id="98">
-            <strong>Signature:</strong> unit -&gt; unit<br />
-                          <strong>Type parameters:</strong> 'T          </div>
-        </td>
-        <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L66-66" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L74-74" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -205,14 +204,36 @@ This is equivalent to dynamically attaching a SerializableAttribute to the type.
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '99', 99)" onmouseover="showTip(event, '99', 99)">
-            EnsureSerializable(...)
+            DeclareSerializable()
           </code>
           <div class="tip" id="99">
+            <strong>Signature:</strong> unit -&gt; unit<br />
+                          <strong>Type parameters:</strong> 'T          </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L67-67" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Declares that supplied type should be treated as serializable.
+This is equivalent to dynamically attaching a SerializableAttribute to the type.</p>
+
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '100', 100)" onmouseover="showTip(event, '100', 100)">
+            EnsureSerializable(...)
+          </code>
+          <div class="tip" id="100">
             <strong>Signature:</strong> (graph:&#39;T * failOnCloneableOnlyTypes:bool option) -&gt; unit<br />
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L230-230" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L239-239" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -226,15 +247,15 @@ or raising an exception if not.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '100', 100)" onmouseover="showTip(event, '100', 100)">
+          <code onmouseout="hideTip(event, '101', 101)" onmouseover="showTip(event, '101', 101)">
             GatherObjectsInGraph(graph)
           </code>
-          <div class="tip" id="100">
+          <div class="tip" id="101">
             <strong>Signature:</strong> graph:obj -&gt; obj []<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L205-205" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L214-214" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -247,15 +268,15 @@ or raising an exception if not.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '101', 101)" onmouseover="showTip(event, '101', 101)">
+          <code onmouseout="hideTip(event, '102', 102)" onmouseover="showTip(event, '102', 102)">
             GatherTypesInObjectGraph(graph)
           </code>
-          <div class="tip" id="101">
+          <div class="tip" id="102">
             <strong>Signature:</strong> graph:obj -&gt; Type []<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L172-172" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L181-181" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -268,15 +289,15 @@ or raising an exception if not.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '102', 102)" onmouseover="showTip(event, '102', 102)">
+          <code onmouseout="hideTip(event, '103', 103)" onmouseover="showTip(event, '103', 103)">
             GeneratePickler(t)
           </code>
-          <div class="tip" id="102">
+          <div class="tip" id="103">
             <strong>Signature:</strong> t:Type -&gt; Pickler<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L44-44" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L45-45" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -289,15 +310,15 @@ or raising an exception if not.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '103', 103)" onmouseover="showTip(event, '103', 103)">
+          <code onmouseout="hideTip(event, '104', 104)" onmouseover="showTip(event, '104', 104)">
             GeneratePickler()
           </code>
-          <div class="tip" id="103">
+          <div class="tip" id="104">
             <strong>Signature:</strong> unit -&gt; Pickler&lt;&#39;T&gt;<br />
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L40-40" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L41-41" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -310,36 +331,15 @@ or raising an exception if not.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '104', 104)" onmouseover="showTip(event, '104', 104)">
+          <code onmouseout="hideTip(event, '105', 105)" onmouseover="showTip(event, '105', 105)">
             IsSerializableType(t)
           </code>
-          <div class="tip" id="104">
+          <div class="tip" id="105">
             <strong>Signature:</strong> t:Type -&gt; bool<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L36-36" class="github-link">
-              <img src="../content/img/github.png" class="normal" />
-              <img src="../content/img/github-blue.png" class="hover" />
-            </a>
-          <p>Decides if given type is serializable by FsPickler</p>
-
-
-
-        </td>
-      </tr>
-      <tr>
-        <td class="member-name">
-
-          <code onmouseout="hideTip(event, '105', 105)" onmouseover="showTip(event, '105', 105)">
-            IsSerializableType()
-          </code>
-          <div class="tip" id="105">
-            <strong>Signature:</strong> unit -&gt; bool<br />
-                          <strong>Type parameters:</strong> 'T          </div>
-        </td>
-        <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L32-32" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L37-37" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -353,14 +353,35 @@ or raising an exception if not.</p>
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '106', 106)" onmouseover="showTip(event, '106', 106)">
-            RegisterPicklerFactory(factory)
+            IsSerializableType()
           </code>
           <div class="tip" id="106">
+            <strong>Signature:</strong> unit -&gt; bool<br />
+                          <strong>Type parameters:</strong> 'T          </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L33-33" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Decides if given type is serializable by FsPickler</p>
+
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '107', 107)" onmouseover="showTip(event, '107', 107)">
+            RegisterPicklerFactory(factory)
+          </code>
+          <div class="tip" id="107">
             <strong>Signature:</strong> factory:IPicklerFactory&lt;&#39;T&gt; -&gt; unit<br />
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L52-52" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L53-53" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -374,37 +395,15 @@ Factories can only be registered before any serializations take place.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '107', 107)" onmouseover="showTip(event, '107', 107)">
-            Sift(...)
-          </code>
-          <div class="tip" id="107">
-            <strong>Signature:</strong> (value:&#39;T * sifter:(obj -&gt; bool) * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option) -&gt; Sifted&lt;&#39;T&gt; * (int64 * obj) []<br />
-                          <strong>Type parameters:</strong> 'T          </div>
-        </td>
-        <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L124-124" class="github-link">
-              <img src="../content/img/github.png" class="normal" />
-              <img src="../content/img/github-blue.png" class="hover" />
-            </a>
-          <p>Creates a clone of the provided object graph, sifting objects from the graph as specified by the provided sifter implementation.
-Only reference types can be sifted from a graph.</p>
-
-
-
-        </td>
-      </tr>
-      <tr>
-        <td class="member-name">
-
           <code onmouseout="hideTip(event, '108', 108)" onmouseover="showTip(event, '108', 108)">
             Sift(...)
           </code>
           <div class="tip" id="108">
-            <strong>Signature:</strong> (value:&#39;T * sifter:IObjectSifter * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option) -&gt; Sifted&lt;&#39;T&gt; * (int64 * obj) []<br />
+            <strong>Signature:</strong> (value:&#39;T * sifter:(obj -&gt; bool) * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option) -&gt; Sifted&lt;&#39;T&gt; * (int64 * obj) []<br />
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L109-109" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L125-125" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -419,14 +418,36 @@ Only reference types can be sifted from a graph.</p>
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '109', 109)" onmouseover="showTip(event, '109', 109)">
-            UnSift(...)
+            Sift(...)
           </code>
           <div class="tip" id="109">
+            <strong>Signature:</strong> (value:&#39;T * sifter:IObjectSifter * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option) -&gt; Sifted&lt;&#39;T&gt; * (int64 * obj) []<br />
+                          <strong>Type parameters:</strong> 'T          </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L110-110" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Creates a clone of the provided object graph, sifting objects from the graph as specified by the provided sifter implementation.
+Only reference types can be sifted from a graph.</p>
+
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '110', 110)" onmouseover="showTip(event, '110', 110)">
+            UnSift(...)
+          </code>
+          <div class="tip" id="110">
             <strong>Signature:</strong> (sifted:Sifted&lt;&#39;T&gt; * values:(int64 * obj) [] * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option) -&gt; &#39;T<br />
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L136-136" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L137-137" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -439,15 +460,15 @@ Only reference types can be sifted from a graph.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '110', 110)" onmouseover="showTip(event, '110', 110)">
+          <code onmouseout="hideTip(event, '111', 111)" onmouseover="showTip(event, '111', 111)">
             VisitObject(...)
           </code>
-          <div class="tip" id="110">
+          <div class="tip" id="111">
             <strong>Signature:</strong> (visitor:IObjectVisitor * graph:&#39;T * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option * visitOrder:VisitOrder option) -&gt; unit<br />
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L154-154" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L163-163" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>

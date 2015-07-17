@@ -53,15 +53,15 @@
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '112', 112)" onmouseover="showTip(event, '112', 112)">
+          <code onmouseout="hideTip(event, '113', 113)" onmouseover="showTip(event, '113', 113)">
             new(formatProvider, typeConverter)
           </code>
-          <div class="tip" id="112">
+          <div class="tip" id="113">
             <strong>Signature:</strong> (formatProvider:IPickleFormatProvider * typeConverter:ITypeNameConverter option) -&gt; FsPicklerSerializer<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Serializer.fs#L24-24" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Serializer.fs#L21-21" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -79,15 +79,15 @@
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '113', 113)" onmouseover="showTip(event, '113', 113)">
+          <code onmouseout="hideTip(event, '114', 114)" onmouseover="showTip(event, '114', 114)">
             ComputeHash(value, hashFactory)
           </code>
-          <div class="tip" id="113">
+          <div class="tip" id="114">
             <strong>Signature:</strong> (value:&#39;T * hashFactory:IHashStreamFactory option) -&gt; HashResult<br />
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Serializer.fs#L281-281" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Serializer.fs#L278-278" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -100,15 +100,15 @@
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '114', 114)" onmouseover="showTip(event, '114', 114)">
+          <code onmouseout="hideTip(event, '115', 115)" onmouseover="showTip(event, '115', 115)">
             ComputeSize(value, pickler)
           </code>
-          <div class="tip" id="114">
+          <div class="tip" id="115">
             <strong>Signature:</strong> (value:&#39;T * pickler:Pickler&lt;&#39;T&gt; option) -&gt; int64<br />
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Serializer.fs#L304-304" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Serializer.fs#L301-301" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -121,15 +121,36 @@
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '115', 115)" onmouseover="showTip(event, '115', 115)">
+          <code onmouseout="hideTip(event, '116', 116)" onmouseover="showTip(event, '116', 116)">
+            CreateSizeCounter(...)
+          </code>
+          <div class="tip" id="116">
+            <strong>Signature:</strong> (encoding:Encoding option * resetInterval:int64 option) -&gt; ObjectSizeCounter<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Serializer.fs#L316-316" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Creates a state object used for computing accumulated sizes for multiple objects.</p>
+
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '117', 117)" onmouseover="showTip(event, '117', 117)">
             Deserialize(...)
           </code>
-          <div class="tip" id="115">
+          <div class="tip" id="117">
             <strong>Signature:</strong> (stream:Stream * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option * encoding:Encoding option * leaveOpen:bool option) -&gt; &#39;T<br />
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Serializer.fs#L63-63" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Serializer.fs#L60-60" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -142,15 +163,15 @@
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '116', 116)" onmouseover="showTip(event, '116', 116)">
+          <code onmouseout="hideTip(event, '118', 118)" onmouseover="showTip(event, '118', 118)">
             DeserializeSequence(...)
           </code>
-          <div class="tip" id="116">
+          <div class="tip" id="118">
             <strong>Signature:</strong> (stream:Stream * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option * encoding:Encoding option * leaveOpen:bool option) -&gt; seq&lt;&#39;T&gt;<br />
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Serializer.fs#L93-93" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Serializer.fs#L90-90" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -163,15 +184,15 @@
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '117', 117)" onmouseover="showTip(event, '117', 117)">
+          <code onmouseout="hideTip(event, '119', 119)" onmouseover="showTip(event, '119', 119)">
             DeserializeSequenceUntyped(...)
           </code>
-          <div class="tip" id="117">
+          <div class="tip" id="119">
             <strong>Signature:</strong> (stream:Stream * pickler:Pickler * streamingContext:StreamingContext option * encoding:Encoding option * leaveOpen:bool option) -&gt; IEnumerable<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Serializer.fs#L246-246" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Serializer.fs#L243-243" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -184,15 +205,15 @@
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '118', 118)" onmouseover="showTip(event, '118', 118)">
+          <code onmouseout="hideTip(event, '120', 120)" onmouseover="showTip(event, '120', 120)">
             DeserializeSifted(...)
           </code>
-          <div class="tip" id="118">
+          <div class="tip" id="120">
             <strong>Signature:</strong> (stream:Stream * sifted:(int64 * obj) [] * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option * encoding:Encoding option * leaveOpen:bool option) -&gt; &#39;T<br />
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Serializer.fs#L131-131" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Serializer.fs#L128-128" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -205,15 +226,15 @@
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '119', 119)" onmouseover="showTip(event, '119', 119)">
+          <code onmouseout="hideTip(event, '121', 121)" onmouseover="showTip(event, '121', 121)">
             DeserializeUntyped(...)
           </code>
-          <div class="tip" id="119">
+          <div class="tip" id="121">
             <strong>Signature:</strong> (stream:Stream * pickler:Pickler * streamingContext:StreamingContext option * encoding:Encoding option * leaveOpen:bool option) -&gt; obj<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Serializer.fs#L218-218" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Serializer.fs#L215-215" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -226,15 +247,15 @@
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '120', 120)" onmouseover="showTip(event, '120', 120)">
+          <code onmouseout="hideTip(event, '122', 122)" onmouseover="showTip(event, '122', 122)">
             Pickle(...)
           </code>
-          <div class="tip" id="120">
+          <div class="tip" id="122">
             <strong>Signature:</strong> (value:&#39;T * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option * encoding:Encoding option) -&gt; byte []<br />
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Serializer.fs#L146-146" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Serializer.fs#L143-143" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -247,15 +268,15 @@
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '121', 121)" onmouseover="showTip(event, '121', 121)">
+          <code onmouseout="hideTip(event, '123', 123)" onmouseover="showTip(event, '123', 123)">
             PickleFormat
           </code>
-          <div class="tip" id="121">
+          <div class="tip" id="123">
             <strong>Signature:</strong> string<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Serializer.fs#L35-35" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Serializer.fs#L32-32" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -268,15 +289,15 @@
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '122', 122)" onmouseover="showTip(event, '122', 122)">
+          <code onmouseout="hideTip(event, '124', 124)" onmouseover="showTip(event, '124', 124)">
             PickleSifted(...)
           </code>
-          <div class="tip" id="122">
+          <div class="tip" id="124">
             <strong>Signature:</strong> (value:&#39;T * sifter:IObjectSifter * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option * encoding:Encoding option) -&gt; byte [] * (int64 * obj) []<br />
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Serializer.fs#L172-172" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Serializer.fs#L169-169" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -290,15 +311,15 @@ Values excluded from serialization will be returned tagged by their ids.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '123', 123)" onmouseover="showTip(event, '123', 123)">
+          <code onmouseout="hideTip(event, '125', 125)" onmouseover="showTip(event, '125', 125)">
             PickleUntyped(...)
           </code>
-          <div class="tip" id="123">
+          <div class="tip" id="125">
             <strong>Signature:</strong> (value:obj * pickler:Pickler * streamingContext:StreamingContext option * encoding:Encoding option) -&gt; byte []<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Serializer.fs#L259-259" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Serializer.fs#L256-256" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -311,15 +332,15 @@ Values excluded from serialization will be returned tagged by their ids.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '124', 124)" onmouseover="showTip(event, '124', 124)">
+          <code onmouseout="hideTip(event, '126', 126)" onmouseover="showTip(event, '126', 126)">
             Serialize(...)
           </code>
-          <div class="tip" id="124">
+          <div class="tip" id="126">
             <strong>Signature:</strong> (stream:Stream * value:&#39;T * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option * encoding:Encoding option * leaveOpen:bool option) -&gt; unit<br />
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Serializer.fs#L48-48" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Serializer.fs#L45-45" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -332,15 +353,15 @@ Values excluded from serialization will be returned tagged by their ids.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '125', 125)" onmouseover="showTip(event, '125', 125)">
+          <code onmouseout="hideTip(event, '127', 127)" onmouseover="showTip(event, '127', 127)">
             SerializeSequence(...)
           </code>
-          <div class="tip" id="125">
+          <div class="tip" id="127">
             <strong>Signature:</strong> (stream:Stream * sequence:seq&lt;&#39;T&gt; * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option * encoding:Encoding option * leaveOpen:bool option) -&gt; int<br />
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Serializer.fs#L78-78" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Serializer.fs#L75-75" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -353,15 +374,15 @@ Values excluded from serialization will be returned tagged by their ids.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '126', 126)" onmouseover="showTip(event, '126', 126)">
+          <code onmouseout="hideTip(event, '128', 128)" onmouseover="showTip(event, '128', 128)">
             SerializeSequenceUntyped(...)
           </code>
-          <div class="tip" id="126">
+          <div class="tip" id="128">
             <strong>Signature:</strong> (stream:Stream * sequence:IEnumerable * pickler:Pickler * streamingContext:StreamingContext option * encoding:Encoding option * leaveOpen:bool option) -&gt; int<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Serializer.fs#L233-233" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Serializer.fs#L230-230" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -374,15 +395,15 @@ Values excluded from serialization will be returned tagged by their ids.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '127', 127)" onmouseover="showTip(event, '127', 127)">
+          <code onmouseout="hideTip(event, '129', 129)" onmouseover="showTip(event, '129', 129)">
             SerializeSifted(...)
           </code>
-          <div class="tip" id="127">
+          <div class="tip" id="129">
             <strong>Signature:</strong> (stream:Stream * value:&#39;T * sifter:IObjectSifter * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option * encoding:Encoding option * leaveOpen:bool option) -&gt; (int64 * obj) []<br />
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Serializer.fs#L113-113" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Serializer.fs#L110-110" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -396,15 +417,15 @@ Values excluded from serialization will be returned tagged by their ids.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '128', 128)" onmouseover="showTip(event, '128', 128)">
+          <code onmouseout="hideTip(event, '130', 130)" onmouseover="showTip(event, '130', 130)">
             SerializeUntyped(...)
           </code>
-          <div class="tip" id="128">
+          <div class="tip" id="130">
             <strong>Signature:</strong> (stream:Stream * value:obj * pickler:Pickler * streamingContext:StreamingContext option * encoding:Encoding option * leaveOpen:bool option) -&gt; unit<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Serializer.fs#L206-206" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Serializer.fs#L203-203" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -417,15 +438,15 @@ Values excluded from serialization will be returned tagged by their ids.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '129', 129)" onmouseover="showTip(event, '129', 129)">
+          <code onmouseout="hideTip(event, '131', 131)" onmouseover="showTip(event, '131', 131)">
             UnPickle(...)
           </code>
-          <div class="tip" id="129">
+          <div class="tip" id="131">
             <strong>Signature:</strong> (data:byte [] * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option * encoding:Encoding option) -&gt; &#39;T<br />
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Serializer.fs#L157-157" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Serializer.fs#L154-154" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -438,15 +459,15 @@ Values excluded from serialization will be returned tagged by their ids.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '130', 130)" onmouseover="showTip(event, '130', 130)">
+          <code onmouseout="hideTip(event, '132', 132)" onmouseover="showTip(event, '132', 132)">
             UnPickleSifted(...)
           </code>
-          <div class="tip" id="130">
+          <div class="tip" id="132">
             <strong>Signature:</strong> (pickle:byte [] * sifted:(int64 * obj) [] * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option * encoding:Encoding option) -&gt; &#39;T<br />
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Serializer.fs#L187-187" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Serializer.fs#L184-184" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -459,15 +480,15 @@ Values excluded from serialization will be returned tagged by their ids.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '131', 131)" onmouseover="showTip(event, '131', 131)">
+          <code onmouseout="hideTip(event, '133', 133)" onmouseover="showTip(event, '133', 133)">
             UnPickleUntyped(...)
           </code>
-          <div class="tip" id="131">
+          <div class="tip" id="133">
             <strong>Signature:</strong> (pickle:byte [] * pickler:Pickler * streamingContext:StreamingContext option * encoding:Encoding option) -&gt; obj<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Serializer.fs#L270-270" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Serializer.fs#L267-267" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
