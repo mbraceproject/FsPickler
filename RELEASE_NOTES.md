@@ -1,3 +1,6 @@
+### 1.2.19
+* Add net35 support in FsPickler.CSharp package.
+
 ### 1.2.18
 * Bugfix.
 

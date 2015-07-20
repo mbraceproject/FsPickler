@@ -2,7 +2,7 @@ source https://www.nuget.org/api/v2
 
 nuget FsCheck 1.0.0
 nuget FSharp.Charting
-nuget FSharp.Core 3.1.2.1
+nuget FSharp.Core 3.1.2.5
 nuget FsUnit
 nuget Newtonsoft.Json >= 6.0.5
 nuget NUnit 2.6.3
