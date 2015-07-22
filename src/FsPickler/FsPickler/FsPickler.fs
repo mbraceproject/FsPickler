@@ -158,7 +158,7 @@ type FsPickler private () =
     /// </summary>
     /// <param name="encoding">Text encoding used by the serializer.</param>
     /// <param name="resetInterval">Specifies the serialized object interval after which serialization state will be reset. Defaults to no interval.</param>
-    static member CreateSizeCounter([<O;D(null)>] ?encoding : Encoding, ?resetInterval:int64) : ObjectSizeCounter =
+    static member CreateObjectSizeCounter([<O;D(null)>] ?encoding : Encoding, [<O;D(null)>] ?resetInterval:int64) : ObjectSizeCounter =
         defaultSerializer.Value.CreateObjectSizeCounter(?encoding = encoding, ?resetInterval = resetInterval)
 
     /// <summary>
