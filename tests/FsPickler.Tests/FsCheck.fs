@@ -2,9 +2,46 @@
 
 open FsCheck
 
-type FsPicklerGenerators =
+type FsPicklerGenerators private () =
+    static let types = 
+        [| 
+            typeof<int> ; typeof<string> ; typeof<bool> ; typeof<byte> ; typeof<uint32> ; typeof<bigint> ;
+            typeof<unit> ; typeof<obj> ; typeof<int list> ; typeof<byte []> ; typeof<System.DateTime> ; typeof<System.Guid>
+            typedefof<_ option> ; typedefof<_ list> ; typedefof<Choice<_,_,_>> ; typedefof<_ * _> ; typedefof<_ ref>
+            typedefof<Choice<_,_>> ; typedefof<_ * _ * _>
+        |]
+
     static member BigInt = Arb.generate<byte []> |> Gen.map (fun bs -> System.Numerics.BigInteger(bs)) |> Arb.fromGen
     static member Array2D<'T> () = Arb.generate<'T> |> Gen.array2DOf |> Arb.fromGen
+    static member Type =
+        let rec genTy () = gen {
+            let! i = Arb.generate<int>
+            let ty = types.[abs i % types.Length]
+            let! gty = gen {
+                if ty.IsGenericTypeDefinition then
+                    let gas = ty.GetGenericArguments()
+                    for i = 0 to gas.Length - 1 do
+                        let! ga = genTy()
+                        gas.[i] <- ga
+
+                    return ty.MakeGenericType gas
+                else
+                    return ty
+            }
+
+            let! makeArray = Arb.generate<int>
+            if makeArray % 13 = 0 then
+                let! sd = Arb.generate<int>
+                let rk = abs sd % 3
+                return 
+                    if rk = 0 then gty.MakeArrayType()
+                    else gty.MakeArrayType(rk + 1)
+            else
+                return gty
+        }
+
+        Arb.fromGen (genTy ())
+
     static member Array3D<'T> () =
         let mkSized (n : int) =
             gen {

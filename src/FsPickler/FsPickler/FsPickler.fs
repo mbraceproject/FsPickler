@@ -37,6 +37,15 @@ type FsPickler private () =
     static member IsSerializableType (t : Type) : bool = 
         resolver.Value.IsSerializable t
 
+    /// <summary>
+    ///     Decides if given value is serializable object graph without performing an actual serialization.
+    /// </summary>
+    /// <param name="graph">Graph to be checked.</param>
+    /// <param name="failOnCloneableOnlyTypes">Fail on types that are declared cloneable only. Defaults to true.</param>
+    static member IsSerializableValue (graph : 'T, [<O;D(null)>] ?failOnCloneableOnlyTypes : bool) : bool =
+        try FsPickler.EnsureSerializable(graph, ?failOnCloneableOnlyTypes = failOnCloneableOnlyTypes) ; true
+        with :? FsPicklerException -> false
+
     /// Auto generates a pickler for given type variable
     static member GeneratePickler<'T> () : Pickler<'T> = 
         resolver.Value.Resolve<'T> ()
@@ -231,8 +240,7 @@ type FsPickler private () =
 
 
     /// <summary>
-    ///     Traverses the object graph, returning if serializable
-    ///     or raising an exception if not.
+    ///     Traverses the object graph, completing if serializable or raising a serialization exception if not.
     /// </summary>
     /// <param name="graph">Graph to be checked.</param>
     /// <param name="failOnCloneableOnlyTypes">Fail on types that are declared cloneable only. Defaults to true.</param>

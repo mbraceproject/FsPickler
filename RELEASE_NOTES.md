@@ -1,3 +1,6 @@
+### 1.2.20
+* Fix HashResult.Parse bug.
+
 ### 1.2.19
 * Add net35 support in FsPickler.CSharp package.
 

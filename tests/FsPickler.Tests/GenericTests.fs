@@ -432,9 +432,12 @@ module ``Generic Tests`` =
 
     [<Test; Category("Pickler tests")>]
     let ``2. Clone: Hash id parsing`` () =
-        let hash = FsPickler.ComputeHash [1..1000]
-        let id = hash.Id
-        HashResult.Parse id |> should equal hash
+        let seed = FsPickler.ComputeHash [|1 .. 10000|]
+        Check.QuickThrowOnFail<int64 * Type * byte []>(
+            fun (l : int64, t : Type, bytes : byte []) ->
+                let hash = { seed with Type = t.FullName ; Hash = bytes ; Length = abs l }
+                let id = hash.Id
+                HashResult.Parse id |> should equal hash)
 
     //
     //  In-memory sifting tests

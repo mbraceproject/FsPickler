@@ -193,7 +193,7 @@ module ExtensionMethods =
             else None
 
 
-    let private hashRegex = new Regex("^([^:]+)://([^/]*)/([0-9]+)/([^/]+)$", RegexOptions.Compiled)
+    let private hashRegex = new Regex("^([^/:]+)://([^/]*)/([0-9]+)/([^/]*)$", RegexOptions.Compiled)
     type HashResult with
         /// Returns a unique, case-sensitive hash identifier
         member h.Id = 
@@ -204,7 +204,7 @@ module ExtensionMethods =
                 .Append('/')
                 .Append(h.Length)
                 .Append('/')
-                .Append(Convert.ToBase64String h.Hash)
+                .Append(Convert.ToBase64String(h.Hash).Replace('/','-'))
                 .ToString()
 
         /// Parses hash identifier to receive a hash record
@@ -216,5 +216,5 @@ module ExtensionMethods =
                     Algorithm = m.Groups.[1].Value
                     Type = m.Groups.[2].Value
                     Length = m.Groups.[3].Value |> int64
-                    Hash = m.Groups.[4].Value |> Convert.FromBase64String
+                    Hash = m.Groups.[4].Value.Replace('-','/') |> Convert.FromBase64String
                 }
