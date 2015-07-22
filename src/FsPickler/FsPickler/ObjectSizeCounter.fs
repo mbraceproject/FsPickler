@@ -24,7 +24,7 @@ type ObjectSizeCounter internal (formatProvider : IPickleFormatProvider, resolve
     /// Resets the serialization state object id generators
     member __.Reset() = writeState.Reset()
     /// Appends a value to the size count
-    member __.Append<'T>(value : 'T, ?pickler:Pickler<'T>) =
+    member __.Append<'T>(value : 'T, [<O;D(null)>] ?pickler:Pickler<'T>) =
         match resetInterval with
         | Some ri ->
             if resetCount = ri then
