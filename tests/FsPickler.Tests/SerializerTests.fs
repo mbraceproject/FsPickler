@@ -642,7 +642,7 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
     [<Test; Category("FsPickler Generic tests")>]
     member __.``5. Object: accumulated size counter`` () =
         let computeSize n =
-            use counter = serializer.CreateSizeCounter()
+            use counter = serializer.CreateObjectSizeCounter()
             for i = 1 to n do
                 counter.Append [1 .. 100]
             counter.Count

@@ -313,5 +313,5 @@ type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?
     /// </summary>
     /// <param name="encoding">Text encoding used by the serializer.</param>
     /// <param name="resetInterval">Specifies the serialized object interval after which serialization state will be reset. Defaults to no interval.</param>
-    member bp.CreateSizeCounter([<O;D(null)>] ?encoding : Encoding, ?resetInterval:int64) : ObjectSizeCounter =
+    member bp.CreateObjectSizeCounter([<O;D(null)>] ?encoding : Encoding, ?resetInterval:int64) : ObjectSizeCounter =
         new ObjectSizeCounter(formatProvider, resolver, reflectionCache, encoding, resetInterval)

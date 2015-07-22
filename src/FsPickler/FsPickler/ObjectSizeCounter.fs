@@ -24,9 +24,11 @@ type ObjectSizeCounter internal (formatProvider : IPickleFormatProvider, resolve
     member __.Count = writer.Flush() ; lengthCounter.Count
     /// Gets the total number of root-level objects that were appended to the counter.
     member __.ObjectCount = totalObjects
-    /// Resets the serialization state object id generators
-    member __.Reset() = writeState.Reset()
-    /// Appends a value to the size count
+    /// Resets the size counter state.
+    member __.Reset() = writeState.Reset() ; resetCount <- 0L ; totalObjects <- 0L ; lengthCounter.Reset()
+    /// Resets the serialization cache, without reseting size counters.
+    member __.ResetSerializationCache() = writeState.Reset() ; resetCount <- 0L
+    /// Appends a value to the size count.
     member __.Append<'T>(value : 'T, [<O;D(null)>] ?pickler:Pickler<'T>) =
         match resetInterval with
         | Some ri ->

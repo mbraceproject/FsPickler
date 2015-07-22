@@ -221,6 +221,7 @@ module internal Utils =
         inherit Stream ()
         let mutable length = 0L
         member __.Count = length
+        member __.Reset () = length <- 0L
 
         override __.CanRead = false
         override __.CanSeek = false

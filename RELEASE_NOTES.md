@@ -1,3 +1,6 @@
+### 1.2.21
+* Sanitize ObjectSizeCounter API.
+
 ### 1.2.20
 * Fix HashResult.Parse bug.
 
