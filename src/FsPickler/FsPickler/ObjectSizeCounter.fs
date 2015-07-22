@@ -16,11 +16,14 @@ type internal DAttribute = System.Runtime.InteropServices.DefaultParameterValueA
 type ObjectSizeCounter internal (formatProvider : IPickleFormatProvider, resolver : IPicklerResolver, reflectionCache : ReflectionCache, encoding : Encoding option, resetInterval : int64 option) =
     let lengthCounter = new LengthCounterStream()
     let mutable resetCount = 0L
+    let mutable totalObjects = 0L
     let writer = initStreamWriter formatProvider lengthCounter encoding true None
     let writeState = new WriteState(writer, resolver, reflectionCache, true)
 
     /// Gets accumulated object size in bytes
     member __.Count = writer.Flush() ; lengthCounter.Count
+    /// Gets the total number of root-level objects that were appended to the counter.
+    member __.ObjectCount = totalObjects
     /// Resets the serialization state object id generators
     member __.Reset() = writeState.Reset()
     /// Appends a value to the size count
@@ -36,6 +39,7 @@ type ObjectSizeCounter internal (formatProvider : IPickleFormatProvider, resolve
 
         let pickler = match pickler with None -> resolver.Resolve<'T>() | Some p -> p
         pickler.Write writeState "elem" value
+        totalObjects <- totalObjects + 1L
 
     interface IDisposable with
         member __.Dispose() = (writer :> IDisposable).Dispose()
