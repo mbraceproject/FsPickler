@@ -211,7 +211,7 @@ module ``Generic Tests`` =
     let ``2. Clone: int32`` () = Check.QuickThrowOnFail<int32> (testCloneEq, maxRuns = 10)
 
     [<Test; Category("Clone")>]
-    let ``2. Clone: string`` () = Check.QuickThrowOnFail<string> testCloneEq
+    let ``2. Clone: string`` () = Check.QuickThrowOnFail<string> testCloneRefEq
 
     let checkArray<'T> () =
         testCloneRefEq (null : 'T [])
