@@ -126,8 +126,7 @@ type StringPickler () =
 
     override __.Write (writer : WriteState) (tag : string) (s : string) = writer.Formatter.WriteString tag s
     override __.Read (reader : ReadState) (tag : string) = reader.Formatter.ReadString tag
-    // strings are effectively immutable, avoid cloning.
-//    override __.Clone (clone : CloneState) (s : string) = if obj.ReferenceEquals(s, null) then s else String.Copy s
+    override __.Clone (clone : CloneState) (s : string) = if obj.ReferenceEquals(s, null) then s else String.Copy s
 
 [<AutoSerializable(false)>]
 type GuidPickler () =
@@ -189,7 +188,7 @@ type DBNullPickler () =
 
 [<AutoSerializable(false)>]
 type private UnitPickler<'T> (value : 'T) =
-    // UnitPickler generic due to a bug in F# compiler: cannot explicitly instantiate Pickler<unit>
+    // UnitPickler generic due to a restriction in F# compiler: cannot explicitly instantiate Pickler<unit>
     inherit PrimitivePickler<'T> ()
 
     override __.Write (writer : WriteState) (tag : string) (_ : 'T) =
