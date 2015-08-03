@@ -7,13 +7,13 @@ open Nessos.FsPickler.SequenceUtils
 
 type internal FSharpSetPickler =
     static member Create<'T when 'T : comparison>(ep : Pickler<'T>) =
-        let writer (w : WriteState) (tag : string) (set : Set<'T>) =
+        let writer (w : WriteState) (_ : string) (set : Set<'T>) =
             let formatter = w.Formatter
             let count = set.Count
             formatter.WriteInt32 "count" count
             writeBoundedSequence ep count w "elements" set
 
-        let reader (r : ReadState) (tag : string) =
+        let reader (r : ReadState) (_ : string) =
             let formatter = r.Formatter
             let count = formatter.ReadInt32 "count"
             let elements = readBoundedSequence ep count r "elements"
@@ -36,12 +36,12 @@ type internal FSharpMapPickler =
 
         let tp = TuplePickler.Create<'K,'V>(kp, vp)
             
-        let writer (w : WriteState) (tag : string) (map : Map<'K,'V>) =
+        let writer (w : WriteState) (_ : string) (map : Map<'K,'V>) =
             let count = map.Count
             w.Formatter.WriteInt32 "count" count
             writeBoundedSequence tp count w "items" <| Map.toSeq map
 
-        let reader (r : ReadState) (tag : string) =
+        let reader (r : ReadState) (_ : string) =
             let count = r.Formatter.ReadInt32 "count"
             let items = readBoundedSequence tp count r "items"
             Map.ofArray items
@@ -64,13 +64,13 @@ type internal DictionaryPickler =
 
         let tp = TuplePickler.Create<'K,'V>(kp, vp)
 
-        let writer (w : WriteState) (tag : string) (d : Dictionary<'K,'V>) =
+        let writer (w : WriteState) (_ : string) (d : Dictionary<'K,'V>) =
             let count = d.Count
             w.Formatter.WriteInt32 "count" d.Count
             let kvs = Seq.map (fun (KeyValue (k,v)) -> k,v) d
             writeBoundedSequence tp count w "items" kvs
 
-        let reader (r : ReadState) (tag : string) =
+        let reader (r : ReadState) (_ : string) =
             let count = r.Formatter.ReadInt32 "count"
             let dict = new Dictionary<'K,'V> (count)
             let items = readBoundedSequence tp count r "items"

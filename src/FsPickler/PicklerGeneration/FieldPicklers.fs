@@ -73,18 +73,18 @@ type internal StructFieldPickler =
 
                 fun v t -> accepterDele.Invoke(picklers, v, t)
 
-        let writer (w : WriteState) (tag : string) (t : 'T) = writerDele.Invoke(picklers, w, t)
-        let reader (r : ReadState) (tag : string) = readerDele.Invoke(picklers, r)
+        let writer (w : WriteState) (_ : string) (t : 'T) = writerDele.Invoke(picklers, w, t)
+        let reader (r : ReadState) (_ : string) = readerDele.Invoke(picklers, r)
         let cloner (c : CloneState) (t : 'T) = clonerDele.Invoke(picklers, c, t)
 
 #else
-        let writer (w : WriteState) (tag : string) (t : 'T) =
+        let writer (w : WriteState) (_ : string) (t : 'T) =
             for i = 0 to fields.Length - 1 do
                 let f = fields.[i]
                 let o = f.GetValue(t)
                 picklers.[i].UntypedWrite w tags.[i] o
 
-        let reader (r : ReadState) (tag : string) =
+        let reader (r : ReadState) (_ : string) =
             let t = FormatterServices.GetUninitializedObject(typeof<'T>)
             for i = 0 to fields.Length - 1 do
                 let f = fields.[i]
@@ -104,7 +104,6 @@ type internal StructFieldPickler =
             fastUnbox<'T> t'
 
         let accepter (v : VisitState) (t : 'T) =
-            let t' = FormatterServices.GetUninitializedObject(typeof<'T>)
             for i = 0 to fields.Length - 1 do
                 let f = fields.[i]
                 let o = f.GetValue t
@@ -166,7 +165,7 @@ type internal ClassFieldPickler =
                             
                         ilGen.Emit OpCodes.Ret)
 
-                fun w tag t -> writerDele.Invoke(picklers, w, t)
+                fun w _ t -> writerDele.Invoke(picklers, w, t)
 
         let readerDele =
             DynamicMethod.compileFunc2<Pickler [], ReadState, 'T> "classDeserializer" (fun picklers reader ilGen ->
@@ -231,14 +230,14 @@ type internal ClassFieldPickler =
 
                 fun v t -> accepterDele.Invoke(picklers, v,t)
 
-        let reader r (tag : string) = readerDele.Invoke(picklers, r)
+        let reader r (_ : string) = readerDele.Invoke(picklers, r)
         let cloner c t = clonerDele.Invoke(picklers, c, t)
 #else
         let inline run (ms : MethodInfo []) (x : obj) w =
             for i = 0 to ms.Length - 1 do 
                 ms.[i].Invoke(x, [| getStreamingContext w :> obj |]) |> ignore
 
-        let writer (w : WriteState) (tag : string) (t : 'T) =
+        let writer (w : WriteState) (_ : string) (t : 'T) =
             run onSerializing t w
 
             for i = 0 to fields.Length - 1 do
@@ -248,7 +247,7 @@ type internal ClassFieldPickler =
 
             run onSerialized t w
 
-        let reader (r : ReadState) (tag : string) =
+        let reader (r : ReadState) (_ : string) =
             let t = FormatterServices.GetUninitializedObject(typeof<'T>) |> fastUnbox<'T>
             run onDeserializing t r
 

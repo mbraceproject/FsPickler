@@ -57,7 +57,7 @@ type internal ListPickler =
                 formatter.EndWriteObject ()
 
 
-        let reader (r : ReadState) (tag : string) =
+        let reader (r : ReadState) (_ : string) =
             let formatter = r.Formatter
 
             if ep.Kind <= Kind.Enum && formatter.IsPrimitiveArraySerializationSupported then

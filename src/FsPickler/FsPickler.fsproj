@@ -26,6 +26,7 @@
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>..\..\bin\FsPickler.xml</DocumentationFile>
     <OutputPath>..\..\bin\</OutputPath>
+    <OtherFlags>--warnon:1182</OtherFlags>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -35,6 +36,7 @@
     <DefineConstants>TRACE;PROTECT_STACK_OVERFLOWS;OPTIMIZE_FSHARP;EMIT_IL</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>..\..\bin\FsPickler.xml</DocumentationFile>
+    <OtherFlags>--warnon:1182</OtherFlags>
   </PropertyGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
@@ -47,6 +49,7 @@
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\Release\FsPickler.xml</DocumentationFile>
     <OutputPath>bin\PerfTests\</OutputPath>
+    <OtherFlags>--warnon:1182</OtherFlags>
   </PropertyGroup>
   <PropertyGroup>
     <FSharpTargetsPath>$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\FSharp\Microsoft.FSharp.Targets</FSharpTargetsPath>
@@ -62,6 +65,7 @@
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>..\..\bin\NoEmit\FsPickler.XML</DocumentationFile>
     <OutputPath>..\..\bin\NoEmit</OutputPath>
+    <OtherFlags>--warnon:1182</OtherFlags>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release-NET40|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -72,7 +76,7 @@
     <DocumentationFile>..\..\bin\net40\FsPickler.xml</DocumentationFile>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <TargetFrameworkProfile />
-    <OtherFlags />
+    <OtherFlags>--warnon:1182</OtherFlags>
     <OutputPath>..\..\bin\net40</OutputPath>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release-NET35|AnyCPU' ">
@@ -86,6 +90,7 @@
     <TargetFrameworkProfile />
     <TargetFSharpCoreVersion>2.3.0.0</TargetFSharpCoreVersion>
     <OutputPath>..\..\bin\net35</OutputPath>
+    <OtherFlags>--warnon:1182</OtherFlags>
   </PropertyGroup>
   <Import Project="$(FSharpTargetsPath)" Condition="Exists('$(FSharpTargetsPath)')" />
   <ItemGroup>

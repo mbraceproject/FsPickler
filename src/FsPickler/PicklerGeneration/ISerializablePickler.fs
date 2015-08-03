@@ -105,7 +105,7 @@ module private ISerializableUtils =
 
 type internal ISerializablePickler =
 
-    static member Create<'T when 'T :> ISerializable>(resolver : IPicklerResolver) =
+    static member Create<'T when 'T :> ISerializable>() =
         let allMethods = typeof<'T>.GetMethods(allMembers)
         let onSerializing = allMethods |> getSerializationMethods<OnSerializingAttribute> |> wrapDelegate<Action<'T, StreamingContext>>
         let onSerialized = allMethods |> getSerializationMethods<OnSerializedAttribute> |> wrapDelegate<Action<'T, StreamingContext>>
@@ -113,8 +113,6 @@ type internal ISerializablePickler =
 
         let isDeserializationCallback = isAssignableFrom typeof<IDeserializationCallback> typeof<'T>
         let isObjectReference = isAssignableFrom typeof<IObjectReference> typeof<'T>
-
-        let entryP = resolver.Resolve<SerializationEntry> ()
 
         let inline run (dele : Action<'T, StreamingContext> []) w x =
             for d in dele do d.Invoke(x, getStreamingContext w)
@@ -124,7 +122,7 @@ type internal ISerializablePickler =
 #if NET35
             raise <| new NonSerializableTypeException(typeof<'T>, "IObjectReference not supported in .net35 builds. Please implement a (SerializationInfo, StreamingContext) constructor.")
 #else
-            let writer (w : WriteState) (tag : string) (t : 'T) =
+            let writer (w : WriteState) (_ : string) (t : 'T) =
                 run onSerializing w t
                 let sI = mkSerializationInfo<'T> ()
                 t.GetObjectData(sI, w.StreamingContext)
@@ -134,7 +132,7 @@ type internal ISerializablePickler =
                 writeSerializationInfo w sI
                 run onSerialized w t
 
-            let reader (r : ReadState) (tag : string) =
+            let reader (r : ReadState) (_ : string) =
                 let objectType = r.TypePickler.Read r "ObjectType"
                 let sI = readSerializationInfo<'T> r
                 let objectRef =
@@ -191,14 +189,14 @@ type internal ISerializablePickler =
             let inline create (si : SerializationInfo) (sc : StreamingContext) = 
                 ctorInfo.Invoke [| si :> obj ; sc :> obj |] |> fastUnbox<'T>
 #endif
-            let writer (w : WriteState) (tag : string) (t : 'T) =
+            let writer (w : WriteState) (_ : string) (t : 'T) =
                 run onSerializing w t
                 let sI = mkSerializationInfo<'T> ()
                 t.GetObjectData(sI, w.StreamingContext)
                 writeSerializationInfo w sI
                 run onSerialized w t
 
-            let reader (r : ReadState) (tag : string) =
+            let reader (r : ReadState) (_ : string) =
                 let sI = readSerializationInfo<'T> r
                 let t = create sI r.StreamingContext
                 run onDeserialized r t
@@ -234,12 +232,12 @@ type internal ISerializablePickler =
 
     /// SerializationInfo-based pickler combinator
     static member FromSerializationInfo<'T>(ctor : SerializationInfo -> 'T, proj : SerializationInfo -> 'T -> unit) : Pickler<'T> =
-        let writer (state : WriteState) (tag : string) (t : 'T) =
+        let writer (state : WriteState) (_ : string) (t : 'T) =
             let sI = mkSerializationInfo<'T> ()
             do proj sI t
             writeSerializationInfo state sI
 
-        let reader (state : ReadState) (tag : string) =
+        let reader (state : ReadState) (_ : string) =
             let sI = readSerializationInfo<'T> state
             ctor sI
 

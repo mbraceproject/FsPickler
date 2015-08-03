@@ -467,7 +467,7 @@ type internal CompositePickler<'T> =
 
         elif p.m_IsCacheByRef then
             let mutable firstOccurence = false
-            let id = state.ObjectIDGenerator.GetId(value, &firstOccurence)
+            let _ = state.ObjectIDGenerator.GetId(value, &firstOccurence)
             if firstOccurence then acceptNode ()
         else
             acceptNode ()

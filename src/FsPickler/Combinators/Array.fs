@@ -78,7 +78,7 @@ type internal ArrayPickler =
                 formatter.WriteNextSequenceElement false
                 formatter.EndWriteObject ()
 
-        let reader (r : ReadState) (tag : string) =
+        let reader (r : ReadState) (_ : string) =
             let formatter = r.Formatter
 
             if isPrimitiveSerialized formatter ep then
@@ -132,7 +132,7 @@ type internal ArrayPickler =
 
     static member Create2D<'T> (ep : Pickler<'T>) =
             
-        let writer (w : WriteState) (tag : string) (array : 'T[,]) =
+        let writer (w : WriteState) (_ : string) (array : 'T[,]) =
             let formatter = w.Formatter
             let lengths = writeMultiDimensionalArrayRanks formatter 2 array
                 
@@ -146,7 +146,7 @@ type internal ArrayPickler =
 
                 formatter.EndWriteObject ()
 
-        let reader (r : ReadState) (tag : string) =
+        let reader (r : ReadState) (_ : string) =
             let formatter = r.Formatter
             let lengths = readMultiDimensionalArrayRanks formatter 2
                 
@@ -194,7 +194,7 @@ type internal ArrayPickler =
 
     static member Create3D<'T> (ep : Pickler<'T>) =
             
-        let writer (w : WriteState) (tag : string) (array : 'T[,,]) =
+        let writer (w : WriteState) (_ : string) (array : 'T[,,]) =
             let formatter = w.Formatter
             let lengths = writeMultiDimensionalArrayRanks formatter 3 array
                 
@@ -209,7 +209,7 @@ type internal ArrayPickler =
 
                 formatter.EndWriteObject ()
 
-        let reader (r : ReadState) (tag : string) =
+        let reader (r : ReadState) (_ : string) =
             let formatter = r.Formatter
             let lengths = readMultiDimensionalArrayRanks formatter 3
                 
@@ -261,7 +261,7 @@ type internal ArrayPickler =
 
     static member Create4D<'T> (ep : Pickler<'T>) =
             
-        let writer (w : WriteState) (tag : string) (array : 'T[,,,]) =
+        let writer (w : WriteState) (_ : string) (array : 'T[,,,]) =
             let formatter = w.Formatter
             let lengths = writeMultiDimensionalArrayRanks formatter 4 array
                 
@@ -278,7 +278,7 @@ type internal ArrayPickler =
 
                 formatter.EndWriteObject ()
 
-        let reader (r : ReadState) (tag : string) =
+        let reader (r : ReadState) (_ : string) =
             let formatter = r.Formatter
             let lengths = readMultiDimensionalArrayRanks formatter 4
                 

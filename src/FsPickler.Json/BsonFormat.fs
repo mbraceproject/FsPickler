@@ -19,7 +19,7 @@ type BsonPickleFormatProvider() =
         member __.Name = "Bson"
         member __.DefaultEncoding = Encoding.UTF8
 
-        member __.CreateWriter(stream : Stream, encoding : Encoding, isTopLevelSequence : bool, leaveOpen : bool) =
+        member __.CreateWriter(stream : Stream, encoding : Encoding, _ : bool, leaveOpen : bool) =
 #if NET40
             if leaveOpen then raise <| new NotSupportedException("'leaveOpen' not supported in .NET 40.")
             let bw = new BinaryWriter(stream, encoding)
@@ -29,7 +29,7 @@ type BsonPickleFormatProvider() =
             let bsonWriter = new BsonWriter(bw)
             new JsonPickleWriter(bsonWriter, false, false, false, null, leaveOpen) :> _
 
-        member __.CreateReader(stream : Stream, encoding : Encoding, isTopLevelSequence : bool, leaveOpen : bool) =
+        member __.CreateReader(stream : Stream, encoding : Encoding, _ : bool, leaveOpen : bool) =
 #if NET40
             if leaveOpen then raise <| new NotSupportedException("'leaveOpen' not supported in .NET 40.")
             let br = new BinaryReader(stream, encoding)

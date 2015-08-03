@@ -7,10 +7,10 @@ open Nessos.FsPickler
 type internal TuplePickler =
 
     static member Create(p1 : Pickler<'T1>) =
-        let writer (w : WriteState) (tag : string) (t : Tuple<'T1>) =
+        let writer (w : WriteState) (_ : string) (t : Tuple<'T1>) =
             p1.Write w "Item1" t.Item1
 
-        let reader (r : ReadState) (tag : string) =
+        let reader (r : ReadState) (_ : string) =
             let t1 = p1.Read r "Item1"
             new Tuple<'T1>(t1)
 
@@ -34,11 +34,11 @@ type internal TuplePickler =
 
 
     static member Create(p1 : Pickler<'T1>, p2 : Pickler<'T2>) =
-        let writer (w : WriteState) (tag : string) ((t1,t2) : 'T1 * 'T2) =
+        let writer (w : WriteState) (_ : string) ((t1,t2) : 'T1 * 'T2) =
             p1.Write w "Item1" t1
             p2.Write w "Item2" t2
 
-        let reader (r : ReadState) (tag : string) =
+        let reader (r : ReadState) (_ : string) =
             let t1 = p1.Read r "Item1"
             let t2 = p2.Read r "Item2"
             (t1, t2)
@@ -66,12 +66,12 @@ type internal TuplePickler =
         TuplePickler.Create(p1, p2)
 
     static member Create(p1 : Pickler<'T1>, p2 : Pickler<'T2>, p3 : Pickler<'T3>) =
-        let writer (w : WriteState) (tag : string) ((t1,t2,t3) : 'T1 * 'T2 * 'T3) =
+        let writer (w : WriteState) (_ : string) ((t1,t2,t3) : 'T1 * 'T2 * 'T3) =
             p1.Write w "Item1" t1
             p2.Write w "Item2" t2
             p3.Write w "Item3" t3
 
-        let reader (r : ReadState) (tag : string) =
+        let reader (r : ReadState) (_ : string) =
             let t1 = p1.Read r "Item1"
             let t2 = p2.Read r "Item2"
             let t3 = p3.Read r "Item3"
@@ -104,13 +104,13 @@ type internal TuplePickler =
 
 
     static member Create(p1 : Pickler<'T1>, p2 : Pickler<'T2>, p3 : Pickler<'T3>, p4 : Pickler<'T4>) =
-        let writer (w : WriteState) (tag : string) ((t1,t2,t3,t4) : 'T1 * 'T2 * 'T3 * 'T4) =
+        let writer (w : WriteState) (_ : string) ((t1,t2,t3,t4) : 'T1 * 'T2 * 'T3 * 'T4) =
             p1.Write w "Item1" t1
             p2.Write w "Item2" t2
             p3.Write w "Item3" t3
             p4.Write w "Item4" t4
 
-        let reader (r : ReadState) (tag : string) =
+        let reader (r : ReadState) (_ : string) =
             let t1 = p1.Read r "Item1"
             let t2 = p2.Read r "Item2"
             let t3 = p3.Read r "Item3"
@@ -147,14 +147,14 @@ type internal TuplePickler =
 
 
     static member Create(p1 : Pickler<'T1>, p2 : Pickler<'T2>, p3 : Pickler<'T3>, p4 : Pickler<'T4>, p5 : Pickler<'T5>) =
-        let writer (w : WriteState) (tag : string) ((t1,t2,t3,t4,t5) : 'T1 * 'T2 * 'T3 * 'T4 * 'T5) =
+        let writer (w : WriteState) (_ : string) ((t1,t2,t3,t4,t5) : 'T1 * 'T2 * 'T3 * 'T4 * 'T5) =
             p1.Write w "Item1" t1
             p2.Write w "Item2" t2
             p3.Write w "Item3" t3
             p4.Write w "Item4" t4
             p5.Write w "Item5" t5
 
-        let reader (r : ReadState) (tag : string) =
+        let reader (r : ReadState) (_ : string) =
             let t1 = p1.Read r "Item1"
             let t2 = p2.Read r "Item2"
             let t3 = p3.Read r "Item3"
@@ -195,7 +195,7 @@ type internal TuplePickler =
 
 
     static member Create(p1 : Pickler<'T1>, p2 : Pickler<'T2>, p3 : Pickler<'T3>, p4 : Pickler<'T4>, p5 : Pickler<'T5>, p6 : Pickler<'T6>) =
-        let writer (w : WriteState) (tag : string) ((t1,t2,t3,t4,t5,t6) : 'T1 * 'T2 * 'T3 * 'T4 * 'T5 * 'T6) =
+        let writer (w : WriteState) (_ : string) ((t1,t2,t3,t4,t5,t6) : 'T1 * 'T2 * 'T3 * 'T4 * 'T5 * 'T6) =
             p1.Write w "Item1" t1
             p2.Write w "Item2" t2
             p3.Write w "Item3" t3
@@ -203,7 +203,7 @@ type internal TuplePickler =
             p5.Write w "Item5" t5
             p6.Write w "Item6" t6
 
-        let reader (r : ReadState) (tag : string) =
+        let reader (r : ReadState) (_ : string) =
             let t1 = p1.Read r "Item1"
             let t2 = p2.Read r "Item2"
             let t3 = p3.Read r "Item3"
@@ -252,7 +252,7 @@ type internal TuplePickler =
                             p4 : Pickler<'T4>, p5 : Pickler<'T5>, p6 : Pickler<'T6>, 
                             p7 : Pickler<'T7>) =
 
-        let writer (w : WriteState) (tag : string) ((t1,t2,t3,t4,t5,t6,t7) : 'T1 * 'T2 * 'T3 * 'T4 * 'T5 * 'T6 * 'T7) =
+        let writer (w : WriteState) (_ : string) ((t1,t2,t3,t4,t5,t6,t7) : 'T1 * 'T2 * 'T3 * 'T4 * 'T5 * 'T6 * 'T7) =
             p1.Write w "Item1" t1
             p2.Write w "Item2" t2
             p3.Write w "Item3" t3
@@ -261,7 +261,7 @@ type internal TuplePickler =
             p6.Write w "Item6" t6
             p7.Write w "Item7" t7
 
-        let reader (r : ReadState) (tag : string) =
+        let reader (r : ReadState) (_ : string) =
             let t1 = p1.Read r "Item1"
             let t2 = p2.Read r "Item2"
             let t3 = p3.Read r "Item3"
@@ -312,7 +312,7 @@ type internal TuplePickler =
     static member Create(p1 : Pickler<'T1>, p2 : Pickler<'T2>, p3 : Pickler<'T3>, p4 : Pickler<'T4>,
                             p5 : Pickler<'T5>, p6 : Pickler<'T6>, p7 : Pickler<'T7>, pr : Pickler<'TRest>) =
 
-        let writer (w : WriteState) (tag : string) (tuple : Tuple<'T1,'T2,'T3,'T4,'T5,'T6,'T7,'TRest>) =
+        let writer (w : WriteState) (_ : string) (tuple : Tuple<'T1,'T2,'T3,'T4,'T5,'T6,'T7,'TRest>) =
             p1.Write w "Item1" tuple.Item1
             p2.Write w "Item2" tuple.Item2
             p3.Write w "Item3" tuple.Item3
@@ -322,7 +322,7 @@ type internal TuplePickler =
             p7.Write w "Item7" tuple.Item7
             pr.Write w "Rest" tuple.Rest
 
-        let reader (r : ReadState) (tag : string) =
+        let reader (r : ReadState) (_ : string) =
             let t1 = p1.Read r "Item1"
             let t2 = p2.Read r "Item2"
             let t3 = p3.Read r "Item3"

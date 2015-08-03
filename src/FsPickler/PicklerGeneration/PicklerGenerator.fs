@@ -23,7 +23,7 @@ type private PicklerGeneratorVisitor (resolver : IPicklerResolver) =
 
         member __.Abstract<'T> () = AbstractPickler.Create<'T> () :> Pickler
         member __.Class<'T when 'T : not struct> () = ClassFieldPickler.Create<'T> resolver :> Pickler
-        member __.ISerializable<'T when 'T :> ISerializable> () = ISerializablePickler.Create<'T> resolver :> Pickler
+        member __.ISerializable<'T when 'T :> ISerializable> () = ISerializablePickler.Create<'T> () :> Pickler
         member __.DataContract<'T> () = DataContractPickler.Create<'T> resolver :> Pickler
         member __.CustomPickler<'T> () = CustomPickler.Create<'T> resolver :> Pickler
         member __.CloneableOnly<'T> () = CloneableOnlyPickler.Create<'T> () :> Pickler

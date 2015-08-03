@@ -102,7 +102,7 @@ open XmlUtils
 /// <summary>
 ///     Xml format serializer.
 /// </summary>
-type XmlPickleWriter internal (textWriter : TextWriter, indent : bool, leaveOpen) =
+type XmlPickleWriter internal (textWriter : TextWriter, indent : bool, leaveOpen : bool) =
 
     let settings = new XmlWriterSettings()
     do 
@@ -138,7 +138,7 @@ type XmlPickleWriter internal (textWriter : TextWriter, indent : bool, leaveOpen
         member __.SerializeUnionCaseNames = true
 
         member __.PreferLengthPrefixInSequences = false
-        member __.WriteNextSequenceElement hasNext = ()
+        member __.WriteNextSequenceElement _ = ()
 
         member __.WriteCachedObjectId id = writer.WriteAttributeString("id", string id)
 
@@ -349,8 +349,6 @@ type XmlPickleReader internal (textReader : TextReader, leaveOpen) =
 ///     Factory methods for the Xml serialization format.
 /// </summary>
 type XmlPickleFormatProvider(indent) =
-
-    static let defaultEnc e = match e with None -> Encoding.UTF8 | Some e -> e
         
     member val Indent = indent with get, set
             

@@ -158,8 +158,8 @@ type internal DataContractPickler =
 
                 fun v t -> accepterDele.Invoke(picklers, v, t)
 
-        let writer w t v = writerDele.Invoke(picklers, w, v)
-        let reader r t = readerDele.Invoke(picklers, r)
+        let writer w _ v = writerDele.Invoke(picklers, w, v)
+        let reader r _ = readerDele.Invoke(picklers, r)
         let cloner s t = clonerDele.Invoke(picklers, s, t)
                 
 #else
@@ -167,7 +167,7 @@ type internal DataContractPickler =
             for i = 0 to ms.Length - 1 do 
                 ms.[i].Invoke(x, [| getStreamingContext w :> obj |]) |> ignore
 
-        let writer (w : WriteState) (tag : string) (t : 'T) =
+        let writer (w : WriteState) (_ : string) (t : 'T) =
             run onSerializing t w
 
             for i = 0 to members.Length - 1 do
@@ -181,7 +181,7 @@ type internal DataContractPickler =
 
             run onSerialized t w
 
-        let reader (r : ReadState) (tag : string) =
+        let reader (r : ReadState) (_ : string) =
             let t =
                 // use parameterless constructor, if available
                 if obj.ReferenceEquals(ctor, null) then

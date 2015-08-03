@@ -131,7 +131,7 @@ type BinaryPickleWriter internal (stream : Stream, encoding : Encoding, leaveOpe
 
         member __.WriteCachedObjectId id = bw.Write id
 
-        member __.BeginWriteObject tag objectFlags =
+        member __.BeginWriteObject _ objectFlags =
             let header = createHeader objectFlags
             bw.Write header
 
@@ -245,7 +245,7 @@ and BinaryPickleReader internal (stream : Stream, encoding : Encoding, leaveOpen
 
         member __.EndReadRoot () = ()
 
-        member __.BeginReadObject tag =
+        member __.BeginReadObject _ =
             let header = br.ReadUInt32()
             readHeader header
 

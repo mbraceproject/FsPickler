@@ -42,27 +42,19 @@ let mkReflectionPicklers (arrayPickler : IArrayPickler) =
         CompositePickler.Create(
             (fun r t -> let aI = assemblyInfoPickler.Reader r t in r.ReflectionCache.LoadAssembly aI),
             (fun w t a -> let aI = w.ReflectionCache.GetAssemblyInfo a in assemblyInfoPickler.Writer w t aI),
-            (fun c a -> a), (fun _ _ -> ()), PicklerInfo.ReflectionType, cacheByRef = true, useWithSubtypes = true)
+            (fun _ a -> a), (fun _ _ -> ()), PicklerInfo.ReflectionType, cacheByRef = true, useWithSubtypes = true)
 
     let assemblyNamePickler =
         CompositePickler.Create(
             (fun r t -> let aI = assemblyInfoPickler.Reader r t in aI.ToAssemblyName()),
             (fun w t an -> let aI = AssemblyInfo.OfAssemblyName an in assemblyInfoPickler.Writer w t aI),
-            (fun c an -> an.Clone() |> fastUnbox<_>), ignore2,
+            (fun _ an -> an.Clone() |> fastUnbox<_>), ignore2,
                 PicklerInfo.ReflectionType, cacheByRef = true, useWithSubtypes = true)
-
-    let stringArrayPickler = arrayPickler.Create <| PrimitivePicklers.mkString()
 
     let tagSerializer = UnionCaseSerializationHelper.OfUnionType<CompositeMemberInfo> ()
 
-    let rec memberInfoWriter (w : WriteState) (tag : string) (m : MemberInfo) =
+    let rec memberInfoWriter (w : WriteState) (_ : string) (m : MemberInfo) =
         let formatter = w.Formatter
-
-        // not used anywhere ; placed here just to assist type inference
-        let inline tp () : Pickler<Type> = typePickler
-        let inline tp () : Pickler<Type []> = typeArrayPickler
-        let inline mp () : Pickler<MemberInfo> = memberInfoPickler
-        let inline mp () : Pickler<MethodInfo> = methodInfoPickler
 
         // note: order of cases must be kept same as type definition
         // so that tag assignments correspond to internal union tag
@@ -158,7 +150,7 @@ let mkReflectionPicklers (arrayPickler : IArrayPickler) =
         | Unknown(t, name) ->
             raise <| new NonSerializableTypeException(t, sprintf "could not serialize '%s'." name)
 
-    and memberInfoReader (r : ReadState) (tag : string) =
+    and memberInfoReader (r : ReadState) (_ : string) =
         let formatter = r.Formatter
 
         let cMemberInfo =
@@ -254,11 +246,11 @@ let mkReflectionPicklers (arrayPickler : IArrayPickler) =
         r.ReflectionCache.LoadMemberInfo cMemberInfo
 
     and memberInfoPickler = 
-        CompositePickler.Create(memberInfoReader, memberInfoWriter, (fun c mI -> mI), ignore2, PicklerInfo.ReflectionType, useWithSubtypes = true, cacheByRef = true)
+        CompositePickler.Create(memberInfoReader, memberInfoWriter, (fun _ mI -> mI), ignore2, PicklerInfo.ReflectionType, useWithSubtypes = true, cacheByRef = true)
 
-    and typePickler = memberInfoPickler.Cast<Type> ()
-    and methodInfoPickler = memberInfoPickler.Cast<MethodInfo> ()
-    and typeArrayPickler = arrayPickler.Create typePickler
+    and typePickler : Pickler<Type> = memberInfoPickler.Cast<Type> ()
+    and methodInfoPickler : Pickler<MethodInfo> = memberInfoPickler.Cast<MethodInfo> ()
+    and typeArrayPickler : Pickler<Type []> = arrayPickler.Create typePickler
 
     [|
         assemblyPickler :> Pickler

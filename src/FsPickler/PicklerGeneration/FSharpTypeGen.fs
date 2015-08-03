@@ -150,7 +150,7 @@ type internal FsUnionPickler =
                 // emit cases
                 for i = 0 to caseInfo.Length - 1 do
                     let label = labels.[i]
-                    let ctor,fields,tags,_ = caseInfo.[i]
+                    let ctor,fields,_,_ = caseInfo.[i]
 
                     ilGen.MarkLabel label
                     emitCloneAndConstruct (Choice1Of2 ctor) fields state picklers source ilGen
@@ -182,15 +182,15 @@ type internal FsUnionPickler =
                 // emit cases
                 for i = 0 to caseInfo.Length - 1 do
                     let label = labels.[i]
-                    let _,fields,tags,_ = caseInfo.[i]
+                    let _,fields,_,_ = caseInfo.[i]
 
                     ilGen.MarkLabel label
                     emitAcceptMembers fields state picklers union ilGen
                     ilGen.Emit OpCodes.Ret
             )
 
-        let writer w tag u = writerDele.Invoke(picklerss, tagSerializer, w, u)
-        let reader r tag = readerDele.Invoke(picklerss, tagSerializer, r)
+        let writer w _ u = writerDele.Invoke(picklerss, tagSerializer, w, u)
+        let reader r _ = readerDele.Invoke(picklerss, tagSerializer, r)
         let cloner c t = clonerDele.Invoke(picklerss, c, t)
         let accepter v t = accepterDele.Invoke(picklerss, v, t)
 #else
@@ -209,14 +209,14 @@ type internal FsUnionPickler =
         let writer (w : WriteState) (_ : string) (u : 'Union) =
             let tag = tagReader.Invoke u
             tagSerializer.WriteTag(w.Formatter, tag)
-            let _,reader,fields,tags,picklers = caseInfo.[tag]
+            let _,reader,_,tags,picklers = caseInfo.[tag]
             let values = reader u
             for i = 0 to values.Length - 1 do
                 picklers.[i].UntypedWrite w tags.[i] (values.[i])
 
         let reader (r : ReadState) (_ : string) =
             let tag = tagSerializer.ReadTag r.Formatter
-            let ctor,_,fields,tags,picklers = caseInfo.[tag]
+            let ctor,_,_,tags,picklers = caseInfo.[tag]
             let values = Array.zeroCreate<obj> picklers.Length
             for i = 0 to picklers.Length - 1 do
                 values.[i] <- picklers.[i].UntypedRead r tags.[i]
@@ -274,7 +274,7 @@ type internal FsRecordPickler =
                             
                         ilGen.Emit OpCodes.Ret)
 
-                fun w tag t -> writerDele.Invoke(picklers, w,t)
+                fun w _ t -> writerDele.Invoke(picklers, w,t)
 
         let readerDele =
             DynamicMethod.compileFunc2<Pickler [], ReadState, 'Record> "recordDeserializer" (fun picklers reader ilGen ->
@@ -303,16 +303,16 @@ type internal FsRecordPickler =
 
                 fun v t -> accepterDele.Invoke(picklers, v, t)
             
-        let reader r tag = readerDele.Invoke(picklers, r)
+        let reader r _ = readerDele.Invoke(picklers, r)
         let cloner c t = clonerDele.Invoke(picklers, c, t)
 #else
-        let writer (w : WriteState) (tag : string) (r : 'Record) =
+        let writer (w : WriteState) (_ : string) (r : 'Record) =
             for i = 0 to fields.Length - 1 do
                 let f = fields.[i]
                 let o = f.GetValue r
                 picklers.[i].UntypedWrite w tags.[i] o
             
-        let reader (r : ReadState) (tag : string) =
+        let reader (r : ReadState) (_ : string) =
             let values = Array.zeroCreate<obj> fields.Length
             for i = 0 to fields.Length - 1 do
                 values.[i] <- picklers.[i].UntypedRead r tags.[i]
@@ -350,7 +350,7 @@ type internal FsExceptionPickler =
             raise <| new NonSerializableTypeException(ty)
 
         // the default ISerializable pickler that handles exception metadata serialization
-        let defPickler = ISerializablePickler.Create<'Exception>(resolver) :?> CompositePickler<'Exception>
+        let defPickler = ISerializablePickler.Create<'Exception>() :?> CompositePickler<'Exception>
         // separately serialize exception fields
         let fields = gatherSerializedFields ty |> Array.filter(fun f -> f.DeclaringType = ty)
         let fpicklers = fields |> Array.map (fun f -> resolver.Resolve f.FieldType)

@@ -129,8 +129,8 @@ module ExtensionMethods =
             if typeof<'T>.IsPrimitive || typeof<'T> = typeof<string> then
                 invalidArg typeof<'T>.FullName "defining custom picklers for primitives not supported."
 
-            let reader r (tag : string) = reader r
-            let writer w (tag : string) (t : 'T) = writer w t
+            let reader r (_ : string) = reader r
+            let writer w (_ : string) (t : 'T) = writer w t
             let cloner = match cloner with Some c -> c | None -> fun _ _ -> invalidOp <| sprintf "User-defined pickler of type '%O' does not implement a cloning function." typeof<'T>
             let accepter = match accepter with Some a -> a | None -> fun _ _ -> invalidOp <| sprintf "User-defined pickler of type '%O' does not implement a visitor function." typeof<'T>
 

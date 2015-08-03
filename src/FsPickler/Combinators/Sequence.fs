@@ -23,7 +23,7 @@ module internal SequenceUtils =
 #else
     let inline writeBoundedSequence
 #endif
-            (ep : Pickler<'T>) (count : int) (w : WriteState) (tag : string) (ts : seq<'T>) =
+            (ep : Pickler<'T>) (_ : int) (w : WriteState) (tag : string) (ts : seq<'T>) =
 
         w.Formatter.BeginWriteObject tag ObjectFlags.IsSequenceHeader
         for e in ts do ep.Write w elemTag e
@@ -156,7 +156,7 @@ type internal SeqPickler =
     static member Create(ep : Pickler<'T>) =
 
         let writer (w : WriteState) (tag : string) (ts : seq<'T>) =
-            let length = writeUnboundedSequence false ep w tag ts
+            let _ = writeUnboundedSequence false ep w tag ts
             ()
 
         let reader (r : ReadState) (tag : string) =

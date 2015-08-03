@@ -26,6 +26,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DocumentationFile>..\..\bin\FsPickler.Json.XML</DocumentationFile>
     <Prefer32Bit>true</Prefer32Bit>
+    <OtherFlags>--warnon:1182</OtherFlags>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -37,6 +38,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DocumentationFile>..\..\bin\FsPickler.Json.XML</DocumentationFile>
     <Prefer32Bit>true</Prefer32Bit>
+    <OtherFlags>--warnon:1182</OtherFlags>
   </PropertyGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
@@ -53,6 +55,7 @@
     <DocumentationFile>..\..\bin\net40\FsPickler.Json.XML</DocumentationFile>
     <Prefer32Bit>true</Prefer32Bit>
     <OutputPath>..\..\bin\net40\</OutputPath>
+    <OtherFlags>--warnon:1182</OtherFlags>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'NoEmit|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -64,6 +67,7 @@
     <DocumentationFile>..\..\bin\NoEmit\FsPickler.Json.XML</DocumentationFile>
     <Prefer32Bit>true</Prefer32Bit>
     <OutputPath>..\..\bin\NoEmit\</OutputPath>
+    <OtherFlags>--warnon:1182</OtherFlags>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release-NET35|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -79,6 +83,7 @@
     <DocumentationFile>..\..\bin\net35\FsPickler.Json.XML</DocumentationFile>
     <Prefer32Bit>true</Prefer32Bit>
     <OutputPath>..\..\bin\net35\</OutputPath>
+    <OtherFlags>--warnon:1182</OtherFlags>
   </PropertyGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '11.0'">

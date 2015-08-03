@@ -23,15 +23,15 @@ type internal EnumPickler =
     static member Create<'Enum, 'Underlying when 'Enum : enum<'Underlying>> (resolver : IPicklerResolver) =
         let pickler = resolver.Resolve<'Underlying> ()
 
-        let writer (w : WriteState) (tag : string) (x : 'Enum) =
+        let writer (w : WriteState) (_ : string) (x : 'Enum) =
             let value = Microsoft.FSharp.Core.LanguagePrimitives.EnumToValue<'Enum, 'Underlying> x
             pickler.Write w "value" value
 
-        let reader (r : ReadState) (tag : string) =
+        let reader (r : ReadState) (_ : string) =
             let value = pickler.Read r "value"
             Microsoft.FSharp.Core.LanguagePrimitives.EnumOfValue<'Underlying, 'Enum> value
 
-        let cloner (c : CloneState) (x : 'Enum) = x
+        let cloner (_ : CloneState) (x : 'Enum) = x
 
         CompositePickler.Create(reader, writer, cloner, ignore2, PicklerInfo.FieldSerialization, cacheByRef = false, useWithSubtypes = false)
 
@@ -45,10 +45,10 @@ type internal NullablePickler =
                             'T : struct and 
                             'T :> ValueType> (pickler : Pickler<'T>) =
 
-        let writer (w : WriteState) (tag : string) (x : Nullable<'T>) =
+        let writer (w : WriteState) (_ : string) (x : Nullable<'T>) =
             pickler.Write w "value" x.Value
 
-        let reader (r : ReadState) (tag : string) =
+        let reader (r : ReadState) (_ : string) =
             let value = pickler.Read r "value"
             Nullable<'T>(value)
 
@@ -77,7 +77,7 @@ type internal DelegatePickler =
         let memberInfoPickler = resolver.Resolve<MethodInfo> ()
         let delePickler = resolver.Resolve<System.Delegate> ()
 
-        let writer (w : WriteState) (tag : string) (dele : 'Delegate) =
+        let writer (w : WriteState) (_ : string) (dele : 'Delegate) =
             match dele.GetInvocationList() with
             | [| _ |] ->
                 w.Formatter.WriteBoolean "isLinked" false
@@ -89,7 +89,7 @@ type internal DelegatePickler =
                 for i = 0 to deleList.Length - 1 do
                     delePickler.Write w "linked" deleList.[i]
 
-        let reader (r : ReadState) (tag : string) =
+        let reader (r : ReadState) (_ : string) =
             if not <| r.Formatter.ReadBoolean "isLinked" then
                 let meth = memberInfoPickler.Read r "method"
                 if not meth.IsStatic then

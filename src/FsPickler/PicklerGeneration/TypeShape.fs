@@ -437,7 +437,7 @@ module TypeShape =
                 | 2 -> activate1 typedefof<ShapeArray2D<_>> et
                 | 3 -> activate1 typedefof<ShapeArray3D<_>> et
                 | 4 -> activate1 typedefof<ShapeArray4D<_>> et
-                | rk -> raise UnSupportedShape
+                | _ -> raise UnSupportedShape
 
             elif typeof<Delegate>.IsAssignableFrom t then
                 activate1 typedefof<ShapeDelegate<_>> t

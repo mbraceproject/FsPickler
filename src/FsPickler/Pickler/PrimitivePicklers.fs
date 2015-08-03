@@ -19,13 +19,13 @@ type PrimitivePickler<'T> () =
     override p.IsCloneableOnly = false
 
     override p.Cast<'S> () : Pickler<'S> = raise <| new NotSupportedException("Cannot cast primitive picklers.")
-    override p.Clone (state : CloneState) (t : 'T) = t
+    override p.Clone (_ : CloneState) (t : 'T) = t
     override p.Accept (state : VisitState) (t : 'T) = 
         if not state.IsCancelled then
             let shouldContinue = 
                 match state.Visitor with
                 | :? ISpecializedObjectVisitor<'T> as fv -> fv.VisitSpecialized(p,t)
-                | v -> state.Visitor.Visit(p,t)
+                | v -> v.Visit(p,t)
 
             if not shouldContinue then state.IsCancelled <- true
 
@@ -126,7 +126,7 @@ type StringPickler () =
 
     override __.Write (writer : WriteState) (tag : string) (s : string) = writer.Formatter.WriteString tag s
     override __.Read (reader : ReadState) (tag : string) = reader.Formatter.ReadString tag
-    override __.Clone (clone : CloneState) (s : string) = if obj.ReferenceEquals(s, null) then s else String.Copy s
+    override __.Clone (_ : CloneState) (s : string) = if obj.ReferenceEquals(s, null) then s else String.Copy s
 
 [<AutoSerializable(false)>]
 type GuidPickler () =

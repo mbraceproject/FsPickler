@@ -85,7 +85,7 @@ type internal JsonPickleWriter (jsonWriter : JsonWriter, omitHeader, indented, i
         member __.SerializeUnionCaseNames = true
 
         member __.PreferLengthPrefixInSequences = false
-        member __.WriteNextSequenceElement hasNext =
+        member __.WriteNextSequenceElement _ =
             if isTopLevelSequence && depth = 1 then
                 if isTopLevelSequenceHead then
                     isTopLevelSequenceHead <- false
