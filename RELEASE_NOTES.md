@@ -1,3 +1,6 @@
+### 1.2.22
+* Changes to ObjectSizeCounter API.
+
 ### 1.2.21
 * Sanitize ObjectSizeCounter API.
 
