@@ -465,6 +465,14 @@ module ``Generic Tests`` =
         FsPickler.UnSift(sifted, values) |> should equal xs
 
     [<Test; Category("Sift")>]
+    let ``3. Object: sifting boxed values`` () =
+        let value = [|1 .. 100|]
+        let sifted, sifts = FsPickler.Sift(box value, (function :? Array -> true | _ -> false))
+        sifts.Length |> should equal 1
+        let value' = FsPickler.UnSift(sifted, sifts) :?> int []
+        value' |> should equal value
+
+    [<Test; Category("Sift")>]
     let ``3. Object: random sift`` () =
         let r = new System.Random()
         let randomSifter = { new IObjectSifter with member __.Sift(_,_,_) = r.Next(0,5) = 0 }

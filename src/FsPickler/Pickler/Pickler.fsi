@@ -164,19 +164,32 @@ and [<AutoSerializable(false); Sealed>] WriteState =
             formatter:IPickleFormatWriter * resolver:IPicklerResolver * reflectionCache:ReflectionCache * 
                 isHashComputation:bool * ?streamingContext:StreamingContext * ?sifter : IObjectSifter -> WriteState
 
+        /// Identifies this serialization session as a hash computation
         member internal IsHashComputation : bool
+        /// Set containing the id's of all objects identified as cyclic
         member internal CyclicObjectSet : HashSet<int64>
+        /// Stack containing all object id's that are currently being serialized.
+        /// Used for identifying cyclic objects.
         member internal ObjectStack : Stack<int64>
+        /// Serialization format provider
         member internal Formatter : IPickleFormatWriter
+        /// Gets an object id which is unique by reference
         member internal GetObjectId : obj:obj * firstTime:byref<bool> -> int64
+        /// Total number of serialized objects
         member internal ObjectCount : int64
+        /// Pickler resolver instance used for dynamic pickler resolution.
         member internal PicklerResolver : IPicklerResolver
+        /// Cache for quick reflection type serialization.
         member internal ReflectionCache : ReflectionCache
         /// Streaming context to the serialization
         member StreamingContext : StreamingContext
+        /// Optional object sifter predicate.
         member internal Sifter : IObjectSifter option
+        /// Contains all currently sifted objects.
         member internal Sifted : ResizeArray<int64 * obj>
+        /// Pickler for serializing System.Type instances.
         member internal TypePickler : Pickler<System.Type>
+        /// Resets the serialization state.
         member internal Reset : unit -> unit
     end
     
@@ -187,17 +200,29 @@ and [<AutoSerializable(false); Sealed>] ReadState =
             formatter:IPickleFormatReader * resolver:IPicklerResolver * 
                 reflectionCache:ReflectionCache * ?streamingContext:StreamingContext * ?sifted:(int64 * obj)[] -> ReadState
 
+        /// Generates an object id for the upcoming object
         member internal NextObjectId : unit -> int64
+        /// Register's array instances upon initialization and before
+        /// element deserialization has taken place. This is done to
+        /// properly deserialize cyclic array instances.
         member internal EarlyRegisterArray : array:System.Array -> unit
+        /// Deserialization format provider
         member internal Formatter : IPickleFormatReader
+        /// In unsifting deserialization instance
         member internal IsUnSifting : bool
+        /// Object deserialization cache indexed by id
         member internal ObjectCache : Dictionary<int64,obj>
+        /// Number of deserialized objects
         member internal ObjectCount : int64
+        /// Pickler resolver used for runtime deserializations
         member internal PicklerResolver : IPicklerResolver
+        /// Reflection cache used for quick reflection type deserialization.
         member internal ReflectionCache : ReflectionCache.ReflectionCache
         /// Streaming context to the deserialization
         member StreamingContext : StreamingContext
+        /// Pickler for System.Type serializations.
         member internal TypePickler : Pickler<System.Type>
+        /// Reset deserializer state.
         member internal Reset : unit -> unit
     end
 
@@ -219,9 +244,15 @@ and [<AutoSerializable(false); Sealed>] CloneState =
         member StreamingContext : StreamingContext
         // sifting-related state
         member internal NextNodeId : unit -> int64
+        /// Declares that the current node was found to be of proper subtyped.
+        /// Used for proper NodeId generation.
+        member internal DeclareProperSubtype : unit -> unit
+        /// Object sifting state
         member internal SiftData : (IObjectSifter * Dictionary<int64, (obj * ResizeArray<int64>)>) option
-        member internal CreateSift : value:'T -> Sifted<'T> * (int64 * obj) []
+        /// Object unsifting state
         member internal UnSiftData : Dictionary<int64, int64 * obj> option
+        /// Create a sifted object using accumulated sifting data
+        member internal CreateSift : value:'T -> Sifted<'T> * (int64 * obj) []
     end
 
 /// Contains all state related to object visiting

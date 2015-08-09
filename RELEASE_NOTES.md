@@ -1,3 +1,6 @@
+### 1.2.23
+* Bugfix in sifting of boxed values.
+
 ### 1.2.22
 * Changes to ObjectSizeCounter API.
 
