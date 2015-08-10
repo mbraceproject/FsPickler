@@ -28,8 +28,8 @@ that can be initialized as follows:
 
 open Nessos.FsPickler
 
-let binary = FsPickler.CreateBinary()
-let xml = FsPickler.CreateXml(indent = true)
+let binarySerializer = FsPickler.CreateBinarySerializer()
+let xmlSerializer = FsPickler.CreateXmlSerializer(indent = true)
 
 (**
 
@@ -43,8 +43,8 @@ If evaluating from F# interactive, make sure to [add an explicit reference to Js
 
 open Nessos.FsPickler.Json
 
-let json = FsPickler.CreateJson(indent = false)
-let bson = FsPickler.CreateBson()
+let jsonSerializer = FsPickler.CreateJsonSerializer(indent = false)
+let bsonSerializer = FsPickler.CreateBsonSerializer()
 
 (**
 
@@ -52,8 +52,8 @@ A simple serialization/deserialization roundtrip can be performed as follows:
 
 *)
 
-xml.Serialize(stream, [0. .. 0.1 .. 1.])
-xml.Deserialize<float list>(stream)
+xmlSerializer.Serialize(stream, [0. .. 0.1 .. 1.])
+xmlSerializer.Deserialize<float list>(stream)
 
 (**
 
@@ -62,8 +62,8 @@ that is byte arrays containing the serialized values:
 
 *)
 
-let pickle = binary.Pickle <@ 1 + 1 @>
-binary.UnPickle<Quotations.Expr<int>> pickle
+let pickle = binarySerializer.Pickle <@ 1 + 1 @>
+binarySerializer.UnPickle<Quotations.Expr<int>> pickle
 
 (**
 
@@ -74,11 +74,11 @@ that offers functionality for text-based serialization:
 
 *)
 
-xml.Serialize(textWriter, [ Some 1 ; Some 2 ; None ])
-xml.Deserialize<int option list>(textReader)
+xmlSerializer.Serialize(textWriter, [ Some 1 ; Some 2 ; None ])
+xmlSerializer.Deserialize<int option list>(textReader)
 
-let text = json.PickleToString (fun x -> x + 1)
-json.UnPickleOfString<int -> int> text
+let text = jsonSerializer.PickleToString (fun x -> x + 1)
+jsonSerializer.UnPickleOfString<int -> int> text
 
 (**
 
@@ -90,8 +90,8 @@ FsPickler offers support for on-demand sequence serialization/deserialization:
 
 let seq = Seq.initInfinite string |> Seq.take 100
 
-let length = binary.SerializeSequence(stream, seq) // returns the length of serialized elements
-let seq' = binary.DeserializeSequence<int>(stream) // lazy deserialization IEnumerable
+let length = binarySerializer.SerializeSequence(stream, seq) // returns the length of serialized elements
+let seq' = binarySerializer.DeserializeSequence<int>(stream) // lazy deserialization IEnumerable
 Seq.toArray seq' // evaluation forces full deserialization
 
 (**
@@ -474,7 +474,7 @@ It is possible to create typed picklings of objects:
 
 *)
 
-let typedPickle = json.PickleTyped [1 .. 1000]
+let typedPickle = jsonSerializer.PickleTyped [1 .. 1000]
 
 (**
 
@@ -483,7 +483,7 @@ They can then be easily deserialized like so:
 
 *)
 
-let value = json.UnPickleTyped typedPickle
+let value = jsonSerializer.UnPickleTyped typedPickle
 
 (**
 ### Object Sifting

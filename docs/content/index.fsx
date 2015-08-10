@@ -35,10 +35,10 @@ This example demonstrates a basic serialization roundtrip using the library
 #r "FsPickler.dll"
 open Nessos.FsPickler
 
-let binary = FsPickler.CreateBinary()
+let binarySerializer = FsPickler.CreateBinarySerializer()
 
-let pickle = binary.Pickle [Some 1; None ; Some -1]
-binary.UnPickle<int option list> pickle
+let pickle = binarySerializer.Pickle [Some 1; None ; Some -1]
+binarySerializer.UnPickle<int option list> pickle
 
 (**
 

@@ -34,7 +34,7 @@ module Binary =
 
 [<RequireQualifiedAccess>]
 module Xml =
-    let private xmlSerializer = lazy(FsPickler.CreateXml())
+    let private xmlSerializer = lazy(FsPickler.CreateXmlSerializer())
 
     /// <summary>
     ///     Pickles a value to XML.

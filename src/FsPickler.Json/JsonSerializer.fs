@@ -69,17 +69,17 @@ type BsonSerializer([<O;D(null)>] ?typeConverter) =
 type FsPickler =
 
     /// <summary>
-    ///     Initializes a new Json pickler instance.
+    ///     Initializes a new FsPickler serializer instance that uses the JSON format.
     /// </summary>
     /// <param name="indent">indent out Json pickles.</param>
     /// <param name="omitHeader">omit FsPickler header in Json pickles.</param>
     /// <param name="typeConverter">specify a custom type name converter.</param>
-    static member CreateJson([<O;D(null)>] ?indent, [<O;D(null)>] ?omitHeader, [<O;D(null)>] ?typeConverter) = 
+    static member CreateJsonSerializer([<O;D(null)>] ?indent, [<O;D(null)>] ?omitHeader, [<O;D(null)>] ?typeConverter) = 
         new JsonSerializer(?indent = indent, ?omitHeader = omitHeader, ?typeConverter = typeConverter)
 
     /// <summary>
-    ///     Initializes a new Bson pickler instance.
+    ///     Initializes a new FsPickler serializer instance that uses the BSON format.
     /// </summary>
     /// <param name="typeConverter">specify a custom type name converter.</param>
-    static member CreateBson([<O;D(null)>] ?typeConverter) = 
+    static member CreateBsonSerializer([<O;D(null)>] ?typeConverter) = 
         new BsonSerializer(?typeConverter = typeConverter)

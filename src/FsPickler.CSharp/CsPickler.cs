@@ -15,38 +15,38 @@ namespace Nessos.CsPickler
     public static class CsPickler
     {
         /// <summary>
-        ///     Creates a new BinaryPickler instance.
+        ///     Creates a new serializer instance that uses the built-in binary format.
         /// </summary>
         /// <param name="forceLittleEndian">force little-endian encoding in primitive arrays but is slower; defaults to false.</param>
         /// <returns>BinaryPickler instance.</returns>
-        public static BinarySerializer CreateBinary(bool forceLittleEndian = false) 
+        public static BinarySerializer CreateBinarySerializer(bool forceLittleEndian = false) 
         {
             return BinarySerializer.Create(forceLittleEndian);
         }
 
         /// <summary>
-        ///     Creates a new XmlPickler instance.
+        ///     Creates a new serializer instance that uses the XML format.
         /// </summary>
         /// <param name="indent">indent xml serializations; defaults to false.</param>
-        public static XmlSerializer CreateXml(bool indent = false)
+        public static XmlSerializer CreateXmlSerializer(bool indent = false)
         {
             return XmlSerializer.Create(indent);
         }
 
         /// <summary>
-        ///     Creates a new JsonPickler instance.
+        ///     Creates a new serializer instances that uses the JSON format.
         /// </summary>
         /// <param name="indent">indent json serializations; defaults to false.</param>
         /// <param name="omitHeader">omit FsPickler metadata at the serialization header; defaults to false.</param>
-        public static JsonSerializer CreateJson(bool indent = false, bool omitHeader = false)
+        public static JsonSerializer CreateJsonSerializer(bool indent = false, bool omitHeader = false)
         {
             return JsonSerializer.Create(indent: indent, omitHeader: omitHeader);
         }
 
         /// <summary>
-        ///     Creates a new BsonPickler instance.
+        ///     Creates a new serializer instances that uses the BSON format.
         /// </summary>
-        public static BsonSerializer CreateBson()
+        public static BsonSerializer CreateBsonSerializer()
         {
             return BsonSerializer.Create();
         }

@@ -15,18 +15,18 @@ type FsPickler private () =
     static let resolver = lazy(PicklerCache.Instance :> IPicklerResolver)
 
     /// <summary>
-    ///     Create a new binary pickler instance.
+    ///     Create a new FsPickler serializer instance that uses the built-in binary format.
     /// </summary>
     /// <param name="forceLittleEndian">Force little-endian encoding in primitive arrays but is slower. Defaults to false.</param>
     /// <param name="tyConv">optional type name converter implementation.</param>
-    static member CreateBinary([<O;D(null)>] ?forceLittleEndian : bool, [<O;D(null)>] ?typeConverter : ITypeNameConverter) = 
+    static member CreateBinarySerializer([<O;D(null)>] ?forceLittleEndian : bool, [<O;D(null)>] ?typeConverter : ITypeNameConverter) = 
         new BinarySerializer(?forceLittleEndian = forceLittleEndian, ?typeConverter = typeConverter)
 
     /// <summary>
-    ///     Create a new XML pickler instance.
+    ///     Create a new FsPickler serializer instance that uses the XML format.
     /// </summary>
     /// <param name="tyConv">optional type name converter implementation.</param>
-    static member CreateXml([<O;D(null)>]?typeConverter : ITypeNameConverter, [<O;D(null)>]?indent : bool) = 
+    static member CreateXmlSerializer([<O;D(null)>]?typeConverter : ITypeNameConverter, [<O;D(null)>]?indent : bool) = 
         new XmlSerializer(?typeConverter = typeConverter, ?indent = indent)
 
     /// Decides if given type is serializable by FsPickler

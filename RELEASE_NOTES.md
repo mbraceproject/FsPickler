@@ -1,3 +1,6 @@
+### 1.3.0
+* Bugfix in sifting of boxed values; renamings in core API.
+
 ### 1.2.23
 * Bugfix in sifting of boxed values.
 

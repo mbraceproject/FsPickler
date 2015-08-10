@@ -26,16 +26,16 @@ type FsPicklerManager(pickleFormat : string) =
 
     let serializer =
         match pickleFormat with
-        | PickleFormat.Binary -> FsPickler.CreateBinary() :> FsPicklerSerializer
-        | PickleFormat.Xml -> FsPickler.CreateXml(indent = true) :> FsPicklerSerializer
-        | PickleFormat.Json -> FsPickler.CreateJson(indent = true) :> FsPicklerSerializer
+        | PickleFormat.Binary -> FsPickler.CreateBinarySerializer() :> FsPicklerSerializer
+        | PickleFormat.Xml -> FsPickler.CreateXmlSerializer(indent = true) :> FsPicklerSerializer
+        | PickleFormat.Json -> FsPickler.CreateJsonSerializer(indent = true) :> FsPicklerSerializer
         | PickleFormat.Json_Headerless -> 
-            let jsp = FsPickler.CreateJson(omitHeader = true)
+            let jsp = FsPickler.CreateJsonSerializer(omitHeader = true)
             jsp.UseCustomTopLevelSequenceSeparator <- true
             jsp.SequenceSeparator <- System.Environment.NewLine
             jsp :> FsPicklerSerializer
 
-        | PickleFormat.Bson -> FsPickler.CreateBson() :> FsPicklerSerializer
+        | PickleFormat.Bson -> FsPickler.CreateBsonSerializer() :> FsPicklerSerializer
 
         | _ -> invalidArg "name" <| sprintf "unexpected pickler format '%s'." pickleFormat
 

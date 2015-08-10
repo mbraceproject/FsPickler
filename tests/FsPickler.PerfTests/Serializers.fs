@@ -55,10 +55,10 @@ module FsPickler =
                 member __.Deserialize<'T>(stream : Stream) = fsp.Deserialize<'T> stream
         }
 
-    let initBinary() = wrap <| FsPickler.CreateBinary()
-    let initXml() = wrap <| FsPickler.CreateXml()
-    let initJson() = wrap <| FsPickler.CreateJson()
-    let initBson() = wrap <| FsPickler.CreateBson()
+    let initBinary() = wrap <| FsPickler.CreateBinarySerializer()
+    let initXml() = wrap <| FsPickler.CreateXmlSerializer()
+    let initJson() = wrap <| FsPickler.CreateJsonSerializer()
+    let initBson() = wrap <| FsPickler.CreateBsonSerializer()
 
 type BinaryFormatterSerializer () =
     inherit Serializer ()

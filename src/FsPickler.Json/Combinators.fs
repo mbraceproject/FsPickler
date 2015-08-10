@@ -7,7 +7,7 @@ open Nessos.FsPickler.Json
 [<RequireQualifiedAccess>]
 module Json =
 
-    let private jsonSerializer = lazy(FsPickler.CreateJson(omitHeader = true))
+    let private jsonSerializer = lazy(FsPickler.CreateJsonSerializer(omitHeader = true))
 
     /// <summary>
     ///     Pickles a value to Json.
@@ -30,7 +30,7 @@ module Json =
 [<RequireQualifiedAccess>]
 module Bson =
 
-    let private bsonPickler = lazy(FsPickler.CreateBson())
+    let private bsonPickler = lazy(FsPickler.CreateBsonSerializer())
 
     /// <summary>
     ///     Pickles a value to Bson.
