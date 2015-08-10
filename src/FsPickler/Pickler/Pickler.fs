@@ -169,7 +169,6 @@ and [<AutoSerializable(false); Sealed>]
     let sc = match streamingContext with None -> new StreamingContext() | Some sc -> sc
 
     let mutable currentId = 0L
-    let mutable isProperSubtype = false
     let mutable idGen = new ObjectIDGenerator()
     let objStack = new Stack<int64> ()
     let cyclicObjects = new HashSet<int64> ()
@@ -216,17 +215,13 @@ and [<AutoSerializable(false); Sealed>]
     member internal __.CyclicObjectSet = cyclicObjects
 
     member internal __.NextNodeId() = 
-        if isProperSubtype then 
-            isProperSubtype <- false
-            nodeCount
-        else
-            let nc = nodeCount + 1L
-            nodeCount <- nc
-            nc
+        let nc = nodeCount + 1L
+        nodeCount <- nc
+        nc
 
     member internal __.UnSiftData = unsiftData
     member internal __.SiftData = siftData
-    member internal __.DeclareProperSubtype() = isProperSubtype <- true
+    member internal __.DeclareProperSubtype() = nodeCount <- nodeCount - 1L
     /// Creates a sift pair using provided sifted value.
     member internal __.CreateSift (value : 'T) = 
         let _,dict = Option.get siftData

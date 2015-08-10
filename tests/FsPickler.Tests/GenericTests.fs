@@ -465,6 +465,24 @@ module ``Generic Tests`` =
         FsPickler.UnSift(sifted, values) |> should equal xs
 
     [<Test; Category("Sift")>]
+    let ``3. Object: sifting with reference equality`` () =
+        let array = [|1 .. 100|]
+        let graph = [array; array]
+        let sifted, sifts = FsPickler.Sift(graph, (function :? Array -> true | _ -> false))
+        sifts.Length |> should equal 1
+        let graph' = FsPickler.UnSift(sifted, sifts)
+        graph' |> should equal graph
+
+    [<Test; Category("Sift")>]
+    let ``3. Object: sifting boxed primitives`` () =
+        let value = [|1|]
+        let graph = [box value; box 2; box 3 ; box 4; box value]
+        let sifted, sifts = FsPickler.Sift(graph, (function :? Array -> true | :? int -> true | _ -> false))
+        sifts.Length |> should equal 1
+        let graph' = FsPickler.UnSift(sifted, sifts)
+        graph' |> should equal graph
+
+    [<Test; Category("Sift")>]
     let ``3. Object: sifting boxed values`` () =
         let value = [|1 .. 100|]
         let sifted, sifts = FsPickler.Sift(box value, (function :? Array -> true | _ -> false))
