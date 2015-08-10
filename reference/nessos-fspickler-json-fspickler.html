@@ -54,7 +54,7 @@
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '314', 314)" onmouseover="showTip(event, '314', 314)">
-            CreateBson(typeConverter)
+            CreateBsonSerializer(typeConverter)
           </code>
           <div class="tip" id="314">
             <strong>Signature:</strong> (typeConverter:ITypeNameConverter option) -&gt; BsonSerializer<br />
@@ -65,7 +65,7 @@
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          <p>Initializes a new Bson pickler instance.</p>
+          <p>Initializes a new FsPickler serializer instance that uses the BSON format.</p>
 
 
 
@@ -75,7 +75,7 @@
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '315', 315)" onmouseover="showTip(event, '315', 315)">
-            CreateJson(...)
+            CreateJsonSerializer(...)
           </code>
           <div class="tip" id="315">
             <strong>Signature:</strong> (indent:bool option * omitHeader:bool option * typeConverter:ITypeNameConverter option) -&gt; JsonSerializer<br />
@@ -86,7 +86,7 @@
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          <p>Initializes a new Json pickler instance.</p>
+          <p>Initializes a new FsPickler serializer instance that uses the JSON format.</p>
 
 
 

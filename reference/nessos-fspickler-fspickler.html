@@ -119,7 +119,7 @@ serialization buffers.</p>
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '95', 95)" onmouseover="showTip(event, '95', 95)">
-            CreateBinary(...)
+            CreateBinarySerializer(...)
           </code>
           <div class="tip" id="95">
             <strong>Signature:</strong> (forceLittleEndian:bool option * typeConverter:ITypeNameConverter option) -&gt; BinarySerializer<br />
@@ -130,7 +130,7 @@ serialization buffers.</p>
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          <p>Create a new binary pickler instance.</p>
+          <p>Create a new FsPickler serializer instance that uses the built-in binary format.</p>
 
 
 
@@ -161,7 +161,7 @@ serialization buffers.</p>
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '97', 97)" onmouseover="showTip(event, '97', 97)">
-            CreateXml(typeConverter, indent)
+            CreateXmlSerializer(...)
           </code>
           <div class="tip" id="97">
             <strong>Signature:</strong> (typeConverter:ITypeNameConverter option * indent:bool option) -&gt; XmlSerializer<br />
@@ -172,7 +172,7 @@ serialization buffers.</p>
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          <p>Create a new XML pickler instance.</p>
+          <p>Create a new FsPickler serializer instance that uses the XML format.</p>
 
 
 
