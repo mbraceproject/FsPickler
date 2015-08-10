@@ -287,13 +287,12 @@ let generateMethodSignature (getTypeSig : Type -> string) (m : MethodInfo) =
 
 
 #nowarn "40"
-
-type private CacheRef = ReferenceEqualityContainer<ITypeNameConverter option>
     
 [<AutoSerializable(false)>]
 type ReflectionCache private (?tyConv : ITypeNameConverter) =
 
-    static let cacheCache = new ConcurrentDictionary<CacheRef, ReflectionCache>()
+    static let defaultCache = lazy(new ReflectionCache())
+    static let cacheCache = new ConcurrentDictionary<ITypeNameConverter, ReflectionCache>(new ReferenceEqualityComparer<_>())
 
     let loadAssembly = memoize loadAssembly
     let getAssemblyInfo = memoize AssemblyInfo.OfAssembly
@@ -310,7 +309,6 @@ type ReflectionCache private (?tyConv : ITypeNameConverter) =
     member __.GetTypeSignature(t : Type) = getSignature t
 
     static member Create(?tyConv : ITypeNameConverter) =
-        let container = new ReferenceEqualityContainer<_>(tyConv)
-        match cacheCache.TryFind container with
-        | None -> cacheCache.GetOrAdd(container, fun _ -> new ReflectionCache(?tyConv = tyConv))
-        | Some cache -> cache
+        match tyConv with
+        | None -> defaultCache.Value
+        | Some tc -> cacheCache.GetOrAdd(tc, fun tc -> new ReflectionCache(tyConv = tc))

@@ -179,14 +179,11 @@ module internal Utils =
         use sr = new StringReader(pickle)
         f sr
 
-    [<NoComparison>]
-    type ReferenceEqualityContainer<'T when 'T : not struct>(value : 'T) =
-        member __.Value = value
-        override __.GetHashCode() = System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode value
-        override __.Equals o =
-            match o with
-            | :? ReferenceEqualityContainer<'T> as c -> obj.ReferenceEquals(value, c.Value)
-            | _ -> false
+    /// IEqualityComparer implementation that follows reference equality
+    type ReferenceEqualityComparer<'T when 'T : not struct>() =
+        interface IEqualityComparer<'T> with
+            member __.Equals(t: 'T, t': 'T): bool = obj.ReferenceEquals(t,t')
+            member __.GetHashCode(value: 'T): int = System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode value
 
     // Byte <-> hex converter that emulates the AssemblyQualifiedName format
     // used in public key tokens
