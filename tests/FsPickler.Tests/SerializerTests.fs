@@ -747,6 +747,15 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
         value'.Value |> should equal value.Value
 
     [<Test ; Category("Custom types")>] 
+    member __.``6. Custom: Data Contract struct`` () =
+        let value = new StructWithDataContract(42, "Me", Guid.NewGuid(), 500.0)
+        let value' = testRoundtrip value
+        value'.Age |> should equal value.Age
+        value'.Name |> should equal value.Name
+        value'.Guid |> should equal value.Guid
+        value'.Salary |> should equal Unchecked.defaultof<float>
+
+    [<Test ; Category("Custom types")>] 
     member __.``6. Custom: struct`` () =
         let s = new StructType(42, "foobar") |> testRoundtrip
         s.X |> should equal 42

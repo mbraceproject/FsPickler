@@ -1,3 +1,6 @@
+### 1.3.1
+* Add support for immutable F# structs implementing DataContract serialization.
+
 ### 1.3.0
 * Bugfix in sifting of boxed values; renamings in core API.
 

@@ -19,7 +19,9 @@ type internal DataContractPickler =
 
     static member Create<'T>(resolver : IPicklerResolver) =
         let ty = typeof<'T>
-        let cacheByRef = not <| ty.IsValueType
+        let isStruct = ty.IsValueType
+
+        let members = gatherMembers ty
 
         // following specs in http://msdn.microsoft.com/en-us/library/ms733127%28v=vs.110%29.aspx
         let tryGetDataMemberInfo (m : MemberInfo) =
@@ -32,16 +34,35 @@ type internal DataContractPickler =
                     if not p.CanRead then
                         let msg = sprintf "property '%s' marked as data member but missing getter." p.Name
                         raise <| new PicklerGenerationException(ty, msg)
-                    elif not p.CanWrite then
-                        let msg = sprintf "property '%s' marked as data member but missing setter." p.Name
-                        raise <| new PicklerGenerationException(ty, msg)
 
-                    Some(attr, m, p.PropertyType)
+                    elif not p.CanWrite then
+                        // add support for F# structs with 'val private field : type' declarations which carry the DataMember attribute
+                        // these are surreptitiously converted to properties by the F# compiler and therefore are not settable
+                        // attempt to infer the underlying field and use that for serialization.
+                        // This allows for structs to be serialized using DataMember and still be declared 'immutable' by the F# compiler,
+                        // avoiding unnecessary copying of values whenever evaluating properties. 
+                        let structFieldMapping =
+                            if isStruct then
+                                match tryGetAttr<CompilationMappingAttribute> p with
+                                | Some attr when attr.SourceConstructFlags = SourceConstructFlags.Field ->
+                                    members |> Array.tryPick (function :? FieldInfo as f when f.Name = p.Name + "@" && f.FieldType = p.PropertyType -> Some f | _ -> None)
+                                | _ -> None
+                            else
+                                None
+                                
+                        match structFieldMapping with
+                        | Some f -> Some(attr, f :> _, f.FieldType)
+                        | None ->
+                            let msg = sprintf "property '%s' marked as data member but missing setter." p.Name
+                            raise <| new PicklerGenerationException(ty, msg)
+
+                    else
+                        Some(attr, m, p.PropertyType)
 
                 | _ -> None
 
         let dataContractInfo = 
-            gatherMembers ty
+            members
             |> Seq.choose tryGetDataMemberInfo
             |> Seq.mapi (fun i v -> (i,v))
             // sort data members: primarily specified by user-specified order
@@ -254,4 +275,4 @@ type internal DataContractPickler =
 
 #endif
 
-        CompositePickler.Create(reader, writer, cloner, accepter, PicklerInfo.DataContract, cacheByRef = cacheByRef, useWithSubtypes = false)
+        CompositePickler.Create(reader, writer, cloner, accepter, PicklerInfo.DataContract, cacheByRef = not isStruct, useWithSubtypes = false)

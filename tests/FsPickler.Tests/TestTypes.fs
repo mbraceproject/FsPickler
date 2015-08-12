@@ -446,6 +446,25 @@ module TestTypes =
             member __.GetObjectData(si : SerializationInfo, sc : StreamingContext) =
                 si.AddValue("x", x)
 
+    [<Struct; DataContract>]
+    type StructWithDataContract =
+        [<DataMember(Name = "Age", Order = 0)>]
+        val private age : int
+        [<DataMember(Name = "Age", Order = 1)>]
+        val private name : string
+        [<DataMember(Name = "Guid", Order = 1)>]
+        val private guid : Guid
+        val private salary : float
+
+        new (age : int, name : string, guid : Guid, salary : float) =
+            { age = age ; name = name ; guid = guid ; salary = salary }
+
+        member __.Age = __.age
+        member __.Name = __.name
+        member __.Guid = __.guid
+        member __.Salary = __.salary
+
+
     [<AutoSerializable(false)>]
     type PicklerFactoryType = class end
 
