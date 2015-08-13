@@ -55,18 +55,9 @@
     <tbody>
         <tr>
           <td class="type-name">
-            <a href="nessos-fspickler-extensionmethods-hashsift-1.html">HashSift<'T></a>
-          </td>
-          <td class="xmldoc"><p>Contains a sifted graph whose sifted values are distinguished by hashcode.</p>
-
-
-</td>
-        </tr>
-        <tr>
-          <td class="type-name">
             <a href="nessos-fspickler-extensionmethods-pickle-1.html">Pickle<'T></a>
           </td>
-          <td class="xmldoc"><p>Object pickle with type annotation</p>
+          <td class="xmldoc"><p>Pickled object with type annotation</p>
 
 
 </td>
@@ -93,7 +84,7 @@
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/ExtensionMethods.fs#L146-146" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/ExtensionMethods.fs#L73-73" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -114,7 +105,7 @@
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/ExtensionMethods.fs#L128-128" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/ExtensionMethods.fs#L55-55" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -135,7 +126,7 @@
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/ExtensionMethods.fs#L153-153" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/ExtensionMethods.fs#L80-80" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -149,19 +140,18 @@
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '4', 4)" onmouseover="showTip(event, '4', 4)">
-            HashSift(...)
+            Id
           </code>
           <div class="tip" id="4">
-            <strong>Signature:</strong> (graph:&#39;T * shouldSift:(obj -&gt; HashResult -&gt; bool) * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option) -&gt; HashSift&lt;&#39;T&gt; * (obj * HashResult) []<br />
-                          <strong>Type parameters:</strong> 'T          </div>
+            <strong>Signature:</strong> string<br />
+                      </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/ExtensionMethods.fs#L66-66" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/ExtensionMethods.fs#L126-126" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          <p>Creates a sifted copy of provided graph in which sifted values are distinguished by hash code.
-Returns a HashSift container as well as a manifest of all objects that were sifted and their hashcodes.</p>
+          <p>Returns a unique, case-sensitive hash identifier</p>
 
 
 
@@ -171,18 +161,18 @@ Returns a HashSift container as well as a manifest of all objects that were sift
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '5', 5)" onmouseover="showTip(event, '5', 5)">
-            HashUnsift(...)
+            Id
           </code>
           <div class="tip" id="5">
-            <strong>Signature:</strong> (sifted:HashSift&lt;&#39;T&gt; * hashValues:(obj * HashResult) [] * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option) -&gt; &#39;T<br />
-                          <strong>Type parameters:</strong> 'T          </div>
+            <strong>Signature:</strong> string<br />
+                      </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/ExtensionMethods.fs#L111-111" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/ExtensionMethods.fs#L126-126" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          <p>Unsifts a provided sifted object graph using supplied values and their corresponding hash codes.</p>
+          <p>Returns a unique, case-sensitive hash identifier</p>
 
 
 
@@ -192,56 +182,14 @@ Returns a HashSift container as well as a manifest of all objects that were sift
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '6', 6)" onmouseover="showTip(event, '6', 6)">
-            Id
-          </code>
-          <div class="tip" id="6">
-            <strong>Signature:</strong> string<br />
-                      </div>
-        </td>
-        <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/ExtensionMethods.fs#L199-199" class="github-link">
-              <img src="../content/img/github.png" class="normal" />
-              <img src="../content/img/github-blue.png" class="hover" />
-            </a>
-          <p>Returns a unique, case-sensitive hash identifier</p>
-
-
-
-        </td>
-      </tr>
-      <tr>
-        <td class="member-name">
-
-          <code onmouseout="hideTip(event, '7', 7)" onmouseover="showTip(event, '7', 7)">
-            Id
-          </code>
-          <div class="tip" id="7">
-            <strong>Signature:</strong> string<br />
-                      </div>
-        </td>
-        <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/ExtensionMethods.fs#L199-199" class="github-link">
-              <img src="../content/img/github.png" class="normal" />
-              <img src="../content/img/github-blue.png" class="hover" />
-            </a>
-          <p>Returns a unique, case-sensitive hash identifier</p>
-
-
-
-        </td>
-      </tr>
-      <tr>
-        <td class="member-name">
-
-          <code onmouseout="hideTip(event, '8', 8)" onmouseover="showTip(event, '8', 8)">
             Parse(id)
           </code>
-          <div class="tip" id="8">
+          <div class="tip" id="6">
             <strong>Signature:</strong> id:string -&gt; HashResult<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/ExtensionMethods.fs#L211-211" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/ExtensionMethods.fs#L138-138" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -254,15 +202,15 @@ Returns a HashSift container as well as a manifest of all objects that were sift
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '9', 9)" onmouseover="showTip(event, '9', 9)">
+          <code onmouseout="hideTip(event, '7', 7)" onmouseover="showTip(event, '7', 7)">
             PickleTyped(...)
           </code>
-          <div class="tip" id="9">
+          <div class="tip" id="7">
             <strong>Signature:</strong> (value:&#39;T * streamingContext:StreamingContext option * encoding:Encoding option) -&gt; Pickle&lt;&#39;T&gt;<br />
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/ExtensionMethods.fs#L44-44" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/ExtensionMethods.fs#L34-34" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -275,15 +223,15 @@ Returns a HashSift container as well as a manifest of all objects that were sift
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '10', 10)" onmouseover="showTip(event, '10', 10)">
+          <code onmouseout="hideTip(event, '8', 8)" onmouseover="showTip(event, '8', 8)">
             TryGet(name)
           </code>
-          <div class="tip" id="10">
+          <div class="tip" id="8">
             <strong>Signature:</strong> name:string -&gt; &#39;T option<br />
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/ExtensionMethods.fs#L161-161" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/ExtensionMethods.fs#L88-88" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -297,15 +245,15 @@ Returns 'None' if not found.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '11', 11)" onmouseover="showTip(event, '11', 11)">
+          <code onmouseout="hideTip(event, '9', 9)" onmouseover="showTip(event, '9', 9)">
             TryGetObj(name)
           </code>
-          <div class="tip" id="11">
+          <div class="tip" id="9">
             <strong>Signature:</strong> name:string -&gt; obj option<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/ExtensionMethods.fs#L181-181" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/ExtensionMethods.fs#L108-108" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -319,15 +267,15 @@ Returns 'None' if not found.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '12', 12)" onmouseover="showTip(event, '12', 12)">
+          <code onmouseout="hideTip(event, '10', 10)" onmouseover="showTip(event, '10', 10)">
             UnPickleTyped(...)
           </code>
-          <div class="tip" id="12">
+          <div class="tip" id="10">
             <strong>Signature:</strong> (pickle:Pickle&lt;&#39;T&gt; * streamingContext:StreamingContext option * encoding:Encoding option) -&gt; &#39;T<br />
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/ExtensionMethods.fs#L54-54" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/ExtensionMethods.fs#L44-44" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
