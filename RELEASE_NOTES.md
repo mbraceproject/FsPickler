@@ -1,3 +1,6 @@
+### 1.3.2
+* Expose type annotated pickle constructor; Remove HashSift methods.
+
 ### 1.3.1
 * Add support for immutable F# structs implementing DataContract serialization.
 
