@@ -194,7 +194,11 @@ type internal DataContractPickler =
             for i = 0 to members.Length - 1 do
                 let value =
                     match members.[i] with
+#if !EMIT_IL && UNITY
+                    | :? PropertyInfo as p -> p.GetValue(t,[||])
+#else
                     | :? PropertyInfo as p -> p.GetValue t
+#endif
                     | :? FieldInfo as f -> f.GetValue t
                     | _ -> invalidOp "internal error on serializing '%O'." typeof<'T>
 
@@ -215,7 +219,11 @@ type internal DataContractPickler =
             for i = 0 to members.Length - 1 do
                 let value = picklers.[i].UntypedRead r names.[i]
                 match members.[i] with
+#if !EMIT_IL && UNITY
+                | :? PropertyInfo as p -> p.SetValue(t, value,[||])
+#else
                 | :? PropertyInfo as p -> p.SetValue(t, value)
+#endif 
                 | :? FieldInfo as f -> f.SetValue(t, value)
                 | _ -> invalidOp <| sprintf "internal error on deserializing '%O'." typeof<'T>
 
@@ -240,10 +248,15 @@ type internal DataContractPickler =
             for i = 0 to members.Length - 1 do
                 match members.[i] with
                 | :? PropertyInfo as p -> 
+#if !EMIT_IL && UNITY
+                    let o = p.GetValue(t,[||])
+                    let o' = picklers.[i].UntypedClone c o
+                    p.SetValue(t', o',[||])
+#else
                     let o = p.GetValue t
                     let o' = picklers.[i].UntypedClone c o
                     p.SetValue(t', o')
-
+#endif 
                 | :? FieldInfo as f -> 
                     let o = f.GetValue t
                     let o' = picklers.[i].UntypedClone c o
@@ -265,7 +278,11 @@ type internal DataContractPickler =
             for i = 0 to members.Length - 1 do
                 let value =
                     match members.[i] with
+#if !EMIT_IL && UNITY
+                    | :? PropertyInfo as p -> p.GetValue(t,[||])
+#else
                     | :? PropertyInfo as p -> p.GetValue t
+#endif 
                     | :? FieldInfo as f -> f.GetValue t
                     | _ -> invalidOp "internal error on visiting '%O'." typeof<'T>
 
