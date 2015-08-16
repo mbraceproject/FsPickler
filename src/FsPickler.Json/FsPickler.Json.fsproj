@@ -85,6 +85,22 @@
     <OutputPath>..\..\bin\net35\</OutputPath>
     <OtherFlags>--warnon:1182</OtherFlags>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release-UNITY|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <Tailcalls>true</Tailcalls>
+    <DefineConstants>TRACE;NET40;NET35</DefineConstants>
+    <WarningLevel>3</WarningLevel>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <TargetFrameworkProfile />
+    <TargetFSharpCoreVersion>2.3.0.0</TargetFSharpCoreVersion>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <DocumentationFile>..\..\bin\net35\FsPickler.Json.XML</DocumentationFile>
+    <Prefer32Bit>true</Prefer32Bit>
+    <OtherFlags>--warnon:1182</OtherFlags>
+    <OutputPath>bin\Release-UNITY\</OutputPath>
+  </PropertyGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '11.0'">
       <PropertyGroup Condition="Exists('$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets')">

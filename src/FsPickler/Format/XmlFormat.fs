@@ -192,7 +192,7 @@ type XmlPickleWriter internal (textWriter : TextWriter, indent : bool, leaveOpen
 
         member __.Dispose () = 
             writer.Flush () ; textWriter.Flush () ; 
-#if NET40
+#if NET40 || UNITY
 #else
             writer.Dispose()
 #endif
@@ -339,7 +339,7 @@ type XmlPickleReader internal (textReader : TextReader, leaveOpen) =
         member __.ReadPrimitiveArray _ _ = raise <| new NotImplementedException()
 
         member __.Dispose () = 
-#if NET40
+#if NET40 || UNITY
             ()
 #else
             reader.Dispose()
@@ -358,7 +358,7 @@ type XmlPickleFormatProvider(indent) =
         member __.DefaultEncoding = Encoding.UTF8
 
         member __.CreateWriter (stream, encoding, _, leaveOpen) =
-#if NET40
+#if NET40 || UNITY
             if leaveOpen then raise <| new NotSupportedException("'leaveOpen' not supported in .NET 40.")
             let sw = new StreamWriter(stream, encoding)
 #else
@@ -367,7 +367,7 @@ type XmlPickleFormatProvider(indent) =
             new XmlPickleWriter(sw, __.Indent, leaveOpen) :> _
 
         member __.CreateReader (stream, encoding, _, leaveOpen) =
-#if NET40
+#if NET40  || UNITY
             if leaveOpen then raise <| new NotSupportedException("'leaveOpen' not supported in .NET 40.")
             let sr = new StreamReader(stream, encoding)
 #else

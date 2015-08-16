@@ -1,0 +1,224 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>30b8d4be-35e3-47d1-99a7-3194a4eb2143</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>FsPickler.Unity3D</RootNamespace>
+    <AssemblyName>FsPickler.Unity3D</AssemblyName>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <TargetFSharpCoreVersion>2.3.0.0</TargetFSharpCoreVersion>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <Name>FsPickler.Unity3D</Name>
+    <TargetFrameworkProfile>Unity Full v3.5</TargetFrameworkProfile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <Tailcalls>false</Tailcalls>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;OPTIMIZE_FSHARP;EMIT_IL;NET35;UNITY</DefineConstants>
+    <WarningLevel>3</WarningLevel>
+    <DocumentationFile>bin\Debug\FsPickler.Unity3D.XML</DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <Tailcalls>true</Tailcalls>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <WarningLevel>3</WarningLevel>
+    <DocumentationFile>bin\Release\FsPickler.Unity3D.XML</DocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="mscorlib" />
+    <Reference Include="FSharp.Core, Version=$(TargetFSharpCoreVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\..\src\FsPickler\Utils\Utils.fs">
+      <Link>Utils\Utils.fs</Link>
+    </Compile>
+    <Compile Include="..\..\src\FsPickler\Utils\Emit.fs">
+      <Link>Utils\Emit.fs</Link>
+    </Compile>
+    <Compile Include="..\..\src\FsPickler\Utils\Reflection.fs">
+      <Link>Utils\Reflection.fs</Link>
+    </Compile>
+    <Compile Include="..\..\src\FsPickler\Utils\ShallowCopy.fs">
+      <Link>Utils\ShallowCopy.fs</Link>
+    </Compile>
+    <Compile Include="..\..\src\FsPickler\Utils\Hashing.fs">
+      <Link>Utils\Hashing.fs</Link>
+    </Compile>
+    <Compile Include="..\..\src\FsPickler\Pickler\Types.fs">
+      <Link>Pickler\Types.fs</Link>
+    </Compile>
+    <Compile Include="..\..\src\FsPickler\Pickler\PickleFormat.fs">
+      <Link>Pickler\PickleFormat.fs</Link>
+    </Compile>
+    <Compile Include="..\..\src\FsPickler\Pickler\ReflectionCache.fs">
+      <Link>Pickler\ReflectionCache.fs</Link>
+    </Compile>
+    <Compile Include="..\..\src\FsPickler\Pickler\Pickler.fsi">
+      <Link>Pickler\Pickler.fsi</Link>
+    </Compile>
+    <Compile Include="..\..\src\FsPickler\Pickler\Pickler.fs">
+      <Link>Pickler\Pickler.fs</Link>
+    </Compile>
+    <Compile Include="..\..\src\FsPickler\Pickler\PrimitivePicklers.fs">
+      <Link>Pickler\PrimitivePicklers.fs</Link>
+    </Compile>
+    <Compile Include="..\..\src\FsPickler\Pickler\CompositePickler.fs">
+      <Link>Pickler\CompositePickler.fs</Link>
+    </Compile>
+    <Compile Include="..\..\src\FsPickler\Pickler\UnionCaseHelper.fs">
+      <Link>Pickler\UnionCaseHelper.fs</Link>
+    </Compile>
+    <Compile Include="..\..\src\FsPickler\Pickler\ReflectionPicklers.fs">
+      <Link>Pickler\ReflectionPicklers.fs</Link>
+    </Compile>
+    <Compile Include="..\..\src\FsPickler\Combinators\Wrappers.fs">
+      <Link>Combinators\Wrappers.fs</Link>
+    </Compile>
+    <Compile Include="..\..\src\FsPickler\Combinators\Sequence.fs">
+      <Link>Combinators\Sequence.fs</Link>
+    </Compile>
+    <Compile Include="..\..\src\FsPickler\Combinators\Array.fs">
+      <Link>Combinators\Array.fs</Link>
+    </Compile>
+    <Compile Include="..\..\src\FsPickler\Combinators\Tuple.fs">
+      <Link>Combinators\Tuple.fs</Link>
+    </Compile>
+    <Compile Include="..\..\src\FsPickler\Combinators\FSharpList.fs">
+      <Link>Combinators\FSharpList.fs</Link>
+    </Compile>
+    <Compile Include="..\..\src\FsPickler\Combinators\DotNetTypes.fs">
+      <Link>Combinators\DotNetTypes.fs</Link>
+    </Compile>
+    <Compile Include="..\..\src\FsPickler\Combinators\FSharpTypes.fs">
+      <Link>Combinators\FSharpTypes.fs</Link>
+    </Compile>
+    <Compile Include="..\..\src\FsPickler\Combinators\Collections.fs">
+      <Link>Combinators\Collections.fs</Link>
+    </Compile>
+    <Compile Include="..\..\src\FsPickler\PicklerGeneration\PluginRegistry.fs">
+      <Link>PicklerGeneration\PluginRegistry.fs</Link>
+    </Compile>
+    <Compile Include="..\..\src\FsPickler\PicklerGeneration\TypeShape.fs">
+      <Link>PicklerGeneration\TypeShape.fs</Link>
+    </Compile>
+    <Compile Include="..\..\src\FsPickler\PicklerGeneration\PicklerEmit.fs">
+      <Link>PicklerGeneration\PicklerEmit.fs</Link>
+    </Compile>
+    <Compile Include="..\..\src\FsPickler\PicklerGeneration\FieldPicklers.fs">
+      <Link>PicklerGeneration\FieldPicklers.fs</Link>
+    </Compile>
+    <Compile Include="..\..\src\FsPickler\PicklerGeneration\ISerializablePickler.fs">
+      <Link>PicklerGeneration\ISerializablePickler.fs</Link>
+    </Compile>
+    <Compile Include="..\..\src\FsPickler\PicklerGeneration\DataContractPickler.fs">
+      <Link>PicklerGeneration\DataContractPickler.fs</Link>
+    </Compile>
+    <Compile Include="..\..\src\FsPickler\PicklerGeneration\FSharpTypeGen.fs">
+      <Link>PicklerGeneration\FSharpTypeGen.fs</Link>
+    </Compile>
+    <Compile Include="..\..\src\FsPickler\PicklerGeneration\CustomPickler.fs">
+      <Link>PicklerGeneration\CustomPickler.fs</Link>
+    </Compile>
+    <Compile Include="..\..\src\FsPickler\PicklerGeneration\PicklerGenerator.fs">
+      <Link>PicklerGeneration\PicklerGenerator.fs</Link>
+    </Compile>
+    <Compile Include="..\..\src\FsPickler\PicklerGeneration\PicklerResolution.fs">
+      <Link>PicklerGeneration\PicklerResolution.fs</Link>
+    </Compile>
+    <Compile Include="..\..\src\FsPickler\PicklerGeneration\PicklerCache.fs">
+      <Link>PicklerGeneration\PicklerCache.fs</Link>
+    </Compile>
+    <Compile Include="..\..\src\FsPickler\Format\BinaryFormat.fs">
+      <Link>Format\BinaryFormat.fs</Link>
+    </Compile>
+    <Compile Include="..\..\src\FsPickler\Format\XmlFormat.fs">
+      <Link>Format\XmlFormat.fs</Link>
+    </Compile>
+    <Compile Include="..\..\src\FsPickler\FsPickler\RootSerialization.fs">
+      <Link>FsPickler\RootSerialization.fs</Link>
+    </Compile>
+    <Compile Include="..\..\src\FsPickler\FsPickler\ObjectSizeCounter.fs">
+      <Link>FsPickler\ObjectSizeCounter.fs</Link>
+    </Compile>
+    <Compile Include="..\..\src\FsPickler\FsPickler\Serializer.fs">
+      <Link>FsPickler\Serializer.fs</Link>
+    </Compile>
+    <Compile Include="..\..\src\FsPickler\FsPickler\TextSerializer.fs">
+      <Link>FsPickler\TextSerializer.fs</Link>
+    </Compile>
+    <Compile Include="..\..\src\FsPickler\FsPickler\BinarySerializer.fs">
+      <Link>FsPickler\BinarySerializer.fs</Link>
+    </Compile>
+    <Compile Include="..\..\src\FsPickler\FsPickler\XmlSerializer.fs">
+      <Link>FsPickler\XmlSerializer.fs</Link>
+    </Compile>
+    <Compile Include="..\..\src\FsPickler\FsPickler\FsPickler.fs">
+      <Link>FsPickler\FsPickler.fs</Link>
+    </Compile>
+    <Compile Include="..\..\src\FsPickler\FsPickler\Combinators.fs">
+      <Link>FsPickler\Combinators.fs</Link>
+    </Compile>
+    <Compile Include="..\..\src\FsPickler\FsPickler\ExtensionMethods.fs">
+      <Link>FsPickler\ExtensionMethods.fs</Link>
+    </Compile>
+  </ItemGroup>
+  <PropertyGroup>
+    <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release-UNITY|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <Tailcalls>true</Tailcalls>
+    <DefineConstants>TRACE;OPTIMIZE_FSHARP;EMIT_IL;NET35;UNITY</DefineConstants>
+    <WarningLevel>3</WarningLevel>
+    <DocumentationFile>bin\Release\FsPickler.Unity3D.XML</DocumentationFile>
+    <OutputPath>bin\Release-UNITY\</OutputPath>
+  </PropertyGroup>
+  <Choose>
+    <When Condition="'$(VisualStudioVersion)' == '11.0'">
+      <PropertyGroup Condition="Exists('$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets')">
+        <FSharpTargetsPath>$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets</FSharpTargetsPath>
+      </PropertyGroup>
+    </When>
+    <Otherwise>
+      <PropertyGroup Condition="Exists('$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\FSharp\Microsoft.FSharp.Targets')">
+        <FSharpTargetsPath>$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\FSharp\Microsoft.FSharp.Targets</FSharpTargetsPath>
+      </PropertyGroup>
+    </Otherwise>
+  </Choose>
+  <Import Project="$(FSharpTargetsPath)" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+  <Choose>
+    <When Condition="($(TargetFrameworkIdentifier) == '.NETFramework' And ($(TargetFrameworkVersion) == 'v3.5' Or $(TargetFrameworkVersion) == 'v4.0' Or $(TargetFrameworkVersion) == 'v4.5' Or $(TargetFrameworkVersion) == 'v4.5.1' Or $(TargetFrameworkVersion) == 'v4.5.2' Or $(TargetFrameworkVersion) == 'v4.5.3' Or $(TargetFrameworkVersion) == 'v4.6')) Or ($(TargetFrameworkIdentifier) == 'MonoAndroid') Or ($(TargetFrameworkIdentifier) == 'MonoTouch')">
+      <ItemGroup>
+        <Reference Include="System.Threading">
+          <HintPath>..\..\packages\TaskParallelLibrary\lib\Net35\System.Threading.dll</HintPath>
+          <Private>True</Private>
+          <Paket>True</Paket>
+        </Reference>
+      </ItemGroup>
+    </When>
+  </Choose>
+</Project>
