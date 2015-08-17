@@ -193,7 +193,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <Tailcalls>true</Tailcalls>
-    <DefineConstants>TRACE;OPTIMIZE_FSHARP;NET35;UNITY</DefineConstants>
+    <DefineConstants>TRACE;OPTIMIZE_FSHARP;NET35;UNITY;EMIT_IL</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\Release\FsPickler.Unity3D.XML</DocumentationFile>
     <OutputPath>bin\Release-UNITY\</OutputPath>
@@ -256,7 +256,6 @@
           <HintPath>..\..\packages\TaskParallelLibrary\lib\Net35\System.Threading.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
-          <SpecificVersion>False</SpecificVersion>
         </Reference>
       </ItemGroup>
     </When>
