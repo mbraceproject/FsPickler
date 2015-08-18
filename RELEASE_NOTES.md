@@ -1,3 +1,6 @@
+### 1.3.3
+* Fix FsPickler.CSharp dependency issue.
+
 ### 1.3.2
 * Expose type annotated pickle constructor; Remove HashSift methods.
 
