@@ -1,3 +1,6 @@
+### 1.3.4
+* Fix DataContract struct deserialization in NoEmit setting.
+
 ### 1.3.3
 * Fix FsPickler.CSharp dependency issue.
 

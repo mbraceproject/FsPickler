@@ -206,9 +206,9 @@ type internal DataContractPickler =
             let t =
                 // use parameterless constructor, if available
                 if obj.ReferenceEquals(ctor, null) then
-                    FormatterServices.GetUninitializedObject(ty) |> fastUnbox<'T>
+                    FormatterServices.GetUninitializedObject(ty)
                 else
-                    ctor.Invoke(null) |> fastUnbox<'T>
+                    ctor.Invoke(null)
 
             run onDeserializing t r
 
@@ -224,15 +224,15 @@ type internal DataContractPickler =
             if isObjectReference then 
                 (fastUnbox<IObjectReference> t).GetRealObject r.StreamingContext :?> 'T
             else
-                t
+                fastUnbox<'T> t
 
         let cloner (c : CloneState) (t : 'T) =
             let t' =
                 // use parameterless constructor, if available
                 if obj.ReferenceEquals(ctor, null) then
-                    FormatterServices.GetUninitializedObject(ty) |> fastUnbox<'T>
+                    FormatterServices.GetUninitializedObject(ty)
                 else
-                    ctor.Invoke(null) |> fastUnbox<'T>
+                    ctor.Invoke(null)
 
             run onSerializing t c
             run onDeserializing t' c
@@ -257,7 +257,7 @@ type internal DataContractPickler =
             if isObjectReference then 
                 (fastUnbox<IObjectReference> t').GetRealObject c.StreamingContext :?> 'T
             else
-                t'
+                fastUnbox<'T> t'
 
         let accepter (v : VisitState) (t : 'T) =
             run onSerializing t v
