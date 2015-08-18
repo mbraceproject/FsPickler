@@ -309,7 +309,11 @@ type internal FsRecordPickler =
         let writer (w : WriteState) (_ : string) (r : 'Record) =
             for i = 0 to fields.Length - 1 do
                 let f = fields.[i]
+#if !EMIT_IL && UNITY                
+                let o = f.GetValue(r,[||])
+#else
                 let o = f.GetValue r
+#endif
                 picklers.[i].UntypedWrite w tags.[i] o
             
         let reader (r : ReadState) (_ : string) =
@@ -323,7 +327,11 @@ type internal FsRecordPickler =
             let values = Array.zeroCreate<obj> picklers.Length
             for i = 0 to fields.Length - 1 do
                 let f = fields.[i]
+#if !EMIT_IL && UNITY                
+                let o = f.GetValue(r,[||])
+#else
                 let o = f.GetValue r
+#endif
                 values.[i] <- picklers.[i].UntypedClone c o
 
             ctor.Invoke values |> fastUnbox<'Record>
@@ -331,7 +339,11 @@ type internal FsRecordPickler =
         let accepter (v : VisitState) (r : 'Record) =
             for i = 0 to fields.Length - 1 do
                 let f = fields.[i]
+#if !EMIT_IL && UNITY                
+                let o = f.GetValue(r,[||])
+#else
                 let o = f.GetValue r
+#endif
                 picklers.[i].UntypedAccept v o
                 
 #endif

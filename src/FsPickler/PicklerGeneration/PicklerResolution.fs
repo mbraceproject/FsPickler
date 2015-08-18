@@ -21,9 +21,15 @@ let resolvePickler (resolver : IPicklerResolver) (mkEarlyBinding : Pickler -> un
         // while stack overflows are unlikely here (this is type-level traversal)
         // it can be useful in catching a certain class of user errors when declaring custom picklers.
 #if PROTECT_STACK_OVERFLOWS
+#if UNITY
+        try RuntimeHelpers.ProbeForSufficientStack ()
+        with :? InsufficientMemoryException ->
+            raise <| new PicklerGenerationException(t, "insufficient execution stack.")
+#else
         try RuntimeHelpers.EnsureSufficientExecutionStack ()
         with :? InsufficientExecutionStackException ->
             raise <| new PicklerGenerationException(t, "insufficient execution stack.")
+#endif
 #endif
 
         // step 1: resolve shape of given type

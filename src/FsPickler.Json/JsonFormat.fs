@@ -37,7 +37,7 @@ type JsonPickleFormatProvider internal (indent, omitHeader) as self =
         member __.DefaultEncoding = new UTF8Encoding(false) :> Encoding
 
         member __.CreateWriter (stream, encoding, isTopLevelSequence, leaveOpen) =
-#if NET40
+#if NET40 || UNITY
             if leaveOpen then raise <| new NotSupportedException("'leaveOpen' not supported in .NET 40.")
             let sw = new StreamWriter(stream, encoding)
 #else
@@ -47,7 +47,7 @@ type JsonPickleFormatProvider internal (indent, omitHeader) as self =
             new JsonPickleWriter(jw, __.OmitHeader, __.Indent, isCustomSeq isTopLevelSequence, sequenceSeparator, leaveOpen) :> _
 
         member __.CreateReader (stream, encoding, isTopLevelSequence, leaveOpen) =
-#if NET40
+#if NET40 || UNITY
             if leaveOpen then raise <| new NotSupportedException("'leaveOpen' not supported in .NET 40.")
             let sr = new StreamReader(stream, encoding)
 #else
