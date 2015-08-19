@@ -112,6 +112,7 @@ type internal ISerializablePickler =
         let onDeserialized = allMethods |> getSerializationMethods<OnDeserializedAttribute> |> wrapDelegate<Action<'T, StreamingContext>>
 
         let isDeserializationCallback = isAssignableFrom typeof<IDeserializationCallback> typeof<'T>
+        let isMarshaledObjRef = typeof<'T> = typeof<System.Runtime.Remoting.ObjRef>
         let isObjectReference = isAssignableFrom typeof<IObjectReference> typeof<'T>
 
         let inline run (dele : Action<'T, StreamingContext> []) w x =
@@ -201,7 +202,7 @@ type internal ISerializablePickler =
                 let t = create sI r.StreamingContext
                 run onDeserialized r t
                 if isDeserializationCallback then (fastUnbox<IDeserializationCallback> t).OnDeserialization null
-                if isObjectReference then 
+                if isObjectReference && not isMarshaledObjRef then 
                     (fastUnbox<IObjectReference> t).GetRealObject r.StreamingContext :?> 'T
                 else
                     t
@@ -216,7 +217,7 @@ type internal ISerializablePickler =
                 let t' = create sI' c.StreamingContext
                 run onDeserialized c t'
                 if isDeserializationCallback then (fastUnbox<IDeserializationCallback> t').OnDeserialization null
-                if isObjectReference then 
+                if isObjectReference && not isMarshaledObjRef then 
                     (fastUnbox<IObjectReference> t').GetRealObject c.StreamingContext :?> 'T
                 else
                     t'

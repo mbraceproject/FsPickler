@@ -1,3 +1,6 @@
+### 1.3.5
+* Fix System.Runtime.Remoting.ObjRef serialization.
+
 ### 1.3.4
 * Fix DataContract struct deserialization in NoEmit setting.
 
