@@ -1,3 +1,6 @@
+### 1.3.6
+* Fix block read bug in binary format.
+
 ### 1.3.5
 * Fix System.Runtime.Remoting.ObjRef serialization.
 
