@@ -1,3 +1,6 @@
+### 1.3.7
+* Fix reference equality issue in object sifting.
+
 ### 1.3.6
 * Fix block read bug in binary format.
 
