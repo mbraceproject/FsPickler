@@ -355,8 +355,7 @@ type internal CompositePickler<'T> =
             let p0 = state.PicklerResolver.Resolve subtype
             p0.UntypedClone state value |> fastUnbox<'T>
 
-        // force caching on all reference types in case of sift mode
-        elif p.m_IsCacheByRef || Option.isSome state.SiftData then
+        elif p.m_IsCacheByRef then
             let mutable firstOccurence = false
             let id = state.GetReferenceId(value, &firstOccurence)
 

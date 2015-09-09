@@ -13,25 +13,15 @@ open Nessos.FsPickler.Hashing
 [<AutoOpen>]
 module ExtensionMethods =
 
-    /// Object pickle with type annotation
-    [<AutoSerializable(true)>]
-    type Pickle<'T> internal (bytes : byte []) =
+    /// Pickled object with type annotation
+    [<DataContract>]
+    type Pickle<'T> =
+        [<DataMember(Name = "Bytes")>]
+        val mutable private bytes : byte []
+        /// Wraps a byte array into a type annotated pickle.
+        new (bytes : byte[]) = { bytes = bytes }
         /// Byte array pickle
-        member __.Bytes = bytes
-
-    /// Contains a sifted graph whose sifted values are distinguished by hashcode.
-    [<Sealed; DataContract>]
-    type HashSift<'T> internal (sifted : Sifted<'T>, hashIndices : (HashResult * int64 []) []) =
-        [<DataMember(Name = "Sifted")>]
-        let sifted = sifted
-        [<DataMember(Name = "Indices")>]
-        let hashIndices = hashIndices
-        /// Collection of all hashes of objects sifted from object graph.
-        member __.Hashes = hashIndices |> Array.map fst
-        member internal __.Sifted = sifted
-        member internal __.HashIndices = hashIndices
-
-        override __.ToString() = sifted.ToString()
+        member __.Bytes = __.bytes
 
     type FsPicklerSerializer with
 
@@ -53,69 +43,6 @@ module ExtensionMethods =
         /// <param name="encoding">encoding passed to the binary reader.</param>
         member fsp.UnPickleTyped(pickle : Pickle<'T>, ?streamingContext, ?encoding) : 'T =
             fsp.UnPickle<'T>(pickle.Bytes, ?streamingContext = streamingContext, ?encoding = encoding)
-
-
-        /// <summary>
-        ///    Creates a sifted copy of provided graph in which sifted values are distinguished by hash code.
-        ///    Returns a HashSift container as well as a manifest of all objects that were sifted and their hashcodes.
-        /// </summary>
-        /// <param name="graph">Object graph to be sifted.</param>
-        /// <param name="shouldSift">Predicate deciding whether supplied object should be sifted.</param>
-        /// <param name="pickler">Pickler used for sifting. Defaults to auto-generated pickler.</param>
-        /// <param name="streamingContext">Streaming context used for cloning. Defaults to null streaming context.</param>
-        member fsp.HashSift<'T>(graph : 'T, shouldSift : obj -> HashResult -> bool, ?pickler : Pickler<'T>, ?streamingContext : StreamingContext) : HashSift<'T> * (obj * HashResult) [] =
-            let hashed = new Dictionary<HashResult, bool> ()
-            let siftIndex = new Dictionary<int64, HashResult> ()
-            let sifter = 
-                {
-                    new IObjectSifter with
-                        member __.Sift(pickler: Pickler<'a>, id: int64, value: 'a) = 
-                            let hash = fsp.ComputeHash value
-                            let mutable result = false
-                            if hashed.TryGetValue(hash, &result) then 
-                                if result then siftIndex.Add(id, hash)
-                                result
-
-                            elif shouldSift value hash then
-                                hashed.Add(hash, true)
-                                siftIndex.Add(id, hash)
-                                true
-                            else
-                                hashed.Add(hash, false)
-                                false
-                }
-
-            let siftedGraph, siftedValues = FsPickler.Sift(graph, sifter, ?pickler = pickler, ?streamingContext = streamingContext)
-
-            let hashIndices, hashObjs =
-                siftedValues 
-                |> Seq.map (fun (id, obj) -> id, obj, siftIndex.[id])
-                |> Seq.groupBy (fun (_,_,hash) -> hash)
-                |> Seq.map (fun (hash, values) -> 
-                                let _,obj,_ = Seq.head values 
-                                let ids = values |> Seq.map (fun (id,_,_) -> id) |> Seq.toArray
-                                (hash, ids), (obj, hash))
-                |> Seq.toArray
-                |> Array.unzip
-
-            let hs = new HashSift<'T>(siftedGraph, hashIndices)
-            hs, hashObjs
-
-        /// <summary>
-        ///     Unsifts a provided sifted object graph using supplied values and their corresponding hash codes.
-        /// </summary>
-        /// <param name="sifted">Graph to be unsifted.</param>
-        /// <param name="hashValues">Values to be used in unsifting by hash code.</param>
-        /// <param name="pickler">Pickler used for sifting. Defaults to auto-generated pickler.</param>
-        /// <param name="streamingContext">Streaming context used for cloning. Defaults to null streaming context.</param>
-        member fsp.HashUnsift<'T>(sifted : HashSift<'T>, hashValues : (obj * HashResult) [], ?pickler : Pickler<'T>, ?streamingContext : StreamingContext) : 'T =
-            let hashIndices = dict sifted.HashIndices
-            let siftedValues =
-                hashValues
-                |> Seq.collect (fun (obj, hash) -> hashIndices.[hash] |> Seq.map (fun id -> (id,obj)))
-                |> Seq.toArray
-
-            FsPickler.UnSift(sifted.Sifted, siftedValues, ?pickler = pickler, ?streamingContext = streamingContext)
 
     type Pickler with
         /// <summary>Initializes a pickler out of a pair of read/write lambdas. Unsafe pickler generation method.</summary>

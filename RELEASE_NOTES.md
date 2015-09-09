@@ -1,3 +1,21 @@
+### 1.3.7
+* Fix reference equality issue in object sifting.
+
+### 1.3.6
+* Fix block read bug in binary format.
+
+### 1.3.5
+* Fix System.Runtime.Remoting.ObjRef serialization.
+
+### 1.3.4
+* Fix DataContract struct deserialization in NoEmit setting.
+
+### 1.3.3
+* Fix FsPickler.CSharp dependency issue.
+
+### 1.3.2
+* Expose type annotated pickle constructor; Remove HashSift methods.
+
 ### 1.3.1
 * Add support for immutable F# structs implementing DataContract serialization.
 

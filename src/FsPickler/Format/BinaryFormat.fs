@@ -75,7 +75,7 @@ module private BinaryFormatUtils =
         let inline fillBytes (n : int) =
             let mutable read = 0
             while read < n do
-                read <- read + source.Read(buf, 0, n - read)
+                read <- read + source.Read(buf, read, n - read)
         
         let mutable bytes = Buffer.ByteLength target
         let mutable i = 0
