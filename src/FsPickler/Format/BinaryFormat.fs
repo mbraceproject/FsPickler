@@ -280,7 +280,7 @@ and BinaryPickleReader internal (stream : Stream, encoding : Encoding, leaveOpen
             else
                 br.ReadString()
 
-        member __.ReadDate _ = let ticks = br.ReadInt64() in DateTime(ticks)
+        member __.ReadDate _ = let ticks = br.ReadInt64() in DateTime(ticks, DateTimeKind.Unspecified)
         member __.ReadTimeSpan _ = let ticks = br.ReadInt64() in TimeSpan(ticks)
         member __.ReadGuid _ = let bytes = br.ReadBytes(16) in Guid(bytes)
 
