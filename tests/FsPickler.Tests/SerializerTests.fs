@@ -123,7 +123,7 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
 
         Check.QuickThrowOnFail<DateTimeOffset list>(fun (d : DateTimeOffset list) -> let d' = testRoundtrip d in d.Length = d'.Length)
 
-        Check.QuickThrowOnFail<DateTime * uint16 * uint16>(fun (d : DateTime, minutes1 : uint16, minutes2 : uint16) ->
+        Check.QuickThrowOnFail<DateTime * int16 * int16>(fun (d : DateTime, minutes1 : int16, minutes2 : int16) ->
             let offset1 = TimeSpan.FromMinutes(float minutes1)
             let offset2 = TimeSpan.FromMinutes(float minutes2)
             let dto1 = new DateTimeOffset(d, offset1)
