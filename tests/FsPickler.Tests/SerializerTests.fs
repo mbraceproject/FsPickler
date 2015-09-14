@@ -109,9 +109,9 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
         else
             Check.QuickThrowOnFail<DateTime> testEquals
 
-        Check.QuickThrowOnFail<DateTime list>(fun (d : DateTime list) -> let d' = testRoundtrip d in d.Length = d'.Length)
-
-        Check.QuickThrowOnFail<DateTime>(fun (d : DateTime) -> let d' = testRoundtrip [|d|] in d'.[0].Kind = DateTimeKind.Unspecified)
+        let d = DateTime.Now
+        let d' = testRoundtrip d
+        d'.Kind |> should equal DateTimeKind.Unspecified
 
     [<Test; Category("Primitives")>]
     member __.``1. Primitive: DateTimeOffset`` () = 
@@ -120,8 +120,6 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
             Check.QuickThrowOnFail<DateTimeOffset> (fun d -> let d' = testRoundtrip d in d.ToString() = d'.ToString())
         else
             Check.QuickThrowOnFail<DateTimeOffset> (fun (d : DateTimeOffset) -> let d' = testRoundtrip d in d = d' && d.Ticks = d'.Ticks && d.Offset = d'.Offset)
-
-        Check.QuickThrowOnFail<DateTimeOffset list>(fun (d : DateTimeOffset list) -> let d' = testRoundtrip d in d.Length = d'.Length)
 
         Check.QuickThrowOnFail<DateTime * int16 * int16>(fun (d : DateTime, minutes1 : int16, minutes2 : int16) ->
             let offset1 = TimeSpan.FromMinutes(float minutes1)
