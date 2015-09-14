@@ -177,7 +177,7 @@ type internal JsonPickleReader (jsonReader : JsonReader, omitHeader, isTopLevelS
         // since the goal of FsPickler is to offer faithful representations of .NET objects
         // we choose to override the spec and serialize ticks outright.
         // see also https://json.codeplex.com/discussions/212067 
-        member __.ReadDate tag = 
+        member __.ReadDateTime tag = 
             if isBsonReader then
                 let ticks = jsonReader.ReadPrimitiveAs<int64> (omitTag ()) tag
                 DateTime(ticks)

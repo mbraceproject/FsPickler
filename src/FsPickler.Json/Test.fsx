@@ -6,8 +6,8 @@ open Nessos.FsPickler
 open Nessos.FsPickler.Json
 open Nessos.FsPickler.Combinators
 
-let jsp = FsPickler.CreateJson(indent = true, omitHeader = true)
-let bsp = FsPickler.CreateBson()
+let jsp = FsPickler.CreateJsonSerializer(indent = true, omitHeader = true)
+let bsp = FsPickler.CreateBsonSerializer()
 
 type Record = { Name : string ; Age : int }
 

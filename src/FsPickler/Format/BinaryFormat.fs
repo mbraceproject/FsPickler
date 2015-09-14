@@ -160,7 +160,7 @@ type BinaryPickleWriter internal (stream : Stream, encoding : Encoding, leaveOpe
                 bw.Write false
                 bw.Write value
 
-        member __.WriteDate _ value = bw.Write value.Ticks
+        member __.WriteDateTime _ value = bw.Write value.Ticks
         member __.WriteTimeSpan _ value = bw.Write value.Ticks
         member __.WriteGuid _ value = bw.Write (value.ToByteArray())
 
@@ -280,7 +280,7 @@ and BinaryPickleReader internal (stream : Stream, encoding : Encoding, leaveOpen
             else
                 br.ReadString()
 
-        member __.ReadDate _ = let ticks = br.ReadInt64() in DateTime(ticks, DateTimeKind.Unspecified)
+        member __.ReadDateTime _ = let ticks = br.ReadInt64() in DateTime(ticks, DateTimeKind.Unspecified)
         member __.ReadTimeSpan _ = let ticks = br.ReadInt64() in TimeSpan(ticks)
         member __.ReadGuid _ = let bytes = br.ReadBytes(16) in Guid(bytes)
 

@@ -125,7 +125,7 @@ type internal JsonPickleWriter (jsonWriter : JsonWriter, omitHeader, indented, i
         // since the goal of FsPickler is to offer faithful representations of .NET objects
         // we choose to override the spec and serialize ticks outright.
         // see also https://json.codeplex.com/discussions/212067 
-        member __.WriteDate (tag : string) value = 
+        member __.WriteDateTime (tag : string) value = 
             if isBsonWriter then
                 writePrimitive jsonWriter (omitTag ()) tag value.Ticks
             else

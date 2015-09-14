@@ -174,7 +174,7 @@ type XmlPickleWriter internal (textWriter : TextWriter, indent : bool, leaveOpen
 #endif
 
         member __.WriteGuid (tag : string) value = writePrimitive writer tag (value.ToString())
-        member __.WriteDate (tag : string) value = writePrimitive writer tag value
+        member __.WriteDateTime (tag : string) value = writePrimitive writer tag value
         member __.WriteTimeSpan (tag : string) value = writePrimitive writer tag (value.ToString())
 
         member __.WriteBytes (tag : string) value = 
@@ -313,7 +313,7 @@ type XmlPickleReader internal (textReader : TextReader, leaveOpen) =
                 reader.ReadElementContentAsString() |> unEscapeString
 
         member __.ReadGuid tag = reader.ReadElementName tag ; let textGuid = reader.ReadElementContentAsString() in new Guid(textGuid)
-        member __.ReadDate tag = reader.ReadElementName tag ; reader.ReadElementContentAsDateTime()
+        member __.ReadDateTime tag = reader.ReadElementName tag ; reader.ReadElementContentAsDateTime()
         member __.ReadTimeSpan tag = reader.ReadElementName tag ; reader.ReadElementContentAsString () |> TimeSpan.Parse
 
         member __.ReadBytes tag =

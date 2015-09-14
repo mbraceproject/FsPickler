@@ -128,3 +128,17 @@ type internal DelegatePickler =
                 for i = 0 to deleList.Length - 1 do delePickler.Accept v deleList.[i]
 
         CompositePickler.Create(reader, writer, cloner, accepter, PicklerInfo.Delegate)
+
+
+type internal DateTimeOffsetPickler =
+    static member Create() =
+        let writer (w : WriteState) (_ : string) (dto : DateTimeOffset) =
+            w.Formatter.WriteDateTime "dateTime" dto.DateTime
+            w.Formatter.WriteTimeSpan "offset" dto.Offset
+
+        let reader (r : ReadState) (_ : string) =
+            let dt = r.Formatter.ReadDateTime "dateTime"
+            let offset = r.Formatter.ReadTimeSpan "offset"
+            new DateTimeOffset(dt, offset)
+
+        CompositePickler.Create(reader, writer, (fun _ dto -> dto), (fun _ _ -> ()), PicklerInfo.Primitive)

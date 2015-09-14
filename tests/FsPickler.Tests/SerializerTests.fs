@@ -102,12 +102,35 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
     member __.``1. Primitive: string`` () = Check.QuickThrowOnFail<string> testEquals
 
     [<Test; Category("Primitives")>]
-    member __.``1. Primitive: date`` () = 
+    member __.``1. Primitive: DateTime`` () = 
         if runsOnMono then
             // Mono bug: https://bugzilla.xamarin.com/show_bug.cgi?id=20457
             Check.QuickThrowOnFail<DateTime> (fun d -> let d' = testRoundtrip d in d.ToString() = d'.ToString())
         else
             Check.QuickThrowOnFail<DateTime> testEquals
+
+        Check.QuickThrowOnFail<DateTime list>(fun (d : DateTime list) -> let d' = testRoundtrip d in d.Length = d'.Length)
+
+        Check.QuickThrowOnFail<DateTime>(fun (d : DateTime) -> let d' = testRoundtrip [|d|] in d'.[0].Kind = DateTimeKind.Unspecified)
+
+    [<Test; Category("Primitives")>]
+    member __.``1. Primitive: DateTimeOffset`` () = 
+        if runsOnMono then
+            // Mono bug: https://bugzilla.xamarin.com/show_bug.cgi?id=20457
+            Check.QuickThrowOnFail<DateTimeOffset> (fun d -> let d' = testRoundtrip d in d.ToString() = d'.ToString())
+        else
+            Check.QuickThrowOnFail<DateTimeOffset> (fun (d : DateTimeOffset) -> let d' = testRoundtrip d in d = d' && d.Ticks = d'.Ticks && d.Offset = d'.Offset)
+
+        Check.QuickThrowOnFail<DateTimeOffset list>(fun (d : DateTimeOffset list) -> let d' = testRoundtrip d in d.Length = d'.Length)
+
+        Check.QuickThrowOnFail<DateTime * uint16 * uint16>(fun (d : DateTime, minutes1 : uint16, minutes2 : uint16) ->
+            let offset1 = TimeSpan.FromMinutes(float minutes1)
+            let offset2 = TimeSpan.FromMinutes(float minutes2)
+            let dto1 = new DateTimeOffset(d, offset1)
+            let dto2 = new DateTimeOffset(d + offset2, offset1 + offset2)
+            let dto1' = testRoundtrip dto1
+            let dto2' = testRoundtrip dto2
+            dto1 = dto2 && dto1' = dto2')
 
     [<Test; Category("Primitives")>]
     member __.``1. Primitive: System.TimeSpan`` () = Check.QuickThrowOnFail<TimeSpan> testEquals

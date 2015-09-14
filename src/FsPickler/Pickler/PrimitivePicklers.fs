@@ -143,10 +143,10 @@ type DateTimePickler () =
     inherit PrimitivePickler<DateTime> ()
 
     override __.Write (writer : WriteState) (tag : string) (date : DateTime) =
-        writer.Formatter.WriteDate tag date
+        writer.Formatter.WriteDateTime tag date
 
     override __.Read (reader : ReadState) (tag : string) =
-        reader.Formatter.ReadDate tag
+        reader.Formatter.ReadDateTime tag
 
 [<AutoSerializable(false)>]
 type TimeSpanPickler () =
@@ -218,7 +218,7 @@ module PrimitivePicklers =
     let mkString () = new StringPickler () :> Pickler<string>
     let mkChar () = new CharPickler () :> Pickler<char>
     let mkGuid () = new GuidPickler () :> Pickler<Guid>
-    let mkDate () = new DateTimePickler () :> Pickler<DateTime>
+    let mkDateTime () = new DateTimePickler () :> Pickler<DateTime>
     let mkTimeSpan () = new TimeSpanPickler () :> Pickler<TimeSpan>
 #if NET35
 #else
@@ -233,7 +233,7 @@ module PrimitivePicklers =
         [|
             uc mkBoolean ; uc mkByte ; uc mkSByte ; uc mkInt16 ; uc mkInt32 ; uc mkInt64
             uc mkUInt16 ; uc mkUInt32 ; uc mkUInt64 ; uc mkSingle ; uc mkDouble ; uc mkDecimal
-            uc mkString ; uc mkChar ; uc mkGuid ; uc mkDate ; uc mkTimeSpan ; uc mkDBNull ; uc mkUnit
+            uc mkString ; uc mkChar ; uc mkGuid ; uc mkDateTime ; uc mkTimeSpan ; uc mkDBNull ; uc mkUnit
 #if NET35
 #else
             uc mkBigInt

@@ -74,7 +74,7 @@ type IPickleFormatWriter =
     abstract WriteChar : tag:string -> value:char -> unit
     abstract WriteString : tag:string -> value:string -> unit
 
-    abstract WriteDate : tag:string -> date:DateTime -> unit
+    abstract WriteDateTime : tag:string -> date:DateTime -> unit
     abstract WriteTimeSpan : tag:string -> span:TimeSpan -> unit
     abstract WriteGuid : tag:string -> guid:Guid -> unit
 
@@ -161,7 +161,7 @@ and IPickleFormatReader =
     abstract ReadChar : tag:string -> char
     abstract ReadString : tag:string -> string
         
-    abstract ReadDate : tag:string -> DateTime
+    abstract ReadDateTime : tag:string -> DateTime
     abstract ReadTimeSpan : tag:string -> TimeSpan
     abstract ReadGuid : tag:string -> Guid
 
