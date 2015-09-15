@@ -239,7 +239,7 @@ type XmlPickleReader internal (textReader : TextReader, leaveOpen) =
                     raise <| new FormatException(msg)
                 else
                     let msg = sprintf "Unrecognized XML format version %O." v
-                raise <| new FormatException(msg)
+                    raise <| new FormatException(msg)
 
             let sTag = reader.["type"]
             if sTag <> tag then

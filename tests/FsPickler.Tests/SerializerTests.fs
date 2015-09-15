@@ -102,7 +102,7 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
     member __.``1. Primitive: string`` () = Check.QuickThrowOnFail<string> testEquals
 
     [<Test; Category("Primitives")>]
-    member __.``1. Primitive: DateTime`` () =    
+    member __.``1. Primitive: DateTime`` () = 
         Check.QuickThrowOnFail<DateTime * DateTimeKind> (fun (d : DateTime, k : DateTimeKind) -> 
             let d = new DateTime(d.Ticks, k)
             let d' = testRoundtrip d
@@ -241,7 +241,7 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
 
     [<Test; Category("Generic BCL Types")>]
     member __.``3. Array: System.DateTime`` () = 
-        __.CheckArray<DateTime> ()
+            __.CheckArray<DateTime> ()
 
     [<Test; Category("Generic BCL Types")>]
     member __.``3. Array: System.TimeSpan`` () = __.CheckArray<TimeSpan> ()

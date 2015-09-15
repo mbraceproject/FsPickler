@@ -198,8 +198,7 @@ type internal JsonPickleReader (jsonReader : JsonReader, omitHeader, isTopLevelS
                     jsonReader.MoveNext()
                     new DateTime(ticks, kind)
             else
-                let dt = jsonReader.ReadPrimitiveAs<DateTime> (omitTag ()) tag
-                new DateTime(dt.Ticks, DateTimeKind.Unspecified)
+                jsonReader.ReadPrimitiveAs<DateTime> (omitTag ()) tag
 
         member __.ReadDateTimeOffset tag =
             if isBsonReader then
