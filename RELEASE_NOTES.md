@@ -1,3 +1,6 @@
+### 1.4.0
+* Revisions and updates in DateTime/DateTimeOffset serialization formats.
+
 ### 1.3.7
 * Fix reference equality issue in object sifting.
 
