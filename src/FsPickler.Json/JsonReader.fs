@@ -40,9 +40,12 @@ type internal JsonPickleReader (jsonReader : JsonReader, omitHeader, isTopLevelS
             else
                 do jsonReader.MoveNext()
                 let version = jsonReader.ReadPrimitiveAs<string> false "FsPickler"
-                if version <> formatv1200 then
+                if version <> formatv1400 then
                     let v = Version(version)
-                    raise <| new FormatException(sprintf "Unsupported json format version '%O'." v)
+                    if version = formatv0960 || version = formatv1200 then
+                        raise <| new FormatException(sprintf "JSON format version %O no longer supported." v)
+                    else
+                        raise <| new FormatException(sprintf "Unrecognized JSON format version %O." v)
 
                 let sTag = jsonReader.ReadPrimitiveAs<string> false "type"
                 if tag <> sTag then
@@ -99,7 +102,7 @@ type internal JsonPickleReader (jsonReader : JsonReader, omitHeader, isTopLevelS
                     arrayStack.Pop() |> ignore
                     depth <- depth - 1
 
-                | token -> raise <| new FormatException(sprintf "expected end of Json object but was '%O'." token)
+                | token -> raise <| new FormatException(sprintf "expected end of JSON object but was '%O'." token)
 
                 if omitHeader && depth = 0 then ()
                 else jsonReader.Read() |> ignore
@@ -179,10 +182,39 @@ type internal JsonPickleReader (jsonReader : JsonReader, omitHeader, isTopLevelS
         // see also https://json.codeplex.com/discussions/212067 
         member __.ReadDateTime tag = 
             if isBsonReader then
-                let ticks = jsonReader.ReadPrimitiveAs<int64> (omitTag ()) tag
-                DateTime(ticks)
+                if not <| omitTag() then
+                    jsonReader.ReadProperty tag
+                    jsonReader.MoveNext()
+
+                jsonReader.MoveNext()
+                let kind = jsonReader.ReadPrimitiveAs<int64> false "kind" |> int |> enum<DateTimeKind>
+                let ticks = jsonReader.ReadPrimitiveAs<int64> false "ticks"
+                if kind = DateTimeKind.Local then
+                    let offset = jsonReader.ReadPrimitiveAs<int64> false "offset"
+                    jsonReader.MoveNext()
+                    let dto = new DateTimeOffset(ticks, new TimeSpan(offset))
+                    dto.LocalDateTime
+                else
+                    jsonReader.MoveNext()
+                    new DateTime(ticks, kind)
             else
                 jsonReader.ReadPrimitiveAs<DateTime> (omitTag ()) tag
+
+        member __.ReadDateTimeOffset tag =
+            if isBsonReader then
+                if not <| omitTag() then
+                    jsonReader.ReadProperty tag
+                    jsonReader.MoveNext()
+
+                jsonReader.MoveNext()
+                let ticks = jsonReader.ReadPrimitiveAs<int64> false "ticks"
+                let offset = jsonReader.ReadPrimitiveAs<int64> false "offset"
+                jsonReader.MoveNext()
+
+                new DateTimeOffset(ticks, new TimeSpan(offset))
+            else
+                let dt = jsonReader.ReadPrimitiveAs<DateTime> (omitTag ()) tag
+                new DateTimeOffset(dt)
 
         member __.ReadBytes tag =
             if not <| omitTag () then

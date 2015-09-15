@@ -102,35 +102,28 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
     member __.``1. Primitive: string`` () = Check.QuickThrowOnFail<string> testEquals
 
     [<Test; Category("Primitives")>]
-    member __.``1. Primitive: DateTime`` () = 
-        if runsOnMono then
-            // Mono bug: https://bugzilla.xamarin.com/show_bug.cgi?id=20457
-            Check.QuickThrowOnFail<DateTime> (fun d -> let d' = testRoundtrip d in d.ToString() = d'.ToString())
-        else
-            Check.QuickThrowOnFail<DateTime> testEquals
-
-        Check.QuickThrowOnFail<DateTime list>(fun (d : DateTime list) -> let d' = testRoundtrip d in d.Length = d'.Length)
-
-        Check.QuickThrowOnFail<DateTime>(fun (d : DateTime) -> let d' = testRoundtrip [|d|] in d'.[0].Kind = DateTimeKind.Unspecified)
+    member __.``1. Primitive: DateTime`` () =    
+        Check.QuickThrowOnFail<DateTime * DateTimeKind> (fun (d : DateTime, k : DateTimeKind) -> 
+            let d = new DateTime(d.Ticks, k)
+            let d' = testRoundtrip d
+            d' |> should equal d
+            d'.Kind |> should equal d.Kind)
 
     [<Test; Category("Primitives")>]
     member __.``1. Primitive: DateTimeOffset`` () = 
-        if runsOnMono then
-            // Mono bug: https://bugzilla.xamarin.com/show_bug.cgi?id=20457
-            Check.QuickThrowOnFail<DateTimeOffset> (fun d -> let d' = testRoundtrip d in d.ToString() = d'.ToString())
-        else
-            Check.QuickThrowOnFail<DateTimeOffset> (fun (d : DateTimeOffset) -> let d' = testRoundtrip d in d = d' && d.Ticks = d'.Ticks && d.Offset = d'.Offset)
+        Check.QuickThrowOnFail<DateTimeOffset> testEquals
 
-        Check.QuickThrowOnFail<DateTimeOffset list>(fun (d : DateTimeOffset list) -> let d' = testRoundtrip d in d.Length = d'.Length)
+        Check.QuickThrowOnFail<DateTime * TimeZoneInfo>(fun (d:DateTime,tz:TimeZoneInfo) ->
+            let d = new DateTime(d.Ticks, DateTimeKind.Local)
+            let dto1 = new DateTimeOffset(d)
+            let dto2 = 
+                let utcTime = d.ToUniversalTime()
+                new DateTimeOffset(TimeZoneInfo.ConvertTimeFromUtc(utcTime, tz), tz.GetUtcOffset utcTime)
 
-        Check.QuickThrowOnFail<DateTime * int16 * int16>(fun (d : DateTime, minutes1 : int16, minutes2 : int16) ->
-            let offset1 = TimeSpan.FromMinutes(float minutes1)
-            let offset2 = TimeSpan.FromMinutes(float minutes2)
-            let dto1 = new DateTimeOffset(d, offset1)
-            let dto2 = new DateTimeOffset(d + offset2, offset1 + offset2)
+            dto2 |> should equal dto1
             let dto1' = testRoundtrip dto1
             let dto2' = testRoundtrip dto2
-            dto1 = dto2 && dto1' = dto2')
+            dto2' |> should equal dto1')
 
     [<Test; Category("Primitives")>]
     member __.``1. Primitive: System.TimeSpan`` () = Check.QuickThrowOnFail<TimeSpan> testEquals
@@ -141,12 +134,7 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
 #if NET35
 #else
     [<Test; Category("Primitives")>]
-    member __.``1. Primitive: bigint`` () = 
-        if runsOnMono then
-            // Mono bug: https://bugzilla.xamarin.com/show_bug.cgi?id=20456
-            Check.QuickThrowOnFail<bigint> (fun i -> let j = testRoundtrip i in i.ToString() = j.ToString())
-        else
-            Check.QuickThrowOnFail<bigint> testEquals
+    member __.``1. Primitive: bigint`` () = Check.QuickThrowOnFail<bigint> testEquals
 #endif
 
     [<Test; Category("Bytes")>]
@@ -253,14 +241,7 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
 
     [<Test; Category("Generic BCL Types")>]
     member __.``3. Array: System.DateTime`` () = 
-        if runsOnMono then
-            // Mono Bug: https://bugzilla.xamarin.com/show_bug.cgi?id=20457
-            Check.QuickThrowOnFail<DateTime []> testReflected
-            Check.QuickThrowOnFail<DateTime [,]> testReflected
-            Check.QuickThrowOnFail<DateTime [,,]> testReflected
-            Check.QuickThrowOnFail<DateTime [,,,]> testReflected
-        else
-            __.CheckArray<DateTime> ()
+        __.CheckArray<DateTime> ()
 
     [<Test; Category("Generic BCL Types")>]
     member __.``3. Array: System.TimeSpan`` () = __.CheckArray<TimeSpan> ()

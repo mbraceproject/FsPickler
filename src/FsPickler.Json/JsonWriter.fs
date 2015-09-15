@@ -36,7 +36,7 @@ type internal JsonPickleWriter (jsonWriter : JsonWriter, omitHeader, indented, i
             if omitHeader then () else
 
             jsonWriter.WriteStartObject()
-            writePrimitive jsonWriter false "FsPickler" formatv1200
+            writePrimitive jsonWriter false "FsPickler" formatv1400
             writePrimitive jsonWriter false "type" tag
 
         member __.EndWriteRoot () = 
@@ -127,9 +127,31 @@ type internal JsonPickleWriter (jsonWriter : JsonWriter, omitHeader, indented, i
         // see also https://json.codeplex.com/discussions/212067 
         member __.WriteDateTime (tag : string) value = 
             if isBsonWriter then
-                writePrimitive jsonWriter (omitTag ()) tag value.Ticks
+                if not <| omitTag() then
+                    jsonWriter.WritePropertyName tag
+
+                jsonWriter.WriteStartObject()
+                writePrimitive jsonWriter false "kind" (int value.Kind)
+                writePrimitive jsonWriter false "ticks" value.Ticks
+                if value.Kind = DateTimeKind.Local then
+                    let offset = TimeZoneInfo.Local.GetUtcOffset value
+                    writePrimitive jsonWriter false "offset" offset.Ticks
+
+                jsonWriter.WriteEndObject()
             else
                 writePrimitive jsonWriter (omitTag ()) tag value
+
+        member __.WriteDateTimeOffset (tag : string) value =
+            if isBsonWriter then
+                if not <| omitTag() then
+                    jsonWriter.WritePropertyName tag
+
+                jsonWriter.WriteStartObject()
+                writePrimitive jsonWriter false "ticks" value.Ticks
+                writePrimitive jsonWriter false "offset" value.Offset.Ticks
+                jsonWriter.WriteEndObject()
+            else
+                writePrimitive jsonWriter (omitTag()) tag value
 
         member __.WriteBytes (tag : string) (value : byte []) =
             if not <| omitTag () then 

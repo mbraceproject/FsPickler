@@ -1,5 +1,6 @@
 ﻿namespace Nessos.FsPickler.Tests
 
+open System
 open FsCheck
 
 type FsPicklerGenerators private () =
@@ -11,6 +12,9 @@ type FsPicklerGenerators private () =
             typedefof<Choice<_,_>> ; typedefof<_ * _ * _>
         |]
 
+    static let timeZones = TimeZoneInfo.GetSystemTimeZones() |> Seq.toArray
+
+    static member TimeZoneInfo = Arb.generate<int> |> Gen.map (fun i -> timeZones.[abs i % timeZones.Length]) |> Arb.fromGen
     static member BigInt = Arb.generate<byte []> |> Gen.map (fun bs -> System.Numerics.BigInteger(bs)) |> Arb.fromGen
     static member Array2D<'T> () = Arb.generate<'T> |> Gen.array2DOf |> Arb.fromGen
     static member Type =

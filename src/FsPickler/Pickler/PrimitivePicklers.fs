@@ -149,6 +149,16 @@ type DateTimePickler () =
         reader.Formatter.ReadDateTime tag
 
 [<AutoSerializable(false)>]
+type DateTimeOffsetPickler () =
+    inherit PrimitivePickler<DateTimeOffset> ()
+
+    override __.Write (writer : WriteState) (tag : string) (date : DateTimeOffset) =
+        writer.Formatter.WriteDateTimeOffset tag date
+
+    override __.Read (reader : ReadState) (tag : string) =
+        reader.Formatter.ReadDateTimeOffset tag
+
+[<AutoSerializable(false)>]
 type TimeSpanPickler () =
     inherit PrimitivePickler<TimeSpan> ()
 
@@ -219,6 +229,7 @@ module PrimitivePicklers =
     let mkChar () = new CharPickler () :> Pickler<char>
     let mkGuid () = new GuidPickler () :> Pickler<Guid>
     let mkDateTime () = new DateTimePickler () :> Pickler<DateTime>
+    let mkDateTimeOffset () = new DateTimeOffsetPickler () :> Pickler<DateTimeOffset>
     let mkTimeSpan () = new TimeSpanPickler () :> Pickler<TimeSpan>
 #if NET35
 #else
@@ -233,7 +244,8 @@ module PrimitivePicklers =
         [|
             uc mkBoolean ; uc mkByte ; uc mkSByte ; uc mkInt16 ; uc mkInt32 ; uc mkInt64
             uc mkUInt16 ; uc mkUInt32 ; uc mkUInt64 ; uc mkSingle ; uc mkDouble ; uc mkDecimal
-            uc mkString ; uc mkChar ; uc mkGuid ; uc mkDateTime ; uc mkTimeSpan ; uc mkDBNull ; uc mkUnit
+            uc mkString ; uc mkChar ; uc mkGuid ; uc mkDateTime ; uc mkDateTimeOffset ; uc mkTimeSpan
+            uc mkDBNull ; uc mkUnit
 #if NET35
 #else
             uc mkBigInt

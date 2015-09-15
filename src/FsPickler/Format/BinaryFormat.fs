@@ -21,6 +21,9 @@ module private BinaryFormatUtils =
     [<Literal>]
     let formatv1200 = 1200us // As specified in FsPickler v. 1.2.0.0
 
+    [<Literal>]
+    let formatv1400 = 1400us // As specified in FsPickler v. 1.4.0.0
+
     // each object is serialized with a 32 bit header 
     // of which the first 24 are a fixed identifier
     // and the final 8 encode the object flags.
@@ -110,7 +113,7 @@ type BinaryPickleWriter internal (stream : Stream, encoding : Encoding, leaveOpe
         member __.Flush () = ()
         member __.BeginWriteRoot (tag : string) =
             bw.Write initValue
-            bw.Write formatv1200
+            bw.Write formatv1400
             bw.Write encoding.CodePage
 
             if forceLittleEndian then 
@@ -160,7 +163,17 @@ type BinaryPickleWriter internal (stream : Stream, encoding : Encoding, leaveOpe
                 bw.Write false
                 bw.Write value
 
-        member __.WriteDateTime _ value = bw.Write value.Ticks
+        member __.WriteDateTime _ value = 
+            bw.Write (byte value.Kind)
+            bw.Write value.Ticks
+            if value.Kind = DateTimeKind.Local then
+                let offset = TimeZoneInfo.Local.GetUtcOffset(value)
+                bw.Write(offset.Ticks)
+
+        member __.WriteDateTimeOffset _ value =
+            bw.Write value.Ticks
+            bw.Write value.Offset.Ticks
+
         member __.WriteTimeSpan _ value = bw.Write value.Ticks
         member __.WriteGuid _ value = bw.Write (value.ToByteArray())
 
@@ -219,9 +232,11 @@ and BinaryPickleReader internal (stream : Stream, encoding : Encoding, leaveOpen
                 raise <| new InvalidDataException("invalid stream initialization bytes.")
 
             let version = br.ReadUInt16()
-            if version <> formatv1200 then
+            if version <> formatv1400 then
                 if version = formatv0960 then
-                    raise <| new FormatException("unsupported binary format version '0.9.6.0'.")
+                    raise <| new FormatException("FsPickler Binary format version 0.9.6.0 no longer supported.")
+                elif version = formatv1200 then
+                    raise <| new FormatException("FsPickler Binary format version 1.2.0.0 no longer supported.")
                 else
                     raise <| new FormatException(sprintf "unsupported binary format version '%d'." version)
 
@@ -280,7 +295,22 @@ and BinaryPickleReader internal (stream : Stream, encoding : Encoding, leaveOpen
             else
                 br.ReadString()
 
-        member __.ReadDateTime _ = let ticks = br.ReadInt64() in DateTime(ticks, DateTimeKind.Unspecified)
+        member __.ReadDateTime _ =
+            let kind = br.ReadByte() |> int |> enum<DateTimeKind>
+            let ticks = br.ReadInt64()
+            if kind = DateTimeKind.Local then 
+                let offsetTicks = br.ReadInt64()
+                let dto = new DateTimeOffset(ticks, TimeSpan(offsetTicks))
+                dto.LocalDateTime
+            else
+                new DateTime(ticks, kind)
+
+        member __.ReadDateTimeOffset _ =
+            let ticks = br.ReadInt64()
+            let offsetTicks = br.ReadInt64()
+            let offset = new TimeSpan(offsetTicks)
+            DateTimeOffset(ticks, offset)
+
         member __.ReadTimeSpan _ = let ticks = br.ReadInt64() in TimeSpan(ticks)
         member __.ReadGuid _ = let bytes = br.ReadBytes(16) in Guid(bytes)
 

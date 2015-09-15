@@ -16,7 +16,10 @@ module private XmlUtils =
     let formatv0960 = "0.9.6.0" // as defined in FsPickler 0.9.6.0
 
     [<Literal>]
-    let formatv1200 = "1.2.0.0" // as defined in FsPickler 1.1.0.0 
+    let formatv1200 = "1.2.0.0" // as defined in FsPickler 1.2.0.0 
+
+    [<Literal>]
+    let formatv1400 = "1.4.0.0" // as defined in FsPickler 1.4.0.0 
 
     let inline escapeString (value : string) = SecurityElement.Escape value
     let inline unEscapeString (value : string) =
@@ -120,7 +123,7 @@ type XmlPickleWriter internal (textWriter : TextWriter, indent : bool, leaveOpen
         member __.BeginWriteRoot (tag : string) = 
             writer.WriteStartDocument()
             writer.WriteStartElement("FsPickler")
-            writer.WriteAttributeString("version", formatv1200)
+            writer.WriteAttributeString("version", formatv1400)
             writer.WriteAttributeString("type", tag)
 
         member __.EndWriteRoot () = 
@@ -174,7 +177,12 @@ type XmlPickleWriter internal (textWriter : TextWriter, indent : bool, leaveOpen
 #endif
 
         member __.WriteGuid (tag : string) value = writePrimitive writer tag (value.ToString())
-        member __.WriteDateTime (tag : string) value = writePrimitive writer tag value
+        member __.WriteDateTime (tag : string) value = 
+            writer.WriteStartElement tag
+            writer.WriteString(XmlConvert.ToString(value, XmlDateTimeSerializationMode.RoundtripKind))
+            writer.WriteEndElement()
+
+        member __.WriteDateTimeOffset (tag : string) value = writePrimitive writer tag value
         member __.WriteTimeSpan (tag : string) value = writePrimitive writer tag (value.ToString())
 
         member __.WriteBytes (tag : string) value = 
@@ -224,10 +232,14 @@ type XmlPickleReader internal (textReader : TextReader, leaveOpen) =
             reader.ReadElementName "FsPickler"
 
             let version = reader.["version"]
-            if version <> formatv1200 then
-                let version = Version(version)
-                let msg = sprintf "Unsupported xml format version %O." version
-                raise <| new FormatException(msg)
+            if version <> formatv1400 then
+                let v = Version(version)
+                if version = formatv0960 || version = formatv1200 then
+                    let msg = sprintf "XML format version %O no longer supported." version
+                    raise <| new FormatException(msg)
+                else
+                    let msg = sprintf "Unrecognized XML format version %O." v
+                    raise <| new FormatException(msg)
 
             let sTag = reader.["type"]
             if sTag <> tag then
@@ -313,7 +325,12 @@ type XmlPickleReader internal (textReader : TextReader, leaveOpen) =
                 reader.ReadElementContentAsString() |> unEscapeString
 
         member __.ReadGuid tag = reader.ReadElementName tag ; let textGuid = reader.ReadElementContentAsString() in new Guid(textGuid)
-        member __.ReadDateTime tag = reader.ReadElementName tag ; reader.ReadElementContentAsDateTime()
+        member __.ReadDateTime tag = 
+            reader.ReadElementName tag 
+            let dateTimeString = reader.ReadElementContentAsString()
+            XmlConvert.ToDateTime(dateTimeString, XmlDateTimeSerializationMode.RoundtripKind)
+
+        member __.ReadDateTimeOffset tag = reader.ReadElementName tag ; reader.ReadElementContentAsString() |> DateTimeOffset.Parse
         member __.ReadTimeSpan tag = reader.ReadElementName tag ; reader.ReadElementContentAsString () |> TimeSpan.Parse
 
         member __.ReadBytes tag =
