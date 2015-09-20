@@ -67,6 +67,8 @@ FsPickler is NOT:
 
  * a library designed for cross-platform communication.
 
+ * a library designed with version tolerance in mind. Avoid using for long-term persistence.
+
 ## Documentation & Technical Overview
 
 A collection of tutorials, technical overviews and API references of the library.

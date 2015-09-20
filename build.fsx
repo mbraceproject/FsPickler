@@ -160,9 +160,9 @@ Target "Release" DoNothing
   ==> "Build.Net40"
   ==> "Build.Net35"
   ==> "PrepareRelease"
-  ==> "NuGet"
   ==> "GenerateDocs"
   ==> "ReleaseDocs"
+  ==> "NuGet"
   ==> "Release"
 
 "Release" 
