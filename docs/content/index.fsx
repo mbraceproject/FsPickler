@@ -96,6 +96,12 @@ A collection of tutorials, technical overviews and API references of the library
 * [Suave.IO](http://suave.io/) - "we needed a simple way of serialising CLR types to
   put in cookies. After fighting .Net's JSONDataContractSerializer for a good while
   we tried FsPickler. It was a straight success; it just worked".
+
+* [Tachyus](http://www.tachyus.com/) - "FsPickler serializes and deserializes
+  objects of virtually any type quickly and reliably in a single line of
+  F# code. For us this makes communications between applications across
+  computing environments effortless. There are no implementation details
+  to obsess about".
  
 ## Contributing and copyright
 
