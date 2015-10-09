@@ -203,18 +203,18 @@ This is something that can only be answered at runtime, typically by calling</p>
 </table>
 
 <p>Primitive types and <code>string</code> are serializable but pointers, COM objects and MarshalByRef types are not.
-A managed class or struct is serializable if and only if it carries the <code>Serializable</code> attribute
+A managed class or struct is serializable if and only if it carries the <code>Serializable</code> flag or attribute
 and moreover satisfies either of the following:</p>
 
 <ul>
 <li><p>is array/nullable/tuple/enum of serializable element types.</p></li>
 <li><p>implements the <code>ISerializable</code> interface and has a matching constructor implementation.</p></li>
-<li><p>carries the <code>DataContract</code> attribute and all designated properties are of 
-serializable type and settable. Parameterless constructors or public properties are not required.</p></li>
+<li><p>carries the <code>DataContract</code> attribute and all <code>DataMember</code> members are of serializable type.
+Properties carrying the <code>DataMember</code> attribute must be settable.
+Parameterless constructors or public properties are not required.</p></li>
+<li><p>is an F# union or record type in which all contained fields are serializable.</p></li>
 <li><p>carries the <a href="reference/nessos-fspickler-custompicklerattribute.html"><code>CustomPickler</code></a> attribute and an accompanying pickler factory method.</p></li>
-<li><p>is an F# union type in which all union case fields are serializable.</p></li>
-<li><p>is abstract or a delegate.</p></li>
-<li><p>is neither of the above and all designated fields are of serializable type.
+<li><p>is neither of the above and all its contained fields are of serializable type.
 Parameterless constructors or public fields are not required.</p></li>
 </ul>
 
