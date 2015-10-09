@@ -181,23 +181,22 @@ FsPickler.IsSerializableType<SomeType> ()
 (**
 
 Primitive types and `string` are serializable but pointers, COM objects and MarshalByRef types are not.
-A managed class or struct is serializable if and only if it carries the `Serializable` attribute
+A managed class or struct is serializable if and only if it carries the `Serializable` flag or attribute
 and moreover satisfies either of the following:
 
   * is array/nullable/tuple/enum of serializable element types.
 
   * implements the `ISerializable` interface and has a matching constructor implementation.
 
-  * carries the `DataContract` attribute and all designated properties are of 
-    serializable type and settable. Parameterless constructors or public properties are not required.
+  * carries the `DataContract` attribute and all `DataMember` members are of serializable type.
+    Properties carrying the `DataMember` attribute must be settable.
+    Parameterless constructors or public properties are not required.
+
+  * is an F# union or record type in which all contained fields are serializable.
 
   * carries the [`CustomPickler`](reference/nessos-fspickler-custompicklerattribute.html) attribute and an accompanying pickler factory method.
 
-  * is an F# union type in which all union case fields are serializable.
-
-  * is abstract or a delegate.
-
-  * is neither of the above and all designated fields are of serializable type.
+  * is neither of the above and all its contained fields are of serializable type.
     Parameterless constructors or public fields are not required.
 
 ## Object Oriented Picklers
