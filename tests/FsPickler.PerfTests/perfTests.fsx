@@ -5,6 +5,7 @@
 #r "PerfUtil.dll"
 #r "ProtoBuf-Net.dll"
 #r "ServiceStack.Text.dll"
+#r "Wire.dll"
 #r "nunit.framework.dll"
 #r "FsPickler.dll"
 #r "FsPickler.PerfTests.dll"
@@ -51,7 +52,7 @@ module PerfTests =
     [<PerfTest(1000)>]
     let ``System.Tuple`` s = Serializer.roundtrip tuple s
 
-    let list = [1..2000]
+    let list = [1..1000]
 
     [<PerfTest(1000)>]
     let ``F# List`` s = Serializer.roundtrip list s
@@ -114,10 +115,9 @@ let bfs = new BinaryFormatterSerializer() :> Serializer
 let ndc = new NetDataContractSerializer() :> Serializer
 let jdn = new JsonDotNetSerializer() :> Serializer
 let pbn = new ProtoBufSerializer() :> Serializer
-let ssj = new ServiceStackJsonSerializer() :> Serializer
-let sst = new ServiceStackTypeSerializer() :> Serializer
+let wire = new WireSerializer() :> Serializer
 
-let allSerializers = [fspXml;fspJson;bfs;ndc;jdn;pbn;ssj;sst]
+let allSerializers = [fspXml;fspJson;bfs;ndc;jdn;pbn;wire]
 let cyclicOnly = [fspXml;fspJson;bfs]
 
 let mkTester () = new ImplementationComparer<Serializer>(fspBinary, allSerializers, warmup = true) :> PerformanceTester<Serializer>
@@ -152,8 +152,9 @@ let plotGC (results : TestSession list) =
 let results = PerfTest.run mkTester tests
 let cyclicResults = PerfTest.run mkCyclicGraphTester cyclic
 
-TestSession.toFile "/mbrace/perftests.xml" results
-TestSession.toFile "/mbrace/perftests-cyclic.xml" cyclicResults
+let desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
+TestSession.toFile (desktop + "/perftests.xml") results
+TestSession.toFile (desktop + "/perftests-cyclic.xml") cyclicResults
 
 plotTime results
 plotGC results

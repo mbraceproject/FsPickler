@@ -9,6 +9,7 @@ open ServiceStack.Text
 open Newtonsoft.Json
 open Newtonsoft.Json.Bson
 open ProtoBuf
+open Wire
 
 open Nessos.FsPickler
 open Nessos.FsPickler.Json
@@ -124,6 +125,14 @@ type ProtoBufSerializer () =
     override __.Name = "ProtoBuf-Net"
     override __.Serialize(stream : Stream, x : 'T) = ProtoBuf.Serializer.Serialize(stream, x)
     override __.Deserialize(stream : Stream) = ProtoBuf.Serializer.Deserialize<'T>(stream)
+
+type WireSerializer () =
+    inherit Serializer ()
+    let wire = new Wire.Serializer()
+
+    override __.Name = "Wire"
+    override __.Serialize(stream : Stream, x : 'T) = wire.Serialize(x, stream)
+    override __.Deserialize(stream : Stream) = wire.Deserialize<'T>(stream)
 
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Serializer =

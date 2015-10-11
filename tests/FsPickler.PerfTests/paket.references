@@ -1,6 +1,7 @@
 FSharp.Charting
 Newtonsoft.Json
 NUnit
+Wire
 PerfUtil
 PerfUtil.NUnit
 protobuf-net

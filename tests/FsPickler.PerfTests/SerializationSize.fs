@@ -16,7 +16,7 @@ module SerializationSize =
             new NetDataContractSerializer() :> Serializer
             new JsonDotNetSerializer() :> Serializer
             new ProtoBufSerializer() :> Serializer
-            new ServiceStackTypeSerializer() :> Serializer
+            new WireSerializer() :> Serializer
         ]
 
     let reflectEquals (x : 'T) (y : 'T) =

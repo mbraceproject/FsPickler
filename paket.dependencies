@@ -9,6 +9,7 @@ nuget NUnit 2.6.3
 nuget PerfUtil
 nuget PerfUtil.NUnit
 nuget protobuf-net
+nuget Wire
 nuget ServiceStack.Text
 nuget FSharp.Formatting
 nuget NUnit.Runners
