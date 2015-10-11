@@ -5,7 +5,6 @@ open System.IO
 open System.Runtime.Serialization
 open System.Runtime.Serialization.Formatters.Binary
 
-open ServiceStack.Text
 open Newtonsoft.Json
 open Newtonsoft.Json.Bson
 open ProtoBuf
@@ -103,21 +102,6 @@ type JsonDotNetBsonSerializer () =
     override __.Deserialize(stream : Stream) : 'T =
         use reader = new BsonReader(stream)
         jdn.Deserialize(reader, typeof<'T>) :?> 'T
-
-type ServiceStackJsonSerializer () =
-    inherit Serializer ()
-
-    override __.Name = "ServiceStack.JsonSerializer"
-    override __.Serialize(stream : Stream, x : 'T) = JsonSerializer.SerializeToStream(x, stream)
-    override __.Deserialize(stream : Stream) = JsonSerializer.DeserializeFromStream<'T>(stream)
-
-type ServiceStackTypeSerializer () =
-    inherit Serializer ()
-
-    override __.Name = "ServiceStack.TypeSerializer"
-    override __.Serialize(stream : Stream, x : 'T) = TypeSerializer.SerializeToStream(x, stream)
-    override __.Deserialize(stream : Stream) = TypeSerializer.DeserializeFromStream<'T>(stream)
-
 
 type ProtoBufSerializer () =
     inherit Serializer ()

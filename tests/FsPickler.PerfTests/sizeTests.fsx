@@ -3,7 +3,7 @@
 #r "Newtonsoft.Json.dll"
 #r "PerfUtil.dll"
 #r "ProtoBuf-Net.dll"
-#r "ServiceStack.Text.dll"
+#r "Wire.dll"
 #r "nunit.framework.dll"
 #r "FsPickler.dll"
 #r "FsPickler.PerfTests.dll"

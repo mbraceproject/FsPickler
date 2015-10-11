@@ -10,7 +10,6 @@ nuget PerfUtil
 nuget PerfUtil.NUnit
 nuget protobuf-net
 nuget Wire
-nuget ServiceStack.Text
 nuget FSharp.Formatting
 nuget NUnit.Runners
 nuget FAKE

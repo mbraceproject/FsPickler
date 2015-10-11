@@ -26,11 +26,10 @@ type ``Serializer Comparison`` () =
     let jdn = new JsonDotNetSerializer() :> Serializer
     let bdn = new JsonDotNetBsonSerializer () :> Serializer
     let pbn = new ProtoBufSerializer() :> Serializer
-    let ssj = new ServiceStackJsonSerializer() :> Serializer
-    let sst = new ServiceStackTypeSerializer() :> Serializer
+    let wsn = new WireSerializer() :> Serializer
 
     let comparer = new WeightedComparer(spaceFactor = 0.2, leastAcceptableImprovementFactor = 1.)
-    let tester = new ImplementationComparer<_>(fsp, [bfs;ndc;jdn;bdn;pbn;ssj;sst], throwOnError = true, warmup = true, comparer = comparer)
+    let tester = new ImplementationComparer<_>(fsp, [bfs;ndc;jdn;bdn;pbn;wsn], throwOnError = true, warmup = true, comparer = comparer)
 
     override __.PerfTester = tester :> _
         

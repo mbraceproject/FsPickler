@@ -21,6 +21,5 @@ NUGET
       NUnit (>= 2.6.3)
       PerfUtil (>= 0.1.8)
     protobuf-net (2.0.0.668)
-    ServiceStack.Text (4.0.46)
     TaskParallelLibrary (1.0.2856)
     Wire (0.0.5)
