@@ -14,7 +14,7 @@ open Nessos.FsPickler.Hashing
 module ExtensionMethods =
 
     /// Pickled object with type annotation
-    [<DataContract>]
+    [<Sealed; DataContract>]
     type Pickle<'T> =
         [<DataMember(Name = "Bytes")>]
         val mutable private bytes : byte []
