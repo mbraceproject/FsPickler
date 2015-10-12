@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8"/>
-    <title>WriteState - FsPickler</title>
+    <title>LocalFSharpCoreConverter - FsPickler</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <meta name="description" content=""/>
     <meta name="author" content="Eirik Tsarpalis"/>
@@ -35,40 +35,38 @@
 
 
 
-<h1>WriteState</h1>
+<h1>LocalFSharpCoreConverter</h1>
 <p>
   <span>Namespace: Nessos.FsPickler</span><br />
 </p>
 <div class="xmldoc">
-<p>Contains all state related to object serializations</p>
+<p>A type name converter that forces deserialization uses the default
+FSharp.Core version that is loaded in the current AppDomain</p>
 
 
 </div>
-  <h3>Instance members</h3>
+  <h3>Constructors</h3>
   <table class="table table-bordered member-list">
     <thead>
-      <tr><td>Instance member</td><td>Description</td></tr>
+      <tr><td>Constructor</td><td>Description</td></tr>
     </thead>
     <tbody>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '292', 292)" onmouseover="showTip(event, '292', 292)">
-            StreamingContext
+          <code onmouseout="hideTip(event, '243', 243)" onmouseover="showTip(event, '243', 243)">
+            new()
           </code>
-          <div class="tip" id="292">
-            <strong>Signature:</strong> StreamingContext<br />
+          <div class="tip" id="243">
+            <strong>Signature:</strong> unit -&gt; LocalFSharpCoreConverter<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/Pickler/Pickler.fs#L109-109" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/Pickler/Types.fs#L212-212" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          <p>Streaming context to the serialization</p>
-
-
-
+          
         </td>
       </tr>
     </tbody>
