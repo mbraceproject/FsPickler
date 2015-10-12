@@ -1,6 +1,7 @@
 ## FsPickler
 
 [![Join the chat at https://gitter.im/nessos/FsPickler](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/nessos/FsPickler?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![NuGet Status](http://img.shields.io/nuget/vpre/FsPickler.svg?style=flat)](https://www.nuget.org/packages/FsPickler/)
 
 FsPickler is a serialization library that facilitates the distribution of .NET objects.
 The implementation focuses on performance and completeness in supported types, including F# types.
