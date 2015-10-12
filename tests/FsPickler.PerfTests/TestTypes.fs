@@ -102,15 +102,32 @@ module TestTypes =
             sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
 
     [<ProtoContract(ImplicitFields = ImplicitFields.AllFields)>]
-    type Entry(id : int, name : string, surname : string, age : int, data : byte [], date : DateTime) =
+    type SimplePoco(id : int, name : string, surname : string, age : int, data : byte [], date : DateTime) =
 
-        new () = new Entry(0, "John", "Smith", 42, [| 1uy .. 100uy |], DateTime.Now)
+        new () = new SimplePoco(0, "John", "Smith", 42, [| 1uy .. 100uy |], DateTime.Now)
         member __.Id = id
         member __.Name = name
         member __.Surname = surname
         member __.Age = age
         member __.Data = data
         member __.Date = date
+
+
+    type PrivatePoco private(name : string, surname : string, age : int) =
+        member __.Name = name
+        member __.Surname = surname
+        member __.Age = age
+        static member Create(name, surname, age) = new PrivatePoco(name, surname, age)
+
+    [<DataContract>]
+    type DataContractClass (name : string, surname : string, age : int) =
+        [<DataMember(Name = "Name")>]
+        member val Name = name with get,set
+        [<DataMember(Name = "Surname")>]
+        member val Surname = surname with get,set
+        [<DataMember(Name = "Age")>]
+        member val Age = age with get,set
+        new () = new DataContractClass(null,null,-1)
 
     [<Sealed>]
     [<ProtoContract(ImplicitFields = ImplicitFields.AllFields)>]
@@ -125,10 +142,10 @@ module TestTypes =
             1 + (children |> Array.sumBy(fun c -> c.NodeCount))
 
     let rec mkClassTree (size : int) =
-        if size = 0 then ClassTree(Entry(),[||])
+        if size = 0 then ClassTree(SimplePoco(),[||])
         else
             let children = Array.init 3 (fun _ -> mkClassTree (size - 1))
-            ClassTree(Entry(),children)
+            ClassTree(SimplePoco(),children)
 
     let mkExceptionWithStackTrace() =
         let rec dive d =

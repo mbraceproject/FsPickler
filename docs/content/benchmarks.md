@@ -4,65 +4,95 @@ How does FsPickler compare against other .Net serialization libraries in terms o
 In this section we present a few microbenchmarks: we compared FsPickler against 
 [BinaryFormatter](http://msdn.microsoft.com/en-us/library/system.runtime.serialization.formatters.binary.binaryformatter.aspx), 
 [NetDataContractSerializer](http://msdn.microsoft.com/en-us/library/system.runtime.serialization.netdatacontractserializer.aspx), 
-[Json.Net](http://james.newtonking.com/json), [ServiceStack.Text](https://www.nuget.org/packages/ServiceStack.Text/4.0.15) and
-[ProtoBuf-Net](https://code.google.com/p/protobuf-net/). 
+[Json.Net 7.0](http://james.newtonking.com/json), [ProtoBuf-Net 2.0](https://code.google.com/p/protobuf-net/)
+and [Wire 0.0.5](https://www.nuget.org/packages/Wire).
 Code used to run the tests is available in the 
 [FsPickler.PerfTests](https://github.com/nessos/FsPickler/tree/master/tests/FsPickler.PerfTests) project.
+Benchmarks were run on an Intel Core i7-7200K CPU @ 3.50GHz with 16GB RAM.
+
+Last updated on October 12, 2015.
 
 ## Execution Time
 
-The first set of tests measures execution time.
+The first set of tests measures serialization roundtrip time and GC collections.
 Performance testing was done using the [PerfUtil](https://github.com/eiriktsarpalis/PerfUtil) library. 
 Libraries not appearing in charts failed to serialize the tested objects.
 Benchmarks are indicative and in no way scientific.
 
+### Simple POCO
+
+<img src="benchmarks/time/poco.png" />
+<img src="benchmarks/gc/poco.png" />
+
+### ISerializable Object
+
+<img src="benchmarks/time/iserializable.png" />
+<img src="benchmarks/gc/iserializable.png" />
+
+### DataContract Object
+
+<img src="benchmarks/time/datacontract.png" />
+<img src="benchmarks/gc/datacontract.png" />
+
 ### System.Tuple
 
-<img src="benchmarks/time/tuple.png" />
+<img src="benchmarks/time/tuple6.png" />
+<img src="benchmarks/gc/tuple6.png" />
+
+### Exception with Stacktrace
+
+<img src="benchmarks/time/exception.png" />
+<img src="benchmarks/gc/exception.png" />
 
 ### Array of Tuples
 
-<img src="benchmarks/time/tupleArray.png" />
+<img src="benchmarks/time/tuplearray.png" />
+<img src="benchmarks/gc/tuplearray.png" />
 
-### Simple Record Class
+### Array of System.Type
 
-<img src="benchmarks/time/class.png" />
-
-### ISerializable Class
-
-<img src="benchmarks/time/iserializable.png" />
+<img src="benchmarks/time/typearray.png" />
+<img src="benchmarks/gc/typearray.png" />
 
 ### Generic Dictionary
 
-<img src="benchmarks/time/dictionary.png" />
+<img src="benchmarks/time/dict.png" />
+<img src="benchmarks/gc/dict.png" />
 
 ### Binary Tree
 
-<img src="benchmarks/time/binaryTree.png" />
+<img src="benchmarks/time/tree.png" />
+<img src="benchmarks/gc/tree.png" />
 
 ### F# list of integers
 
-<img src="benchmarks/time/list.png" />
+<img src="benchmarks/time/intlist.png" />
+<img src="benchmarks/gc/intlist.png" />
 
 ### F# list of tuples
 
-<img src="benchmarks/time/pairList.png" />
+<img src="benchmarks/time/pairlist.png" />
+<img src="benchmarks/gc/pairlist.png" />
 
 ### 3D float Array (200 x 200 x 200)
 
-<img src="benchmarks/time/array3D.png" />
+<img src="benchmarks/time/3darray.png" />
+<img src="benchmarks/gc/3darray.png" />
 
 ### F# mutual recursive types
 
-<img src="benchmarks/time/fsharpForest.png" />
+<img src="benchmarks/time/fsmutual.png" />
+<img src="benchmarks/gc/fsmutual.png" />
 
 ### F# Quotation
 
 <img src="benchmarks/time/quotation.png" />
+<img src="benchmarks/gc/quotation.png" />
 
 ### Random object graph (n = 500, Pb = 20%)
 
-<img src="benchmarks/time/random.png" />
+<img src="benchmarks/time/graph.png" />
+<img src="benchmarks/gc/graph.png" />
 
 ## Serialization Size
 
@@ -87,7 +117,7 @@ Libraries not appearing in charts failed to serialize the tested objects.
 
 ### 3D float Array (100x100x100)
 
-<img src="benchmarks/size/array.png" />
+<img src="benchmarks/size/3darray.png" />
 
 ### F# List of Integers (1000 elements)
 
@@ -97,13 +127,13 @@ Libraries not appearing in charts failed to serialize the tested objects.
 
 <img src="benchmarks/size/pairlist.png" />
 
-### Record
+### Simple POCO
 
-<img src="benchmarks/size/record.png" />
+<img src="benchmarks/size/poco.png" />
 
-### Dictionary of Records (1000 entries)
+### Dictionary of POCOs (1000 entries)
 
-<img src="benchmarks/size/dictionary.png" />
+<img src="benchmarks/size/dict.png" />
 
 ### Exception (with stacktrace)
 
@@ -111,7 +141,7 @@ Libraries not appearing in charts failed to serialize the tested objects.
 
 ### Binary tree (balanced, depth = 10)
 
-<img src="benchmarks/size/bintree.png" />
+<img src="benchmarks/size/tree.png" />
 
 ### F# Quotation
 

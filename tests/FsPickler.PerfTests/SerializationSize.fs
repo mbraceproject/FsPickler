@@ -50,6 +50,7 @@ module SerializationSize =
         let results = 
             serializers 
             |> List.choose (fun s -> tryGetSize s t |> Option.map (fun r -> s.Name, float r))
+            |> List.sortBy fst
 
         let mean = 
             results

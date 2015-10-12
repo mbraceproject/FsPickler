@@ -27,17 +27,27 @@ module PerfTests =
 
     type Marker = class end
     
-    let entry = Entry()
+    let entry = SimplePoco()
 
     let entries = new System.Collections.Generic.Dictionary<int, _> ()
     
     for i in 1 .. 1000 do
-        entries.Add(i, new Entry())
+        entries.Add(i, new SimplePoco())
 
     let largeTree = mkTree 8
 
     [<PerfTest(100000)>]
     let ``Simple POCO`` (s : Serializer) = Serializer.roundtrip entry s
+
+    let privatePoco = PrivatePoco.Create("John", "Smith", age = 42)
+
+    [<PerfTest(100000)>]
+    let ``POCO with private members & constructors`` (s : Serializer) = Serializer.roundtrip privatePoco s
+
+    let dataContract = new DataContractClass("John", "Smith", age = 42)
+
+    [<PerfTest(100000)>]
+    let ``DataContract Object`` (s : Serializer) = Serializer.roundtrip dataContract s
 
     [<PerfTest(100)>]
     let ``BCL Dictionary containing POCOs (count = 1000)`` (s : Serializer) = Serializer.roundtrip entries s
@@ -45,20 +55,20 @@ module PerfTests =
     [<PerfTest(100)>]
     let ``Balanced Binary tree (depth = 10)`` (s : Serializer) = Serializer.roundtrip largeTree s
 
-    let tuple = (1,"lorem ipsum",[|1..100|],4, (1,42), System.Guid.NewGuid())
+    let tuple = (1, "lorem ipsum", [|1..100|], (1,42), System.Guid.NewGuid())
 
     [<PerfTest(1000)>]
-    let ``System.Tuple (6 elements)`` s = Serializer.roundtrip tuple s
+    let ``System.Tuple<int, string, byte[], int * int64, Guid>`` s = Serializer.roundtrip tuple s
 
     let list = [1..1000]
 
     [<PerfTest(1000)>]
-    let ``F# List of ints (length = 1000)`` s = Serializer.roundtrip list s
+    let ``F# List<int> (length = 1000)`` s = Serializer.roundtrip list s
 
     let tupleList = [1..1000] |> List.map (fun i -> string i,i)
 
     [<PerfTest(1000)>]
-    let ``F# List of Pairs (length = 1000)`` s = Serializer.roundtrip tupleList s
+    let ``F# List<string * int> (length = 1000)`` s = Serializer.roundtrip tupleList s
 
     [<PerfTest(100)>]
     let ``Large F# Quotation`` s = Serializer.roundtrip PerformanceTests.quotationLarge s
@@ -67,6 +77,11 @@ module PerfTests =
 
     [<PerfTest(1000)>]
     let ``ISerializable Object`` s = Serializer.roundtrip iserializable s
+
+    let exn = mkExceptionWithStackTrace()
+
+    [<PerfTest(100)>]
+    let ``Exception with stacktrace`` s = Serializer.roundtrip exn s
 
     let fsharpBin = TestTypes.mkTree 10
 
@@ -81,7 +96,7 @@ module PerfTests =
     let kvArr = [|1..10000|] |> Array.map (fun i -> (i,string i))
 
     [<PerfTest(100)>]
-    let ``Array of tuples (10000 elements)`` s = Serializer.roundtrip kvArr s
+    let ``Array of Tuple<int * string> (10000 elements)`` s = Serializer.roundtrip kvArr s
 
     let types = 
         [| 
@@ -138,7 +153,12 @@ let getChartName (results : PerfResult list) = results |> List.tryPick (fun r ->
 let show (chart : ChartTypes.GenericChart) = chart.ShowChart() |> ignore
 
 let plot name (metric : PerfResult -> float) (results : PerfResult list) =
-    let values = results |> List.choose (fun r -> if r.HasFailed then None else Some (r.SessionId, metric r))
+    let values = 
+        results 
+        |> List.choose (fun r -> if r.HasFailed then None else Some (r.SessionId, metric r))
+        |> List.sortBy fst
+        |> List.rev
+
     Chart.Bar(values, ?Name = name)
     |> Chart.WithYAxis(MajorGrid = dashGrid) 
     |> Chart.WithXAxis(MajorGrid = dashGrid)
@@ -156,12 +176,13 @@ let plotGC (results : TestSession list) =
     results
     |> TestSession.groupByTest
     |> Map.iter (fun _ rs -> 
-        let g0 = plot (Some "Collections (gen0)") (fun r -> float r.GcDelta.[0]) rs
-        let g1 = plot (Some "Collections (gen1)") (fun r -> float r.GcDelta.[1]) rs
-        let g2 = plot (Some "Collections (gen2)") (fun r -> float r.GcDelta.[2]) rs
+        let g0 = plot (Some "gen0") (fun r -> float r.GcDelta.[0]) rs
+        let g1 = plot (Some "gen1") (fun r -> float r.GcDelta.[1]) rs
+        let g2 = plot (Some "gen2") (fun r -> float r.GcDelta.[2]) rs
         Chart.Combine [g0;g1;g2]
         |> Chart.WithTitle (?Text = getChartName rs, InsideArea = false)
         |> Chart.WithLegend(Enabled = true)
+        |> Chart.WithYAxis(Enabled = true, Title = "GC Collections")
         |> show)
 
 //
@@ -171,8 +192,12 @@ let plotGC (results : TestSession list) =
 let results = PerfTest.run mkTester tests
 let cyclicResults = PerfTest.run mkCyclicGraphTester cyclic
 
+//
+//  Persist test results
+//
+
 let desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
-let perfFile = desktop + @"/perftests.xml"
+let perfFile = desktop + "/perftests.xml"
 let cyclFile = desktop + "/perftests-cyclic.xml"
 
 TestSession.toFile perfFile results
@@ -180,6 +205,10 @@ TestSession.toFile cyclFile cyclicResults
 
 //let results = TestSession.ofFile perfFile
 //let cyclicResults = TestSession.ofFile cyclFile
+
+//
+//  Plot test results
+//
 
 plotTime results
 plotGC results
