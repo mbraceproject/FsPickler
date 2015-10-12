@@ -27,22 +27,15 @@ module PerfTests =
 
     type Marker = class end
     
-    let entry = SimplePoco()
+    let entry = SimplePoco.Create()
 
     let entries = new System.Collections.Generic.Dictionary<int, _> ()
-    
-    for i in 1 .. 1000 do
-        entries.Add(i, new SimplePoco())
+    for i in 1 .. 1000 do entries.Add(i, SimplePoco.Create())
 
     let largeTree = mkTree 8
 
     [<PerfTest(100000)>]
     let ``Simple POCO`` (s : Serializer) = Serializer.roundtrip entry s
-
-    let privatePoco = PrivatePoco.Create("John", "Smith", age = 42)
-
-    [<PerfTest(100000)>]
-    let ``POCO with private members & constructors`` (s : Serializer) = Serializer.roundtrip privatePoco s
 
     let dataContract = new DataContractClass("John", "Smith", age = 42)
 

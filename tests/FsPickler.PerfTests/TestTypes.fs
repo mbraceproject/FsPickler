@@ -15,6 +15,8 @@ open Nessos.FsPickler.Combinators
 [<AutoOpen>]
 module TestTypes =
 
+    let private random = new Random(System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(obj()))
+
     type Peano =
         | Zero
         | Succ of Peano
@@ -101,23 +103,14 @@ module TestTypes =
         "Lorem ipsum dolor sit amet, consectetur adipisicing elit, 
             sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
 
-    [<ProtoContract(ImplicitFields = ImplicitFields.AllFields)>]
-    type SimplePoco(id : int, name : string, surname : string, age : int, data : byte [], date : DateTime) =
-
-        new () = new SimplePoco(0, "John", "Smith", 42, [| 1uy .. 100uy |], DateTime.Now)
+    type SimplePoco private (id : int, name : string, surname : string, age : int, data : byte [], date : DateTime) =
+        static member Create() = new SimplePoco(random.Next(), "John", "Smith", 42, [| 1uy .. 100uy |], DateTime.Now)
         member __.Id = id
         member __.Name = name
         member __.Surname = surname
         member __.Age = age
         member __.Data = data
         member __.Date = date
-
-
-    type PrivatePoco private(name : string, surname : string, age : int) =
-        member __.Name = name
-        member __.Surname = surname
-        member __.Age = age
-        static member Create(name, surname, age) = new PrivatePoco(name, surname, age)
 
     [<DataContract>]
     type DataContractClass (name : string, surname : string, age : int) =
@@ -142,10 +135,10 @@ module TestTypes =
             1 + (children |> Array.sumBy(fun c -> c.NodeCount))
 
     let rec mkClassTree (size : int) =
-        if size = 0 then ClassTree(SimplePoco(),[||])
+        if size = 0 then ClassTree(SimplePoco.Create(),[||])
         else
             let children = Array.init 3 (fun _ -> mkClassTree (size - 1))
-            ClassTree(SimplePoco(),children)
+            ClassTree(SimplePoco.Create(),children)
 
     let mkExceptionWithStackTrace() =
         let rec dive d =

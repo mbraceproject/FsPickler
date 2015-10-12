@@ -73,7 +73,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "size", "size", "{E97FD04B-2
 		docs\files\benchmarks\size\pairarray.png = docs\files\benchmarks\size\pairarray.png
 		docs\files\benchmarks\size\pairlist.png = docs\files\benchmarks\size\pairlist.png
 		docs\files\benchmarks\size\poco.png = docs\files\benchmarks\size\poco.png
-		docs\files\benchmarks\time\privatepoco.png = docs\files\benchmarks\time\privatepoco.png
 		docs\files\benchmarks\size\quotation.png = docs\files\benchmarks\size\quotation.png
 		docs\files\benchmarks\size\tree.png = docs\files\benchmarks\size\tree.png
 	EndProjectSection
@@ -110,7 +109,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "gc", "gc", "{CDF2389D-8F60-
 		docs\files\benchmarks\gc\iserializable.png = docs\files\benchmarks\gc\iserializable.png
 		docs\files\benchmarks\gc\pairlist.png = docs\files\benchmarks\gc\pairlist.png
 		docs\files\benchmarks\gc\poco.png = docs\files\benchmarks\gc\poco.png
-		docs\files\benchmarks\gc\privatepoco.png = docs\files\benchmarks\gc\privatepoco.png
 		docs\files\benchmarks\gc\quotation.png = docs\files\benchmarks\gc\quotation.png
 		docs\files\benchmarks\gc\tree.png = docs\files\benchmarks\gc\tree.png
 		docs\files\benchmarks\gc\tuple6.png = docs\files\benchmarks\gc\tuple6.png
