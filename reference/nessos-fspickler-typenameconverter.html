@@ -57,10 +57,10 @@
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '11', 11)" onmouseover="showTip(event, '11', 11)">
-            compose(f g)
+            compose(converters)
           </code>
           <div class="tip" id="11">
-            <strong>Signature:</strong> f:ITypeNameConverter -&gt; g:ITypeNameConverter -&gt; ITypeNameConverter<br />
+            <strong>Signature:</strong> converters:seq&lt;ITypeNameConverter&gt; -&gt; ITypeNameConverter<br />
                       </div>
         </td>
         <td class="xmldoc">
@@ -68,7 +68,7 @@
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          <p>Composes two type name converters into one</p>
+          <p>Composes a collection of ITypeNameConverters into one</p>
 
 
 
