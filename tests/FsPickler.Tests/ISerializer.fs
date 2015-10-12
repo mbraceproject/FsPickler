@@ -10,7 +10,7 @@ open Newtonsoft.Json
 
 open Nessos.FsPickler
 
-type IPickler =
+type ISerializer =
     abstract Name : string
     abstract Pickle : 'T -> byte []
     abstract UnPickle<'T> : byte [] -> 'T
@@ -26,26 +26,26 @@ module PickleUtils =
         use m = new MemoryStream(data)
         deserializer m
 
-type BinaryFormatterPickler () =
+type BinaryFormatterSerializer () =
     let bfs = new BinaryFormatter()
 
-    interface IPickler with
+    interface ISerializer with
         member __.Name = "BinaryFormatter"
         member __.Pickle (x : 'T) = pickle (fun s -> bfs.Serialize(s, x))
         member __.UnPickle<'T> data = unpickle (fun s -> bfs.Deserialize s :?> 'T) data
 
-type NetDataContractPickler () =
+type NetDataContractSerializer () =
     let ndc = new System.Runtime.Serialization.NetDataContractSerializer()
 
-    interface IPickler with
+    interface ISerializer with
         member __.Name = "NetDataContractSerializer"
         member __.Pickle (x : 'T) = pickle (fun s -> ndc.Serialize(s, x))
         member __.UnPickle data = unpickle (fun s -> ndc.Deserialize s :?> 'T) data
 
-type JsonDotNetPickler () =
+type JsonDotNetSerializer () =
     let jdn = Newtonsoft.Json.JsonSerializer.Create()
         
-    interface IPickler with
+    interface ISerializer with
         member __.Name = "Json.Net"
         member __.Pickle (t : 'T) =
             pickle (fun s ->
@@ -59,19 +59,19 @@ type JsonDotNetPickler () =
                 jdn.Deserialize(reader, typeof<'T>) :?> 'T) data
 
 
-type FailoverPicklerException(message : string) =
+type FailoverSerializerException(message : string) =
     inherit System.Exception(message)
 
 /// Provides a reliable serialization format
 /// Pass object throught a chain of candidate serializers, choosing the first that succeeds.
-type FailoverPickler (picklers : IPickler list) =
+type FailoverSerializer (picklers : ISerializer list) =
         
-    interface IPickler with
+    interface ISerializer with
         member __.Name = "Failover Pickler"
         member __.Pickle (x : 'T) =
-            let rec tryNext id (rest : IPickler list) =
+            let rec tryNext id (rest : ISerializer list) =
                 match rest with
-                | [] -> raise <| FailoverPicklerException(sprintf "failed to pickle '%O." x)
+                | [] -> raise <| FailoverSerializerException(sprintf "failed to pickle '%O." x)
                 | hd :: tl ->
                     let result =
                         try 
@@ -102,11 +102,11 @@ type FailoverPickler (picklers : IPickler list) =
 
 
     static member Create() =
-        let bfp = new BinaryFormatterPickler() :> IPickler
-        let ndc = new NetDataContractPickler() :> IPickler
-        let jdn = new JsonDotNetPickler() :> IPickler
+        let bfp = new BinaryFormatterSerializer() :> ISerializer
+        let ndc = new NetDataContractSerializer() :> ISerializer
+        let jdn = new JsonDotNetSerializer() :> ISerializer
 
         if runsOnMono then
-            new FailoverPickler([bfp ; jdn ]) :> IPickler
+            new FailoverSerializer([bfp ; jdn ]) :> ISerializer
         else
-            new FailoverPickler([bfp ; jdn ; ndc ]) :> IPickler
+            new FailoverSerializer([bfp ; jdn ; ndc ]) :> ISerializer

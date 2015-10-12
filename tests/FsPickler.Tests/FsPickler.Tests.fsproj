@@ -93,7 +93,7 @@
   <ItemGroup>
     <Compile Include="Utils.fs" />
     <Compile Include="FsCheck.fs" />
-    <Compile Include="IPickler.fs" />
+    <Compile Include="ISerializer.fs" />
     <Compile Include="FsPicklerManager.fs" />
     <Compile Include="TestTypes.fs" />
     <Compile Include="GenericTests.fs" />

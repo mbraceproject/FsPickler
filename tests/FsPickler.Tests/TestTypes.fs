@@ -504,7 +504,7 @@ module TestTypes =
             try Some (t, Activator.CreateInstance t)
             with _ -> None
 
-        let fo = FailoverPickler.Create()
+        let fo = FailoverSerializer.Create()
 
         // only test things that are successfully serialized by other Picklers
         let filterObject (t : Type, o : obj) =

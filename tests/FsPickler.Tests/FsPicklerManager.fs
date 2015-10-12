@@ -43,7 +43,7 @@ type FsPicklerManager(pickleFormat : string) =
 
     member __.GetRemoteSerializer() = new RemoteSerializationClient(pickleFormat)
 
-    interface IPickler with
+    interface ISerializer with
         member __.Name = pickleFormat
         member __.Pickle (value : 'T) = serializer.Pickle(value)
         member __.UnPickle<'T> (data : byte[]) = serializer.UnPickle<'T>(data)
@@ -54,7 +54,7 @@ and RemoteSerializer (pickleFormat : string) =
     inherit MarshalByRefObject()
 
     let mgr = new FsPicklerManager(pickleFormat)
-    let fp = FailoverPickler.Create()
+    let fp = FailoverSerializer.Create()
 
     member __.Pickle<'T>(data : byte []) : byte [] =
         let value = fp.UnPickle<'T>(data)
@@ -65,7 +65,7 @@ and RemoteSerializer (pickleFormat : string) =
         serializer mgr.Serializer
 
 and RemoteSerializationClient (pickleFormat : string) =
-    let fp = FailoverPickler.Create()
+    let fp = FailoverSerializer.Create()
     let remote = AppDomainManager.Activate<RemoteSerializer>("remoteSerializationDomain", [| pickleFormat :> obj |])
 
     member __.Pickle<'T> (value : 'T) =
