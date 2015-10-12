@@ -39,10 +39,11 @@
 In this section we present a few microbenchmarks: we compared FsPickler against 
 <a href="http://msdn.microsoft.com/en-us/library/system.runtime.serialization.formatters.binary.binaryformatter.aspx">BinaryFormatter</a>, 
 <a href="http://msdn.microsoft.com/en-us/library/system.runtime.serialization.netdatacontractserializer.aspx">NetDataContractSerializer</a>, 
-<a href="http://james.newtonking.com/json">Json.Net</a>, <a href="https://www.nuget.org/packages/ServiceStack.Text/4.0.15">ServiceStack.Text</a> and
+<a href="http://james.newtonking.com/json">Json.Net</a>, <a href="https://www.nuget.org/packages/Wire">Wire</a> and
 <a href="https://code.google.com/p/protobuf-net/">ProtoBuf-Net</a>. 
 Code used to run the tests is available in the 
-<a href="https://github.com/nessos/FsPickler/tree/master/tests/FsPickler.PerfTests">FsPickler.PerfTests</a> project.</p>
+<a href="https://github.com/nessos/FsPickler/tree/master/tests/FsPickler.PerfTests">FsPickler.PerfTests</a> project.
+Benchmarks were run on an Intel Core i7-7200K CPU @ 3.50GHz with 16GB RAM.</p>
 
 <h2><a name="Execution-Time" class="anchor" href="#Execution-Time">Execution Time</a></h2>
 
@@ -53,51 +54,73 @@ Benchmarks are indicative and in no way scientific.</p>
 
 <h3><a name="System-Tuple" class="anchor" href="#System-Tuple">System.Tuple</a></h3>
 
-<img src="benchmarks/time/tuple.png" />
+<img src="benchmarks/time/tuple6.png" />
+<img src="benchmarks/gc/tuple6.png" />
 
 <h3><a name="Array-of-Tuples" class="anchor" href="#Array-of-Tuples">Array of Tuples</a></h3>
 
-<img src="benchmarks/time/tupleArray.png" />
+<img src="benchmarks/time/tuplearray.png" />
+<img src="benchmarks/gc/tuplearray.png" />
 
-<h3><a name="Simple-Record-Class" class="anchor" href="#Simple-Record-Class">Simple Record Class</a></h3>
+<h3><a name="Array-of-System-Type" class="anchor" href="#Array-of-System-Type">Array of System.Type</a></h3>
 
-<img src="benchmarks/time/class.png" />
+<img src="benchmarks/time/typearray.png" />
+<img src="benchmarks/gc/typearray.png" />
 
-<h3><a name="ISerializable-Class" class="anchor" href="#ISerializable-Class">ISerializable Class</a></h3>
+<h3><a name="Simple-POCO" class="anchor" href="#Simple-POCO">Simple POCO</a></h3>
+
+<img src="benchmarks/time/poco.png" />
+<img src="benchmarks/gc/poco.png" />
+
+<h3><a name="ISerializable-Object" class="anchor" href="#ISerializable-Object">ISerializable Object</a></h3>
 
 <img src="benchmarks/time/iserializable.png" />
+<img src="benchmarks/gc/iserializable.png" />
+
+<h3><a name="DataContract-Object" class="anchor" href="#DataContract-Object">DataContract Object</a></h3>
+
+<img src="benchmarks/time/datacontract.png" />
+<img src="benchmarks/gc/datacontract.png" />
 
 <h3><a name="Generic-Dictionary" class="anchor" href="#Generic-Dictionary">Generic Dictionary</a></h3>
 
-<img src="benchmarks/time/dictionary.png" />
+<img src="benchmarks/time/dict.png" />
+<img src="benchmarks/gc/dict.png" />
 
 <h3><a name="Binary-Tree" class="anchor" href="#Binary-Tree">Binary Tree</a></h3>
 
-<img src="benchmarks/time/binaryTree.png" />
+<img src="benchmarks/time/tree.png" />
+<img src="benchmarks/gc/tree.png" />
 
 <h3><a name="F-list-of-integers" class="anchor" href="#F-list-of-integers">F# list of integers</a></h3>
 
-<img src="benchmarks/time/list.png" />
+<img src="benchmarks/time/intlist.png" />
+<img src="benchmarks/gc/intlist.png" />
 
 <h3><a name="F-list-of-tuples" class="anchor" href="#F-list-of-tuples">F# list of tuples</a></h3>
 
-<img src="benchmarks/time/pairList.png" />
+<img src="benchmarks/time/pairlist.png" />
+<img src="benchmarks/gc/pairlist.png" />
 
 <h3><a name="3D-float-Array-200-x-200-x-200" class="anchor" href="#3D-float-Array-200-x-200-x-200">3D float Array (200 x 200 x 200)</a></h3>
 
-<img src="benchmarks/time/array3D.png" />
+<img src="benchmarks/time/3darray.png" />
+<img src="benchmarks/gc/3darray.png" />
 
 <h3><a name="F-mutual-recursive-types" class="anchor" href="#F-mutual-recursive-types">F# mutual recursive types</a></h3>
 
-<img src="benchmarks/time/fsharpForest.png" />
+<img src="benchmarks/time/fsmutual.png" />
+<img src="benchmarks/gc/fsmutual.png" />
 
 <h3><a name="F-Quotation" class="anchor" href="#F-Quotation">F# Quotation</a></h3>
 
 <img src="benchmarks/time/quotation.png" />
+<img src="benchmarks/gc/quotation.png" />
 
 <h3><a name="Random-object-graph-n-500-Pb-20" class="anchor" href="#Random-object-graph-n-500-Pb-20">Random object graph (n = 500, Pb = 20%)</a></h3>
 
-<img src="benchmarks/time/random.png" />
+<img src="benchmarks/time/graph.png" />
+<img src="benchmarks/gc/graph.png" />
 
 <h2><a name="Serialization-Size" class="anchor" href="#Serialization-Size">Serialization Size</a></h2>
 
@@ -122,7 +145,7 @@ Libraries not appearing in charts failed to serialize the tested objects.</p>
 
 <h3><a name="3D-float-Array-100x100x100" class="anchor" href="#3D-float-Array-100x100x100">3D float Array (100x100x100)</a></h3>
 
-<img src="benchmarks/size/array.png" />
+<img src="benchmarks/size/3darray.png" />
 
 <h3><a name="F-List-of-Integers-1000-elements" class="anchor" href="#F-List-of-Integers-1000-elements">F# List of Integers (1000 elements)</a></h3>
 
@@ -132,13 +155,13 @@ Libraries not appearing in charts failed to serialize the tested objects.</p>
 
 <img src="benchmarks/size/pairlist.png" />
 
-<h3><a name="Record" class="anchor" href="#Record">Record</a></h3>
+<h3><a name="Simple-POCO-1" class="anchor" href="#Simple-POCO-1">Simple POCO</a></h3>
 
-<img src="benchmarks/size/record.png" />
+<img src="benchmarks/size/poco.png" />
 
-<h3><a name="Dictionary-of-Records-1000-entries" class="anchor" href="#Dictionary-of-Records-1000-entries">Dictionary of Records (1000 entries)</a></h3>
+<h3><a name="Dictionary-of-POCOs-1000-entries" class="anchor" href="#Dictionary-of-POCOs-1000-entries">Dictionary of POCOs (1000 entries)</a></h3>
 
-<img src="benchmarks/size/dictionary.png" />
+<img src="benchmarks/size/dict.png" />
 
 <h3><a name="Exception-with-stacktrace" class="anchor" href="#Exception-with-stacktrace">Exception (with stacktrace)</a></h3>
 
@@ -146,7 +169,7 @@ Libraries not appearing in charts failed to serialize the tested objects.</p>
 
 <h3><a name="Binary-tree-balanced-depth-10" class="anchor" href="#Binary-tree-balanced-depth-10">Binary tree (balanced, depth = 10)</a></h3>
 
-<img src="benchmarks/size/bintree.png" />
+<img src="benchmarks/size/tree.png" />
 
 <h3><a name="F-Quotation-1" class="anchor" href="#F-Quotation-1">F# Quotation</a></h3>
 
