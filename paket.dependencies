@@ -13,4 +13,4 @@ nuget Wire
 nuget FSharp.Formatting
 nuget NUnit.Runners
 nuget FAKE
-nuget TaskParallelLibrary
+nuget TaskParallelLibrary framework:net35
