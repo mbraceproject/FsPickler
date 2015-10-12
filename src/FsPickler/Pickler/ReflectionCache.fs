@@ -292,23 +292,24 @@ let generateMethodSignature (getTypeSig : Type -> string) (m : MethodInfo) =
 type ReflectionCache private (?tyConv : ITypeNameConverter) =
 
     static let defaultCache = lazy(new ReflectionCache())
-    static let cacheCache = new ConcurrentDictionary<ITypeNameConverter, ReflectionCache>(new ReferenceEqualityComparer<_>())
+    static let caches = new ConcurrentDictionary<ITypeNameConverter, ReflectionCache>(new ReferenceEqualityComparer<_>())
 
     let loadAssembly = memoize loadAssembly
     let getAssemblyInfo = memoize AssemblyInfo.OfAssembly
 
-    let rec memberInfoCache = new BiMemoizer<_,_>(getMember, loadMember)
-    and getMember m   = getMemberInfo tyConv getAssemblyInfo (generateMethodSignature getSignature) m
+    let rec getMemberMemoized : MemberInfo -> CompositeMemberInfo = memoize getMember
+    and loadMemberMemoized = memoize loadMember
+    and getMember m = getMemberInfo tyConv getAssemblyInfo (generateMethodSignature getSignature) m
     and loadMember mI = loadMemberInfo tyConv loadAssembly (generateMethodSignature getSignature) mI
-    and getSignature = memoize (fun t -> generateTypeSignature memberInfoCache.F t)
+    and getSignature = memoize (fun t -> generateTypeSignature getMemberMemoized t)
 
     member __.GetAssemblyInfo(a : Assembly) = getAssemblyInfo a
     member __.LoadAssembly(aI : AssemblyInfo) = loadAssembly aI
-    member __.GetCompositeMemberInfo(m : MemberInfo) = memberInfoCache.F m
-    member __.LoadMemberInfo(m : CompositeMemberInfo) = memberInfoCache.G m
+    member __.GetCompositeMemberInfo(m : MemberInfo) = getMemberMemoized m
+    member __.LoadMemberInfo(m : CompositeMemberInfo) = loadMemberMemoized m
     member __.GetTypeSignature(t : Type) = getSignature t
 
     static member Create(?tyConv : ITypeNameConverter) =
         match tyConv with
         | None -> defaultCache.Value
-        | Some tc -> cacheCache.GetOrAdd(tc, fun tc -> new ReflectionCache(tyConv = tc))
+        | Some tc -> caches.GetOrAdd(tc, fun tc -> new ReflectionCache(tyConv = tc))

@@ -1,3 +1,6 @@
+### 1.5.2
+* Fix ReflectionCache binding redirect issue.
+
 ### 1.5.1
 * Revise ITypeNameConverter.compose definition.
 

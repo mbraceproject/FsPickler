@@ -17,9 +17,9 @@ type ``AppDomain Tests`` (pickleFormat : string) as self =
     override __.IsRemotedTest = true
     override __.Pickle (value : 'T) = 
         try remotePickler.Pickle<'T> value
-        with :? FailoverPicklerException -> self.PicklerManager.Serializer.Pickle value
+        with :? FailoverSerializerException -> self.PicklerManager.Serializer.Pickle value
 
     override __.PickleF (pickleF : FsPicklerSerializer -> byte []) = 
         try remotePickler.PickleF pickleF
-        with :? FailoverPicklerException -> pickleF self.PicklerManager.Serializer
+        with :? FailoverSerializerException -> pickleF self.PicklerManager.Serializer
 #endif

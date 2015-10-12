@@ -121,39 +121,6 @@ module internal Utils =
         let cache = new ConcurrentDictionary<'T,'S> ()
         fun t -> cache.GetOrAdd(t, f)
 
-    /// takes an isomorphic function and its inverse as inputs
-    /// memoizes output in both directions
-    type BiMemoizer<'T, 'S>(f : 'T -> 'S, g : 'S -> 'T) =
-        let cache = new ConcurrentDictionary<'T,'S> ()
-        let cache' = new ConcurrentDictionary<'S,'T> ()
-
-        member __.F(t : 'T) =
-            let mutable s = Unchecked.defaultof<'S>
-            let found = cache.TryGetValue(t, &s)
-            if found then s
-            else
-                let s = f t
-                cache.TryAdd(t,s) |> ignore
-#if DEBUG
-#else
-                cache'.TryAdd(s,t) |> ignore
-#endif
-                s
-
-        member __.G(s : 'S) =
-            let mutable t = Unchecked.defaultof<'T>
-            let found = cache'.TryGetValue(s, &t)
-            if found then t
-            else
-                let t = g s
-                cache'.TryAdd(s,t) |> ignore
-#if DEBUG
-#else
-                cache.TryAdd(t,s) |> ignore
-#endif
-
-                t
-
     type SerializationInfo with
         member internal sI.Write<'T> (name : string, x : 'T) =
             sI.AddValue(name, x, typeof<'T>)
