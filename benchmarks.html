@@ -39,11 +39,13 @@
 In this section we present a few microbenchmarks: we compared FsPickler against 
 <a href="http://msdn.microsoft.com/en-us/library/system.runtime.serialization.formatters.binary.binaryformatter.aspx">BinaryFormatter</a>, 
 <a href="http://msdn.microsoft.com/en-us/library/system.runtime.serialization.netdatacontractserializer.aspx">NetDataContractSerializer</a>, 
-<a href="http://james.newtonking.com/json">Json.Net</a>, <a href="https://www.nuget.org/packages/Wire">Wire</a> and
-<a href="https://code.google.com/p/protobuf-net/">ProtoBuf-Net</a>. 
+<a href="http://james.newtonking.com/json">Json.Net 7.0</a>, <a href="https://code.google.com/p/protobuf-net/">ProtoBuf-Net 2.0</a>
+and <a href="https://www.nuget.org/packages/Wire">Wire 0.0.5</a>.
 Code used to run the tests is available in the 
 <a href="https://github.com/nessos/FsPickler/tree/master/tests/FsPickler.PerfTests">FsPickler.PerfTests</a> project.
 Benchmarks were run on an Intel Core i7-7200K CPU @ 3.50GHz with 16GB RAM.</p>
+
+<p>Last updated on October 12, 2015.</p>
 
 <h2><a name="Execution-Time" class="anchor" href="#Execution-Time">Execution Time</a></h2>
 
@@ -51,21 +53,6 @@ Benchmarks were run on an Intel Core i7-7200K CPU @ 3.50GHz with 16GB RAM.</p>
 Performance testing was done using the <a href="https://github.com/eiriktsarpalis/PerfUtil">PerfUtil</a> library. 
 Libraries not appearing in charts failed to serialize the tested objects.
 Benchmarks are indicative and in no way scientific.</p>
-
-<h3><a name="System-Tuple" class="anchor" href="#System-Tuple">System.Tuple</a></h3>
-
-<img src="benchmarks/time/tuple6.png" />
-<img src="benchmarks/gc/tuple6.png" />
-
-<h3><a name="Array-of-Tuples" class="anchor" href="#Array-of-Tuples">Array of Tuples</a></h3>
-
-<img src="benchmarks/time/tuplearray.png" />
-<img src="benchmarks/gc/tuplearray.png" />
-
-<h3><a name="Array-of-System-Type" class="anchor" href="#Array-of-System-Type">Array of System.Type</a></h3>
-
-<img src="benchmarks/time/typearray.png" />
-<img src="benchmarks/gc/typearray.png" />
 
 <h3><a name="Simple-POCO" class="anchor" href="#Simple-POCO">Simple POCO</a></h3>
 
@@ -81,6 +68,26 @@ Benchmarks are indicative and in no way scientific.</p>
 
 <img src="benchmarks/time/datacontract.png" />
 <img src="benchmarks/gc/datacontract.png" />
+
+<h3><a name="System-Tuple" class="anchor" href="#System-Tuple">System.Tuple</a></h3>
+
+<img src="benchmarks/time/tuple6.png" />
+<img src="benchmarks/gc/tuple6.png" />
+
+<h3><a name="Exception-with-Stacktrace" class="anchor" href="#Exception-with-Stacktrace">Exception with Stacktrace</a></h3>
+
+<img src="benchmarks/time/exception.png" />
+<img src="benchmarks/gc/exception.png" />
+
+<h3><a name="Array-of-Tuples" class="anchor" href="#Array-of-Tuples">Array of Tuples</a></h3>
+
+<img src="benchmarks/time/tuplearray.png" />
+<img src="benchmarks/gc/tuplearray.png" />
+
+<h3><a name="Array-of-System-Type" class="anchor" href="#Array-of-System-Type">Array of System.Type</a></h3>
+
+<img src="benchmarks/time/typearray.png" />
+<img src="benchmarks/gc/typearray.png" />
 
 <h3><a name="Generic-Dictionary" class="anchor" href="#Generic-Dictionary">Generic Dictionary</a></h3>
 
