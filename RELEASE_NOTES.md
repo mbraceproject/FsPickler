@@ -1,3 +1,6 @@
+### 1.5.1
+* Revise ITypeNameConverter.compose definition.
+
 ### 1.5.0
 * Give additional ITypeNameConverter implementations.
 

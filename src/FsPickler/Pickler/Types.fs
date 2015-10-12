@@ -179,14 +179,21 @@ type ITypeNameConverter =
 /// TypeNameConverter utilities
 [<RequireQualifiedAccess>]
 module TypeNameConverter =
-    /// Composes two type name converters into one
-    let compose (f : ITypeNameConverter) (g : ITypeNameConverter) : ITypeNameConverter =
+    /// Composes a collection of ITypeNameConverters into one
+    let compose (converters : seq<ITypeNameConverter>) =
+        let converters = Seq.toArray converters
         { new ITypeNameConverter with
             member x.OfSerializedType(tI: TypeInfo): TypeInfo = 
-                tI |> f.OfSerializedType |> g.OfSerializedType
+                let mutable tI = tI
+                for i = 0 to converters.Length - 1 do 
+                    tI <- converters.[i].OfSerializedType tI
+                tI
 
             member __.ToDeserializedType (tI : TypeInfo) : TypeInfo =
-                tI |> g.ToDeserializedType |> f.ToDeserializedType }
+                let mutable tI = tI
+                for i = converters.Length - 1 downto 0 do 
+                    tI <- converters.[i].ToDeserializedType tI
+                tI }
 
 /// <summary>
 ///     Defines a type conversion scheme in which strong assembly info is dropped 
