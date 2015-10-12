@@ -61,7 +61,8 @@ module SerializationSize =
             elif mean < 1024. * 1024. then "KiB", results |> List.map (fun (n,d) -> n, d / 1024.)
             else "MiB", results |> List.map (fun (n,d) -> n, d / (1024. * 1024.))
 
-        Chart.Bar(data, Name = id, ?Title = None, YTitle = title)
+        Chart.Bar(data, Name = id, YTitle = title)
+        |> Chart.WithTitle(Text = id, InsideArea = false)
         |> Chart.WithYAxis(MajorGrid = dashGrid) 
         |> Chart.WithXAxis(MajorGrid = dashGrid)
         |> fun ch -> ch.ShowChart()

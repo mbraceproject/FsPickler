@@ -22,7 +22,6 @@ open Nessos.FsPickler.Tests
 
 open FSharp.Charting
 
-
 [<AutoOpen>]
 module PerfTests =
 
@@ -38,56 +37,65 @@ module PerfTests =
     let largeTree = mkTree 8
 
     [<PerfTest(100000)>]
-    let ``Generic Class`` (s : Serializer) = Serializer.roundtrip entry s
+    let ``Simple POCO`` (s : Serializer) = Serializer.roundtrip entry s
 
     [<PerfTest(100)>]
-    let ``Dictionary of Generic Classes`` (s : Serializer) = Serializer.roundtrip entries s
+    let ``BCL Dictionary containing POCOs (count = 1000)`` (s : Serializer) = Serializer.roundtrip entries s
 
     [<PerfTest(100)>]
-    let ``Balanced Binary tree of depth 10`` (s : Serializer) = Serializer.roundtrip largeTree s
+    let ``Balanced Binary tree (depth = 10)`` (s : Serializer) = Serializer.roundtrip largeTree s
 
     let tuple = (1,"lorem ipsum",[|1..100|],4, (1,42), System.Guid.NewGuid())
 
     [<PerfTest(1000)>]
-    let ``System.Tuple`` s = Serializer.roundtrip tuple s
+    let ``System.Tuple (6 elements)`` s = Serializer.roundtrip tuple s
 
     let list = [1..1000]
 
     [<PerfTest(1000)>]
-    let ``F# List`` s = Serializer.roundtrip list s
+    let ``F# List of ints (length = 1000)`` s = Serializer.roundtrip list s
 
     let tupleList = [1..1000] |> List.map (fun i -> string i,i)
 
     [<PerfTest(1000)>]
-    let ``F# List of Pairs`` s = Serializer.roundtrip tupleList s
+    let ``F# List of Pairs (length = 1000)`` s = Serializer.roundtrip tupleList s
 
     [<PerfTest(100)>]
-    let ``F# Quotation`` s = Serializer.roundtrip PerformanceTests.quotationLarge s
+    let ``Large F# Quotation`` s = Serializer.roundtrip PerformanceTests.quotationLarge s
 
     let iserializable = new TestTypes.SerializableClass<_>(42, "lorem ipsum", [|1..1000|])
 
     [<PerfTest(1000)>]
-    let ``ISerializable Class`` s = Serializer.roundtrip iserializable s
+    let ``ISerializable Object`` s = Serializer.roundtrip iserializable s
 
     let fsharpBin = TestTypes.mkTree 10
 
     [<PerfTest(100)>]
-    let ``F# Binary Tree`` s = Serializer.roundtrip fsharpBin s
+    let ``F# Binary Tree (depth = 10)`` s = Serializer.roundtrip fsharpBin s
 
     let forest = TestTypes.nForest 5 5 
 
     [<PerfTest(100)>]
-    let ``F# mutual recursive types`` s = Serializer.roundtrip forest s
+    let ``F# mutual recursive type (depth = 5)`` s = Serializer.roundtrip forest s
 
     let kvArr = [|1..10000|] |> Array.map (fun i -> (i,string i))
 
     [<PerfTest(100)>]
-    let ``Array of tuples`` s = Serializer.roundtrip kvArr s
+    let ``Array of tuples (10000 elements)`` s = Serializer.roundtrip kvArr s
 
-    let tyArray = Array.init 10 (fun i -> if i % 2 = 0 then typeof<int> else typeof<int * string option []>)
+    let types = 
+        [| 
+            typeof<int> ; typeof<string> ; typeof<bool> ; typeof<byte> ; typeof<uint32> ; typeof<bigint> ;
+            typeof<unit> ; typeof<obj> ; typeof<int list> ; typeof<byte []> ; typeof<System.DateTime> ; typeof<System.Guid>
+            typeof<(string * int []) option> ; typeof<string list> ; typeof<Choice<int,int * System.Type,string>> ; 
+            typeof<(int * int option) * string [] * string option> ; typeof<int ref>
+            typedefof<Choice<_,_>> ; typedefof<_ * _ * _>
+        |]
+
+    let tyArray = Array.init 100 (fun i -> types.[i % types.Length])
 
     [<PerfTest(10000)>]
-    let ``System.Type`` s = Serializer.roundtrip tyArray s
+    let ``Array of System.Type (100 elements)`` s = Serializer.roundtrip tyArray s
 
     let array = Array3D.init 200 200 200 (fun i j k -> float <| i + 1000 * j + 1000000 * k)
 
@@ -125,24 +133,36 @@ let mkCyclicGraphTester () = new ImplementationComparer<Serializer>(fspBinary, c
 
 let dashGrid = ChartTypes.Grid(LineColor = Color.Gainsboro, LineDashStyle = ChartDashStyle.Dash)
 
-let plot yaxis (metric : PerfResult -> float) (results : PerfResult list) =
+let getChartName (results : PerfResult list) = results |> List.tryPick (fun r -> let i = r.TestId.IndexOf('.') in Some <| r.TestId.[i+1..])
+
+let show (chart : ChartTypes.GenericChart) = chart.ShowChart() |> ignore
+
+let plot name (metric : PerfResult -> float) (results : PerfResult list) =
     let values = results |> List.choose (fun r -> if r.HasFailed then None else Some (r.SessionId, metric r))
-    let name = results |> List.tryPick (fun r -> let i = r.TestId.IndexOf('.') in Some <| r.TestId.[i+1..])
-    Chart.Bar(values, ?Name = name, ?Title = None, YTitle = yaxis)
+    Chart.Bar(values, ?Name = name)
     |> Chart.WithYAxis(MajorGrid = dashGrid) 
     |> Chart.WithXAxis(MajorGrid = dashGrid)
-    |> fun ch -> ch.ShowChart()
-    |> ignore
 
 let plotTime (results : TestSession list) = 
     results 
     |> TestSession.groupByTest
-    |> Map.iter (fun _ rs -> plot "milliseconds" (fun r -> r.Elapsed.TotalMilliseconds) rs)
+    |> Map.iter (fun _ rs -> 
+        plot None (fun r -> r.Elapsed.TotalMilliseconds / float r.Repeat) rs
+        |> Chart.WithTitle(?Text = getChartName rs, InsideArea = false)
+        |> Chart.WithYAxis(Enabled = true, Title = "milliseconds")
+        |> show)
 
 let plotGC (results : TestSession list) =
     results
     |> TestSession.groupByTest
-    |> Map.iter (fun _ rs -> plot "GC Collections (gen0)" (fun r -> float r.GcDelta.[0]) rs)
+    |> Map.iter (fun _ rs -> 
+        let g0 = plot (Some "Collections (gen0)") (fun r -> float r.GcDelta.[0]) rs
+        let g1 = plot (Some "Collections (gen1)") (fun r -> float r.GcDelta.[1]) rs
+        let g2 = plot (Some "Collections (gen2)") (fun r -> float r.GcDelta.[2]) rs
+        Chart.Combine [g0;g1;g2]
+        |> Chart.WithTitle (?Text = getChartName rs, InsideArea = false)
+        |> Chart.WithLegend(Enabled = true)
+        |> show)
 
 //
 //  Run the tests
@@ -152,8 +172,14 @@ let results = PerfTest.run mkTester tests
 let cyclicResults = PerfTest.run mkCyclicGraphTester cyclic
 
 let desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
-TestSession.toFile (desktop + "/perftests.xml") results
-TestSession.toFile (desktop + "/perftests-cyclic.xml") cyclicResults
+let perfFile = desktop + @"/perftests.xml"
+let cyclFile = desktop + "/perftests-cyclic.xml"
+
+TestSession.toFile perfFile results
+TestSession.toFile cyclFile cyclicResults
+
+//let results = TestSession.ofFile perfFile
+//let cyclicResults = TestSession.ofFile cyclFile
 
 plotTime results
 plotGC results
