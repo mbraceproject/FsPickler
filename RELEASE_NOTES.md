@@ -1,3 +1,6 @@
+### 1.5.0
+* Give additional ITypeNameConverter implementations.
+
 ### 1.4.0
 * Revisions and updates in DateTime/DateTimeOffset serialization formats.
 

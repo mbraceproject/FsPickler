@@ -176,11 +176,24 @@ type ITypeNameConverter =
     /// TypeInfo to be converted at deserialization
     abstract member ToDeserializedType : TypeInfo -> TypeInfo
 
+/// TypeNameConverter utilities
+[<RequireQualifiedAccess>]
+module TypeNameConverter =
+    /// Composes two type name converters into one
+    let compose (f : ITypeNameConverter) (g : ITypeNameConverter) : ITypeNameConverter =
+        { new ITypeNameConverter with
+            member x.OfSerializedType(tI: TypeInfo): TypeInfo = 
+                tI |> f.OfSerializedType |> g.OfSerializedType
+
+            member __.ToDeserializedType (tI : TypeInfo) : TypeInfo =
+                tI |> g.ToDeserializedType |> f.ToDeserializedType }
+
 /// <summary>
 ///     Defines a type conversion scheme in which strong assembly info is dropped 
 ///     at deserialization.
 /// </summary>
-type IgnoreStrongNamesConverter (?ignoreVersion) =
+[<AutoSerializable(false)>]
+type IgnoreStrongNamesConverter (?ignoreVersion : bool) =
     let ignoreVersion = defaultArg ignoreVersion true
     interface ITypeNameConverter with
         member __.OfSerializedType (tI : TypeInfo) = tI
@@ -192,6 +205,19 @@ type IgnoreStrongNamesConverter (?ignoreVersion) =
                     PublicKeyToken = null 
                 }
             { tI with AssemblyInfo = aI }
+
+/// A type name converter that forces deserialization uses the default
+/// FSharp.Core version that is loaded in the current AppDomain
+[<AutoSerializable(false)>]
+type LocalFSharpCoreConverter () =
+    let localCore = typeof<int option>.Assembly |> AssemblyInfo.OfAssembly
+
+    interface ITypeNameConverter with
+        member x.OfSerializedType (tI: TypeInfo): TypeInfo = tI
+        member x.ToDeserializedType (tI : TypeInfo): TypeInfo = 
+            if tI.AssemblyInfo.Name = localCore.Name then { tI with AssemblyInfo = localCore }
+            else
+                tI
 
 
 /// Declares a sifted version of a version of type 'T
