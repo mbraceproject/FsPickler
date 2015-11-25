@@ -118,11 +118,16 @@ type internal ClassFieldPickler =
 
     static member Create<'T when 'T : not struct>(resolver : IPicklerResolver) =
         let ty = typeof<'T>
-        let isEDI = not runsOnMono && isExceptionDispatchInfo ty // ExceptionDispatchInfo serialization not supported in mono.
+        // ExceptionDispatchInfo serialization not supported in mono.
+        let isEDI = not runsOnMono && isExceptionDispatchInfo ty 
+        // we need to be capable of serializing ScriptCs submission types
+        let isScriptCsSubmissionType = isScriptCsSubmissionType ty
+        // compiler generated types in C# are not marked as serializable, but should in principle be treated as such.
+        let isCompilerGeneratedType = containsAttr<System.Runtime.CompilerServices.CompilerGeneratedAttribute> ty
         let isSerializable =
             isReflectionSerializable ty
-            // compiler generated types in C# are not marked as serializable, but should in principle be treated as such.
-            || containsAttr<System.Runtime.CompilerServices.CompilerGeneratedAttribute> ty
+            || isScriptCsSubmissionType
+            || isCompilerGeneratedType
             || isEDI
             || PicklerPluginRegistry.IsDeclaredSerializable ty
 
@@ -137,7 +142,13 @@ type internal ClassFieldPickler =
             if isEDI then fields |> Array.filter (fun f -> not <| f.Name.Contains "Watson")
             else fields
 
+        let fields =
+            // if scriptcs submission, do not serialize its "InteractiveSession" field
+            if isScriptCsSubmissionType then fields |> Array.filter (fun f -> not <| isScriptCsInteractiveHostObject f.FieldType)
+            else fields
+
         let picklers = fields |> Array.map (fun f -> resolver.Resolve f.FieldType)
+
         let tags = fields |> Array.mapi (fun i f -> getNormalizedFieldName i f.Name)
 
         let isDeserializationCallback = isAssignableFrom typeof<IDeserializationCallback> ty

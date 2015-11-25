@@ -46,6 +46,11 @@ type MethodInfo with
 
     member m.GetParameterTypes() = m.GetParameters() |> Array.map (fun p -> p.ParameterType)
 
+let isScriptCsSubmissionType (t : Type) =
+    t.Name.StartsWith "Submission#" && t.Assembly.GetName().Name.StartsWith "ℛ*"
+
+let isScriptCsInteractiveHostObject (t : Type) =
+    t.Name = "InteractiveHostObject" && t.Assembly.GetName().Name = "Microsoft.CodeAnalysis.InteractiveFeatures"
 
 type ConstructorInfo with
     member c.GetParameterTypes() = c.GetParameters() |> Array.map (fun p -> p.ParameterType)
