@@ -14,3 +14,4 @@ nuget FSharp.Formatting
 nuget NUnit.Runners
 nuget FAKE
 nuget TaskParallelLibrary framework:net35
+github fsharp/FAKE modules/Octokit/Octokit.fsx

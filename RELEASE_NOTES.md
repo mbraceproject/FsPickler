@@ -1,3 +1,6 @@
+### 1.6.0
+* Add serialization support for ScriptCs bindings.
+
 ### 1.5.2
 * Fix ReflectionCache binding redirect issue.
 
