@@ -1,3 +1,6 @@
+### 1.6.1
+* Tweak ScriptCS serialization support.
+
 ### 1.6.0
 * Add serialization support for ScriptCs bindings.
 

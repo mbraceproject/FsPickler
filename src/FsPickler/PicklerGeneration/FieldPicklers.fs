@@ -142,12 +142,19 @@ type internal ClassFieldPickler =
             if isEDI then fields |> Array.filter (fun f -> not <| f.Name.Contains "Watson")
             else fields
 
-        let fields =
-            // if scriptcs submission, do not serialize its "InteractiveSession" field
-            if isScriptCsSubmissionType then fields |> Array.filter (fun f -> not <| isScriptCsInteractiveHostObject f.FieldType)
-            else fields
+        let fields, picklers =
+            if isScriptCsSubmissionType then
+                // in ScriptCS submission objects, ignore any fields that are not serializable
+                fields
+                |> Array.choose (fun f ->
+                    try Some (f, resolver.Resolve f.FieldType)
+                    with :? NonSerializableTypeException -> None)
+                |> Array.unzip
 
-        let picklers = fields |> Array.map (fun f -> resolver.Resolve f.FieldType)
+            else
+                let picklers = fields |> Array.map (fun f -> resolver.Resolve f.FieldType)
+                fields, picklers
+
 
         let tags = fields |> Array.mapi (fun i f -> getNormalizedFieldName i f.Name)
 

@@ -21,9 +21,7 @@ NUGET
       Microsoft.Bcl.Build (>= 1.0.14)
     Newtonsoft.Json (7.0.1)
     NUnit (2.6.3)
-    NUnit.Console (3.0.0)
-    NUnit.Runners (3.0.0)
-      NUnit.Console (3.0.0)
+    NUnit.Runners (2.6.3)
     Octokit (0.16.0)
       Microsoft.Net.Http
     PerfUtil (0.1.8)
@@ -31,7 +29,7 @@ NUGET
       NUnit (>= 2.6.3)
       PerfUtil (>= 0.1.8)
     protobuf-net (2.0.0.668)
-    TaskParallelLibrary (1.0.2856) - framework: net35
+    TaskParallelLibrary (1.0.2856.0) - framework: net35
     Wire (0.0.6)
 GITHUB
   remote: fsharp/FAKE

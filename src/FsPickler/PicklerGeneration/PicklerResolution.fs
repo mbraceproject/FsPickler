@@ -64,7 +64,7 @@ let resolvePickler (resolver : IPicklerResolver) (mkEarlyBinding : Pickler -> un
     // Store all NonSerializableTypeException's in cache
     | :? NonSerializableTypeException as e when e.Type = t -> Exn.Error e
     | :? NonSerializableTypeException as e ->
-        Exn.error <| NonSerializableTypeException(t, e.NonSerializableType)
+        Exn.error <| NonSerializableTypeException(t, e.Type)
 
     // wrap/reraise everything else as PicklerGenerationExceptions
     | :? PicklerGenerationException -> reraise ()
