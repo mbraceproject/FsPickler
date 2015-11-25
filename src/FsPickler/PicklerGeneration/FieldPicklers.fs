@@ -118,7 +118,7 @@ type internal ClassFieldPickler =
 
     static member Create<'T when 'T : not struct>(resolver : IPicklerResolver) =
         let ty = typeof<'T>
-        let isEDI = not runsOnMono.Value && isExceptionDispatchInfo ty // ExceptionDispatchInfo serialization not supported in mono.
+        let isEDI = not runsOnMono && isExceptionDispatchInfo ty // ExceptionDispatchInfo serialization not supported in mono.
         let isSerializable =
             isReflectionSerializable ty
             // compiler generated types in C# are not marked as serializable, but should in principle be treated as such.

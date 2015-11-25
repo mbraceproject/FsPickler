@@ -114,7 +114,7 @@ let getMemberInfo (tyConv : ITypeNameConverter option)
     | :? MethodInfo as m ->
         if m.IsGenericMethod && not m.IsGenericMethodDefinition then
             let gm = m.GetGenericMethodDefinition()
-            if runsOnMono.Value && gm = m then 
+            if runsOnMono && gm = m then 
                 // address an extremely rare mono reflection bug in which certain 
                 // generic method definitions are reported as not being such. 
                 // An example would be the current instance of CompositePickler.Unpack<'R>

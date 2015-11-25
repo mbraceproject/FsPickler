@@ -13,7 +13,7 @@ open Nessos.FsPickler.Emit
 type internal ShallowObjectCopier<'T> private () =
     static let copier : Action<'T, 'T> =
         let t = typeof<'T>
-        if t.IsValueType then invalidOp t.FullName "not a class."
+        if t.IsValueType then invalidArg t.FullName "not a class."
         let fields = gatherSerializedFields t
 
 #if EMIT_IL

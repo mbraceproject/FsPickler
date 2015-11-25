@@ -18,10 +18,9 @@ module internal Utils =
 
     // Detect current core library version at runtime
     // as suggested in http://stackoverflow.com/a/8543850
-    let isDotNet45OrNewer =
-        lazy(Type.GetType("System.Reflection.ReflectionContext") <> null)
+    let isDotNet45OrNewer = Type.GetType("System.Reflection.ReflectionContext") <> null
 
-    let runsOnMono = lazy(Type.GetType("Mono.Runtime") <> null)
+    let runsOnMono = Type.GetType("Mono.Runtime") <> null
 
     /// hashset constructor
     let hset (ts : seq<'T>) = new HashSet<_>(ts)
