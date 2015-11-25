@@ -1,3 +1,6 @@
+### 1.6.2
+* Tweak ScriptCS serialization support.
+
 ### 1.6.1
 * Tweak ScriptCS serialization support.
 

@@ -47,7 +47,17 @@ type MethodInfo with
     member m.GetParameterTypes() = m.GetParameters() |> Array.map (fun p -> p.ParameterType)
 
 let isScriptCsSubmissionType (t : Type) =
-    t.Name.StartsWith "Submission#" && t.Assembly.GetName().Name.StartsWith "ℛ*"
+    if t.Assembly.GetName().Name.StartsWith "ℛ*" then
+        let rec aux (t : Type) =
+            if t.Name.StartsWith "Submission#" then true
+            else
+                match t.DeclaringType with
+                | null -> false
+                | dt -> aux dt
+
+        aux t
+    else
+        false
 
 type ConstructorInfo with
     member c.GetParameterTypes() = c.GetParameters() |> Array.map (fun p -> p.ParameterType)
