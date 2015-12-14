@@ -1,3 +1,6 @@
+### 1.7.0
+* Extend serialization support to System.Linq IEnumerables.
+
 ### 1.6.2
 * Tweak ScriptCS serialization support.
 
