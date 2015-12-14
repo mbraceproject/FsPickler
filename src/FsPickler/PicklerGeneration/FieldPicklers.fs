@@ -128,6 +128,7 @@ type internal ClassFieldPickler =
             isReflectionSerializable ty
             || isScriptCsSubmissionType
             || isCompilerGeneratedType
+            || isLinqEnumerable ty
             || isEDI
             || PicklerPluginRegistry.IsDeclaredSerializable ty
 

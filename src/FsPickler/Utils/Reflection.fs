@@ -46,19 +46,6 @@ type MethodInfo with
 
     member m.GetParameterTypes() = m.GetParameters() |> Array.map (fun p -> p.ParameterType)
 
-let isScriptCsSubmissionType (t : Type) =
-    if t.Assembly.GetName().Name.StartsWith "ℛ*" then
-        let rec aux (t : Type) =
-            if t.Name.StartsWith "Submission#" then true
-            else
-                match t.DeclaringType with
-                | null -> false
-                | dt -> aux dt
-
-        aux t
-    else
-        false
-
 type ConstructorInfo with
     member c.GetParameterTypes() = c.GetParameters() |> Array.map (fun p -> p.ParameterType)
 
@@ -89,6 +76,22 @@ let rec isAssignableFrom (interfaceTy : Type) (ty : Type) =
         match ty.BaseType with
         | null -> false
         | bt -> isAssignableFrom interfaceTy bt
+
+let isScriptCsSubmissionType (t : Type) =
+    if t.Assembly.GetName().Name.StartsWith "ℛ*" then
+        let rec aux (t : Type) =
+            if t.Name.StartsWith "Submission#" then true
+            else
+                match t.DeclaringType with
+                | null -> false
+                | dt -> aux dt
+
+        aux t
+    else
+        false
+
+let isLinqEnumerable(t : Type) =
+    isAssignableFrom typeof<System.Collections.IEnumerable> t && t.FullName.StartsWith "System.Linq"
 
 let isReflectionSerializable (t : Type) = t.IsSerializable || containsAttr<SerializableAttribute> t
 

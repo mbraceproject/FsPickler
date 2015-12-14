@@ -2,6 +2,7 @@
 
 open System
 open System.IO
+open System.Linq
 open System.Collections
 open System.Collections.Generic
 open System.Reflection
@@ -410,6 +411,18 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
         let x = Nullable<decimal>(42.01M)
         let y = Nullable<decimal> ()
         testEquals x ; testEquals y
+
+    [<Test; Category("Generic BCL Types")>]
+    member __.``4. BCL: System.Linq enumerables`` () =
+        let a = [|1..100|].Select(fun i -> i + 1)
+        let b = a.Where(fun i -> i % 2 = 0)
+        let c = b.GroupBy(fun s -> s + 1)
+        let test enum =
+            enum |> testRoundtrip |> Seq.toArray |> should equal (Seq.toArray enum)
+
+        test a
+        test b
+        test c
 
     //
     // Object serialization
