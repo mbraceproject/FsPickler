@@ -45,7 +45,6 @@ Target "BuildVersion" (fun _ ->
 Target "AssemblyInfo" (fun _ ->
     let attrs =
         [ 
-            Attribute.Title project
             Attribute.Product project
             Attribute.Copyright "\169 Eirik Tsarpalis."
             Attribute.Version release.AssemblyVersion
