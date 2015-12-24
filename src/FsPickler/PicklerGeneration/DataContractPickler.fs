@@ -196,7 +196,7 @@ type internal DataContractPickler =
                     match members.[i] with
                     | :? PropertyInfo as p -> p.GetValue t
                     | :? FieldInfo as f -> f.GetValue t
-                    | _ -> invalidOp "internal error on serializing '%O'." typeof<'T>
+                    | _ -> invalidOp <| sprintf "internal error on serializing '%O'." typeof<'T>
 
                 picklers.[i].UntypedWrite w names.[i] value
 
@@ -249,7 +249,7 @@ type internal DataContractPickler =
                     let o' = picklers.[i].UntypedClone c o
                     f.SetValue(t', o')
 
-                | _ -> invalidOp "internal error on cloning '%O'." typeof<'T>
+                | _ -> invalidOp <| sprintf "internal error on cloning '%O'." typeof<'T>
 
             run onSerialized t c
             run onDeserialized t' c
@@ -267,7 +267,7 @@ type internal DataContractPickler =
                     match members.[i] with
                     | :? PropertyInfo as p -> p.GetValue t
                     | :? FieldInfo as f -> f.GetValue t
-                    | _ -> invalidOp "internal error on visiting '%O'." typeof<'T>
+                    | _ -> invalidOp <| sprintf "internal error on visiting '%O'." typeof<'T>
 
                 picklers.[i].UntypedAccept v value
 
