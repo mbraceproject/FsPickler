@@ -19,6 +19,7 @@ type internal JsonPickleReader (jsonReader : JsonReader, omitHeader, isTopLevelS
     do
         jsonReader.CloseInput <- not leaveOpen
         jsonReader.SupportMultipleContent <- isTopLevelSequence
+        jsonReader.DateParseHandling <- DateParseHandling.None
 
     let isBsonReader = match jsonReader with :? Bson.BsonReader -> true | _ -> false
 
@@ -198,7 +199,8 @@ type internal JsonPickleReader (jsonReader : JsonReader, omitHeader, isTopLevelS
                     jsonReader.MoveNext()
                     new DateTime(ticks, kind)
             else
-                jsonReader.ReadPrimitiveAs<DateTime> (omitTag ()) tag
+                let dt = jsonReader.ReadPrimitiveAs<string> (omitTag ()) tag
+                DateTime.Parse(dt, null, DateTimeStyles.RoundtripKind)
 
         member __.ReadDateTimeOffset tag =
             if isBsonReader then
@@ -213,8 +215,8 @@ type internal JsonPickleReader (jsonReader : JsonReader, omitHeader, isTopLevelS
 
                 new DateTimeOffset(ticks, new TimeSpan(offset))
             else
-                let dt = jsonReader.ReadPrimitiveAs<DateTime> (omitTag ()) tag
-                new DateTimeOffset(dt)
+                let dt = jsonReader.ReadPrimitiveAs<string> (omitTag ()) tag
+                DateTimeOffset.Parse dt
 
         member __.ReadBytes tag =
             if not <| omitTag () then
