@@ -1,3 +1,6 @@
+### 1.7.1
+* Fix issue in json deserialization of ISO8601 strings.
+
 ### 1.7.0
 * Extend serialization support to System.Linq IEnumerables.
 
