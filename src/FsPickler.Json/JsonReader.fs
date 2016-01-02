@@ -216,7 +216,7 @@ type internal JsonPickleReader (jsonReader : JsonReader, omitHeader, isTopLevelS
                 new DateTimeOffset(ticks, new TimeSpan(offset))
             else
                 let dt = jsonReader.ReadPrimitiveAs<string> (omitTag ()) tag
-                DateTimeOffset.Parse dt
+                DateTimeOffset.Parse(dt, null, DateTimeStyles.RoundtripKind)
 
         member __.ReadBytes tag =
             if not <| omitTag () then
