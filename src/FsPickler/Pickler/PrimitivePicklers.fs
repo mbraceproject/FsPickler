@@ -168,8 +168,7 @@ type TimeSpanPickler () =
     override __.Read (reader : ReadState) (tag : string) =
         reader.Formatter.ReadTimeSpan tag
 
-#if NET35
-#else
+#if !NET35
 
 [<AutoSerializable(false)>]
 type BigIntPickler () =
@@ -231,8 +230,7 @@ module PrimitivePicklers =
     let mkDateTime () = new DateTimePickler () :> Pickler<DateTime>
     let mkDateTimeOffset () = new DateTimeOffsetPickler () :> Pickler<DateTimeOffset>
     let mkTimeSpan () = new TimeSpanPickler () :> Pickler<TimeSpan>
-#if NET35
-#else
+#if !NET35
     let mkBigInt () = new BigIntPickler () :> Pickler<bigint>
 #endif
     let mkDBNull () = new DBNullPickler () :> Pickler<DBNull>
@@ -246,8 +244,7 @@ module PrimitivePicklers =
             uc mkUInt16 ; uc mkUInt32 ; uc mkUInt64 ; uc mkSingle ; uc mkDouble ; uc mkDecimal
             uc mkString ; uc mkChar ; uc mkGuid ; uc mkDateTime ; uc mkDateTimeOffset ; uc mkTimeSpan
             uc mkDBNull ; uc mkUnit
-#if NET35
-#else
+#if !NET35
             uc mkBigInt
 #endif
         |]

@@ -112,8 +112,8 @@ type internal JsonPickleWriter (jsonWriter : JsonWriter, omitHeader, indented, i
 
         member __.WriteChar (tag : string) value = writePrimitive jsonWriter (omitTag ()) tag value
         member __.WriteString (tag : string) value = writePrimitive jsonWriter (omitTag ()) tag value
-#if NET35
-#else
+
+#if !NET35
         member __.WriteBigInteger (tag : string) value = writePrimitive jsonWriter (omitTag ()) tag (string value)
 #endif
 
@@ -165,4 +165,6 @@ type internal JsonPickleWriter (jsonWriter : JsonWriter, omitHeader, indented, i
         member __.IsPrimitiveArraySerializationSupported = false
         member __.WritePrimitiveArray _ _ = raise <| NotSupportedException()
 
-        member __.Dispose () = jsonWriter.Flush()
+        member __.Dispose () = 
+            if leaveOpen then jsonWriter.Flush()
+            else jsonWriter.Close()

@@ -32,7 +32,7 @@ module Utils =
             raise <| new AssertionException(msg)
         | Choice2Of3 () -> ()
         | Choice3Of3 e ->
-            let msg = sprintf "An unexpected exception type was thrown\nExpected: '%s'\n but was: '%s'." typeof<'Exception>.Name (e.GetType().Name)
+            let msg = sprintf "An unexpected exception type was thrown\nExpected: '%s'\n but was: '%O'." typeof<'Exception>.Name e
             raise <| new AssertionException(msg)
 
     let (|InnerExn|_|) (e : exn) =

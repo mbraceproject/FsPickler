@@ -100,10 +100,10 @@ module private BinaryFormatUtils =
 /// <summary>
 ///     Binary format serializer.
 /// </summary>
+[<AutoSerializable(false)>]
 type BinaryPickleWriter internal (stream : Stream, encoding : Encoding, leaveOpen : bool, forceLittleEndian : bool) =
 
-#if NET40
-    do if leaveOpen then raise <| new NotSupportedException("'leaveOpen' not supported in .NET 40.")
+#if NET35 || NET40
     let bw = new BinaryWriter(stream, encoding)
 #else
     let bw = new BinaryWriter(stream, encoding, leaveOpen)
@@ -177,8 +177,7 @@ type BinaryPickleWriter internal (stream : Stream, encoding : Encoding, leaveOpe
         member __.WriteTimeSpan _ value = bw.Write value.Ticks
         member __.WriteGuid _ value = bw.Write (value.ToByteArray())
 
-#if NET35
-#else
+#if !NET35
         member __.WriteBigInteger _ value = 
             let data = value.ToByteArray()
             bw.Write data.Length
@@ -198,8 +197,9 @@ type BinaryPickleWriter internal (stream : Stream, encoding : Encoding, leaveOpe
         member __.WritePrimitiveArray _ array = blockCopy(array, stream)
 
         member __.Dispose () = 
-#if NET35
-            ()
+#if NET35 || NET40
+            if leaveOpen then bw.Flush()
+            else bw.Close()
 #else
             bw.Dispose()
 #endif
@@ -207,10 +207,10 @@ type BinaryPickleWriter internal (stream : Stream, encoding : Encoding, leaveOpe
 /// <summary>
 ///     Binary format deserializer.
 /// </summary>
-and BinaryPickleReader internal (stream : Stream, encoding : Encoding, leaveOpen : bool) =
+[<AutoSerializable(false)>]
+type BinaryPickleReader internal (stream : Stream, encoding : Encoding, leaveOpen : bool) =
 
-#if NET40
-    do if leaveOpen then raise <| new NotSupportedException("'leaveOpen' not supported in .NET 40.")
+#if NET35 || NET40
     let br = new BinaryReader(stream, encoding)
 #else
     let br = new BinaryReader(stream, encoding, leaveOpen)
@@ -221,8 +221,8 @@ and BinaryPickleReader internal (stream : Stream, encoding : Encoding, leaveOpen
     interface IPickleFormatReader with
             
         member __.Dispose () = 
-#if NET35
-            ()
+#if NET35 || NET40
+            if not leaveOpen then br.Close()
 #else
             br.Dispose ()
 #endif
@@ -314,8 +314,7 @@ and BinaryPickleReader internal (stream : Stream, encoding : Encoding, leaveOpen
         member __.ReadTimeSpan _ = let ticks = br.ReadInt64() in TimeSpan(ticks)
         member __.ReadGuid _ = let bytes = br.ReadBytes(16) in Guid(bytes)
 
-#if NET35
-#else
+#if !NET35
         member __.ReadBigInteger _ =
             let length = br.ReadInt32()
             let data = br.ReadBytes(length)
@@ -333,7 +332,8 @@ and BinaryPickleReader internal (stream : Stream, encoding : Encoding, leaveOpen
 /// <summary>
 ///     Factory methods for the binary serialization format.
 /// </summary>
-and BinaryPickleFormatProvider (forceLittleEndian : bool) =
+[<AutoSerializable(false)>]
+type BinaryPickleFormatProvider (forceLittleEndian : bool) =
 
     member val ForceLittleEndian = forceLittleEndian with get, set
 

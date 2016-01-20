@@ -312,8 +312,7 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
         let inner = new Exception("inner") |> addStackTrace
         __.TestException <| new Exception("outer", inner)
 
-#if NET40
-#else
+#if !NET40
     [<Test; Category("Generic BCL Types")>]
     member __.``4. BCL: System.Runtime.ExceptionServices.ExceptionDispatchInfo`` () =
         if runsOnMono then
@@ -654,6 +653,18 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
 
         serializer.ComputeSize<obj>(value) |> should equal serializationSize
         serializer.ComputeHash(value).Length |> should equal serializationSize
+
+    [<Test; Category("FsPickler Generic tests")>]
+    member __.``5. Object: leaveOpen=true`` () =
+        let m = new MemoryStream()
+        serializer.Serialize(m, [1 .. 10], leaveOpen = true)
+        m.WriteByte(1uy) // should not fail
+
+    [<Test; Category("FsPickler Generic tests")>]
+    member __.``5. Object: leaveOpen=false`` () =
+        let m = new MemoryStream()
+        serializer.Serialize(m, [1 .. 10], leaveOpen = false)
+        (fun () -> m.WriteByte(1uy)) |> shouldFailwith<ObjectDisposedException>
 
     [<Test; Category("FsPickler Generic tests")>]
     member __.``5. Object: accumulated size counter`` () =

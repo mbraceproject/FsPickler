@@ -161,8 +161,8 @@ type internal JsonPickleReader (jsonReader : JsonReader, omitHeader, isTopLevelS
 
         member __.ReadChar tag = let value = jsonReader.ReadPrimitiveAs<string> (omitTag ()) tag in value.[0]
         member __.ReadString tag = jsonReader.ReadPrimitiveAs<string> (omitTag ()) tag
-#if NET35
-#else
+
+#if !NET35
         member __.ReadBigInteger tag = jsonReader.ReadPrimitiveAs<string> (omitTag ()) tag |> BigInteger.Parse
 #endif
 
@@ -237,4 +237,5 @@ type internal JsonPickleReader (jsonReader : JsonReader, omitHeader, isTopLevelS
         member __.IsPrimitiveArraySerializationSupported = false
         member __.ReadPrimitiveArray _ _ = raise <| new NotImplementedException()
 
-        member __.Dispose () = (jsonReader :> IDisposable).Dispose()
+        member __.Dispose () = 
+            if not leaveOpen then jsonReader.Close()

@@ -82,8 +82,7 @@ module Pickler =
     let dateTimeOffset = PrimitivePicklers.mkDateTimeOffset ()
     let timeSpan = PrimitivePicklers.mkTimeSpan ()
     let bytes = ArrayPickler.CreateByteArrayPickler()
-#if NET35
-#else
+#if !NET35
     let bigint = PrimitivePicklers.mkBigInt ()
 #endif
 

@@ -171,8 +171,7 @@ type XmlPickleWriter internal (textWriter : TextWriter, indent : bool, leaveOpen
             else
                 writePrimitive writer tag <| escapeString value
 
-#if NET35
-#else
+#if !NET35
         member __.WriteBigInteger (tag : string) value = writePrimitive writer tag (value.ToString())
 #endif
 
@@ -199,8 +198,9 @@ type XmlPickleWriter internal (textWriter : TextWriter, indent : bool, leaveOpen
         member __.WritePrimitiveArray _ _ = raise <| new NotSupportedException()
 
         member __.Dispose () = 
-            writer.Flush () ; textWriter.Flush () ; 
-#if NET40
+#if NET35 || NET40
+            if leaveOpen then writer.Flush()
+            else writer.Close()
 #else
             writer.Dispose()
 #endif
@@ -311,8 +311,7 @@ type XmlPickleReader internal (textReader : TextReader, leaveOpen) =
 
         member __.ReadChar tag = reader.ReadElementName tag ; reader.ReadElementContentAsString() |> unEscapeString |> char
 
-#if NET35
-#else
+#if !NET35
         member __.ReadBigInteger tag = reader.ReadElementName tag ; reader.ReadElementContentAsString() |> System.Numerics.BigInteger.Parse
 #endif
 
@@ -356,8 +355,8 @@ type XmlPickleReader internal (textReader : TextReader, leaveOpen) =
         member __.ReadPrimitiveArray _ _ = raise <| new NotImplementedException()
 
         member __.Dispose () = 
-#if NET40
-            ()
+#if NET35 || NET40
+            if not leaveOpen then reader.Close()
 #else
             reader.Dispose()
 #endif
@@ -375,8 +374,7 @@ type XmlPickleFormatProvider(indent) =
         member __.DefaultEncoding = Encoding.UTF8
 
         member __.CreateWriter (stream, encoding, _, leaveOpen) =
-#if NET40
-            if leaveOpen then raise <| new NotSupportedException("'leaveOpen' not supported in .NET 40.")
+#if NET35 || NET40
             let sw = new StreamWriter(stream, encoding)
 #else
             let sw = new StreamWriter(stream, encoding, 1024, leaveOpen)
@@ -384,8 +382,7 @@ type XmlPickleFormatProvider(indent) =
             new XmlPickleWriter(sw, __.Indent, leaveOpen) :> _
 
         member __.CreateReader (stream, encoding, _, leaveOpen) =
-#if NET40
-            if leaveOpen then raise <| new NotSupportedException("'leaveOpen' not supported in .NET 40.")
+#if NET35 || NET40
             let sr = new StreamReader(stream, encoding)
 #else
             let sr = new StreamReader(stream, encoding, true, 1024, leaveOpen)

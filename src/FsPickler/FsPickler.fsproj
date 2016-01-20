@@ -83,7 +83,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <Tailcalls>true</Tailcalls>
-    <DefineConstants>TRACE;OPTIMIZE_FSHARP;EMIT_IL;NET40;NET35</DefineConstants>
+    <DefineConstants>TRACE;OPTIMIZE_FSHARP;EMIT_IL;NET35</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>..\..\bin\net35\FsPickler.xml</DocumentationFile>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
