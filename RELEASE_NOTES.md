@@ -1,3 +1,6 @@
+### 1.7.2
+* Fix stream disposal in pre net45 runtimes.
+
 ### 1.7.1
 * Fix issue in json deserialization of ISO8601 strings.
 
