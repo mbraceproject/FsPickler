@@ -176,7 +176,10 @@ type internal ISerializablePickler =
 
         CompositePickler.Create(reader, writer, cloner, accepter, PicklerInfo.ISerializable)
 
-    static member CreateObjectReferencePickler<'T when 'T :> ISerializable> () =
+    static member CreateObjectReferencePickler<'T when 'T :> ISerializable> () : Pickler<'T> =
+#if NET35
+        raise <| new NonSerializableTypeException(typeof<'T>, "IObjectReference not supported in .net35 builds. Please implement a (SerializationInfo, StreamingContext) constructor.")
+#else
         let allMethods = typeof<'T>.GetMethods(allMembers)
         let onSerializing = allMethods |> getSerializationMethods<OnSerializingAttribute> |> wrapDelegate<Action<'T, StreamingContext>>
         let onSerialized = allMethods |> getSerializationMethods<OnSerializedAttribute> |> wrapDelegate<Action<'T, StreamingContext>>
@@ -187,9 +190,6 @@ type internal ISerializablePickler =
         let inline run (dele : Action<'T, StreamingContext> []) w x =
             for d in dele do d.Invoke(x, getStreamingContext w)
 
-#if NET35
-        raise <| new NonSerializableTypeException(typeof<'T>, "IObjectReference not supported in .net35 builds. Please implement a (SerializationInfo, StreamingContext) constructor.")
-#else
         let writer (w : WriteState) (_ : string) (t : 'T) =
             run onSerializing w t
             let sI = mkSerializationInfo<'T> ()

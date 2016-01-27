@@ -1,3 +1,6 @@
+### 1.8.0
+* Add support for exceptions that do not implement ISerializable overloads.
+
 ### 1.7.2
 * Fix stream disposal in pre net45 runtimes.
 
