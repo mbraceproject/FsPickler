@@ -1,4 +1,4 @@
-﻿type project
+type project
 id FsPickler.CSharp
 description
     FsPickler is a serialization library that facilitates the distribution of .NET objects. 
@@ -19,6 +19,7 @@ summary
 licenseurl https://github.com/nessos/FsPickler/blob/master/License.md
 projecturl https://github.com/nessos/FsPickler
 iconurl https://avatars1.githubusercontent.com/u/5538081
+include-pdbs true
 tags
     F#, fsharp, serializer, pickler, binary, json, xml
 dependencies
