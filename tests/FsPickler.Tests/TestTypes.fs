@@ -237,6 +237,10 @@ module TestTypes =
 
     exception FSharpException of int * string
 
+    type ExceptionWithoutISerializable<'T>(value : 'T, msg : string, inner) =
+        inherit Exception(msg, inner)
+        member __.Value = value
+
     type BinTree<'T> =
         | Leaf
         | Node of 'T * BinTree<'T> * BinTree<'T>

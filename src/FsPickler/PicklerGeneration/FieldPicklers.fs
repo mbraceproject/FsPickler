@@ -116,10 +116,12 @@ type internal StructFieldPickler =
 
 type internal ClassFieldPickler =
 
-    static member Create<'T when 'T : not struct>(resolver : IPicklerResolver) =
+    static member Create<'T>(resolver : IPicklerResolver) =
         let ty = typeof<'T>
         // ExceptionDispatchInfo serialization not supported in mono.
-        let isEDI = not runsOnMono && isExceptionDispatchInfo ty 
+        let isEDI = not runsOnMono && isExceptionDispatchInfo ty
+        // Exception field-based serialization.
+        let isException = isAssignableFrom typeof<Exception> ty
         // we need to be capable of serializing ScriptCs submission types
         let isScriptCsSubmissionType = isScriptCsSubmissionType ty
         // compiler generated types in C# are not marked as serializable, but should in principle be treated as such.
@@ -129,6 +131,7 @@ type internal ClassFieldPickler =
             || isScriptCsSubmissionType
             || isCompilerGeneratedType
             || isLinqEnumerable ty
+            || isException
             || isEDI
             || PicklerPluginRegistry.IsDeclaredSerializable ty
 
@@ -141,6 +144,8 @@ type internal ClassFieldPickler =
         let fields =
             // if ExceptionDispatchInfo, do not serialize Watson metadata.
             if isEDI then fields |> Array.filter (fun f -> not <| f.Name.Contains "Watson")
+            // if Exception, ignore fields specified by System.Exception.
+            elif isException then fields |> Array.filter (fun f -> f.DeclaringType <> typeof<exn>)
             else fields
 
         let fields, picklers =

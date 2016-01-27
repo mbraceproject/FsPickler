@@ -312,6 +312,14 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
         let inner = new Exception("inner") |> addStackTrace
         __.TestException <| new Exception("outer", inner)
 
+    [<Test; Category("Generic BCL Types")>]
+    member __.``4. BCL: System.Exception without ISerializable`` () =
+        let e = new ExceptionWithoutISerializable<int>(42, "Message", new Exception()) |> addStackTrace
+        let e' = testRoundtrip e
+        e'.Value |> should equal e.Value
+        e'.InnerException.Message |> should equal e.InnerException.Message
+        e'.StackTrace |> should equal e.StackTrace
+
 #if !NET40
     [<Test; Category("Generic BCL Types")>]
     member __.``4. BCL: System.Runtime.ExceptionServices.ExceptionDispatchInfo`` () =

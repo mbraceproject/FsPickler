@@ -25,7 +25,7 @@ type private PicklerGeneratorVisitor (resolver : IPicklerResolver) =
         member __.Class<'T when 'T : not struct> () = ClassFieldPickler.Create<'T> resolver :> Pickler
         member __.ISerializable<'T when 'T :> ISerializable> () = ISerializablePickler.Create<'T> () :> Pickler
         member __.IObjectReference<'T when 'T :> ISerializable> () = ISerializablePickler.CreateObjectReferencePickler<'T> () :> Pickler
-        member __.NonISerializableException<'T when 'T :> exn> () = failwith "not implemented"
+        member __.NonISerializableException<'T when 'T :> exn> () = ISerializablePickler.CreateNonISerializableExceptionPickler<'T> resolver :> Pickler
 
         member __.DataContract<'T> () = DataContractPickler.Create<'T> resolver :> Pickler
         member __.CustomPickler<'T> () = CustomPickler.Create<'T> resolver :> Pickler

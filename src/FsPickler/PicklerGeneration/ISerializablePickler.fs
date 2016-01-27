@@ -18,6 +18,11 @@ open Nessos.FsPickler.PicklerEmit
 [<AutoOpen>]
 module private ISerializableUtils =
 
+    type private ExceptionInfoHolder(si : SerializationInfo, sc : StreamingContext) =
+        inherit Exception(si, sc)
+
+    let mkDummyException si sc = new ExceptionInfoHolder(si, sc) :> Exception
+
     let inline mkSerializationInfo<'T> () = new SerializationInfo(typeof<'T>, new FormatterConverter())
 
     let inline writeSerializationEntry (w : WriteState) (entry : SerializationEntry) =
@@ -241,6 +246,39 @@ type internal ISerializablePickler =
 
         CompositePickler.Create(reader, writer, cloner, accepter, PicklerInfo.ISerializable)
 #endif
+
+    static member CreateNonISerializableExceptionPickler<'Exn when 'Exn :> exn>(resolver : IPicklerResolver) =
+        let exnFieldPickler = ClassFieldPickler.Create<'Exn> resolver :?> CompositePickler<'Exn>
+
+        let writer (w : WriteState) (tag : string) (e : 'Exn) =
+            let sI = mkSerializationInfo<'Exn> ()
+            exnFieldPickler.Writer w tag e
+            e.GetObjectData(sI, w.StreamingContext)
+            writeSerializationInfo w sI
+
+        let reader (r : ReadState) (tag : string) =
+            let e = exnFieldPickler.Reader r tag
+            let sI = readSerializationInfo<'Exn> r
+            let dummyExn = mkDummyException sI r.StreamingContext
+            ShallowObjectCopier<Exception>.Copy dummyExn e
+            e
+
+        let cloner (c : CloneState) (e : 'Exn) =
+            let sI = mkSerializationInfo<'Exn> ()
+            let e' = exnFieldPickler.Cloner c e
+            e.GetObjectData(sI, c.StreamingContext)
+            let sI' = cloneSerializationInfo<'Exn> c sI
+            let dummyExn = mkDummyException sI' c.StreamingContext
+            ShallowObjectCopier<Exception>.Copy dummyExn e'
+            e'
+
+        let accepter (v : VisitState) (e : 'Exn) =
+            let sI = mkSerializationInfo<'Exn> ()
+            exnFieldPickler.Accept v e
+            e.GetObjectData(sI, v.StreamingContext)
+            acceptSerializationInfo v sI
+
+        CompositePickler.Create(reader, writer, cloner, accepter, PicklerInfo.ISerializable)
 
     /// SerializationInfo-based pickler combinator
     static member FromSerializationInfo<'T>(ctor : SerializationInfo -> 'T, proj : SerializationInfo -> 'T -> unit) : Pickler<'T> =

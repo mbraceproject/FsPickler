@@ -334,6 +334,14 @@ module ``Generic Tests`` =
         e'.StackTrace |> should equal e.StackTrace
 
     [<Test; Category("Clone")>]
+    let ``2. Clone: Exception without ISerializable`` () = 
+        let e = new ExceptionWithoutISerializable<int>(42, "Message", new Exception()) |> addStackTrace
+        let e' = clone e
+        e'.Value |> should equal e.Value
+        e'.InnerException.Message |> should equal e.InnerException.Message
+        e'.StackTrace |> should equal e.StackTrace
+
+    [<Test; Category("Clone")>]
     let ``2. Clone: record`` () = 
         Check.QuickThrowOnFail<Record> (testCloneRefEq, maxRuns = 10)
         Check.QuickThrowOnFail<Record> (testCloneRefEq, maxRuns = 10)
