@@ -102,10 +102,14 @@ module private ISerializableUtils =
             let ep = v.PicklerResolver.Resolve se.ObjectType
             ep.UntypedAccept v se.Value
 
-
 type internal ISerializablePickler =
 
     static member Create<'T when 'T :> ISerializable>() =
+        let ctorInfo = 
+            match typeof<'T>.TryGetConstructor [| typeof<SerializationInfo> ; typeof<StreamingContext> |] with
+            | Some ctor -> ctor
+            | None -> invalidArg "T" <| sprintf "Type '%O' missing a (SerializationInfo, StreamingContext) constructor." typeof<'T>
+
         let allMethods = typeof<'T>.GetMethods(allMembers)
         let onSerializing = allMethods |> getSerializationMethods<OnSerializingAttribute> |> wrapDelegate<Action<'T, StreamingContext>>
         let onSerialized = allMethods |> getSerializationMethods<OnSerializedAttribute> |> wrapDelegate<Action<'T, StreamingContext>>
@@ -118,118 +122,125 @@ type internal ISerializablePickler =
         let inline run (dele : Action<'T, StreamingContext> []) w x =
             for d in dele do d.Invoke(x, getStreamingContext w)
 
-        match typeof<'T>.TryGetConstructor [| typeof<SerializationInfo> ; typeof<StreamingContext> |] with
-        | None -> 
-#if NET35
-            raise <| new NonSerializableTypeException(typeof<'T>, "IObjectReference not supported in .net35 builds. Please implement a (SerializationInfo, StreamingContext) constructor.")
+#if EMIT_IL
+        let ctorDele = wrapISerializableConstructor<'T> ctorInfo
+
+        let inline create si sc = ctorDele.Invoke(si, sc)
 #else
-            let writer (w : WriteState) (_ : string) (t : 'T) =
-                run onSerializing w t
-                let sI = mkSerializationInfo<'T> ()
-                t.GetObjectData(sI, w.StreamingContext)
-                if not <| isAssignableFrom typeof<IObjectReference> sI.ObjectType then
-                    raise <| new NonSerializableTypeException(typeof<'T>, "is ISerializable but does not implement deserialization constructor or use IObjectReference.")
-                w.TypePickler.Write w "ObjectType" sI.ObjectType
-                writeSerializationInfo w sI
-                run onSerialized w t
+        let inline create (si : SerializationInfo) (sc : StreamingContext) = 
+            ctorInfo.Invoke [| si :> obj ; sc :> obj |] |> fastUnbox<'T>
+#endif
+        let writer (w : WriteState) (_ : string) (t : 'T) =
+            run onSerializing w t
+            let sI = mkSerializationInfo<'T> ()
+            t.GetObjectData(sI, w.StreamingContext)
+            writeSerializationInfo w sI
+            run onSerialized w t
 
-            let reader (r : ReadState) (_ : string) =
-                let objectType = r.TypePickler.Read r "ObjectType"
-                let sI = readSerializationInfo<'T> r
-                let objectRef =
-                    match objectType.TryGetConstructor [| typeof<SerializationInfo> ; typeof<StreamingContext> |] with
-                    | None -> FormatterServices.GetUninitializedObject(objectType) :?> IObjectReference
-                    | Some ctor -> 
-                        sI.SetType objectType
-                        ctor.Invoke [| sI :> obj ; r.StreamingContext :> obj |] :?> IObjectReference
-
-                let t = objectRef.GetRealObject r.StreamingContext :?> 'T
-                run onDeserialized r t
-                if isDeserializationCallback then (fastUnbox<IDeserializationCallback> t).OnDeserialization null
+        let reader (r : ReadState) (_ : string) =
+            let sI = readSerializationInfo<'T> r
+            let t = create sI r.StreamingContext
+            run onDeserialized r t
+            if isDeserializationCallback then (fastUnbox<IDeserializationCallback> t).OnDeserialization null
+            if isObjectReference && not isMarshaledObjRef then 
+                (fastUnbox<IObjectReference> t).GetRealObject r.StreamingContext :?> 'T
+            else
                 t
 
-            let cloner (c : CloneState) (t : 'T) =
-                run onSerializing c t
-                let sI = mkSerializationInfo<'T> ()
-                t.GetObjectData(sI, c.StreamingContext)
-                if not <| isAssignableFrom typeof<IObjectReference> sI.ObjectType then
-                    raise <| new NonSerializableTypeException(typeof<'T>, "is ISerializable but does not implement deserialization constructor or use IObjectReference.")
+        let cloner (c : CloneState) (t : 'T) =
+            run onSerializing c t
+            let sI = mkSerializationInfo<'T> ()
+            t.GetObjectData(sI, c.StreamingContext)
+            run onSerialized c t
 
-                run onSerialized c t
-
-                let objectRef =
-                    match sI.ObjectType.TryGetConstructor [| typeof<SerializationInfo> ; typeof<StreamingContext> |] with
-                    | None -> FormatterServices.GetUninitializedObject(sI.ObjectType) :?> IObjectReference
-                    | Some ctor -> 
-                        let sI' = cloneSerializationInfo<'T> c sI
-                        sI'.SetType sI.ObjectType
-                        ctor.Invoke [| sI' :> obj ; c.StreamingContext :> obj |] :?> IObjectReference
-
-                let t' = objectRef.GetRealObject c.StreamingContext :?> 'T
-                run onDeserialized c t'
-                if isDeserializationCallback then (fastUnbox<IDeserializationCallback> t').OnDeserialization null
+            let sI' = cloneSerializationInfo<'T> c sI
+            let t' = create sI' c.StreamingContext
+            run onDeserialized c t'
+            if isDeserializationCallback then (fastUnbox<IDeserializationCallback> t').OnDeserialization null
+            if isObjectReference && not isMarshaledObjRef then 
+                (fastUnbox<IObjectReference> t').GetRealObject c.StreamingContext :?> 'T
+            else
                 t'
 
-            let accepter (v : VisitState) (t : 'T) =
-                run onSerializing v t
-                let sI = mkSerializationInfo<'T> ()
-                t.GetObjectData(sI, v.StreamingContext)
-                run onSerialized v t
-                acceptSerializationInfo v sI
+        let accepter (v : VisitState) (t : 'T) =
+            run onSerializing v t
+            let sI = mkSerializationInfo<'T> ()
+            t.GetObjectData(sI, v.StreamingContext)
+            run onSerialized v t
+            acceptSerializationInfo v sI
 
-            CompositePickler.Create(reader, writer, cloner, accepter, PicklerInfo.ISerializable)
-#endif
+        CompositePickler.Create(reader, writer, cloner, accepter, PicklerInfo.ISerializable)
 
-        | Some ctorInfo ->
+    static member CreateObjectReferencePickler<'T when 'T :> ISerializable> () =
+        let allMethods = typeof<'T>.GetMethods(allMembers)
+        let onSerializing = allMethods |> getSerializationMethods<OnSerializingAttribute> |> wrapDelegate<Action<'T, StreamingContext>>
+        let onSerialized = allMethods |> getSerializationMethods<OnSerializedAttribute> |> wrapDelegate<Action<'T, StreamingContext>>
+        let onDeserialized = allMethods |> getSerializationMethods<OnDeserializedAttribute> |> wrapDelegate<Action<'T, StreamingContext>>
 
-#if EMIT_IL
-            let ctorDele = wrapISerializableConstructor<'T> ctorInfo
+        let isDeserializationCallback = isAssignableFrom typeof<IDeserializationCallback> typeof<'T>
 
-            let inline create si sc = ctorDele.Invoke(si, sc)
+        let inline run (dele : Action<'T, StreamingContext> []) w x =
+            for d in dele do d.Invoke(x, getStreamingContext w)
+
+#if NET35
+        raise <| new NonSerializableTypeException(typeof<'T>, "IObjectReference not supported in .net35 builds. Please implement a (SerializationInfo, StreamingContext) constructor.")
 #else
-            let inline create (si : SerializationInfo) (sc : StreamingContext) = 
-                ctorInfo.Invoke [| si :> obj ; sc :> obj |] |> fastUnbox<'T>
+        let writer (w : WriteState) (_ : string) (t : 'T) =
+            run onSerializing w t
+            let sI = mkSerializationInfo<'T> ()
+            t.GetObjectData(sI, w.StreamingContext)
+            if not <| isAssignableFrom typeof<IObjectReference> sI.ObjectType then
+                raise <| new NonSerializableTypeException(typeof<'T>, "is ISerializable but does not implement deserialization constructor or use IObjectReference.")
+            w.TypePickler.Write w "ObjectType" sI.ObjectType
+            writeSerializationInfo w sI
+            run onSerialized w t
+
+        let reader (r : ReadState) (_ : string) =
+            let objectType = r.TypePickler.Read r "ObjectType"
+            let sI = readSerializationInfo<'T> r
+            let objectRef =
+                match objectType.TryGetConstructor [| typeof<SerializationInfo> ; typeof<StreamingContext> |] with
+                | None -> FormatterServices.GetUninitializedObject(objectType) :?> IObjectReference
+                | Some ctor -> 
+                    sI.SetType objectType
+                    ctor.Invoke [| sI :> obj ; r.StreamingContext :> obj |] :?> IObjectReference
+
+            let t = objectRef.GetRealObject r.StreamingContext :?> 'T
+            run onDeserialized r t
+            if isDeserializationCallback then (fastUnbox<IDeserializationCallback> t).OnDeserialization null
+            t
+
+        let cloner (c : CloneState) (t : 'T) =
+            run onSerializing c t
+            let sI = mkSerializationInfo<'T> ()
+            t.GetObjectData(sI, c.StreamingContext)
+            if not <| isAssignableFrom typeof<IObjectReference> sI.ObjectType then
+                raise <| new NonSerializableTypeException(typeof<'T>, "is ISerializable but does not implement deserialization constructor or use IObjectReference.")
+
+            run onSerialized c t
+
+            let objectRef =
+                match sI.ObjectType.TryGetConstructor [| typeof<SerializationInfo> ; typeof<StreamingContext> |] with
+                | None -> FormatterServices.GetUninitializedObject(sI.ObjectType) :?> IObjectReference
+                | Some ctor -> 
+                    let sI' = cloneSerializationInfo<'T> c sI
+                    sI'.SetType sI.ObjectType
+                    ctor.Invoke [| sI' :> obj ; c.StreamingContext :> obj |] :?> IObjectReference
+
+            let t' = objectRef.GetRealObject c.StreamingContext :?> 'T
+            run onDeserialized c t'
+            if isDeserializationCallback then (fastUnbox<IDeserializationCallback> t').OnDeserialization null
+            t'
+
+        let accepter (v : VisitState) (t : 'T) =
+            run onSerializing v t
+            let sI = mkSerializationInfo<'T> ()
+            t.GetObjectData(sI, v.StreamingContext)
+            run onSerialized v t
+            acceptSerializationInfo v sI
+
+        CompositePickler.Create(reader, writer, cloner, accepter, PicklerInfo.ISerializable)
 #endif
-            let writer (w : WriteState) (_ : string) (t : 'T) =
-                run onSerializing w t
-                let sI = mkSerializationInfo<'T> ()
-                t.GetObjectData(sI, w.StreamingContext)
-                writeSerializationInfo w sI
-                run onSerialized w t
-
-            let reader (r : ReadState) (_ : string) =
-                let sI = readSerializationInfo<'T> r
-                let t = create sI r.StreamingContext
-                run onDeserialized r t
-                if isDeserializationCallback then (fastUnbox<IDeserializationCallback> t).OnDeserialization null
-                if isObjectReference && not isMarshaledObjRef then 
-                    (fastUnbox<IObjectReference> t).GetRealObject r.StreamingContext :?> 'T
-                else
-                    t
-
-            let cloner (c : CloneState) (t : 'T) =
-                run onSerializing c t
-                let sI = mkSerializationInfo<'T> ()
-                t.GetObjectData(sI, c.StreamingContext)
-                run onSerialized c t
-
-                let sI' = cloneSerializationInfo<'T> c sI
-                let t' = create sI' c.StreamingContext
-                run onDeserialized c t'
-                if isDeserializationCallback then (fastUnbox<IDeserializationCallback> t').OnDeserialization null
-                if isObjectReference && not isMarshaledObjRef then 
-                    (fastUnbox<IObjectReference> t').GetRealObject c.StreamingContext :?> 'T
-                else
-                    t'
-
-            let accepter (v : VisitState) (t : 'T) =
-                run onSerializing v t
-                let sI = mkSerializationInfo<'T> ()
-                t.GetObjectData(sI, v.StreamingContext)
-                run onSerialized v t
-                acceptSerializationInfo v sI
-
-            CompositePickler.Create(reader, writer, cloner, accepter, PicklerInfo.ISerializable)
 
     /// SerializationInfo-based pickler combinator
     static member FromSerializationInfo<'T>(ctor : SerializationInfo -> 'T, proj : SerializationInfo -> 'T -> unit) : Pickler<'T> =

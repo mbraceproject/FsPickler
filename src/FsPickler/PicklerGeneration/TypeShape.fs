@@ -12,6 +12,7 @@
 //
 
 open System
+open System.Reflection
 open System.Runtime.Serialization
 
 type Shape =
@@ -30,6 +31,8 @@ type Shape =
     | FSharpType = 12
     | Dictionary = 13
     | CloneableOnly = 14
+    | NonISerializableException = 15
+    | IObjectReference = 16
 
 [<AbstractClass>]
 type TypeShape internal () =
@@ -67,6 +70,16 @@ and ShapeISerializable<'T when 'T :> ISerializable> () =
     inherit TypeShape<'T>()
     override __.Shape = Shape.ISerializable
     override __.Accept (v : ITypeShapeVisitor<'R>) = v.ISerializable<'T> ()
+
+and ShapeIObjectReference<'T when 'T :> ISerializable> () =
+    inherit TypeShape<'T> ()
+    override __.Shape = Shape.IObjectReference
+    override __.Accept (v : ITypeShapeVisitor<'R>) = v.IObjectReference<'T> ()
+
+and ShapeNonISerializableException<'T when 'T :> exn> () =
+    inherit TypeShape<'T> ()
+    override __.Shape = Shape.NonISerializableException
+    override __.Accept (v : ITypeShapeVisitor<'R>) = v.NonISerializableException<'T> ()
 
 and ShapeDataContract<'T> () =
     inherit TypeShape<'T> ()
@@ -251,6 +264,8 @@ and ITypeShapeVisitor<'R> =
     abstract Abstract<'T> : unit -> 'R
     abstract Class<'T when 'T : not struct> : unit -> 'R
     abstract ISerializable<'T when 'T :> ISerializable> : unit -> 'R
+    abstract IObjectReference<'T when 'T :> ISerializable> : unit -> 'R
+    abstract NonISerializableException<'T when 'T :> exn> : unit -> 'R
     abstract DataContract<'T> : unit -> 'R
     abstract CustomPickler<'T> : unit -> 'R
     abstract CloneableOnly<'T> : unit -> 'R
@@ -441,10 +456,14 @@ module TypeShape =
 
             elif typeof<Delegate>.IsAssignableFrom t then
                 activate1 typedefof<ShapeDelegate<_>> t
+            elif isISerializable t then
+                match t.TryGetConstructor [| typeof<SerializationInfo> ; typeof<StreamingContext> |] with
+                | Some _ -> activate typedefof<ShapeISerializable<_>> [|t|]
+                | None when isAssignableFrom typeof<exn> t -> activate1 typedefof<ShapeNonISerializableException<_>> t
+                | None -> activate1 typedefof<ShapeIObjectReference<_>> t
+
             elif containsAttr<DataContractAttribute> t then
                 activate1 typedefof<ShapeDataContract<_>> t
-            elif isISerializable t then
-                activate1 typedefof<ShapeISerializable<_>> t
             elif t.IsValueType then 
                 activate1 typedefof<ShapeStruct<_>> t
             else
