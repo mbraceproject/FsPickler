@@ -1,3 +1,6 @@
+### 1.8.1
+* Fix FsPickler.Json issue with Json.NET 8.
+
 ### 1.8.0
 * Add support for exceptions that do not implement ISerializable overloads.
 
