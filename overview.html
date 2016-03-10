@@ -34,45 +34,47 @@
         <div class="span9" id="main">
           
 <h1><a name="Technical-Overview" class="anchor" href="#Technical-Overview">Technical Overview</a></h1>
-
 <p>This article discusses the general topic of serialization in .NET
 and gives an overview of the implementation details in FsPickler.</p>
-
 <h2><a name="Serialization-in-the-NET-framework" class="anchor" href="#Serialization-in-the-NET-framework">Serialization in the .NET framework</a></h2>
-
 <p>Serialization in the .NET framework is something often considered
 as being problematic or even broken. This could be tracked to the following reasons:</p>
-
 <ul>
-<li><p>There is no runtime or type system support for serialization. 
+<li>
+<p>There is no runtime or type system support for serialization.
 Rather, serializers are library implementations that mostly depend
 on the reflection system to extrapolate serialization rules for
-each type (resulting in runtime errors if this is not possible).</p></li>
-<li><p>There is confusion as to which is the prefered methodology when
+each type (resulting in runtime errors if this is not possible).</p>
+</li>
+<li>
+<p>There is confusion as to which is the prefered methodology when
 defining serialization semantics for types.
 The BCL itself comes with a multitude of approaches most of which are
-dated, unsafe and inefficient by design.</p></li>
+dated, unsafe and inefficient by design.</p>
+</li>
 </ul>
-
 <h3><a name="BCL-Serialization-methods" class="anchor" href="#BCL-Serialization-methods">BCL Serialization methods</a></h3>
-
 <p>The BCL comes with the following patterns for defining serializable types:</p>
-
 <ul>
-<li><p>Field-based serialization: objects are pickled by serializing the contents 
+<li>
+<p>Field-based serialization: objects are pickled by serializing the contents
 of their fields. This behaviour is tuned by applying an assortment of attributes such as
 <a href="http://msdn.microsoft.com/en-us/library/system.nonserializedattribute.aspx"><code>NonSerialized</code></a>,
 <a href="http://msdn.microsoft.com/en-us/library/system.runtime.serialization.onserializingattribute.aspx"><code>OnSerializing</code></a>,
 <a href="http://msdn.microsoft.com/en-us/library/system.runtime.serialization.ondeserializedattribute.aspx"><code>OnDeserialized</code></a>
 and the <a href="http://msdn.microsoft.com/en-us/library/system.runtime.serialization.ideserializationcallback.aspx"><code>IDeserializationCallback</code></a>
 interface. This is arguably the most problematic approach, since it is sensitive to internal implementation details.
-Incidentally, this is the pattern of choice for most F# types.</p></li>
-<li><p>Property-based or <a href="http://msdn.microsoft.com/en-us/library/ms733127.aspx">DataContract</a> 
+Incidentally, this is the pattern of choice for most F# types.</p>
+</li>
+<li>
+<p>Property-based or <a href="http://msdn.microsoft.com/en-us/library/ms733127.aspx">DataContract</a>
 serialization: objects are pickled by serializing the contents
 of specially flagged properties. Properties should be settable and are usually required to be
 public. In most cases, a parameterless constructor is also necessary. Property-based serialization
-is probably the most popular approach.</p></li>
-<li><p><a href="http://msdn.microsoft.com/en-us/library/system.runtime.serialization.iserializable.aspx">ISerializable</a> 
+is probably the most popular approach.</p>
+</li>
+<li>
+<p><a href="http://msdn.microsoft.com/en-us/library/system.runtime.serialization.iserializable.aspx">ISerializable</a>
 types: possibly intended as a type-safe replacement of field-based serialization.
 It fails to live up to this role, mostly due to the nature of interfaces; it still requires a
 special constructor for deserialization which, if missing, would result in a runtime error.
@@ -80,57 +82,48 @@ It requires separate implementations for serialization and deserialization, ofte
 and introducing lots of boilerplate code.
 Its dynamic nature also makes it impossible to reason about the components it serializes a priori.
 It is however an indispensible pattern since it is used by many BCL types, most important being
-exceptions, whose metadata is impossible to serialize otherwise.</p></li>
+exceptions, whose metadata is impossible to serialize otherwise.</p>
+</li>
 </ul>
-
 <h3><a name="Serialization-Libraries" class="anchor" href="#Serialization-Libraries">Serialization Libraries</a></h3>
-
 <p>The BCL ships with a couple of general-purpose serializer libraries but these suffer either
-from obsolescence (e.g. <a href="http://msdn.microsoft.com/en-us/library/system.runtime.serialization.formatters.binary.binaryformatter.aspx">BinaryFormatter</a>) 
+from obsolescence (e.g. <a href="http://msdn.microsoft.com/en-us/library/system.runtime.serialization.formatters.binary.binaryformatter.aspx">BinaryFormatter</a>)
 or performance (<a href="http://msdn.microsoft.com/en-us/library/system.runtime.serialization.netdatacontractserializer.aspx">NetDataContractSerializer</a>).
-Many third-party libraries have emerged attempting to address these shortcomings, 
+Many third-party libraries have emerged attempting to address these shortcomings,
 some with success. However, most of them seem to suffer when it comes to properly
 supporting serialization of .NET objects. In particular many of them:</p>
-
 <ul>
 <li><p>offer sketchy or no support for reflection types, like <code>MemberInfo</code>.</p></li>
-<li><p>require library-specific dependencies for serializable type definitions.</p></li>
-<li><p>do not support inaccessible types/constructors/properties.</p></li>
-<li><p>fail to address subtype polymorphism.</p></li>
-<li><p>do not support types like multi-dimensional arrays or delegates.</p></li>
-<li><p>fail to properly handle cyclic objects.</p></li>
-<li><p>have limited or nonexistent support for F# types.</p></li>
+<li>require library-specific dependencies for serializable type definitions.</li>
+<li>do not support inaccessible types/constructors/properties.</li>
+<li>fail to address subtype polymorphism.</li>
+<li>do not support types like multi-dimensional arrays or delegates.</li>
+<li>fail to properly handle cyclic objects.</li>
+<li>have limited or nonexistent support for F# types.</li>
 </ul>
-
 <h2><a name="FsPickler-Motivation" class="anchor" href="#FsPickler-Motivation">FsPickler : Motivation</a></h2>
-
-<p>The need for a new serialization library was realized while developing for 
+<p>The need for a new serialization library was realized while developing for
 <a href="http://www.m-brace.net/">MBrace</a>. MBrace is a framework for distributed
 computation and big data that is essentially built on the idea of a distributed
 continuation monad. To be able to distribute continuations, you need to be able to
-serialize closures. The inherently intrinsic and arbitrary nature of closures means 
+serialize closures. The inherently intrinsic and arbitrary nature of closures means
 that they are not supported by most serialization libraries.
 Initially we started using NetDataContractSerializer as our library of choice,
 but that eventually took its toll on overall performance,
 so we decided to build a new library from scratch.</p>
-
 <p>FsPickler was created with two goals in mind: performance and completeness in supported objects.
 Importantly, it was conceived as a .NET serializer, rather than an F# serializer:
 if it is a .NET object designed to be serialized, it should be serializable in FsPickler.
 In that sense, it was designed with a goal to embrace the imperfect world of
 .NET serialization in its totality, albeit with an eye for correctness.</p>
-
 <p>At this point, we should acknowledge Anton Tayanovskyy and his great F#
 snippet <a href="http://www.fssnip.net/6u">Union-Friendly Generic Binary Serializer</a>
 which served as the initial inspiration for this library.</p>
-
 <h2><a name="Pickler-Combinators" class="anchor" href="#Pickler-Combinators">Pickler Combinators</a></h2>
-
-<p>FsPickler is founded on the functional programming notion of picklers and pickler combinators. 
-The concept was originally described in Andrew Kennedy's 
+<p>FsPickler is founded on the functional programming notion of picklers and pickler combinators.
+The concept was originally described in Andrew Kennedy's
 <a href="http://research.microsoft.com/pubs/64036/picklercombinators.pdf">Pickler Combinators</a>.
 A pickler is essentially the type:</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 <span class="l">2: </span>
 <span class="l">3: </span>
@@ -145,15 +138,12 @@ A pickler is essentially the type:</p>
 </code></pre></td>
 </tr>
 </table>
-
-<p>The <code>Write</code> and <code>Read</code> functions represent serialization and deserialization 
-implementations for values of type <code>'T</code>. When compared to other .NET serializers, 
+<p>The <code>Write</code> and <code>Read</code> functions represent serialization and deserialization
+implementations for values of type <code>'T</code>. When compared to other .NET serializers,
 picklers prove exceptionally fast since they directly handle the serialized value
 without any reliance on reflection-based resolution.</p>
-
-<p>Pickler combinators are functions that operate on picklers, generating picklers of more complex types. 
+<p>Pickler combinators are functions that operate on picklers, generating picklers of more complex types.
 For instance, the following could be a pickler combinator implementation for rank-1 arrays:</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 <span class="l">2: </span>
 <span class="l">3: </span>
@@ -168,59 +158,52 @@ For instance, the following could be a pickler combinator implementation for ran
 </code></pre></td>
 </tr>
 </table>
-
 <p>Given a sufficient range of primitive picklers and pickler combinators,
-it is possible to define pickling rules for most essentially serializable .NET types. 
+it is possible to define pickling rules for most essentially serializable .NET types.
 However, these would still need to be declared manually by their implementor.</p>
-
-<p>FsPickler attempts to solve this by providing an automated pickler generation framework: 
-picklers are generated at runtime and on demand using a combination of reflection and 
-dynamic IL generation. Picklers are cached for future use, hence the cost of generation 
+<p>FsPickler attempts to solve this by providing an automated pickler generation framework:
+picklers are generated at runtime and on demand using a combination of reflection and
+dynamic IL generation. Picklers are cached for future use, hence the cost of generation
 has a constant price.</p>
-
 <p>Moreover, it extends the concept of picklers so that features particular to the
-.NET framework are accommodated: object orientation and subtype polymorphism, 
+.NET framework are accommodated: object orientation and subtype polymorphism,
 null references and cyclic objects.</p>
-
-<p>It should be mentioned for the sake of completeness that a 
-<a href="http://lampwww.epfl.ch/~hmiller/files/pickling.pdf">similar effort</a> 
-has been undertaken by the Scala community. There are differences of approach however, 
+<p>It should be mentioned for the sake of completeness that a
+<a href="http://lampwww.epfl.ch/~hmiller/files/pickling.pdf">similar effort</a>
+has been undertaken by the Scala community. There are differences of approach however,
 since this mostly relies on the metaprogramming facility offered by scala.</p>
-
 <h2><a name="Serializable-Types" class="anchor" href="#Serializable-Types">Serializable Types</a></h2>
-
 <p>So what qualifies as a serializable type in FsPickler?
-The short answer would be any type <code>'T</code> for which we present an instance of 
+The short answer would be any type <code>'T</code> for which we present an instance of
 <a href="reference/nessos-fspickler-pickler-1.html"><code>Pickler&lt;'T&gt;</code></a>.
-To make the question more meaningful: for what types does the library auto-generate picklers? 
+To make the question more meaningful: for what types does the library auto-generate picklers?
 This is something that can only be answered at runtime, typically by calling</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 </pre></td>
 <td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span onmouseout="hideTip(event, 'fs26', 47)" onmouseover="showTip(event, 'fs26', 47)" class="t">FsPickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs27', 48)" onmouseover="showTip(event, 'fs27', 48)" class="f">IsSerializableType</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs5', 49)" onmouseover="showTip(event, 'fs5', 49)" class="t">SomeType</span><span class="o">&gt;</span> ()
 </code></pre></td>
 </tr>
 </table>
-
 <p>Primitive types and <code>string</code> are serializable but pointers, COM objects and MarshalByRef types are not.
 A managed class or struct is serializable if and only if it carries the <code>Serializable</code> flag or attribute
 and moreover satisfies either of the following:</p>
-
 <ul>
-<li><p>is array/nullable/tuple/enum of serializable element types.</p></li>
+<li>is array/nullable/tuple/enum of serializable element types.</li>
 <li><p>implements the <code>ISerializable</code> interface and has a matching constructor implementation.</p></li>
-<li><p>carries the <code>DataContract</code> attribute and all <code>DataMember</code> members are of serializable type.
+<li>
+<p>carries the <code>DataContract</code> attribute and all <code>DataMember</code> members are of serializable type.
 Properties carrying the <code>DataMember</code> attribute must be settable.
-Parameterless constructors or public properties are not required.</p></li>
-<li><p>is an F# union or record type in which all contained fields are serializable.</p></li>
+Parameterless constructors or public properties are not required.</p>
+</li>
+<li>is an F# union or record type in which all contained fields are serializable.</li>
 <li><p>carries the <a href="reference/nessos-fspickler-custompicklerattribute.html"><code>CustomPickler</code></a> attribute and an accompanying pickler factory method.</p></li>
-<li><p>is neither of the above and all its contained fields are of serializable type.
-Parameterless constructors or public fields are not required.</p></li>
+<li>
+<p>is neither of the above and all its contained fields are of serializable type.
+Parameterless constructors or public fields are not required.</p>
+</li>
 </ul>
-
 <h2><a name="Object-Oriented-Picklers" class="anchor" href="#Object-Oriented-Picklers">Object Oriented Picklers</a></h2>
-
-<p>We now discuss how the functional programming concept of picklers can be 
+<p>We now discuss how the functional programming concept of picklers can be
 reconciled with the object-oriented .NET framework.
 It is useful to note here that reference type serialization essentially
 means object graph serialization.
@@ -228,65 +211,60 @@ Object graphs in .NET can often contain null references or cycles,
 which ought to be fully supported.
 FsPickler automatically augments reference types so that such
 occurences are handled effectively.</p>
-
-<p>Object graphs are serialized by performing depth-first traversal; 
+<p>Object graphs are serialized by performing depth-first traversal;
 this approach improves performance by eliminating unnecessary
 boxings in object queues but is sensitive to stack overflow conditions.
 FsPickler uses
 <a href="http://msdn.microsoft.com/en-us/library/system.runtime.serialization.objectidgenerator.aspx"><code>ObjectIdGenerator</code></a>
 for keeping track of traversed references and detecting cycles.
 Cyclic objects are re-instantiated lazily through shallow field copying.</p>
-
 <h3><a name="Subtyping" class="anchor" href="#Subtyping">Subtyping</a></h3>
-
-<p>FsPickler discriminates between reference types that are sealed and those that are not sealed. 
-A value of non-sealed type can either be instance of this type or of a proper subtype. 
-In the context of open hierarchies, it is clear that a type-fixed pickler implementation simply 
+<p>FsPickler discriminates between reference types that are sealed and those that are not sealed.
+A value of non-sealed type can either be instance of this type or of a proper subtype.
+In the context of open hierarchies, it is clear that a type-fixed pickler implementation simply
 cannot cater to arbitrary subtype instances.</p>
-
 <p>For this reason, picklers will only be used to serialize values whose reflected type is identical
 to the pickler's. When coming across an object of non-sealed type, FsPickler
 will examine its reflected type; if found to differ, a new pickler will be
 generated on-the-fly for that particular subtype.</p>
-
 <p>The above implies that <code>obj</code> is serializable in FsPickler, but <code>Pickler&lt;obj&gt;</code>
 will only be used with <code>obj()</code> instances. Similarly, picklers for interfaces
 or abstract classes are possible, but on their own are incapable of serializing anything.
 This is how serialization of F# closures is made possible:
-for every internal closure type generated by the F# compiler, 
+for every internal closure type generated by the F# compiler,
 a special pickler is generated for handling it.</p>
-
 <h2><a name="Pickler-Generation" class="anchor" href="#Pickler-Generation">Pickler Generation</a></h2>
-
 <p>Conceptually, pickler implementations found in the library can roughly be separated into
 the following categories:</p>
-
 <ul>
-<li><p>Atomic picklers: self containing pickler implementations for types like primitives,
+<li>
+<p>Atomic picklers: self containing pickler implementations for types like primitives,
 strings, <code>System.DateTime</code> and <code>System.Guid</code>. These do little other than delegating
 serialization to the underlying
 <a href="reference/nessos-fspickler-ipickleformatprovider.html">pickle format</a>
-implementation.</p></li>
-<li><p>Pickler combinators: as described earlier, these are parametric functions generating picklers
-out of simpler components. Examples are option, list, array and tuple picklers.</p></li>
-<li>Pickler generators: for nominal types that are not expressions on known types,
+implementation.</p>
+</li>
+<li>
+<p>Pickler combinators: as described earlier, these are parametric functions generating picklers
+out of simpler components. Examples are option, list, array and tuple picklers.</p>
+</li>
+<li>
+<p>Pickler generators: for nominal types that are not expressions on known types,
 a different generation strategy is required. The type structure is determined using reflection
 and a new pickler is constructed from that information. FsPickler can emit dynamic methods
 to ensure that no reflection or boxing penalty is incurred during actual serialization.
-Pickler generators can be further separated into the following kinds:
+Pickler generators can be further separated into the following kinds:</p>
 <ul>
 <li>Field-based pickler generation.</li>
 <li>DataContract pickler generation.</li>
 <li>ISerializable pickler generation.</li>
 <li>F# union/record/exception pickler generation.</li>
-</ul></li>
 </ul>
-
+</li>
+</ul>
 <h3><a name="Putting-it-all-together" class="anchor" href="#Putting-it-all-together">Putting it all together</a></h3>
-
 <p>So how does FsPickler generate a pickler (or fail trying) for a given type parameter?
 I will attempt to explain by giving a simplified example:</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
 <span class="l"> 2: </span>
 <span class="l"> 3: </span>
@@ -351,12 +329,10 @@ I will attempt to explain by giving a simplified example:</p>
 </code></pre></td>
 </tr>
 </table>
-
 <p>The above declarations define a notion of "type shape", a partitioning of types according
 to certain traits satisfied. This pattern gives naturally rise to a "type shape visitor",
 which we will be making use of later. Given an arbitrary type <code>'T</code>, we can use reflection to extract
 and construct the shape it fits in, albeit in a packaged manner:</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
 <span class="l"> 2: </span>
 <span class="l"> 3: </span>
@@ -399,11 +375,9 @@ and construct the shape it fits in, albeit in a packaged manner:</p>
 </code></pre></td>
 </tr>
 </table>
-
 <p>We can now use the type shape visitor to plug in all required pickler combinators.
 This will result in a generator function that recursively calls appropriate
 pickler combinators in a strongly typed manner:</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
 <span class="l"> 2: </span>
 <span class="l"> 3: </span>
@@ -448,9 +422,7 @@ pickler combinators in a strongly typed manner:</p>
 </code></pre></td>
 </tr>
 </table>
-
 <p>The <code>generate</code> function can now be used for auto-generating derivative picklers:</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 <span class="l">2: </span>
 <span class="l">3: </span>

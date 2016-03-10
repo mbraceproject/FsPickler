@@ -34,14 +34,12 @@
         <div class="span9" id="main">
           
 <h1><a name="FsPickler-A-fast-NET-object-serializer" class="anchor" href="#FsPickler-A-fast-NET-object-serializer">FsPickler : A fast .NET object serializer</a></h1>
-
 <p>FsPickler is a serialization library that facilitates the distribution of .NET objects.
 The implementation focuses on performance and completeness in supported types, including F# types.
 It supports multiple, pluggable serialization formats including Binary, Xml, JSON and BSON.
-The library is based on the functional programming concept of 
+The library is based on the functional programming concept of
 <a href="http://lambda-the-ultimate.org/node/2243">pickler combinators</a>
 which has been adapted to accommodate the object oriented nature of the .NET framework.</p>
-
 <div class="row">
   <div class="span1"></div>
   <div class="span6">
@@ -54,11 +52,8 @@ PM> Install-Package FsPickler.CSharp</pre>
   </div>
   <div class="span1"></div>
 </div>
-
 <h2><a name="Example" class="anchor" href="#Example">Example</a></h2>
-
 <p>This example demonstrates a basic serialization roundtrip using the library</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 <span class="l">2: </span>
 <span class="l">3: </span>
@@ -77,70 +72,68 @@ PM> Install-Package FsPickler.CSharp</pre>
 </code></pre></td>
 </tr>
 </table>
-
 <h2><a name="Why-FsPickler" class="anchor" href="#Why-FsPickler">Why FsPickler?</a></h2>
-
 <p>The principal motivation behind creating FsPickler is the need for a
 library that provides efficient, correct and complete serialization of
 objects in the CLR and mono runtime. It is aimed at providing a foundation for
 large-scale distributed computation that is based on the .NET framework.</p>
-
 <p>FsPickler is ideally suited for serializing:</p>
-
 <ul>
-<li><p>Large and complex objects, such as dictionaries, trees and cyclic objects.</p></li>
-<li><p>Abstract classes, subtypes, nulls, delegates and closures.</p></li>
-<li><p>ISerializable, DataContract or attribute-based serialization.</p></li>
-<li><p>F# unions, records and quotations.</p></li>
-<li><p>Inaccessible types or types unknown at compile time.</p></li>
+<li>Large and complex objects, such as dictionaries, trees and cyclic objects.</li>
+<li>Abstract classes, subtypes, nulls, delegates and closures.</li>
+<li>ISerializable, DataContract or attribute-based serialization.</li>
+<li>F# unions, records and quotations.</li>
+<li>Inaccessible types or types unknown at compile time.</li>
 </ul>
-
 <p>FsPickler is NOT:</p>
-
 <ul>
-<li><p>a general-purpose Xml/JSON/BSON framework.</p></li>
-<li><p>a library designed for cross-platform communication.</p></li>
-<li><p>a library designed with version tolerance in mind. Avoid using for long-term persistence.</p></li>
+<li>a general-purpose Xml/JSON/BSON framework.</li>
+<li>a library designed for cross-platform communication.</li>
+<li>a library designed with version tolerance in mind. Avoid using for long-term persistence.</li>
 </ul>
-
 <h2><a name="Documentation-amp-Technical-Overview" class="anchor" href="#Documentation-amp-Technical-Overview">Documentation &amp; Technical Overview</a></h2>
-
 <p>A collection of tutorials, technical overviews and API references of the library.</p>
-
 <ul>
 <li><p><a href="tutorial.html">Tutorial</a> A short introduction to FsPickler.</p></li>
 <li><p><a href="overview.html">Technical Overview</a> A walkthrough of the library's implementation details.</p></li>
-<li><p><a href="benchmarks.html">Performance</a> Benchmarks comparing FsPickler
-to other established serialization libraries.</p></li>
-<li><p><a href="reference/index.html">API Reference</a> contains automatically generated documentation for all types, modules
-and functions in the library.</p></li>
+<li>
+<p><a href="benchmarks.html">Performance</a> Benchmarks comparing FsPickler
+to other established serialization libraries.</p>
+</li>
+<li>
+<p><a href="reference/index.html">API Reference</a> contains automatically generated documentation for all types, modules
+and functions in the library.</p>
+</li>
 </ul>
-
 <h2><a name="Who-uses-FsPickler" class="anchor" href="#Who-uses-FsPickler">Who uses FsPickler?</a></h2>
-
 <ul>
-<li><p><a href="http://m-brace.net/">MBrace framework</a> - MBrace is a framework for distributed
+<li>
+<p><a href="http://m-brace.net/">MBrace framework</a> - MBrace is a framework for distributed
 computation in the cloud. Its programming model uses continuations, so a library
 that supports serialization of closures was essential. FsPickler was designed out
-of this requirement.</p></li>
-<li><p><a href="http://akkadotnet.github.io/">Akka.NET</a> - Used in the Akka.FSharp library for its
-quotation serialization capabilities.</p></li>
-<li><p><a href="http://suave.io/">Suave.IO</a> - "we needed a simple way of serialising CLR types to
+of this requirement.</p>
+</li>
+<li>
+<p><a href="http://akkadotnet.github.io/">Akka.NET</a> - Used in the Akka.FSharp library for its
+quotation serialization capabilities.</p>
+</li>
+<li>
+<p><a href="http://suave.io/">Suave.IO</a> - "we needed a simple way of serialising CLR types to
 put in cookies. After fighting .Net's JSONDataContractSerializer for a good while
-we tried FsPickler. It was a straight success; it just worked".</p></li>
-<li><p><a href="http://www.tachyus.com/">Tachyus</a> - "FsPickler serializes and deserializes
+we tried FsPickler. It was a straight success; it just worked".</p>
+</li>
+<li>
+<p><a href="http://www.tachyus.com/">Tachyus</a> - "FsPickler serializes and deserializes
 objects of virtually any type quickly and reliably in a single line of
 F# code. For us this makes communications between applications across
 computing environments effortless. There are no implementation details
-to obsess about".</p></li>
+to obsess about".</p>
+</li>
 </ul>
-
 <h2><a name="Contributing-and-copyright" class="anchor" href="#Contributing-and-copyright">Contributing and copyright</a></h2>
-
-<p>The project is hosted on <a href="https://github.com/nessos/FsPickler">GitHub</a> where you can <a href="https://github.com/nessos/FsPickler/issues">report issues</a>, fork 
+<p>The project is hosted on <a href="https://github.com/nessos/FsPickler">GitHub</a> where you can <a href="https://github.com/nessos/FsPickler/issues">report issues</a>, fork
 the project and submit pull requests.</p>
-
-<p>The library is available under the MIT License. 
+<p>The library is available under the MIT License.
 For more information see the <a href="https://github.com/nessos/FsPickler/blob/master/License.md">License file</a> in the GitHub repository.</p>
 
 <div class="tip" id="fs1">namespace Nessos</div>

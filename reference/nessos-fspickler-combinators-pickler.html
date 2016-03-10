@@ -42,7 +42,6 @@
 <div class="xmldoc">
 <p>Pickler combinator definitions</p>
 
-
 </div>
 
 <!-- Render nested types and modules, if there are any -->
@@ -60,7 +59,6 @@
           <td class="xmldoc"><p>Experimental support for n-way product types such as records.
 See <code>product</code> and <code>field</code> combinators.</p>
 
-
 </td>
         </tr>
         <tr>
@@ -69,7 +67,6 @@ See <code>product</code> and <code>field</code> combinators.</p>
           </td>
           <td class="xmldoc"><p>Experimental support for n-way sum types such as unions.
 See <code>sum</code>.</p>
-
 
 </td>
         </tr>
@@ -91,8 +88,8 @@ See <code>sum</code>.</p>
             alt(tagReader ps)
           </code>
           <div class="tip" id="14">
-            <strong>Signature:</strong> tagReader:(&#39;?91303 -&gt; int) -&gt; ps:Pickler&lt;&#39;?91303&gt; list -&gt; Pickler&lt;&#39;?91303&gt;<br />
-                          <strong>Type parameters:</strong> '?91303          </div>
+            <strong>Signature:</strong> tagReader:(&#39;?105798 -&gt; int) -&gt; ps:Pickler&lt;&#39;?105798&gt; list -&gt; Pickler&lt;&#39;?105798&gt;<br />
+                          <strong>Type parameters:</strong> '?105798          </div>
         </td>
         <td class="xmldoc">
             <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Combinators.fs#L136-136" class="github-link">
@@ -100,7 +97,6 @@ See <code>sum</code>.</p>
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
           <p>alt combinator: choose from list of pickler combinators using tag reader</p>
-
 
 
         </td>
@@ -123,7 +119,6 @@ See <code>sum</code>.</p>
           <p>array pickler combinator</p>
 
 
-
         </td>
       </tr>
       <tr>
@@ -142,7 +137,6 @@ See <code>sum</code>.</p>
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
           <p>array2D pickler combinator</p>
-
 
 
         </td>
@@ -165,7 +159,6 @@ See <code>sum</code>.</p>
           <p>array3D pickler combinator</p>
 
 
-
         </td>
       </tr>
       <tr>
@@ -186,7 +179,6 @@ See <code>sum</code>.</p>
           <p>array4D pickler combinator</p>
 
 
-
         </td>
       </tr>
       <tr>
@@ -205,7 +197,6 @@ See <code>sum</code>.</p>
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
           <p>auto generate a pickler</p>
-
 
 
         </td>
@@ -289,8 +280,8 @@ See <code>sum</code>.</p>
             case(inj p)
           </code>
           <div class="tip" id="24">
-            <strong>Signature:</strong> inj:&#39;?91332 -&gt; p:&#39;?91333 -&gt; Case&lt;&#39;?91332,&#39;?91333&gt;<br />
-                          <strong>Type parameters:</strong> '?91332, '?91333          </div>
+            <strong>Signature:</strong> inj:&#39;?105827 -&gt; p:&#39;?105828 -&gt; Case&lt;&#39;?105827,&#39;?105828&gt;<br />
+                          <strong>Type parameters:</strong> '?105827, '?105828          </div>
         </td>
         <td class="xmldoc">
             <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Combinators.fs#L324-324" class="github-link">
@@ -298,7 +289,6 @@ See <code>sum</code>.</p>
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
           <p>See <code>sum</code>.</p>
-
 
 
         </td>
@@ -328,8 +318,8 @@ See <code>sum</code>.</p>
             choice2(f g)
           </code>
           <div class="tip" id="26">
-            <strong>Signature:</strong> f:Pickler&lt;&#39;?91269&gt; -&gt; g:Pickler&lt;&#39;?91270&gt; -&gt; Pickler&lt;Choice&lt;&#39;?91269,&#39;?91270&gt;&gt;<br />
-                          <strong>Type parameters:</strong> '?91269, '?91270          </div>
+            <strong>Signature:</strong> f:Pickler&lt;&#39;?105764&gt; -&gt; g:Pickler&lt;&#39;?105765&gt; -&gt; Pickler&lt;Choice&lt;&#39;?105764,&#39;?105765&gt;&gt;<br />
+                          <strong>Type parameters:</strong> '?105764, '?105765          </div>
         </td>
         <td class="xmldoc">
             <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Combinators.fs#L108-108" class="github-link">
@@ -337,7 +327,6 @@ See <code>sum</code>.</p>
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
           <p>Choice<_,_> pickler combinator</p>
-
 
 
         </td>
@@ -349,8 +338,8 @@ See <code>sum</code>.</p>
             choice3(f g h)
           </code>
           <div class="tip" id="27">
-            <strong>Signature:</strong> f:Pickler&lt;&#39;?91272&gt; -&gt; g:Pickler&lt;&#39;?91273&gt; -&gt; h:Pickler&lt;&#39;?91274&gt; -&gt; Pickler&lt;Choice&lt;&#39;?91272,&#39;?91273,&#39;?91274&gt;&gt;<br />
-                          <strong>Type parameters:</strong> '?91272, '?91273, '?91274          </div>
+            <strong>Signature:</strong> f:Pickler&lt;&#39;?105767&gt; -&gt; g:Pickler&lt;&#39;?105768&gt; -&gt; h:Pickler&lt;&#39;?105769&gt; -&gt; Pickler&lt;Choice&lt;&#39;?105767,&#39;?105768,&#39;?105769&gt;&gt;<br />
+                          <strong>Type parameters:</strong> '?105767, '?105768, '?105769          </div>
         </td>
         <td class="xmldoc">
             <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Combinators.fs#L110-110" class="github-link">
@@ -358,7 +347,6 @@ See <code>sum</code>.</p>
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
           <p>Choice<_,_,_> pickler combinator</p>
-
 
 
         </td>
@@ -370,8 +358,8 @@ See <code>sum</code>.</p>
             choice4(f g h i)
           </code>
           <div class="tip" id="28">
-            <strong>Signature:</strong> f:Pickler&lt;&#39;?91276&gt; -&gt; g:Pickler&lt;&#39;?91277&gt; -&gt; h:Pickler&lt;&#39;?91278&gt; -&gt; i:Pickler&lt;&#39;?91279&gt; -&gt; Pickler&lt;Choice&lt;&#39;?91276,&#39;?91277,&#39;?91278,&#39;?91279&gt;&gt;<br />
-                          <strong>Type parameters:</strong> '?91276, '?91277, '?91278, '?91279          </div>
+            <strong>Signature:</strong> f:Pickler&lt;&#39;?105771&gt; -&gt; g:Pickler&lt;&#39;?105772&gt; -&gt; h:Pickler&lt;&#39;?105773&gt; -&gt; i:Pickler&lt;&#39;?105774&gt; -&gt; Pickler&lt;Choice&lt;&#39;?105771,&#39;?105772,&#39;?105773,&#39;?105774&gt;&gt;<br />
+                          <strong>Type parameters:</strong> '?105771, '?105772, '?105773, '?105774          </div>
         </td>
         <td class="xmldoc">
             <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Combinators.fs#L112-112" class="github-link">
@@ -379,7 +367,6 @@ See <code>sum</code>.</p>
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
           <p>Choice<_,_,_,_> pickler combinator</p>
-
 
 
         </td>
@@ -463,8 +450,8 @@ See <code>sum</code>.</p>
             field(f p)
           </code>
           <div class="tip" id="33">
-            <strong>Signature:</strong> f:(&#39;?91323 -&gt; &#39;?91324) -&gt; p:Pickler&lt;&#39;?91324&gt; -&gt; Wrap&lt;(Part&lt;&#39;?91323,&#39;?91325,&#39;?91326&gt; -&gt; Part&lt;&#39;?91323,(&#39;?91324 -&gt; &#39;?91325),(&#39;?91324 * &#39;?91326)&gt;)&gt;<br />
-                          <strong>Type parameters:</strong> '?91323, '?91324, '?91325, '?91326          </div>
+            <strong>Signature:</strong> f:(&#39;?105818 -&gt; &#39;?105819) -&gt; p:Pickler&lt;&#39;?105819&gt; -&gt; Wrap&lt;(Part&lt;&#39;?105818,&#39;?105820,&#39;?105821&gt; -&gt; Part&lt;&#39;?105818,(&#39;?105819 -&gt; &#39;?105820),(&#39;?105819 * &#39;?105821)&gt;)&gt;<br />
+                          <strong>Type parameters:</strong> '?105818, '?105819, '?105820, '?105821          </div>
         </td>
         <td class="xmldoc">
             <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Combinators.fs#L238-238" class="github-link">
@@ -472,7 +459,6 @@ See <code>sum</code>.</p>
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
           <p>See <code>product</code>.</p>
-
 
 
         </td>
@@ -495,7 +481,6 @@ See <code>sum</code>.</p>
           <p>pickler fixpoint combinator</p>
 
 
-
         </td>
       </tr>
       <tr>
@@ -514,7 +499,6 @@ See <code>sum</code>.</p>
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
           <p>pickler fixpoint combinator</p>
-
 
 
         </td>
@@ -537,7 +521,6 @@ See <code>sum</code>.</p>
           <p>pickler fixpoint combinator</p>
 
 
-
         </td>
       </tr>
       <tr>
@@ -558,7 +541,6 @@ See <code>sum</code>.</p>
           <p>Pickler combinator based on SerializationInfo</p>
 
 
-
         </td>
       </tr>
       <tr>
@@ -577,7 +559,6 @@ See <code>sum</code>.</p>
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
           <p>F# function combinator</p>
-
 
 
         </td>
@@ -672,7 +653,6 @@ See <code>sum</code>.</p>
           <p>FSharp list pickler combinator</p>
 
 
-
         </td>
       </tr>
       <tr>
@@ -682,8 +662,8 @@ See <code>sum</code>.</p>
             map(kp vp)
           </code>
           <div class="tip" id="44">
-            <strong>Signature:</strong> kp:Pickler&lt;&#39;?91285&gt; -&gt; vp:Pickler&lt;&#39;?91286&gt; -&gt; Pickler&lt;Map&lt;&#39;?91285,&#39;?91286&gt;&gt;<br />
-                          <strong>Type parameters:</strong> '?91285, '?91286          </div>
+            <strong>Signature:</strong> kp:Pickler&lt;&#39;?105780&gt; -&gt; vp:Pickler&lt;&#39;?105781&gt; -&gt; Pickler&lt;Map&lt;&#39;?105780,&#39;?105781&gt;&gt;<br />
+                          <strong>Type parameters:</strong> '?105780, '?105781          </div>
         </td>
         <td class="xmldoc">
             <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Combinators.fs#L119-119" class="github-link">
@@ -691,7 +671,6 @@ See <code>sum</code>.</p>
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
           <p>FSharp map pickler combinator</p>
-
 
 
         </td>
@@ -714,7 +693,6 @@ See <code>sum</code>.</p>
           <p>nullable pickler combinator</p>
 
 
-
         </td>
       </tr>
       <tr>
@@ -733,7 +711,6 @@ See <code>sum</code>.</p>
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
           <p>the default System.Object pickler</p>
-
 
 
         </td>
@@ -756,7 +733,6 @@ See <code>sum</code>.</p>
           <p>option pickler combinator</p>
 
 
-
         </td>
       </tr>
       <tr>
@@ -766,8 +742,8 @@ See <code>sum</code>.</p>
             pair(f g)
           </code>
           <div class="tip" id="48">
-            <strong>Signature:</strong> f:Pickler&lt;&#39;?91253&gt; -&gt; g:Pickler&lt;&#39;?91254&gt; -&gt; Pickler&lt;&#39;?91253 * &#39;?91254&gt;<br />
-                          <strong>Type parameters:</strong> '?91253, '?91254          </div>
+            <strong>Signature:</strong> f:Pickler&lt;&#39;?105748&gt; -&gt; g:Pickler&lt;&#39;?105749&gt; -&gt; Pickler&lt;&#39;?105748 * &#39;?105749&gt;<br />
+                          <strong>Type parameters:</strong> '?105748, '?105749          </div>
         </td>
         <td class="xmldoc">
             <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Combinators.fs#L98-98" class="github-link">
@@ -775,7 +751,6 @@ See <code>sum</code>.</p>
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
           <p>pair pickler combinator</p>
-
 
 
         </td>
@@ -787,8 +762,8 @@ See <code>sum</code>.</p>
             product(f)
           </code>
           <div class="tip" id="49">
-            <strong>Signature:</strong> f:&#39;?91319 -&gt; Wrap&lt;(Part&lt;&#39;?91320,&#39;?91319,&#39;?91321&gt; -&gt; Pickler&lt;&#39;?91320&gt;)&gt;<br />
-                          <strong>Type parameters:</strong> '?91319, '?91320, '?91321          </div>
+            <strong>Signature:</strong> f:&#39;?105814 -&gt; Wrap&lt;(Part&lt;&#39;?105815,&#39;?105814,&#39;?105816&gt; -&gt; Pickler&lt;&#39;?105815&gt;)&gt;<br />
+                          <strong>Type parameters:</strong> '?105814, '?105815, '?105816          </div>
         </td>
         <td class="xmldoc">
             <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Combinators.fs#L234-234" class="github-link">
@@ -797,30 +772,25 @@ See <code>sum</code>.</p>
             </a>
           <p>Starts defining a pickler for an n-ary product, such as
 record. Example:</p>
-
 <p>type Person =
-       {
-           Address : string
-           Age : int
-           Name : string
-       }</p>
-
+{
+Address : string
+Age : int
+Name : string
+}</p>
 <p>let makePerson name age address =
-       {
-           Address = address
-           Age = age
-           Name = name
-       }</p>
-
+{
+Address = address
+Age = age
+Name = name
+}</p>
 <p>let personPickler =
-       Pickler.product makePerson
-       ^+ Pickler.field (fun p -&gt; p.Name) Pickler.string
-       ^+ Pickler.field (fun p -&gt; p.Age) Pickler.int
-       ^. Pickler.field (fun p -&gt; p.Address) Pickler.string</p>
-
+Pickler.product makePerson
+^+ Pickler.field (fun p -&gt; p.Name) Pickler.string
+^+ Pickler.field (fun p -&gt; p.Age) Pickler.int
+^. Pickler.field (fun p -&gt; p.Address) Pickler.string</p>
 <p>The implementation is not currently efficient, though it
 may improve in the future.</p>
-
 
 
         </td>
@@ -832,8 +802,8 @@ may improve in the future.</p>
             quad(f g h i)
           </code>
           <div class="tip" id="50">
-            <strong>Signature:</strong> f:Pickler&lt;&#39;?91260&gt; -&gt; g:Pickler&lt;&#39;?91261&gt; -&gt; h:Pickler&lt;&#39;?91262&gt; -&gt; i:Pickler&lt;&#39;?91263&gt; -&gt; Pickler&lt;&#39;?91260 * &#39;?91261 * &#39;?91262 * &#39;?91263&gt;<br />
-                          <strong>Type parameters:</strong> '?91260, '?91261, '?91262, '?91263          </div>
+            <strong>Signature:</strong> f:Pickler&lt;&#39;?105755&gt; -&gt; g:Pickler&lt;&#39;?105756&gt; -&gt; h:Pickler&lt;&#39;?105757&gt; -&gt; i:Pickler&lt;&#39;?105758&gt; -&gt; Pickler&lt;&#39;?105755 * &#39;?105756 * &#39;?105757 * &#39;?105758&gt;<br />
+                          <strong>Type parameters:</strong> '?105755, '?105756, '?105757, '?105758          </div>
         </td>
         <td class="xmldoc">
             <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Combinators.fs#L102-102" class="github-link">
@@ -841,7 +811,6 @@ may improve in the future.</p>
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
           <p>quad pickler combinator</p>
-
 
 
         </td>
@@ -862,7 +831,6 @@ may improve in the future.</p>
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
           <p>FSharp ref pickler combinator</p>
-
 
 
         </td>
@@ -892,8 +860,8 @@ may improve in the future.</p>
             seq(f)
           </code>
           <div class="tip" id="53">
-            <strong>Signature:</strong> f:Pickler&lt;&#39;?91298&gt; -&gt; Pickler&lt;seq&lt;&#39;?91298&gt;&gt;<br />
-                          <strong>Type parameters:</strong> '?91298          </div>
+            <strong>Signature:</strong> f:Pickler&lt;&#39;?105793&gt; -&gt; Pickler&lt;seq&lt;&#39;?105793&gt;&gt;<br />
+                          <strong>Type parameters:</strong> '?105793          </div>
         </td>
         <td class="xmldoc">
             <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Combinators.fs#L131-131" class="github-link">
@@ -901,7 +869,6 @@ may improve in the future.</p>
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
           <p>sequence pickler combinator ; uses eager evaluation</p>
-
 
 
         </td>
@@ -922,7 +889,6 @@ may improve in the future.</p>
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
           <p>FSharp set pickler combinator</p>
-
 
 
         </td>
@@ -970,8 +936,8 @@ may improve in the future.</p>
             sum(f)
           </code>
           <div class="tip" id="57">
-            <strong>Signature:</strong> f:(&#39;?91328 -&gt; &#39;?91329) -&gt; Wrap&lt;(Part&lt;&#39;?91328,&#39;?91329,&#39;?91330,&#39;?91330&gt; -&gt; Pickler&lt;&#39;?91328&gt;)&gt;<br />
-                          <strong>Type parameters:</strong> '?91328, '?91329, '?91330          </div>
+            <strong>Signature:</strong> f:(&#39;?105823 -&gt; &#39;?105824) -&gt; Wrap&lt;(Part&lt;&#39;?105823,&#39;?105824,&#39;?105825,&#39;?105825&gt; -&gt; Pickler&lt;&#39;?105823&gt;)&gt;<br />
+                          <strong>Type parameters:</strong> '?105823, '?105824, '?105825          </div>
         </td>
         <td class="xmldoc">
             <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Combinators.fs#L320-320" class="github-link">
@@ -980,25 +946,21 @@ may improve in the future.</p>
             </a>
           <p>Starts defining a pickler for an n-ary sum type, such as
 a union type. For example:</p>
-
 <p>type UnionT =
-       | Case1
-       | Case2 of int
-       | Case3 of string * int</p>
-
+| Case1
+| Case2 of int
+| Case3 of string * int</p>
 <p>let unionTPickler =
-       Pickler.sum (fun x k1 k2 k3 -&gt;
-           match x with
-           | Case1 -&gt; k1 ()
-           | Case2 x -&gt; k2 x
-           | Case3 (x, y) -&gt; k3 (x, y))
-       ^+ Pickler.variant Case1
-       ^+ Pickler.case Case2 Pickler.int
-       ^. Pickler.case Case3 (Pickler.pair Pickler.string Pickler.int)</p>
-
+Pickler.sum (fun x k1 k2 k3 -&gt;
+match x with
+| Case1 -&gt; k1 ()
+| Case2 x -&gt; k2 x
+| Case3 (x, y) -&gt; k3 (x, y))
+^+ Pickler.variant Case1
+^+ Pickler.case Case2 Pickler.int
+^. Pickler.case Case3 (Pickler.pair Pickler.string Pickler.int)</p>
 <p>Note that the implementation is not currently efficient,
 though it may improve in the future.</p>
-
 
 
         </td>
@@ -1028,8 +990,8 @@ though it may improve in the future.</p>
             triple(f g h)
           </code>
           <div class="tip" id="59">
-            <strong>Signature:</strong> f:Pickler&lt;&#39;?91256&gt; -&gt; g:Pickler&lt;&#39;?91257&gt; -&gt; h:Pickler&lt;&#39;?91258&gt; -&gt; Pickler&lt;&#39;?91256 * &#39;?91257 * &#39;?91258&gt;<br />
-                          <strong>Type parameters:</strong> '?91256, '?91257, '?91258          </div>
+            <strong>Signature:</strong> f:Pickler&lt;&#39;?105751&gt; -&gt; g:Pickler&lt;&#39;?105752&gt; -&gt; h:Pickler&lt;&#39;?105753&gt; -&gt; Pickler&lt;&#39;?105751 * &#39;?105752 * &#39;?105753&gt;<br />
+                          <strong>Type parameters:</strong> '?105751, '?105752, '?105753          </div>
         </td>
         <td class="xmldoc">
             <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Combinators.fs#L100-100" class="github-link">
@@ -1037,7 +999,6 @@ though it may improve in the future.</p>
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
           <p>triple pickler combinator</p>
-
 
 
         </td>
@@ -1121,8 +1082,8 @@ though it may improve in the future.</p>
             variant(v)
           </code>
           <div class="tip" id="64">
-            <strong>Signature:</strong> v:&#39;?91335 -&gt; Case&lt;(unit -&gt; &#39;?91335),Pickler&lt;unit&gt;&gt;<br />
-                          <strong>Type parameters:</strong> '?91335          </div>
+            <strong>Signature:</strong> v:&#39;?105830 -&gt; Case&lt;(unit -&gt; &#39;?105830),Pickler&lt;unit&gt;&gt;<br />
+                          <strong>Type parameters:</strong> '?105830          </div>
         </td>
         <td class="xmldoc">
             <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Combinators.fs#L328-328" class="github-link">
@@ -1130,7 +1091,6 @@ though it may improve in the future.</p>
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
           <p>Useful for union cases without arguments.</p>
-
 
 
         </td>
@@ -1142,8 +1102,8 @@ though it may improve in the future.</p>
             wrap(recover convert p)
           </code>
           <div class="tip" id="65">
-            <strong>Signature:</strong> recover:(&#39;?91300 -&gt; &#39;?91301) -&gt; convert:(&#39;?91301 -&gt; &#39;?91300) -&gt; p:Pickler&lt;&#39;?91300&gt; -&gt; Pickler&lt;&#39;?91301&gt;<br />
-                          <strong>Type parameters:</strong> '?91300, '?91301          </div>
+            <strong>Signature:</strong> recover:(&#39;?105795 -&gt; &#39;?105796) -&gt; convert:(&#39;?105796 -&gt; &#39;?105795) -&gt; p:Pickler&lt;&#39;?105795&gt; -&gt; Pickler&lt;&#39;?105796&gt;<br />
+                          <strong>Type parameters:</strong> '?105795, '?105796          </div>
         </td>
         <td class="xmldoc">
             <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/Combinators.fs#L134-134" class="github-link">
@@ -1151,7 +1111,6 @@ though it may improve in the future.</p>
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
           <p>wrap combinator: defines picklers up to isomorphism</p>
-
 
 
         </td>

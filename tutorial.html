@@ -34,14 +34,10 @@
         <div class="span9" id="main">
           
 <h1><a name="An-Introduction-to-FsPickler" class="anchor" href="#An-Introduction-to-FsPickler">An Introduction to FsPickler</a></h1>
-
 <p>The following provides an overview of the basic functionalities offered by the library.</p>
-
 <h2><a name="The-core-serialization-API" class="anchor" href="#The-core-serialization-API">The core serialization API</a></h2>
-
 <p>The basic API is accessible through instances of type <a href="reference/nessos-fspickler-fspicklerserializer.html"><code>FsPicklerSerializer</code></a>
 that can be initialized as follows:</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 <span class="l">2: </span>
 <span class="l">3: </span>
@@ -58,10 +54,8 @@ that can be initialized as follows:</p>
 </code></pre></td>
 </tr>
 </table>
-
 <p>Json serialization formats can be accessed by referencing the <code>FsPickler.Json</code> project.
 If evaluating from F# interactive, make sure to <a href="https://github.com/nessos/FsPickler/issues/16">add an explicit reference to Json.Net</a>.</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 <span class="l">2: </span>
 <span class="l">3: </span>
@@ -80,9 +74,7 @@ If evaluating from F# interactive, make sure to <a href="https://github.com/ness
 </code></pre></td>
 </tr>
 </table>
-
 <p>A simple serialization/deserialization roundtrip can be performed as follows:</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 <span class="l">2: </span>
 </pre></td>
@@ -91,10 +83,8 @@ If evaluating from F# interactive, make sure to <a href="https://github.com/ness
 </code></pre></td>
 </tr>
 </table>
-
-<p>FsPickler instances can be used to produce binary pickles, 
+<p>FsPickler instances can be used to produce binary pickles,
 that is byte arrays containing the serialized values:</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 <span class="l">2: </span>
 </pre></td>
@@ -103,12 +93,9 @@ that is byte arrays containing the serialized values:</p>
 </code></pre></td>
 </tr>
 </table>
-
 <h3><a name="Text-based-serialization" class="anchor" href="#Text-based-serialization">Text-based serialization</a></h3>
-
 <p>The Xml and Json serializers are instances of type <a href="reference/nessos-fspickler-fspicklertextserializer.html"><code>FsPicklerTextSerializer</code></a>
 that offers functionality for text-based serialization:</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 <span class="l">2: </span>
 <span class="l">3: </span>
@@ -123,11 +110,8 @@ that offers functionality for text-based serialization:</p>
 </code></pre></td>
 </tr>
 </table>
-
 <h3><a name="Sequence-serialization" class="anchor" href="#Sequence-serialization">Sequence serialization</a></h3>
-
 <p>FsPickler offers support for on-demand sequence serialization/deserialization:</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 <span class="l">2: </span>
 <span class="l">3: </span>
@@ -142,11 +126,8 @@ that offers functionality for text-based serialization:</p>
 </code></pre></td>
 </tr>
 </table>
-
 <h2><a name="Picklers-and-Pickler-combinators" class="anchor" href="#Picklers-and-Pickler-combinators">Picklers and Pickler combinators</a></h2>
-
 <p>A pickler is essentially the type</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 <span class="l">2: </span>
 <span class="l">3: </span>
@@ -161,28 +142,26 @@ that offers functionality for text-based serialization:</p>
 </code></pre></td>
 </tr>
 </table>
-
 <p>which defines the serialization/deserialization rules for a given type.
 Picklers are strongly typed and perform serialization without reflection
 or intermediate boxings.</p>
-
 <p>There are two kinds of picklers:</p>
-
 <ul>
-<li><p>Primitive or atomic picklers that are self-contained definitions 
-for simple values like primitives, strings or timespans.</p></li>
-<li><p>Composite picklers which are derived from composition of simpler types.
+<li>
+<p>Primitive or atomic picklers that are self-contained definitions
+for simple values like primitives, strings or timespans.</p>
+</li>
+<li>
+<p>Composite picklers which are derived from composition of simpler types.
 They are generated using <em>pickler combinators</em>, functions taking a collection
-of picklers as inputs yielding a composite result.</p></li>
+of picklers as inputs yielding a composite result.</p>
+</li>
 </ul>
-
 <p>FsPickler is essentially an automated pickler generation framework: picklers are generated at runtime
-and on demand using a combination of reflection and dynamic IL generation. Picklers are cached for 
+and on demand using a combination of reflection and dynamic IL generation. Picklers are cached for
 future use, hence the cost of generation has a constant price.</p>
-
 <p>Moreover, the library provides an experimental combinator module that allows direct manipulation
 of picklers in a more functional style:</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
 <span class="l"> 2: </span>
 <span class="l"> 3: </span>
@@ -225,11 +204,9 @@ of picklers in a more functional style:</p>
 </code></pre></td>
 </tr>
 </table>
-
-<p>The module includes all primitive combinators as described in Andrew Kennedy's 
+<p>The module includes all primitive combinators as described in Andrew Kennedy's
 <a href="http://research.microsoft.com/en-us/um/people/akenn/fun/picklercombinators.pdf">Pickler Combinators</a>
 like<code>wrap</code> and <code>alt</code>. Fixpoint combinators for declaring recursive picklers are also available:</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
 <span class="l"> 2: </span>
 <span class="l"> 3: </span>
@@ -254,9 +231,7 @@ like<code>wrap</code> and <code>alt</code>. Fixpoint combinators for declaring r
 </code></pre></td>
 </tr>
 </table>
-
 <p>When it comes to generic types, picklers can be created through user-defined combinators:</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
 <span class="l"> 2: </span>
 <span class="l"> 3: </span>
@@ -285,9 +260,7 @@ like<code>wrap</code> and <code>alt</code>. Fixpoint combinators for declaring r
 </code></pre></td>
 </tr>
 </table>
-
 <p>or it could be done using automatic resolution of type parameters:</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
 <span class="l"> 2: </span>
 <span class="l"> 3: </span>
@@ -314,21 +287,16 @@ like<code>wrap</code> and <code>alt</code>. Fixpoint combinators for declaring r
 </code></pre></td>
 </tr>
 </table>
-
 <h3><a name="SerializationInfo-Picklers" class="anchor" href="#SerializationInfo-Picklers">SerializationInfo Picklers</a></h3>
-
 <p>It is possible to define picklers that serialise objects using <a href="https://msdn.microsoft.com/en-us/library/system.runtime.serialization.serializationinfo%28v=vs.110%29.aspx">SerializationInfo</a>.
 For example, consider the record:</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 </pre></td>
 <td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">type</span> <span onmouseout="hideTip(event, 'fs102', 269)" onmouseover="showTip(event, 'fs102', 269)" class="t">Name</span> <span class="o">=</span> { <span onmouseout="hideTip(event, 'fs103', 270)" onmouseover="showTip(event, 'fs103', 270)" class="i">FirstName</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs61', 271)" onmouseover="showTip(event, 'fs61', 271)" class="t">string</span> ; <span onmouseout="hideTip(event, 'fs104', 272)" onmouseover="showTip(event, 'fs104', 272)" class="i">MiddleName</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs61', 273)" onmouseover="showTip(event, 'fs61', 273)" class="t">string</span> <span onmouseout="hideTip(event, 'fs36', 274)" onmouseover="showTip(event, 'fs36', 274)" class="t">option</span> ; <span onmouseout="hideTip(event, 'fs105', 275)" onmouseover="showTip(event, 'fs105', 275)" class="i">Surname</span> <span class="o">:</span> <span onmouseout="hideTip(event, 'fs61', 276)" onmouseover="showTip(event, 'fs61', 276)" class="t">string</span> }
 </code></pre></td>
 </tr>
 </table>
-
 <p>We can define a SerializationInfo based pickler using the following combinator:</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
 <span class="l"> 2: </span>
 <span class="l"> 3: </span>
@@ -353,20 +321,15 @@ For example, consider the record:</p>
 </code></pre></td>
 </tr>
 </table>
-
 <h3><a name="Experimental-N-way-Sum-and-Product-Combinators" class="anchor" href="#Experimental-N-way-Sum-and-Product-Combinators">Experimental N-way Sum and Product Combinators</a></h3>
-
 <p>N-way sum and product combinators provide an alternative pretty syntax for
 defining picklers over arbitrary discriminated unions and records.  Unfortunately
 at the moment the performance of resulting picklers is sub-optimal, this might
 improve in the future.</p>
-
 <p>The types involved in the examples are not fit for human consumption, but thankfully
 F# infers them automatically. The implementation is total and purely functional,
 see this <a href="https://gist.github.com/t0yv0/6834822">gist</a> for some Coq code used to model these combinators.</p>
-
 <h4><a name="Records-Product-Types" class="anchor" href="#Records-Product-Types">Records / Product Types</a></h4>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
 <span class="l"> 2: </span>
 <span class="l"> 3: </span>
@@ -409,9 +372,7 @@ see this <a href="https://gist.github.com/t0yv0/6834822">gist</a> for some Coq c
 </code></pre></td>
 </tr>
 </table>
-
 <h4><a name="Unions-Sum-Types" class="anchor" href="#Unions-Sum-Types">Unions / Sum Types</a></h4>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
 <span class="l"> 2: </span>
 <span class="l"> 3: </span>
@@ -444,12 +405,9 @@ see this <a href="https://gist.github.com/t0yv0/6834822">gist</a> for some Coq c
 </code></pre></td>
 </tr>
 </table>
-
 <h2><a name="Generating-custom-picklers-in-type-definitions" class="anchor" href="#Generating-custom-picklers-in-type-definitions">Generating custom picklers in type definitions</a></h2>
-
 <p>FsPickler can be instructed to use custom pickler definitions for given types
 using the following design pattern:</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
 <span class="l"> 2: </span>
 <span class="l"> 3: </span>
@@ -494,12 +452,10 @@ using the following design pattern:</p>
 </code></pre></td>
 </tr>
 </table>
-
 <p>This tells FsPickler to generate a pickler for the given type using
 that particular factory method. It should be noted that the <code>Read</code>/<code>Write</code>
-operations are not commutative, hence care should be taken so that ordering is matched. 
+operations are not commutative, hence care should be taken so that ordering is matched.
 The <code>IPicklerResolver</code> argument provides a handle to the pickler generator and can be used recursively:</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
 <span class="l"> 2: </span>
 <span class="l"> 3: </span>
@@ -534,13 +490,10 @@ The <code>IPicklerResolver</code> argument provides a handle to the pickler gene
 </code></pre></td>
 </tr>
 </table>
-
 <h2><a name="Runtime-pickler-registration" class="anchor" href="#Runtime-pickler-registration">Runtime pickler registration</a></h2>
-
 <p>As of FsPickler 1.2.5 it is possible to register custom pickler definitions at runtime. This is possible using
-the <a href="http://nessos.github.io/FsPickler/reference/nessos-fspickler-ipicklerfactory-1.html"><code>IPicklerFactory&lt;'T&gt;</code></a> abstraction. 
+the <a href="http://nessos.github.io/FsPickler/reference/nessos-fspickler-ipicklerfactory-1.html"><code>IPicklerFactory&lt;'T&gt;</code></a> abstraction.
 Consider a type declaration that has not been made serializable:</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 <span class="l">2: </span>
 <span class="l">3: </span>
@@ -551,9 +504,7 @@ Consider a type declaration that has not been made serializable:</p>
 </code></pre></td>
 </tr>
 </table>
-
 <p>It is now possible to declare and register a pickler factory at a separate location</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
 <span class="l"> 2: </span>
 <span class="l"> 3: </span>
@@ -588,9 +539,7 @@ Consider a type declaration that has not been made serializable:</p>
 </code></pre></td>
 </tr>
 </table>
-
 <p>When resolving a pickler of this type in the future, the user-supplied implementation will be used:</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 <span class="l">2: </span>
 <span class="l">3: </span>
@@ -601,9 +550,7 @@ Consider a type declaration that has not been made serializable:</p>
 </code></pre></td>
 </tr>
 </table>
-
 <p>Note that factory registrations need to be performed <em>before</em> FsPickler uses their types at all in the current AppDomain:</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 <span class="l">2: </span>
 <span class="l">3: </span>
@@ -612,37 +559,27 @@ Consider a type declaration that has not been made serializable:</p>
    at &lt;StartupCode$FsPickler&gt;.$FsPickler.RegisterPicklerFactory@54.Invoke(Unit unitVar0) in c:\Users\eirik\Development\nessos\FsPickler\src\FsPickler\FsPickler\FsPickler.fs:line 60
    at &lt;StartupCode$FsPickler&gt;.$PicklerCache.f@1-2(PicklerCache c, FSharpFunc`2 f, Unit unitVar0) in c:\Users\eirik\Development\nessos\FsPickler\src\FsPickler\PicklerGeneration\PicklerCache.fs:line 73
 </code></pre></td></tr></table>
-
 <p>If all that needs to be done is declare to FsPickler the intention of treating a type as serializable,
 we can avoid the hassle of defining a full-blown custom pickler as follows:</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 </pre></td>
 <td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span onmouseout="hideTip(event, 'fs14', 523)" onmouseover="showTip(event, 'fs14', 523)" class="t">FsPickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs191', 524)" onmouseover="showTip(event, 'fs191', 524)" class="f">DeclareSerializable</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs175', 525)" onmouseover="showTip(event, 'fs175', 525)" class="t">NonSerializable</span><span class="o">&gt;</span> ()
 </code></pre></td>
 </tr>
 </table>
-
 <h2><a name="Additional-tools" class="anchor" href="#Additional-tools">Additional tools</a></h2>
-
 <p>This section describes some of the additional tools offered by the library:</p>
-
 <h3><a name="Object-Cloning" class="anchor" href="#Object-Cloning">Object Cloning</a></h3>
-
-<p>FsPickler 1.2 adds support for fast cloning of serializable objects. 
+<p>FsPickler 1.2 adds support for fast cloning of serializable objects.
 This is done in a node-per-node basis, without the need for serialization formats and intermediate buffers.</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 </pre></td>
 <td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span onmouseout="hideTip(event, 'fs192', 526)" onmouseover="showTip(event, 'fs192', 526)" class="i">clonedValue</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs14', 527)" onmouseover="showTip(event, 'fs14', 527)" class="t">FsPickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs193', 528)" onmouseover="showTip(event, 'fs193', 528)" class="f">Clone</span> [<span onmouseout="hideTip(event, 'fs194', 529)" onmouseover="showTip(event, 'fs194', 529)" class="p">Choice1Of2</span> <span class="s">&quot;foo&quot;</span> ; <span onmouseout="hideTip(event, 'fs195', 530)" onmouseover="showTip(event, 'fs195', 530)" class="p">Choice2Of2</span> [<span class="s">&#39;b&#39;</span>;<span class="s">&#39;a&#39;</span>;<span class="s">&#39;r&#39;</span>]]
 </code></pre></td>
 </tr>
 </table>
-
 <h3><a name="Structural-Hashcodes" class="anchor" href="#Structural-Hashcodes">Structural Hashcodes</a></h3>
-
 <p>FsPickler offers experimental support for structural, non-cryptographic, hashcode generation:</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 <span class="l">2: </span>
 <span class="l">3: </span>
@@ -663,17 +600,13 @@ This is done in a node-per-node basis, without the need for serialization format
 </code></pre></td>
 </tr>
 </table>
-
 <p>This will generate a 128-bit structural hashcode based on the <a href="http://en.wikipedia.org/wiki/MurmurHash">MurMurHash</a> algorithm.
 Implementation is memory efficient, since the hashing algorithm is integrated with
 the underlying stream implementation. It is possible for users to define their own hashing
 algorithms by inheriting the special <code>HashStream</code> class.</p>
-
 <p>Hashing functionality offered by FsPickler is an ideal replacement to <code>.GetHashCode()</code> for
 large objects or complex object graphs, but it is not recommended for small values or primitives.</p>
-
 <p>If a hashcode is not required, the size of an object alone can be computed as follows:</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 <span class="l">2: </span>
 <span class="l">3: </span>
@@ -684,33 +617,25 @@ large objects or complex object graphs, but it is not recommended for small valu
 </code></pre></td>
 </tr>
 </table>
-
 <h3><a name="Typed-Serialization" class="anchor" href="#Typed-Serialization">Typed Serialization</a></h3>
-
 <p>It is possible to create typed picklings of objects:</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 </pre></td>
 <td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span onmouseout="hideTip(event, 'fs199', 536)" onmouseover="showTip(event, 'fs199', 536)" class="i">typedPickle</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs19', 537)" onmouseover="showTip(event, 'fs19', 537)" class="i">jsonSerializer</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs200', 538)" onmouseover="showTip(event, 'fs200', 538)" class="f">PickleTyped</span> [<span class="n">1</span> <span class="o">..</span> <span class="n">1000</span>]
 </code></pre></td>
 </tr>
 </table>
-
 <p>this will produce a serialization annotated with the type of the original object.
 They can then be easily deserialized like so:</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 </pre></td>
 <td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span onmouseout="hideTip(event, 'fs201', 539)" onmouseover="showTip(event, 'fs201', 539)" class="i">value</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs19', 540)" onmouseover="showTip(event, 'fs19', 540)" class="i">jsonSerializer</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs202', 541)" onmouseover="showTip(event, 'fs202', 541)" class="f">UnPickleTyped</span> <span onmouseout="hideTip(event, 'fs199', 542)" onmouseover="showTip(event, 'fs199', 542)" class="i">typedPickle</span>
 </code></pre></td>
 </tr>
 </table>
-
 <h3><a name="Object-Sifting" class="anchor" href="#Object-Sifting">Object Sifting</a></h3>
-
 <p>FsPickler 1.2 comes with a 'sifting' functionality which allows serialization/cloning while omitting specified
 instances from an object graph. For example, consider the object graph</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 <span class="l">2: </span>
 <span class="l">3: </span>
@@ -721,9 +646,7 @@ instances from an object graph. For example, consider the object graph</p>
 </code></pre></td>
 </tr>
 </table>
-
 <p>The size of the object becomes evident when running</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 <span class="l">2: </span>
 <span class="l">3: </span>
@@ -734,10 +657,8 @@ instances from an object graph. For example, consider the object graph</p>
 </code></pre></td>
 </tr>
 </table>
-
 <p>Supposing we knew that the size of the graph was being bloated by large arrays,
 we can use FsPickler to optimize serialization by sifting away occurences from the object graph.</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
 <span class="l"> 2: </span>
 <span class="l"> 3: </span>
@@ -774,11 +695,9 @@ we can use FsPickler to optimize serialization by sifting away occurences from t
 </code></pre></td>
 </tr>
 </table>
-
 <p>This will return a sifted clone of the original object as well as a collection of all objects that were sifted
 from the original input. The sifted copy encapsulated in a wrapper type so that it cannot be consumed while in its partial state.
 The original input graph will not be mutated in any way. We can verify that the size of the sifted object has been reduced:</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 <span class="l">2: </span>
 <span class="l">3: </span>
@@ -789,30 +708,23 @@ The original input graph will not be mutated in any way. We can verify that the 
 </code></pre></td>
 </tr>
 </table>
-
 <p>Sifted objects can be put back together by calling</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 </pre></td>
 <td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span onmouseout="hideTip(event, 'fs214', 570)" onmouseover="showTip(event, 'fs214', 570)" class="i">reconstructed</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs14', 571)" onmouseover="showTip(event, 'fs14', 571)" class="t">FsPickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs215', 572)" onmouseover="showTip(event, 'fs215', 572)" class="f">UnSift</span>(<span onmouseout="hideTip(event, 'fs211', 573)" onmouseover="showTip(event, 'fs211', 573)" class="i">siftedGraph</span>, <span onmouseout="hideTip(event, 'fs212', 574)" onmouseover="showTip(event, 'fs212', 574)" class="i">siftedValues</span>)
 </code></pre></td>
 </tr>
 </table>
-
 <h3><a name="Object-Graph-Visitors" class="anchor" href="#Object-Graph-Visitors">Object Graph Visitors</a></h3>
-
 <p>FsPickler is capable of efficiently traversing arbitrary object graphs (as long as they are serializable)
 by exploiting its pickler infrastructure. This can be done by calling the method:</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 </pre></td>
 <td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span onmouseout="hideTip(event, 'fs14', 575)" onmouseover="showTip(event, 'fs14', 575)" class="t">FsPickler</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs216', 576)" onmouseover="showTip(event, 'fs216', 576)" class="f">VisitObject</span>
 </code></pre></td>
 </tr>
 </table>
-
 <p>which takes as input a serializable object graph and a so-called object visitor:</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 <span class="l">2: </span>
 <span class="l">3: </span>
@@ -825,9 +737,7 @@ by exploiting its pickler infrastructure. This can be done by calling the method
 </code></pre></td>
 </tr>
 </table>
-
 <p>A few applications of this are provided by the core library:</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 <span class="l">2: </span>
 <span class="l">3: </span>
@@ -844,11 +754,8 @@ by exploiting its pickler infrastructure. This can be done by calling the method
 </code></pre></td>
 </tr>
 </table>
-
 <h2><a name="Defining-Custom-Pickle-Formats" class="anchor" href="#Defining-Custom-Pickle-Formats">Defining Custom Pickle Formats</a></h2>
-
 <p>It is possible to create user-defined pickle formats for FsPickler. One simply needs to implement the interface</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 <span class="l">2: </span>
 <span class="l">3: </span>
@@ -867,9 +774,8 @@ by exploiting its pickler infrastructure. This can be done by calling the method
 </code></pre></td>
 </tr>
 </table>
-
-<p>which can then be bolted on a class that inherits either of the 
-<a href="reference/nessos-fspickler-fspicklerserializer.html"><code>FsPicklerSerializer</code></a> or 
+<p>which can then be bolted on a class that inherits either of the
+<a href="reference/nessos-fspickler-fspicklerserializer.html"><code>FsPicklerSerializer</code></a> or
 <a href="reference/nessos-fspickler-fspicklertextserializer.html"><code>FsPicklerTextSerializer</code></a>.</p>
 
 <div class="tip" id="fs1">val stream : System.IO.Stream<br /><br />Full name: Tutorial.stream</div>
