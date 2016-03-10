@@ -35,4 +35,4 @@ type BsonPickleFormatProvider() =
             let br = new BinaryReader(stream, encoding, leaveOpen)
 #endif
             let bsonReader = new BsonReader(br)
-            new JsonPickleReader(bsonReader, false, false, leaveOpen) :> _
+            new JsonPickleReader(bsonReader, false, false, false, leaveOpen) :> _

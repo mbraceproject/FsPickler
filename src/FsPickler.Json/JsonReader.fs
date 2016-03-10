@@ -14,7 +14,7 @@ open Nessos.FsPickler
 /// <summary>
 ///     Json format deserializer
 /// </summary>
-type internal JsonPickleReader (jsonReader : JsonReader, omitHeader, isTopLevelSequence, leaveOpen) =
+type internal JsonPickleReader (jsonReader : JsonReader, omitHeader, useCustomSeparator, isTopLevelSequence, leaveOpen) =
 
     do
         jsonReader.CloseInput <- not leaveOpen
@@ -22,6 +22,14 @@ type internal JsonPickleReader (jsonReader : JsonReader, omitHeader, isTopLevelS
         jsonReader.DateParseHandling <- DateParseHandling.None
 
     let isBsonReader = match jsonReader with :? Bson.BsonReader -> true | _ -> false
+    let isTextReader = match jsonReader with :? JsonTextReader -> true | _ -> false
+    
+    // Json.NET 8 introduces bug when SupportMultipleContent is enabled 
+    let isJsonDotNet8CustomSequence = 
+        isTopLevelSequence && 
+        useCustomSeparator &&
+        isTextReader &&
+        jsonDotNetVersion.Major >= 8
 
     let mutable depth = 0
     let arrayStack = new Stack<int> ()
@@ -113,7 +121,17 @@ type internal JsonPickleReader (jsonReader : JsonReader, omitHeader, isTopLevelS
         member __.PreferLengthPrefixInSequences = false
         member __.ReadNextSequenceElement () = 
             if isTopLevelSequence && depth = 1 then
-                jsonReader.TokenType <> JsonToken.None
+                if isJsonDotNet8CustomSequence then
+                    // Json.NET 8 handling
+                    match jsonReader.TokenType with
+                    | JsonToken.None | JsonToken.EndArray 
+                    | JsonToken.EndConstructor | JsonToken.EndObject -> false
+                    | _ -> 
+                        let tr = jsonReader :?> JsonTextReader
+                        tr.LinePosition + tr.LineNumber > 0
+                else
+                    // old logic
+                    jsonReader.TokenType <> JsonToken.None
             else
                 jsonReader.TokenType <> JsonToken.EndArray
 

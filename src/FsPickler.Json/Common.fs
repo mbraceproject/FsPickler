@@ -24,6 +24,9 @@ module internal Common =
     let inline fastUnbox<'T> (x : obj) = 
         Microsoft.FSharp.Core.LanguagePrimitives.IntrinsicFunctions.UnboxFast<'T> x
 
+    let jsonDotNetVersion = 
+        typeof<Newtonsoft.Json.FloatParseHandling>.Assembly.GetName().Version
+
     module Enum =
         /// <summary>
         ///     Checks that set of enumeration flags has given flag
@@ -79,7 +82,7 @@ module internal Common =
 
         member inline jsonReader.ValueAs<'T> () = jsonReader.Value |> fastUnbox<'T>
 
-        member inline jsonReader.ReadPrimitiveAs<'T> ignoreName (name : string) =
+        member jsonReader.ReadPrimitiveAs<'T> ignoreName (name : string) =
             if not ignoreName then
                 jsonReader.ReadProperty name
                 jsonReader.Read() |> ignore

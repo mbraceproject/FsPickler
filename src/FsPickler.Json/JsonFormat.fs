@@ -52,7 +52,7 @@ type JsonPickleFormatProvider internal (indent, omitHeader) as self =
             let sr = new StreamReader(stream, encoding, true, 1024, leaveOpen)
 #endif
             let jr = new JsonTextReader(sr)
-            new JsonPickleReader(jr, __.OmitHeader, isCustomSeq isTopLevelSequence, leaveOpen) :> _
+            new JsonPickleReader(jr, __.OmitHeader, __.UseCustomTopLevelSequenceSeparator, isCustomSeq isTopLevelSequence, leaveOpen) :> _
 
         member __.CreateWriter (textWriter, isTopLevelSequence, leaveOpen) =
             let jw = new JsonTextWriter(textWriter)
@@ -60,4 +60,4 @@ type JsonPickleFormatProvider internal (indent, omitHeader) as self =
 
         member __.CreateReader (textReader, isTopLevelSequence, leaveOpen) =
             let jr = new JsonTextReader(textReader)
-            new JsonPickleReader(jr, __.OmitHeader, isCustomSeq isTopLevelSequence, leaveOpen) :> _
+            new JsonPickleReader(jr, __.OmitHeader, __.UseCustomTopLevelSequenceSeparator, isCustomSeq isTopLevelSequence, leaveOpen) :> _
