@@ -121,7 +121,7 @@ module ``Generic Tests`` =
     [<Test; Category("Pickler tests")>]
     let ``1. Should mark subtypes of nonserializable types serializable`` () =
         FsPickler.IsSerializableType<NonSerializable> () |> should equal false
-        FsPickler.IsSerializableType<SerializableInheritingNonSerializable> () |> should equal false
+        FsPickler.IsSerializableType<SerializableInheritingNonSerializable> () |> should equal true
 
     [<Test; Category("Pickler tests")>]
     let ``1. Should mark serializable instances of nonserializable interfaces serializable`` () =

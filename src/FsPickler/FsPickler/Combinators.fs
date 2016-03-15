@@ -130,7 +130,7 @@ module Pickler =
     /// sequence pickler combinator ; uses eager evaluation
     let seq f = SeqPickler.Create f
 
-    /// a pickler that always serializes instances as zero.
+    /// a pickler that always serializes instances as zero(null).
     /// Useful for forcing serialization of non-serializable fields.
     let zero<'T> = NullPickler.Create<'T> ()
 

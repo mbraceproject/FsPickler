@@ -379,15 +379,15 @@ module TypeShape =
         || t.IsCOMObject
         || t.IsImport
         || t.IsMarshalByRef
-        || t = canon
         
     /// use reflection to bootstrap a shape instance
     let resolve (t : Type) =
         if t.IsGenericTypeDefinition then raise UnSupportedShape
         elif t.IsGenericParameter then raise UnSupportedShape
-        elif isIntrinsicType t then raise UnSupportedShape
+        elif t = canon then raise UnSupportedShape
         elif t.IsPrimitive then activate1 typedefof<ShapePrimitive<_>> t
         elif PicklerPluginRegistry.ContainsFactory t then activate1 typedefof<ShapeUserFactory<_>> t
+        elif isIntrinsicType t then raise UnSupportedShape
         elif FSharpType.IsTuple t then
             let gas = t.GetGenericArguments()
             match gas.Length with

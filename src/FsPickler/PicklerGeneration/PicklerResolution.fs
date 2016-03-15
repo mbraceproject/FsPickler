@@ -37,15 +37,14 @@ let resolvePickler (resolver : IPicklerResolver) (mkEarlyBinding : Pickler -> un
 
         // step 3: subtype pickler resolution
         let result =
-            if t.BaseType <> null then
-                let baseP = 
-                    try resolver.Resolve t.BaseType
-                    with :? NonSerializableTypeException as e ->
-                        raise <| NonSerializableTypeException(t, "has non-serializable base type.", inner = e) 
+            if t.BaseType <> null then 
+                try 
+                    let baseP = resolver.Resolve t.BaseType
+                    if baseP.UseWithSubtypes then Some baseP
+                    else
+                        None
 
-                if baseP.UseWithSubtypes then Some baseP
-                else
-                    None
+                with :? NonSerializableTypeException -> None
             else
                 None
 
