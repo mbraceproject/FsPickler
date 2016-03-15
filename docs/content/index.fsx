@@ -7,12 +7,13 @@
 
 # FsPickler : A fast .NET object serializer
 
-FsPickler is a serialization library that facilitates the distribution of .NET objects.
-The implementation focuses on performance and completeness in supported types, including F# types.
-It supports multiple, pluggable serialization formats including Binary, Xml, JSON and BSON.
+FsPickler is a serialization library that facilitates the distribution of objects across .NET processes.
+The implementation focuses on performance and supporting as many types as possible, where possible.
+It supports multiple, pluggable serialization formats such as XML, JSON and BSON;
+also included is a fast binary format of its own.
 The library is based on the functional programming concept of 
 [pickler combinators](http://lambda-the-ultimate.org/node/2243)
-which has been adapted to accommodate the object oriented nature of the .NET framework.
+which has been adapted to accommodate the .NET type system.
 
 <div class="row">
   <div class="span1"></div>
@@ -47,11 +48,11 @@ binarySerializer.UnPickle<int option list> pickle
 The principal motivation behind creating FsPickler is the need for a
 library that provides efficient, correct and complete serialization of
 objects in the CLR and mono runtime. It is aimed at providing a foundation for
-large-scale distributed computation that is based on the .NET framework.
+efficient communication across homogeneous .NET clusters.
 
 FsPickler is ideally suited for serializing:
 
- * Large and complex objects, such as dictionaries, trees and cyclic objects.
+ * Large and complex object graphs, such as dictionaries, trees and cyclic graphs.
 
  * Abstract classes, subtypes, nulls, delegates and closures.
 
@@ -63,7 +64,7 @@ FsPickler is ideally suited for serializing:
 
 FsPickler is NOT:
 
- * a general-purpose Xml/JSON/BSON framework.
+ * a general-purpose XML/JSON/BSON framework.
 
  * a library designed for cross-platform communication.
 
