@@ -33,7 +33,7 @@ type private PicklerGeneratorVisitor (resolver : IPicklerResolver) =
         member __.Struct<'T when 'T : struct> () = StructFieldPickler.Create<'T> resolver :> Pickler
         member __.Delegate<'T when 'T :> Delegate> () = DelegatePickler.Create<'T> resolver :> Pickler
         member __.Enum<'E, 'U when 'E : enum<'U>> () = EnumPickler.Create<'E,'U> resolver :> Pickler
-        member __.UserFactory<'T> () = PicklerPluginRegistry.GetPicklerFactory<'T>().Create resolver :> Pickler
+        member __.UserFactory<'T> () = PicklerPluginRegistry.GetPicklerFactory<'T>() resolver :> Pickler
 
         member __.Nullable<'T when  'T : (new : unit -> 'T) and 
                                     'T : struct and 

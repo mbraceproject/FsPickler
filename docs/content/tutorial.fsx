@@ -357,8 +357,7 @@ RecursiveClass(RecursiveClass()) |> Json.pickle p |> Json.unpickle p
 
 ## Runtime pickler registration
 
-As of FsPickler 1.2.5 it is possible to register custom pickler definitions at runtime. This is possible using
-the [``IPicklerFactory<'T>``](http://nessos.github.io/FsPickler/reference/nessos-fspickler-ipicklerfactory-1.html) abstraction. 
+As of FsPickler 1.2.5 it is possible to register custom pickler definitions at runtime.
 Consider a type declaration that has not been made serializable:
 
 *)
@@ -373,21 +372,18 @@ It is now possible to declare and register a pickler factory at a separate locat
 
 *)
 
-let factory = 
-    { new IPicklerFactory<NonSerializable> with 
-        member __.Create (resolver : IPicklerResolver) =
-            let intP = resolver.Resolve<int> ()
+let mkPickler (resolver : IPicklerResolver) =
+    let intP = resolver.Resolve<int> ()
 
-            let writer (w : WriteState) (ns : NonSerializable) =
-                intP.Write w "value" ns.Value
+    let writer (w : WriteState) (ns : NonSerializable) =
+        intP.Write w "value" ns.Value
 
-            let reader (r : ReadState) =
-                let v = intP.Read r "value" in new NonSerializable(v)
+    let reader (r : ReadState) =
+        let v = intP.Read r "value" in new NonSerializable(v)
 
-            Pickler.FromPrimitives(reader, writer) 
-    }
+    Pickler.FromPrimitives(reader, writer) 
 
-FsPickler.RegisterPicklerFactory factory
+FsPickler.RegisterPicklerFactory mkPickler
 
 (**
 

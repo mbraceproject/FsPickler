@@ -130,6 +130,10 @@ module Pickler =
     /// sequence pickler combinator ; uses eager evaluation
     let seq f = SeqPickler.Create f
 
+    /// a pickler that always serializes instances as zero.
+    /// Useful for forcing serialization of non-serializable fields.
+    let zero<'T> = NullPickler.Create<'T> ()
+
     /// wrap combinator: defines picklers up to isomorphism
     let wrap recover convert p = WrapPickler.Create(p, recover, convert)
     /// alt combinator: choose from list of pickler combinators using tag reader

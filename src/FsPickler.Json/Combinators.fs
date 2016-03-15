@@ -33,7 +33,7 @@ module Bson =
     let private bsonPickler = lazy(FsPickler.CreateBsonSerializer())
 
     /// <summary>
-    ///     Pickles a value to Bson.
+    ///     Pickles a value to BSON.
     /// </summary>
     /// <param name="pickler">utilized pickler.</param>
     /// <param name="value">input value.</param>
@@ -41,7 +41,7 @@ module Bson =
         bsonPickler.Value.Pickle (value, pickler = pickler)
 
     /// <summary>
-    ///     Unpickles a value from bson.
+    ///     Unpickles a value from BSON.
     /// </summary>
     /// <param name="pickler">utilized pickler.</param>
     /// <param name="pickle">input pickle.</param>

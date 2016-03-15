@@ -150,11 +150,9 @@ module ``Generic Tests`` =
         if isRunPicklerFactoryTest then () else
         isRunPicklerFactoryTest <- true
 
-        let factory = 
-            { new IPicklerFactory<PicklerFactoryType> with 
-                member __.Create resolver = Pickler.FromPrimitives((fun _ -> failwith ""), (fun _ _ -> failwith "")) }
+        let factory _ = Pickler.FromPrimitives((fun _ -> failwith ""), (fun _ _ -> failwith ""))
 
-        FsPickler.RegisterPicklerFactory factory
+        FsPickler.RegisterPicklerFactory<PicklerFactoryType> factory
 
         let p = FsPickler.GeneratePickler<PicklerFactoryType> ()
         p.PicklerInfo |> should equal PicklerInfo.UserDefined

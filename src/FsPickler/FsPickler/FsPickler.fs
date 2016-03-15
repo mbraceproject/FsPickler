@@ -59,7 +59,7 @@ type FsPickler private () =
     ///     Factories can only be registered before any serializations take place.
     /// </summary>
     /// <param name="factory">Pickler factory instance.</param>
-    static member RegisterPicklerFactory(factory : IPicklerFactory<'T>) : unit =
+    static member RegisterPicklerFactory<'T>(factory : IPicklerResolver -> Pickler<'T>) : unit =
         let cache = PicklerCache.Instance
         cache.WithLockedCache (fun () ->
             if cache.IsPicklerGenerated typeof<'T> then
@@ -68,6 +68,14 @@ type FsPickler private () =
             let success = PicklerPluginRegistry.RegisterFactory factory
             if not success then
                 invalidOp <| sprintf "A pickler plugin for type '%O' has already been registered." typeof<'T>)
+
+    /// <summary>
+    ///     Registers a pickler instance for use by the pickler generation mechanism.
+    ///     Picklers can only be registered before any serializations take place.
+    /// </summary>
+    /// <param name="Pickler">Pickler instance.</param>
+    static member RegisterPickler<'T>(pickler : Pickler<'T>) : unit =
+        FsPickler.RegisterPicklerFactory(fun _ -> pickler)
 
     /// <summary>
     ///     Declares that supplied type should be treated as serializable.
