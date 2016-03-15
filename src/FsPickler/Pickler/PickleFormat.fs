@@ -47,6 +47,9 @@ type IPickleFormatWriter =
     /// </summary>
     abstract SerializeUnionCaseNames : bool
 
+    /// Serialize enumerations using the slower Enum.Parse/Enum.Format methods
+    abstract UseNamedEnumSerialization : bool
+
     /// <summary>
     ///     Specifies if another sequence element is to follow in the stream.
     /// </summary>
@@ -134,6 +137,9 @@ and IPickleFormatReader =
     ///     This is offered for performance and is mostly used by binary formats.
     /// </summary>
     abstract PreferLengthPrefixInSequences : bool
+
+    /// Serialize enumerations using the slower Enum.Parse/Enum.Format methods
+    abstract UseNamedEnumSerialization : bool
 
     /// <summary>
     ///     Check if sequence has another element.

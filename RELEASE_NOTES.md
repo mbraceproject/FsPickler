@@ -1,3 +1,8 @@
+### 2.0.0
+* Simplify IPicklerFactory API.
+* Serialize enumerations as strings in JSON and XML formats.
+* Allow serializable subtypes of non-serializable base classes.
+
 ### 1.8.1
 * Fix FsPickler.Json issue with Json.NET 8.
 

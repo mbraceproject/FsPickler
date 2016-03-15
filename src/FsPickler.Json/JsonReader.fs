@@ -49,9 +49,9 @@ type internal JsonPickleReader (jsonReader : JsonReader, omitHeader, useCustomSe
             else
                 do jsonReader.MoveNext()
                 let version = jsonReader.ReadPrimitiveAs<string> false "FsPickler"
-                if version <> formatv1400 then
+                if version <> formatv2000 then
                     let v = Version(version)
-                    if version = formatv0960 || version = formatv1200 then
+                    if version = formatv0960 || version = formatv1200 || version = formatv1400 then
                         raise <| new FormatException(sprintf "JSON format version %O no longer supported." v)
                     else
                         raise <| new FormatException(sprintf "Unrecognized JSON format version %O." v)
@@ -117,6 +117,7 @@ type internal JsonPickleReader (jsonReader : JsonReader, omitHeader, useCustomSe
                 else jsonReader.Read() |> ignore
 
         member __.SerializeUnionCaseNames = true
+        member __.UseNamedEnumSerialization = true
 
         member __.PreferLengthPrefixInSequences = false
         member __.ReadNextSequenceElement () = 

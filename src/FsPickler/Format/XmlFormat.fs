@@ -19,7 +19,10 @@ module private XmlUtils =
     let Formatv1200 = "1.2.0.0" // as defined in FsPickler 1.2.0.0 
 
     [<Literal>]
-    let Formatv1400 = "1.4.0.0" // as defined in FsPickler 1.4.0.0 
+    let Formatv1400 = "1.4.0.0" // as defined in FsPickler 1.4.0.0
+
+    [<Literal>]
+    let Formatv2000 = "2.0.0.0" // as defined in FsPickler 2.0.0.0 
 
     let inline escapeString (value : string) = SecurityElement.Escape value
     let inline unEscapeString (value : string) =
@@ -123,7 +126,7 @@ type XmlPickleWriter internal (textWriter : TextWriter, indent : bool, leaveOpen
         member __.BeginWriteRoot (tag : string) = 
             writer.WriteStartDocument()
             writer.WriteStartElement("FsPickler")
-            writer.WriteAttributeString("version", Formatv1400)
+            writer.WriteAttributeString("version", Formatv2000)
             writer.WriteAttributeString("type", tag)
 
         member __.EndWriteRoot () = 
@@ -139,6 +142,7 @@ type XmlPickleWriter internal (textWriter : TextWriter, indent : bool, leaveOpen
         member __.EndWriteObject () = writer.WriteEndElement()
 
         member __.SerializeUnionCaseNames = true
+        member __.UseNamedEnumSerialization = true
 
         member __.PreferLengthPrefixInSequences = false
         member __.WriteNextSequenceElement _ = ()
@@ -232,7 +236,7 @@ type XmlPickleReader internal (textReader : TextReader, leaveOpen) =
             reader.ReadElementName "FsPickler"
 
             let version = reader.["version"]
-            if version <> Formatv1400 then
+            if version <> Formatv2000 then
                 let v = Version(version)
                 if version = Formatv0960 || version = Formatv1200 then
                     let msg = sprintf "XML format version %O no longer supported." version
@@ -283,6 +287,7 @@ type XmlPickleReader internal (textReader : TextReader, leaveOpen) =
         member __.ReadCachedObjectId () = cachedObjectId
 
         member __.SerializeUnionCaseNames = true
+        member __.UseNamedEnumSerialization = true
 
         member __.PreferLengthPrefixInSequences = false
         member __.ReadNextSequenceElement () =

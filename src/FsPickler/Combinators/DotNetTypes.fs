@@ -23,17 +23,25 @@ type internal EnumPickler =
     static member Create<'Enum, 'Underlying when 'Enum : enum<'Underlying>> (resolver : IPicklerResolver) =
         let pickler = resolver.Resolve<'Underlying> ()
 
-        let writer (w : WriteState) (_ : string) (x : 'Enum) =
-            let value = Microsoft.FSharp.Core.LanguagePrimitives.EnumToValue<'Enum, 'Underlying> x
-            pickler.Write w "value" value
+        let writer (w : WriteState) (tag : string) (x : 'Enum) =
+            if w.Formatter.UseNamedEnumSerialization then
+                let value = x.ToString()
+                w.Formatter.WriteString tag value
+            else
+                let value = Microsoft.FSharp.Core.LanguagePrimitives.EnumToValue<'Enum, 'Underlying> x
+                pickler.Write w tag value
 
-        let reader (r : ReadState) (_ : string) =
-            let value = pickler.Read r "value"
-            Microsoft.FSharp.Core.LanguagePrimitives.EnumOfValue<'Underlying, 'Enum> value
+        let reader (r : ReadState) (tag : string) =
+            if r.Formatter.UseNamedEnumSerialization then
+                let value = r.Formatter.ReadString tag
+                Enum.Parse(typeof<'Enum>, value) :?> 'Enum
+            else
+                let value = pickler.Read r tag
+                Microsoft.FSharp.Core.LanguagePrimitives.EnumOfValue<'Underlying, 'Enum> value
 
         let cloner (_ : CloneState) (x : 'Enum) = x
 
-        CompositePickler.Create(reader, writer, cloner, ignore2, PicklerInfo.FieldSerialization, cacheByRef = false, useWithSubtypes = false)
+        CompositePickler.Create(reader, writer, cloner, ignore2, PicklerInfo.FieldSerialization, cacheByRef = false, useWithSubtypes = false, bypass = true)
 
 
 /// Nullable Pickler combinator
