@@ -281,7 +281,7 @@ type internal ISerializablePickler =
         CompositePickler.Create(reader, writer, cloner, accepter, PicklerInfo.ISerializable)
 
     /// SerializationInfo-based pickler combinator
-    static member FromSerializationInfo<'T>(ctor : SerializationInfo -> 'T, proj : SerializationInfo -> 'T -> unit) : Pickler<'T> =
+    static member FromSerializationInfo<'T>(ctor : SerializationInfo -> 'T, proj : SerializationInfo -> 'T -> unit, ?useWithSubtypes) : Pickler<'T> =
         let writer (state : WriteState) (_ : string) (t : 'T) =
             let sI = mkSerializationInfo<'T> ()
             do proj sI t
@@ -302,4 +302,4 @@ type internal ISerializablePickler =
             do proj sI t
             acceptSerializationInfo v sI
 
-        CompositePickler.Create(reader, writer, cloner, accepter, PicklerInfo.Combinator)
+        CompositePickler.Create(reader, writer, cloner, accepter, PicklerInfo.Combinator, ?useWithSubtypes = useWithSubtypes)

@@ -63,6 +63,15 @@ module ExtensionMethods =
 
             CompositePickler.Create(reader, writer, cloner, accepter, PicklerInfo.UserDefined, ?cacheByRef = cacheByRef, ?useWithSubtypes = useWithSubtypes)
 
+        /// <summary>
+        ///     Initializes a pickler instance using a pair of SerializationInfo lambdas.
+        /// </summary>
+        /// <param name="reader">SerializationInfo deserializer.</param>
+        /// <param name="writer">SerializationInfo serializer.</param>
+        /// <param name="useWithSubtypes">Use with all subtypes of given type. Defaults to false.</param>
+        static member FromSerializationInfo<'T>(reader : SerializationInfo -> 'T, writer : SerializationInfo -> 'T -> unit, ?useWithSubtypes : bool) : Pickler<'T> =
+            ISerializablePickler.FromSerializationInfo(reader, writer, ?useWithSubtypes = useWithSubtypes)
+
         /// A pickler that always serializes instances as zero(null).
         /// Useful for forcing serialization of non-serializable fields.
         static member Null<'T>(?useWithSubtypes : bool) =
