@@ -38,12 +38,3 @@ type internal CloneableOnlyPickler =
         let visitor (_ : VisitState) (_ : 'T) = ()
 
         CompositePickler.Create(reader, writer, cloner, visitor, PicklerInfo.UserDefined, cacheByRef = true, isCloneableOnly = true)
-
-type internal NullPickler =
-    static member Create<'T> () =
-        let writer (_ : WriteState) (_ : string) (_ : 'T) = ()
-        let reader (_ : ReadState) (_ : string) = Unchecked.defaultof<'T>
-        let cloner (_ : CloneState) (t : 'T) = t
-        let visitor (_ : VisitState) (_ : 'T) = ()
-
-        CompositePickler.Create(reader, writer, cloner, visitor, PicklerInfo.UserDefined, cacheByRef = true)

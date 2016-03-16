@@ -63,6 +63,11 @@ module ExtensionMethods =
 
             CompositePickler.Create(reader, writer, cloner, accepter, PicklerInfo.UserDefined, ?cacheByRef = cacheByRef, ?useWithSubtypes = useWithSubtypes)
 
+        /// A pickler that always serializes instances as zero(null).
+        /// Useful for forcing serialization of non-serializable fields.
+        static member Null<'T>(?useWithSubtypes : bool) =
+            CompositePickler.FromPrimitives<'T>((fun _ -> Unchecked.defaultof<'T>), (fun _ _ -> ()), ?useWithSubtypes = useWithSubtypes, cacheByRef = false)
+
 
     type SerializationInfo with
         /// <summary>
