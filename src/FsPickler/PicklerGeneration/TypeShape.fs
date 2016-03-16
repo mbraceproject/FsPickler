@@ -458,7 +458,7 @@ module TypeShape =
                 activate1 typedefof<ShapeDelegate<_>> t
             elif isISerializable t then
                 match t.TryGetConstructor [| typeof<SerializationInfo> ; typeof<StreamingContext> |] with
-                | Some _ -> activate typedefof<ShapeISerializable<_>> [|t|]
+                | Some _ -> activate1 typedefof<ShapeISerializable<_>> t
                 | None when isAssignableFrom typeof<exn> t -> activate1 typedefof<ShapeNonISerializableException<_>> t
                 | None -> activate1 typedefof<ShapeIObjectReference<_>> t
 
