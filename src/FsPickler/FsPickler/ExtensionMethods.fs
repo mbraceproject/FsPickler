@@ -74,7 +74,7 @@ module ExtensionMethods =
 
         /// A pickler that always serializes instances as zero(null).
         /// Useful for forcing serialization of non-serializable fields.
-        static member Null<'T>(?useWithSubtypes : bool) =
+        static member Null<'T>(?useWithSubtypes : bool) : Pickler<'T> =
             CompositePickler.FromPrimitives<'T>((fun _ -> Unchecked.defaultof<'T>), (fun _ _ -> ()), ?useWithSubtypes = useWithSubtypes, cacheByRef = false)
 
 
