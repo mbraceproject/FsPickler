@@ -38,6 +38,7 @@ type PicklerInfo =
     | UserDefined           = 10uy
 
 /// Specifies runtime properties of serialized objects.
+[<Flags>]
 type ObjectFlags = 
     | None                  = 0uy
     | IsNull                = 1uy
