@@ -5,7 +5,7 @@
 
 (**
 
-# FsPickler : A fast .NET object serializer
+# FsPickler : A fast, multi-format messaging serializer for .NET
 
 FsPickler is a serialization library that facilitates the distribution of objects across .NET processes.
 The implementation focuses on performance and supporting as many types as possible, where possible.
