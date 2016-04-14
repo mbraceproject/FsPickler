@@ -1,3 +1,7 @@
+### 2.1.0
+* Add support for CollectionDataContractAttribute.
+* Add support for DeclareSerializable predicate arguments.
+
 ### 2.0.0
 * Simplify IPicklerFactory API.
 * Serialize enumerations as strings in JSON and XML formats.
