@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8"/>
-    <title>FsPickler : A fast .NET object serializer
+    <title>FsPickler : A fast, multi-format messaging serializer for .NET
 </title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <meta name="description" content="A general-purpose serialization library for .NET"/>
@@ -33,7 +33,7 @@
       <div class="row">
         <div class="span9" id="main">
           
-<h1><a name="FsPickler-A-fast-NET-object-serializer" class="anchor" href="#FsPickler-A-fast-NET-object-serializer">FsPickler : A fast .NET object serializer</a></h1>
+<h1><a name="FsPickler-A-fast-multi-format-messaging-serializer-for-NET" class="anchor" href="#FsPickler-A-fast-multi-format-messaging-serializer-for-NET">FsPickler : A fast, multi-format messaging serializer for .NET</a></h1>
 <p>FsPickler is a serialization library that facilitates the distribution of objects across .NET processes.
 The implementation focuses on performance and supporting as many types as possible, where possible.
 It supports multiple, pluggable serialization formats such as XML, JSON and BSON;
@@ -81,7 +81,7 @@ efficient communication across homogeneous .NET clusters.</p>
 <p>FsPickler is ideally suited for serializing:</p>
 <ul>
 <li>Large and complex object graphs, such as dictionaries, trees and cyclic graphs.</li>
-<li>Abstract classes, subtypes, nulls, delegates and closures.</li>
+<li>Abstract classes, subtypes, delegates and closures.</li>
 <li>ISerializable, DataContract or attribute-based serialization.</li>
 <li>F# unions, records and quotations.</li>
 <li>Inaccessible types or types unknown at compile time.</li>
@@ -140,7 +140,7 @@ For more information see the <a href="https://github.com/nessos/FsPickler/blob/m
 <div class="tip" id="fs1">namespace Nessos</div>
 <div class="tip" id="fs2">namespace Nessos.FsPickler</div>
 <div class="tip" id="fs3">val binarySerializer : BinarySerializer<br /><br />Full name: Index.binarySerializer</div>
-<div class="tip" id="fs4">type FsPickler =<br />&#160;&#160;private new : unit -&gt; FsPickler<br />&#160;&#160;static member Clone : value:&#39;T * ?pickler:Pickler&lt;&#39;T&gt; * ?streamingContext:StreamingContext -&gt; &#39;T<br />&#160;&#160;static member ComputeHash : value:&#39;T * ?hashFactory:IHashStreamFactory -&gt; HashResult<br />&#160;&#160;static member ComputeSize : value:&#39;T * ?pickler:Pickler&lt;&#39;T&gt; -&gt; int64<br />&#160;&#160;static member CreateBinarySerializer : ?forceLittleEndian:bool * ?typeConverter:ITypeNameConverter -&gt; BinarySerializer<br />&#160;&#160;static member CreateObjectSizeCounter : ?encoding:Encoding * ?resetInterval:int64 -&gt; ObjectSizeCounter<br />&#160;&#160;static member CreateXmlSerializer : ?typeConverter:ITypeNameConverter * ?indent:bool -&gt; XmlSerializer<br />&#160;&#160;static member DeclareSerializable : unit -&gt; unit<br />&#160;&#160;static member DeclareSerializable : t:Type -&gt; unit<br />&#160;&#160;static member EnsureSerializable : graph:&#39;T * ?failOnCloneableOnlyTypes:bool -&gt; unit<br />&#160;&#160;...<br /><br />Full name: Nessos.FsPickler.FsPickler</div>
+<div class="tip" id="fs4">type FsPickler =<br />&#160;&#160;private new : unit -&gt; FsPickler<br />&#160;&#160;static member Clone : value:&#39;T * ?pickler:Pickler&lt;&#39;T&gt; * ?streamingContext:StreamingContext -&gt; &#39;T<br />&#160;&#160;static member ComputeHash : value:&#39;T * ?hashFactory:IHashStreamFactory -&gt; HashResult<br />&#160;&#160;static member ComputeSize : value:&#39;T * ?pickler:Pickler&lt;&#39;T&gt; -&gt; int64<br />&#160;&#160;static member CreateBinarySerializer : ?forceLittleEndian:bool * ?typeConverter:ITypeNameConverter -&gt; BinarySerializer<br />&#160;&#160;static member CreateObjectSizeCounter : ?encoding:Encoding * ?resetInterval:int64 -&gt; ObjectSizeCounter<br />&#160;&#160;static member CreateXmlSerializer : ?typeConverter:ITypeNameConverter * ?indent:bool -&gt; XmlSerializer<br />&#160;&#160;static member DeclareSerializable : unit -&gt; unit<br />&#160;&#160;static member DeclareSerializable : predicate:(Type -&gt; bool) -&gt; unit<br />&#160;&#160;static member DeclareSerializable : t:Type -&gt; unit<br />&#160;&#160;...<br /><br />Full name: Nessos.FsPickler.FsPickler</div>
 <div class="tip" id="fs5">static member FsPickler.CreateBinarySerializer : ?forceLittleEndian:bool * ?typeConverter:ITypeNameConverter -&gt; BinarySerializer</div>
 <div class="tip" id="fs6">val pickle : byte []<br /><br />Full name: Index.pickle</div>
 <div class="tip" id="fs7">member FsPicklerSerializer.Pickle : value:&#39;T * ?pickler:Pickler&lt;&#39;T&gt; * ?streamingContext:System.Runtime.Serialization.StreamingContext * ?encoding:System.Text.Encoding -&gt; byte []</div>

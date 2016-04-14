@@ -60,7 +60,7 @@
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L113-113" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L121-121" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -82,7 +82,7 @@ serialization buffers.</p>
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L191-191" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L199-199" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -102,7 +102,7 @@ serialization buffers.</p>
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L162-162" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L170-170" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -142,7 +142,7 @@ serialization buffers.</p>
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L169-169" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L177-177" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -175,9 +175,30 @@ serialization buffers.</p>
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '101', 101)" onmouseover="showTip(event, '101', 101)">
-            DeclareSerializable(t)
+            DeclareSerializable(predicate)
           </code>
           <div class="tip" id="101">
+            <strong>Signature:</strong> (predicate:(Type -&gt; bool)) -&gt; unit<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L106-106" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Declares that types satisfying the provided predicate should be treated by
+FsPickler as carrying the Serializable attribute.</p>
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '102', 102)" onmouseover="showTip(event, '102', 102)">
+            DeclareSerializable(t)
+          </code>
+          <div class="tip" id="102">
             <strong>Signature:</strong> t:Type -&gt; unit<br />
                       </div>
         </td>
@@ -195,10 +216,10 @@ This is equivalent to dynamically attaching a SerializableAttribute to the type.
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '102', 102)" onmouseover="showTip(event, '102', 102)">
+          <code onmouseout="hideTip(event, '103', 103)" onmouseover="showTip(event, '103', 103)">
             DeclareSerializable()
           </code>
-          <div class="tip" id="102">
+          <div class="tip" id="103">
             <strong>Signature:</strong> unit -&gt; unit<br />
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
@@ -216,15 +237,15 @@ This is equivalent to dynamically attaching a SerializableAttribute to the type.
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '103', 103)" onmouseover="showTip(event, '103', 103)">
+          <code onmouseout="hideTip(event, '104', 104)" onmouseover="showTip(event, '104', 104)">
             EnsureSerializable(...)
           </code>
-          <div class="tip" id="103">
+          <div class="tip" id="104">
             <strong>Signature:</strong> (graph:&#39;T * failOnCloneableOnlyTypes:bool option) -&gt; unit<br />
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L255-255" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L263-263" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -236,15 +257,15 @@ This is equivalent to dynamically attaching a SerializableAttribute to the type.
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '104', 104)" onmouseover="showTip(event, '104', 104)">
+          <code onmouseout="hideTip(event, '105', 105)" onmouseover="showTip(event, '105', 105)">
             GatherObjectsInGraph(graph)
           </code>
-          <div class="tip" id="104">
+          <div class="tip" id="105">
             <strong>Signature:</strong> graph:obj -&gt; obj []<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L231-231" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L239-239" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -256,15 +277,15 @@ This is equivalent to dynamically attaching a SerializableAttribute to the type.
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '105', 105)" onmouseover="showTip(event, '105', 105)">
+          <code onmouseout="hideTip(event, '106', 106)" onmouseover="showTip(event, '106', 106)">
             GatherTypesInObjectGraph(graph)
           </code>
-          <div class="tip" id="105">
+          <div class="tip" id="106">
             <strong>Signature:</strong> graph:obj -&gt; Type []<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L198-198" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L206-206" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -276,10 +297,10 @@ This is equivalent to dynamically attaching a SerializableAttribute to the type.
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '106', 106)" onmouseover="showTip(event, '106', 106)">
+          <code onmouseout="hideTip(event, '107', 107)" onmouseover="showTip(event, '107', 107)">
             GeneratePickler(t)
           </code>
-          <div class="tip" id="106">
+          <div class="tip" id="107">
             <strong>Signature:</strong> t:Type -&gt; Pickler<br />
                       </div>
         </td>
@@ -296,10 +317,10 @@ This is equivalent to dynamically attaching a SerializableAttribute to the type.
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '107', 107)" onmouseover="showTip(event, '107', 107)">
+          <code onmouseout="hideTip(event, '108', 108)" onmouseover="showTip(event, '108', 108)">
             GeneratePickler()
           </code>
-          <div class="tip" id="107">
+          <div class="tip" id="108">
             <strong>Signature:</strong> unit -&gt; Pickler&lt;&#39;T&gt;<br />
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
@@ -316,10 +337,10 @@ This is equivalent to dynamically attaching a SerializableAttribute to the type.
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '108', 108)" onmouseover="showTip(event, '108', 108)">
+          <code onmouseout="hideTip(event, '109', 109)" onmouseover="showTip(event, '109', 109)">
             IsSerializableType(t)
           </code>
-          <div class="tip" id="108">
+          <div class="tip" id="109">
             <strong>Signature:</strong> t:Type -&gt; bool<br />
                       </div>
         </td>
@@ -336,10 +357,10 @@ This is equivalent to dynamically attaching a SerializableAttribute to the type.
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '109', 109)" onmouseover="showTip(event, '109', 109)">
+          <code onmouseout="hideTip(event, '110', 110)" onmouseover="showTip(event, '110', 110)">
             IsSerializableType()
           </code>
-          <div class="tip" id="109">
+          <div class="tip" id="110">
             <strong>Signature:</strong> unit -&gt; bool<br />
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
@@ -356,10 +377,10 @@ This is equivalent to dynamically attaching a SerializableAttribute to the type.
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '110', 110)" onmouseover="showTip(event, '110', 110)">
+          <code onmouseout="hideTip(event, '111', 111)" onmouseover="showTip(event, '111', 111)">
             IsSerializableValue(...)
           </code>
-          <div class="tip" id="110">
+          <div class="tip" id="111">
             <strong>Signature:</strong> (graph:&#39;T * failOnCloneableOnlyTypes:bool option) -&gt; bool<br />
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
@@ -376,10 +397,10 @@ This is equivalent to dynamically attaching a SerializableAttribute to the type.
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '111', 111)" onmouseover="showTip(event, '111', 111)">
+          <code onmouseout="hideTip(event, '112', 112)" onmouseover="showTip(event, '112', 112)">
             RegisterPickler(pickler)
           </code>
-          <div class="tip" id="111">
+          <div class="tip" id="112">
             <strong>Signature:</strong> pickler:Pickler&lt;&#39;T&gt; -&gt; unit<br />
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
@@ -397,10 +418,10 @@ Picklers can only be registered before any serializations take place.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '112', 112)" onmouseover="showTip(event, '112', 112)">
+          <code onmouseout="hideTip(event, '113', 113)" onmouseover="showTip(event, '113', 113)">
             RegisterPicklerFactory(factory)
           </code>
-          <div class="tip" id="112">
+          <div class="tip" id="113">
             <strong>Signature:</strong> (factory:(IPicklerResolver -&gt; Pickler&lt;&#39;T&gt;)) -&gt; unit<br />
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
@@ -418,36 +439,15 @@ Factories can only be registered before any serializations take place.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '113', 113)" onmouseover="showTip(event, '113', 113)">
-            Sift(...)
-          </code>
-          <div class="tip" id="113">
-            <strong>Signature:</strong> (value:&#39;T * sifter:(obj -&gt; bool) * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option) -&gt; Sifted&lt;&#39;T&gt; * (int64 * obj) []<br />
-                          <strong>Type parameters:</strong> 'T          </div>
-        </td>
-        <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L142-142" class="github-link">
-              <img src="../content/img/github.png" class="normal" />
-              <img src="../content/img/github-blue.png" class="hover" />
-            </a>
-          <p>Creates a clone of the provided object graph, sifting objects from the graph as specified by the provided sifter implementation.
-Only reference types can be sifted from a graph.</p>
-
-
-        </td>
-      </tr>
-      <tr>
-        <td class="member-name">
-
           <code onmouseout="hideTip(event, '114', 114)" onmouseover="showTip(event, '114', 114)">
             Sift(...)
           </code>
           <div class="tip" id="114">
-            <strong>Signature:</strong> (value:&#39;T * sifter:IObjectSifter * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option) -&gt; Sifted&lt;&#39;T&gt; * (int64 * obj) []<br />
+            <strong>Signature:</strong> (value:&#39;T * sifter:(obj -&gt; bool) * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option) -&gt; Sifted&lt;&#39;T&gt; * (int64 * obj) []<br />
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L127-127" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L150-150" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -461,14 +461,35 @@ Only reference types can be sifted from a graph.</p>
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '115', 115)" onmouseover="showTip(event, '115', 115)">
-            UnSift(...)
+            Sift(...)
           </code>
           <div class="tip" id="115">
+            <strong>Signature:</strong> (value:&#39;T * sifter:IObjectSifter * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option) -&gt; Sifted&lt;&#39;T&gt; * (int64 * obj) []<br />
+                          <strong>Type parameters:</strong> 'T          </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L135-135" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Creates a clone of the provided object graph, sifting objects from the graph as specified by the provided sifter implementation.
+Only reference types can be sifted from a graph.</p>
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '116', 116)" onmouseover="showTip(event, '116', 116)">
+            UnSift(...)
+          </code>
+          <div class="tip" id="116">
             <strong>Signature:</strong> (sifted:Sifted&lt;&#39;T&gt; * values:(int64 * obj) [] * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option) -&gt; &#39;T<br />
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L154-154" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L162-162" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -480,15 +501,15 @@ Only reference types can be sifted from a graph.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '116', 116)" onmouseover="showTip(event, '116', 116)">
+          <code onmouseout="hideTip(event, '117', 117)" onmouseover="showTip(event, '117', 117)">
             VisitObject(...)
           </code>
-          <div class="tip" id="116">
+          <div class="tip" id="117">
             <strong>Signature:</strong> (visitor:IObjectVisitor * graph:&#39;T * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option * visitOrder:VisitOrder option) -&gt; unit<br />
                           <strong>Type parameters:</strong> 'T          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L180-180" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L188-188" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
