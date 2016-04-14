@@ -54,7 +54,7 @@ FsPickler is ideally suited for serializing:
 
  * Large and complex object graphs, such as dictionaries, trees and cyclic graphs.
 
- * Abstract classes, subtypes, nulls, delegates and closures.
+ * Abstract classes, subtypes, delegates and closures.
 
  * ISerializable, DataContract or attribute-based serialization.
 
