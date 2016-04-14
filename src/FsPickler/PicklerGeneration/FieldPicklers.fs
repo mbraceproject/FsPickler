@@ -122,18 +122,23 @@ type internal ClassFieldPickler =
         let isEDI = not runsOnMono && isExceptionDispatchInfo ty
         // Exception field-based serialization.
         let isException = isAssignableFrom typeof<Exception> ty
-        // we need to be capable of serializing ScriptCs submission types
-        let isScriptCsSubmissionType = isScriptCsSubmissionType ty
-        // compiler generated types in C# are not marked as serializable, but should in principle be treated as such.
-        let isCompilerGeneratedType = containsAttr<System.Runtime.CompilerServices.CompilerGeneratedAttribute> ty
-        let isSerializable =
+        // we need to be capable of serializing Roslyn submission types
+        let isRoslynReplSubmissionType = isRoslynReplSubmissionType ty
+
+        let isSerializable = 
             isReflectionSerializable ty
-            || isScriptCsSubmissionType
-            || isCompilerGeneratedType
+            || isRoslynReplSubmissionType
             || isLinqEnumerable ty
             || isException
             || isEDI
             || PicklerPluginRegistry.IsDeclaredSerializable ty
+            // compiler generated types in C# are not marked as serializable, but should in principle be treated as such.
+            || containsAttr<System.Runtime.CompilerServices.CompilerGeneratedAttribute> ty
+            // certain types in Microsoft's CRM SDK contain the CollectionDataContractAttribute but do not
+            // supply a DataContract for its data. Support field-based serialization as a last-ditch effort
+            // to support those types.
+            || containsAttr<System.Runtime.Serialization.CollectionDataContractAttribute> ty
+            || containsAttr<System.Runtime.Serialization.KnownTypeAttribute> ty
 
         if not isSerializable then raise <| new NonSerializableTypeException(ty)
 
@@ -149,8 +154,8 @@ type internal ClassFieldPickler =
             else fields
 
         let fields, picklers =
-            if isScriptCsSubmissionType then
-                // in ScriptCS submission objects, ignore any fields that are not serializable
+            if isRoslynReplSubmissionType then
+                // in Roslyn submission objects, ignore any fields that are not serializable
                 fields
                 |> Array.choose (fun f ->
                     try Some (f, resolver.Resolve f.FieldType)

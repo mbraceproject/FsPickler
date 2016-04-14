@@ -307,6 +307,12 @@ module ``Generic Tests`` =
         d' |> isNotSameTo d
 
     [<Test; Category("Clone")>]
+    let ``2. Clone: class with lone CollectionDataContractAttribute`` () = 
+        let d = new ClassWithLoneCollectionDataContractAttribute<int>([1 .. 10])
+        let d' = clone d
+        d'.Values |> should equal d.Values
+
+    [<Test; Category("Clone")>]
     let ``2. Clone: delegate simple`` () = 
         let d = Func<int>(fun () -> 1 + 1)
         let d' = clone d

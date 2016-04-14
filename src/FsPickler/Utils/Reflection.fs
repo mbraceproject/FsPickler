@@ -77,7 +77,7 @@ let rec isAssignableFrom (interfaceTy : Type) (ty : Type) =
         | null -> false
         | bt -> isAssignableFrom interfaceTy bt
 
-let isScriptCsSubmissionType (t : Type) =
+let isRoslynReplSubmissionType (t : Type) =
     if t.Assembly.GetName().Name.StartsWith "ℛ*" then
         let rec aux (t : Type) =
             if t.Name.StartsWith "Submission#" then true

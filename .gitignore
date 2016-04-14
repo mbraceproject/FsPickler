@@ -28,3 +28,7 @@ _ReSharper*/
 $tf*/
 build/
 packages/
+paket-files/
+.fake
+docs/output/
+temp/

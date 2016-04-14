@@ -497,6 +497,10 @@ module TestTypes =
     [<AutoSerializable(false)>]type Bar8 = class end
     [<AutoSerializable(false)>]type Bar9 = class end
 
+    [<AutoSerializable(false); CollectionDataContract>]
+    type ClassWithLoneCollectionDataContractAttribute<'T>(xs : 'T list) =
+        member __.Values = xs
+
     // automated large-scale object generation
     let generateSerializableObjects (assembly : Assembly) =
         let filterType (t : Type) =
