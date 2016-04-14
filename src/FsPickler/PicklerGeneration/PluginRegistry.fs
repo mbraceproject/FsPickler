@@ -13,12 +13,17 @@ type private PicklerPlugin =
 
 type internal PicklerPluginRegistry private () =
     static let registry = new ConcurrentDictionary<Type, PicklerPlugin> ()
+    static let serializablePredicates = ref []
 
     static member RegisterFactory<'T>(factory : IPicklerResolver -> Pickler<'T>) =
         registry.TryAdd(typeof<'T>, Factory (factory :> obj))
 
     static member DeclareSerializable (t : Type) =
         registry.TryAdd(t, DeclareSerializable)
+
+    static member DeclareSerializable (predicate : Type -> bool) =
+        lock serializablePredicates 
+            (fun () -> serializablePredicates := predicate :: !serializablePredicates)
 
     static member ContainsFactory(t : Type) = 
         match registry.TryFind t with
@@ -28,7 +33,7 @@ type internal PicklerPluginRegistry private () =
     static member IsDeclaredSerializable(t : Type) =
         match registry.TryFind t with
         | Some DeclareSerializable -> true
-        | _ -> false
+        | _ -> !serializablePredicates |> List.exists (fun pred -> pred t)
 
     static member GetPicklerFactory<'T> () : IPicklerResolver -> Pickler<'T> =
         match registry.[typeof<'T>] with

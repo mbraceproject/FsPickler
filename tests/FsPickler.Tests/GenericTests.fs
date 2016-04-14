@@ -194,6 +194,20 @@ module ``Generic Tests`` =
             gen<Bar8> ;
             gen<Bar9> ;
         |] |> Array.Parallel.iter (fun f -> f ())
+
+    FsPickler.DeclareSerializable(fun (t:Type) -> t.Name.StartsWith "BazBaz")
+    [<Test; Category("Pickler tests")>]
+    let ``1. Declare Serializable Predicate`` () =
+        FsPickler.IsSerializableType<BazBaz0>() |> should equal true
+        FsPickler.IsSerializableType<BazBaz1>() |> should equal true
+        FsPickler.IsSerializableType<BazBaz2>() |> should equal true
+        FsPickler.IsSerializableType<BazBaz3>() |> should equal true
+        FsPickler.IsSerializableType<BazBaz4>() |> should equal true
+        FsPickler.IsSerializableType<BazBaz5>() |> should equal true
+        FsPickler.IsSerializableType<BazBaz6>() |> should equal true
+        FsPickler.IsSerializableType<BazBaz7>() |> should equal true
+        FsPickler.IsSerializableType<BazBaz8>() |> should equal true
+        FsPickler.IsSerializableType<BazBaz9>() |> should equal true
     
     //
     //  Clone tests

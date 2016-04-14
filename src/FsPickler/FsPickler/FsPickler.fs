@@ -98,6 +98,14 @@ type FsPickler private () =
             if not success then
                 invalidOp <| sprintf "A pickler plugin for type '%O' has already been registered." t)
 
+    /// <summary>
+    ///     Declares that types satisfying the provided predicate should be treated by
+    ///     FsPickler as carrying the Serializable attribute.
+    /// </summary>
+    /// <param name="predicate">Serializable type predicate.</param>
+    static member DeclareSerializable (predicate : Type -> bool) : unit =
+        PicklerPluginRegistry.DeclareSerializable predicate
+
     //
     // Misc utils
     //

@@ -497,6 +497,17 @@ module TestTypes =
     [<AutoSerializable(false)>]type Bar8 = class end
     [<AutoSerializable(false)>]type Bar9 = class end
 
+    [<AutoSerializable(false)>]type BazBaz0 = class end
+    [<AutoSerializable(false)>]type BazBaz1 = class end
+    [<AutoSerializable(false)>]type BazBaz2 = class end
+    [<AutoSerializable(false)>]type BazBaz3 = class end
+    [<AutoSerializable(false)>]type BazBaz4 = class end
+    [<AutoSerializable(false)>]type BazBaz5 = class end
+    [<AutoSerializable(false)>]type BazBaz6 = class end
+    [<AutoSerializable(false)>]type BazBaz7 = class end
+    [<AutoSerializable(false)>]type BazBaz8 = class end
+    [<AutoSerializable(false)>]type BazBaz9 = class end
+
     [<AutoSerializable(false); CollectionDataContract>]
     type ClassWithLoneCollectionDataContractAttribute<'T>(xs : 'T list) =
         member __.Values = xs
