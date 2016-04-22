@@ -93,6 +93,7 @@
   <ItemGroup>
     <None Include="paket.references" />
     <None Include="paket.template" />
+    <None Include="tests.csx" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
