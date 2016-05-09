@@ -12,8 +12,8 @@ open Nessos.FsPickler
 /// <summary>
 ///     BSON format factory methods.
 /// </summary>
-type BsonPickleFormatProvider() =
-        
+type BsonPickleFormatProvider(?omitHeader : bool) =
+    let omitHeader = defaultArg omitHeader false
     interface IPickleFormatProvider with
 
         member __.Name = "Bson"
@@ -26,7 +26,7 @@ type BsonPickleFormatProvider() =
             let bw = new BinaryWriter(stream, encoding, leaveOpen)
 #endif
             let bsonWriter = new BsonWriter(bw)
-            new JsonPickleWriter(bsonWriter, false, false, false, null, leaveOpen) :> _
+            new JsonPickleWriter(bsonWriter, omitHeader, false, false, null, leaveOpen) :> _
 
         member __.CreateReader(stream : Stream, encoding : Encoding, _ : bool, leaveOpen : bool) =
 #if NET35 || NET40
@@ -35,4 +35,4 @@ type BsonPickleFormatProvider() =
             let br = new BinaryReader(stream, encoding, leaveOpen)
 #endif
             let bsonReader = new BsonReader(br)
-            new JsonPickleReader(bsonReader, false, false, false, leaveOpen) :> _
+            new JsonPickleReader(bsonReader, omitHeader, false, false, leaveOpen) :> _

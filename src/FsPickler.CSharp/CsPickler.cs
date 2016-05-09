@@ -46,9 +46,10 @@ namespace Nessos.CsPickler
         /// <summary>
         ///     Creates a new serializer instances that uses the BSON format.
         /// </summary>
-        public static BsonSerializer CreateBsonSerializer()
+        /// <param name="omitHeader">omit FsPickler metadata at the serialization header; defaults to false.</param>
+        public static BsonSerializer CreateBsonSerializer(bool omitHeader = false)
         {
-            return BsonSerializer.Create();
+            return BsonSerializer.Create(omitHeader : omitHeader);
         }
 
         /// <summary>
