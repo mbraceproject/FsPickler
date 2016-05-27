@@ -63,7 +63,7 @@ let resolvePickler (resolver : IPicklerResolver) (mkEarlyBinding : Pickler -> un
     // Store all NonSerializableTypeException's in cache
     | :? NonSerializableTypeException as e when e.Type = t -> Exn.Error e
     | :? NonSerializableTypeException as e ->
-        Exn.error <| NonSerializableTypeException(t, e.Type)
+        Exn.error <| NonSerializableTypeException(t, e.Type, e)
 
     // wrap/reraise everything else as PicklerGenerationExceptions
     | :? PicklerGenerationException -> reraise ()
@@ -77,9 +77,6 @@ let generatePickler (globalCache : ICache<Type, Exn<Pickler>>) (t : Type) =
     // a local cache keeps the global cache from being contaminated with partial state.
     // the boolean flag indicates whether generation is completed for given pickler
     let localCache = new Dictionary<Type, bool * Exn<Pickler>> ()
-
-    let getCompletedPicklers() =
-        localCache |> Seq.choose(function (KeyValue(t,(true,p))) -> Some(t,p) | _ -> None)
 
     let rec resolver =
         {
@@ -107,10 +104,10 @@ let generatePickler (globalCache : ICache<Type, Exn<Pickler>>) (t : Type) =
     // pickler generation complete
     // now commit to global cache
 
-    for t',p' in getCompletedPicklers() do
+    for (KeyValue(t',(isCompleted, p'))) in localCache do
         // only cache completed picklers other than the current
         // if p is exception, only cache results that are exceptions
-        if t' <> t && (p.IsValue || p'.IsException) then
+        if isCompleted && t' <> t && (p.IsValue || p'.IsException) then
             globalCache.Commit t' p' |> ignore
 
     globalCache.Commit t p
