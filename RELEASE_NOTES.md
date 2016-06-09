@@ -1,3 +1,6 @@
+### 2.3.0
+* Add DeclareSerializable methods to FsPickler.CSharp API.
+
 ### 2.2.0
 * Improve NonSerializableTypeException messages.
 
