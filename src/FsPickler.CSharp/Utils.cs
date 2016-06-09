@@ -3,32 +3,22 @@ using System.Text;
 using System.Runtime.Serialization;
 
 using Microsoft.FSharp.Core;
+using FsPickler.CSharpProxy;
 
 namespace Nessos.CsPickler
 {
     internal static class Utils
     {
-        public static FSharpOption<Encoding> GetEncoding(Encoding e)
+        public static FSharpOption<T> ToOption<T>(this T value)
         {
-            if (e == null) return FSharpOption<Encoding>.None;
-            else return new FSharpOption<Encoding>(e);
+            if (value == null) return Option.None<T>();
+            return Option.Some(value);
         }
 
-        public static FSharpOption<StreamingContext> GetStreamingContext(Object context)
+        public static StreamingContext GetStreamingContext(Object context)
         {
-            StreamingContext ctx;
-
-            if (context == null)
-                ctx = new StreamingContext(StreamingContextStates.All);
-            else
-                ctx = new StreamingContext(StreamingContextStates.All, context);
-
-            return new FSharpOption<StreamingContext>(ctx);
-        }
-
-        public static FSharpOption<bool> GetLeaveOpen(bool leaveOpen)
-        {
-            return new FSharpOption<bool>(leaveOpen);
+            if (context == null) return new StreamingContext(StreamingContextStates.All);
+            return new StreamingContext(StreamingContextStates.All, context);
         }
     }
 }
