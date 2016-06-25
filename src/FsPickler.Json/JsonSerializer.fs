@@ -61,8 +61,8 @@ type JsonSerializer =
 /// <summary>
 ///     BSON pickler instance.
 /// </summary>
-type BsonSerializer([<O;D(null)>] ?typeConverter) =
-    inherit FsPicklerSerializer(new BsonPickleFormatProvider(), ?typeConverter = typeConverter)
+type BsonSerializer([<O;D(null)>] ?omitHeader, [<O;D(null)>] ?typeConverter) =
+    inherit FsPicklerSerializer(new BsonPickleFormatProvider(?omitHeader = omitHeader), ?typeConverter = typeConverter)
 
 
 /// FsPickler static methods.
@@ -81,5 +81,5 @@ type FsPickler =
     ///     Initializes a new FsPickler serializer instance that uses the BSON format.
     /// </summary>
     /// <param name="typeConverter">specify a custom type name converter.</param>
-    static member CreateBsonSerializer([<O;D(null)>] ?typeConverter) = 
-        new BsonSerializer(?typeConverter = typeConverter)
+    static member CreateBsonSerializer([<O;D(null)>] ?omitHeader, [<O;D(null)>] ?typeConverter) = 
+        new BsonSerializer(?omitHeader = omitHeader, ?typeConverter = typeConverter)

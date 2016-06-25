@@ -22,6 +22,8 @@ module PickleFormat =
     [<Literal>]
     let Bson = "FsPickler.Bson"
 
+    [<Literal>]
+    let Bson_Headerless = "FsPickler.Bson-headerless"
 type FsPicklerManager(pickleFormat : string) =
 
     let serializer =
@@ -35,7 +37,10 @@ type FsPicklerManager(pickleFormat : string) =
             jsp.SequenceSeparator <- System.Environment.NewLine
             jsp :> FsPicklerSerializer
 
-        | PickleFormat.Bson -> FsPickler.CreateBsonSerializer() :> FsPicklerSerializer
+        | PickleFormat.Bson -> 
+            FsPickler.CreateBsonSerializer() :> FsPicklerSerializer
+        | PickleFormat.Bson_Headerless -> 
+            FsPickler.CreateBsonSerializer(omitHeader = true) :> FsPicklerSerializer
 
         | _ -> invalidArg "name" <| sprintf "unexpected pickler format '%s'." pickleFormat
 

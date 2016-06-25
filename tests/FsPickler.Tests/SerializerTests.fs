@@ -26,6 +26,7 @@ open FsCheck
 [<TestFixture(PickleFormat.Json)>]
 [<TestFixture(PickleFormat.Json_Headerless)>]
 [<TestFixture(PickleFormat.Bson)>]
+[<TestFixture(PickleFormat.Bson_Headerless)>]
 type ``FsPickler Serializer Tests`` (format : string) as self =
 
     let _ = Arb.register<FsPicklerGenerators> ()

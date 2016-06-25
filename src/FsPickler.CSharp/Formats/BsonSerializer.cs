@@ -3,7 +3,7 @@ using System.Reflection;
 using System.IO;
 using System.Text;
 using System.Runtime.Serialization;
-
+using Microsoft.FSharp.Core;
 using FSP = Nessos.FsPickler;
 
 namespace Nessos.CsPickler
@@ -24,9 +24,11 @@ namespace Nessos.CsPickler
         /// <summary>
         ///     Creates a new BsonPickler instance.
         /// </summary>
-        public static BsonSerializer Create()
+        /// <param name="omitHeader">omit FsPickler metadata at the serialization header; defaults to false.</param>
+        public static BsonSerializer Create(bool omitHeader = false)
         {
-            var bs = new FSP.Json.BsonSerializer();
+            var omitHeaderOption = FSharpOption<bool>.Some(omitHeader);
+            var bs = new FSP.Json.BsonSerializer(omitHeaderOption);
             return new BsonSerializer(bs);
         }
     }
