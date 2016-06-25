@@ -1,3 +1,9 @@
+### 2.3.0
+* Add DeclareSerializable methods to FsPickler.CSharp API.
+
+### 2.2.0
+* Improve NonSerializableTypeException messages.
+
 ### 2.1.0
 * Add support for CollectionDataContractAttribute.
 * Add support for DeclareSerializable predicate arguments.

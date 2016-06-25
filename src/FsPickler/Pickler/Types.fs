@@ -323,15 +323,15 @@ type NonSerializableTypeException =
             containedNonSerializableField = None
         }
 
-    internal new (t : Type, containedNonSerializableField : Type) =
+    internal new (t : Type, containedNonSerializableField : Type, ?inner : exn) =
         let message = sprintf "Type '%O' contains non-serializable field of type '%O'." t containedNonSerializableField
         {
-            inherit FsPicklerException(message, null)
+            inherit FsPicklerException(message, ?inner = inner)
             Type = t
             containedNonSerializableField = Some containedNonSerializableField
         }
 
-    new (si : SerializationInfo, sc : StreamingContext) =
+    internal new (si : SerializationInfo, sc : StreamingContext) =
         {
             inherit FsPicklerException(si, sc)
             Type = si.Read<Type> "picklerType"

@@ -13,15 +13,15 @@ namespace Nessos.CsPickler
     /// </summary>
     public abstract class CsPicklerTextSerializer : CsPicklerSerializer
     {
-        FSP.FsPicklerTextSerializer _textPickler;
+        FSP.FsPicklerTextSerializer _textSerializer;
 
         /// <summary>
         ///     Wraps an FsPickler instance in a CsPickler facade.
         /// </summary>
-        /// <param name="textPickler">FsPickler instance.</param>
-        public CsPicklerTextSerializer(FSP.FsPicklerTextSerializer textPickler) : base(textPickler)
+        /// <param name="textSerializer">FsPickler instance.</param>
+        public CsPicklerTextSerializer(FSP.FsPicklerTextSerializer textSerializer) : base(textSerializer)
         {
-            _textPickler = textPickler;
+            _textSerializer = textSerializer;
         }
 
         /// <summary>
@@ -35,9 +35,7 @@ namespace Nessos.CsPickler
         public void Serialize<T>(TextWriter writer, T value, Object streamingContext = null, bool leaveOpen = false)
         {
             var sc = Utils.GetStreamingContext(streamingContext);
-            var lo = Utils.GetLeaveOpen(leaveOpen);
-
-            _textPickler.Serialize<T>(writer, value, streamingContext: sc, leaveOpen: lo);
+            _textSerializer.Serialize<T>(writer, value, streamingContext: sc.ToOption(), leaveOpen: leaveOpen.ToOption());
         }
 
         /// <summary>
@@ -51,9 +49,7 @@ namespace Nessos.CsPickler
         public T Deserialize<T>(TextReader reader, Object streamingContext = null, bool leaveOpen = false)
         {
             var sc = Utils.GetStreamingContext(streamingContext);
-            var lo = Utils.GetLeaveOpen(leaveOpen);
-
-            return _textPickler.Deserialize<T>(reader, streamingContext: sc, leaveOpen: lo);
+            return _textSerializer.Deserialize<T>(reader, streamingContext: sc.ToOption(), leaveOpen: leaveOpen.ToOption());
         }
 
 
@@ -68,7 +64,7 @@ namespace Nessos.CsPickler
         {
             var sc = Utils.GetStreamingContext(streamingContext);
 
-            return _textPickler.PickleToString<T>(value, streamingContext: sc);
+            return _textSerializer.PickleToString<T>(value, streamingContext: sc.ToOption());
         }
 
         /// <summary>
@@ -82,7 +78,7 @@ namespace Nessos.CsPickler
         {
             var sc = Utils.GetStreamingContext(streamingContext);
 
-            return _textPickler.UnPickleOfString<T>(pickle, streamingContext: sc);
+            return _textSerializer.UnPickleOfString<T>(pickle, streamingContext: sc.ToOption());
         }
     }
 }

@@ -247,7 +247,11 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
     member __.``3. Array: System.Guid`` () = __.CheckArray<Guid> ()
 
     [<Test; Category("Generic BCL Types")>]
-    member __.``3. Array: enum`` () = __.CheckArray<Enum> () ; __.CheckArray<CharEnum> ()
+    member __.``3. Array: enum`` () = 
+        __.CheckArray<Enum> () ; 
+        // provisional: until mono bug is fixed
+        // https://bugzilla.xamarin.com/show_bug.cgi?id=40568
+        if not runsOnMono then __.CheckArray<CharEnum> ()
 
     [<Test; Category("Generic BCL Types")>]
     member __.``3. Array: System.DateTime`` () = 
