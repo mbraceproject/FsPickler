@@ -89,30 +89,39 @@ and IPicklerResolver =
 
 and [<AutoSerializable(false); Sealed>]
     WriteState internal (formatter : IPickleFormatWriter, resolver : IPicklerResolver, reflectionCache : ReflectionCache,
-                            isHashComputation:bool, ?streamingContext, ?sifter : IObjectSifter) =
+                            isHashComputation:bool, disableSubtypes:bool, ignoreReferenceEquality:bool,
+                            ?streamingContext, ?sifter : IObjectSifter) =
 
     let tyPickler = resolver.Resolve<Type> ()
-
     let sc = match streamingContext with None -> new StreamingContext() | Some sc -> sc
 
     let mutable currentId = 0L
+    let mutable objCount = 0L
     let mutable idGen = new ObjectIDGenerator()
     let objStack = new Stack<int64> ()
     let cyclicObjects = new HashSet<int64> ()
     let sifted = new ResizeArray<int64 * obj> ()
 
-    member internal __.PicklerResolver = resolver
-    member internal __.IsHashComputation = isHashComputation
+    member __.IsHashComputation = isHashComputation
     member __.StreamingContext = sc
+    member __.DisableSubtypes = disableSubtypes
+    member __.IgnoreReferenceEquality = ignoreReferenceEquality
+
+    member internal __.PicklerResolver = resolver
     member internal __.Formatter = formatter
     member internal __.Sifter = sifter
     member internal __.Sifted = sifted
     member internal __.ReflectionCache = reflectionCache
     member internal __.TypePickler = tyPickler
     member internal __.GetObjectId(obj:obj, firstTime:byref<bool>) =
-        let id = idGen.GetId(obj, &firstTime)
-        if firstTime then currentId <- id
-        id
+        if ignoreReferenceEquality then
+            currentId <- objCount
+            objCount <- objCount + 1L
+            currentId
+        else
+            let id = idGen.GetId(obj, &firstTime)
+            if firstTime then currentId <- id
+            id
 
     member internal __.ObjectCount = currentId
     member internal __.ObjectStack = objStack
@@ -125,8 +134,9 @@ and [<AutoSerializable(false); Sealed>]
 
 and [<AutoSerializable(false); Sealed>]
     ReadState internal (formatter : IPickleFormatReader, resolver : IPicklerResolver, reflectionCache : ReflectionCache, 
-                            ?streamingContext : StreamingContext, ?sifted : (int64 * obj) []) =
-        
+                            disableSubtypes : bool, ?streamingContext : StreamingContext, 
+                            ?sifted : (int64 * obj) []) =
+
     let sc = match streamingContext with None -> new StreamingContext() | Some sc -> sc
 
     let mutable currentId = 0L
@@ -139,12 +149,14 @@ and [<AutoSerializable(false); Sealed>]
 
     let tyPickler = resolver.Resolve<Type> ()
 
+    member __.StreamingContext = sc
+    member __.DisableSubtypes = disableSubtypes
+
     member internal __.PicklerResolver = resolver
     member internal __.IsUnSifting = isUnsifting
     member internal __.Formatter = formatter
     member internal __.TypePickler = tyPickler
     member internal __.ReflectionCache = reflectionCache
-    member __.StreamingContext = sc
     member internal __.ObjectCache = objCache
     member internal __.NextObjectId () =
         currentId <- currentId + 1L

@@ -86,6 +86,10 @@ type internal DelegatePickler =
         let delePickler = resolver.Resolve<System.Delegate> ()
 
         let writer (w : WriteState) (_ : string) (dele : 'Delegate) =
+            if w.DisableSubtypes then
+                let msg = sprintf "Subtype serialization has been disabled. Value %O is of delegate type %O." dele typeof<'Delegate>
+                raise <| new FsPicklerException(msg)
+
             match dele.GetInvocationList() with
             | [| _ |] ->
                 w.Formatter.WriteBoolean "isLinked" false
@@ -98,6 +102,10 @@ type internal DelegatePickler =
                     delePickler.Write w "linked" deleList.[i]
 
         let reader (r : ReadState) (_ : string) =
+            if r.DisableSubtypes then
+                let msg = sprintf "Subtype deserialization has been disabled. Attempting to deserialize delegate type %O." typeof<'Delegate>
+                raise <| new FsPicklerException(msg)
+
             if not <| r.Formatter.ReadBoolean "isLinked" then
                 let meth = memberInfoPickler.Read r "method"
                 if not meth.IsStatic then

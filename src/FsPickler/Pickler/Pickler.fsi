@@ -154,10 +154,15 @@ and [<AutoSerializable(false); Sealed>] WriteState =
     class
         internal new : 
             formatter:IPickleFormatWriter * resolver:IPicklerResolver * reflectionCache:ReflectionCache * 
-                isHashComputation:bool * ?streamingContext:StreamingContext * ?sifter : IObjectSifter -> WriteState
+                isHashComputation:bool * disableSubtypes:bool * ignoreReferenceEquality:bool *
+                ?streamingContext:StreamingContext * ?sifter : IObjectSifter -> WriteState
 
         /// Identifies this serialization session as a hash computation
-        member internal IsHashComputation : bool
+        member IsHashComputation : bool
+        /// Do not allow subtype resolution when serializing classes
+        member DisableSubtypes : bool
+        /// Do not track reference equality when serializing classes
+        member IgnoreReferenceEquality : bool
         /// Set containing the id's of all objects identified as cyclic
         member internal CyclicObjectSet : HashSet<int64>
         /// Stack containing all object id's that are currently being serialized.
@@ -190,8 +195,11 @@ and [<AutoSerializable(false); Sealed>] ReadState =
     class
         internal new : 
             formatter:IPickleFormatReader * resolver:IPicklerResolver * 
-                reflectionCache:ReflectionCache * ?streamingContext:StreamingContext * ?sifted:(int64 * obj)[] -> ReadState
+                reflectionCache:ReflectionCache * disableSubtypes : bool *
+                ?streamingContext:StreamingContext * ?sifted:(int64 * obj)[] -> ReadState
 
+        /// Do not allow subtype resolution when deserializing classes
+        member DisableSubtypes : bool
         /// Generates an object id for the upcoming object
         member internal NextObjectId : unit -> int64
         /// Register's array instances upon initialization and before

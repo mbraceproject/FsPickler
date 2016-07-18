@@ -25,6 +25,15 @@ type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?
 
     member internal __.Resolver = resolver
     member internal __.ReflectionCache = reflectionCache
+    /// Declares that dynamic subtype resolution should be disabled during serialization.
+    /// This explicitly prohibits serialization/deserialization of any objects whose type
+    /// is specified in the serialization payload. Examples of such types are System.Object,
+    /// F# functions and delegates.
+    member val DisableSubtypes = false with get,set
+    /// Declares that reference equality should not be taken into consideration when serializing
+    /// object graphs. This can result in performance gains when serializing large objects, but
+    /// it may also result in stack overflow errors in case of cycles.
+    member val IgnoreReferenceEquality = false with get,set
 
     /// <summary>
     ///     Description of the pickle format used by the serializer.
@@ -48,7 +57,7 @@ type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?
 
         let pickler = match pickler with None -> resolver.Resolve<'T> () | Some p -> p
         use writer = initStreamWriter formatProvider stream encoding false leaveOpen
-        let _ = writeRootObject resolver reflectionCache writer streamingContext None false pickler value
+        let _ = writeRootObject resolver reflectionCache writer streamingContext None false __.DisableSubtypes __.IgnoreReferenceEquality pickler value
         ()
 
     /// <summary>Deserialize value of given type from the underlying stream.</summary>
@@ -62,7 +71,7 @@ type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?
 
         let pickler = match pickler with None -> resolver.Resolve<'T> () | Some p -> p
         use reader = initStreamReader formatProvider stream encoding false leaveOpen
-        readRootObject resolver reflectionCache reader streamingContext None pickler
+        readRootObject resolver reflectionCache reader streamingContext None __.DisableSubtypes pickler
 
     /// <summary>Serialize a sequence of objects to the underlying stream.</summary>
     /// <param name="stream">Target write stream.</param>
@@ -77,7 +86,7 @@ type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?
 
         let pickler = match pickler with None -> resolver.Resolve<'T> () | Some p -> p
         use writer = initStreamWriter formatProvider stream encoding true leaveOpen
-        writeTopLevelSequence resolver reflectionCache writer streamingContext false pickler sequence
+        writeTopLevelSequence resolver reflectionCache writer streamingContext false __.DisableSubtypes __.IgnoreReferenceEquality pickler sequence
 
 
     /// <summary>Lazily deserialize a sequence of objects from the underlying stream.</summary>
@@ -92,7 +101,7 @@ type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?
 
         let pickler = match pickler with None -> resolver.Resolve<'T>() | Some p -> p
         let reader = initStreamReader formatProvider stream encoding true leaveOpen
-        readTopLevelSequence resolver reflectionCache reader streamingContext pickler
+        readTopLevelSequence resolver reflectionCache reader streamingContext __.DisableSubtypes pickler
 
     /// <summary>
     ///     Serializes a value to stream, excluding objects mandated by the provided IObjectSifter instance.
@@ -113,7 +122,7 @@ type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?
 
         let pickler = match pickler with None -> resolver.Resolve<'T>() | Some p -> p
         use writer = initStreamWriter formatProvider stream encoding false leaveOpen
-        let state = writeRootObject resolver reflectionCache writer streamingContext (Some sifter) false pickler value
+        let state = writeRootObject resolver reflectionCache writer streamingContext (Some sifter) false __.DisableSubtypes __.IgnoreReferenceEquality pickler value
         state.Sifted.ToArray()
 
     /// <summary>
@@ -131,7 +140,7 @@ type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?
 
         let pickler = match pickler with None -> resolver.Resolve<'T> () | Some p -> p
         use reader = initStreamReader formatProvider stream encoding false leaveOpen
-        readRootObject resolver reflectionCache reader streamingContext (Some sifted) pickler
+        readRootObject resolver reflectionCache reader streamingContext (Some sifted) __.DisableSubtypes pickler
 
     /// <summary>
     ///     Pickles given value to byte array.
@@ -203,7 +212,7 @@ type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?
     member __.SerializeUntyped(stream : Stream, value : obj, pickler : Pickler, [<O;D(null)>]?streamingContext : StreamingContext, 
                                                 [<O;D(null)>]?encoding : Encoding, [<O;D(null)>]?leaveOpen : bool) : unit =
         use writer = initStreamWriter formatProvider stream encoding false leaveOpen
-        let _ = writeRootObjectUntyped resolver reflectionCache writer streamingContext None false pickler value
+        let _ = writeRootObjectUntyped resolver reflectionCache writer streamingContext None false __.DisableSubtypes __.IgnoreReferenceEquality pickler value
         ()
 
     /// <summary>Deserialize untyped object from the underlying stream with provided pickler.</summary>
@@ -216,7 +225,7 @@ type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?
                                                                 [<O;D(null)>]?encoding : Encoding, [<O;D(null)>]?leaveOpen : bool) : obj =
 
         use reader = initStreamReader formatProvider stream encoding false leaveOpen
-        readRootObjectUntyped resolver reflectionCache reader streamingContext None pickler
+        readRootObjectUntyped resolver reflectionCache reader streamingContext None __.DisableSubtypes pickler
 
     /// <summary>Serialize an untyped sequence of objects to the underlying stream.</summary>
     /// <param name="elementType">element type used in sequence.</param>
@@ -231,7 +240,7 @@ type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?
                                         [<O;D(null)>]?streamingContext : StreamingContext, [<O;D(null)>]?encoding : Encoding, [<O;D(null)>]?leaveOpen : bool) : int =
 
         use writer = initStreamWriter formatProvider stream encoding true leaveOpen
-        writeTopLevelSequenceUntyped resolver reflectionCache writer streamingContext false pickler sequence
+        writeTopLevelSequenceUntyped resolver reflectionCache writer streamingContext false __.DisableSubtypes __.IgnoreReferenceEquality pickler sequence
 
     /// <summary>Lazily deserialize an untyped sequence of objects from the underlying stream.</summary>
     /// <param name="stream">source stream.</param>
@@ -244,7 +253,7 @@ type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?
                                             [<O;D(null)>]?encoding : Encoding, [<O;D(null)>]?leaveOpen : bool) : IEnumerable =
 
         let reader = initStreamReader formatProvider stream encoding true leaveOpen
-        readTopLevelSequenceUntyped resolver reflectionCache reader streamingContext pickler
+        readTopLevelSequenceUntyped resolver reflectionCache reader streamingContext __.DisableSubtypes pickler
 
     /// <summary>
     ///     Pickles given value to byte array.
@@ -253,8 +262,8 @@ type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?
     /// <param name="pickler">Pickler used for value serialization. Its type should be compatible with that of the supplied value.</param>
     /// <param name="streamingContext">Streaming context for serialization state. Defaults to the empty streaming context.</param>
     /// <param name="encoding">Text encoding used by the serializer.</param>
-    member bp.PickleUntyped (value : obj, pickler : Pickler, [<O;D(null)>]?streamingContext : StreamingContext, [<O;D(null)>]?encoding : Encoding) : byte [] =
-        pickleBinary (fun m v -> bp.SerializeUntyped(m, v, pickler, ?streamingContext = streamingContext, ?encoding = encoding)) value
+    member __.PickleUntyped (value : obj, pickler : Pickler, [<O;D(null)>]?streamingContext : StreamingContext, [<O;D(null)>]?encoding : Encoding) : byte [] =
+        pickleBinary (fun m v -> __.SerializeUntyped(m, v, pickler, ?streamingContext = streamingContext, ?encoding = encoding)) value
 
 
     /// <summary>
@@ -264,8 +273,8 @@ type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?
     /// <param name="pickler">Pickler used for value serialization. Its type should be compatible with that of the supplied pickle.</param>
     /// <param name="streamingContext">Streaming context for deserialization state. Defaults to the empty streaming context.</param>
     /// <param name="encoding">Text encoding used by the deserializer.</param>
-    member bp.UnPickleUntyped (pickle : byte [], pickler : Pickler, [<O;D(null)>]?streamingContext : StreamingContext, [<O;D(null)>]?encoding : Encoding) : obj =
-        unpickleBinary (fun m -> bp.DeserializeUntyped(m, pickler, ?streamingContext = streamingContext, ?encoding = encoding)) pickle
+    member __.UnPickleUntyped (pickle : byte [], pickler : Pickler, [<O;D(null)>]?streamingContext : StreamingContext, [<O;D(null)>]?encoding : Encoding) : obj =
+        unpickleBinary (fun m -> __.DeserializeUntyped(m, pickler, ?streamingContext = streamingContext, ?encoding = encoding)) pickle
 
     
     //
@@ -275,7 +284,7 @@ type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?
     /// <summary>Compute size and hashcode for given input.</summary>
     /// <param name="value">input value.</param>
     /// <param name="hashFactory">the hashing algorithm to be used. MurMur3 by default.</param>
-    member bp.ComputeHash<'T>(value : 'T, [<O;D(null)>] ?hashFactory : IHashStreamFactory) =
+    member __.ComputeHash<'T>(value : 'T, [<O;D(null)>] ?hashFactory : IHashStreamFactory) =
         let signature = reflectionCache.GetTypeSignature (if obj.ReferenceEquals(value,null) then typeof<obj> else value.GetType())
         let hashStream = 
             match hashFactory with 
@@ -285,7 +294,7 @@ type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?
         do
             use writer = initStreamWriter formatProvider hashStream None false None
             let pickler = resolver.Resolve<obj>()
-            let _ = writeRootObject resolver reflectionCache writer None None true pickler (box value)
+            let _ = writeRootObject resolver reflectionCache writer None None true false false pickler (box value)
             ()
 
         {
@@ -298,12 +307,12 @@ type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?
     /// <summary>Compute size in bytes for given input.</summary>
     /// <param name="value">input value.</param>
     /// <param name="pickler">Pickler to be used for size computation. Defaults to auto-generated pickler.</param>
-    member bp.ComputeSize<'T>(value : 'T, [<O;D(null)>] ?pickler : Pickler<'T>) =
+    member __.ComputeSize<'T>(value : 'T, [<O;D(null)>] ?pickler : Pickler<'T>) =
         let pickler = match pickler with Some p -> p | None -> resolver.Resolve<'T> ()
         let lengthCounter = new LengthCounterStream()
         do
             use writer = initStreamWriter formatProvider lengthCounter None false None
-            let _ = writeRootObject resolver reflectionCache writer None None true pickler value
+            let _ = writeRootObject resolver reflectionCache writer None None true false false pickler value
             ()
 
         lengthCounter.Count
