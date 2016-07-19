@@ -15,6 +15,28 @@ namespace Nessos.CsPickler
     {
         private FSP.FsPicklerSerializer _serializer;
 
+
+        /// <summary>
+        /// Declares that dynamic subtype resolution should be disabled during serialization.
+        /// This explicitly prohibits serialization/deserialization of any objects whose type
+        /// is specified in the serialization payload. Examples of such types are System.Object,
+        /// F# functions and delegates. Defaults to false.
+        /// </summary>
+        public bool DisableSubtypeResolution
+        {
+            get { return _serializer.DisableSubtypeResolution; }
+            set { _serializer.DisableSubtypeResolution = value; }
+        }
+
+        /// Declares that FsPickler should make no attempt of its own to load Assemblies
+        /// that are specified in the serialization format. Will result in a deserialization
+        /// exception if required assembly is missing from the current AppDomain. Defaults to false.
+        public bool DisableAssemblyLoading
+        {
+            get { return _serializer.DisableAssemblyLoading; }
+            set { _serializer.DisableAssemblyLoading = value; }
+        }
+
         /// <summary>
         ///     Wraps an FsPickler instance in a C# friendly facade.
         /// </summary>

@@ -8,6 +8,7 @@
 #r "FsPickler.Json.dll"
 
 let stream = Unchecked.defaultof<System.IO.Stream>
+let serializer = Unchecked.defaultof<Nessos.FsPickler.FsPicklerSerializer>
 let textWriter = Unchecked.defaultof<System.IO.TextWriter>
 let textReader = Unchecked.defaultof<System.IO.TextReader>
 
@@ -586,6 +587,36 @@ let types = FsPickler.GatherTypesInObjectGraph [box 42 ; box (Some (42, "42"))]
 //  [|Microsoft.FSharp.Collections.FSharpList`1[System.Object]; System.Int32;
 //    Microsoft.FSharp.Core.FSharpOption`1[System.Tuple`2[System.Int32,System.String]];
 //    System.Tuple`2[System.Int32,System.String]; System.String|]
+
+(**
+
+### Disabling Subtype Resolution
+
+For security reasons, it might often be desirable to disable subtype resolution
+when serializing classes:
+
+*)
+
+serializer.DisableSubtypeResolution <- true
+
+(**
+
+This essentially disables the serialization of any object whose declaring type
+is specified on the serialization format. Attempting to serialize or deserialize
+any such object will result in a serialization exception.
+
+Note that enabling this option prevents serialization of the following types:
+  
+  * `System.Object` or any non-sealed class.
+  * Any delegate instance or F# function.
+  * Any ISerializable class.
+
+As a further precaution, it is also possible to disable implicit assembly loading
+when deserializing objects:
+
+*)
+
+serializer.DisableAssemblyLoading <- true
 
 (**
 
