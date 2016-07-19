@@ -1,3 +1,6 @@
+### 2.4.0
+* Implement DisableSubtypeResolution and DisableAssemblyLoading properties.
+
 ### 2.3.0
 * Add DeclareSerializable methods to FsPickler.CSharp API.
 
