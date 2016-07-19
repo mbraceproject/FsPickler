@@ -602,7 +602,7 @@ serializer.DisableSubtypeResolution <- true
 (**
 
 This essentially disables the serialization of any object whose declaring type
-is specified on the serialization format. Attempting to serialize or deserialize
+is specified on the serialization itself. Attempting to serialize or deserialize
 any such object will result in a serialization exception.
 
 Note that enabling this option prevents serialization of the following types:
