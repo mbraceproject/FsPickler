@@ -186,7 +186,7 @@ type internal CompositePickler<'T> =
 
         if isProperSubtype then
             if state.DisableSubtypes then
-                let msg = sprintf "Subtype serialization has been disabled. Value %A is of proper subtype %O." value subtype
+                let msg = sprintf "Subtype serialization has been disabled. Value %A : %O is of proper subtype %O." value typeof<'T> subtype
                 raise <| new FsPicklerException(msg)
 
             let p0 = state.PicklerResolver.Resolve subtype

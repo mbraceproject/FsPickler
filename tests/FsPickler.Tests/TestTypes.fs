@@ -101,10 +101,12 @@ module TestTypes =
     type GenericClass<'T>(x : 'T) =
         member __.Value = x
 
+    [<Sealed>]
     type RecursiveClass(x : RecursiveClass option) =
         member __.Value = x
         override __.Equals y = match y with :? RecursiveClass as y -> y.Value = __.Value | _ -> false
 
+    [<Sealed>]
     type CyclicClass () as self =
         let s = Some (self, 42)
         let t = Choice1Of2 self
@@ -314,6 +316,7 @@ module TestTypes =
     type PseudoPolyRec<'T> = V of PseudoPolyRec<bool * int>
 
     let isRecursive<'T> = FsPickler.GeneratePickler<'T>().IsRecursiveType
+    let isOpenHierarchy<'T> = FsPickler.GeneratePickler<'T>().IsOpenHierarchy
     let isFixedSize<'T> = FsPickler.GeneratePickler<'T>().IsOfFixedSize
 
 

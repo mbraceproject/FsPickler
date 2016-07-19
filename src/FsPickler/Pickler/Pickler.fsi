@@ -22,11 +22,13 @@ type Pickler =
         /// Specifies if pickled objects are to be cached by reference.
         abstract member IsCacheByRef : bool
 
-        /// Specifies if instances of this pickler type are of fixed size.
+        /// Specifies if instances of this type are of fixed size.
         member IsOfFixedSize : bool
 
-        /// Specifies if instances of this pickler type can be cyclic objects.
+        /// Specifies if instances of this type can be cyclic objects.
         member IsRecursiveType : bool
+        /// Specifies if objects graphs of this type can contain open hierarchies.
+        member IsOpenHierarchy : bool
 
         /// Pickler type classification
         member Kind : Kind

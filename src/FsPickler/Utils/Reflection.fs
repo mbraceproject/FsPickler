@@ -212,12 +212,13 @@ let isPolymorphicRecursive (t : Type) =
 
 /// Checks if type is 'recursive' according to above definition
 /// Note that type must additionally be a reference type for this to be meaningful.
-let isRecursiveType (t : Type) =
+let isRecursiveType openHierarchiesOnly (t : Type) =
     let rec aux (traversed : Type list) (t : Type) =
         if t.IsPrimitive then false
         elif typeof<MemberInfo>.IsAssignableFrom t then false
         // check for cyclic type dependencies
-        elif traversed |> List.exists (fun t' -> isAssignableFrom t t') then true else
+        elif not openHierarchiesOnly && traversed |> List.exists (fun t' -> isAssignableFrom t t') then true
+        elif openHierarchiesOnly && traversed |> List.exists (fun t' -> t = t') then false else
 
         // detect polymorphic recursion patterns
         if isPolymorphicRecursive t then raise <| PolymorphicRecursiveException t

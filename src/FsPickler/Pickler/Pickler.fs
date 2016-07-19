@@ -15,7 +15,7 @@ type Pickler internal (t : Type) =
 
     let typeKind = Kind.compute t
     let isRecursive = 
-        try isRecursiveType t
+        try isRecursiveType false t
         with 
         | PolymorphicRecursiveException t' when t = t' -> 
             let msg = "type is polymorphic recursive."
@@ -23,6 +23,8 @@ type Pickler internal (t : Type) =
         | PolymorphicRecursiveException t' ->
             let msg = sprintf "contains polymorphic recursive type '%O'." t'
             raise <| NonSerializableTypeException(t, msg)
+
+    let isOpenHierarchy = isRecursive && isRecursiveType true t
 
     let isOfFixedSize = isOfFixedSize isRecursive t
     // In order for a type to be considered recursive,
@@ -33,6 +35,7 @@ type Pickler internal (t : Type) =
     member __.Kind = typeKind
     member __.IsOfFixedSize = isOfFixedSize
     member __.IsRecursiveType = isRecursive
+    member __.IsOpenHierarchy = isOpenHierarchy
 
     abstract ImplementationType : Type
 
@@ -96,7 +99,6 @@ and [<AutoSerializable(false); Sealed>]
     let sc = match streamingContext with None -> new StreamingContext() | Some sc -> sc
 
     let mutable currentId = 0L
-    let mutable objCount = 0L
     let mutable idGen = new ObjectIDGenerator()
     let objStack = new Stack<int64> ()
     let cyclicObjects = new HashSet<int64> ()
@@ -114,14 +116,9 @@ and [<AutoSerializable(false); Sealed>]
     member internal __.ReflectionCache = reflectionCache
     member internal __.TypePickler = tyPickler
     member internal __.GetObjectId(obj:obj, firstTime:byref<bool>) =
-        if ignoreReferenceEquality then
-            currentId <- objCount
-            objCount <- objCount + 1L
-            currentId
-        else
-            let id = idGen.GetId(obj, &firstTime)
-            if firstTime then currentId <- id
-            id
+        let id = idGen.GetId(obj, &firstTime)
+        if firstTime then currentId <- id
+        id
 
     member internal __.ObjectCount = currentId
     member internal __.ObjectStack = objStack

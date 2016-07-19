@@ -86,6 +86,32 @@ module ``Generic Tests`` =
         isRecursive<GenericISerializableClass<int>> |> should equal true
 
     [<Test; Category("Pickler tests")>]
+    let ``1. Correctly resolve open hierarchies`` () =
+        isOpenHierarchy<int> |> should equal false
+        isOpenHierarchy<DateTime> |> should equal false
+        isOpenHierarchy<DateTimeOffset> |> should equal false
+#if NET35
+#else
+        isOpenHierarchy<bigint> |> should equal false
+#endif
+        isOpenHierarchy<string> |> should equal false
+        isOpenHierarchy<Type> |> should equal false
+        isOpenHierarchy<int * string []> |> should equal false
+        isOpenHierarchy<Type option * string []> |> should equal false
+        isOpenHierarchy<Record> |> should equal false
+        isOpenHierarchy<SimpleDU> |> should equal false
+        isOpenHierarchy<GenericClass<GenericClass<int>>> |> should equal false
+
+        isOpenHierarchy<obj> |> should equal true
+        isOpenHierarchy<Peano> |> should equal false
+        isOpenHierarchy<int list> |> should equal false
+        isOpenHierarchy<int -> int> |> should equal true
+        isOpenHierarchy<RecursiveClass> |> should equal false
+        isOpenHierarchy<CyclicClass> |> should equal true
+        isOpenHierarchy<SimpleISerializableClass> |> should equal true
+        isOpenHierarchy<GenericISerializableClass<int>> |> should equal true
+
+    [<Test; Category("Pickler tests")>]
     let ``1. Correctly resolve finite types`` () =
         isFixedSize<int> |> should equal true
         isFixedSize<DateTime> |> should equal true
