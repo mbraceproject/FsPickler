@@ -26,12 +26,12 @@ module private ISerializableUtils =
     let inline mkSerializationInfo<'T> () = new SerializationInfo(typeof<'T>, new FormatterConverter())
 
     let inline checkSerializationSubtype (w : WriteState) (value : 'T) =
-        if w.DisableSubtypes then
+        if w.DisableSubtypeResolution then
             let msg = sprintf "Subtype serialization has been disabled. Value %A:%O is ISerializable." value typeof<'T>
             raise <| new FsPicklerException(msg)
 
     let inline checkDeserializationSubtype<'T> (r : ReadState) =
-        if r.DisableSubtypes then
+        if r.DisableSubtypeResolution then
             let msg = sprintf "Subtype deserialization has been disabled. Type %O is ISerializable." typeof<'T>
             raise <| new FsPicklerException(msg)
 

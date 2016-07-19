@@ -18,7 +18,7 @@ type ObjectSizeCounter internal (formatProvider : IPickleFormatProvider, resolve
     let mutable resetCount = 0L
     let mutable totalObjects = 0L
     let writer = initStreamWriter formatProvider lengthCounter encoding true None
-    let writeState = new WriteState(writer, resolver, reflectionCache, true, false, false)
+    let writeState = new WriteState(writer, resolver, reflectionCache, true, false)
 
     /// Gets accumulated object size in bytes
     member __.Count = writer.Flush() ; lengthCounter.Count

@@ -30,7 +30,7 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
 
     let _ = Arb.register<FsPicklerGenerators> ()
 
-    let manager = FsPicklerManager(format)
+    let manager = new FsPicklerManager(format)
     let serializer = manager.Serializer
 
     let testRoundtrip (x : 'T) = 
@@ -825,6 +825,18 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
                 r'.DoD |> should equal r.DoD)
 
 
+    [<Test ; Category("Custom types")>] 
+    member __.``6. Custom: disable subtype resolution on serialization`` () =
+        let serializer = manager.CreateSerializer()
+        serializer.DisableSubtypeResolution <- true
+        shouldFailwith<FsPicklerException> (fun () -> serializer.Pickle(fun i -> i + 1) |> ignore)
+
+    [<Test ; Category("Custom types")>] 
+    member __.``6. Custom: disable subtype resolution on deserialization`` () =
+        let serializer = manager.CreateSerializer()
+        let pickle = serializer.Pickle(fun i -> i + 1)
+        serializer.DisableSubtypeResolution <- true
+        shouldFailwith<FsPicklerException> (fun () -> serializer.UnPickle<int -> int>(pickle) |> ignore)
 
     //
     //  FSharp Tests

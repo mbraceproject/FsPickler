@@ -57,7 +57,7 @@ let mkReflectionPicklers (arrayPickler : IArrayPickler) =
 
     let assemblyPickler =
         CompositePickler.Create(
-            (fun r t -> let aI = assemblyInfoPickler.Reader r t in r.ReflectionCache.LoadAssembly(aI, not r.DisableSubtypes)),
+            (fun r t -> let aI = assemblyInfoPickler.Reader r t in r.ReflectionCache.LoadAssembly(aI, not r.DisableAssemblyLoading)),
             (fun w t a -> let aI = w.ReflectionCache.GetAssemblyInfo a in assemblyInfoPickler.Writer w t aI),
             (fun _ a -> a), (fun _ _ -> ()), PicklerInfo.ReflectionType, cacheByRef = true, useWithSubtypes = true)
 
@@ -260,7 +260,7 @@ let mkReflectionPicklers (arrayPickler : IArrayPickler) =
             | _ -> raise <| new FormatException("invalid member type.")
 
 
-        r.ReflectionCache.LoadMemberInfo(cMemberInfo, not r.DisableSubtypes)
+        r.ReflectionCache.LoadMemberInfo(cMemberInfo, not r.DisableAssemblyLoading)
 
     and memberInfoPickler = 
         CompositePickler.Create(memberInfoReader, memberInfoWriter, (fun _ mI -> mI), ignore2, PicklerInfo.ReflectionType, useWithSubtypes = true, cacheByRef = true)

@@ -156,15 +156,13 @@ and [<AutoSerializable(false); Sealed>] WriteState =
     class
         internal new : 
             formatter:IPickleFormatWriter * resolver:IPicklerResolver * reflectionCache:ReflectionCache * 
-                isHashComputation:bool * disableSubtypes:bool * ignoreReferenceEquality:bool *
+                isHashComputation:bool * disableSubtypeResolution:bool *
                 ?streamingContext:StreamingContext * ?sifter : IObjectSifter -> WriteState
 
         /// Identifies this serialization session as a hash computation
         member IsHashComputation : bool
         /// Do not allow subtype resolution when serializing classes
-        member DisableSubtypes : bool
-        /// Do not track reference equality when serializing classes
-        member IgnoreReferenceEquality : bool
+        member DisableSubtypeResolution : bool
         /// Set containing the id's of all objects identified as cyclic
         member internal CyclicObjectSet : HashSet<int64>
         /// Stack containing all object id's that are currently being serialized.
@@ -197,11 +195,13 @@ and [<AutoSerializable(false); Sealed>] ReadState =
     class
         internal new : 
             formatter:IPickleFormatReader * resolver:IPicklerResolver * 
-                reflectionCache:ReflectionCache * disableSubtypes : bool *
+                reflectionCache:ReflectionCache * disableSubtypeResolution : bool * disableAssemblyLoading : bool *
                 ?streamingContext:StreamingContext * ?sifted:(int64 * obj)[] -> ReadState
 
         /// Do not allow subtype resolution when deserializing classes
-        member DisableSubtypes : bool
+        member DisableSubtypeResolution : bool
+        /// Disable assembly loading when deserializing classes specifying System.Reflection.Assembly instances
+        member DisableAssemblyLoading : bool
         /// Generates an object id for the upcoming object
         member internal NextObjectId : unit -> int64
         /// Register's array instances upon initialization and before

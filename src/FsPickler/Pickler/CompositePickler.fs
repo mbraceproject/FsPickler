@@ -185,7 +185,7 @@ type internal CompositePickler<'T> =
                 isProperSubtype <- true
 
         if isProperSubtype then
-            if state.DisableSubtypes then
+            if state.DisableSubtypeResolution then
                 let msg = sprintf "Subtype serialization has been disabled. Value %A : %O is of proper subtype %O." value typeof<'T> subtype
                 raise <| new FsPicklerException(msg)
 
@@ -252,7 +252,7 @@ type internal CompositePickler<'T> =
             fastUnbox<'T> null
 
         elif Enum.hasFlag flags ObjectFlags.IsProperSubtype then
-            if state.DisableSubtypes then
+            if state.DisableSubtypeResolution then
                 let msg = sprintf "Subtype deserialization has been disabled. Attempting to deserialize value of type %O" typeof<'T>
                 raise <| new FsPicklerException(msg)
 

@@ -92,8 +92,7 @@ and IPicklerResolver =
 
 and [<AutoSerializable(false); Sealed>]
     WriteState internal (formatter : IPickleFormatWriter, resolver : IPicklerResolver, reflectionCache : ReflectionCache,
-                            isHashComputation:bool, disableSubtypes:bool, ignoreReferenceEquality:bool,
-                            ?streamingContext, ?sifter : IObjectSifter) =
+                            isHashComputation:bool, disableSubtypeResolution:bool, ?streamingContext, ?sifter : IObjectSifter) =
 
     let tyPickler = resolver.Resolve<Type> ()
     let sc = match streamingContext with None -> new StreamingContext() | Some sc -> sc
@@ -106,8 +105,7 @@ and [<AutoSerializable(false); Sealed>]
 
     member __.IsHashComputation = isHashComputation
     member __.StreamingContext = sc
-    member __.DisableSubtypes = disableSubtypes
-    member __.IgnoreReferenceEquality = ignoreReferenceEquality
+    member __.DisableSubtypeResolution = disableSubtypeResolution
 
     member internal __.PicklerResolver = resolver
     member internal __.Formatter = formatter
@@ -131,7 +129,7 @@ and [<AutoSerializable(false); Sealed>]
 
 and [<AutoSerializable(false); Sealed>]
     ReadState internal (formatter : IPickleFormatReader, resolver : IPicklerResolver, reflectionCache : ReflectionCache, 
-                            disableSubtypes : bool, ?streamingContext : StreamingContext, 
+                            disableSubtypes : bool, disableAssemblyLoading : bool, ?streamingContext : StreamingContext, 
                             ?sifted : (int64 * obj) []) =
 
     let sc = match streamingContext with None -> new StreamingContext() | Some sc -> sc
@@ -147,7 +145,8 @@ and [<AutoSerializable(false); Sealed>]
     let tyPickler = resolver.Resolve<Type> ()
 
     member __.StreamingContext = sc
-    member __.DisableSubtypes = disableSubtypes
+    member __.DisableSubtypeResolution = disableSubtypes
+    member __.DisableAssemblyLoading = disableAssemblyLoading
 
     member internal __.PicklerResolver = resolver
     member internal __.IsUnSifting = isUnsifting

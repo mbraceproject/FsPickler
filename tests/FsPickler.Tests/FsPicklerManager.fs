@@ -24,7 +24,7 @@ module PickleFormat =
 
 type FsPicklerManager(pickleFormat : string) =
 
-    let serializer =
+    let mkSerializer () =
         match pickleFormat with
         | PickleFormat.Binary -> FsPickler.CreateBinarySerializer() :> FsPicklerSerializer
         | PickleFormat.Xml -> FsPickler.CreateXmlSerializer(indent = true) :> FsPicklerSerializer
@@ -39,8 +39,10 @@ type FsPicklerManager(pickleFormat : string) =
 
         | _ -> invalidArg "name" <| sprintf "unexpected pickler format '%s'." pickleFormat
 
-    member __.Serializer = serializer
+    let serializer = mkSerializer()
 
+    member __.Serializer = serializer
+    member __.CreateSerializer() = mkSerializer()
     member __.GetRemoteSerializer() = new RemoteSerializationClient(pickleFormat)
 
     interface ISerializer with

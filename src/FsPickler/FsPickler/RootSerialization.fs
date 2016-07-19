@@ -35,11 +35,11 @@ let initTextReader (formatP : ITextPickleFormatProvider) reader isSeq leaveOpen 
 
 /// Initializes a WriteState instance and write value to stream
 let writeRootObject resolver reflectionCache formatter streamingContext sifter isHash 
-        disableSubtypes ignoreReferenceEquality (pickler : Pickler<'T>) (value : 'T) =
+        disableSubtypes (pickler : Pickler<'T>) (value : 'T) =
     try
         let writeState = 
-            new WriteState(formatter, resolver, reflectionCache, isHash, disableSubtypes, 
-                            ignoreReferenceEquality, ?streamingContext = streamingContext, ?sifter = sifter)
+            new WriteState(formatter, resolver, reflectionCache, isHash, disableSubtypes,
+                            ?streamingContext = streamingContext, ?sifter = sifter)
         let typeName = reflectionCache.GetTypeSignature pickler.Type
         formatter.BeginWriteRoot typeName
         pickler.Write writeState "value" value
@@ -50,10 +50,10 @@ let writeRootObject resolver reflectionCache formatter streamingContext sifter i
         raise <| new FsPicklerException(sprintf "Error serializing object of type '%O'." typeof<'T>, e)
 
 /// Initializes a ReadState instance and read value from stream
-let readRootObject resolver reflectionCache formatter streamingContext sifted disableSubtypes (pickler : Pickler<'T>) =
+let readRootObject resolver reflectionCache formatter streamingContext sifted disableSubtypes disableAssemblyLoading (pickler : Pickler<'T>) =
 
     try
-        let readState = new ReadState(formatter, resolver, reflectionCache, disableSubtypes, ?streamingContext = streamingContext, ?sifted = sifted)
+        let readState = new ReadState(formatter, resolver, reflectionCache, disableSubtypes, disableAssemblyLoading, ?streamingContext = streamingContext, ?sifted = sifted)
         let typeName = reflectionCache.GetTypeSignature pickler.Type
 
         formatter.BeginReadRoot typeName
@@ -66,12 +66,12 @@ let readRootObject resolver reflectionCache formatter streamingContext sifted di
 
 /// Initializes a WriteState instance and write untyped value to stream
 let writeRootObjectUntyped resolver reflectionCache formatter streamingContext sifter isHash 
-        disableSubtypes ignoreReferenceEquality (pickler : Pickler) (value : obj) =
+        disableSubtypes (pickler : Pickler) (value : obj) =
 
     try
         let writeState = 
             new WriteState(formatter, resolver, reflectionCache, isHash, disableSubtypes, 
-                ignoreReferenceEquality, ?streamingContext = streamingContext, ?sifter = sifter)
+                            ?streamingContext = streamingContext, ?sifter = sifter)
         let typeName = reflectionCache.GetTypeSignature pickler.Type
         formatter.BeginWriteRoot typeName
         pickler.UntypedWrite writeState "value" value
@@ -82,9 +82,9 @@ let writeRootObjectUntyped resolver reflectionCache formatter streamingContext s
         raise <| new FsPicklerException(sprintf "Error serializing object of type '%O'." pickler.Type, e)
 
 /// Initializes a ReadState instance and read untyped value from stream
-let readRootObjectUntyped resolver reflectionCache formatter streamingContext sifted disableSubtypes (pickler : Pickler) =
+let readRootObjectUntyped resolver reflectionCache formatter streamingContext sifted disableSubtypes disableAssemblyLoading (pickler : Pickler) =
     try
-        let readState = new ReadState(formatter, resolver, reflectionCache, disableSubtypes, ?streamingContext = streamingContext, ?sifted = sifted)
+        let readState = new ReadState(formatter, resolver, reflectionCache, disableSubtypes, disableAssemblyLoading, ?streamingContext = streamingContext, ?sifted = sifted)
         let typeName = reflectionCache.GetTypeSignature pickler.Type
         formatter.BeginReadRoot typeName
 
@@ -101,12 +101,12 @@ let readRootObjectUntyped resolver reflectionCache formatter streamingContext si
 
 /// serializes a sequence of objects to stream
 let writeTopLevelSequence resolver reflectionCache formatter streamingContext isHash 
-        disableSubtypes ignoreReferenceEquality (pickler : Pickler<'T>) (values : seq<'T>) : int =
+        disableSubtypes (pickler : Pickler<'T>) (values : seq<'T>) : int =
     try
         // write state initialization
         let state = 
             new WriteState(formatter, resolver, reflectionCache, isHash, disableSubtypes, 
-                            ignoreReferenceEquality, ?streamingContext = streamingContext)
+                            ?streamingContext = streamingContext)
         let typeName = reflectionCache.GetTypeSignature pickler.Type + " seq"
 
         state.Formatter.BeginWriteRoot typeName
@@ -118,10 +118,10 @@ let writeTopLevelSequence resolver reflectionCache formatter streamingContext is
         raise <| new FsPicklerException(sprintf "Error serializing sequence of type '%O'." typeof<'T>, e)
 
 /// deserializes a sequence of objects from stream
-let readTopLevelSequence resolver reflectionCache formatter streamingContext disableSubtypes (pickler : Pickler<'T>) : seq<'T> =
+let readTopLevelSequence resolver reflectionCache formatter streamingContext disableSubtypes disableAssemblyLoading (pickler : Pickler<'T>) : seq<'T> =
     try
         // read state initialization
-        let state = new ReadState(formatter, resolver, reflectionCache, disableSubtypes, ?streamingContext = streamingContext)
+        let state = new ReadState(formatter, resolver, reflectionCache, disableSubtypes, disableAssemblyLoading, ?streamingContext = streamingContext)
         let typeName = reflectionCache.GetTypeSignature pickler.Type + " seq"
 
         // read stream header
@@ -132,28 +132,28 @@ let readTopLevelSequence resolver reflectionCache formatter streamingContext dis
 
 /// serializes a sequence of untyped objects to stream
 let writeTopLevelSequenceUntyped resolver reflectionCache formatter streamingContext isHash 
-        disableSubtypes ignoreReferenceEquality (pickler : Pickler) (values : IEnumerable) : int =
+        disableSubtypes (pickler : Pickler) (values : IEnumerable) : int =
 
     let unpacker =
         {
             new IPicklerUnpacker<int> with
                 member __.Apply (p : Pickler<'T>) =
                     writeTopLevelSequence resolver reflectionCache formatter
-                        streamingContext isHash disableSubtypes ignoreReferenceEquality p (values :?> IEnumerable<'T>)
+                        streamingContext isHash disableSubtypes p (values :?> IEnumerable<'T>)
         }
 
     pickler.Unpack unpacker
 
 /// deserializes a sequence of untyped objects from stream
 let readTopLevelSequenceUntyped resolver reflectionCache formatter 
-        streamingContext disableSubtypes (pickler : Pickler) : IEnumerable =
+        streamingContext disableSubtypes disableAssemblyLoading (pickler : Pickler) : IEnumerable =
 
     let unpacker =
         {
             new IPicklerUnpacker<IEnumerable> with
                 member __.Apply (p : Pickler<'T>) =
                     readTopLevelSequence resolver reflectionCache formatter
-                        streamingContext disableSubtypes p :> IEnumerable
+                        streamingContext disableSubtypes disableAssemblyLoading p :> IEnumerable
         }
 
     pickler.Unpack unpacker
