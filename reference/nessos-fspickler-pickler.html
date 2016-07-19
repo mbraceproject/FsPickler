@@ -52,16 +52,16 @@
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '292', 292)" onmouseover="showTip(event, '292', 292)">
+          <code onmouseout="hideTip(event, '296', 296)" onmouseover="showTip(event, '296', 296)">
             ImplementationType
           </code>
-          <div class="tip" id="292">
+          <div class="tip" id="296">
             <strong>Signature:</strong> Type<br />
               <strong>Modifiers:</strong> abstract<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/Pickler/Pickler.fs#L37-37" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/Pickler/Pickler.fs#L40-40" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -74,16 +74,16 @@
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '293', 293)" onmouseover="showTip(event, '293', 293)">
+          <code onmouseout="hideTip(event, '297', 297)" onmouseover="showTip(event, '297', 297)">
             IsCacheByRef
           </code>
-          <div class="tip" id="293">
+          <div class="tip" id="297">
             <strong>Signature:</strong> bool<br />
               <strong>Modifiers:</strong> abstract<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/Pickler/Pickler.fs#L40-40" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/Pickler/Pickler.fs#L43-43" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -96,16 +96,16 @@
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '294', 294)" onmouseover="showTip(event, '294', 294)">
+          <code onmouseout="hideTip(event, '298', 298)" onmouseover="showTip(event, '298', 298)">
             IsCloneableOnly
           </code>
-          <div class="tip" id="294">
+          <div class="tip" id="298">
             <strong>Signature:</strong> bool<br />
               <strong>Modifiers:</strong> abstract<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/Pickler/Pickler.fs#L42-42" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/Pickler/Pickler.fs#L45-45" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -119,19 +119,19 @@ and that type is not otherwise serializable.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '295', 295)" onmouseover="showTip(event, '295', 295)">
+          <code onmouseout="hideTip(event, '299', 299)" onmouseover="showTip(event, '299', 299)">
             IsOfFixedSize
           </code>
-          <div class="tip" id="295">
+          <div class="tip" id="299">
             <strong>Signature:</strong> bool<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/Pickler/Pickler.fs#L34-34" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/Pickler/Pickler.fs#L36-36" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          <p>Specifies if instances of this pickler type are of fixed size.</p>
+          <p>Specifies if instances of this type are of fixed size.</p>
 
 
               <p>CompiledName: <code>get_IsOfFixedSize</code></p>
@@ -140,19 +140,40 @@ and that type is not otherwise serializable.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '296', 296)" onmouseover="showTip(event, '296', 296)">
-            IsRecursiveType
+          <code onmouseout="hideTip(event, '300', 300)" onmouseover="showTip(event, '300', 300)">
+            IsOpenHierarchy
           </code>
-          <div class="tip" id="296">
+          <div class="tip" id="300">
             <strong>Signature:</strong> bool<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/Pickler/Pickler.fs#L35-35" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/Pickler/Pickler.fs#L38-38" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          <p>Specifies if instances of this pickler type can be cyclic objects.</p>
+          <p>Specifies if objects graphs of this type can contain open hierarchies.</p>
+
+
+              <p>CompiledName: <code>get_IsOpenHierarchy</code></p>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '301', 301)" onmouseover="showTip(event, '301', 301)">
+            IsRecursiveType
+          </code>
+          <div class="tip" id="301">
+            <strong>Signature:</strong> bool<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/Pickler/Pickler.fs#L37-37" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Specifies if instances of this type can be cyclic objects.</p>
 
 
               <p>CompiledName: <code>get_IsRecursiveType</code></p>
@@ -161,15 +182,15 @@ and that type is not otherwise serializable.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '297', 297)" onmouseover="showTip(event, '297', 297)">
+          <code onmouseout="hideTip(event, '302', 302)" onmouseover="showTip(event, '302', 302)">
             Kind
           </code>
-          <div class="tip" id="297">
+          <div class="tip" id="302">
             <strong>Signature:</strong> Kind<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/Pickler/Pickler.fs#L33-33" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/Pickler/Pickler.fs#L35-35" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -182,16 +203,16 @@ and that type is not otherwise serializable.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '298', 298)" onmouseover="showTip(event, '298', 298)">
+          <code onmouseout="hideTip(event, '303', 303)" onmouseover="showTip(event, '303', 303)">
             PicklerInfo
           </code>
-          <div class="tip" id="298">
+          <div class="tip" id="303">
             <strong>Signature:</strong> PicklerInfo<br />
               <strong>Modifiers:</strong> abstract<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/Pickler/Pickler.fs#L39-39" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/Pickler/Pickler.fs#L42-42" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -204,15 +225,15 @@ and that type is not otherwise serializable.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '299', 299)" onmouseover="showTip(event, '299', 299)">
+          <code onmouseout="hideTip(event, '304', 304)" onmouseover="showTip(event, '304', 304)">
             Type
           </code>
-          <div class="tip" id="299">
+          <div class="tip" id="304">
             <strong>Signature:</strong> Type<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/Pickler/Pickler.fs#L32-32" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/Pickler/Pickler.fs#L34-34" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -225,16 +246,16 @@ and that type is not otherwise serializable.</p>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '300', 300)" onmouseover="showTip(event, '300', 300)">
+          <code onmouseout="hideTip(event, '305', 305)" onmouseover="showTip(event, '305', 305)">
             UseWithSubtypes
           </code>
-          <div class="tip" id="300">
+          <div class="tip" id="305">
             <strong>Signature:</strong> bool<br />
               <strong>Modifiers:</strong> abstract<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/Pickler/Pickler.fs#L41-41" class="github-link">
+            <a href="http://github.com/nessos/FsPickler/tree/master/src/FsPickler/Pickler/Pickler.fs#L44-44" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
