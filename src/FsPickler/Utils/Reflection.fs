@@ -256,7 +256,6 @@ let isRecursiveType openHierarchiesOnly (t : Type) =
 //
 
 let isOfFixedSize isRecursive (t : Type) =
-
     let rec aux (t : Type) =
         if t.IsPrimitive then true
         elif typeof<MemberInfo>.IsAssignableFrom t then true

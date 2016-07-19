@@ -10,6 +10,23 @@ open Nessos.FsPickler.Reflection
 open Nessos.FsPickler.ReflectionCache
 open Nessos.FsPickler.PrimitivePicklers
 
+[<RequireQualifiedAccess>]
+module private MemberTag =
+    let [<Literal>] NamedType = 0
+    let [<Literal>] Array = 1
+    let [<Literal>] ArrayMultiDimensional = 2
+    let [<Literal>] Pointer = 3
+    let [<Literal>] ByRef = 4
+    let [<Literal>] GenericTypeInstance = 5
+    let [<Literal>] GenericTypeParam = 6
+    let [<Literal>] GenericMethodParam = 7
+    let [<Literal>] Method = 8
+    let [<Literal>] GenericMethodInstance = 9
+    let [<Literal>] Constructor = 10
+    let [<Literal>] Property = 11
+    let [<Literal>] Field = 12
+    let [<Literal>] Event = 13
+
 type IArrayPickler =
     abstract Create : Pickler<'T> -> Pickler<'T []>
 
@@ -40,7 +57,7 @@ let mkReflectionPicklers (arrayPickler : IArrayPickler) =
 
     let assemblyPickler =
         CompositePickler.Create(
-            (fun r t -> let aI = assemblyInfoPickler.Reader r t in r.ReflectionCache.LoadAssembly aI),
+            (fun r t -> let aI = assemblyInfoPickler.Reader r t in r.ReflectionCache.LoadAssembly(aI, not r.DisableSubtypes)),
             (fun w t a -> let aI = w.ReflectionCache.GetAssemblyInfo a in assemblyInfoPickler.Writer w t aI),
             (fun _ a -> a), (fun _ _ -> ()), PicklerInfo.ReflectionType, cacheByRef = true, useWithSubtypes = true)
 
@@ -61,45 +78,45 @@ let mkReflectionPicklers (arrayPickler : IArrayPickler) =
         // as this is the order defined in the UnionCaseSerializationHelper.
         match w.ReflectionCache.GetCompositeMemberInfo m with
         | NamedType (name, aI) ->
-            tagSerializer.WriteTag(formatter, 0)
+            tagSerializer.WriteTag(formatter, MemberTag.NamedType)
 
             formatter.WriteString "Name" name
             assemblyInfoPickler.Write w "Assembly" aI
 
         | Array et ->
-            tagSerializer.WriteTag(formatter, 1)
+            tagSerializer.WriteTag(formatter, MemberTag.Array)
             typePickler.Write w "ElementType" et
 
         | ArrayMultiDimensional (et, rk) ->
-            tagSerializer.WriteTag(formatter, 2)
+            tagSerializer.WriteTag(formatter, MemberTag.ArrayMultiDimensional)
             typePickler.Write w "ElementType" et
             formatter.WriteInt32 "Rank" rk
 
         | Pointer et ->
-            tagSerializer.WriteTag(formatter, 3)
+            tagSerializer.WriteTag(formatter, MemberTag.Pointer)
             typePickler.Write w "ElementType" et
 
         | ByRef et ->
-            tagSerializer.WriteTag(formatter, 4)
+            tagSerializer.WriteTag(formatter, MemberTag.ByRef)
             typePickler.Write w "ElementType" et
 
         | GenericTypeInstance(dt, tyArgs) ->
-            tagSerializer.WriteTag(formatter, 5)
+            tagSerializer.WriteTag(formatter, MemberTag.GenericTypeInstance)
             typePickler.Write w "GenericDefinition" dt
             typeArrayPickler.Write w "TypeArgs" tyArgs
 
         | GenericTypeParam(dt, idx) ->
-            tagSerializer.WriteTag(formatter, 6)
+            tagSerializer.WriteTag(formatter, MemberTag.GenericTypeParam)
             typePickler.Write w "DeclaringType" dt
             formatter.WriteInt32 "Index" idx
 
         | GenericMethodParam(dm, idx) ->
-            tagSerializer.WriteTag(formatter, 7)
+            tagSerializer.WriteTag(formatter, MemberTag.GenericMethodParam)
             methodInfoPickler.Write w "DeclaringMethod" dm
             formatter.WriteInt32 "Index" idx
 
         | Method(dt, rt, signature, isStatic) ->
-            tagSerializer.WriteTag(formatter, 8)
+            tagSerializer.WriteTag(formatter, MemberTag.Method)
 
             formatter.WriteString "Signature" signature
             formatter.WriteBoolean "IsStatic" isStatic
@@ -108,20 +125,20 @@ let mkReflectionPicklers (arrayPickler : IArrayPickler) =
             typePickler.Write w "ReflectedType" (defaultArg rt null)
 
         | GenericMethodInstance(gm, tyArgs) ->
-            tagSerializer.WriteTag(formatter, 9)
+            tagSerializer.WriteTag(formatter, MemberTag.GenericMethodInstance)
 
             methodInfoPickler.Write w "GenericDefinition" gm
             typeArrayPickler.Write w "TypeArgs" tyArgs
 
         | Constructor(dt, isStatic, cParams) ->
-            tagSerializer.WriteTag(formatter, 10)
+            tagSerializer.WriteTag(formatter, MemberTag.Constructor)
 
             typePickler.Write w "DeclaringType" dt
             formatter.WriteBoolean "IsStatic" isStatic
             typeArrayPickler.Write w "Params" cParams
 
         | Property(dt, rt, name, isStatic) ->
-            tagSerializer.WriteTag(formatter, 11)
+            tagSerializer.WriteTag(formatter, MemberTag.Property)
 
             formatter.WriteString "Name" name
             formatter.WriteBoolean "IsStatic" isStatic
@@ -130,7 +147,7 @@ let mkReflectionPicklers (arrayPickler : IArrayPickler) =
             typePickler.Write w "ReflectedType" (defaultArg rt null)
 
         | Field(dt, rt, name, isStatic) ->
-            tagSerializer.WriteTag(formatter, 12)
+            tagSerializer.WriteTag(formatter, MemberTag.Field)
 
             formatter.WriteString "Name" name
             formatter.WriteBoolean "IsStatic" isStatic
@@ -139,7 +156,7 @@ let mkReflectionPicklers (arrayPickler : IArrayPickler) =
             typePickler.Write w "ReflectedType" (defaultArg rt null)
 
         | Event(dt, rt, name, isStatic) ->
-            tagSerializer.WriteTag(formatter, 13)
+            tagSerializer.WriteTag(formatter, MemberTag.Event)
 
             formatter.WriteString "Name" name
             formatter.WriteBoolean "IsStatic" isStatic
@@ -155,44 +172,44 @@ let mkReflectionPicklers (arrayPickler : IArrayPickler) =
 
         let cMemberInfo =
             match tagSerializer.ReadTag formatter with
-            | 0 ->
+            | MemberTag.NamedType ->
                 let name = formatter.ReadString "Name"
                 let assembly = assemblyInfoPickler.Read r "Assembly"
                 NamedType(name, assembly)
                 
-            | 1 ->
+            | MemberTag.Array ->
                 let et = typePickler.Read r "ElementType"
                 Array(et)
 
-            | 2 ->
+            | MemberTag.ArrayMultiDimensional ->
                 let et = typePickler.Read r "ElementType"
                 let rk = formatter.ReadInt32 "Rank"
                 ArrayMultiDimensional(et, rk)
 
-            | 3 ->
+            | MemberTag.Pointer ->
                 let et = typePickler.Read r "ElementType"
                 Pointer(et)
 
-            | 4 ->
+            | MemberTag.ByRef ->
                 let et = typePickler.Read r "ElementType"
                 ByRef(et)
 
-            | 5 ->
+            | MemberTag.GenericTypeInstance ->
                 let gt = typePickler.Read r "GenericDefinition"
                 let tyArgs = typeArrayPickler.Read r "TypeArgs"
                 GenericTypeInstance(gt, tyArgs)
 
-            | 6 ->
+            | MemberTag.GenericTypeParam ->
                 let dt = typePickler.Read r "DeclaringType"
                 let idx = formatter.ReadInt32 "Index"
                 GenericTypeParam(dt, idx)
 
-            | 7 ->
+            | MemberTag.GenericMethodParam ->
                 let dm = methodInfoPickler.Read r "DeclaringMethod"
                 let idx = formatter.ReadInt32 "Index"
                 GenericMethodParam(dm, idx)
 
-            | 8 ->
+            | MemberTag.Method ->
                 let signature = formatter.ReadString "Signature"
                 let isStatic = formatter.ReadBoolean "IsStatic"
 
@@ -201,18 +218,18 @@ let mkReflectionPicklers (arrayPickler : IArrayPickler) =
 
                 Method(dt, rt, signature, isStatic)
 
-            | 9 ->
+            | MemberTag.GenericMethodInstance ->
                 let gm = methodInfoPickler.Read r "GenericDefinition"
                 let tyArgs = typeArrayPickler.Read r "TypeArgs"
                 GenericMethodInstance(gm, tyArgs)
 
-            | 10 ->
+            | MemberTag.Constructor ->
                 let dt = typePickler.Read r "DeclaringType"
                 let isStatic = formatter.ReadBoolean "IsStatic"
                 let cParams = typeArrayPickler.Read r "Params"
                 Constructor(dt, isStatic, cParams)
 
-            | 11 ->
+            | MemberTag.Property ->
                 let name = formatter.ReadString "Name"
                 let isStatic = formatter.ReadBoolean "IsStatic"
 
@@ -221,7 +238,7 @@ let mkReflectionPicklers (arrayPickler : IArrayPickler) =
 
                 Property(dt, rt, name, isStatic)
 
-            | 12 ->
+            | MemberTag.Field ->
                 let name = formatter.ReadString "Name"
                 let isStatic = formatter.ReadBoolean "IsStatic"
 
@@ -230,7 +247,7 @@ let mkReflectionPicklers (arrayPickler : IArrayPickler) =
 
                 Field(dt, rt, name, isStatic)
 
-            | 13 ->
+            | MemberTag.Event ->
                 let name = formatter.ReadString "Name"
                 let isStatic = formatter.ReadBoolean "IsStatic"
 
@@ -240,10 +257,10 @@ let mkReflectionPicklers (arrayPickler : IArrayPickler) =
                 Event(dt, rt, name, isStatic)
 
             // 'Unknown' cases never get serialized; this is a case of invalid data
-            | _ -> raise <| new InvalidDataException("invalid member type.")
+            | _ -> raise <| new FormatException("invalid member type.")
 
 
-        r.ReflectionCache.LoadMemberInfo cMemberInfo
+        r.ReflectionCache.LoadMemberInfo(cMemberInfo, not r.DisableSubtypes)
 
     and memberInfoPickler = 
         CompositePickler.Create(memberInfoReader, memberInfoWriter, (fun _ mI -> mI), ignore2, PicklerInfo.ReflectionType, useWithSubtypes = true, cacheByRef = true)

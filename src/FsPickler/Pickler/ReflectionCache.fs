@@ -18,29 +18,29 @@ open Nessos.FsPickler.Reflection
 
 type CompositeMemberInfo =
     // System.Type breakdown
-    | NamedType of string * AssemblyInfo
-    | Array of Type
-    | ArrayMultiDimensional of Type * (* rank *) int
-    | Pointer of Type
-    | ByRef of Type
-    | GenericTypeInstance of Type * Type []
-    | GenericTypeParam of Type * int
-    | GenericMethodParam of MethodInfo * int
+    | NamedType of name:string * assembly:AssemblyInfo
+    | Array of elementType:Type
+    | ArrayMultiDimensional of elementType:Type * rank:int
+    | Pointer of elementType:Type
+    | ByRef of elementType:Type
+    | GenericTypeInstance of genericType:Type * tyArgs:Type []
+    | GenericTypeParam of genericType:Type * index:int
+    | GenericMethodParam of declaringMethod:MethodInfo * index:int
     // System.MethodInfo breakdown
-    | Method of Type * (*reflected type*) Type option * (* signature *) string * (* isStatic *) bool
-    | GenericMethodInstance of MethodInfo * Type []
+    | Method of declaringType:Type * reflectedType:Type option * signature:string * isStatic:bool
+    | GenericMethodInstance of declaringMethod:MethodInfo * tyArgs:Type []
     // misc MemberInfo
-    | Constructor of Type * (*isStatic*) bool * (* params *) Type []
-    | Property of Type * (*reflected type*) Type option * (* name *) string * (* isStatic *) bool
-    | Field of Type * (*reflected type*) Type option * (* name *) string * (* isStatic *) bool
-    | Event of Type * (*reflected type*) Type option * (* name *) string * (* isStatic *) bool
+    | Constructor of declaringType:Type * isStatic:bool * tyArgs:Type []
+    | Property of declaringType:Type * reflectedType:Type option * name:string * isStatic:bool
+    | Field of declaringType:Type * reflectedType:Type option * name:string * isStatic:bool
+    | Event of declaringType:Type * reflectedType:Type option * name:string * isStatic:bool
     // Unknown instance ; cannot serialize
-    | Unknown of Type * string
+    | Unknown of declaringType:Type * id:string
 
 
 // Assembly Loader
 
-let loadAssembly (aI : AssemblyInfo) =
+let getAssembly enableAssemblyLoading (aI : AssemblyInfo) =
     let an = aI.ToAssemblyName()
 
     // first, query AppDomain for loaded assembly of given qualified name
@@ -50,9 +50,12 @@ let loadAssembly (aI : AssemblyInfo) =
 
     match loadedAssembly with
     | Some la -> la
-    | None -> 
+    | None when enableAssemblyLoading -> 
         // resort to CLR loader mechanism if nothing found.
         Assembly.Load an
+    | None ->
+        let msg = sprintf "Could not load file or assembly '%O' or one of its dependencies. The system cannot find the file specified." an
+        raise <| new FileNotFoundException(msg)
 
 //
 //  MemberInfo Loading Code
@@ -151,8 +154,9 @@ let getMemberInfo (tyConv : ITypeNameConverter option)
 
 
 let loadMemberInfo (tyConv : ITypeNameConverter option) 
-                    (loadAssembly : AssemblyInfo -> Assembly) 
-                    (getMethodSignature : MethodInfo -> string) (mI : CompositeMemberInfo) =
+                    (getAssembly : bool -> AssemblyInfo -> Assembly) 
+                    (getMethodSignature : MethodInfo -> string) 
+                    (enableAssemblyLoading : bool) (mI : CompositeMemberInfo) =
 
     let inline getFlags isStatic =
         let allVisibility = BindingFlags.Public ||| BindingFlags.NonPublic ||| BindingFlags.FlattenHierarchy
@@ -166,7 +170,7 @@ let loadMemberInfo (tyConv : ITypeNameConverter option)
             | None -> tI
             | Some tc -> tc.ToDeserializedType tI
 
-        let assembly = loadAssembly tI'.AssemblyInfo
+        let assembly = getAssembly enableAssemblyLoading tI'.AssemblyInfo
         assembly.GetType(tI'.Name, throwOnError = true) |> fastUnbox<MemberInfo>
 
     | Array et -> et.MakeArrayType() |> fastUnbox<MemberInfo>
@@ -294,20 +298,23 @@ type ReflectionCache private (?tyConv : ITypeNameConverter) =
     static let defaultCache = lazy(new ReflectionCache())
     static let caches = new ConcurrentDictionary<ITypeNameConverter, ReflectionCache>(new ReferenceEqualityComparer<_>())
 
-    let loadAssembly = memoize loadAssembly
-    let getAssemblyInfo = memoize AssemblyInfo.OfAssembly
+    let getAssemblyMemoized = memoizeParam getAssembly
+    let getAssemblyInfoMemoized = memoize AssemblyInfo.OfAssembly
 
-    let rec getMemberMemoized : MemberInfo -> CompositeMemberInfo = memoize getMember
-    and loadMemberMemoized = memoize loadMember
-    and getMember m = getMemberInfo tyConv getAssemblyInfo (generateMethodSignature getSignature) m
-    and loadMember mI = loadMemberInfo tyConv loadAssembly (generateMethodSignature getSignature) mI
-    and getSignature = memoize (fun t -> generateTypeSignature getMemberMemoized t)
+    let rec getMemberMemoized : MemberInfo -> CompositeMemberInfo = 
+        memoize (getMemberInfo tyConv getAssemblyInfoMemoized (generateMethodSignature getSignatureMemoized))
 
-    member __.GetAssemblyInfo(a : Assembly) = getAssemblyInfo a
-    member __.LoadAssembly(aI : AssemblyInfo) = loadAssembly aI
+    and loadMemberMemoized = 
+        memoizeParam (loadMemberInfo tyConv getAssemblyMemoized (generateMethodSignature getSignatureMemoized))
+
+    and getSignatureMemoized = 
+        memoize (fun t -> generateTypeSignature getMemberMemoized t)
+
+    member __.GetAssemblyInfo(a : Assembly) = getAssemblyInfoMemoized a
+    member __.LoadAssembly(aI : AssemblyInfo, enableAssemblyLoading : bool) = getAssemblyMemoized enableAssemblyLoading aI
     member __.GetCompositeMemberInfo(m : MemberInfo) = getMemberMemoized m
-    member __.LoadMemberInfo(m : CompositeMemberInfo) = loadMemberMemoized m
-    member __.GetTypeSignature(t : Type) = getSignature t
+    member __.LoadMemberInfo(m : CompositeMemberInfo, enableAssemblyLoading : bool) = loadMemberMemoized enableAssemblyLoading m
+    member __.GetTypeSignature(t : Type) = getSignatureMemoized t
 
     static member Create(?tyConv : ITypeNameConverter) =
         match tyConv with

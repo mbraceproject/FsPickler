@@ -25,6 +25,16 @@ module private ISerializableUtils =
 
     let inline mkSerializationInfo<'T> () = new SerializationInfo(typeof<'T>, new FormatterConverter())
 
+    let inline checkSerializationSubtype (w : WriteState) (value : 'T) =
+        if w.DisableSubtypes then
+            let msg = sprintf "Subtype serialization has been disabled. Value %A:%O is ISerializable." value typeof<'T>
+            raise <| new FsPicklerException(msg)
+
+    let inline checkDeserializationSubtype<'T> (r : ReadState) =
+        if r.DisableSubtypes then
+            let msg = sprintf "Subtype deserialization has been disabled. Type %O is ISerializable." typeof<'T>
+            raise <| new FsPicklerException(msg)
+
     let inline writeSerializationEntry (w : WriteState) (entry : SerializationEntry) =
         let formatter = w.Formatter
         formatter.BeginWriteObject "entry" ObjectFlags.None
@@ -136,6 +146,7 @@ type internal ISerializablePickler =
             ctorInfo.Invoke [| si :> obj ; sc :> obj |] |> fastUnbox<'T>
 #endif
         let writer (w : WriteState) (_ : string) (t : 'T) =
+            checkSerializationSubtype w t
             run onSerializing w t
             let sI = mkSerializationInfo<'T> ()
             t.GetObjectData(sI, w.StreamingContext)
@@ -143,6 +154,7 @@ type internal ISerializablePickler =
             run onSerialized w t
 
         let reader (r : ReadState) (_ : string) =
+            checkDeserializationSubtype<'T> r
             let sI = readSerializationInfo<'T> r
             let t = create sI r.StreamingContext
             run onDeserialized r t
@@ -191,6 +203,7 @@ type internal ISerializablePickler =
             for d in dele do d.Invoke(x, getStreamingContext w)
 
         let writer (w : WriteState) (_ : string) (t : 'T) =
+            checkSerializationSubtype w t
             run onSerializing w t
             let sI = mkSerializationInfo<'T> ()
             t.GetObjectData(sI, w.StreamingContext)
@@ -201,6 +214,7 @@ type internal ISerializablePickler =
             run onSerialized w t
 
         let reader (r : ReadState) (_ : string) =
+            checkDeserializationSubtype<'T> r
             let objectType = r.TypePickler.Read r "ObjectType"
             let sI = readSerializationInfo<'T> r
             let objectRef =
@@ -251,12 +265,14 @@ type internal ISerializablePickler =
         let exnFieldPickler = ClassFieldPickler.Create<'Exn> resolver :?> CompositePickler<'Exn>
 
         let writer (w : WriteState) (tag : string) (e : 'Exn) =
+            checkSerializationSubtype w e
             let sI = mkSerializationInfo<'Exn> ()
             exnFieldPickler.Writer w tag e
             e.GetObjectData(sI, w.StreamingContext)
             writeSerializationInfo w sI
 
         let reader (r : ReadState) (tag : string) =
+            checkDeserializationSubtype<'Exn> r
             let e = exnFieldPickler.Reader r tag
             let sI = readSerializationInfo<'Exn> r
             let dummyExn = mkDummyException sI r.StreamingContext
@@ -283,11 +299,13 @@ type internal ISerializablePickler =
     /// SerializationInfo-based pickler combinator
     static member FromSerializationInfo<'T>(ctor : SerializationInfo -> 'T, proj : SerializationInfo -> 'T -> unit, ?useWithSubtypes) : Pickler<'T> =
         let writer (state : WriteState) (_ : string) (t : 'T) =
+            checkSerializationSubtype state t
             let sI = mkSerializationInfo<'T> ()
             do proj sI t
             writeSerializationInfo state sI
 
         let reader (state : ReadState) (_ : string) =
+            checkDeserializationSubtype<'T> state
             let sI = readSerializationInfo<'T> state
             ctor sI
 

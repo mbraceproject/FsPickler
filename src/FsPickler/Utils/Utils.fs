@@ -120,6 +120,11 @@ module internal Utils =
         let cache = new ConcurrentDictionary<'T,'S> ()
         fun t -> cache.GetOrAdd(t, f)
 
+    /// thread safe memo operator with parametric support
+    let memoizeParam (f : 'P -> 'T -> 'S) =
+        let cache = new ConcurrentDictionary<'T,'S> ()
+        fun p t -> cache.GetOrAdd(t, f p)
+
     type SerializationInfo with
         member internal sI.Write<'T> (name : string, x : 'T) =
             sI.AddValue(name, x, typeof<'T>)
