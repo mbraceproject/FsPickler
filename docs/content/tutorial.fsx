@@ -603,11 +603,11 @@ serializer.DisableSubtypeResolution <- true
 
 This essentially disables the serialization of any object whose declaring type
 is specified on the serialization itself. Attempting to serialize or deserialize
-any such object will result in a serialization exception.
+any such object will result in an exception.
 
 Note that enabling this option prevents serialization of the following types:
   
-  * `System.Object` or any non-sealed class.
+  * `System.Object` or any abstract class (excluding F# DUs).
   * Any delegate instance or F# function.
   * Any ISerializable class.
 
