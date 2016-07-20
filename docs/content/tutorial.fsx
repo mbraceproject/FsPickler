@@ -609,7 +609,7 @@ Note that enabling this option prevents serialization of the following types:
   
   * `System.Object` or any abstract class (excluding F# DUs).
   * Any delegate instance or F# function.
-  * Any ISerializable class.
+  * Any `ISerializable` class.
 
 As a further precaution, it is also possible to disable implicit assembly loading
 when deserializing objects:
