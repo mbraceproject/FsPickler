@@ -1,9 +1,9 @@
-﻿namespace Nessos.FsPickler
+﻿namespace MBrace.FsPickler
 
 open System
 open System.Reflection
 
-open Nessos.FsPickler
+open MBrace.FsPickler
 
 /// abstract type pickler factory
 

@@ -7,7 +7,7 @@
     <ProjectGuid>{49D58CB3-B5A5-41DD-8398-060A8C6FBDD0}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Nessos.CsPickler</RootNamespace>
+    <RootNamespace>MBrace.CsPickler</RootNamespace>
     <AssemblyName>FsPickler.CSharp</AssemblyName>
     <FileAlignment>512</FileAlignment>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>

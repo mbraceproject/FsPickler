@@ -1,14 +1,14 @@
-﻿module internal Nessos.FsPickler.ReflectionPicklers
+﻿module internal MBrace.FsPickler.ReflectionPicklers
 
 open System
 open System.IO
 open System.Reflection
 open System.Collections.Concurrent
 
-open Nessos.FsPickler
-open Nessos.FsPickler.Reflection
-open Nessos.FsPickler.ReflectionCache
-open Nessos.FsPickler.PrimitivePicklers
+open MBrace.FsPickler
+open MBrace.FsPickler.Reflection
+open MBrace.FsPickler.ReflectionCache
+open MBrace.FsPickler.PrimitivePicklers
 
 [<RequireQualifiedAccess>]
 module private MemberTag =

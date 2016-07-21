@@ -5,7 +5,7 @@ using System.Runtime.Serialization;
 using Microsoft.FSharp.Core;
 using FsPickler.CSharpProxy;
 
-namespace Nessos.CsPickler
+namespace MBrace.CsPickler
 {
     internal static class Utils
     {

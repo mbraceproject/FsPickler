@@ -1,9 +1,9 @@
-﻿namespace Nessos.FsPickler
+﻿namespace MBrace.FsPickler
 
 open System
 open System.Reflection
 
-open Nessos.FsPickler.Reflection
+open MBrace.FsPickler.Reflection
 
 type internal CustomPickler =
     static member Create<'T>(resolver : IPicklerResolver) =

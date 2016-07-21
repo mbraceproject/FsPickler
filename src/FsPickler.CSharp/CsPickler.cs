@@ -5,11 +5,11 @@ using System.Text;
 using Microsoft.FSharp.Core;
 using FsPickler.CSharpProxy;
 
-using FSP = Nessos.FsPickler.FsPickler;
-using IObjectVisitor = Nessos.FsPickler.IObjectVisitor;
-using HashResult = Nessos.FsPickler.Hashing.HashResult;
+using FSP = MBrace.FsPickler.FsPickler;
+using IObjectVisitor = MBrace.FsPickler.IObjectVisitor;
+using HashResult = MBrace.FsPickler.Hashing.HashResult;
 
-namespace Nessos.CsPickler
+namespace MBrace.CsPickler
 {
     /// <summary>
     ///     Provides a collection of utilities and factory methods.

@@ -1,3 +1,7 @@
+### 3.0.0
+* Move FsPickler to mbraceproject organization.
+* Change root namespace from Nessos.FsPickler to MBrace.FsPickler.
+
 ### 2.4.0
 * Implement DisableSubtypeResolution and DisableAssemblyLoading properties.
 
@@ -259,7 +263,7 @@
 * Add FAKE support
 
 #### 0.8.6.0
-* Update namespace to Nessos.FsPickler
+* Update namespace to MBrace.FsPickler
 * Improve pickler cache performance
 
 #### 0.8.5.3

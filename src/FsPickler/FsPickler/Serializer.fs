@@ -1,4 +1,4 @@
-﻿namespace Nessos.FsPickler
+﻿namespace MBrace.FsPickler
 
 open System
 
@@ -9,10 +9,10 @@ open System.Collections.Generic
 open System.Runtime.Serialization
 open System.Text
 
-open Nessos.FsPickler.Utils
-open Nessos.FsPickler.Hashing
-open Nessos.FsPickler.ReflectionCache
-open Nessos.FsPickler.RootSerialization
+open MBrace.FsPickler.Utils
+open MBrace.FsPickler.Hashing
+open MBrace.FsPickler.ReflectionCache
+open MBrace.FsPickler.RootSerialization
 
 /// <summary>
 ///     An abstract class containg the basic serialization API.

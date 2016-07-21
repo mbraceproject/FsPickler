@@ -1,8 +1,8 @@
 ﻿#I "../../bin/"
 #r "FsPickler.dll"
 
-open Nessos.FsPickler
-open Nessos.FsPickler.Combinators 
+open MBrace.FsPickler
+open MBrace.FsPickler.Combinators 
 
 let qPickler = Pickler.auto<Quotations.Expr<int>>
 

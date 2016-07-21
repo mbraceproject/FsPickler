@@ -1,4 +1,4 @@
-﻿namespace Nessos.FsPickler
+﻿namespace MBrace.FsPickler
 
 open System
 open System.IO
@@ -6,11 +6,11 @@ open System.Collections.Generic
 
 open Microsoft.FSharp.Reflection
 
-open Nessos.FsPickler.Reflection
+open MBrace.FsPickler.Reflection
 
 #if EMIT_IL
 open System.Reflection.Emit
-open Nessos.FsPickler.Emit
+open MBrace.FsPickler.Emit
 #endif
 
 //

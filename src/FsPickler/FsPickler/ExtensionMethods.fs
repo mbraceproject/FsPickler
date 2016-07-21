@@ -1,4 +1,4 @@
-﻿namespace Nessos.FsPickler
+﻿namespace MBrace.FsPickler
 
 open System
 open System.Collections.Generic
@@ -6,7 +6,7 @@ open System.Runtime.Serialization
 open System.Text
 open System.Text.RegularExpressions
 
-open Nessos.FsPickler.Hashing
+open MBrace.FsPickler.Hashing
 
 /// F# Extension methods for FsPickler
 

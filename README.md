@@ -1,6 +1,6 @@
 ## FsPickler
 
-[![Join the chat at https://gitter.im/nessos/FsPickler](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/nessos/FsPickler?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Join the chat at https://gitter.im/mbraceproject/FsPickler](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/mbraceproject/FsPickler?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![NuGet Status](http://img.shields.io/nuget/vpre/FsPickler.svg?style=flat)](https://www.nuget.org/packages/FsPickler/)
 
 FsPickler is a serialization library that facilitates the distribution of .NET objects.
@@ -14,16 +14,16 @@ Packages of the library are available on Nuget [[1](http://www.nuget.org/package
 
 ### Documentation
 
-* [Tutorial](http://nessos.github.io/FsPickler/tutorial.html) A short introduction to FsPickler.
-* [Technical Overview](http://nessos.github.io/FsPickler/overview.html) A walkthrough of the library's implementation details.
-* [Performance](http://nessos.github.io/FsPickler/benchmarks.html) Benchmarks comparing FsPickler to other established serialization libraries.
-* [API Reference](http://nessos.github.io/FsPickler/reference/index.html) Auto-generated library documentation.
+* [Tutorial](http://mbraceproject.github.io/FsPickler/tutorial.html) A short introduction to FsPickler.
+* [Technical Overview](http://mbraceproject.github.io/FsPickler/overview.html) A walkthrough of the library's implementation details.
+* [Performance](http://mbraceproject.github.io/FsPickler/benchmarks.html) Benchmarks comparing FsPickler to other established serialization libraries.
+* [API Reference](http://mbraceproject.github.io/FsPickler/reference/index.html) Auto-generated library documentation.
 
-All documentation and related material can be found [here](http://nessos.github.io/FsPickler/).
+All documentation and related material can be found [here](http://mbraceproject.github.io/FsPickler/).
 
 ### Build Status
 
 Head (branch `master`), Build & Unit tests
 
-* Windows/.NET [![Build status](https://ci.appveyor.com/api/projects/status/vwthnxgal50ua8ej/branch/master)](https://ci.appveyor.com/project/nessos/fspickler)
-* Linux/Mono 4.2 [![Build Status](https://travis-ci.org/nessos/FsPickler.png?branch=master)](https://travis-ci.org/nessos/FsPickler/branches)
+* Windows/.NET [![Build status](https://ci.appveyor.com/api/projects/status/vwthnxgal50ua8ej/branch/master)](https://ci.appveyor.com/project/mbraceproject/fspickler)
+* Linux/Mono 4.2 [![Build Status](https://travis-ci.org/mbraceproject/FsPickler.png?branch=master)](https://travis-ci.org/mbraceproject/FsPickler/branches)

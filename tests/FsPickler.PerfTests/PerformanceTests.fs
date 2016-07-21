@@ -1,13 +1,13 @@
-﻿namespace Nessos.FsPickler.Tests
+﻿namespace MBrace.FsPickler.Tests
 
 open System
 open System.Collections.Generic
 
 open PerfUtil
 
-open Nessos.FsPickler
-open Nessos.FsPickler.Tests.Serializer
-open Nessos.FsPickler.Tests.TestTypes
+open MBrace.FsPickler
+open MBrace.FsPickler.Tests.Serializer
+open MBrace.FsPickler.Tests.TestTypes
 
 module PerformanceTests =
 

@@ -8,8 +8,8 @@
 #r "FsPickler.Json.dll"
 
 open System
-open Nessos.FsPickler
-open Nessos.FsPickler.Combinators
+open MBrace.FsPickler
+open MBrace.FsPickler.Combinators
 
 type SomeType = class end
 
@@ -144,7 +144,7 @@ let mkArrayPickler (ip : Pickler<int>) (tp : Pickler<'T>) : Pickler<'T []> =
 
 (***hide***)
 // mask the dummy pickler implementation
-open Nessos.FsPickler
+open MBrace.FsPickler
 
 (**
 
@@ -170,7 +170,7 @@ since this mostly relies on the metaprogramming facility offered by scala.
 
 So what qualifies as a serializable type in FsPickler?
 The short answer would be any type `'T` for which we present an instance of 
-[`Pickler<'T>`](reference/nessos-fspickler-pickler-1.html).
+[`Pickler<'T>`](reference/mbrace-fspickler-pickler-1.html).
 To make the question more meaningful: for what types does the library auto-generate picklers? 
 This is something that can only be answered at runtime, typically by calling
 
@@ -194,7 +194,7 @@ and moreover satisfies either of the following:
 
   * is an F# union or record type in which all contained fields are serializable.
 
-  * carries the [`CustomPickler`](reference/nessos-fspickler-custompicklerattribute.html) attribute and an accompanying pickler factory method.
+  * carries the [`CustomPickler`](reference/mbrace-fspickler-custompicklerattribute.html) attribute and an accompanying pickler factory method.
 
   * is neither of the above and all its contained fields are of serializable type.
     Parameterless constructors or public fields are not required.
@@ -245,7 +245,7 @@ the following categories:
   * Atomic picklers: self containing pickler implementations for types like primitives,
     strings, `System.DateTime` and `System.Guid`. These do little other than delegating
     serialization to the underlying 
-    [pickle format](reference/nessos-fspickler-ipickleformatprovider.html) 
+    [pickle format](reference/mbrace-fspickler-ipickleformatprovider.html) 
     implementation.
 
   * Pickler combinators: as described earlier, these are parametric functions generating picklers

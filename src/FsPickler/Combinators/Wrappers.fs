@@ -1,8 +1,8 @@
-﻿namespace Nessos.FsPickler
+﻿namespace MBrace.FsPickler
 
 open Microsoft.FSharp.Reflection
 
-open Nessos.FsPickler.Reflection
+open MBrace.FsPickler.Reflection
 
 type internal AltPickler =
         

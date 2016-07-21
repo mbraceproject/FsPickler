@@ -1,4 +1,4 @@
-﻿module internal Nessos.FsPickler.PicklerGenerator
+﻿module internal MBrace.FsPickler.PicklerGenerator
 
 //
 //  Defines a type shape visitor that routes shapes into their
@@ -9,8 +9,8 @@ open System
 open System.Reflection
 open System.Runtime.Serialization
 
-open Nessos.FsPickler
-open Nessos.FsPickler.TypeShape
+open MBrace.FsPickler
+open MBrace.FsPickler.TypeShape
 
 
 /// Implements a pickler factory type visitor

@@ -1,10 +1,10 @@
-﻿namespace Nessos.FsPickler
+﻿namespace MBrace.FsPickler
 
 open System
 open System.Reflection
 
-open Nessos.FsPickler.Reflection
-open Nessos.FsPickler.SequenceUtils
+open MBrace.FsPickler.Reflection
+open MBrace.FsPickler.SequenceUtils
 
 [<AutoOpen>]
 module private ArrayPicklerUtils =

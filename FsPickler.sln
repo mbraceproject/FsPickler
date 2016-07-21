@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.23107.0
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".paket", ".paket", "{2FC26D10-021B-4487-AE72-6CFC1346239A}"
 	ProjectSection(SolutionItems) = preProject
@@ -55,7 +55,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "files", "files", "{BE768967-0DE8-4FB3-83EA-2841CB790B9E}"
 	ProjectSection(SolutionItems) = preProject
 		docs\files\img\fsharp.png = docs\files\img\fsharp.png
-		docs\files\img\nessos.png = docs\files\img\nessos.png
+		docs\files\img\mbrace.png = docs\files\img\mbrace.png
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "benchmarks", "benchmarks", "{6A9C2D20-E8F1-42C1-A116-EACB1A4E93BD}"

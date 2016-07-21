@@ -1,4 +1,4 @@
-﻿namespace Nessos.FsPickler
+﻿namespace MBrace.FsPickler
 
 //
 //  CompositePickler

@@ -7,7 +7,7 @@ In this section we present a few microbenchmarks: we compared FsPickler against
 [Json.Net 7.0](http://james.newtonking.com/json), [ProtoBuf-Net 2.0](https://code.google.com/p/protobuf-net/)
 and [Wire 0.0.5](https://www.nuget.org/packages/Wire).
 Code used to run the tests is available in the 
-[FsPickler.PerfTests](https://github.com/nessos/FsPickler/tree/master/tests/FsPickler.PerfTests) project.
+[FsPickler.PerfTests](https://github.com/mbraceproject/FsPickler/tree/master/tests/FsPickler.PerfTests) project.
 Benchmarks were run on an Intel Core i7-7200K CPU @ 3.50GHz with 16GB RAM.
 
 Last updated on October 12, 2015.

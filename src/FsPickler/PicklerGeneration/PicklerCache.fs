@@ -1,4 +1,4 @@
-﻿namespace Nessos.FsPickler
+﻿namespace MBrace.FsPickler
 
 // The Pickler cache stores all generated picklers.
 // It is essentially a ConcurrentDictionary<Type, Pickler>
@@ -9,10 +9,10 @@ open System.Collections.Generic
 open System.Collections.Concurrent
 open System.Threading
 
-open Nessos.FsPickler.Utils
-open Nessos.FsPickler.PrimitivePicklers
-open Nessos.FsPickler.ReflectionPicklers
-open Nessos.FsPickler.PicklerResolution
+open MBrace.FsPickler.Utils
+open MBrace.FsPickler.PrimitivePicklers
+open MBrace.FsPickler.ReflectionPicklers
+open MBrace.FsPickler.PicklerResolution
 
 [<AutoSerializable(false)>]
 type internal PicklerCache private () =

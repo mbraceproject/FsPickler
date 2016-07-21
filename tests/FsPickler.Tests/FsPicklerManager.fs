@@ -1,9 +1,9 @@
-﻿namespace Nessos.FsPickler.Tests
+﻿namespace MBrace.FsPickler.Tests
 
 open System
 
-open Nessos.FsPickler
-open Nessos.FsPickler.Json
+open MBrace.FsPickler
+open MBrace.FsPickler.Json
 
 [<RequireQualifiedAccess>]
 module PickleFormat =

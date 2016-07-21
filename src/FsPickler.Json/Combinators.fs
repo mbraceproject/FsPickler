@@ -1,7 +1,7 @@
-﻿namespace Nessos.FsPickler.Combinators
+﻿namespace MBrace.FsPickler.Combinators
 
-open Nessos.FsPickler
-open Nessos.FsPickler.Json
+open MBrace.FsPickler
+open MBrace.FsPickler.Json
 
 /// Json pickling methods
 [<RequireQualifiedAccess>]

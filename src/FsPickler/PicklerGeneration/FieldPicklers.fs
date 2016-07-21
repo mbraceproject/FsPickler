@@ -1,4 +1,4 @@
-﻿namespace Nessos.FsPickler
+﻿namespace MBrace.FsPickler
 
 open System
 open System.IO
@@ -6,13 +6,13 @@ open System.Reflection
 open System.Threading
 open System.Runtime.Serialization
 
-open Nessos.FsPickler
-open Nessos.FsPickler.Reflection
+open MBrace.FsPickler
+open MBrace.FsPickler.Reflection
 
 #if EMIT_IL
 open System.Reflection.Emit
-open Nessos.FsPickler.Emit
-open Nessos.FsPickler.PicklerEmit
+open MBrace.FsPickler.Emit
+open MBrace.FsPickler.PicklerEmit
 #endif
 
 // pickler combinator for struct types

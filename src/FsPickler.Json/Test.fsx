@@ -2,9 +2,9 @@
 #r "FsPickler.dll"
 #r "FsPickler.Json.dll"
 
-open Nessos.FsPickler
-open Nessos.FsPickler.Json
-open Nessos.FsPickler.Combinators
+open MBrace.FsPickler
+open MBrace.FsPickler.Json
+open MBrace.FsPickler.Combinators
 
 let jsp = FsPickler.CreateJsonSerializer(indent = true, omitHeader = true)
 let bsp = FsPickler.CreateBsonSerializer()

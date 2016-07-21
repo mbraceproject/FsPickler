@@ -1,4 +1,4 @@
-﻿module internal Nessos.FsPickler.ReflectionCache
+﻿module internal MBrace.FsPickler.ReflectionCache
 
 open System
 open System.Globalization
@@ -9,8 +9,8 @@ open System.Runtime.Serialization
 open System.Collections.Generic
 open System.Collections.Concurrent
 
-open Nessos.FsPickler
-open Nessos.FsPickler.Reflection
+open MBrace.FsPickler
+open MBrace.FsPickler.Reflection
 
 /// Contains breakdown information for a MemberInfo instance
 /// This information can be memoized for performance and

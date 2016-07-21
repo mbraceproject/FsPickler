@@ -3,7 +3,7 @@
 #r "../../bin/FsPickler.Json.dll"
 #r "../../bin/FsPickler.CSharp.dll"
 
-using Nessos.CsPickler;
+using MBrace.CsPickler;
 
 var serializer = CsPickler.CreateJsonSerializer(indent: true, omitHeader: true);
 

@@ -16,9 +16,9 @@ releasenotes
     RELEASE NOTES
 summary
     A fast serialization framework and pickler combinator library for .NET
-licenseurl https://github.com/nessos/FsPickler/blob/master/License.md
-projecturl https://github.com/nessos/FsPickler
-iconurl https://avatars1.githubusercontent.com/u/5538081
+licenseurl https://github.com/mbraceproject/FsPickler/blob/master/License.md
+projecturl https://github.com/mbraceproject/FsPickler
+iconurl https://avatars1.githubusercontent.com/u/9674757
 include-pdbs true
 tags
     F#, fsharp, serializer, pickler, binary, json, xml

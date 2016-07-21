@@ -1,4 +1,4 @@
-﻿namespace Nessos.FsPickler.Tests
+﻿namespace MBrace.FsPickler.Tests
 
 open System
 open System.IO
@@ -9,12 +9,12 @@ open System.Reflection
 open System.Runtime.Serialization
 open System.Threading.Tasks
 
-open Nessos.FsPickler
-open Nessos.FsPickler.Json
-open Nessos.FsPickler.Combinators
-open Nessos.FsPickler.Hashing
+open MBrace.FsPickler
+open MBrace.FsPickler.Json
+open MBrace.FsPickler.Combinators
+open MBrace.FsPickler.Hashing
 
-open Nessos.FsPickler.Tests.TestTypes
+open MBrace.FsPickler.Tests.TestTypes
 
 open NUnit.Framework
 open FsUnit

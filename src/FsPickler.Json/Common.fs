@@ -1,11 +1,11 @@
-﻿namespace Nessos.FsPickler.Json
+﻿namespace MBrace.FsPickler.Json
 
 open System
 open System.IO
 
 open Newtonsoft.Json
 
-open Nessos.FsPickler
+open MBrace.FsPickler
 
 #nowarn "1204"
 

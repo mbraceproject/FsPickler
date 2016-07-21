@@ -1,4 +1,4 @@
-﻿module internal Nessos.FsPickler.Reflection
+﻿module internal MBrace.FsPickler.Reflection
 
 open System
 open System.Text.RegularExpressions

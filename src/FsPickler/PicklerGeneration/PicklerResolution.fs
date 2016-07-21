@@ -1,13 +1,13 @@
-﻿module internal Nessos.FsPickler.PicklerResolution
+﻿module internal MBrace.FsPickler.PicklerResolution
 
 open System
 open System.Collections.Generic
 open System.Runtime.CompilerServices
 
-open Nessos.FsPickler
-open Nessos.FsPickler.Reflection
-open Nessos.FsPickler.TypeShape
-open Nessos.FsPickler.PicklerGenerator
+open MBrace.FsPickler
+open MBrace.FsPickler.Reflection
+open MBrace.FsPickler.TypeShape
+open MBrace.FsPickler.PicklerGenerator
 
 let isSerializable (result : Exn<Pickler>) =
     match result with

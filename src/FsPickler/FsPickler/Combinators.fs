@@ -1,11 +1,11 @@
-﻿namespace Nessos.FsPickler.Combinators
+﻿namespace MBrace.FsPickler.Combinators
 
 open System
 open System.IO
 open System.Runtime.Serialization
 
-open Nessos.FsPickler
-open Nessos.FsPickler.PrimitivePicklers
+open MBrace.FsPickler
+open MBrace.FsPickler.PrimitivePicklers
 
 /// Binary pickling methods
 

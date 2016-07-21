@@ -4,9 +4,9 @@ using System.IO;
 using System.Text;
 using System.Runtime.Serialization;
 
-using FSP = Nessos.FsPickler;
+using FSP = MBrace.FsPickler;
 
-namespace Nessos.CsPickler
+namespace MBrace.CsPickler
 {
     /// <summary>
     ///     Defines a Bson serializer instance.

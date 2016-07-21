@@ -7,7 +7,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>3ad987bf-f0fa-40bd-9dae-4af3a5fe9cc7</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>Nessos.FsPickler</RootNamespace>
+    <RootNamespace>MBrace.FsPickler</RootNamespace>
     <AssemblyName>FsPickler</AssemblyName>
     <Name>FsPickler</Name>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>

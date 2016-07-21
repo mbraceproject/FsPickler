@@ -1,4 +1,4 @@
-﻿namespace Nessos.FsPickler
+﻿namespace MBrace.FsPickler
 
 open System
 open System.Collections
@@ -51,7 +51,7 @@ module internal SequenceUtils =
 
     // number of objects after which to reset cache state in sequence serialization
     // this relates to an ObjectIdGenerator performance issue that hits as the number
-    // of cached objects increases. See https://github.com/nessos/FsPickler/issues/38 for more.
+    // of cached objects increases. See https://github.com/mbraceproject/FsPickler/issues/38 for more.
     // Resetting the cache is safe when serializing top-level sequences.
     [<Literal>]
     let objectCountResetThreshold = 50000L

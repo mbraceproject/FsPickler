@@ -1,4 +1,4 @@
-﻿namespace Nessos.FsPickler
+﻿namespace MBrace.FsPickler
 
 open System
 open System.Collections
@@ -6,8 +6,8 @@ open System.Collections.Generic
 open System.IO
 open System.Runtime.Serialization
 
-open Nessos.FsPickler.Reflection
-open Nessos.FsPickler.ReflectionCache
+open MBrace.FsPickler.Reflection
+open MBrace.FsPickler.ReflectionCache
 
 [<AbstractClass>]
 [<AutoSerializable(false)>]

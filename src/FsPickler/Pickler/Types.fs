@@ -1,4 +1,4 @@
-﻿namespace Nessos.FsPickler
+﻿namespace MBrace.FsPickler
 
 open System
 open System.Globalization
@@ -6,8 +6,8 @@ open System.Reflection
 open System.IO
 open System.Runtime.Serialization
 
-open Nessos.FsPickler.Utils
-open Nessos.FsPickler.Reflection
+open MBrace.FsPickler.Utils
+open MBrace.FsPickler.Reflection
 
 /// Defines a stratification of .NET types from simplest to more complex.
 type Kind =

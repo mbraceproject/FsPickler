@@ -1,4 +1,4 @@
-﻿namespace Nessos.FsPickler.Tests
+﻿namespace MBrace.FsPickler.Tests
 
 open System
 open System.IO
@@ -8,7 +8,7 @@ open System.Runtime.Serialization.Formatters.Binary
 
 open Newtonsoft.Json
 
-open Nessos.FsPickler
+open MBrace.FsPickler
 
 type ISerializer =
     abstract Name : string

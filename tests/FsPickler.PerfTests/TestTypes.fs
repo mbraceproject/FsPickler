@@ -1,4 +1,4 @@
-﻿namespace Nessos.FsPickler.Tests
+﻿namespace MBrace.FsPickler.Tests
 
 #nowarn "346"
 
@@ -9,8 +9,8 @@ open System.Runtime.Serialization
 
 open ProtoBuf
 
-open Nessos.FsPickler
-open Nessos.FsPickler.Combinators
+open MBrace.FsPickler
+open MBrace.FsPickler.Combinators
 
 [<AutoOpen>]
 module TestTypes =

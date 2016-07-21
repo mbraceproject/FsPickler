@@ -1,4 +1,4 @@
-﻿namespace Nessos.FsPickler
+﻿namespace MBrace.FsPickler
 
 open System
 open System.IO
@@ -9,13 +9,13 @@ open System.Runtime.Serialization
 
 open Microsoft.FSharp.Reflection
 
-open Nessos.FsPickler
-open Nessos.FsPickler.Reflection
+open MBrace.FsPickler
+open MBrace.FsPickler.Reflection
 
 #if EMIT_IL
 open System.Reflection.Emit
-open Nessos.FsPickler.Emit
-open Nessos.FsPickler.PicklerEmit
+open MBrace.FsPickler.Emit
+open MBrace.FsPickler.PicklerEmit
 #endif
 
 // F# union types

@@ -1,11 +1,11 @@
-﻿module internal Nessos.FsPickler.PrimitivePicklers
+﻿module internal MBrace.FsPickler.PrimitivePicklers
 
 open System
 
 open Microsoft.FSharp.Core.LanguagePrimitives
 
-open Nessos.FsPickler
-open Nessos.FsPickler.Reflection
+open MBrace.FsPickler
+open MBrace.FsPickler.Reflection
 
 [<AbstractClass>]
 [<AutoSerializable(false)>]

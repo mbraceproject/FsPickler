@@ -8,7 +8,7 @@ let referenceBinaries = [ "FsPickler.dll" ; "FsPickler.Json.dll" ]
 // Web site location for the generated documentation
 let website = "/FsPickler"
 
-let githubLink = "http://github.com/nessos/FsPickler"
+let githubLink = "http://github.com/mbraceproject/FsPickler"
 
 // Specify more information about your project
 let info =

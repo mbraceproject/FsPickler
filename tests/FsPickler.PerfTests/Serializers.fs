@@ -1,4 +1,4 @@
-﻿namespace Nessos.FsPickler.Tests
+﻿namespace MBrace.FsPickler.Tests
     
 open System
 open System.IO
@@ -10,8 +10,8 @@ open Newtonsoft.Json.Bson
 open ProtoBuf
 open Wire
 
-open Nessos.FsPickler
-open Nessos.FsPickler.Json
+open MBrace.FsPickler
+open MBrace.FsPickler.Json
 
 open PerfUtil
 

@@ -1,4 +1,4 @@
-﻿namespace Nessos.FsPickler.Json
+﻿namespace MBrace.FsPickler.Json
 
 open System
 open System.Collections.Generic
@@ -9,7 +9,7 @@ open System.Text
 
 open Newtonsoft.Json
 
-open Nessos.FsPickler
+open MBrace.FsPickler
 
 /// <summary>
 ///     Json format deserializer

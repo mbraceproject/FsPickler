@@ -1,12 +1,12 @@
-﻿namespace Nessos.FsPickler
+﻿namespace MBrace.FsPickler
 
 open System
 open System.IO
 open System.Text
 
-open Nessos.FsPickler.Hashing
-open Nessos.FsPickler.RootSerialization
-open Nessos.FsPickler.ReflectionCache
+open MBrace.FsPickler.Hashing
+open MBrace.FsPickler.RootSerialization
+open MBrace.FsPickler.ReflectionCache
 
 type internal OAttribute = System.Runtime.InteropServices.OptionalAttribute
 type internal DAttribute = System.Runtime.InteropServices.DefaultParameterValueAttribute

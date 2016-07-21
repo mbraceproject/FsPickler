@@ -1,9 +1,9 @@
-﻿namespace Nessos.FsPickler
+﻿namespace MBrace.FsPickler
 
 open System
 open System.Collections.Generic
 
-open Nessos.FsPickler.SequenceUtils
+open MBrace.FsPickler.SequenceUtils
 
 type internal FSharpSetPickler =
     static member Create<'T when 'T : comparison>(ep : Pickler<'T>) =

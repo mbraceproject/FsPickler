@@ -1,13 +1,13 @@
-﻿namespace Nessos.FsPickler
+﻿namespace MBrace.FsPickler
 
 open System
 open System.Reflection
 
-open Nessos.FsPickler.Reflection
+open MBrace.FsPickler.Reflection
 
 #if EMIT_IL
 open System.Reflection.Emit
-open Nessos.FsPickler.Emit
+open MBrace.FsPickler.Emit
 #endif
 
 type internal ShallowObjectCopier<'T> private () =

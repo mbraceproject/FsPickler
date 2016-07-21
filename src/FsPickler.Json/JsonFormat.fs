@@ -1,4 +1,4 @@
-﻿namespace Nessos.FsPickler.Json
+﻿namespace MBrace.FsPickler.Json
 
 open System
 open System.IO
@@ -6,7 +6,7 @@ open System.Text
 
 open Newtonsoft.Json
 
-open Nessos.FsPickler
+open MBrace.FsPickler
 
 /// <summary>
 ///     Factory methods for the Json serialization format.
@@ -33,7 +33,7 @@ type JsonPickleFormatProvider internal (indent, omitHeader) as self =
     interface ITextPickleFormatProvider with
         member __.Name = "Json"
 
-        // see discussion : https://github.com/nessos/FsPickler/issues/17
+        // see discussion : https://github.com/mbraceproject/FsPickler/issues/17
         member __.DefaultEncoding = new UTF8Encoding(false) :> Encoding
 
         member __.CreateWriter (stream, encoding, isTopLevelSequence, leaveOpen) =

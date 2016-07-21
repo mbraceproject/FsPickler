@@ -1,11 +1,11 @@
-﻿namespace Nessos.FsPickler.Tests
+﻿namespace MBrace.FsPickler.Tests
 
 open System
 open System.IO
 
 open NUnit.Framework
 
-open Nessos.FsPickler
+open MBrace.FsPickler
 
 #if REMOTE_TESTS
 

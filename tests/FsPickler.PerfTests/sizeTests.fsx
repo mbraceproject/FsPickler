@@ -8,9 +8,9 @@
 #r "FsPickler.dll"
 #r "FsPickler.PerfTests.dll"
 
-open Nessos.FsPickler
-open Nessos.FsPickler.Tests
-open Nessos.FsPickler.Tests.SerializationSize
+open MBrace.FsPickler
+open MBrace.FsPickler.Tests
+open MBrace.FsPickler.Tests.SerializationSize
 
 plot "System.Int32" 1
 plot "Tuple<int, string>" (42, "lorem ipsum")

@@ -1,4 +1,4 @@
-﻿module internal Nessos.FsPickler.RootSerialization
+﻿module internal MBrace.FsPickler.RootSerialization
 
 open System
 open System.Collections
@@ -7,9 +7,9 @@ open System.Text
 open System.IO
 open System.Runtime.Serialization
     
-open Nessos.FsPickler
-open Nessos.FsPickler.ReflectionCache
-open Nessos.FsPickler.SequenceUtils
+open MBrace.FsPickler
+open MBrace.FsPickler.ReflectionCache
+open MBrace.FsPickler.SequenceUtils
 
 /// Initializes an IPicklerFormatWriter instance using a targeted System.IO.Stream and parameters
 let initStreamWriter (formatP : IPickleFormatProvider) stream encoding isSeq leaveOpen =

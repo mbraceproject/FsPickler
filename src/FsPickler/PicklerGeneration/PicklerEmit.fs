@@ -1,4 +1,4 @@
-﻿namespace Nessos.FsPickler
+﻿namespace MBrace.FsPickler
 
 #if EMIT_IL
 
@@ -8,8 +8,8 @@ open System.Runtime.Serialization
 
 open System.Reflection.Emit
 
-open Nessos.FsPickler.Reflection
-open Nessos.FsPickler.Emit
+open MBrace.FsPickler.Reflection
+open MBrace.FsPickler.Emit
 
 module internal PicklerEmit =
     

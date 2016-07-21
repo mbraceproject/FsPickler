@@ -1,4 +1,4 @@
-﻿namespace Nessos.FsPickler
+﻿namespace MBrace.FsPickler
 
 open System
 open System.IO
@@ -8,7 +8,7 @@ open System.Runtime.Serialization
 
 open Microsoft.FSharp.Core.LanguagePrimitives
 
-open Nessos.FsPickler
+open MBrace.FsPickler
 
 [<AutoOpen>]
 module private BinaryFormatUtils =

@@ -17,8 +17,8 @@ open System.Windows.Forms.DataVisualization.Charting
 
 open PerfUtil
 
-open Nessos.FsPickler
-open Nessos.FsPickler.Tests
+open MBrace.FsPickler
+open MBrace.FsPickler.Tests
 
 open FSharp.Charting
 
@@ -113,7 +113,7 @@ module PerfTests =
 module RandomGraph =
     type Marker = class end
 
-    let graph = Nessos.FsPickler.Tests.TestTypes.createRandomGraph 0.2 500
+    let graph = MBrace.FsPickler.Tests.TestTypes.createRandomGraph 0.2 500
 
     [<PerfTest>]
     let ``Random object graph (n=500,P=20%)`` s = Serializer.roundtrip graph s

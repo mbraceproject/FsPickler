@@ -1,12 +1,12 @@
-﻿namespace Nessos.FsPickler.Tests
+﻿namespace MBrace.FsPickler.Tests
 
 open PerfUtil
 open PerfUtil.NUnit
 
 open NUnit.Framework
 
-open Nessos.FsPickler
-open Nessos.FsPickler.Json
+open MBrace.FsPickler
+open MBrace.FsPickler.Json
 
 [<AbstractClass>]
 type PerfTester () =

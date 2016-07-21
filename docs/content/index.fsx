@@ -34,7 +34,7 @@ This example demonstrates a basic serialization roundtrip using the library
 
 *)
 #r "FsPickler.dll"
-open Nessos.FsPickler
+open MBrace.FsPickler
 
 let binarySerializer = FsPickler.CreateBinarySerializer()
 
@@ -112,7 +112,7 @@ the project and submit pull requests.
 The library is available under the MIT License. 
 For more information see the [License file][license] in the GitHub repository. 
 
-  [gh]: https://github.com/nessos/FsPickler
-  [issues]: https://github.com/nessos/FsPickler/issues
-  [license]: https://github.com/nessos/FsPickler/blob/master/License.md
+  [gh]: https://github.com/mbraceproject/FsPickler
+  [issues]: https://github.com/mbraceproject/FsPickler/issues
+  [license]: https://github.com/mbraceproject/FsPickler/blob/master/License.md
 *)

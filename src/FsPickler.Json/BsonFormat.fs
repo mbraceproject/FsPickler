@@ -1,4 +1,4 @@
-﻿namespace Nessos.FsPickler.Json
+﻿namespace MBrace.FsPickler.Json
 
 open System
 open System.IO
@@ -7,7 +7,7 @@ open System.Text
 open Newtonsoft.Json
 open Newtonsoft.Json.Bson
 
-open Nessos.FsPickler
+open MBrace.FsPickler
 
 /// <summary>
 ///     BSON format factory methods.

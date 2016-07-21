@@ -1,8 +1,8 @@
-﻿namespace Nessos.FsPickler
+﻿namespace MBrace.FsPickler
 
 open System
 
-open Nessos.FsPickler
+open MBrace.FsPickler
 
 type internal TuplePickler =
 

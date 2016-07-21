@@ -1,4 +1,4 @@
-﻿namespace Nessos.FsPickler.Hashing
+﻿namespace MBrace.FsPickler.Hashing
     
 open System
 open System.IO

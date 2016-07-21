@@ -1,4 +1,4 @@
-﻿module internal Nessos.FsPickler.TypeShape
+﻿module internal MBrace.FsPickler.TypeShape
 
 // TypeShape:
 //
@@ -321,7 +321,7 @@ module TypeShape =
 
     open Microsoft.FSharp.Reflection
 
-    open Nessos.FsPickler.Reflection
+    open MBrace.FsPickler.Reflection
 
     // typedefof does not work properly with 'enum' constraints
     let private getGenericEnumType () = 

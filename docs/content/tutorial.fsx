@@ -8,7 +8,7 @@
 #r "FsPickler.Json.dll"
 
 let stream = Unchecked.defaultof<System.IO.Stream>
-let serializer = Unchecked.defaultof<Nessos.FsPickler.FsPicklerSerializer>
+let serializer = Unchecked.defaultof<MBrace.FsPickler.FsPicklerSerializer>
 let textWriter = Unchecked.defaultof<System.IO.TextWriter>
 let textReader = Unchecked.defaultof<System.IO.TextReader>
 
@@ -20,14 +20,14 @@ The following provides an overview of the basic functionalities offered by the l
 
 ## The core serialization API
 
-The basic API is accessible through instances of type [`FsPicklerSerializer`](reference/nessos-fspickler-fspicklerserializer.html)
+The basic API is accessible through instances of type [`FsPicklerSerializer`](reference/mbrace-fspickler-fspicklerserializer.html)
 that can be initialized as follows:
 
 *)
 
 #r "FsPickler.dll"
 
-open Nessos.FsPickler
+open MBrace.FsPickler
 
 let binarySerializer = FsPickler.CreateBinarySerializer()
 let xmlSerializer = FsPickler.CreateXmlSerializer(indent = true)
@@ -35,14 +35,14 @@ let xmlSerializer = FsPickler.CreateXmlSerializer(indent = true)
 (**
 
 Json serialization formats can be accessed by referencing the `FsPickler.Json` project.
-If evaluating from F# interactive, make sure to [add an explicit reference to Json.Net](https://github.com/nessos/FsPickler/issues/16).
+If evaluating from F# interactive, make sure to [add an explicit reference to Json.Net](https://github.com/mbraceproject/FsPickler/issues/16).
 
 *)
 
 #r "Newtonsoft.Json.dll"
 #r "FsPickler.Json.dll"
 
-open Nessos.FsPickler.Json
+open MBrace.FsPickler.Json
 
 let jsonSerializer = FsPickler.CreateJsonSerializer(indent = false)
 let bsonSerializer = FsPickler.CreateBsonSerializer()
@@ -70,7 +70,7 @@ binarySerializer.UnPickle<Quotations.Expr<int>> pickle
 
 ### Text-based serialization
 
-The Xml and Json serializers are instances of type [`FsPicklerTextSerializer`](reference/nessos-fspickler-fspicklertextserializer.html)
+The Xml and Json serializers are instances of type [`FsPicklerTextSerializer`](reference/mbrace-fspickler-fspicklertextserializer.html)
 that offers functionality for text-based serialization:
 
 *)
@@ -110,7 +110,7 @@ type Pickler<'T> =
     }
 
 (*** hide ***) 
-open Nessos.FsPickler
+open MBrace.FsPickler
 
 (**
 
@@ -136,7 +136,7 @@ of picklers in a more functional style:
 
 *)
 
-open Nessos.FsPickler.Combinators
+open MBrace.FsPickler.Combinators
 
 // atomic picklers
 let int = Pickler.int
@@ -571,7 +571,7 @@ type IObjectVisitor =
   end
 
 (*** hide ***)
-open Nessos.FsPickler
+open MBrace.FsPickler
 open System.IO
 open System.Text
 
@@ -636,6 +636,6 @@ type IPickleFormatProvider =
 
 (**
 which can then be bolted on a class that inherits either of the 
-[`FsPicklerSerializer`](reference/nessos-fspickler-fspicklerserializer.html) or 
-[`FsPicklerTextSerializer`](reference/nessos-fspickler-fspicklertextserializer.html).
+[`FsPicklerSerializer`](reference/mbrace-fspickler-fspicklerserializer.html) or 
+[`FsPicklerTextSerializer`](reference/mbrace-fspickler-fspicklertextserializer.html).
 *)

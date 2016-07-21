@@ -1,4 +1,4 @@
-﻿namespace Nessos.FsPickler
+﻿namespace MBrace.FsPickler
 
 open System
 open System.Reflection
@@ -6,7 +6,7 @@ open System.Collections.Generic
 open System.Runtime.Serialization
 open System.Text
     
-open Nessos.FsPickler.Hashing
+open MBrace.FsPickler.Hashing
 
 /// FsPickler static methods.
 type FsPickler private () =
@@ -266,7 +266,7 @@ type FsPickler private () =
             { new IObjectVisitor with 
                 member __.Visit<'T> (p : Pickler<'T>, _ : 'T) : bool = 
                     if failOnCloneableOnlyTypes && p.IsCloneableOnly then
-                        raise <| new Nessos.FsPickler.NonSerializableTypeException(typeof<'T>)
+                        raise <| new MBrace.FsPickler.NonSerializableTypeException(typeof<'T>)
                     else
                         true }
 

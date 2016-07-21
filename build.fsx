@@ -19,10 +19,10 @@ open Fake.AssemblyInfoFile
 
 let project = "FsPickler"
 
-let gitOwner = "nessos"
+let gitOwner = "mbraceproject"
 let gitHome = "https://github.com/" + gitOwner
 let gitName = "FsPickler"
-let gitRaw = environVarOrDefault "gitRaw" "https://raw.github.com/nessos"
+let gitRaw = environVarOrDefault "gitRaw" "https://raw.github.com/" + gitOwner
 
 
 let testAssemblies = ["bin/FsPickler.Tests.dll" ; "bin/NoEmit/FsPickler.Tests.dll"]

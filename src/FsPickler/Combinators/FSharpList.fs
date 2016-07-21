@@ -1,6 +1,6 @@
-﻿namespace Nessos.FsPickler
+﻿namespace MBrace.FsPickler
 
-open Nessos.FsPickler.SequenceUtils
+open MBrace.FsPickler.SequenceUtils
 
 // F# list pickler combinator
 

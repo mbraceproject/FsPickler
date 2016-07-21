@@ -1,10 +1,10 @@
-﻿namespace Nessos.FsPickler
+﻿namespace MBrace.FsPickler
 
 open System
 open System.Collections.Generic
 open System.Runtime.Serialization
 
-open Nessos.FsPickler.ReflectionCache
+open MBrace.FsPickler.ReflectionCache
 
 /// Base pickler type.
 
