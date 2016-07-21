@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <title>FsPicklerTextSerializer - FsPickler</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content=""/>
+    <meta name="author" content="Eirik Tsarpalis"/>
+
+    <script src="https://code.jquery.com/jquery-1.8.0.js"></script>
+    <script src="https://code.jquery.com/ui/1.8.23/jquery-ui.js"></script>
+    <script src="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/js/bootstrap.min.js"></script>
+    <link href="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/css/bootstrap-combined.min.css" rel="stylesheet"/>
+
+    <link type="text/css" rel="stylesheet" href="/FsPickler/content/style.css" />
+    <script type="text/javascript" src="/FsPickler/content/tips.js"></script>
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="https://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="container">
+      <div class="masthead">
+        <ul class="nav nav-pills pull-right">
+          <li><a href="http://mbrace.io/">mbrace</a></li>
+          <li><a href="http://github.com/mbraceproject/FsPickler">github page</a></li>
+        </ul>
+        <h3 class="muted"><a href="/FsPickler/index.html">FsPickler</a></h3>
+      </div>
+      <hr />
+      <div class="row">
+        <div class="span9" id="main">
+          
+
+
+
+<h1>FsPicklerTextSerializer</h1>
+<p>
+  <span>Namespace: MBrace.FsPickler</span><br />
+</p>
+<div class="xmldoc">
+<p>An abstract class containing the text-based serialization API.</p>
+
+</div>
+  <h3>Constructors</h3>
+  <table class="table table-bordered member-list">
+    <thead>
+      <tr><td>Constructor</td><td>Description</td></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '168', 168)" onmouseover="showTip(event, '168', 168)">
+            new(formatProvider, typeConverter)
+          </code>
+          <div class="tip" id="168">
+            <strong>Signature:</strong> (formatProvider:ITextPickleFormatProvider * typeConverter:ITypeNameConverter option) -&gt; FsPicklerTextSerializer<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/FsPickler/TextSerializer.fs#L16-16" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          
+              <p>CompiledName: <code>.ctor</code></p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <h3>Instance members</h3>
+  <table class="table table-bordered member-list">
+    <thead>
+      <tr><td>Instance member</td><td>Description</td></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '169', 169)" onmouseover="showTip(event, '169', 169)">
+            Deserialize(...)
+          </code>
+          <div class="tip" id="169">
+            <strong>Signature:</strong> (reader:TextReader * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option * leaveOpen:bool option) -&gt; &#39;T<br />
+                          <strong>Type parameters:</strong> 'T          </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/FsPickler/TextSerializer.fs#L45-45" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Deserialize value of given type from the underlying stream.</p>
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '170', 170)" onmouseover="showTip(event, '170', 170)">
+            DeserializeSequence(...)
+          </code>
+          <div class="tip" id="170">
+            <strong>Signature:</strong> (reader:TextReader * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option * leaveOpen:bool option) -&gt; seq&lt;&#39;T&gt;<br />
+                          <strong>Type parameters:</strong> 'T          </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/FsPickler/TextSerializer.fs#L72-72" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Lazily deserialize a sequence of objects from the underlying stream.</p>
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '171', 171)" onmouseover="showTip(event, '171', 171)">
+            DeserializeSequenceUntyped(...)
+          </code>
+          <div class="tip" id="171">
+            <strong>Signature:</strong> (reader:TextReader * pickler:Pickler * streamingContext:StreamingContext option * leaveOpen:bool option) -&gt; IEnumerable<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/FsPickler/TextSerializer.fs#L203-203" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Lazily deserialize a sequence of objects from the underlying stream.</p>
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '172', 172)" onmouseover="showTip(event, '172', 172)">
+            DeserializeSifted(...)
+          </code>
+          <div class="tip" id="172">
+            <strong>Signature:</strong> (reader:TextReader * sifted:(int64 * obj) [] * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option * leaveOpen:bool option) -&gt; &#39;T<br />
+                          <strong>Type parameters:</strong> 'T          </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/FsPickler/TextSerializer.fs#L107-107" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Deserializes a sifted value from stream, filling in sifted holes from the serialized using supplied objects.</p>
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '173', 173)" onmouseover="showTip(event, '173', 173)">
+            DeserializeUntyped(...)
+          </code>
+          <div class="tip" id="173">
+            <strong>Signature:</strong> (reader:TextReader * pickler:Pickler * streamingContext:StreamingContext option * leaveOpen:bool option) -&gt; obj<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/FsPickler/TextSerializer.fs#L180-180" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Deserialize object of given type from the underlying stream.</p>
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '174', 174)" onmouseover="showTip(event, '174', 174)">
+            PickleToString(...)
+          </code>
+          <div class="tip" id="174">
+            <strong>Signature:</strong> (value:&#39;T * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option) -&gt; string<br />
+                          <strong>Type parameters:</strong> 'T          </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/FsPickler/TextSerializer.fs#L121-121" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Pickles given value to string.</p>
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '175', 175)" onmouseover="showTip(event, '175', 175)">
+            PickleToStringSifted(...)
+          </code>
+          <div class="tip" id="175">
+            <strong>Signature:</strong> (value:&#39;T * sifter:IObjectSifter * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option) -&gt; string * (int64 * obj) []<br />
+                          <strong>Type parameters:</strong> 'T          </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/FsPickler/TextSerializer.fs#L143-143" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Pickles value to string, excluding objects mandated by the provided IObjectSifter instance.
+Values excluded from serialization will be returned tagged by their ids.</p>
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '176', 176)" onmouseover="showTip(event, '176', 176)">
+            PickleToStringUntyped(...)
+          </code>
+          <div class="tip" id="176">
+            <strong>Signature:</strong> (value:obj * pickler:Pickler * streamingContext:StreamingContext option) -&gt; string<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/FsPickler/TextSerializer.fs#L213-213" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Pickles given value to string using provided pickler.</p>
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '177', 177)" onmouseover="showTip(event, '177', 177)">
+            Serialize(...)
+          </code>
+          <div class="tip" id="177">
+            <strong>Signature:</strong> (writer:TextWriter * value:&#39;T * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option * leaveOpen:bool option) -&gt; unit<br />
+                          <strong>Type parameters:</strong> 'T          </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/FsPickler/TextSerializer.fs#L32-32" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Serialize value to the underlying writer.</p>
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '178', 178)" onmouseover="showTip(event, '178', 178)">
+            SerializeSequence(...)
+          </code>
+          <div class="tip" id="178">
+            <strong>Signature:</strong> (writer:TextWriter * sequence:seq&lt;&#39;T&gt; * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option * leaveOpen:bool option) -&gt; int<br />
+                          <strong>Type parameters:</strong> 'T          </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/FsPickler/TextSerializer.fs#L59-59" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Evaluates and serializes a sequence of objects to the underlying stream.</p>
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '179', 179)" onmouseover="showTip(event, '179', 179)">
+            SerializeSequenceUntyped(...)
+          </code>
+          <div class="tip" id="179">
+            <strong>Signature:</strong> (writer:TextWriter * sequence:IEnumerable * pickler:Pickler * streamingContext:StreamingContext option * leaveOpen:bool option) -&gt; int<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/FsPickler/TextSerializer.fs#L191-191" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Evaluate and serialize a sequence of objects to the underlying stream.</p>
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '180', 180)" onmouseover="showTip(event, '180', 180)">
+            SerializeSifted(...)
+          </code>
+          <div class="tip" id="180">
+            <strong>Signature:</strong> (writer:TextWriter * value:&#39;T * sifter:IObjectSifter * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option * leaveOpen:bool option) -&gt; (int64 * obj) []<br />
+                          <strong>Type parameters:</strong> 'T          </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/FsPickler/TextSerializer.fs#L90-90" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Serializes a value to text writer, excluding values mandated by the provided IObjectSifter instance.
+Values excluded from serialization will be returned tagged by their ids.</p>
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '181', 181)" onmouseover="showTip(event, '181', 181)">
+            SerializeUntyped(...)
+          </code>
+          <div class="tip" id="181">
+            <strong>Signature:</strong> (writer:TextWriter * value:obj * pickler:Pickler * streamingContext:StreamingContext option * leaveOpen:bool option) -&gt; unit<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/FsPickler/TextSerializer.fs#L170-170" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Serialize object of given type to the underlying stream.</p>
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '182', 182)" onmouseover="showTip(event, '182', 182)">
+            UnPickleOfString(...)
+          </code>
+          <div class="tip" id="182">
+            <strong>Signature:</strong> (pickle:string * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option) -&gt; &#39;T<br />
+                          <strong>Type parameters:</strong> 'T          </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/FsPickler/TextSerializer.fs#L130-130" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Unpickles value from string.</p>
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '183', 183)" onmouseover="showTip(event, '183', 183)">
+            UnPickleOfStringSifted(...)
+          </code>
+          <div class="tip" id="183">
+            <strong>Signature:</strong> (pickle:string * sifted:(int64 * obj) [] * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option) -&gt; &#39;T<br />
+                          <strong>Type parameters:</strong> 'T          </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/FsPickler/TextSerializer.fs#L155-155" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Unpickles a sifted value, filling in sifted holes from the serialized using supplied objects.</p>
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '184', 184)" onmouseover="showTip(event, '184', 184)">
+            UnPickleOfStringUntyped(...)
+          </code>
+          <div class="tip" id="184">
+            <strong>Signature:</strong> (pickle:string * pickler:Pickler * streamingContext:StreamingContext option) -&gt; obj<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/FsPickler/TextSerializer.fs#L222-222" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Unpickle using provided pickler.</p>
+
+
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+        </div>
+        <div class="span3">
+          <a target="_blank" href="http://mbrace.io/">
+      <img src="/FsPickler/img/mbrace.png" alt="F# Project" style="width:150px;margin:10px" /> 
+      </a>
+          <ul class="nav nav-list" id="menu" style="margin-top: 20px;">
+            <li class="nav-header">FsPickler</li>
+            <li><a href="/FsPickler/index.html">Home page</a></li>
+            <li class="divider"></li>
+            <li><a href="http://www.nuget.org/packages/FsPickler">Get Library via NuGet</a></li>
+            <li><a href="http://github.com/mbraceproject/FsPickler">Source Code on GitHub</a></li>
+            <li><a href="http://github.com/mbraceproject/FsPickler/blob/master/License.md">License</a></li>
+            <li><a href="http://github.com/mbraceproject/FsPickler/blob/master/RELEASE_NOTES.md">Release Notes</a></li>
+
+            <li class="nav-header">Documentation</li>
+            <li><a href="/FsPickler/tutorial.html">Tutorial</a></li>
+            <li><a href="/FsPickler/overview.html">Technical Overview</a></li>
+            <li><a href="/FsPickler/benchmarks.html">Performance</a></li>
+            <li><a href="/FsPickler/reference/index.html">API Reference</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <a href="http://github.com/mbraceproject/FsPickler"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_gray_6d6d6d.png" alt="Fork me on GitHub"/></a>
+  </body>
+  </html>
