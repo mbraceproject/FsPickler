@@ -1,4 +1,4 @@
-﻿namespace FsPickler.CSharpProxy
+﻿namespace MBrace.FsPickler.CSharpProxy
 
 open System.Runtime.CompilerServices
 

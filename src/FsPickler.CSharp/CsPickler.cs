@@ -3,7 +3,7 @@ using System.Reflection;
 using System.IO;
 using System.Text;
 using Microsoft.FSharp.Core;
-using FsPickler.CSharpProxy;
+using MBrace.FsPickler.CSharpProxy;
 
 using FSP = MBrace.FsPickler.FsPickler;
 using IObjectVisitor = MBrace.FsPickler.IObjectVisitor;

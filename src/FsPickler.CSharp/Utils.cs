@@ -3,7 +3,7 @@ using System.Text;
 using System.Runtime.Serialization;
 
 using Microsoft.FSharp.Core;
-using FsPickler.CSharpProxy;
+using MBrace.FsPickler.CSharpProxy;
 
 namespace MBrace.CsPickler
 {
