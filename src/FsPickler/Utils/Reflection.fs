@@ -96,6 +96,7 @@ let isLinqEnumerable(t : Type) =
 let isReflectionSerializable (t : Type) = t.IsSerializable || containsAttr<SerializableAttribute> t
 
 let isISerializable (t : Type) = isAssignableFrom typeof<ISerializable> t
+let tryGetISerializableCtor (t : Type) = t.TryGetConstructor [| typeof<SerializationInfo> ; typeof<StreamingContext> |]
 
 /// returns all methods of type `StreamingContext -> unit` and given Attribute
 let getSerializationMethods<'Attr when 'Attr :> Attribute> (ms : MethodInfo []) =

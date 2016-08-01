@@ -60,30 +60,31 @@ module Pickler =
 
     // .NET primitive picklers
 
-    let unit = PrimitivePicklers.mkUnit ()
-    let bool = PrimitivePicklers.mkBoolean()
-    let byte = PrimitivePicklers.mkByte ()
-    let sbyte = PrimitivePicklers.mkSByte ()
-    let char = PrimitivePicklers.mkChar ()
-    let decimal = PrimitivePicklers.mkDecimal ()
-    let single = PrimitivePicklers.mkSingle ()
-    let double = PrimitivePicklers.mkDouble ()
-    let int16 = PrimitivePicklers.mkInt16 ()
-    let int = PrimitivePicklers.mkInt32 ()
-    let int64 = PrimitivePicklers.mkInt64 ()
-    let uint16 = PrimitivePicklers.mkUInt16 ()
-    let uint32 = PrimitivePicklers.mkUInt32 ()
-    let uint64 = PrimitivePicklers.mkUInt64 ()
+    let unit = new UnitPickler() :> Pickler<unit>
+    let bool = new BooleanPickler() :> Pickler<bool>
+    let byte = new BytePickler() :> Pickler<byte>
+    let sbyte = new SBytePickler() :> Pickler<sbyte>
+    let char = new CharPickler() :> Pickler<char>
+    let decimal = new DecimalPickler() :> Pickler<decimal>
+    let single = new SinglePickler() :> Pickler<single>
+    let double = new DoublePickler() :> Pickler<double>
+    let float = double : Pickler<float>
+    let int16 = new Int16Pickler() :> Pickler<int16>
+    let int = new Int32Pickler() :> Pickler<int>
+    let int64 = new Int64Pickler() :> Pickler<int64>
+    let uint16 = new UInt16Pickler() :> Pickler<uint16>
+    let uint32 = new UInt32Pickler() :> Pickler<uint32>
+    let uint64 = new UInt64Pickler() :> Pickler<uint64>
 
     // misc atomic picklers
-    let string = PrimitivePicklers.mkString ()
-    let guid = PrimitivePicklers.mkGuid ()
-    let dateTime = PrimitivePicklers.mkDateTime ()
-    let dateTimeOffset = PrimitivePicklers.mkDateTimeOffset ()
-    let timeSpan = PrimitivePicklers.mkTimeSpan ()
+    let string = new StringPickler() :> Pickler<string>
+    let guid = new GuidPickler() :> Pickler<Guid>
+    let dateTime = new DateTimePickler() :> Pickler<DateTime>
+    let dateTimeOffset = new DateTimeOffsetPickler() :> Pickler<DateTimeOffset>
+    let timeSpan = new TimeSpanPickler() :> Pickler<TimeSpan>
     let bytes = ArrayPickler.CreateByteArrayPickler()
 #if !NET35
-    let bigint = PrimitivePicklers.mkBigInt ()
+    let bigint = new BigIntPickler() :> Pickler<bigint>
 #endif
 
     /// the default System.Object pickler

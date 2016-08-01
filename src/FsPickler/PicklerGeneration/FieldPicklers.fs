@@ -19,8 +19,8 @@ open MBrace.FsPickler.PicklerEmit
 
 type internal StructFieldPickler =
 
-    static member Create<'T when 'T : struct>(resolver : IPicklerResolver) =
-
+    static member Create<'T>(resolver : IPicklerResolver) =
+        assert(typeof<'T>.IsValueType)
         let t = typeof<'T>
         let fields = gatherSerializedFields t
         let picklers = fields |> Array.map (fun f -> resolver.Resolve f.FieldType)
@@ -117,6 +117,7 @@ type internal StructFieldPickler =
 type internal ClassFieldPickler =
 
     static member Create<'T>(resolver : IPicklerResolver) =
+        assert(typeof<'T>.IsClass)
         let ty = typeof<'T>
         // ExceptionDispatchInfo serialization not supported in mono.
         let isEDI = not runsOnMono && isExceptionDispatchInfo ty

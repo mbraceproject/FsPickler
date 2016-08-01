@@ -18,7 +18,7 @@ type PrimitivePickler<'T> () =
     override p.UseWithSubtypes = false
     override p.IsCloneableOnly = false
 
-    override p.Cast<'S> () : Pickler<'S> = raise <| new NotSupportedException("Cannot cast primitive picklers.")
+    override p.Cast<'S> () : Pickler<'S> = p :> obj :?> Pickler<'S>
     override p.Clone (_ : CloneState) (t : 'T) = t
     override p.Accept (state : VisitState) (t : 'T) = 
         if not state.IsCancelled then
@@ -195,8 +195,8 @@ type DBNullPickler () =
         reader.Formatter.EndReadObject ()
         DBNull.Value
 
-[<AutoSerializable(false)>]
-type private UnitPickler<'T> (value : 'T) =
+[<AbstractClass; AutoSerializable(false)>]
+type UnitPicklerIntermediate<'T> (value : 'T) =
     // UnitPickler generic due to a restriction in F# compiler: cannot explicitly instantiate Pickler<unit>
     inherit PrimitivePickler<'T> ()
 
@@ -209,42 +209,5 @@ type private UnitPickler<'T> (value : 'T) =
         reader.Formatter.EndReadObject ()
         value
 
-
-module PrimitivePicklers =
-        
-    let mkBoolean () = new BooleanPickler () :> Pickler<bool>
-    let mkByte () = new BytePickler () :> Pickler<byte>
-    let mkSByte () = new SBytePickler () :> Pickler<sbyte>
-    let mkInt16 () = new Int16Pickler () :> Pickler<int16>
-    let mkInt32 () = new Int32Pickler () :> Pickler<int>
-    let mkInt64 () = new Int64Pickler () :> Pickler<int64>
-    let mkUInt16 () = new UInt16Pickler () :> Pickler<uint16>
-    let mkUInt32 () = new UInt32Pickler () :> Pickler<uint32>
-    let mkUInt64 () = new UInt64Pickler () :> Pickler<uint64>
-    let mkSingle () = new SinglePickler () :> Pickler<single>
-    let mkDouble () = new DoublePickler () :> Pickler<double>
-    let mkDecimal () = new DecimalPickler () :> Pickler<decimal>
-    let mkString () = new StringPickler () :> Pickler<string>
-    let mkChar () = new CharPickler () :> Pickler<char>
-    let mkGuid () = new GuidPickler () :> Pickler<Guid>
-    let mkDateTime () = new DateTimePickler () :> Pickler<DateTime>
-    let mkDateTimeOffset () = new DateTimeOffsetPickler () :> Pickler<DateTimeOffset>
-    let mkTimeSpan () = new TimeSpanPickler () :> Pickler<TimeSpan>
-#if !NET35
-    let mkBigInt () = new BigIntPickler () :> Pickler<bigint>
-#endif
-    let mkDBNull () = new DBNullPickler () :> Pickler<DBNull>
-    let mkUnit () = new UnitPickler<unit>(()) :> Pickler<unit>
-
-
-    let mkAll () : Pickler [] =
-        let inline uc (factory : unit -> Pickler<'T>) = factory () :> Pickler
-        [|
-            uc mkBoolean ; uc mkByte ; uc mkSByte ; uc mkInt16 ; uc mkInt32 ; uc mkInt64
-            uc mkUInt16 ; uc mkUInt32 ; uc mkUInt64 ; uc mkSingle ; uc mkDouble ; uc mkDecimal
-            uc mkString ; uc mkChar ; uc mkGuid ; uc mkDateTime ; uc mkDateTimeOffset ; uc mkTimeSpan
-            uc mkDBNull ; uc mkUnit
-#if !NET35
-            uc mkBigInt
-#endif
-        |]
+type UnitPickler() =
+    inherit UnitPicklerIntermediate<unit>(())

@@ -19,14 +19,6 @@ type internal PicklerCache private () =
 
     static let instance = lazy(new PicklerCache())
 
-    let basePicklers =
-        seq {  
-            yield CompositePickler.ObjectPickler :> Pickler
-            yield! PrimitivePicklers.mkAll ()
-            yield ArrayPickler.CreateByteArrayPickler() :> Pickler
-            yield! mkReflectionPicklers <| ArrayPickler.GetInterface()
-        } |> Seq.map (fun p -> KeyValuePair(p.Type, Success p))
-
     /// declares pickler generation locked for cache
     [<VolatileField>]
     let mutable isLocked = false
@@ -34,7 +26,7 @@ type internal PicklerCache private () =
     [<VolatileField>]
     let mutable resolutionCount = 0
 
-    let dict = new ConcurrentDictionary<Type, Exn<Pickler>>(basePicklers)
+    let dict = new ConcurrentDictionary<Type, Exn<Pickler>>()
 
     let cache =
         {

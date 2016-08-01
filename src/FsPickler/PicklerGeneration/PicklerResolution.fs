@@ -6,7 +6,6 @@ open System.Runtime.CompilerServices
 
 open MBrace.FsPickler
 open MBrace.FsPickler.Reflection
-open MBrace.FsPickler.TypeShape
 open MBrace.FsPickler.PicklerGenerator
 
 let isSerializable (result : Exn<Pickler>) =
@@ -15,7 +14,9 @@ let isSerializable (result : Exn<Pickler>) =
     | Error _ -> false
 
 /// reflection - based pickler resolution
-let resolvePickler (resolver : IPicklerResolver) (mkEarlyBinding : Pickler -> unit) (t : Type) =
+let resolvePickler (resolver : IPicklerResolver) 
+                    (mkEarlyBinding : Pickler -> unit) 
+                    (isPicklerReferenced : Pickler -> bool) (t : Type) =
 
     try
         // while stack overflows are unlikely here (this is type-level traversal)
@@ -27,20 +28,20 @@ let resolvePickler (resolver : IPicklerResolver) (mkEarlyBinding : Pickler -> un
 #endif
 
         // step 1: resolve shape of given type
-        let shape = 
-            try TypeShape.resolve t
-            with UnSupportedShape -> raise <| NonSerializableTypeException(t)
+        let shape = PicklerGenerator.ExtractShape t
 
         // step 2: create an uninitialized pickler instance and register to the local cache
         let p0 = PicklerGenerator.CreateUninitialized shape
-        do mkEarlyBinding p0
+        mkEarlyBinding p0
 
         // step 3: subtype pickler resolution
         let result =
             if t.BaseType <> null then 
                 try 
                     let baseP = resolver.Resolve t.BaseType
-                    if baseP.UseWithSubtypes then Some baseP
+                    if baseP.UseWithSubtypes then
+                        let pickler = PicklerGenerator.Cast shape baseP
+                        Some pickler
                     else
                         None
 
@@ -54,10 +55,9 @@ let resolvePickler (resolver : IPicklerResolver) (mkEarlyBinding : Pickler -> un
             | Some p -> p
             | None -> PicklerGenerator.Create resolver shape
 
-        // step 5; pickler generation complete, copy data to uninitialized binding
-        CompositePickler.Copy(p, p0)
-
-        Success p0
+        // step 5: pickler generation complete, copy data to uninitialized binding
+        if isPicklerReferenced p0 then CompositePickler.Copy(p, p0) ; Success p0
+        else Success p
 
     with 
     // Store all NonSerializableTypeException's in cache
@@ -69,6 +69,11 @@ let resolvePickler (resolver : IPicklerResolver) (mkEarlyBinding : Pickler -> un
     | :? PicklerGenerationException -> reraise ()
     | e -> raise <| new PicklerGenerationException(t, inner = e)
 
+type private GenerationState =
+    | Fresh       = 0
+    | Referenced  = 1
+    | Completed   = 2
+
 /// recursively generates picklers required for given type, 
 /// storing results in global cache when completed.
 let generatePickler (globalCache : ICache<Type, Exn<Pickler>>) (t : Type) =
@@ -76,7 +81,7 @@ let generatePickler (globalCache : ICache<Type, Exn<Pickler>>) (t : Type) =
     // this serves the purpose of providing recursive bindings rectypes.
     // a local cache keeps the global cache from being contaminated with partial state.
     // the boolean flag indicates whether generation is completed for given pickler
-    let localCache = new Dictionary<Type, bool * Exn<Pickler>> ()
+    let localCache = new Dictionary<Type, GenerationState * Exn<Pickler>> ()
 
     let rec resolver =
         {
@@ -93,10 +98,14 @@ let generatePickler (globalCache : ICache<Type, Exn<Pickler>>) (t : Type) =
         | Some p -> p
         | None ->
             match localCache.TryFind t with
+            | Some (GenerationState.Fresh,p) -> 
+                localCache.[t] <- (GenerationState.Referenced, p) 
+                p
             | Some (_,p) -> p
             | None ->
-                let p = resolvePickler resolver (fun p -> localCache.Add(p.Type, (false, Success p))) t
-                localCache.[t] <- (true, p)
+                let p = resolvePickler resolver (fun p -> localCache.Add(p.Type, (GenerationState.Fresh, Success p))) 
+                                                (fun p -> let s,_ = localCache.[p.Type] in s = GenerationState.Referenced) t
+                localCache.[t] <- (GenerationState.Completed, p)
                 p
 
     let p = generate t
@@ -104,10 +113,10 @@ let generatePickler (globalCache : ICache<Type, Exn<Pickler>>) (t : Type) =
     // pickler generation complete
     // now commit to global cache
 
-    for (KeyValue(t',(isCompleted, p'))) in localCache do
+    for (KeyValue(t',(genState, p'))) in localCache do
         // only cache completed picklers other than the current
         // if p is exception, only cache results that are exceptions
-        if isCompleted && t' <> t && (p.IsValue || p'.IsException) then
+        if genState = GenerationState.Completed && t' <> t && (p.IsValue || p'.IsException) then
             globalCache.Commit t' p' |> ignore
 
     globalCache.Commit t p

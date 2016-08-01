@@ -22,7 +22,7 @@
     <Optimize>false</Optimize>
     <Tailcalls>false</Tailcalls>
     <OutputPath Condition="'$(OutputPath)' == ''">bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;OPTIMIZE_FSHARP;PROTECT_STACK_OVERFLOWS;EMIT_IL</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;OPTIMIZE_FSHARP;PROTECT_STACK_OVERFLOWS;EMIT_IL;TYPESHAPE_HIDE</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>..\..\bin\FsPickler.xml</DocumentationFile>
     <OutputPath>..\..\bin\</OutputPath>
@@ -33,7 +33,7 @@
     <Optimize>true</Optimize>
     <Tailcalls>true</Tailcalls>
     <OutputPath>..\..\bin\</OutputPath>
-    <DefineConstants>TRACE;PROTECT_STACK_OVERFLOWS;OPTIMIZE_FSHARP;EMIT_IL</DefineConstants>
+    <DefineConstants>TRACE;PROTECT_STACK_OVERFLOWS;OPTIMIZE_FSHARP;EMIT_IL;TYPESHAPE_HIDE</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>..\..\bin\FsPickler.xml</DocumentationFile>
     <OtherFlags>--warnon:1182</OtherFlags>
@@ -61,7 +61,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <Tailcalls>true</Tailcalls>
-    <DefineConstants>TRACE;PROTECT_STACK_OVERFLOWS;OPTIMIZE_FSHARP</DefineConstants>
+    <DefineConstants>TRACE;PROTECT_STACK_OVERFLOWS;OPTIMIZE_FSHARP;TYPESHAPE_HIDE</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>..\..\bin\NoEmit\FsPickler.XML</DocumentationFile>
     <OutputPath>..\..\bin\NoEmit</OutputPath>
@@ -71,7 +71,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <Tailcalls>true</Tailcalls>
-    <DefineConstants>TRACE;PROTECT_STACK_OVERFLOWS;OPTIMIZE_FSHARP;EMIT_IL;NET40</DefineConstants>
+    <DefineConstants>TRACE;PROTECT_STACK_OVERFLOWS;OPTIMIZE_FSHARP;EMIT_IL;NET40;TYPESHAPE_HIDE</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>..\..\bin\net40\FsPickler.xml</DocumentationFile>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
@@ -83,7 +83,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <Tailcalls>true</Tailcalls>
-    <DefineConstants>TRACE;OPTIMIZE_FSHARP;EMIT_IL;NET35</DefineConstants>
+    <DefineConstants>TRACE;OPTIMIZE_FSHARP;EMIT_IL;NET35;TYPESHAPE_HIDE</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <DocumentationFile>..\..\bin\net35\FsPickler.xml</DocumentationFile>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
@@ -94,6 +94,14 @@
   </PropertyGroup>
   <Import Project="$(FSharpTargetsPath)" Condition="Exists('$(FSharpTargetsPath)')" />
   <ItemGroup>
+    <Compile Include="..\..\paket-files\eiriktsarpalis\TypeShape\src\TypeShape\TypeShape.fs">
+      <Paket>True</Paket>
+      <Link>TypeShape/TypeShape.fs</Link>
+    </Compile>
+    <Compile Include="..\..\paket-files\eiriktsarpalis\TypeShape\src\TypeShape\ISerializableExtensions.fs">
+      <Paket>True</Paket>
+      <Link>TypeShape/ISerializableExtensions.fs</Link>
+    </Compile>
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Utils\CsharpProxy.fs" />
     <Compile Include="Utils\Utils.fs" />
@@ -119,7 +127,6 @@
     <Compile Include="Combinators\FSharpTypes.fs" />
     <Compile Include="Combinators\Collections.fs" />
     <Compile Include="PicklerGeneration\PluginRegistry.fs" />
-    <Compile Include="PicklerGeneration\TypeShape.fs" />
     <Compile Include="PicklerGeneration\PicklerEmit.fs" />
     <Compile Include="PicklerGeneration\FieldPicklers.fs" />
     <Compile Include="PicklerGeneration\ISerializablePickler.fs" />

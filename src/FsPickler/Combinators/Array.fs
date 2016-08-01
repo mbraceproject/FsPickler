@@ -331,8 +331,6 @@ type internal ArrayPickler =
 
         CompositePickler.Create(reader, writer, cloner, accepter, PicklerInfo.Array, skipHeaderWrite = false)
 
-    static member GetInterface () = { new ReflectionPicklers.IArrayPickler with member __.Create ep = ArrayPickler.Create ep }
-
     static member Create<'T> (resolver : IPicklerResolver) =
         let ep = resolver.Resolve<'T> ()
         ArrayPickler.Create<'T>(ep)
