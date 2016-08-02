@@ -39,5 +39,5 @@ GITHUB
     modules/Octokit/Octokit.fsx (8fd20ae42c996060bc8bedb821edfb50517cdd8b)
       Octokit (>= 0.20)
   remote: eiriktsarpalis/TypeShape
-    src/TypeShape/ISerializableExtensions.fs (818b0a5cd0beb83d5dfb91e87f7f24d445a77e69)
-    src/TypeShape/TypeShape.fs (818b0a5cd0beb83d5dfb91e87f7f24d445a77e69)
+    src/TypeShape/ISerializableExtensions.fs (5dabaf0577d8387c5213a496099598bbd89650b8)
+    src/TypeShape/TypeShape.fs (5dabaf0577d8387c5213a496099598bbd89650b8)
