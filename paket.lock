@@ -3,7 +3,7 @@ FRAMEWORK: >= NET40
 NUGET
   remote: https://www.nuget.org/api/v2
     FAKE (4.36)
-    FsCheck (2.5)
+    FsCheck (2.6)
       FSharp.Core (>= 3.1.2.5)
     FSharp.Charting (0.90.14)
     FSharp.Compiler.Service (2.0.0.6)
@@ -39,5 +39,5 @@ GITHUB
     modules/Octokit/Octokit.fsx (8fd20ae42c996060bc8bedb821edfb50517cdd8b)
       Octokit (>= 0.20)
   remote: eiriktsarpalis/TypeShape
-    src/TypeShape/ISerializableExtensions.fs (5dabaf0577d8387c5213a496099598bbd89650b8)
-    src/TypeShape/TypeShape.fs (5dabaf0577d8387c5213a496099598bbd89650b8)
+    src/TypeShape/ISerializableExtensions.fs (5b533d1ab07d5d48c33bfc27323b8de2b9d481c9)
+    src/TypeShape/TypeShape.fs (5b533d1ab07d5d48c33bfc27323b8de2b9d481c9)

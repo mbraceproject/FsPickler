@@ -22,7 +22,7 @@ open MBrace.FsPickler.ReflectionPicklers
 type PicklerGenerator =
 
     static member ExtractShape(t : Type) =
-        try TypeShape.Resolve t
+        try TypeShape.Create t
         with UnsupportedShape t -> raise <| NonSerializableTypeException(t)
         
     /// Constructs a pickler for a given shape
