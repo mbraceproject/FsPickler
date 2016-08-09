@@ -25,5 +25,5 @@ All documentation and related material can be found [here](http://mbraceproject.
 
 Head (branch `master`), Build & Unit tests
 
-* Windows/.NET [![Build status](https://ci.appveyor.com/api/projects/status/vwthnxgal50ua8ej/branch/master)](https://ci.appveyor.com/project/mbraceproject/fspickler)
+* Windows/.NET [![Build status](https://ci.appveyor.com/api/projects/status/vwthnxgal50ua8ej/branch/master)](https://ci.appveyor.com/project/nessos/fspickler)
 * Linux/Mono 4.2 [![Build Status](https://travis-ci.org/mbraceproject/FsPickler.png?branch=master)](https://travis-ci.org/mbraceproject/FsPickler/branches)
