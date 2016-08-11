@@ -1,4 +1,4 @@
-framework: >= net40
+framework: >= net35
 redirects: on
 source https://www.nuget.org/api/v2
 

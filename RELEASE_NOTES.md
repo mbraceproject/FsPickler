@@ -1,3 +1,6 @@
+### 3.1.0
+* Internal refactoring of Pickler generation implementation.
+
 ### 3.0.0
 * Move FsPickler to mbraceproject organization.
 * Change root namespace from Nessos.FsPickler to MBrace.FsPickler.
