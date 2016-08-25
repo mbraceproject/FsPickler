@@ -18,5 +18,5 @@ nuget FAKE
 nuget TaskParallelLibrary framework:net35
 github fsharp/FAKE modules/Octokit/Octokit.fsx
 
-github eiriktsarpalis/TypeShape src/TypeShape/TypeShape.fs
-github eiriktsarpalis/TypeShape src/TypeShape/ISerializableExtensions.fs
+github eiriktsarpalis/TypeShape:1.0 src/TypeShape/TypeShape.fs
+github eiriktsarpalis/TypeShape:1.0 src/TypeShape/ISerializableExtensions.fs

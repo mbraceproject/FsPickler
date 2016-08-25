@@ -2,7 +2,7 @@ REDIRECTS: ON
 FRAMEWORK: >= NET35
 NUGET
   remote: https://www.nuget.org/api/v2
-    FAKE (4.37.2)
+    FAKE (4.39)
     FsCheck (2.6)
       FSharp.Core (>= 3.1.2.5)
     FSharp.Charting (0.90.14)
@@ -33,11 +33,11 @@ NUGET
       PerfUtil (>= 0.1.8)
     protobuf-net (2.1)
     TaskParallelLibrary (1.0.2856)
-    Wire (0.7.1)
+    Wire (0.8)
 GITHUB
   remote: fsharp/FAKE
-    modules/Octokit/Octokit.fsx (7faaaf53e4a8fbe04a4d2b4c1bfc5d09bd82eed6)
+    modules/Octokit/Octokit.fsx (e5870cb85f9b500246e02c6daa94e5131dad7a6e)
       Octokit (>= 0.20)
   remote: eiriktsarpalis/TypeShape
-    src/TypeShape/ISerializableExtensions.fs (d3b035f138b47c74a1765329b64c5b9bee5005b3)
-    src/TypeShape/TypeShape.fs (d3b035f138b47c74a1765329b64c5b9bee5005b3)
+    src/TypeShape/ISerializableExtensions.fs (e27b1e7cbff320103ce909b0d035bf509f6fb947)
+    src/TypeShape/TypeShape.fs (e27b1e7cbff320103ce909b0d035bf509f6fb947)
