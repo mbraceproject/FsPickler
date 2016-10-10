@@ -69,30 +69,7 @@ type PicklerGenerator =
         | _ when PicklerPluginRegistry.ContainsFactory shape.Type ->
             shape.Accept {
                 new ITypeShapeVisitor<Pickler> with
-                    member __.Visit<'T> () = PicklerPluginRegistry.GetPicklerFactory<'T>() resolver :> Pickler }
-
-        | _ when containsAttr<CloneableOnlyAttribute> shape.Type ->
-            shape.Accept {
-                new ITypeShapeVisitor<Pickler> with
-                    member __.Visit<'T> () = CloneableOnlyPickler.Create<'T> () :> Pickler
-            }
-
-        | _ when containsAttr<CustomPicklerAttribute> shape.Type ->
-            shape.Accept {
-                new ITypeShapeVisitor<Pickler> with
-                    member __.Visit<'T> () = CustomPickler.Create<'T> resolver :> Pickler
-            }
-
-        | _ when containsAttr<DataContractAttribute> shape.Type ->
-            shape.Accept {
-                new ITypeShapeVisitor<Pickler> with
-                    member __.Visit<'T> () = DataContractPickler.Create<'T> resolver :> Pickler
-            }
-
-        | Shape.Enum s -> 
-            s.Accept { 
-                new IEnumVisitor<Pickler> with
-                    member __.Visit<'E, 'U when 'E : enum<'U>>() = EnumPickler.Create<'E, 'U>(resolver) :> _
+                    member __.Visit<'T> () = PicklerPluginRegistry.GetPicklerFactory<'T>() resolver :> Pickler 
             }
 
         | Shape.Nullable s ->
@@ -100,13 +77,6 @@ type PicklerGenerator =
                 new INullableVisitor<Pickler> with
                     member __.Visit<'T when 'T : struct and 'T :> ValueType and 'T : (new : unit -> 'T)> () =
                         NullablePickler.Create<'T>(resolver) :> _
-            }
-
-        | Shape.Delegate s ->
-            s.Accept {
-                new IDelegateVisitor<Pickler> with
-                    member __.Visit<'D when 'D :> Delegate> () =
-                        DelegatePickler.Create<'D>(resolver) :> _
             }
 
         | Shape.Array s ->
@@ -251,6 +221,42 @@ type PicklerGenerator =
             s.Accept {
                 new IFSharpChoice7Visitor<Pickler> with
                     member __.Visit<'T1,'T2,'T3,'T4,'T5,'T6,'T7> () = ChoicePickler.Create<'T1,'T2,'T3,'T4,'T5,'T6,'T7>(resolver) :> _
+            }
+
+        //////////////////////////////////
+        // User-defined types
+        //////////////////////////////////
+
+        | _ when containsAttr<CloneableOnlyAttribute> shape.Type ->
+            shape.Accept {
+                new ITypeShapeVisitor<Pickler> with
+                    member __.Visit<'T> () = CloneableOnlyPickler.Create<'T> () :> Pickler
+            }
+
+        | _ when containsAttr<CustomPicklerAttribute> shape.Type ->
+            shape.Accept {
+                new ITypeShapeVisitor<Pickler> with
+                    member __.Visit<'T> () = CustomPickler.Create<'T> resolver :> Pickler
+            }
+
+        | Shape.Enum s -> 
+            // NB: DataContractAttribute for enum types handled by enum pickler
+            s.Accept { 
+                new IEnumVisitor<Pickler> with
+                    member __.Visit<'E, 'U when 'E : enum<'U>>() = EnumPickler.Create<'E, 'U>(resolver) :> _
+            }
+
+        | _ when containsAttr<DataContractAttribute> shape.Type ->
+            shape.Accept {
+                new ITypeShapeVisitor<Pickler> with
+                    member __.Visit<'T> () = DataContractPickler.Create<'T> resolver :> Pickler
+            }
+
+        | Shape.Delegate s ->
+            s.Accept {
+                new IDelegateVisitor<Pickler> with
+                    member __.Visit<'D when 'D :> Delegate> () =
+                        DelegatePickler.Create<'D>(resolver) :> _
             }
 
         | Shape.FSharpUnion _ as s ->
