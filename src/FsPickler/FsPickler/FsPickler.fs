@@ -218,7 +218,7 @@ type FsPickler private () =
                             match box value with
                             | null -> ()
                             | :? Type as t -> gathered.Add t |> ignore
-                            | :? MemberInfo as m when m.DeclaringType <> null ->
+                            | :? MemberInfo as m when isNotNull m.DeclaringType ->
                                 gathered.Add m.DeclaringType |> ignore
 
                             | value -> 

@@ -168,7 +168,7 @@ type XmlPickleWriter internal (textWriter : TextWriter, indent : bool, leaveOpen
         member __.WriteChar (tag : string) value = writePrimitive writer tag <| escapeString (string value)
 
         member __.WriteString (tag : string) value = 
-            if obj.ReferenceEquals(value, null) then
+            if isNull value then
                 writer.WriteStartElement(tag)
                 writer.WriteAttributeString("null", "true")
                 writer.WriteEndElement()
@@ -190,7 +190,7 @@ type XmlPickleWriter internal (textWriter : TextWriter, indent : bool, leaveOpen
 
         member __.WriteBytes (tag : string) value = 
             writer.WriteStartElement(tag)
-            if obj.ReferenceEquals(value, null) then
+            if isNull value then
                 writer.WriteAttributeString("null", "true")
             else
                 writer.WriteAttributeString("size", string value.Length)

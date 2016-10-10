@@ -16,11 +16,17 @@ module internal Utils =
 
     open Microsoft.FSharp.Reflection
 
+    let inline isNull (t : 'T) = 
+        match t with null -> true | _ -> false
+
+    let inline isNotNull (t : 'T) =
+        match t with null -> false | _ -> true
+
     // Detect current core library version at runtime
     // as suggested in http://stackoverflow.com/a/8543850
-    let isDotNet45OrNewer = Type.GetType("System.Reflection.ReflectionContext") <> null
+    let isDotNet45OrNewer = Type.GetType("System.Reflection.ReflectionContext") |> isNotNull
 
-    let runsOnMono = Type.GetType("Mono.Runtime") <> null
+    let runsOnMono = Type.GetType("Mono.Runtime") |> isNotNull
 
     /// hashset constructor
     let hset (ts : seq<'T>) = new HashSet<_>(ts)
@@ -85,7 +91,7 @@ module internal Utils =
         /// <param name="flag">Flag to be satisfied.</param>
         let inline hasFlag flags flag = (flags &&& flag) = flag
 
-    let inline denull x = if x = null then None else Some x
+    let inline denull x = if isNull x then None else Some x
 
     let inline fastUnbox<'T> (x : obj) = 
         Microsoft.FSharp.Core.LanguagePrimitives.IntrinsicFunctions.UnboxFast<'T> x

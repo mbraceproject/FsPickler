@@ -126,7 +126,7 @@ type StringPickler () =
 
     override __.Write (writer : WriteState) (tag : string) (s : string) = writer.Formatter.WriteString tag s
     override __.Read (reader : ReadState) (tag : string) = reader.Formatter.ReadString tag
-    override __.Clone (_ : CloneState) (s : string) = if obj.ReferenceEquals(s, null) then s else String.Copy s
+    override __.Clone (_ : CloneState) (s : string) = if isNull s then s else String.Copy s
 
 [<AutoSerializable(false)>]
 type GuidPickler () =

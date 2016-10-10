@@ -158,10 +158,9 @@ type internal JsonPickleWriter (jsonWriter : JsonWriter, omitHeader, indented, i
             if not <| omitTag () then 
                 jsonWriter.WritePropertyName tag
 
-            if obj.ReferenceEquals(value, null) then
-                jsonWriter.WriteNull()
-            else
-                jsonWriter.WriteValue value
+            match value with
+            | null -> jsonWriter.WriteNull()
+            | _ -> jsonWriter.WriteValue value
 
         member __.IsPrimitiveArraySerializationSupported = false
         member __.WritePrimitiveArray _ _ = raise <| NotSupportedException()

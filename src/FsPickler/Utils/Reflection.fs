@@ -41,7 +41,7 @@ type Type with
 type MethodInfo with
     member m.GuardedInvoke(instance : obj, parameters : obj []) =
         try m.Invoke(instance, parameters)
-        with :? TargetInvocationException as e when e.InnerException <> null ->
+        with :? TargetInvocationException as e when isNotNull e.InnerException ->
             reraise' e.InnerException
 
     member m.GetParameterTypes() = m.GetParameters() |> Array.map (fun p -> p.ParameterType)

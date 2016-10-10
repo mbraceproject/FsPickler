@@ -32,7 +32,7 @@ type internal UnionCaseSerializationHelper(caseNames : string []) =
     member __.ReadTag (formatter : IPickleFormatReader) =
         if formatter.SerializeUnionCaseNames then
             let case = formatter.ReadString "Case"
-            if obj.ReferenceEquals(case, null) then
+            if isNull case then
                 raise <| new FormatException("invalid union case 'null'.")
 
             let mutable tag = Unchecked.defaultof<int>

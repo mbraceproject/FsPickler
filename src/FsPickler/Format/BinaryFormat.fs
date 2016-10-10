@@ -162,7 +162,7 @@ type BinaryPickleWriter internal (stream : Stream, encoding : Encoding, leaveOpe
 
         member __.WriteChar _ value = bw.Write value
         member __.WriteString _ value = 
-            if obj.ReferenceEquals(value, null) then bw.Write true
+            if isNull value then bw.Write true
             else
                 bw.Write false
                 bw.Write value
@@ -189,7 +189,7 @@ type BinaryPickleWriter internal (stream : Stream, encoding : Encoding, leaveOpe
 #endif
 
         member __.WriteBytes _ value = 
-            if obj.ReferenceEquals(value, null) then bw.Write -1
+            if isNull value then bw.Write -1
             else
                 bw.Write value.Length
                 bw.Write value

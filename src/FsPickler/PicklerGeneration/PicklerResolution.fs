@@ -36,7 +36,7 @@ let resolvePickler (resolver : IPicklerResolver)
 
         // step 3: subtype pickler resolution
         let result =
-            if t.BaseType <> null then 
+            if isNotNull t.BaseType then 
                 try 
                     let baseP = resolver.Resolve t.BaseType
                     if baseP.UseWithSubtypes then

@@ -109,7 +109,7 @@ type internal DataContractPickler =
                 let value = EnvItem<'T>(ilGen)
 
                 // use parameterless constructor, if available
-                if ctor = null then
+                if isNull ctor then
                     emitObjectInitializer typeof<'T> ilGen
                 else
                     ilGen.Emit(OpCodes.Newobj, ctor)
@@ -138,7 +138,7 @@ type internal DataContractPickler =
                 let value' = EnvItem<'T>(ilGen)
 
                 // use parameterless constructor, if available
-                if ctor = null then
+                if isNull ctor then
                     emitObjectInitializer typeof<'T> ilGen
                 else
                     ilGen.Emit(OpCodes.Newobj, ctor)
@@ -205,7 +205,7 @@ type internal DataContractPickler =
         let reader (r : ReadState) (_ : string) =
             let t =
                 // use parameterless constructor, if available
-                if obj.ReferenceEquals(ctor, null) then
+                if isNull ctor then
                     FormatterServices.GetUninitializedObject(ty)
                 else
                     ctor.Invoke(null)
@@ -229,7 +229,7 @@ type internal DataContractPickler =
         let cloner (c : CloneState) (t : 'T) =
             let t' =
                 // use parameterless constructor, if available
-                if obj.ReferenceEquals(ctor, null) then
+                if isNull ctor then
                     FormatterServices.GetUninitializedObject(ty)
                 else
                     ctor.Invoke(null)
