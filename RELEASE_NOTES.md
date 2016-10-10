@@ -1,3 +1,6 @@
+### 3.2.0
+* Fix enum serialization for types that carry the DataContract attribute.
+
 ### 3.1.0
 * Internal refactoring of Pickler generation implementation.
 
