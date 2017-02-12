@@ -109,6 +109,7 @@
     <Compile Include="JsonSerializer.fs" />
     <Compile Include="Combinators.fs" />
     <None Include="Test.fsx" />
+    <None Include="Iso8601DateTime.fsx" />
     <Content Include="paket.references" />
     <None Include="paket.template" />
   </ItemGroup>

@@ -103,6 +103,14 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
     member __.``1. Primitive: string`` () = Check.QuickThrowOnFail<string> testEquals
 
     [<Test; Category("Primitives")>]
+    member __.``1. Primitive: ISO 8601 string`` () =
+        Check.QuickThrowOnFail<DateTime * DateTimeKind> (fun (d : DateTime, k : DateTimeKind) -> 
+            let dt = new DateTime(d.Ticks, k)
+            let s = Xml.XmlConvert.ToString(dt, Xml.XmlDateTimeSerializationMode.RoundtripKind)
+            let s' = testRoundtrip s
+            s' |> should equal s)
+
+    [<Test; Category("Primitives")>]
     member __.``1. Primitive: DateTime`` () = 
         Check.QuickThrowOnFail<DateTime * DateTimeKind> (fun (d : DateTime, k : DateTimeKind) -> 
             let d = new DateTime(d.Ticks, k)
