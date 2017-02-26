@@ -14,7 +14,8 @@ let isSerializable (result : Exn<Pickler>) =
     | Error _ -> false
 
 /// reflection - based pickler resolution
-let resolvePickler (resolver : IPicklerResolver) 
+let resolvePickler (resolver : IPicklerResolver)
+                   (registry)
                     (mkEarlyBinding : Pickler -> unit) 
                     (isPicklerReferenced : Pickler -> bool) (t : Type) =
 
@@ -53,7 +54,7 @@ let resolvePickler (resolver : IPicklerResolver)
         let p =
             match result with
             | Some p -> p
-            | None -> PicklerGenerator.Create resolver shape
+            | None -> PicklerGenerator.Create (resolver, registry) shape
 
         // step 5: pickler generation complete, copy data to uninitialized binding
         if isPicklerReferenced p0 then CompositePickler.Copy(p, p0) ; Success p0
@@ -76,7 +77,7 @@ type private GenerationState =
 
 /// recursively generates picklers required for given type, 
 /// storing results in global cache when completed.
-let generatePickler (globalCache : ICache<Type, Exn<Pickler>>) (t : Type) =
+let generatePickler (globalCache : ICache<Type, Exn<Pickler>>) (registry:PicklerPluginRegistry) (t : Type) =
     // a temporary local cache is used to store generated picklers.
     // this serves the purpose of providing recursive bindings rectypes.
     // a local cache keeps the global cache from being contaminated with partial state.
@@ -103,8 +104,8 @@ let generatePickler (globalCache : ICache<Type, Exn<Pickler>>) (t : Type) =
                 p
             | Some (_,p) -> p
             | None ->
-                let p = resolvePickler resolver (fun p -> localCache.Add(p.Type, (GenerationState.Fresh, Success p))) 
-                                                (fun p -> let s,_ = localCache.[p.Type] in s = GenerationState.Referenced) t
+                let p = resolvePickler resolver registry (fun p -> localCache.Add(p.Type, (GenerationState.Fresh, Success p))) 
+                                                         (fun p -> let s,_ = localCache.[p.Type] in s = GenerationState.Referenced) t
                 localCache.[t] <- (GenerationState.Completed, p)
                 p
 

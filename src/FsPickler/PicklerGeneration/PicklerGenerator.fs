@@ -26,7 +26,7 @@ type PicklerGenerator =
         with UnsupportedShape t -> raise <| NonSerializableTypeException(t)
         
     /// Constructs a pickler for a given shape
-    static member Create (resolver : IPicklerResolver) (shape : TypeShape) : Pickler =
+    static member Create (resolver : IPicklerResolver, registry:PicklerPluginRegistry) (shape : TypeShape) : Pickler =
         let isUnsupportedType (t:Type) =
             t.IsPointer 
             || t = typeof<System.Reflection.Pointer>
@@ -66,10 +66,10 @@ type PicklerGenerator =
         | :? TypeShape<Assembly> -> ReflectionPicklers.CreateAssemblyPickler resolver :> _
         | :? TypeShape<MemberInfo> -> ReflectionPicklers.CreateMemberInfoPickler resolver :> _
         | :? TypeShape<System.DBNull> -> new DBNullPickler() :> _
-        | _ when PicklerPluginRegistry.ContainsFactory shape.Type ->
+        | _ when registry.ContainsFactory shape.Type ->
             shape.Accept {
                 new ITypeShapeVisitor<Pickler> with
-                    member __.Visit<'T> () = PicklerPluginRegistry.GetPicklerFactory<'T>() resolver :> Pickler 
+                    member __.Visit<'T> () = registry.GetPicklerFactory<'T>() resolver :> Pickler 
             }
 
         | Shape.Nullable s ->
@@ -262,13 +262,13 @@ type PicklerGenerator =
         | Shape.FSharpUnion _ as s ->
             s.Accept {
                 new ITypeShapeVisitor<Pickler> with
-                    member __.Visit<'U> () = FsUnionPickler.Create<'U>(resolver) :> _
+                    member __.Visit<'U> () = FsUnionPickler.Create<'U>(resolver, registry) :> _
             }
 
         | Shape.FSharpRecord _ as s ->
             s.Accept {
                 new ITypeShapeVisitor<Pickler> with
-                    member __.Visit<'R> () = FsRecordPickler.Create<'R>(resolver) :> _
+                    member __.Visit<'R> () = FsRecordPickler.Create<'R>(resolver, registry) :> _
             }
 
         | shape when shape.Type.IsAbstract ->
@@ -281,10 +281,10 @@ type PicklerGenerator =
             s.Accept {
                 new IExceptionVisitor<Pickler> with
                     member __.Visit<'exn when 'exn :> exn>() = 
-                        if s.IsFSharpException then FsExceptionPickler.Create<'exn>(resolver) :> _
+                        if s.IsFSharpException then FsExceptionPickler.Create<'exn>(resolver, registry) :> _
                         else
                             match tryGetISerializableCtor typeof<'exn> with
-                            | None -> ISerializablePickler.CreateNonISerializableExceptionPickler<'exn>(resolver) :> _
+                            | None -> ISerializablePickler.CreateNonISerializableExceptionPickler<'exn>(resolver, registry) :> _
                             | Some _ -> ISerializablePickler.Create<'exn>() :> _
             }
 
@@ -306,7 +306,7 @@ type PicklerGenerator =
         | _ ->
             shape.Accept {
                 new ITypeShapeVisitor<Pickler> with
-                    member __.Visit<'T>() = ClassFieldPickler.Create<'T>(resolver) :> Pickler
+                    member __.Visit<'T>() = ClassFieldPickler.Create<'T>(resolver, registry) :> Pickler
             }
 
     /// Constructs a blank, uninitialized pickler object
