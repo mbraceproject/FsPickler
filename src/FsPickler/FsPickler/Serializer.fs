@@ -18,9 +18,11 @@ open MBrace.FsPickler.RootSerialization
 ///     An abstract class containg the basic serialization API.
 /// </summary>
 [<AbstractClass>]
-type FsPicklerSerializer internal (formatProvider : IPickleFormatProvider, [<O;D(null)>]?typeConverter : ITypeNameConverter, ?registry:PicklerPluginRegistry) =
+type FsPicklerSerializer internal (formatProvider : IPickleFormatProvider, [<O;D(null)>]?typeConverter : ITypeNameConverter, ?registry:IPicklerPluginRegistry) =
     
-
+    // there is only one implementation of IPicklerPluginRegistry, but it is internal.
+    // The marker interface is used to pass it through from PicklerContext
+    let registry = registry |> Option.map (fun i -> i :?> PicklerPluginRegistry)
     let registry = defaultArg registry PicklerPluginRegistry.Default
     let resolver = PicklerCache(registry) :> IPicklerResolver
     let reflectionCache = ReflectionCache.Create(?tyConv = typeConverter)

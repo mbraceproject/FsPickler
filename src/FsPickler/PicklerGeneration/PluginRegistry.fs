@@ -11,12 +11,17 @@ type private PicklerPlugin =
     /// Registered pickler factory instance
     | Factory of obj
 
+// PicklerPluginRegistry is internal, so we need a public type to pass it through from PicklerContext to FsPicklerSerializer
+type IPicklerPluginRegistry = interface end
+
 type internal PicklerPluginRegistry () =
     
     static let defaultInstance = PicklerPluginRegistry()
 
     let registry = new ConcurrentDictionary<Type, PicklerPlugin> ()
     let serializablePredicates = ref []
+
+    interface IPicklerPluginRegistry
 
     member self.RegisterFactory<'T>(factory : IPicklerResolver -> Pickler<'T>) =
         registry.TryAdd(typeof<'T>, Factory (factory :> obj))

@@ -17,6 +17,8 @@ type PicklerContext internal (defaultSerializer:FsPicklerSerializer, resolver:IP
             let cache = PicklerCache(registry)
             PicklerContext(serializer, cache :> IPicklerResolver, cache, registry)
 
+    member self.Registry : IPicklerPluginRegistry = upcast registry
+
     /// <summary>
     ///     Create a new FsPickler serializer instance that uses the built-in binary format.
     /// </summary>
