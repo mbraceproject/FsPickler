@@ -97,6 +97,7 @@
     <Compile Include="FsPicklerManager.fs" />
     <Compile Include="TestTypes.fs" />
     <Compile Include="GenericTests.fs" />
+    <Compile Include="InterfaceTests.fs" />
     <Compile Include="SerializerTests.fs" />
     <Compile Include="InMemoryTests.fs" />
     <Compile Include="AppDomainTests.fs" />
