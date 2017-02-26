@@ -12,10 +12,13 @@ open MBrace.FsPickler.Hashing
 type PicklerContext internal (defaultSerializer:FsPicklerSerializer, resolver:IPicklerResolver, cache:PicklerCache, registry:PicklerPluginRegistry) =
 
     new (?defaultSerializer:FsPicklerSerializer) =
-            let serializer = defaultArg defaultSerializer (upcast BinarySerializer())
             let registry = PicklerPluginRegistry()
+            let defaultSerializer =
+                match defaultSerializer with
+                | Some s -> s
+                | None -> BinarySerializer(registry=(registry :> IPicklerPluginRegistry)) :> FsPicklerSerializer
             let cache = PicklerCache(registry)
-            PicklerContext(serializer, cache :> IPicklerResolver, cache, registry)
+            PicklerContext(defaultSerializer, cache :> IPicklerResolver, cache, registry)
 
     member self.Registry : IPicklerPluginRegistry = upcast registry
 
