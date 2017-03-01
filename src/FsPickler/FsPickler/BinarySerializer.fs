@@ -14,11 +14,11 @@ type BinarySerializer =
     /// </summary>
     /// <param name="forceLittleEndian">Force little-endian encoding in primitive arrays but is slower. Defaults to false.</param>
     /// <param name="typeConverter">Define a custom type name converter.</param>
-    new ([<O;D(null)>]?forceLittleEndian : bool, ?registry:IPicklerPluginRegistry, [<O;D(null)>] ?typeConverter : ITypeNameConverter) =
+    new (registry:IPicklerPluginRegistry, [<O;D(null)>]?forceLittleEndian : bool, [<O;D(null)>] ?typeConverter : ITypeNameConverter) =
         let forceLittleEndian = defaultArg forceLittleEndian false
         let format = new BinaryPickleFormatProvider(forceLittleEndian)
         { 
-            inherit FsPicklerSerializer(format, ?typeConverter = typeConverter, ?registry = registry) 
+            inherit FsPicklerSerializer(format, ?typeConverter = typeConverter, registry = registry) 
             format = format    
         }
 
@@ -27,7 +27,7 @@ type BinarySerializer =
     /// </summary>
     /// <param name="forceLittleEndian">Force little-endian encoding in primitive arrays but is slower. Defaults to false.</param>
     /// <param name="typeConverter">Define a custom type name converter.</param>
-    new ([<O;D(null)>]?forceLittleEndian : bool, [<O;D(null)>] ?typeConverter : ITypeNameConverter) = BinarySerializer(?forceLittleEndian = forceLittleEndian, ?typeConverter = typeConverter, ?registry = None)
+    new ([<O;D(null)>]?forceLittleEndian : bool, [<O;D(null)>] ?typeConverter : ITypeNameConverter) = BinarySerializer(PicklerPluginRegistry.Default, ?forceLittleEndian = forceLittleEndian, ?typeConverter = typeConverter)
 
     /// Gets or sets the ForceLittleEndian setting.
     /// Uses BinaryWriter rather than Buffer.BlockCopy 

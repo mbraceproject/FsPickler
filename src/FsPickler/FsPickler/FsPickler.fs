@@ -28,14 +28,14 @@ type PicklerContext internal (defaultSerializer:FsPicklerSerializer, resolver:IP
     /// <param name="forceLittleEndian">Force little-endian encoding in primitive arrays but is slower. Defaults to false.</param>
     /// <param name="tyConv">optional type name converter implementation.</param>
     member self.CreateBinarySerializer([<O;D(null)>] ?forceLittleEndian : bool, [<O;D(null)>] ?typeConverter : ITypeNameConverter) = 
-        new BinarySerializer(?forceLittleEndian = forceLittleEndian, ?typeConverter = typeConverter)
+        new BinarySerializer(self.Registry, ?forceLittleEndian = forceLittleEndian, ?typeConverter = typeConverter)
 
     /// <summary>
     ///     Create a new FsPickler serializer instance that uses the XML format.
     /// </summary>
     /// <param name="tyConv">optional type name converter implementation.</param>
     member self.CreateXmlSerializer([<O;D(null)>]?typeConverter : ITypeNameConverter, [<O;D(null)>]?indent : bool) = 
-        new XmlSerializer(?typeConverter = typeConverter, ?indent = indent)
+        new XmlSerializer(self.Registry, ?typeConverter = typeConverter, ?indent = indent)
 
     /// Decides if given type is serializable by FsPickler
     member self.IsSerializableType<'T> () : bool = 

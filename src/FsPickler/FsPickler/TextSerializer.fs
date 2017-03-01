@@ -13,11 +13,14 @@ open MBrace.FsPickler.RootSerialization
 ///     An abstract class containing the text-based serialization API.
 /// </summary>
 [<AbstractClass>]
-type FsPicklerTextSerializer (formatProvider : ITextPickleFormatProvider, [<O;D(null)>] ?typeConverter : ITypeNameConverter) =
-    inherit FsPicklerSerializer(formatProvider, ?typeConverter = typeConverter)
+type FsPicklerTextSerializer (formatProvider : ITextPickleFormatProvider, [<O;D(null)>] ?typeConverter : ITypeNameConverter, ?registry:IPicklerPluginRegistry) =
+    inherit FsPicklerSerializer(formatProvider, ?typeConverter = typeConverter, ?registry=registry)
 
     let resolver = base.Resolver
     let reflectionCache = base.ReflectionCache
+
+    new (formatProvider : ITextPickleFormatProvider, [<O;D(null)>] ?typeConverter : ITypeNameConverter) =
+        FsPicklerTextSerializer(formatProvider, ?typeConverter=typeConverter, ?registry=None)
 
     //
     //  Typed API
