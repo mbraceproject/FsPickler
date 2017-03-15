@@ -8,6 +8,7 @@ module internal Emit =
     open System.Reflection
     open System.Reflection.Emit
     open System.Runtime.Serialization
+    open System.Collections.Concurrent
 
     /// a descriptor for local variables or parameters in emitted IL
 
@@ -60,80 +61,87 @@ module internal Emit =
 
         let private voidType = Type.GetType("System.Void")
 
-        let private createDynamicMethod (name : string) (argTypes : Type []) (returnType : Type) =
-            let dyn =
-                new DynamicMethod(name, 
-                    MethodAttributes.Static ||| MethodAttributes.Public, CallingConventions.Standard, 
-                    returnType, argTypes, typeof<Marker>, skipVisibility = true)
+        let private compileCache = new ConcurrentDictionary<Type * string, Lazy<Delegate>>()
 
-            dyn, dyn.GetILGenerator()
+        /// Emits a dynamic method that is cached based on the type of the delegate and method name
+        let emitDynamicMethod<'Delegate when 'Delegate :> Delegate> 
+                    (name : string) (argTypes : Type []) (returnType : Type)
+                    (ilBuilder : ILGenerator -> unit) : 'Delegate =
 
-        let private compileDynamicMethod<'Dele when 'Dele :> Delegate> (dyn : DynamicMethod) =
-            dyn.CreateDelegate(typeof<'Dele>) :?> 'Dele
+            let compile () =
+                let dynamicMethod =
+                    new DynamicMethod(name, MethodAttributes.Static ||| MethodAttributes.Public, 
+                                        CallingConventions.Standard, returnType, argTypes, typeof<Marker>, 
+                                        skipVisibility = true)
+
+                let ilGen = dynamicMethod.GetILGenerator()
+                do ilBuilder ilGen
+                dynamicMethod.CreateDelegate typeof<'Delegate>
+
+            let wrapper = compileCache.GetOrAdd((typeof<'Delegate>, name), fun _ -> lazy(compile ()))
+            wrapper.Value :?> 'Delegate
 
         let compileFunc<'T> (name : string) (builderF : ILGenerator -> unit) =
-            let dyn, ilGen = createDynamicMethod name [| |] typeof<'T>
-            do builderF ilGen
-            compileDynamicMethod<Func<'T>> dyn
+            emitDynamicMethod<Func<'T>> name [||] typeof<'T> builderF
 
         let compileFunc1<'U1,'V> (name : string) (builderF : EnvItem<'U1> -> ILGenerator -> unit) =
-            let dyn, ilGen = createDynamicMethod name [| typeof<'U1> |] typeof<'V>
-            let arg0 = EnvItem<'U1>(ilGen, 0s)
-            do builderF arg0 ilGen
-            compileDynamicMethod<Func<'U1,'V>> dyn
+            emitDynamicMethod<Func<'U1,'V>> name [| typeof<'U1> |] typeof<'V>
+                (fun ilGen ->
+                    let arg0 = EnvItem<'U1>(ilGen, 0s)
+                    builderF arg0 ilGen)
 
         let compileFunc2<'U1,'U2,'V> (name : string) (builderF : EnvItem<'U1> -> EnvItem<'U2> -> ILGenerator -> unit) =
-            let dyn, ilGen = createDynamicMethod name [| typeof<'U1> ; typeof<'U2> |] typeof<'V>
-            let arg0 = EnvItem<'U1>(ilGen, 0s)
-            let arg1 = EnvItem<'U2>(ilGen, 1s)
-            do builderF arg0 arg1 ilGen
-            compileDynamicMethod<Func<'U1,'U2,'V>> dyn
+            emitDynamicMethod<Func<'U1,'U2,'V>> name [| typeof<'U1> ; typeof<'U2> |] typeof<'V>
+                (fun ilGen ->
+                    let arg0 = EnvItem<'U1>(ilGen, 0s)
+                    let arg1 = EnvItem<'U2>(ilGen, 1s)
+                    do builderF arg0 arg1 ilGen)
 
         let compileFunc3<'U1,'U2,'U3,'V> (name : string) (builderF : EnvItem<'U1> -> EnvItem<'U2> -> EnvItem<'U3> -> ILGenerator -> unit) =
-            let dyn, ilGen = createDynamicMethod name [| typeof<'U1> ; typeof<'U2> ; typeof<'U3> |] typeof<'V>
-            let arg0 = EnvItem<'U1>(ilGen, 0s)
-            let arg1 = EnvItem<'U2>(ilGen, 1s)
-            let arg2 = EnvItem<'U3>(ilGen, 2s)
-            do builderF arg0 arg1 arg2 ilGen
-            compileDynamicMethod<Func<'U1,'U2,'U3,'V>> dyn
+            emitDynamicMethod<Func<'U1,'U2, 'U3,'V>> name [| typeof<'U1> ; typeof<'U2> ; typeof<'U3> |] typeof<'V>
+                (fun ilGen ->
+                    let arg0 = EnvItem<'U1>(ilGen, 0s)
+                    let arg1 = EnvItem<'U2>(ilGen, 1s)
+                    let arg2 = EnvItem<'U3>(ilGen, 2s)
+                    do builderF arg0 arg1 arg2 ilGen)
 
         let compileFunc4<'U1,'U2,'U3,'U4,'V> (name : string) (builderF : EnvItem<'U1> -> EnvItem<'U2> -> EnvItem<'U3> -> EnvItem<'U4> -> ILGenerator -> unit) =
-            let dyn, ilGen = createDynamicMethod name [| typeof<'U1> ; typeof<'U2> ; typeof<'U3> ; typeof<'U4> |] typeof<'V>
-            let arg0 = EnvItem<'U1>(ilGen, 0s)
-            let arg1 = EnvItem<'U2>(ilGen, 1s)
-            let arg2 = EnvItem<'U3>(ilGen, 2s)
-            let arg3 = EnvItem<'U4>(ilGen, 3s)
-            do builderF arg0 arg1 arg2 arg3 ilGen
-            compileDynamicMethod<Func<'U1,'U2,'U3,'U4,'V>> dyn
+            emitDynamicMethod<Func<'U1,'U2,'U3,'U4, 'V>> name [| typeof<'U1> ; typeof<'U2> ; typeof<'U3> ; typeof<'U4> |] typeof<'V>
+                (fun ilGen ->
+                    let arg0 = EnvItem<'U1>(ilGen, 0s)
+                    let arg1 = EnvItem<'U2>(ilGen, 1s)
+                    let arg2 = EnvItem<'U3>(ilGen, 2s)
+                    let arg3 = EnvItem<'U4>(ilGen, 3s)
+                    do builderF arg0 arg1 arg2 arg3 ilGen)
 
         let compileAction1<'U1> (name : string) (builderF : EnvItem<'U1> -> ILGenerator -> unit) =
-            let dyn, ilGen = createDynamicMethod name [| typeof<'U1> |] voidType
-            let arg0 = EnvItem<'U1>(ilGen, 0s)
-            do builderF arg0 ilGen
-            compileDynamicMethod<Action<'U1>> dyn
+            emitDynamicMethod<Action<'U1>> name [| typeof<'U1> |] voidType
+                (fun ilGen ->
+                    let arg0 = EnvItem<'U1>(ilGen, 0s)
+                    do builderF arg0 ilGen)
 
         let compileAction2<'U1,'U2> (name : string) (builderF : EnvItem<'U1> -> EnvItem<'U2> -> ILGenerator -> unit) =
-            let dyn, ilGen = createDynamicMethod name [| typeof<'U1> ; typeof<'U2> |] voidType
-            let arg0 = EnvItem<'U1>(ilGen, 0s)
-            let arg1 = EnvItem<'U2>(ilGen, 1s)
-            do builderF arg0 arg1 ilGen
-            compileDynamicMethod<Action<'U1,'U2>> dyn
+            emitDynamicMethod<Action<'U1, 'U2>> name [| typeof<'U1> ; typeof<'U2> |] voidType
+                (fun ilGen ->
+                    let arg0 = EnvItem<'U1>(ilGen, 0s)
+                    let arg1 = EnvItem<'U2>(ilGen, 1s)
+                    do builderF arg0 arg1 ilGen)
 
         let compileAction3<'U1,'U2,'U3> (name : string) (builderF : EnvItem<'U1> -> EnvItem<'U2> -> EnvItem<'U3> -> ILGenerator -> unit) =
-            let dyn, ilGen = createDynamicMethod name [| typeof<'U1> ; typeof<'U2> ; typeof<'U3> |] voidType
-            let arg0 = EnvItem<'U1>(ilGen, 0s)
-            let arg1 = EnvItem<'U2>(ilGen, 1s)
-            let arg2 = EnvItem<'U3>(ilGen, 2s)
-            do builderF arg0 arg1 arg2 ilGen
-            compileDynamicMethod<Action<'U1,'U2,'U3>> dyn
+            emitDynamicMethod<Action<'U1,'U2,'U3>> name [| typeof<'U1> ; typeof<'U2> ; typeof<'U3> |] voidType
+                (fun ilGen ->
+                    let arg0 = EnvItem<'U1>(ilGen, 0s)
+                    let arg1 = EnvItem<'U2>(ilGen, 1s)
+                    let arg2 = EnvItem<'U3>(ilGen, 2s)
+                    do builderF arg0 arg1 arg2 ilGen)
 
         let compileAction4<'U1,'U2,'U3,'U4> (name : string) (builderF : EnvItem<'U1> -> EnvItem<'U2> -> EnvItem<'U3> -> EnvItem<'U4> -> ILGenerator -> unit) =
-            let dyn, ilGen = createDynamicMethod name [| typeof<'U1> ; typeof<'U2> ; typeof<'U3> ; typeof<'U4> |] voidType
-            let arg0 = EnvItem<'U1>(ilGen, 0s)
-            let arg1 = EnvItem<'U2>(ilGen, 1s)
-            let arg2 = EnvItem<'U3>(ilGen, 2s)
-            let arg3 = EnvItem<'U4>(ilGen, 3s)
-            do builderF arg0 arg1 arg2 arg3 ilGen
-            compileDynamicMethod<Action<'U1,'U2,'U3,'U4>> dyn
+            emitDynamicMethod<Action<'U1,'U2,'U3,'U4>> name [| typeof<'U1> ; typeof<'U2> ; typeof<'U3> ; typeof<'U4> |] voidType
+                (fun ilGen ->
+                    let arg0 = EnvItem<'U1>(ilGen, 0s)
+                    let arg1 = EnvItem<'U2>(ilGen, 1s)
+                    let arg2 = EnvItem<'U3>(ilGen, 2s)
+                    let arg3 = EnvItem<'U4>(ilGen, 3s)
+                    do builderF arg0 arg1 arg2 arg3 ilGen)
         
 #endif
