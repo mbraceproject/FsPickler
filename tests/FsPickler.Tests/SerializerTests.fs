@@ -1107,3 +1107,20 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
             raise <| new AssertionException(msg)
         else
             printfn "Failed Serializations: %d out of %d." failedResults results.Length
+
+module TestsByExample =
+    [<Test>]
+    let ``Unpickle a single from a Json integer should pass``() =
+        let jser = JsonSerializer(false, true)
+        let json = "10";
+        let current = jser.UnPickleOfString(json, Combinators.Pickler.single)
+        let expected = 10.0f
+        Assert.That(current, Is.EqualTo expected)
+
+    [<Test>]
+    let ``Unpickle a double from a Json integer should pass``() =
+        let jser = JsonSerializer(false, true)
+        let json = "10";
+        let current = jser.UnPickleOfString(json, Combinators.Pickler.double)
+        let expected = 10.0
+        Assert.That(current, Is.EqualTo expected)
