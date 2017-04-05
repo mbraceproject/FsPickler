@@ -158,6 +158,7 @@ type internal JsonPickleReader (jsonReader : JsonReader, omitHeader, useCustomSe
             let value =
                 match jsonReader.TokenType with
                 | JsonToken.Float -> jsonReader.ValueAs<double> () |> single
+                | JsonToken.Integer -> jsonReader.ValueAs<int64> () |> single
                 | JsonToken.String -> Single.Parse(jsonReader.ValueAs<string>(), CultureInfo.InvariantCulture)
                 | _ -> raise <| new FormatException("not a float.")
 
@@ -172,6 +173,7 @@ type internal JsonPickleReader (jsonReader : JsonReader, omitHeader, useCustomSe
             let value =
                 match jsonReader.TokenType with
                 | JsonToken.Float -> jsonReader.ValueAs<double> ()
+                | JsonToken.Integer -> jsonReader.ValueAs<int64> () |> double
                 | JsonToken.String -> Double.Parse(jsonReader.ValueAs<string>(), CultureInfo.InvariantCulture)
                 | _ -> raise <| new FormatException("not a float.")
 
