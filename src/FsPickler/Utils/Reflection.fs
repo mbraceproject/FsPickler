@@ -1,9 +1,10 @@
 ﻿module internal MBrace.FsPickler.Reflection
 
 open System
-open System.Text.RegularExpressions
+open System.Collections.Generic
 open System.Reflection
 open System.Runtime.Serialization
+open System.Text.RegularExpressions
 
 open Microsoft.FSharp.Reflection
 
@@ -120,16 +121,16 @@ let isExceptionDispatchInfo (t : Type) =
 /// walks up the type hierarchy, gathering all instance members
 let gatherMembers (t : Type) =
     // resolve conflicts, index by declaring type and field name
-    let gathered = ref Map.empty<string * string, (* index *) int * MemberInfo>
-    let i = ref 0
+    let gathered = new Dictionary<string * string, (* index *) int * MemberInfo>()
+    let index = ref 0
 
     let rec gather (t : Type) =
         let members = t.GetMembers(allFields)
         for m in members do
             let k = m.DeclaringType.AssemblyQualifiedName, m.ToString()
-            if not <| gathered.Value.ContainsKey k then
-                gathered := gathered.Value.Add(k, (!i, m))
-                incr i
+            if not <| gathered.ContainsKey k then
+                gathered.Add(k, (!index, m))
+                incr index
 
         match t.BaseType with
         | null -> ()
@@ -138,9 +139,8 @@ let gatherMembers (t : Type) =
 
     do gather t
 
-    gathered.Value 
-    |> Map.toSeq
-    |> Seq.map snd
+    gathered
+    |> Seq.map (fun kv -> kv.Value)
     |> Seq.sortBy fst // sort by index; this is to preserve member serialization ordering
     |> Seq.map snd
     |> Seq.toArray

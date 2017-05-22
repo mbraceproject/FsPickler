@@ -98,7 +98,7 @@ module internal Emit =
                     do builderF arg0 arg1 ilGen)
 
         let compileFunc3<'U1,'U2,'U3,'V> (name : string) (builderF : EnvItem<'U1> -> EnvItem<'U2> -> EnvItem<'U3> -> ILGenerator -> unit) =
-            emitDynamicMethod<Func<'U1,'U2, 'U3,'V>> name [| typeof<'U1> ; typeof<'U2> ; typeof<'U3> |] typeof<'V>
+            emitDynamicMethod<Func<'U1,'U2,'U3,'V>> name [| typeof<'U1> ; typeof<'U2> ; typeof<'U3> |] typeof<'V>
                 (fun ilGen ->
                     let arg0 = EnvItem<'U1>(ilGen, 0s)
                     let arg1 = EnvItem<'U2>(ilGen, 1s)
@@ -106,7 +106,7 @@ module internal Emit =
                     do builderF arg0 arg1 arg2 ilGen)
 
         let compileFunc4<'U1,'U2,'U3,'U4,'V> (name : string) (builderF : EnvItem<'U1> -> EnvItem<'U2> -> EnvItem<'U3> -> EnvItem<'U4> -> ILGenerator -> unit) =
-            emitDynamicMethod<Func<'U1,'U2,'U3,'U4, 'V>> name [| typeof<'U1> ; typeof<'U2> ; typeof<'U3> ; typeof<'U4> |] typeof<'V>
+            emitDynamicMethod<Func<'U1,'U2,'U3,'U4,'V>> name [| typeof<'U1> ; typeof<'U2> ; typeof<'U3> ; typeof<'U4> |] typeof<'V>
                 (fun ilGen ->
                     let arg0 = EnvItem<'U1>(ilGen, 0s)
                     let arg1 = EnvItem<'U2>(ilGen, 1s)
@@ -121,7 +121,7 @@ module internal Emit =
                     do builderF arg0 ilGen)
 
         let compileAction2<'U1,'U2> (name : string) (builderF : EnvItem<'U1> -> EnvItem<'U2> -> ILGenerator -> unit) =
-            emitDynamicMethod<Action<'U1, 'U2>> name [| typeof<'U1> ; typeof<'U2> |] voidType
+            emitDynamicMethod<Action<'U1,'U2>> name [| typeof<'U1> ; typeof<'U2> |] voidType
                 (fun ilGen ->
                     let arg0 = EnvItem<'U1>(ilGen, 0s)
                     let arg1 = EnvItem<'U2>(ilGen, 1s)
