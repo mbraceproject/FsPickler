@@ -27,6 +27,10 @@ type internal FsUnionPickler =
         if not (isReflectionSerializable ty || PicklerPluginRegistry.IsDeclaredSerializable ty) then
             raise <| new NonSerializableTypeException(ty)
 
+        if ty.IsValueType then
+            // avoid emitting invalid IL for struct unions
+            raise <| new NonSerializableTypeException(ty, "Struct unions  not supported.")
+
         // Only cache by reference if typedef introduces custom or reference equality semantics
         let isCacheByRef = 
             containsAttr<CustomEqualityAttribute> ty 
@@ -251,6 +255,10 @@ type internal FsRecordPickler =
         let ty = typeof<'Record>
         if not (isReflectionSerializable ty || PicklerPluginRegistry.IsDeclaredSerializable ty) then
             raise <| new NonSerializableTypeException(ty)
+
+        if ty.IsValueType then
+            // avoid emitting invalid IL for struct records
+            raise <| new NonSerializableTypeException(ty, "Struct records not supported.")
 
         let fields = FSharpType.GetRecordFields(ty, allMembers)
         let ctor = FSharpValue.PreComputeRecordConstructorInfo(ty, allMembers)
