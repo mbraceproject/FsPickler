@@ -256,10 +256,6 @@ type internal FsRecordPickler =
         if not (isReflectionSerializable ty || PicklerPluginRegistry.IsDeclaredSerializable ty) then
             raise <| new NonSerializableTypeException(ty)
 
-        if ty.IsValueType then
-            // avoid emitting invalid IL for struct records
-            raise <| new NonSerializableTypeException(ty, "Struct records not supported.")
-
         let fields = FSharpType.GetRecordFields(ty, allMembers)
         let ctor = FSharpValue.PreComputeRecordConstructorInfo(ty, allMembers)
 
@@ -272,6 +268,11 @@ type internal FsRecordPickler =
             containsAttr<ReferenceEqualityAttribute> ty
 
 #if EMIT_IL
+
+        if ty.IsValueType then
+            // avoid emitting invalid IL for struct records
+            raise <| new NonSerializableTypeException(ty, "Struct records not supported.")
+
         let writer =
             if fields.Length = 0 then fun _ _ _ -> ()
             else
