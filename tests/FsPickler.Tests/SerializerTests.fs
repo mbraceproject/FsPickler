@@ -330,6 +330,20 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
         Check.QuickThrowOnFail<struct ((int * struct (bool * string)) * struct (string * int16))> testEquals
         Check.QuickThrowOnFail<struct (int * struct (bool * struct (sbyte * string * uint32) * struct (string * string)))> testEquals
 
+    
+    [<Test; Category("Generic BCL Types")>]
+    member __.``4. BCL: tuple/struct tuple mixed`` () =
+        Check.QuickThrowOnFail<int * struct(string * decimal)> testEquals
+        Check.QuickThrowOnFail<struct (int * (string * decimal))> testEquals
+        Check.QuickThrowOnFail<struct (int * (bool * string)) * (string * int16)> testEquals
+        Check.QuickThrowOnFail<struct (int * (bool * string)) * struct (string * int16)> testEquals
+        Check.QuickThrowOnFail<(int * struct (bool * string)) * (string * int16)> testEquals
+        Check.QuickThrowOnFail<(int * (bool * (sbyte * string * uint32) * struct (string * string)))> testEquals
+        Check.QuickThrowOnFail<struct (int * (bool * (sbyte * string * uint32) * (string * string)))> testEquals
+        Check.QuickThrowOnFail<(int * struct (bool * (sbyte * string * uint32) * (string * string)))> testEquals
+        Check.QuickThrowOnFail<(int * (bool * struct (sbyte * string * uint32) * (string * string)))> testEquals
+        Check.QuickThrowOnFail<(int * (bool * struct (sbyte * string * uint32) * struct (string * string)))> testEquals
+
     // exceptions
 
     // should properly serialize stacktrace
