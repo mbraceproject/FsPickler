@@ -404,12 +404,22 @@ module ``Generic Tests`` =
         e'.Value |> should equal e.Value
         e'.InnerException.Message |> should equal e.InnerException.Message
         e'.StackTrace |> should equal e.StackTrace
-
+        
     [<Test; Category("Clone")>]
     let ``2. Clone: record`` () = 
         Check.QuickThrowOnFail<Record> (testCloneRefEq, maxRuns = 10)
         Check.QuickThrowOnFail<Record> (testCloneRefEq, maxRuns = 10)
         { GValue = obj() } |> testClonePayload (fun r -> r.GValue)
+
+    [<Test; Category("Clone")>]
+    let ``2. Clone: struct record`` () =
+        let c =
+            { SInt = 42
+              SString = "42"
+              STuple = 43, "42" }
+        let c' = clone c
+        c |> should equal c'
+        { SGValue = obj() } |> testClonePayload (fun s -> s.SGValue)
 
     [<Test; Category("Clone")>]
     let ``2. Clone: union`` () = 
