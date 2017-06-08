@@ -420,7 +420,8 @@ module ``Generic Tests`` =
         let c' = clone c
         c |> should equal c'
         { SGValue = obj() } |> testClonePayload (fun s -> s.SGValue)
-
+        Check.QuickThrowOnFail<StructRecord>(testCloneEq, maxRuns = 10)
+        
     [<Test; Category("Clone")>]
     let ``2. Clone: union`` () = 
         // unions encode certain branches as singletons
@@ -431,6 +432,13 @@ module ``Generic Tests`` =
         Check.QuickThrowOnFail<Either<int,int>> (testCloneRefEq, maxRuns = 10)
         GValue(obj()) |> testClonePayload (function GValue v -> v)
 
+    
+    [<Test; Category("Clone")>]
+    let ``2. Clone: struct union`` () = 
+        Check.QuickThrowOnFail<StructDU> testCloneEq
+        Check.QuickThrowOnFail<GenericStructDU<int>> (testCloneEq, maxRuns = 10)
+        SGValue(obj()) |> testClonePayload (function SGValue v -> v)
+        
     [<Test; Category("Clone")>]
     let ``2. Clone: tuple`` () = 
         Check.QuickThrowOnFail<Tuple<int>>(testCloneRefEq, maxRuns = 10)
@@ -442,6 +450,19 @@ module ``Generic Tests`` =
         Check.QuickThrowOnFail<int * string * string * string * string * string * string>(testCloneRefEq, maxRuns = 10)
         Check.QuickThrowOnFail<int * string * string * string * string * string * string * string>(testCloneRefEq, maxRuns = 10)
         (obj(),obj()) |> testClonePayload fst
+
+    
+    [<Test; Category("Clone")>]
+    let ``2. Clone: struct tuple`` () = 
+        // a single struct tuple is just an int.
+        Check.QuickThrowOnFail<struct (int * string)>(testCloneEq, maxRuns = 10)
+        Check.QuickThrowOnFail<struct (int * string * string)>(testCloneEq, maxRuns = 10)
+        Check.QuickThrowOnFail<struct (int * string * string * string)>(testCloneEq, maxRuns = 10)
+        Check.QuickThrowOnFail<struct (int * string * string * string * string)>(testCloneEq, maxRuns = 10)
+        Check.QuickThrowOnFail<struct (int * string * string * string * string * string)>(testCloneEq, maxRuns = 10)
+        Check.QuickThrowOnFail<struct (int * string * string * string * string * string * string)>(testCloneEq, maxRuns = 10)
+        Check.QuickThrowOnFail<struct (int * string * string * string * string * string * string * string)>(testCloneEq, maxRuns = 10)
+        struct (obj(),obj()) |> testClonePayload (fun struct (a,_) -> a)
 
     [<Test; Category("Clone")>]
     let ``2. Clone: choice`` () = 
