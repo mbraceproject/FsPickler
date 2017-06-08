@@ -27,6 +27,9 @@ module TestTypes =
 
     type GenericDU<'T> = GValue of 'T
 
+    [<Struct>]
+    type GenericStructDU<'T> = SGValue of 'T
+
     type Either<'T,'S> = L of 'T | R of 'S
 
     let rec int2Peano n = match n with 0 -> Zero | n -> Succ(int2Peano(n-1))
