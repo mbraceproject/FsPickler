@@ -294,6 +294,13 @@ module TestTypes =
         | Something of string * int
         | SomethingElse of string * int * obj
 
+    [<RequireQualifiedAccess>]
+    [<Struct>]
+    type StructDU =
+        | Nothing
+        | Something of something: string * numberA: int
+        | SomethingElse of somethingElse: string * numberB:int * obj: obj
+
     type BinTree =
         | Leaf
         | Node of string * BinTree * BinTree
@@ -303,6 +310,13 @@ module TestTypes =
 
     type GenericRecord<'T> = { GValue : 'T }
 
+    [<Struct>]
+    type StructRecord =
+        { Int : int ; String : string ; Tuple : int * string }
+
+    [<Struct>]
+    type StructGenericRecord<'T> =
+        { GValue : 'T }
 
     type Class(x : int, y : string) =
         member __.X = x
