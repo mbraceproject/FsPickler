@@ -19,5 +19,4 @@ nuget TaskParallelLibrary framework:net35
 nuget System.ValueTuple
 github fsharp/FAKE modules/Octokit/Octokit.fsx
 
-github eiriktsarpalis/TypeShape:1.0 src/TypeShape/TypeShape.fs
-github eiriktsarpalis/TypeShape:1.0 src/TypeShape/ISerializableExtensions.fs
+github eiriktsarpalis/TypeShape:2.15 src/TypeShape/TypeShape.fs
