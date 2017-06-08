@@ -16,6 +16,7 @@ nuget NUnit ~> 2.6
 nuget NUnit.Runners ~> 2.6
 nuget FAKE
 nuget TaskParallelLibrary framework:net35
+nuget System.ValueTuple
 github fsharp/FAKE modules/Octokit/Octokit.fsx
 
 github eiriktsarpalis/TypeShape:1.0 src/TypeShape/TypeShape.fs

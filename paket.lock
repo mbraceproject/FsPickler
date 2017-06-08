@@ -16,10 +16,10 @@ NUGET
     FsUnit (1.4.1)
       FSharp.Core (>= 3.1.2.5)
       NUnit (2.6.4)
-    Microsoft.Bcl (1.1.10)
+    Microsoft.Bcl (1.1.10) - framework: net35, net40, net40-full
       Microsoft.Bcl.Build (>= 1.0.14)
     Microsoft.Bcl.Build (1.0.21) - import_targets: false
-    Microsoft.Net.Http (2.2.29)
+    Microsoft.Net.Http (2.2.29) - framework: net35, net40, net40-full
       Microsoft.Bcl (>= 1.1.10)
       Microsoft.Bcl.Build (>= 1.0.14)
     Newtonsoft.Json (9.0.1)
@@ -32,11 +32,12 @@ NUGET
       NUnit (>= 2.6.3)
       PerfUtil (>= 0.1.8)
     protobuf-net (2.1)
-    TaskParallelLibrary (1.0.2856)
+    System.ValueTuple (4.3.1)
+    TaskParallelLibrary (1.0.2856) - framework: net35
     Wire (0.8)
 GITHUB
   remote: fsharp/FAKE
-    modules/Octokit/Octokit.fsx (e5870cb85f9b500246e02c6daa94e5131dad7a6e)
+    modules/Octokit/Octokit.fsx (ad65548e62c35ad64ad1f9db6f5768330bc06594)
       Octokit (>= 0.20)
   remote: eiriktsarpalis/TypeShape
     src/TypeShape/ISerializableExtensions.fs (e27b1e7cbff320103ce909b0d035bf509f6fb947)

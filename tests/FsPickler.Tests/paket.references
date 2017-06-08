@@ -2,3 +2,4 @@ FsCheck
 FsUnit
 Newtonsoft.Json
 NUnit
+System.ValueTuple
