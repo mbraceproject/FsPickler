@@ -122,6 +122,7 @@
     <Compile Include="Combinators\Sequence.fs" />
     <Compile Include="Combinators\Array.fs" />
     <Compile Include="Combinators\Tuple.fs" />
+    <Compile Include="Combinators\ValueTuple.fs" />
     <Compile Include="Combinators\FSharpList.fs" />
     <Compile Include="Combinators\DotNetTypes.fs" />
     <Compile Include="Combinators\FSharpTypes.fs" />
