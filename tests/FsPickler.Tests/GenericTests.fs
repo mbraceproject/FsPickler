@@ -455,6 +455,7 @@ module ``Generic Tests`` =
     [<Test; Category("Clone")>]
     let ``2. Clone: struct tuple`` () = 
         // a single struct tuple is just an int.
+        Check.QuickThrowOnFail<ValueTuple<int>>(testCloneEq, maxRuns = 10)
         Check.QuickThrowOnFail<struct (int * string)>(testCloneEq, maxRuns = 10)
         Check.QuickThrowOnFail<struct (int * string * string)>(testCloneEq, maxRuns = 10)
         Check.QuickThrowOnFail<struct (int * string * string * string)>(testCloneEq, maxRuns = 10)
