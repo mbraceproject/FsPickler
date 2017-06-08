@@ -107,7 +107,8 @@ module ``Generic Tests`` =
         isOpenHierarchy<GenericRecord<GenericRecord<int>>> |> should equal false
         isOpenHierarchy<StructGenericRecord<StructGenericRecord<int>>> |> should equal false
         isOpenHierarchy<SimpleDU> |> should equal false
-        isOpenHierarchy<StructDU> |> should equal false
+        isOpenHierarchy<DU> |> should equal true
+        isOpenHierarchy<StructDU> |> should equal true
         isOpenHierarchy<GenericClass<GenericClass<int>>> |> should equal false
 
         isOpenHierarchy<obj> |> should equal true
