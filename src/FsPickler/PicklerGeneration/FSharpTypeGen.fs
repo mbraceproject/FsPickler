@@ -27,10 +27,6 @@ type internal FsUnionPickler =
         if not (isReflectionSerializable ty || PicklerPluginRegistry.IsDeclaredSerializable ty) then
             raise <| new NonSerializableTypeException(ty)
 
-        if ty.IsValueType then
-            // avoid emitting invalid IL for struct unions
-            raise <| new NonSerializableTypeException(ty, "Struct unions  not supported.")
-
         // Only cache by reference if typedef introduces custom or reference equality semantics
         let isCacheByRef = 
             containsAttr<CustomEqualityAttribute> ty 
@@ -198,7 +194,13 @@ type internal FsUnionPickler =
         let cloner c t = clonerDele.Invoke(picklerss, c, t)
         let accepter v t = accepterDele.Invoke(picklerss, v, t)
 #else
-        let tagReader = Delegate.CreateDelegate<Func<'Union,int>> tagReaderMethod
+        let tagReader = 
+            if tagReaderMethod.IsSecurityCritical then
+                // we can't create a delegate, so we wrap a reflection call here
+                let f obj = tagReaderMethod.Invoke(obj, null) :?> int
+                new Func<'Union, int>(f)
+            else
+                Delegate.CreateDelegate<Func<'Union,int>> tagReaderMethod
 
         let caseInfo =
             ucis
