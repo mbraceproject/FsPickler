@@ -73,7 +73,11 @@ module ``Generic Tests`` =
         isRecursive<int * string []> |> should equal false
         isRecursive<Type option * string []> |> should equal false
         isRecursive<Record> |> should equal false
+        isRecursive<StructRecord> |> should equal false
+        isRecursive<GenericRecord<GenericRecord<int>>> |> should equal false
+        isRecursive<StructGenericRecord<StructGenericRecord<int>>> |> should equal false
         isRecursive<SimpleDU> |> should equal false
+        isRecursive<StructDU> |> should equal false
         isRecursive<GenericClass<GenericClass<int>>> |> should equal false
 
         isRecursive<obj> |> should equal true
@@ -99,7 +103,11 @@ module ``Generic Tests`` =
         isOpenHierarchy<int * string []> |> should equal false
         isOpenHierarchy<Type option * string []> |> should equal false
         isOpenHierarchy<Record> |> should equal false
+        isOpenHierarchy<StructRecord> |> should equal false
+        isOpenHierarchy<GenericRecord<GenericRecord<int>>> |> should equal false
+        isOpenHierarchy<StructGenericRecord<StructGenericRecord<int>>> |> should equal false
         isOpenHierarchy<SimpleDU> |> should equal false
+        isOpenHierarchy<StructDU> |> should equal false
         isOpenHierarchy<GenericClass<GenericClass<int>>> |> should equal false
 
         isOpenHierarchy<obj> |> should equal true
@@ -122,7 +130,15 @@ module ``Generic Tests`` =
         isFixedSize<int * string []> |> should equal false
         isFixedSize<Type option * string []> |> should equal false
         isFixedSize<Record> |> should equal false
+        isFixedSize<GenericRecord<GenericRecord<string>>> |> should equal false
+        isFixedSize<GenericRecord<GenericRecord<int>>> |> should equal true
+        isFixedSize<StructGenericRecord<StructGenericRecord<int>>> |> should equal true
+        isFixedSize<StructGenericRecord<StructGenericRecord<string>>> |> should equal false
+        isFixedSize<StructRecord> |> should equal false
+        isFixedSize<GenericStruct<GenericStruct<int>>> |> should equal true
+        isFixedSize<GenericStruct<GenericStruct<string>>> |> should equal false
         isFixedSize<SimpleDU> |> should equal false
+        isFixedSize<StructDU> |> should equal false
         isFixedSize<GenericClass<GenericClass<int>>> |> should equal true
 
         isFixedSize<obj> |> should equal false
