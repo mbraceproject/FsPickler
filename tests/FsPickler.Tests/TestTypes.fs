@@ -312,11 +312,11 @@ module TestTypes =
 
     [<Struct>]
     type StructRecord =
-        { Int : int ; String : string ; Tuple : int * string }
+        { SInt : int ; SString : string ; STuple : int * string }
 
     [<Struct>]
     type StructGenericRecord<'T> =
-        { GValue : 'T }
+        { SGValue : 'T }
 
     type Class(x : int, y : string) =
         member __.X = x
