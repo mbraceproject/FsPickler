@@ -583,6 +583,11 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
         let records = seq { for i in 1 .. 10000 -> { Int = i ; String = string i ; Tuple = (i, "const") } }
         __.TestSequenceRoundtrip records
 
+    [<Test; Category("FsPickler Generic tests")>]
+    member __.``5. Object: struct record sequence`` () =
+        let records = seq { for i in 1 .. 10000 -> { SInt = i ; SString = string i ; STuple = (i, "const") } }
+        __.TestSequenceRoundtrip records
+
 
     [<Test; Category("FsPickler Generic tests")>]
     member __.``5. Object: rec sequence`` () =
@@ -919,6 +924,10 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
     [<Test; Category("FSharp type tests")>]
     member __.``7. FSharp: simple union`` () =
         Check.QuickThrowOnFail<SimpleDU> testEquals
+        
+    [<Test; Category("FSharp type tests")>]
+    member __.``7. FSharp: struct union`` () =
+        Check.QuickThrowOnFail<StructDU> testEquals
 
     [<Test; Category("FSharp type tests")>]
     member __.``7. FSharp: recursive union`` () =
@@ -957,10 +966,14 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
 
         serializer.UnPickle(data, pickler = (getTreeForestPicklers Pickler.int |> fst))
         |> should equal (nTree 6)
-
+        
     [<Test; Category("FSharp type tests")>]
     member __.``7. FSharp: record`` () = 
         Check.QuickThrowOnFail<Record> testEquals
+        
+    [<Test; Category("FSharp type tests")>]
+    member __.``7. FSharp: struct record`` () = 
+        Check.QuickThrowOnFail<StructRecord> testEquals
 
     [<Test; Category("FSharp type tests")>]
     member __.``7. FSharp: cyclic record`` () = 
