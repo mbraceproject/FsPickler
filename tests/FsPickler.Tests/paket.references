@@ -1,4 +1,6 @@
-FsCheck
-FsUnit
+FSharp.Core
 Newtonsoft.Json
-NUnit
+group Test
+  FsCheck
+  FsUnit
+  NUnit

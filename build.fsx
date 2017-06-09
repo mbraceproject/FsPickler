@@ -2,8 +2,8 @@
 // FAKE build script 
 // --------------------------------------------------------------------------------------
 
-#I "packages/FAKE/tools"
-#r "packages/FAKE/tools/FakeLib.dll"
+#I "packages/build/FAKE/tools"
+#r "packages/build/FAKE/tools/FakeLib.dll"
 
 open System
 open System.IO
@@ -140,7 +140,7 @@ Target "ReleaseDocs" (fun _ ->
 
 // Github Releases
 
-#load "paket-files/fsharp/FAKE/modules/Octokit/Octokit.fsx"
+#load "paket-files/build/fsharp/FAKE/modules/Octokit/Octokit.fsx"
 open Octokit
 
 Target "ReleaseGitHub" (fun _ ->
