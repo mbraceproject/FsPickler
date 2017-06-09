@@ -78,6 +78,17 @@ type FsPicklerGenerators private () =
 
     static member Seq<'T> () = Arb.generate<'T []> |> Gen.map Array.toSeq |> Arb.fromGen
 
+    /// value tuple generators
+    static member ValueTuple<'T> () = Arb.generate<'T> |> Gen.map (ValueTuple<_>) |> Arb.fromGen
+    static member ValueTuple<'T, 'T2> () = Arb.generate<'T * 'T2> |> Gen.map (ValueTuple<_,_>) |> Arb.fromGen
+    static member ValueTuple<'T, 'T2, 'T3> () = Arb.generate<'T * 'T2 * 'T3> |> Gen.map (ValueTuple<_,_,_>) |> Arb.fromGen
+    static member ValueTuple<'T, 'T2, 'T3, 'T4> () = Arb.generate<'T * 'T2 * 'T3 * 'T4> |> Gen.map (ValueTuple<_,_,_,_>) |> Arb.fromGen
+    static member ValueTuple<'T, 'T2, 'T3, 'T4, 'T5> () = Arb.generate<'T * 'T2 * 'T3 * 'T4 * 'T5> |> Gen.map (ValueTuple<_,_,_,_,_>) |> Arb.fromGen
+    static member ValueTuple<'T, 'T2, 'T3, 'T4, 'T5, 'T6> () = Arb.generate<'T * 'T2 * 'T3 * 'T4 * 'T5 * 'T6> |> Gen.map (ValueTuple<_,_,_,_,_,_>) |> Arb.fromGen
+    static member ValueTuple<'T, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7> () = Arb.generate<'T * 'T2 * 'T3 * 'T4 * 'T5 * 'T6 * 'T7> |> Gen.map (ValueTuple<_,_,_,_,_,_,_>) |> Arb.fromGen
+    static member ValueTuple<'T, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8 when 'T8 : (new : unit -> 'T8) and 'T8 : struct and 'T8 :> ValueType> () =
+        Arb.generate<'T * 'T2 * 'T3 * 'T4 * 'T5 * 'T6 * 'T7 * 'T8> |> Gen.map (ValueTuple<'T,'T2,'T3,'T4,'T5,'T6,'T7,'T8>) |> Arb.fromGen
+
             
 type Check =
     /// quick check methods with explicit type annotation

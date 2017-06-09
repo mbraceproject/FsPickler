@@ -73,7 +73,11 @@ module ``Generic Tests`` =
         isRecursive<int * string []> |> should equal false
         isRecursive<Type option * string []> |> should equal false
         isRecursive<Record> |> should equal false
+        isRecursive<StructRecord> |> should equal false
+        isRecursive<GenericRecord<GenericRecord<int>>> |> should equal false
+        isRecursive<StructGenericRecord<StructGenericRecord<int>>> |> should equal false
         isRecursive<SimpleDU> |> should equal false
+        isRecursive<StructDU> |> should equal false
         isRecursive<GenericClass<GenericClass<int>>> |> should equal false
 
         isRecursive<obj> |> should equal true
@@ -99,7 +103,12 @@ module ``Generic Tests`` =
         isOpenHierarchy<int * string []> |> should equal false
         isOpenHierarchy<Type option * string []> |> should equal false
         isOpenHierarchy<Record> |> should equal false
+        isOpenHierarchy<StructRecord> |> should equal false
+        isOpenHierarchy<GenericRecord<GenericRecord<int>>> |> should equal false
+        isOpenHierarchy<StructGenericRecord<StructGenericRecord<int>>> |> should equal false
         isOpenHierarchy<SimpleDU> |> should equal false
+        isOpenHierarchy<DU> |> should equal true
+        isOpenHierarchy<StructDU> |> should equal true
         isOpenHierarchy<GenericClass<GenericClass<int>>> |> should equal false
 
         isOpenHierarchy<obj> |> should equal true
@@ -122,7 +131,15 @@ module ``Generic Tests`` =
         isFixedSize<int * string []> |> should equal false
         isFixedSize<Type option * string []> |> should equal false
         isFixedSize<Record> |> should equal false
+        isFixedSize<GenericRecord<GenericRecord<string>>> |> should equal false
+        isFixedSize<GenericRecord<GenericRecord<int>>> |> should equal true
+        isFixedSize<StructGenericRecord<StructGenericRecord<int>>> |> should equal true
+        isFixedSize<StructGenericRecord<StructGenericRecord<string>>> |> should equal false
+        isFixedSize<StructRecord> |> should equal false
+        isFixedSize<GenericStruct<GenericStruct<int>>> |> should equal true
+        isFixedSize<GenericStruct<GenericStruct<string>>> |> should equal false
         isFixedSize<SimpleDU> |> should equal false
+        isFixedSize<StructDU> |> should equal false
         isFixedSize<GenericClass<GenericClass<int>>> |> should equal true
 
         isFixedSize<obj> |> should equal false
@@ -388,13 +405,24 @@ module ``Generic Tests`` =
         e'.Value |> should equal e.Value
         e'.InnerException.Message |> should equal e.InnerException.Message
         e'.StackTrace |> should equal e.StackTrace
-
+        
     [<Test; Category("Clone")>]
     let ``2. Clone: record`` () = 
         Check.QuickThrowOnFail<Record> (testCloneRefEq, maxRuns = 10)
         Check.QuickThrowOnFail<Record> (testCloneRefEq, maxRuns = 10)
         { GValue = obj() } |> testClonePayload (fun r -> r.GValue)
 
+    [<Test; Category("Clone")>]
+    let ``2. Clone: struct record`` () =
+        let c =
+            { SInt = 42
+              SString = "42"
+              STuple = 43, "42" }
+        let c' = clone c
+        c |> should equal c'
+        { SGValue = obj() } |> testClonePayload (fun s -> s.SGValue)
+        Check.QuickThrowOnFail<StructRecord>(testCloneEq, maxRuns = 10)
+        
     [<Test; Category("Clone")>]
     let ``2. Clone: union`` () = 
         // unions encode certain branches as singletons
@@ -405,6 +433,13 @@ module ``Generic Tests`` =
         Check.QuickThrowOnFail<Either<int,int>> (testCloneRefEq, maxRuns = 10)
         GValue(obj()) |> testClonePayload (function GValue v -> v)
 
+    
+    [<Test; Category("Clone")>]
+    let ``2. Clone: struct union`` () = 
+        Check.QuickThrowOnFail<StructDU> testCloneEq
+        Check.QuickThrowOnFail<GenericStructDU<int>> (testCloneEq, maxRuns = 10)
+        SGValue(obj()) |> testClonePayload (function SGValue v -> v)
+        
     [<Test; Category("Clone")>]
     let ``2. Clone: tuple`` () = 
         Check.QuickThrowOnFail<Tuple<int>>(testCloneRefEq, maxRuns = 10)
@@ -416,6 +451,20 @@ module ``Generic Tests`` =
         Check.QuickThrowOnFail<int * string * string * string * string * string * string>(testCloneRefEq, maxRuns = 10)
         Check.QuickThrowOnFail<int * string * string * string * string * string * string * string>(testCloneRefEq, maxRuns = 10)
         (obj(),obj()) |> testClonePayload fst
+
+    
+    [<Test; Category("Clone")>]
+    let ``2. Clone: struct tuple`` () = 
+        // a single struct tuple is just an int.
+        Check.QuickThrowOnFail<ValueTuple<int>>(testCloneEq, maxRuns = 10)
+        Check.QuickThrowOnFail<struct (int * string)>(testCloneEq, maxRuns = 10)
+        Check.QuickThrowOnFail<struct (int * string * string)>(testCloneEq, maxRuns = 10)
+        Check.QuickThrowOnFail<struct (int * string * string * string)>(testCloneEq, maxRuns = 10)
+        Check.QuickThrowOnFail<struct (int * string * string * string * string)>(testCloneEq, maxRuns = 10)
+        Check.QuickThrowOnFail<struct (int * string * string * string * string * string)>(testCloneEq, maxRuns = 10)
+        Check.QuickThrowOnFail<struct (int * string * string * string * string * string * string)>(testCloneEq, maxRuns = 10)
+        Check.QuickThrowOnFail<struct (int * string * string * string * string * string * string * string)>(testCloneEq, maxRuns = 10)
+        struct (obj(),obj()) |> testClonePayload (fun struct (a,_) -> a)
 
     [<Test; Category("Clone")>]
     let ``2. Clone: choice`` () = 
