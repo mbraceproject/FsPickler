@@ -1,7 +1,9 @@
-FSharp.Charting
+FSharp.Core
 Newtonsoft.Json
-NUnit
-Wire
-PerfUtil
-PerfUtil.NUnit
-protobuf-net
+group Test
+  FSharp.Charting
+  NUnit
+  Wire
+  PerfUtil
+  PerfUtil.NUnit
+  protobuf-net

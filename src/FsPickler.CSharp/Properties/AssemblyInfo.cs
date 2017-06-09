@@ -7,7 +7,9 @@ using System.Reflection;
 [assembly: AssemblyFileVersionAttribute("3.3.0")]
 namespace System {
     internal static class AssemblyVersionInformation {
-        internal const string Version = "3.3.0";
-        internal const string InformationalVersion = "3.3.0";
+        internal const System.String AssemblyProduct = "FsPickler";
+        internal const System.String AssemblyCopyright = "© Eirik Tsarpalis.";
+        internal const System.String AssemblyVersion = "3.3.0";
+        internal const System.String AssemblyFileVersion = "3.3.0";
     }
 }
