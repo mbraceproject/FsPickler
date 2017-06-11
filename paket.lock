@@ -51,5 +51,5 @@ NUGET
       NUnit (>= 2.6.3)
       PerfUtil (>= 0.1.8)
     protobuf-net (2.2.1)
-    TaskParallelLibrary (1.0.2856)
+    TaskParallelLibrary (1.0.2856) - framework: net35
     Wire (0.8.2)
