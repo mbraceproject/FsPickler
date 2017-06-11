@@ -90,10 +90,6 @@
       <Paket>True</Paket>
       <Link>TypeShape/TypeShape.fs</Link>
     </Compile>
-    <Compile Include="..\..\paket-files\eiriktsarpalis\TypeShape\src\TypeShape\ISerializableExtensions.fs">
-      <Paket>True</Paket>
-      <Link>TypeShape/ISerializableExtensions.fs</Link>
-    </Compile>
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Utils\CsharpProxy.fs" />
     <Compile Include="Utils\Utils.fs" />

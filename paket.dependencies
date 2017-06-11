@@ -5,8 +5,6 @@ source https://www.nuget.org/api/v2
 nuget FSharp.Core 4.0.0.1
 nuget Newtonsoft.Json >= 6.0.5
 github eiriktsarpalis/TypeShape:1.0 src/TypeShape/TypeShape.fs
-github eiriktsarpalis/TypeShape:1.0 src/TypeShape/ISerializableExtensions.fs
-
 
 group Test
   framework: >= net35
