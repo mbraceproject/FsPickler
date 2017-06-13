@@ -31,4 +31,5 @@ group Build
   source https://www.nuget.org/api/v2
 
   nuget FAKE
+  nuget FSharp.Core 4.2.1
   github fsharp/FAKE modules/Octokit/Octokit.fsx
