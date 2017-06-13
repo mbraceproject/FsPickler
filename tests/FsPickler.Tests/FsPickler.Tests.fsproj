@@ -101,7 +101,9 @@
     <Compile Include="InMemoryTests.fs" />
     <Compile Include="AppDomainTests.fs" />
     <None Include="paket.references" />
-    <Content Include="app.config" />
+    <Content Include="app.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
