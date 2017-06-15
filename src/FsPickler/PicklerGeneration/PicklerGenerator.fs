@@ -87,7 +87,7 @@ type PicklerGenerator =
                         | 2 -> ArrayPickler.Create2D<'T>(resolver) :> _
                         | 3 -> ArrayPickler.Create3D<'T>(resolver) :> _
                         | 4 -> ArrayPickler.Create4D<'T>(resolver) :> _
-                        | _ -> raise <| FsPicklerException "Array ranks more than 4 are not supported."
+                        | _ -> raise <| NonSerializableTypeException(shape.Type, "Array ranks more than 4 are not supported.")
             }
 
         | Shape.Tuple1 s ->
