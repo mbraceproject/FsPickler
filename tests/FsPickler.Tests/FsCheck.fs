@@ -13,11 +13,10 @@ type FsPicklerGenerators private () =
         |]
 
     static let timeZones = TimeZoneInfo.GetSystemTimeZones() |> Seq.toArray
-    static let zeroIfZero n v = if n = 0 then 0 else v
 
     static member TimeZoneInfo = Arb.generate<int> |> Gen.map (fun i -> timeZones.[abs i % timeZones.Length]) |> Arb.fromGen
     static member BigInt = Arb.generate<byte []> |> Gen.map (fun bs -> System.Numerics.BigInteger(bs)) |> Arb.fromGen
-    
+    static member Array2D<'T> () = Arb.generate<'T> |> Gen.array2DOf |> Arb.fromGen
     static member Type =
         let rec genTy () = gen {
             let! i = Arb.generate<int>
@@ -47,27 +46,14 @@ type FsPicklerGenerators private () =
 
         Arb.fromGen (genTy ())
 
-    static member Array2D<'T> () = 
+    static member Array3D<'T> () =
         let mkSized (n : int) =
             gen {
                 // sqrt is good enough here
                 let chooseSqrtOfSize = Gen.choose(0, n |> float |> sqrt |> int)
                 let! N = chooseSqrtOfSize
-                let! M = chooseSqrtOfSize |> Gen.map (zeroIfZero N)
-                let g = Arb.generate<'T>
-                let! seed = Gen.arrayOfLength (N*M) g
-                return Array2D.init N M (fun n m -> seed.[n + m * N])
-            }
-
-        mkSized |> Gen.sized |> Arb.fromGen
-
-    static member Array3D<'T> () =
-        let mkSized (n : int) =
-            gen {
-                let chooseSqrtOfSize = Gen.choose(0, n |> float |> sqrt |> int)
-                let! N = chooseSqrtOfSize
-                let! M = chooseSqrtOfSize |> Gen.map (zeroIfZero N)
-                let! K = chooseSqrtOfSize |> Gen.map (zeroIfZero M)
+                let! M = chooseSqrtOfSize
+                let! K = chooseSqrtOfSize
                 let g = Arb.generate<'T>
                 let! seed = Gen.arrayOfLength (N*M*K) g
                 return Array3D.init N M K (fun n m k -> seed.[n + m * N + k * N * M])
@@ -80,9 +66,9 @@ type FsPicklerGenerators private () =
             gen {
                 let chooseSqrtOfSize = Gen.choose(0, n |> float |> sqrt |> sqrt |> int)
                 let! N = chooseSqrtOfSize
-                let! M = chooseSqrtOfSize |> Gen.map (zeroIfZero N)
-                let! K = chooseSqrtOfSize |> Gen.map (zeroIfZero M)
-                let! L = chooseSqrtOfSize |> Gen.map (zeroIfZero K)
+                let! M = chooseSqrtOfSize
+                let! K = chooseSqrtOfSize
+                let! L = chooseSqrtOfSize
                 let g = Arb.generate<'T>
                 let! seed = Gen.arrayOfLength (N*M*K*L) g
                 return Array4D.init N M K L (fun n m k l -> seed.[n + m * N + k * N * M + l * N * M * K])
@@ -91,17 +77,6 @@ type FsPicklerGenerators private () =
         mkSized |> Gen.sized |> Arb.fromGen
 
     static member Seq<'T> () = Arb.generate<'T []> |> Gen.map Array.toSeq |> Arb.fromGen
-
-    /// value tuple generators
-    static member ValueTuple<'T> () = Arb.generate<'T> |> Gen.map (ValueTuple<_>) |> Arb.fromGen
-    static member ValueTuple<'T, 'T2> () = Arb.generate<'T * 'T2> |> Gen.map (ValueTuple<_,_>) |> Arb.fromGen
-    static member ValueTuple<'T, 'T2, 'T3> () = Arb.generate<'T * 'T2 * 'T3> |> Gen.map (ValueTuple<_,_,_>) |> Arb.fromGen
-    static member ValueTuple<'T, 'T2, 'T3, 'T4> () = Arb.generate<'T * 'T2 * 'T3 * 'T4> |> Gen.map (ValueTuple<_,_,_,_>) |> Arb.fromGen
-    static member ValueTuple<'T, 'T2, 'T3, 'T4, 'T5> () = Arb.generate<'T * 'T2 * 'T3 * 'T4 * 'T5> |> Gen.map (ValueTuple<_,_,_,_,_>) |> Arb.fromGen
-    static member ValueTuple<'T, 'T2, 'T3, 'T4, 'T5, 'T6> () = Arb.generate<'T * 'T2 * 'T3 * 'T4 * 'T5 * 'T6> |> Gen.map (ValueTuple<_,_,_,_,_,_>) |> Arb.fromGen
-    static member ValueTuple<'T, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7> () = Arb.generate<'T * 'T2 * 'T3 * 'T4 * 'T5 * 'T6 * 'T7> |> Gen.map (ValueTuple<_,_,_,_,_,_,_>) |> Arb.fromGen
-    static member ValueTuple<'T, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8 when 'T8 : (new : unit -> 'T8) and 'T8 : struct and 'T8 :> ValueType> () =
-        Arb.generate<'T * 'T2 * 'T3 * 'T4 * 'T5 * 'T6 * 'T7 * 'T8> |> Gen.map (ValueTuple<'T,'T2,'T3,'T4,'T5,'T6,'T7,'T8>) |> Arb.fromGen
 
             
 type Check =

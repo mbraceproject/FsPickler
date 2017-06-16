@@ -10,6 +10,7 @@ open System.Reflection
 open System.Runtime.Serialization
 
 open TypeShape
+open TypeShape_ISerializableExtensions
 
 open MBrace.FsPickler
 open MBrace.FsPickler.Reflection
@@ -81,13 +82,25 @@ type PicklerGenerator =
         | Shape.Array s ->
             s.Accept {
                 new IArrayVisitor<Pickler> with
-                    member __.Visit<'T> rank = 
-                        match rank with
-                        | 1 -> ArrayPickler.Create<'T>(resolver) :> _
-                        | 2 -> ArrayPickler.Create2D<'T>(resolver) :> _
-                        | 3 -> ArrayPickler.Create3D<'T>(resolver) :> _
-                        | 4 -> ArrayPickler.Create4D<'T>(resolver) :> _
-                        | _ -> raise <| NonSerializableTypeException(shape.Type, "Array ranks more than 4 are not supported.")
+                    member __.Visit<'T> () = ArrayPickler.Create<'T>(resolver) :> _
+            }
+
+        | Shape.Array2D s ->
+            s.Accept {
+                new IArray2DVisitor<Pickler> with
+                    member __.Visit<'T> () = ArrayPickler.Create2D<'T>(resolver) :> _
+            }
+
+        | Shape.Array3D s ->
+            s.Accept {
+                new IArray3DVisitor<Pickler> with
+                    member __.Visit<'T> () = ArrayPickler.Create3D<'T>(resolver) :> _
+            }
+
+        | Shape.Array4D s ->
+            s.Accept {
+                new IArray4DVisitor<Pickler> with
+                    member __.Visit<'T> () = ArrayPickler.Create4D<'T>(resolver) :> _
             }
 
         | Shape.Tuple1 s ->
@@ -278,7 +291,7 @@ type PicklerGenerator =
         | Shape.ISerializable s ->
             s.Accept {
                 new ISerializableVisitor<Pickler> with
-                    member __.Visit<'T when 'T :> ISerializable> (ss:ShapeISerializable<'T>): Pickler =
+                    member __.Visit<'T when 'T :> ISerializable> () =
                         match tryGetISerializableCtor typeof<'T> with
                         | Some _ -> ISerializablePickler.Create<'T>() :> _
                         | None -> ISerializablePickler.CreateObjectReferencePickler<'T>() :> _

@@ -27,9 +27,6 @@ module TestTypes =
 
     type GenericDU<'T> = GValue of 'T
 
-    [<Struct>]
-    type GenericStructDU<'T> = SGValue of 'T
-
     type Either<'T,'S> = L of 'T | R of 'S
 
     let rec int2Peano n = match n with 0 -> Zero | n -> Succ(int2Peano(n-1))
@@ -297,13 +294,6 @@ module TestTypes =
         | Something of string * int
         | SomethingElse of string * int * obj
 
-    [<RequireQualifiedAccess>]
-    [<Struct>]
-    type StructDU =
-        | Nothing
-        | Something of something: string * numberA: int
-        | SomethingElse of somethingElse: string * numberB:int * obj: obj
-
     type BinTree =
         | Leaf
         | Node of string * BinTree * BinTree
@@ -313,13 +303,6 @@ module TestTypes =
 
     type GenericRecord<'T> = { GValue : 'T }
 
-    [<Struct>]
-    type StructRecord =
-        { SInt : int ; SString : string ; STuple : int * string }
-
-    [<Struct>]
-    type StructGenericRecord<'T> =
-        { SGValue : 'T }
 
     type Class(x : int, y : string) =
         member __.X = x

@@ -1,6 +1,6 @@
+FSharp.Core
 Newtonsoft.Json
 group Test
-  FSharp.Core
   FSharp.Charting
   NUnit
   Wire
