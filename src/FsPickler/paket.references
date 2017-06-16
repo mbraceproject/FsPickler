@@ -1,2 +1,3 @@
-﻿FSharp.Core copy_local:false
+﻿FSharp.Core
 File: TypeShape.fs TypeShape
+File: ISerializableExtensions.fs TypeShape

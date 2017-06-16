@@ -27,232 +27,225 @@ type internal FsUnionPickler =
         if not (isReflectionSerializable ty || PicklerPluginRegistry.IsDeclaredSerializable ty) then
             raise <| new NonSerializableTypeException(ty)
 
+        if ty.IsValueType then
+            // avoid emitting invalid IL for struct unions
+            raise <| new NonSerializableTypeException(ty, "Struct unions  not supported.")
+
         // Only cache by reference if typedef introduces custom or reference equality semantics
         let isCacheByRef = 
             containsAttr<CustomEqualityAttribute> ty 
             || containsAttr<ReferenceEqualityAttribute> ty
 
-        if ty.IsValueType then
-            StructFieldPickler.Create(resolver)
-        else
+        // resolve tag reader methodInfo
+        let tagReaderMethod =
+            match FSharpValue.PreComputeUnionTagMemberInfo(ty, allMembers) with
+            | null -> invalidOp "unexpected error"
+            | :? PropertyInfo as p -> p.GetGetMethod(true)
+            | :? MethodInfo as m -> m
+            | _ -> invalidOp "unexpected error"
 
-            // resolve tag reader methodInfo
-            let tagReaderMethod =
-                match FSharpValue.PreComputeUnionTagMemberInfo(ty, allMembers) with
-                | null -> invalidOp "unexpected error"
-                | :? PropertyInfo as p -> p.GetGetMethod(true)
-                | :? MethodInfo as m -> m
-                | _ -> invalidOp "unexpected error"
-
-            let ucis = FSharpType.GetUnionCases(ty, allMembers)
-            let tagSerializer = new UnionCaseSerializationHelper(ucis |> Array.map (fun u -> u.Name))
+        let ucis = FSharpType.GetUnionCases(ty, allMembers)
+        let tagSerializer = new UnionCaseSerializationHelper(ucis |> Array.map (fun u -> u.Name))
 
 #if EMIT_IL
+        let caseInfo =
+            ucis
+            |> Array.sortBy (fun uci -> uci.Tag)
+            |> Array.map (fun uci ->
+                let fields = uci.GetFields()
+                let ctor = FSharpValue.PreComputeUnionConstructorInfo(uci, allMembers)
+                let picklers = fields |> Array.map (fun f -> resolver.Resolve f.PropertyType)
+                let tags = fields |> Array.mapi (fun i f -> getNormalizedFieldName i f.Name)
+                ctor, fields, tags, picklers)
 
-            let caseInfo =
-                ucis
-                |> Array.sortBy (fun uci -> uci.Tag)
-                |> Array.map (fun uci ->
-                    let fields = uci.GetFields()
-                    let ctor = FSharpValue.PreComputeUnionConstructorInfo(uci, allMembers)
-                    let picklers = fields |> Array.map (fun f -> resolver.Resolve f.PropertyType)
-                    let tags = fields |> Array.mapi (fun i f -> getNormalizedFieldName i f.Name)
-                    ctor, fields, tags, picklers)
+        let picklerss = caseInfo |> Array.map (fun (_,_,_,picklers) -> picklers)
 
-            let picklerss = caseInfo |> Array.map (fun (_,_,_,picklers) -> picklers)
+        let writerDele =
+            DynamicMethod.compileAction4<Pickler [] [], UnionCaseSerializationHelper, WriteState, 'Union> "unionSerializer" (fun picklerss cs writer union ilGen ->
+                let tag = EnvItem<int>(ilGen)
+                let picklers = EnvItem<Pickler []>(ilGen)
 
-            let writerDele =
-                DynamicMethod.compileAction4<Pickler [] [], UnionCaseSerializationHelper, WriteState, 'Union> "unionSerializer" (fun picklerss cs writer union ilGen ->
-                    let tag = EnvItem<int>(ilGen)
-                    let picklers = EnvItem<Pickler []>(ilGen)
+                let labels = Array.init caseInfo.Length (fun _ -> ilGen.DefineLabel())
 
-                    let labels = Array.init caseInfo.Length (fun _ -> ilGen.DefineLabel())
+                // read union tag
+                union.Load ()
+                ilGen.EmitCall(OpCodes.Call, tagReaderMethod, null)
+                tag.Store ()
 
-                    // read union tag
-                    union.Load ()
-                    ilGen.EmitCall(OpCodes.Call, tagReaderMethod, null)
-                    tag.Store ()
+                // select appropriate picklers & store
+                picklerss.Load ()
+                tag.Load ()
+                ilGen.Emit OpCodes.Ldelem_Ref
+                picklers.Store ()
 
-                    // select appropriate picklers & store
-                    picklerss.Load ()
-                    tag.Load ()
-                    ilGen.Emit OpCodes.Ldelem_Ref
-                    picklers.Store ()
+                // serialize union case tag
+                UnionCaseSerializationHelper.InvokeTagWriter cs writer tag ilGen
 
-                    // serialize union case tag
-                    UnionCaseSerializationHelper.InvokeTagWriter cs writer tag ilGen
+                // make jump table
+                tag.Load ()
+                ilGen.Emit(OpCodes.Switch, labels)
 
-                    // make jump table
-                    tag.Load ()
-                    ilGen.Emit(OpCodes.Switch, labels)
+                // emit cases
+                for i = 0 to caseInfo.Length - 1 do
+                    let label = labels.[i]
+                    let _,fields,tags,_ = caseInfo.[i]
 
-                    // emit cases
-                    for i = 0 to caseInfo.Length - 1 do
-                        let label = labels.[i]
-                        let _,fields,tags,_ = caseInfo.[i]
+                    ilGen.MarkLabel label
+                    emitSerializeMembers fields tags writer picklers union ilGen
+                    ilGen.Emit OpCodes.Ret
+            )
 
-                        ilGen.MarkLabel label
-                        emitSerializeMembers fields tags writer picklers union ilGen
-                        ilGen.Emit OpCodes.Ret
-                )
+        let readerDele =
+            DynamicMethod.compileFunc3<Pickler [] [], UnionCaseSerializationHelper, ReadState, 'Union> "unionDeserializer" (fun picklerss cs reader ilGen ->
 
-            let readerDele =
-                DynamicMethod.compileFunc3<Pickler [] [], UnionCaseSerializationHelper, ReadState, 'Union> "unionDeserializer" (fun picklerss cs reader ilGen ->
+                let tag = EnvItem<int>(ilGen)
+                let picklers = EnvItem<Pickler []>(ilGen)
 
-                    let tag = EnvItem<int>(ilGen)
-                    let picklers = EnvItem<Pickler []>(ilGen)
+                let labels = Array.init caseInfo.Length (fun _ -> ilGen.DefineLabel())
 
-                    let labels = Array.init caseInfo.Length (fun _ -> ilGen.DefineLabel())
+                // resolve union case tag
+                UnionCaseSerializationHelper.InvokeTagReader cs reader ilGen
+                tag.Store()
 
-                    // resolve union case tag
-                    UnionCaseSerializationHelper.InvokeTagReader cs reader ilGen
-                    tag.Store()
+                // select appropriate picklers & store
+                picklerss.Load ()
+                tag.Load ()
+                ilGen.Emit OpCodes.Ldelem_Ref
+                picklers.Store ()
 
-                    // select appropriate picklers & store
-                    picklerss.Load ()
-                    tag.Load ()
-                    ilGen.Emit OpCodes.Ldelem_Ref
-                    picklers.Store ()
+                // make jump table
+                tag.Load ()
+                ilGen.Emit(OpCodes.Switch, labels)
 
-                    // make jump table
-                    tag.Load ()
-                    ilGen.Emit(OpCodes.Switch, labels)
+                // emit cases
+                for i = 0 to caseInfo.Length - 1 do
+                    let label = labels.[i]
+                    let ctor,fields,tags,_ = caseInfo.[i]
 
-                    // emit cases
-                    for i = 0 to caseInfo.Length - 1 do
-                        let label = labels.[i]
-                        let ctor,fields,tags,_ = caseInfo.[i]
+                    let ctorParams = fields |> Array.map (fun f -> f.PropertyType)
 
-                        let ctorParams = fields |> Array.map (fun f -> f.PropertyType)
+                    ilGen.MarkLabel label
+                    emitDeserializeAndConstruct (Choice1Of2 ctor) ctorParams tags reader picklers ilGen
+                    ilGen.Emit OpCodes.Ret
+            )
 
-                        ilGen.MarkLabel label
-                        emitDeserializeAndConstruct (Choice1Of2 ctor) ctorParams tags reader picklers ilGen
-                        ilGen.Emit OpCodes.Ret
-                )
+        let clonerDele =
+            DynamicMethod.compileFunc3<Pickler [] [], CloneState, 'Union, 'Union> "unionCloner" (fun picklerss state source ilGen ->
+                let tag = EnvItem<int>(ilGen)
+                let picklers = EnvItem<Pickler []>(ilGen)
 
-            let clonerDele =
-                DynamicMethod.compileFunc3<Pickler [] [], CloneState, 'Union, 'Union> "unionCloner" (fun picklerss state source ilGen ->
-                    let tag = EnvItem<int>(ilGen)
-                    let picklers = EnvItem<Pickler []>(ilGen)
+                let labels = Array.init caseInfo.Length (fun _ -> ilGen.DefineLabel())
 
-                    let labels = Array.init caseInfo.Length (fun _ -> ilGen.DefineLabel())
+                // read union tag
+                source.Load ()
+                ilGen.EmitCall(OpCodes.Call, tagReaderMethod, null)
+                tag.Store ()
 
-                    // read union tag
-                    source.Load ()
-                    ilGen.EmitCall(OpCodes.Call, tagReaderMethod, null)
-                    tag.Store ()
+                // select appropriate picklers & store
+                picklerss.Load ()
+                tag.Load ()
+                ilGen.Emit OpCodes.Ldelem_Ref
+                picklers.Store ()
 
-                    // select appropriate picklers & store
-                    picklerss.Load ()
-                    tag.Load ()
-                    ilGen.Emit OpCodes.Ldelem_Ref
-                    picklers.Store ()
+                // make jump table
+                tag.Load ()
+                ilGen.Emit(OpCodes.Switch, labels)
 
-                    // make jump table
-                    tag.Load ()
-                    ilGen.Emit(OpCodes.Switch, labels)
+                // emit cases
+                for i = 0 to caseInfo.Length - 1 do
+                    let label = labels.[i]
+                    let ctor,fields,_,_ = caseInfo.[i]
 
-                    // emit cases
-                    for i = 0 to caseInfo.Length - 1 do
-                        let label = labels.[i]
-                        let ctor,fields,_,_ = caseInfo.[i]
+                    ilGen.MarkLabel label
+                    emitCloneAndConstruct (Choice1Of2 ctor) fields state picklers source ilGen
+                    ilGen.Emit OpCodes.Ret
+            )
 
-                        ilGen.MarkLabel label
-                        emitCloneAndConstruct (Choice1Of2 ctor) fields state picklers source ilGen
-                        ilGen.Emit OpCodes.Ret
-                )
+        let accepterDele =
+            DynamicMethod.compileAction3<Pickler [] [], VisitState, 'Union> "unionAccepter" (fun picklerss state union ilGen ->
+                let tag = EnvItem<int>(ilGen)
+                let picklers = EnvItem<Pickler []>(ilGen)
 
-            let accepterDele =
-                DynamicMethod.compileAction3<Pickler [] [], VisitState, 'Union> "unionAccepter" (fun picklerss state union ilGen ->
-                    let tag = EnvItem<int>(ilGen)
-                    let picklers = EnvItem<Pickler []>(ilGen)
+                let labels = Array.init caseInfo.Length (fun _ -> ilGen.DefineLabel())
 
-                    let labels = Array.init caseInfo.Length (fun _ -> ilGen.DefineLabel())
+                // read union tag
+                union.Load ()
+                ilGen.EmitCall(OpCodes.Call, tagReaderMethod, null)
+                tag.Store ()
 
-                    // read union tag
-                    union.Load ()
-                    ilGen.EmitCall(OpCodes.Call, tagReaderMethod, null)
-                    tag.Store ()
+                // select appropriate picklers & store
+                picklerss.Load ()
+                tag.Load ()
+                ilGen.Emit OpCodes.Ldelem_Ref
+                picklers.Store ()
 
-                    // select appropriate picklers & store
-                    picklerss.Load ()
-                    tag.Load ()
-                    ilGen.Emit OpCodes.Ldelem_Ref
-                    picklers.Store ()
+                // make jump table
+                tag.Load ()
+                ilGen.Emit(OpCodes.Switch, labels)
 
-                    // make jump table
-                    tag.Load ()
-                    ilGen.Emit(OpCodes.Switch, labels)
+                // emit cases
+                for i = 0 to caseInfo.Length - 1 do
+                    let label = labels.[i]
+                    let _,fields,_,_ = caseInfo.[i]
 
-                    // emit cases
-                    for i = 0 to caseInfo.Length - 1 do
-                        let label = labels.[i]
-                        let _,fields,_,_ = caseInfo.[i]
+                    ilGen.MarkLabel label
+                    emitAcceptMembers fields state picklers union ilGen
+                    ilGen.Emit OpCodes.Ret
+            )
 
-                        ilGen.MarkLabel label
-                        emitAcceptMembers fields state picklers union ilGen
-                        ilGen.Emit OpCodes.Ret
-                )
-
-            let writer w _ u = writerDele.Invoke(picklerss, tagSerializer, w, u)
-            let reader r _ = readerDele.Invoke(picklerss, tagSerializer, r)
-            let cloner c t = clonerDele.Invoke(picklerss, c, t)
-            let accepter v t = accepterDele.Invoke(picklerss, v, t)
+        let writer w _ u = writerDele.Invoke(picklerss, tagSerializer, w, u)
+        let reader r _ = readerDele.Invoke(picklerss, tagSerializer, r)
+        let cloner c t = clonerDele.Invoke(picklerss, c, t)
+        let accepter v t = accepterDele.Invoke(picklerss, v, t)
 #else
-            let tagReader = 
-                if tagReaderMethod.IsSecurityCritical then
-                    // we can't create a delegate, so we wrap a reflection call here
-                    let f obj = tagReaderMethod.Invoke(obj, null) :?> int
-                    new Func<'Union, int>(f)
-                else
-                    Delegate.CreateDelegate<Func<'Union,int>> tagReaderMethod
+        let tagReader = Delegate.CreateDelegate<Func<'Union,int>> tagReaderMethod
 
-            let caseInfo =
-                ucis
-                |> Array.map (fun uci ->
-                    let ctor = FSharpValue.PreComputeUnionConstructor(uci, allMembers)
-                    let reader = FSharpValue.PreComputeUnionReader(uci, allMembers)
-                    let fields = uci.GetFields()
-                    let picklers = fields |> Array.map (fun f -> resolver.Resolve f.PropertyType)
-                    let tags = fields |> Array.mapi (fun i f -> getNormalizedFieldName i f.Name)
-                    ctor, reader, fields, tags, picklers)
+        let caseInfo =
+            ucis
+            |> Array.map (fun uci ->
+                let ctor = FSharpValue.PreComputeUnionConstructor(uci, allMembers)
+                let reader = FSharpValue.PreComputeUnionReader(uci, allMembers)
+                let fields = uci.GetFields()
+                let picklers = fields |> Array.map (fun f -> resolver.Resolve f.PropertyType)
+                let tags = fields |> Array.mapi (fun i f -> getNormalizedFieldName i f.Name)
+                ctor, reader, fields, tags, picklers)
 
-            let writer (w : WriteState) (_ : string) (u : 'Union) =
-                let tag = tagReader.Invoke u
-                tagSerializer.WriteTag(w.Formatter, tag)
-                let _,reader,_,tags,picklers = caseInfo.[tag]
-                let values = reader u
-                for i = 0 to values.Length - 1 do
-                    picklers.[i].UntypedWrite w tags.[i] (values.[i])
+        let writer (w : WriteState) (_ : string) (u : 'Union) =
+            let tag = tagReader.Invoke u
+            tagSerializer.WriteTag(w.Formatter, tag)
+            let _,reader,_,tags,picklers = caseInfo.[tag]
+            let values = reader u
+            for i = 0 to values.Length - 1 do
+                picklers.[i].UntypedWrite w tags.[i] (values.[i])
 
-            let reader (r : ReadState) (_ : string) =
-                let tag = tagSerializer.ReadTag r.Formatter
-                let ctor,_,_,tags,picklers = caseInfo.[tag]
-                let values = Array.zeroCreate<obj> picklers.Length
-                for i = 0 to picklers.Length - 1 do
-                    values.[i] <- picklers.[i].UntypedRead r tags.[i]
+        let reader (r : ReadState) (_ : string) =
+            let tag = tagSerializer.ReadTag r.Formatter
+            let ctor,_,_,tags,picklers = caseInfo.[tag]
+            let values = Array.zeroCreate<obj> picklers.Length
+            for i = 0 to picklers.Length - 1 do
+                values.[i] <- picklers.[i].UntypedRead r tags.[i]
 
-                ctor values |> fastUnbox<'Union>
+            ctor values |> fastUnbox<'Union>
 
-            let cloner (c : CloneState) (u : 'Union) =
-                let tag = tagReader.Invoke u
-                let ctor,reader,_,_,picklers = caseInfo.[tag]
-                let values = reader u
-                let values' = Array.zeroCreate<obj> values.Length
-                for i = 0 to picklers.Length - 1 do
-                    values'.[i] <- picklers.[i].UntypedClone c values.[i]
+        let cloner (c : CloneState) (u : 'Union) =
+            let tag = tagReader.Invoke u
+            let ctor,reader,_,_,picklers = caseInfo.[tag]
+            let values = reader u
+            let values' = Array.zeroCreate<obj> values.Length
+            for i = 0 to picklers.Length - 1 do
+                values'.[i] <- picklers.[i].UntypedClone c values.[i]
 
-                ctor values' |> fastUnbox<'Union>
+            ctor values' |> fastUnbox<'Union>
 
-            let accepter (v : VisitState) (u : 'Union) =
-                let tag = tagReader.Invoke u
-                let _,reader,_,_,picklers = caseInfo.[tag]
-                let values = reader u
-                for i = 0 to picklers.Length - 1 do
-                    picklers.[i].UntypedAccept v values.[i]
+        let accepter (v : VisitState) (u : 'Union) =
+            let tag = tagReader.Invoke u
+            let _,reader,_,_,picklers = caseInfo.[tag]
+            let values = reader u
+            for i = 0 to picklers.Length - 1 do
+                picklers.[i].UntypedAccept v values.[i]
             
 #endif
-            CompositePickler.Create(reader, writer, cloner, accepter, PicklerInfo.FSharpValue, cacheByRef = isCacheByRef, useWithSubtypes = true)
+        CompositePickler.Create(reader, writer, cloner, accepter, PicklerInfo.FSharpValue, cacheByRef = isCacheByRef, useWithSubtypes = true)
 
 // F# record types
 
@@ -262,6 +255,10 @@ type internal FsRecordPickler =
         let ty = typeof<'Record>
         if not (isReflectionSerializable ty || PicklerPluginRegistry.IsDeclaredSerializable ty) then
             raise <| new NonSerializableTypeException(ty)
+
+        if ty.IsValueType then
+            // avoid emitting invalid IL for struct records
+            raise <| new NonSerializableTypeException(ty, "Struct records not supported.")
 
         let fields = FSharpType.GetRecordFields(ty, allMembers)
         let ctor = FSharpValue.PreComputeRecordConstructorInfo(ty, allMembers)
@@ -273,85 +270,81 @@ type internal FsRecordPickler =
         let isCacheByRef = 
             containsAttr<CustomEqualityAttribute> ty ||
             containsAttr<ReferenceEqualityAttribute> ty
-        
-        if ty.IsValueType then
-            StructFieldPickler.Create(resolver)
-        else
+
 #if EMIT_IL
+        let writer =
+            if fields.Length = 0 then fun _ _ _ -> ()
+            else
+                let writerDele =
+                    DynamicMethod.compileAction3<Pickler [], WriteState, 'Record> "recordSerializer" (fun picklers writer record ilGen ->
 
-            let writer =
-                if fields.Length = 0 then fun _ _ _ -> ()
-                else
-                    let writerDele =
-                        DynamicMethod.compileAction3<Pickler [], WriteState, 'Record> "recordSerializer" (fun picklers writer record ilGen ->
-
-                            emitSerializeMembers fields tags writer picklers record ilGen
+                        emitSerializeMembers fields tags writer picklers record ilGen
                             
-                            ilGen.Emit OpCodes.Ret)
+                        ilGen.Emit OpCodes.Ret)
 
-                    fun w _ t -> writerDele.Invoke(picklers, w,t)
+                fun w _ t -> writerDele.Invoke(picklers, w,t)
 
-            let readerDele =
-                DynamicMethod.compileFunc2<Pickler [], ReadState, 'Record> "recordDeserializer" (fun picklers reader ilGen ->
+        let readerDele =
+            DynamicMethod.compileFunc2<Pickler [], ReadState, 'Record> "recordDeserializer" (fun picklers reader ilGen ->
 
-                    let ctorParams = fields |> Array.map (fun f -> f.PropertyType)
+                let ctorParams = fields |> Array.map (fun f -> f.PropertyType)
 
-                    emitDeserializeAndConstruct (Choice2Of2 ctor) ctorParams tags reader picklers ilGen
+                emitDeserializeAndConstruct (Choice2Of2 ctor) ctorParams tags reader picklers ilGen
 
-                    ilGen.Emit OpCodes.Ret)
+                ilGen.Emit OpCodes.Ret)
 
-            let clonerDele =
-                DynamicMethod.compileFunc3<Pickler [], CloneState, 'Record, 'Record> "recordCloner" (fun picklers state source ilGen ->
+        let clonerDele =
+            DynamicMethod.compileFunc3<Pickler [], CloneState, 'Record, 'Record> "recordCloner" (fun picklers state source ilGen ->
 
-                    emitCloneAndConstruct (Choice2Of2 ctor) fields state picklers source ilGen
+                emitCloneAndConstruct (Choice2Of2 ctor) fields state picklers source ilGen
 
-                    ilGen.Emit OpCodes.Ret)
+                ilGen.Emit OpCodes.Ret)
 
-            let accepter =
-                if fields.Length = 0 then ignore2
-                else
-                    let accepterDele =
-                        DynamicMethod.compileAction3<Pickler [], VisitState, 'Record> "recordAccepter" (fun picklers state record ilGen ->
-                            emitAcceptMembers fields state picklers record ilGen
+        let accepter =
+            if fields.Length = 0 then ignore2
+            else
+                let accepterDele =
+                    DynamicMethod.compileAction3<Pickler [], VisitState, 'Record> "recordAccepter" (fun picklers state record ilGen ->
+                        emitAcceptMembers fields state picklers record ilGen
                             
-                            ilGen.Emit OpCodes.Ret)
+                        ilGen.Emit OpCodes.Ret)
 
-                    fun v t -> accepterDele.Invoke(picklers, v, t)
+                fun v t -> accepterDele.Invoke(picklers, v, t)
             
-            let reader r _ = readerDele.Invoke(picklers, r)
-            let cloner c t = clonerDele.Invoke(picklers, c, t)
+        let reader r _ = readerDele.Invoke(picklers, r)
+        let cloner c t = clonerDele.Invoke(picklers, c, t)
 #else
-            let writer (w : WriteState) (_ : string) (r : 'Record) =
-                for i = 0 to fields.Length - 1 do
-                    let f = fields.[i]
-                    let o = f.GetValue r
-                    picklers.[i].UntypedWrite w tags.[i] o
+        let writer (w : WriteState) (_ : string) (r : 'Record) =
+            for i = 0 to fields.Length - 1 do
+                let f = fields.[i]
+                let o = f.GetValue r
+                picklers.[i].UntypedWrite w tags.[i] o
             
-            let reader (r : ReadState) (_ : string) =
-                let values = Array.zeroCreate<obj> fields.Length
-                for i = 0 to fields.Length - 1 do
-                    values.[i] <- picklers.[i].UntypedRead r tags.[i]
+        let reader (r : ReadState) (_ : string) =
+            let values = Array.zeroCreate<obj> fields.Length
+            for i = 0 to fields.Length - 1 do
+                values.[i] <- picklers.[i].UntypedRead r tags.[i]
 
-                ctor.Invoke values |> fastUnbox<'Record>
+            ctor.Invoke values |> fastUnbox<'Record>
 
-            let cloner (c : CloneState) (r : 'Record) =
-                let values = Array.zeroCreate<obj> picklers.Length
-                for i = 0 to fields.Length - 1 do
-                    let f = fields.[i]
-                    let o = f.GetValue r
-                    values.[i] <- picklers.[i].UntypedClone c o
+        let cloner (c : CloneState) (r : 'Record) =
+            let values = Array.zeroCreate<obj> picklers.Length
+            for i = 0 to fields.Length - 1 do
+                let f = fields.[i]
+                let o = f.GetValue r
+                values.[i] <- picklers.[i].UntypedClone c o
 
-                ctor.Invoke values |> fastUnbox<'Record>
+            ctor.Invoke values |> fastUnbox<'Record>
 
-            let accepter (v : VisitState) (r : 'Record) =
-                for i = 0 to fields.Length - 1 do
-                    let f = fields.[i]
-                    let o = f.GetValue r
-                    picklers.[i].UntypedAccept v o
+        let accepter (v : VisitState) (r : 'Record) =
+            for i = 0 to fields.Length - 1 do
+                let f = fields.[i]
+                let o = f.GetValue r
+                picklers.[i].UntypedAccept v o
                 
 #endif
 
-            CompositePickler.Create(reader, writer, cloner, accepter, PicklerInfo.FSharpValue, cacheByRef = isCacheByRef)
+        CompositePickler.Create(reader, writer, cloner, accepter, PicklerInfo.FSharpValue, cacheByRef = isCacheByRef)
 
 
 // F# exception types
