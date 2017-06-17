@@ -74,6 +74,8 @@ module internal PicklerEmit =
                                 (picklers : EnvItem<Pickler []>) 
                                 (parent : EnvItem<'T>) (ilGen : ILGenerator) =
 
+        let isStruct = typeof<'T>.IsValueType
+
         for i = 0 to members.Length - 1 do
             match members.[i] :> MemberInfo with
             | :? FieldInfo as f ->
@@ -84,7 +86,7 @@ module internal PicklerEmit =
                 // load field name
                 ilGen.Emit(OpCodes.Ldstr, tags.[i])
                 // load field value to the stack
-                parent.Load ()
+                if isStruct then parent.LoadAddress() else parent.Load()
                 ilGen.Emit(OpCodes.Ldfld, f)
                 // perform serialization
                 emitSerialize f.FieldType ilGen
@@ -98,7 +100,7 @@ module internal PicklerEmit =
                 // load tag
                 ilGen.Emit(OpCodes.Ldstr, tags.[i])
                 // load property value to the stack
-                parent.Load ()
+                if isStruct then parent.LoadAddress () else parent.Load()
                 ilGen.EmitCall(OpCodes.Call, m, null)
                 // perform serialization
                 emitSerialize m.ReturnType ilGen
@@ -286,6 +288,8 @@ module internal PicklerEmit =
                                     (picklers : EnvItem<Pickler []>)
                                     (source : EnvItem<'T>) (ilGen : ILGenerator) =
 
+        let isStruct = typeof<'T>.IsValueType
+
         for i = 0 to fields.Length - 1 do
             let f = fields.[i]
             let getter = f.GetGetMethod(true)
@@ -295,7 +299,7 @@ module internal PicklerEmit =
             // load cloner state to the stack
             cloner.Load ()
             // load source object to the stack
-            source.Load ()
+            if isStruct then source.LoadAddress () else source.Load()
             // load source value
             ilGen.EmitCall(OpCodes.Call, getter, null)
             // clone value
