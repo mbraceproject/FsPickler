@@ -36,6 +36,10 @@ type internal FsUnionPickler =
                 containsAttr<CustomEqualityAttribute> ty 
                 || containsAttr<ReferenceEqualityAttribute> ty
 
+        let ucis = FSharpType.GetUnionCases(ty, allMembers)
+        let tagSerializer = new UnionCaseSerializationHelper(ucis |> Array.map (fun u -> u.Name))
+
+#if EMIT_IL
         // resolve tag reader methodInfo
         let tagReaderMethod =
             match FSharpValue.PreComputeUnionTagMemberInfo(ty, allMembers) with
@@ -43,11 +47,6 @@ type internal FsUnionPickler =
             | :? PropertyInfo as p -> p.GetGetMethod(true)
             | :? MethodInfo as m -> m
             | _ -> invalidOp "unexpected error"
-
-        let ucis = FSharpType.GetUnionCases(ty, allMembers)
-        let tagSerializer = new UnionCaseSerializationHelper(ucis |> Array.map (fun u -> u.Name))
-
-#if EMIT_IL
 
         let caseInfo =
             ucis
@@ -199,13 +198,7 @@ type internal FsUnionPickler =
         let cloner c t = clonerDele.Invoke(picklerss, c, t)
         let accepter v t = accepterDele.Invoke(picklerss, v, t)
 #else
-        let tagReader = 
-            if tagReaderMethod.IsSecurityCritical then
-                // we can't create a delegate, so we wrap a reflection call here
-                let f obj = tagReaderMethod.Invoke(obj, null) :?> int
-                new Func<'Union, int>(f)
-            else
-                Delegate.CreateDelegate<Func<'Union,int>> tagReaderMethod
+        let tagReader = FSharpValue.PreComputeUnionTagReader(ty, allMembers)
 
         let caseInfo =
             ucis
@@ -218,7 +211,7 @@ type internal FsUnionPickler =
                 ctor, reader, fields, tags, picklers)
 
         let writer (w : WriteState) (_ : string) (u : 'Union) =
-            let tag = tagReader.Invoke u
+            let tag = tagReader u
             tagSerializer.WriteTag(w.Formatter, tag)
             let _,reader,_,tags,picklers = caseInfo.[tag]
             let values = reader u
@@ -235,7 +228,7 @@ type internal FsUnionPickler =
             ctor values |> fastUnbox<'Union>
 
         let cloner (c : CloneState) (u : 'Union) =
-            let tag = tagReader.Invoke u
+            let tag = tagReader u
             let ctor,reader,_,_,picklers = caseInfo.[tag]
             let values = reader u
             let values' = Array.zeroCreate<obj> values.Length
@@ -245,7 +238,7 @@ type internal FsUnionPickler =
             ctor values' |> fastUnbox<'Union>
 
         let accepter (v : VisitState) (u : 'Union) =
-            let tag = tagReader.Invoke u
+            let tag = tagReader u
             let _,reader,_,_,picklers = caseInfo.[tag]
             let values = reader u
             for i = 0 to picklers.Length - 1 do
