@@ -120,16 +120,14 @@ let isExceptionDispatchInfo (t : Type) =
 /// walks up the type hierarchy, gathering all instance members
 let gatherMembers (t : Type) =
     // resolve conflicts, index by declaring type and field name
-    let gathered = ref Map.empty<string * string, (* index *) int * MemberInfo>
-    let i = ref 0
+    let gathered = ref Map.empty<string * string, MemberInfo>
 
     let rec gather (t : Type) =
         let members = t.GetMembers(allFields)
         for m in members do
             let k = m.DeclaringType.AssemblyQualifiedName, m.ToString()
             if not <| gathered.Value.ContainsKey k then
-                gathered := gathered.Value.Add(k, (!i, m))
-                incr i
+                gathered := gathered.Value.Add(k, m)
 
         match t.BaseType with
         | null -> ()
@@ -141,9 +139,10 @@ let gatherMembers (t : Type) =
     gathered.Value 
     |> Map.toSeq
     |> Seq.map snd
-    |> Seq.sortBy fst // sort by index; this is to preserve member serialization ordering
-    |> Seq.map snd
     |> Seq.toArray
+    // sort by name since Type.GetMembers() is non deterministic an unordered. https://github.com/mbraceproject/FsPickler/issues/92
+    // names are unique, so this should be ok.
+    |> Array.sortBy (fun mi -> mi.Name) 
 
 let gatherSerializedFields (t : Type) =
     let isSerializedField (m : MemberInfo) =
