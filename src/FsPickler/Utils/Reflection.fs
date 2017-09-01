@@ -138,11 +138,11 @@ let gatherMembers (t : Type) =
 
     gathered.Value 
     |> Map.toSeq
-    |> Seq.map snd
     |> Seq.toArray
     // sort by name since Type.GetMembers() is non deterministic an unordered. https://github.com/mbraceproject/FsPickler/issues/92
-    // names are unique, so this should be ok.
-    |> Array.sortBy (fun mi -> mi.Name) 
+    // Since names are not unique in class hierarchies, we use the full key here being (assemblyQualifiedName * FieldName).
+    |> Array.sortBy (fun (k,_) -> k) 
+    |> Array.map snd
 
 let gatherSerializedFields (t : Type) =
     let isSerializedField (m : MemberInfo) =
