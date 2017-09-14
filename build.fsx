@@ -105,7 +105,7 @@ FinalTarget "CloseTestRunner" (fun _ ->
 //// --------------------------------------------------------------------------------------
 //// Build a NuGet package
 
-Target "NuGet" (fun _ ->    
+Target "BundleNuGet" (fun _ ->    
     Paket.Pack (fun p -> 
         { p with 
             ToolPath = ".paket/paket.exe" 
@@ -202,8 +202,8 @@ Target "Release" DoNothing
   ==> "Build.Net35"
   ==> "PrepareRelease"
   ==> "GenerateDocs"
+  ==> "BundleNuGet"
   ==> "ReleaseDocs"
-  ==> "NuGet"
   ==> "NuGetPush"
   ==> "ReleaseGithub"
   ==> "Release"
