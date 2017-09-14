@@ -4,7 +4,7 @@ source https://www.nuget.org/api/v2
 
 nuget FSharp.Core 4.0.0.1
 nuget Newtonsoft.Json >= 6.0.5
-github eiriktsarpalis/TypeShape:1.0 src/TypeShape/TypeShape.fs
+github eiriktsarpalis/TypeShape:2.17 src/TypeShape/TypeShape.fs
 
 group Test
   framework: >= net35
@@ -19,7 +19,6 @@ group Test
   nuget PerfUtil.NUnit
   nuget protobuf-net
   nuget Wire
-  nuget FSharp.Formatting >= 2.14.4
   nuget NUnit ~> 2.6
   nuget NUnit.Runners ~> 2.6
   nuget TaskParallelLibrary framework:net35
@@ -32,4 +31,5 @@ group Build
 
   nuget FAKE
   nuget FSharp.Core 4.2.1
+  nuget FSharp.Formatting ~> 2.14.4
   github fsharp/FAKE modules/Octokit/Octokit.fsx

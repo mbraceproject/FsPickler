@@ -1,148 +1,90 @@
 REDIRECTS: ON
-FRAMEWORK: >= NET35
+RESTRICTION: >= net35
 NUGET
   remote: https://www.nuget.org/api/v2
     FSharp.Core (4.0.0.1)
-    Newtonsoft.Json (10.0.2)
+    Newtonsoft.Json (10.0.3)
 GITHUB
   remote: eiriktsarpalis/TypeShape
-    src/TypeShape/TypeShape.fs (25f33447098d01962578d33ef363f158edc1cbe2)
+    src/TypeShape/TypeShape.fs (d0df02655564e1269389d1c37e0eb34740122e77)
 GROUP Build
 REDIRECTS: ON
-FRAMEWORK: >= NET35
+RESTRICTION: >= net35
 NUGET
   remote: https://www.nuget.org/api/v2
-    FAKE (4.61.3)
-    FSharp.Core (4.2.1)
-      System.Collections (>= 4.0.11) - framework: >= net463
-      System.Console (>= 4.0) - framework: >= net463
-      System.Diagnostics.Debug (>= 4.0.11) - framework: >= net463
-      System.Diagnostics.Tools (>= 4.0.1) - framework: >= net463
-      System.Globalization (>= 4.0.11) - framework: >= net463
-      System.IO (>= 4.1) - framework: >= net463
-      System.Linq (>= 4.1) - framework: >= net463
-      System.Linq.Expressions (>= 4.1) - framework: >= net463
-      System.Linq.Queryable (>= 4.0.1) - framework: >= net463
-      System.Net.Requests (>= 4.0.11) - framework: >= net463
-      System.Reflection (>= 4.1) - framework: >= net463
-      System.Reflection.Extensions (>= 4.0.1) - framework: >= net463
-      System.Resources.ResourceManager (>= 4.0.1) - framework: >= net463
-      System.Runtime (>= 4.1) - framework: >= net463
-      System.Runtime.Extensions (>= 4.1) - framework: >= net463
-      System.Runtime.Numerics (>= 4.0.1) - framework: >= net463
-      System.Text.RegularExpressions (>= 4.1) - framework: >= net463
-      System.Threading (>= 4.0.11) - framework: >= net463
-      System.Threading.Tasks (>= 4.0.11) - framework: >= net463
-      System.Threading.Tasks.Parallel (>= 4.0.1) - framework: >= net463
-      System.Threading.Thread (>= 4.0) - framework: >= net463
-      System.Threading.ThreadPool (>= 4.0.10) - framework: >= net463
-      System.Threading.Timer (>= 4.0.1) - framework: >= net463
-    Microsoft.Bcl (1.1.10) - framework: net35, net40, net40-full
-      Microsoft.Bcl.Build (>= 1.0.14)
-    Microsoft.Bcl.Build (1.0.21) - import_targets: false
-    Microsoft.Net.Http (2.2.29) - framework: net35, net40, net40-full
-      Microsoft.Bcl (>= 1.1.10)
-      Microsoft.Bcl.Build (>= 1.0.14)
-    Octokit (0.24)
-      Microsoft.Net.Http  - framework: net35, net40, net40-full
-    System.Collections (4.3) - framework: >= net463
-    System.Console (4.3) - framework: >= net463
-    System.Diagnostics.Debug (4.3) - framework: >= net463
-    System.Diagnostics.Tools (4.3) - framework: >= net463
-    System.Globalization (4.3) - framework: >= net463
-    System.IO (4.3) - framework: >= net463
-    System.Linq (4.3) - framework: >= net463
-    System.Linq.Expressions (4.3) - framework: >= net463
-    System.Linq.Queryable (4.3) - framework: >= net463
-    System.Net.Requests (4.3) - framework: >= net463
-    System.Reflection (4.3) - framework: >= net463
-    System.Reflection.Extensions (4.3) - framework: >= net463
-    System.Resources.ResourceManager (4.3) - framework: >= net463
-    System.Runtime (4.3) - framework: >= net463
-    System.Runtime.Extensions (4.3) - framework: >= net463
-    System.Runtime.Numerics (4.3) - framework: >= net463
-    System.Text.RegularExpressions (4.3) - framework: >= net463
-    System.Threading (4.3) - framework: >= net463
-    System.Threading.Tasks (4.3) - framework: >= net463
-    System.Threading.Tasks.Parallel (4.3) - framework: >= net463
-    System.Threading.Thread (4.3) - framework: >= net463
-    System.Threading.ThreadPool (4.3) - framework: >= net463
-    System.Threading.Timer (4.3) - framework: >= net463
-GITHUB
-  remote: fsharp/FAKE
-    modules/Octokit/Octokit.fsx (574f6259c4abec2ae45b8c888aa1bdc9b5d4e842)
-      Octokit (>= 0.20)
-GROUP Test
-REDIRECTS: ON
-FRAMEWORK: >= NET35
-NUGET
-  remote: https://www.nuget.org/api/v2
-    FsCheck (2.8.2)
-      FSharp.Core (>= 3.1.2.5)
-    FSharp.Charting (0.90.14)
+    FAKE (4.63.2)
     FSharp.Compiler.Service (2.0.0.6)
     FSharp.Core (4.2.1)
-      System.Collections (>= 4.0.11) - framework: >= net463
-      System.Console (>= 4.0) - framework: >= net463
-      System.Diagnostics.Debug (>= 4.0.11) - framework: >= net463
-      System.Diagnostics.Tools (>= 4.0.1) - framework: >= net463
-      System.Globalization (>= 4.0.11) - framework: >= net463
-      System.IO (>= 4.1) - framework: >= net463
-      System.Linq (>= 4.1) - framework: >= net463
-      System.Linq.Expressions (>= 4.1) - framework: >= net463
-      System.Linq.Queryable (>= 4.0.1) - framework: >= net463
-      System.Net.Requests (>= 4.0.11) - framework: >= net463
-      System.Reflection (>= 4.1) - framework: >= net463
-      System.Reflection.Extensions (>= 4.0.1) - framework: >= net463
-      System.Resources.ResourceManager (>= 4.0.1) - framework: >= net463
-      System.Runtime (>= 4.1) - framework: >= net463
-      System.Runtime.Extensions (>= 4.1) - framework: >= net463
-      System.Runtime.Numerics (>= 4.0.1) - framework: >= net463
-      System.Text.RegularExpressions (>= 4.1) - framework: >= net463
-      System.Threading (>= 4.0.11) - framework: >= net463
-      System.Threading.Tasks (>= 4.0.11) - framework: >= net463
-      System.Threading.Tasks.Parallel (>= 4.0.1) - framework: >= net463
-      System.Threading.Thread (>= 4.0) - framework: >= net463
-      System.Threading.ThreadPool (>= 4.0.10) - framework: >= net463
-      System.Threading.Timer (>= 4.0.1) - framework: >= net463
     FSharp.Formatting (2.14.4)
       FSharp.Compiler.Service (2.0.0.6)
       FSharpVSPowerTools.Core (>= 2.3 < 2.4)
     FSharpVSPowerTools.Core (2.3)
       FSharp.Compiler.Service (>= 2.0.0.3)
+    Octokit (0.26)
+GITHUB
+  remote: fsharp/FAKE
+    modules/Octokit/Octokit.fsx (0bde6564e7a9218200cee8c74b71d67fbe66fe51)
+      Octokit (>= 0.20)
+GROUP Test
+REDIRECTS: ON
+RESTRICTION: >= net35
+NUGET
+  remote: https://www.nuget.org/api/v2
+    FsCheck (2.10)
+      FSharp.Core (>= 4.1)
+    FSharp.Charting (0.91.1)
+    FSharp.Core (4.2.1)
     FsUnit (1.4.1)
       FSharp.Core (>= 3.1.2.5)
       NUnit (2.6.4)
+    Microsoft.NETCore.Platforms (2.0) - restriction: || (&& (>= net35) (< net45) (>= netstandard1.1) (< portable-net451+win81+wpa81)) (&& (>= net35) (< net45) (>= netstandard1.2) (< netstandard1.3)) (&& (>= net35) (< net45) (>= netstandard1.3) (< netstandard1.4)) (&& (>= net35) (< net45) (>= netstandard1.4) (< netstandard1.5)) (&& (>= net35) (< net45) (>= netstandard1.5)) (&& (>= net35) (>= uap10.0)) (&& (>= net35) (>= netstandard1.0) (< portable-net45+win8+wpa81)) (&& (>= net35) (< netstandard1.3) (>= wpa81)) (&& (>= net35) (>= netstandard1.6)) (&& (>= net45) (< portable-net451+win81+wpa81)) (&& (>= net451) (< netstandard1.3)) (&& (>= net46) (< netstandard1.4))
+    Microsoft.Win32.Primitives (4.3) - restriction: || (&& (>= net35) (< net45) (>= netstandard1.3) (< netstandard1.4)) (&& (>= net35) (< net45) (>= netstandard1.4) (< netstandard1.5)) (&& (>= net35) (< net45) (>= netstandard1.5)) (&& (>= net35) (>= uap10.0)) (&& (>= net35) (>= netstandard1.6)) (&& (>= net46) (< netstandard1.4))
+    NETStandard.Library (2.0) - restriction: && (>= net35) (< net461) (>= netstandard1.0)
+      Microsoft.NETCore.Platforms (>= 1.1) - restriction: || (&& (>= net35) (< net45) (>= netstandard1.1) (< portable-net451+win81+wpa81)) (&& (>= net35) (< net45) (>= netstandard1.2) (< netstandard1.3)) (&& (>= net35) (< net45) (>= netstandard1.3) (< netstandard1.4)) (&& (>= net35) (< net45) (>= netstandard1.4) (< netstandard1.5)) (&& (>= net35) (< net45) (>= netstandard1.5)) (&& (>= net35) (>= uap10.0)) (&& (>= net35) (>= netstandard1.0) (< portable-net45+win8+wpa81)) (&& (>= net35) (< netstandard1.0) (>= monoandroid)) (&& (>= net35) (< netstandard1.0) (>= portable-net45+win8+wpa81) (< portable-net451+win81+wpa81)) (&& (>= net35) (< netstandard1.0) (< portable-net45+win8+wpa81) (>= portable-net45+win8+wp8+wpa81)) (&& (>= net35) (< netstandard1.0) (>= portable-net451+win81+wpa81)) (&& (>= net35) (< netstandard1.3) (>= wpa81)) (&& (>= net35) (>= netstandard1.6)) (&& (>= net45) (< portable-net451+win81+wpa81)) (&& (>= net451) (< netstandard1.3)) (&& (>= net46) (< netstandard1.4)) (>= net461)
+      Microsoft.Win32.Primitives (>= 4.3) - restriction: || (&& (>= net35) (< net45) (>= netstandard1.3) (< netstandard1.4)) (&& (>= net35) (< net45) (>= netstandard1.4) (< netstandard1.5)) (&& (>= net35) (< net45) (>= netstandard1.5)) (&& (>= net35) (>= uap10.0)) (&& (>= net35) (>= netstandard1.6)) (&& (>= net46) (< netstandard1.4))
+      System.AppContext (>= 4.3) - restriction: || (&& (>= net35) (< net45) (>= netstandard1.3) (< netstandard1.4)) (&& (>= net35) (< net45) (>= netstandard1.4) (< netstandard1.5)) (&& (>= net35) (< net45) (>= netstandard1.5)) (&& (>= net35) (>= uap10.0)) (&& (>= net35) (>= netstandard1.6)) (&& (>= net46) (< netstandard1.4))
+      System.Console (>= 4.3) - restriction: || (&& (>= net35) (< net45) (>= netstandard1.3) (< netstandard1.4)) (&& (>= net35) (< net45) (>= netstandard1.4) (< netstandard1.5)) (&& (>= net35) (< net45) (>= netstandard1.5)) (&& (>= net35) (>= uap10.0)) (&& (>= net35) (>= netstandard1.6)) (&& (>= net46) (< netstandard1.4))
+      System.Globalization.Calendars (>= 4.3) - restriction: || (&& (>= net35) (< net45) (>= netstandard1.3) (< netstandard1.4)) (&& (>= net35) (< net45) (>= netstandard1.4) (< netstandard1.5)) (&& (>= net35) (< net45) (>= netstandard1.5)) (&& (>= net35) (>= uap10.0)) (&& (>= net35) (>= netstandard1.6)) (&& (>= net46) (< netstandard1.4))
+      System.IO.Compression (>= 4.3) - restriction: || (&& (>= net35) (< net45) (>= netstandard1.1) (< portable-net451+win81+wpa81)) (&& (>= net35) (< net45) (>= netstandard1.2) (< netstandard1.3)) (&& (>= net35) (< net45) (>= netstandard1.3) (< netstandard1.4)) (&& (>= net35) (< net45) (>= netstandard1.4) (< netstandard1.5)) (&& (>= net35) (< net45) (>= netstandard1.5)) (&& (>= net35) (>= uap10.0)) (&& (>= net35) (>= netstandard1.6)) (&& (>= net46) (< netstandard1.4))
+      System.IO.Compression.ZipFile (>= 4.3) - restriction: || (&& (>= net35) (< net45) (>= netstandard1.3) (< netstandard1.4)) (&& (>= net35) (< net45) (>= netstandard1.4) (< netstandard1.5)) (&& (>= net35) (< net45) (>= netstandard1.5)) (&& (>= net35) (>= uap10.0)) (&& (>= net35) (>= netstandard1.6)) (&& (>= net46) (< netstandard1.4))
+      System.IO.FileSystem (>= 4.3) - restriction: || (&& (>= net35) (< net45) (>= netstandard1.3) (< netstandard1.4)) (&& (>= net35) (< net45) (>= netstandard1.4) (< netstandard1.5)) (&& (>= net35) (< net45) (>= netstandard1.5)) (&& (>= net35) (>= uap10.0)) (&& (>= net35) (>= netstandard1.6)) (&& (>= net46) (< netstandard1.4))
+      System.IO.FileSystem.Primitives (>= 4.3) - restriction: || (&& (>= net35) (< net45) (>= netstandard1.3) (< netstandard1.4)) (&& (>= net35) (< net45) (>= netstandard1.4) (< netstandard1.5)) (&& (>= net35) (< net45) (>= netstandard1.5)) (&& (>= net35) (>= uap10.0)) (&& (>= net35) (>= netstandard1.6)) (&& (>= net46) (< netstandard1.4))
+      System.Net.Http (>= 4.3.2) - restriction: || (&& (>= net35) (< net45) (>= netstandard1.1) (< portable-net451+win81+wpa81)) (&& (>= net35) (< net45) (>= netstandard1.2) (< netstandard1.3)) (&& (>= net35) (< net45) (>= netstandard1.3) (< netstandard1.4)) (&& (>= net35) (< net45) (>= netstandard1.4) (< netstandard1.5)) (&& (>= net35) (< net45) (>= netstandard1.5)) (&& (>= net35) (>= uap10.0)) (&& (>= net35) (>= netstandard1.6)) (&& (>= net46) (< netstandard1.4))
+      System.Net.Sockets (>= 4.3) - restriction: || (&& (>= net35) (< net45) (>= netstandard1.3) (< netstandard1.4)) (&& (>= net35) (< net45) (>= netstandard1.4) (< netstandard1.5)) (&& (>= net35) (< net45) (>= netstandard1.5)) (&& (>= net35) (>= uap10.0)) (&& (>= net35) (>= netstandard1.6)) (&& (>= net46) (< netstandard1.4))
+      System.Runtime.InteropServices.RuntimeInformation (>= 4.3) - restriction: || (&& (>= net35) (< net45) (>= netstandard1.1) (< portable-net451+win81+wpa81)) (&& (>= net35) (< net45) (>= netstandard1.2) (< netstandard1.3)) (&& (>= net35) (< net45) (>= netstandard1.3) (< netstandard1.4)) (&& (>= net35) (< net45) (>= netstandard1.4) (< netstandard1.5)) (&& (>= net35) (< net45) (>= netstandard1.5)) (&& (>= net35) (>= uap10.0)) (&& (>= net35) (< netstandard1.0) (>= portable-net45+win8+wpa81) (< portable-net451+win81+wpa81)) (&& (>= net35) (< netstandard1.0) (>= portable-net451+win81+wpa81)) (&& (>= net35) (< netstandard1.3) (>= wpa81)) (&& (>= net35) (>= netstandard1.6)) (&& (>= net45) (< portable-net451+win81+wpa81)) (&& (>= net451) (< netstandard1.3)) (&& (>= net46) (< netstandard1.4))
+      System.Security.Cryptography.Algorithms (>= 4.3) - restriction: || (&& (>= net35) (< net45) (>= netstandard1.3) (< netstandard1.4)) (&& (>= net35) (< net45) (>= netstandard1.4) (< netstandard1.5)) (&& (>= net35) (< net45) (>= netstandard1.5)) (&& (>= net35) (>= uap10.0)) (&& (>= net35) (>= netstandard1.6)) (&& (>= net46) (< netstandard1.4))
+      System.Security.Cryptography.Encoding (>= 4.3) - restriction: || (&& (>= net35) (< net45) (>= netstandard1.3) (< netstandard1.4)) (&& (>= net35) (< net45) (>= netstandard1.4) (< netstandard1.5)) (&& (>= net35) (< net45) (>= netstandard1.5)) (&& (>= net35) (>= uap10.0)) (&& (>= net35) (>= netstandard1.6)) (&& (>= net46) (< netstandard1.4))
+      System.Security.Cryptography.Primitives (>= 4.3) - restriction: || (&& (>= net35) (< net45) (>= netstandard1.3) (< netstandard1.4)) (&& (>= net35) (< net45) (>= netstandard1.4) (< netstandard1.5)) (&& (>= net35) (< net45) (>= netstandard1.5)) (&& (>= net35) (>= uap10.0)) (&& (>= net35) (>= netstandard1.6)) (&& (>= net46) (< netstandard1.4))
+      System.Security.Cryptography.X509Certificates (>= 4.3) - restriction: || (&& (>= net35) (< net45) (>= netstandard1.3) (< netstandard1.4)) (&& (>= net35) (< net45) (>= netstandard1.4) (< netstandard1.5)) (&& (>= net35) (< net45) (>= netstandard1.5)) (&& (>= net35) (>= uap10.0)) (&& (>= net35) (>= netstandard1.6)) (&& (>= net46) (< netstandard1.4))
+      System.Xml.ReaderWriter (>= 4.3) - restriction: || (&& (>= net35) (< net45) (>= netstandard1.1) (< portable-net451+win81+wpa81)) (&& (>= net35) (< net45) (>= netstandard1.2) (< netstandard1.3)) (&& (>= net35) (< net45) (>= netstandard1.3) (< netstandard1.4)) (&& (>= net35) (< net45) (>= netstandard1.4) (< netstandard1.5)) (&& (>= net35) (< net45) (>= netstandard1.5)) (&& (>= net35) (>= uap10.0)) (&& (>= net35) (>= netstandard1.0) (< portable-net45+win8+wpa81)) (&& (>= net35) (>= netstandard1.6)) (&& (>= net46) (< netstandard1.4))
     NUnit (2.6.4)
     NUnit.Runners (2.6.4)
     PerfUtil (0.1.8)
     PerfUtil.NUnit (0.1.8)
       NUnit (>= 2.6.3)
       PerfUtil (>= 0.1.8)
-    protobuf-net (2.2.1)
-    System.Collections (4.3) - framework: >= net463
-    System.Console (4.3) - framework: >= net463
-    System.Diagnostics.Debug (4.3) - framework: >= net463
-    System.Diagnostics.Tools (4.3) - framework: >= net463
-    System.Globalization (4.3) - framework: >= net463
-    System.IO (4.3) - framework: >= net463
-    System.Linq (4.3) - framework: >= net463
-    System.Linq.Expressions (4.3) - framework: >= net463
-    System.Linq.Queryable (4.3) - framework: >= net463
-    System.Net.Requests (4.3) - framework: >= net463
-    System.Reflection (4.3) - framework: >= net463
-    System.Reflection.Extensions (4.3) - framework: >= net463
-    System.Resources.ResourceManager (4.3) - framework: >= net463
-    System.Runtime (4.3) - framework: >= net463
-    System.Runtime.Extensions (4.3) - framework: >= net463
-    System.Runtime.Numerics (4.3) - framework: >= net463
-    System.Text.RegularExpressions (4.3) - framework: >= net463
-    System.Threading (4.3) - framework: >= net463
-    System.Threading.Tasks (4.3) - framework: >= net463
-    System.Threading.Tasks.Parallel (4.3) - framework: >= net463
-    System.Threading.Thread (4.3) - framework: >= net463
-    System.Threading.ThreadPool (4.3) - framework: >= net463
-    System.Threading.Timer (4.3) - framework: >= net463
-    System.ValueTuple (4.3.1)
-    TaskParallelLibrary (1.0.2856) - framework: net35
+    protobuf-net (2.3.2)
+    System.AppContext (4.3) - restriction: || (&& (>= net35) (< net45) (>= netstandard1.3) (< netstandard1.4)) (&& (>= net35) (< net45) (>= netstandard1.4) (< netstandard1.5)) (&& (>= net35) (< net45) (>= netstandard1.5)) (&& (>= net35) (>= uap10.0)) (&& (>= net35) (>= netstandard1.6)) (&& (>= net46) (< netstandard1.4))
+    System.Console (4.3) - restriction: || (&& (>= net35) (< net45) (>= netstandard1.3) (< netstandard1.4)) (&& (>= net35) (< net45) (>= netstandard1.4) (< netstandard1.5)) (&& (>= net35) (< net45) (>= netstandard1.5)) (&& (>= net35) (>= uap10.0)) (&& (>= net35) (>= netstandard1.6)) (&& (>= net46) (< netstandard1.4))
+    System.Globalization.Calendars (4.3) - restriction: || (&& (>= net35) (< net45) (>= netstandard1.3) (< netstandard1.4)) (&& (>= net35) (< net45) (>= netstandard1.4) (< netstandard1.5)) (&& (>= net35) (< net45) (>= netstandard1.5)) (&& (>= net35) (>= uap10.0)) (&& (>= net35) (>= netstandard1.6)) (&& (>= net46) (< netstandard1.4))
+    System.IO.Compression (4.3) - restriction: || (&& (>= net35) (< net45) (>= netstandard1.1) (< portable-net451+win81+wpa81)) (&& (>= net35) (< net45) (>= netstandard1.2) (< netstandard1.3)) (&& (>= net35) (< net45) (>= netstandard1.3) (< netstandard1.4)) (&& (>= net35) (< net45) (>= netstandard1.4) (< netstandard1.5)) (&& (>= net35) (< net45) (>= netstandard1.5)) (&& (>= net35) (>= uap10.0)) (&& (>= net35) (>= netstandard1.6)) (&& (>= net46) (< netstandard1.4))
+    System.IO.Compression.ZipFile (4.3) - restriction: || (&& (>= net35) (< net45) (>= netstandard1.3) (< netstandard1.4)) (&& (>= net35) (< net45) (>= netstandard1.4) (< netstandard1.5)) (&& (>= net35) (< net45) (>= netstandard1.5)) (&& (>= net35) (>= uap10.0)) (&& (>= net35) (>= netstandard1.6)) (&& (>= net46) (< netstandard1.4))
+    System.IO.FileSystem (4.3) - restriction: || (&& (>= net35) (< net45) (>= netstandard1.3) (< netstandard1.4)) (&& (>= net35) (< net45) (>= netstandard1.4) (< netstandard1.5)) (&& (>= net35) (< net45) (>= netstandard1.5)) (&& (>= net35) (>= uap10.0)) (&& (>= net35) (>= netstandard1.6)) (&& (>= net46) (< netstandard1.4))
+      System.IO.FileSystem.Primitives (>= 4.3) - restriction: || (&& (>= net35) (>= netstandard1.3)) (>= net46)
+    System.IO.FileSystem.Primitives (4.3) - restriction: || (&& (>= net35) (< net45) (>= netstandard1.3) (< netstandard1.4)) (&& (>= net35) (< net45) (>= netstandard1.4) (< netstandard1.5)) (&& (>= net35) (< net45) (>= netstandard1.5)) (&& (>= net35) (>= uap10.0)) (&& (>= net35) (>= netstandard1.6)) (&& (< net45) (>= net46) (>= netstandard1.4) (< netstandard1.5)) (&& (< net45) (>= net46) (>= netstandard1.5)) (&& (>= net46) (>= uap10.0)) (&& (>= net46) (< netstandard1.4)) (&& (>= net46) (>= netstandard1.6))
+    System.Net.Http (4.3.2) - restriction: || (&& (>= net35) (< net45) (>= netstandard1.1) (< portable-net451+win81+wpa81)) (&& (>= net35) (< net45) (>= netstandard1.2) (< netstandard1.3)) (&& (>= net35) (< net45) (>= netstandard1.3) (< netstandard1.4)) (&& (>= net35) (< net45) (>= netstandard1.4) (< netstandard1.5)) (&& (>= net35) (< net45) (>= netstandard1.5)) (&& (>= net35) (>= uap10.0)) (&& (>= net35) (>= netstandard1.6)) (&& (>= net46) (< netstandard1.4))
+      System.Security.Cryptography.X509Certificates (>= 4.3) - restriction: || (&& (>= net35) (< net45) (>= netstandard1.3)) (&& (>= net35) (>= dnxcore50)) (&& (>= net35) (>= netstandard1.6)) (>= net46)
+    System.Net.Sockets (4.3) - restriction: || (&& (>= net35) (< net45) (>= netstandard1.3) (< netstandard1.4)) (&& (>= net35) (< net45) (>= netstandard1.4) (< netstandard1.5)) (&& (>= net35) (< net45) (>= netstandard1.5)) (&& (>= net35) (>= uap10.0)) (&& (>= net35) (>= netstandard1.6)) (&& (>= net46) (< netstandard1.4))
+    System.Runtime.InteropServices.RuntimeInformation (4.3) - restriction: || (&& (>= net35) (< net45) (>= netstandard1.1) (< portable-net451+win81+wpa81)) (&& (>= net35) (< net45) (>= netstandard1.2) (< netstandard1.3)) (&& (>= net35) (< net45) (>= netstandard1.3) (< netstandard1.4)) (&& (>= net35) (< net45) (>= netstandard1.4) (< netstandard1.5)) (&& (>= net35) (< net45) (>= netstandard1.5)) (&& (>= net35) (>= uap10.0)) (&& (>= net35) (< netstandard1.3) (>= wpa81)) (&& (>= net35) (>= netstandard1.6)) (&& (>= net45) (< portable-net451+win81+wpa81)) (&& (>= net451) (< netstandard1.3)) (&& (>= net46) (< netstandard1.4))
+    System.Security.Cryptography.Algorithms (4.3) - restriction: || (&& (>= net35) (< net45) (>= netstandard1.3) (< netstandard1.4)) (&& (>= net35) (< net45) (>= netstandard1.4) (< netstandard1.5)) (&& (>= net35) (< net45) (>= netstandard1.5)) (&& (>= net35) (>= uap10.0)) (&& (>= net35) (>= netstandard1.6)) (&& (>= net46) (< netstandard1.4))
+      System.Security.Cryptography.Primitives (>= 4.3) - restriction: || (&& (>= net35) (< net46) (>= netstandard1.3) (< netstandard1.4)) (&& (>= net35) (< net46) (>= netstandard1.4)) (&& (>= net35) (>= dnxcore50)) (&& (>= net35) (>= netstandard1.6)) (&& (>= net46) (< netstandard1.4)) (>= net461)
+    System.Security.Cryptography.Encoding (4.3) - restriction: || (&& (>= net35) (< net45) (>= netstandard1.3) (< netstandard1.4)) (&& (>= net35) (< net45) (>= netstandard1.4) (< netstandard1.5)) (&& (>= net35) (< net45) (>= netstandard1.5)) (&& (>= net35) (>= uap10.0)) (&& (>= net35) (>= netstandard1.6)) (&& (>= net46) (< netstandard1.4))
+    System.Security.Cryptography.Primitives (4.3) - restriction: || (&& (>= net35) (< net45) (>= netstandard1.3) (< netstandard1.4)) (&& (>= net35) (< net45) (>= netstandard1.4) (< netstandard1.5)) (&& (>= net35) (< net45) (>= netstandard1.5)) (&& (>= net35) (>= uap10.0)) (&& (>= net35) (>= dnxcore50) (>= netstandard1.3)) (&& (>= net35) (>= dnxcore50) (>= netstandard1.4)) (&& (>= net35) (>= dnxcore50) (>= netstandard1.5)) (&& (>= net35) (>= netstandard1.6)) (&& (< net45) (>= net461) (>= netstandard1.5)) (&& (< net45) (>= net461) (< netstandard1.5)) (&& (>= net46) (>= dnxcore50)) (&& (>= net46) (< netstandard1.4)) (&& (>= net461) (>= uap10.0)) (&& (>= net461) (< netstandard1.4)) (&& (>= net461) (>= netstandard1.6))
+    System.Security.Cryptography.X509Certificates (4.3) - restriction: || (&& (>= net35) (< net45) (>= netstandard1.3) (< netstandard1.4)) (&& (>= net35) (< net45) (>= netstandard1.3) (< portable-net451+win81+wpa81)) (&& (>= net35) (< net45) (>= netstandard1.4) (< netstandard1.5)) (&& (>= net35) (< net45) (>= netstandard1.5)) (&& (>= net35) (>= uap10.0)) (&& (>= net35) (>= dnxcore50) (>= netstandard1.1)) (&& (>= net35) (>= dnxcore50) (>= netstandard1.2)) (&& (>= net35) (>= dnxcore50) (>= netstandard1.3)) (&& (>= net35) (>= dnxcore50) (>= netstandard1.4)) (&& (>= net35) (>= dnxcore50) (>= netstandard1.5)) (&& (>= net35) (>= netstandard1.6)) (&& (< net45) (>= net46) (< netstandard1.3)) (&& (< net45) (>= net46) (>= netstandard1.4) (< netstandard1.5)) (&& (< net45) (>= net46) (>= netstandard1.5)) (&& (< net45) (>= net46) (< portable-net451+win81+wpa81)) (&& (>= net46) (>= uap10.0)) (&& (>= net46) (>= dnxcore50)) (&& (>= net46) (< netstandard1.4)) (&& (>= net46) (>= netstandard1.6))
+      System.Security.Cryptography.Algorithms (>= 4.3) - restriction: || (&& (>= net35) (< net46) (>= netstandard1.3) (< netstandard1.4)) (&& (>= net35) (< net46) (>= netstandard1.4)) (&& (>= net35) (>= dnxcore50)) (&& (>= net35) (>= netstandard1.6)) (&& (>= net46) (< netstandard1.4)) (>= net461)
+      System.Security.Cryptography.Encoding (>= 4.3) - restriction: || (&& (>= net35) (< net46) (>= netstandard1.3) (< netstandard1.4)) (&& (>= net35) (< net46) (>= netstandard1.4)) (&& (>= net35) (>= dnxcore50)) (&& (>= net35) (>= netstandard1.6)) (&& (>= net46) (< netstandard1.4)) (>= net461)
+    System.ValueTuple (4.4)
+      NETStandard.Library (>= 1.6.1) - restriction: && (>= net35) (< net461) (>= netstandard1.0)
+    System.Xml.ReaderWriter (4.3) - restriction: || (&& (>= net35) (< net45) (>= netstandard1.1) (< portable-net451+win81+wpa81)) (&& (>= net35) (< net45) (>= netstandard1.2) (< netstandard1.3)) (&& (>= net35) (< net45) (>= netstandard1.3) (< netstandard1.4)) (&& (>= net35) (< net45) (>= netstandard1.4) (< netstandard1.5)) (&& (>= net35) (< net45) (>= netstandard1.5)) (&& (>= net35) (>= uap10.0)) (&& (>= net35) (>= netstandard1.0) (< portable-net45+win8+wpa81)) (&& (>= net35) (>= netstandard1.6)) (&& (>= net46) (< netstandard1.4))
+    TaskParallelLibrary (1.0.2856) - restriction: == net35
     Wire (0.8.2)

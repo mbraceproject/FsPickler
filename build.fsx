@@ -197,7 +197,7 @@ Target "Release" DoNothing
   ==> "RunTests"
   ==> "Default"
 
-"Build"
+"Default"
   ==> "Build.Net40"
   ==> "Build.Net35"
   ==> "PrepareRelease"

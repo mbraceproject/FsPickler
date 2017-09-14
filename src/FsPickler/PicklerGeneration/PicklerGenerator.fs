@@ -230,7 +230,12 @@ type PicklerGenerator =
             // NB: DataContractAttribute for enum types handled by enum pickler
             s.Accept { 
                 new IEnumVisitor<Pickler> with
-                    member __.Visit<'E, 'U when 'E : enum<'U>>() = EnumPickler.Create<'E, 'U>(resolver) :> _
+                    member __.Visit<'E, 'U when 'E : enum<'U> 
+                                            and 'E : struct 
+                                            and 'E :> ValueType
+                                            and 'E : (new : unit -> 'E)> () = 
+
+                        EnumPickler.Create<'E, 'U>(resolver) :> _
             }
 
         | _ when containsAttr<DataContractAttribute> shape.Type ->
