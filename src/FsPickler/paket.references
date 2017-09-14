@@ -1,2 +1,3 @@
 ﻿FSharp.Core copy_local:false
 File: TypeShape.fs TypeShape
+TaskParallelLibrary

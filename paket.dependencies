@@ -4,6 +4,8 @@ source https://www.nuget.org/api/v2
 
 nuget FSharp.Core 4.0.0.1
 nuget Newtonsoft.Json >= 6.0.5
+nuget TaskParallelLibrary framework:net35
+
 github eiriktsarpalis/TypeShape:2.17 src/TypeShape/TypeShape.fs
 
 group Test
@@ -21,7 +23,6 @@ group Test
   nuget Wire
   nuget NUnit ~> 2.6
   nuget NUnit.Runners ~> 2.6
-  nuget TaskParallelLibrary framework:net35
   nuget System.ValueTuple
   
 group Build

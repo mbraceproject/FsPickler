@@ -4,6 +4,7 @@ NUGET
   remote: https://www.nuget.org/api/v2
     FSharp.Core (4.0.0.1)
     Newtonsoft.Json (10.0.3)
+    TaskParallelLibrary (1.0.2856) - restriction: == net35
 GITHUB
   remote: eiriktsarpalis/TypeShape
     src/TypeShape/TypeShape.fs (d0df02655564e1269389d1c37e0eb34740122e77)
@@ -86,5 +87,4 @@ NUGET
     System.ValueTuple (4.4)
       NETStandard.Library (>= 1.6.1) - restriction: && (>= net35) (< net461) (>= netstandard1.0)
     System.Xml.ReaderWriter (4.3) - restriction: || (&& (>= net35) (< net45) (>= netstandard1.1) (< portable-net451+win81+wpa81)) (&& (>= net35) (< net45) (>= netstandard1.2) (< netstandard1.3)) (&& (>= net35) (< net45) (>= netstandard1.3) (< netstandard1.4)) (&& (>= net35) (< net45) (>= netstandard1.4) (< netstandard1.5)) (&& (>= net35) (< net45) (>= netstandard1.5)) (&& (>= net35) (>= uap10.0)) (&& (>= net35) (>= netstandard1.0) (< portable-net45+win8+wpa81)) (&& (>= net35) (>= netstandard1.6)) (&& (>= net46) (< netstandard1.4))
-    TaskParallelLibrary (1.0.2856) - restriction: == net35
     Wire (0.8.2)

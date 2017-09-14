@@ -1,4 +1,4 @@
-### 4.3.0
+### 3.4.0
 * Add support for struct records and struct unions.
 
 ### 3.3.0
