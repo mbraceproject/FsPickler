@@ -14,10 +14,11 @@ type XmlSerializer =
     /// </summary>
     /// <param name="indent">Enable indentation of output XML pickles.</param>
     /// <param name="typeConverter">Define a custom type name converter.</param>
-    new ([<O;D(null)>] ?indent : bool, [<O;D(null)>] ?typeConverter : ITypeNameConverter) =
+    /// <param name="picklerResolver">Specify a custom pickler resolver/cache for serialization. Defaults to the singleton pickler cache.</param>
+    new ([<O;D(null)>] ?indent : bool, [<O;D(null)>] ?typeConverter : ITypeNameConverter, [<O;D(null)>]?picklerResolver : IPicklerResolver) =
         let xml = new XmlPickleFormatProvider(defaultArg indent false)
         { 
-            inherit FsPicklerTextSerializer(xml, ?typeConverter = typeConverter)
+            inherit FsPicklerTextSerializer(xml, ?typeConverter = typeConverter, ?picklerResolver = picklerResolver)
             format = xml    
         }
 

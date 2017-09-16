@@ -1,22 +1,35 @@
-framework: >= net35
+framework: >= net40
 redirects: on
 source https://www.nuget.org/api/v2
 
-nuget FsCheck
-nuget FSharp.Charting
-nuget FSharp.Core >= 3.1.2.5
-nuget FsUnit
+nuget FSharp.Core >= 3.1 lowest_matching: true
 nuget Newtonsoft.Json >= 6.0.5
-nuget PerfUtil
-nuget PerfUtil.NUnit
-nuget protobuf-net
-nuget Wire
-nuget FSharp.Formatting
-nuget NUnit ~> 2.6
-nuget NUnit.Runners ~> 2.6
-nuget FAKE
-nuget TaskParallelLibrary framework:net35
-github fsharp/FAKE modules/Octokit/Octokit.fsx
 
-github eiriktsarpalis/TypeShape:1.0 src/TypeShape/TypeShape.fs
-github eiriktsarpalis/TypeShape:1.0 src/TypeShape/ISerializableExtensions.fs
+github eiriktsarpalis/TypeShape:2.19 src/TypeShape/TypeShape.fs
+
+group Test
+  framework: >= net40
+  redirects: on
+  source https://www.nuget.org/api/v2
+
+  nuget FSharp.Core 4.2.1
+  nuget FsCheck >= 2.6
+  nuget FSharp.Charting >= 0.90.14
+  nuget FsUnit >= 1.4.1
+  nuget PerfUtil
+  nuget PerfUtil.NUnit
+  nuget protobuf-net
+  nuget Wire
+  nuget NUnit ~> 2.6
+  nuget NUnit.Runners ~> 2.6
+  nuget System.ValueTuple
+  
+group Build
+  framework: >= net40
+  redirects: on
+  source https://www.nuget.org/api/v2
+
+  nuget FAKE
+  nuget FSharp.Core 4.2.1
+  nuget FSharp.Formatting ~> 2.14.4
+  github fsharp/FAKE modules/Octokit/Octokit.fsx

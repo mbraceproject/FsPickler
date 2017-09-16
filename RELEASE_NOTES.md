@@ -1,3 +1,15 @@
+### 4.0.0
+* Use deterministic ordering in field serialization.
+* Add support for custom pickler caches.
+* Add support for struct records, unions and tuples.
+* Deprecate net35 support.
+
+### 3.4.0
+* Add support for struct records and struct unions.
+
+### 3.3.0
+* Improve error messaging on struct record/union serialization.
+
 ### 3.2.0
 * Fix enum serialization for types that carry the DataContract attribute.
 

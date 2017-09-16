@@ -1,4 +1,7 @@
-FsCheck
-FsUnit
 Newtonsoft.Json
-NUnit
+group Test
+  FSharp.Core
+  FsCheck
+  FsUnit
+  NUnit
+  System.ValueTuple

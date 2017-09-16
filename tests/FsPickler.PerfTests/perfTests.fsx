@@ -9,7 +9,7 @@
 #r "FsPickler.dll"
 #r "FsPickler.PerfTests.dll"
 
-#load "../../packages/FSharp.Charting/FSharp.Charting.fsx"
+#load "../../packages/test/FSharp.Charting/lib/net45/FSharp.Charting.fsx"
 
 open System
 open System.Drawing
@@ -133,7 +133,7 @@ let pbn = new ProtoBufSerializer() :> Serializer
 let wire = new WireSerializer() :> Serializer
 
 let allSerializers = [fspXml;fspJson;bfs;ndc;jdn;pbn;wire]
-let cyclicOnly = [fspXml;fspJson;bfs]
+let cyclicOnly = [fspXml;fspJson;bfs;wire]
 
 let mkTester () = new ImplementationComparer<Serializer>(fspBinary, allSerializers, warmup = true) :> PerformanceTester<Serializer>
 let mkCyclicGraphTester () = new ImplementationComparer<Serializer>(fspBinary, cyclicOnly, warmup = true) :> PerformanceTester<Serializer>

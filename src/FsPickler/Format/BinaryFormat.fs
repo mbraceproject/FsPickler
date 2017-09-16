@@ -27,6 +27,9 @@ module private BinaryFormatUtils =
     [<Literal>]
     let formatv2000 = 2000us // As specified in FsPickler v. 2.0.0.0
 
+    [<Literal>]
+    let formatv4000 = 4000us // As specified in FsPickler v. 4.0.0.0
+
     // each object is serialized with a 32 bit header 
     // of which the first 24 are a fixed identifier
     // and the final 8 encode the object flags.
@@ -106,7 +109,7 @@ module private BinaryFormatUtils =
 [<AutoSerializable(false)>]
 type BinaryPickleWriter internal (stream : Stream, encoding : Encoding, leaveOpen : bool, forceLittleEndian : bool) =
 
-#if NET35 || NET40
+#if NET40
     let bw = new BinaryWriter(stream, encoding)
 #else
     let bw = new BinaryWriter(stream, encoding, leaveOpen)
@@ -116,7 +119,7 @@ type BinaryPickleWriter internal (stream : Stream, encoding : Encoding, leaveOpe
         member __.Flush () = ()
         member __.BeginWriteRoot (tag : string) =
             bw.Write initValue
-            bw.Write formatv2000
+            bw.Write formatv4000
             bw.Write encoding.CodePage
 
             if forceLittleEndian then 
@@ -181,12 +184,10 @@ type BinaryPickleWriter internal (stream : Stream, encoding : Encoding, leaveOpe
         member __.WriteTimeSpan _ value = bw.Write value.Ticks
         member __.WriteGuid _ value = bw.Write (value.ToByteArray())
 
-#if !NET35
         member __.WriteBigInteger _ value = 
             let data = value.ToByteArray()
             bw.Write data.Length
             bw.Write data
-#endif
 
         member __.WriteBytes _ value = 
             if isNull value then bw.Write -1
@@ -201,7 +202,7 @@ type BinaryPickleWriter internal (stream : Stream, encoding : Encoding, leaveOpe
         member __.WritePrimitiveArray _ array = blockCopy(array, stream)
 
         member __.Dispose () = 
-#if NET35 || NET40
+#if NET40
             if leaveOpen then bw.Flush()
             else bw.Close()
 #else
@@ -214,7 +215,7 @@ type BinaryPickleWriter internal (stream : Stream, encoding : Encoding, leaveOpe
 [<AutoSerializable(false)>]
 type BinaryPickleReader internal (stream : Stream, encoding : Encoding, leaveOpen : bool) =
 
-#if NET35 || NET40
+#if NET40
     let br = new BinaryReader(stream, encoding)
 #else
     let br = new BinaryReader(stream, encoding, leaveOpen)
@@ -225,7 +226,7 @@ type BinaryPickleReader internal (stream : Stream, encoding : Encoding, leaveOpe
     interface IPickleFormatReader with
             
         member __.Dispose () = 
-#if NET35 || NET40
+#if NET40
             if not leaveOpen then br.Close()
 #else
             br.Dispose ()
@@ -236,13 +237,15 @@ type BinaryPickleReader internal (stream : Stream, encoding : Encoding, leaveOpe
                 raise <| new InvalidDataException("invalid stream initialization bytes.")
 
             let version = br.ReadUInt16()
-            if version <> formatv2000 then
+            if version <> formatv4000 then
                 if version = formatv0960 then
                     raise <| new FormatException("FsPickler Binary format version 0.9.6.0 no longer supported.")
                 elif version = formatv1200 then
                     raise <| new FormatException("FsPickler Binary format version 1.2.0.0 no longer supported.")
                 elif version = formatv1400 then
                     raise <| new FormatException("FsPickler Binary format version 1.4.0.0 no longer supported.")
+                elif version = formatv2000 then
+                    raise <| new FormatException("FsPickler Binary format version 2.0.0.0 no longer supported.")
                 else
                     raise <| new FormatException(sprintf "unsupported binary format version '%d'." version)
 
@@ -321,12 +324,10 @@ type BinaryPickleReader internal (stream : Stream, encoding : Encoding, leaveOpe
         member __.ReadTimeSpan _ = let ticks = br.ReadInt64() in TimeSpan(ticks)
         member __.ReadGuid _ = let bytes = br.ReadBytes(16) in Guid(bytes)
 
-#if !NET35
         member __.ReadBigInteger _ =
             let length = br.ReadInt32()
             let data = br.ReadBytes(length)
             new System.Numerics.BigInteger(data)
-#endif
 
         member __.ReadBytes _ = 
             let length = br.ReadInt32() 

@@ -2,8 +2,8 @@
 // FAKE build script 
 // --------------------------------------------------------------------------------------
 
-#I "packages/FAKE/tools"
-#r "packages/FAKE/tools/FakeLib.dll"
+#I "packages/build/FAKE/tools"
+#r "packages/build/FAKE/tools/FakeLib.dll"
 
 open System
 open System.IO
@@ -82,7 +82,6 @@ let build configuration () =
 
 Target "Build.Default" (build configuration)
 Target "Build.NoEmit" (build "NoEmit")
-Target "Build.Net35" (build "Release-NET35")
 Target "Build.Net40" (build "Release-NET40")
 
 // --------------------------------------------------------------------------------------
@@ -105,7 +104,7 @@ FinalTarget "CloseTestRunner" (fun _ ->
 //// --------------------------------------------------------------------------------------
 //// Build a NuGet package
 
-Target "NuGet" (fun _ ->    
+Target "BundleNuGet" (fun _ ->    
     Paket.Pack (fun p -> 
         { p with 
             ToolPath = ".paket/paket.exe" 
@@ -140,7 +139,7 @@ Target "ReleaseDocs" (fun _ ->
 
 // Github Releases
 
-#load "paket-files/fsharp/FAKE/modules/Octokit/Octokit.fsx"
+#load "paket-files/build/fsharp/FAKE/modules/Octokit/Octokit.fsx"
 open Octokit
 
 Target "ReleaseGitHub" (fun _ ->
@@ -186,6 +185,7 @@ Target "Prepare" DoNothing
 Target "PrepareRelease" DoNothing
 Target "Build" DoNothing
 Target "Default" DoNothing
+Target "Bundle" DoNothing
 Target "Release" DoNothing
 
 "Clean"
@@ -197,13 +197,15 @@ Target "Release" DoNothing
   ==> "RunTests"
   ==> "Default"
 
-"Build"
+"Default"
   ==> "Build.Net40"
-  ==> "Build.Net35"
   ==> "PrepareRelease"
   ==> "GenerateDocs"
+  ==> "BundleNuGet"
+  ==> "Bundle"
+
+"Bundle"
   ==> "ReleaseDocs"
-  ==> "NuGet"
   ==> "NuGetPush"
   ==> "ReleaseGithub"
   ==> "Release"

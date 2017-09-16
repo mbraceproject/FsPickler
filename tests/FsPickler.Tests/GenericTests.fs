@@ -19,6 +19,8 @@ open NUnit.Framework
 open FsUnit
 open FsCheck
 
+#nowarn "8989"
+
 [<TestFixture>]
 module ``Generic Tests`` =
 
@@ -64,16 +66,17 @@ module ``Generic Tests`` =
         isRecursive<int> |> should equal false
         isRecursive<DateTime> |> should equal false
         isRecursive<DateTimeOffset> |> should equal false
-#if NET35
-#else
         isRecursive<bigint> |> should equal false
-#endif
         isRecursive<string> |> should equal false
         isRecursive<Type> |> should equal false
         isRecursive<int * string []> |> should equal false
         isRecursive<Type option * string []> |> should equal false
         isRecursive<Record> |> should equal false
+        isRecursive<StructRecord> |> should equal false
+        isRecursive<GenericRecord<GenericRecord<int>>> |> should equal false
+        isRecursive<StructGenericRecord<StructGenericRecord<int>>> |> should equal false
         isRecursive<SimpleDU> |> should equal false
+        isRecursive<StructDU> |> should equal false
         isRecursive<GenericClass<GenericClass<int>>> |> should equal false
 
         isRecursive<obj> |> should equal true
@@ -90,16 +93,18 @@ module ``Generic Tests`` =
         isOpenHierarchy<int> |> should equal false
         isOpenHierarchy<DateTime> |> should equal false
         isOpenHierarchy<DateTimeOffset> |> should equal false
-#if NET35
-#else
         isOpenHierarchy<bigint> |> should equal false
-#endif
         isOpenHierarchy<string> |> should equal false
         isOpenHierarchy<Type> |> should equal false
         isOpenHierarchy<int * string []> |> should equal false
         isOpenHierarchy<Type option * string []> |> should equal false
         isOpenHierarchy<Record> |> should equal false
+        isOpenHierarchy<StructRecord> |> should equal false
+        isOpenHierarchy<GenericRecord<GenericRecord<int>>> |> should equal false
+        isOpenHierarchy<StructGenericRecord<StructGenericRecord<int>>> |> should equal false
         isOpenHierarchy<SimpleDU> |> should equal false
+        isOpenHierarchy<DU> |> should equal true
+        isOpenHierarchy<StructDU> |> should equal true
         isOpenHierarchy<GenericClass<GenericClass<int>>> |> should equal false
 
         isOpenHierarchy<obj> |> should equal true
@@ -122,15 +127,20 @@ module ``Generic Tests`` =
         isFixedSize<int * string []> |> should equal false
         isFixedSize<Type option * string []> |> should equal false
         isFixedSize<Record> |> should equal false
+        isFixedSize<GenericRecord<GenericRecord<string>>> |> should equal false
+        isFixedSize<GenericRecord<GenericRecord<int>>> |> should equal true
+        isFixedSize<StructGenericRecord<StructGenericRecord<int>>> |> should equal true
+        isFixedSize<StructGenericRecord<StructGenericRecord<string>>> |> should equal false
+        isFixedSize<StructRecord> |> should equal false
+        isFixedSize<GenericStruct<GenericStruct<int>>> |> should equal true
+        isFixedSize<GenericStruct<GenericStruct<string>>> |> should equal false
         isFixedSize<SimpleDU> |> should equal false
+        isFixedSize<StructDU> |> should equal false
         isFixedSize<GenericClass<GenericClass<int>>> |> should equal true
 
         isFixedSize<obj> |> should equal false
         isFixedSize<Peano> |> should equal false
-#if NET35
-#else
         isFixedSize<bigint> |> should equal false
-#endif
         isFixedSize<int list> |> should equal false
         isFixedSize<int -> int> |> should equal false
         isFixedSize<RecursiveClass> |> should equal false
@@ -158,82 +168,41 @@ module ``Generic Tests`` =
     let ``1. Should mark types carrying the SerializableAttribute serializable`` () =
         FsPickler.IsSerializableType<SerializableOnAccountOfAttribute> () |> should equal true
 
-    let mutable private isRunSerializableDeclarationTest = false
     [<Test; Category("Pickler tests")>]
     let ``1. Serializable type declaration simple test`` () =
-        // ensure test is only run once per AppDomain
-        if isRunSerializableDeclarationTest then () else
-        isRunSerializableDeclarationTest <- true
+        let registry = new CustomPicklerRegistry()
+        do registry.DeclareSerializable<DeclaredSerializableType>()
+        let cache = PicklerCache.FromCustomPicklerRegistry registry
 
-        FsPickler.DeclareSerializable<DeclaredSerializableType> ()
-        let p = FsPickler.GeneratePickler<DeclaredSerializableType> ()
+        let p = cache.GeneratePickler<DeclaredSerializableType>()
         ()
 
-    let mutable private isRunPicklerFactoryTest = false
     [<Test; Category("Pickler tests")>]
     let ``1. Pickler factory simple test`` () =
-        // ensure test is only run once per AppDomain
-        if isRunPicklerFactoryTest then () else
-        isRunPicklerFactoryTest <- true
+        let registry = new CustomPicklerRegistry()
+        let customPickler = Pickler.FromPrimitives<PicklerFactoryType>((fun _ -> failwith ""), (fun _ _ -> failwith ""))
+        do registry.RegisterPickler customPickler
+        let cache = PicklerCache.FromCustomPicklerRegistry registry
 
-        let factory _ = Pickler.FromPrimitives((fun _ -> failwith ""), (fun _ _ -> failwith ""))
+        let p = cache.GeneratePickler<PicklerFactoryType>()
+        obj.ReferenceEquals(p, customPickler) |> should equal true
 
-        FsPickler.RegisterPicklerFactory<PicklerFactoryType> factory
-
-        let p = FsPickler.GeneratePickler<PicklerFactoryType> ()
-        p.PicklerInfo |> should equal PicklerInfo.UserDefined
-
-    let mutable private isRunPicklerConcurrencyTest = false
-    let private gen<'T> () = FsPickler.GeneratePickler<'T>() |> ignore
-    let private reg<'T> () = FsPickler.DeclareSerializable<'T> ()
-    [<Test; Category("Pickler tests")>]
-    let ``1. Pickler registry concurrency test`` () =
-        // ensure test is only run once per AppDomain
-        if isRunPicklerConcurrencyTest then () else
-        isRunPicklerConcurrencyTest <- true
-
-        // test that registration behaves correctly in conjunction
-        // with concurrent pickler generation operations.
-
-        [| 
-            gen<Foo0> ; reg<Bar0> ; 
-            gen<Foo1> ; reg<Bar1> ; 
-            gen<Foo2> ; reg<Bar2> ; 
-            gen<Foo3> ; reg<Bar3> ; 
-            gen<Foo4> ; reg<Bar4> ;
-            gen<Foo5> ; reg<Bar5> ;
-            gen<Foo6> ; reg<Bar6> ;
-            gen<Foo7> ; reg<Bar7> ;
-            gen<Foo8> ; reg<Bar8> ;
-            gen<Foo9> ; reg<Bar9> ;
-        |] |> Array.Parallel.iter (fun f -> f ())
-
-        [| 
-            gen<Bar0> ; 
-            gen<Bar1> ; 
-            gen<Bar2> ; 
-            gen<Bar3> ; 
-            gen<Bar4> ;
-            gen<Bar5> ;
-            gen<Bar6> ;
-            gen<Bar7> ;
-            gen<Bar8> ;
-            gen<Bar9> ;
-        |] |> Array.Parallel.iter (fun f -> f ())
-
-    FsPickler.DeclareSerializable(fun (t:Type) -> t.Name.StartsWith "BazBaz")
     [<Test; Category("Pickler tests")>]
     let ``1. Declare Serializable Predicate`` () =
-        FsPickler.IsSerializableType<BazBaz0>() |> should equal true
-        FsPickler.IsSerializableType<BazBaz1>() |> should equal true
-        FsPickler.IsSerializableType<BazBaz2>() |> should equal true
-        FsPickler.IsSerializableType<BazBaz3>() |> should equal true
-        FsPickler.IsSerializableType<BazBaz4>() |> should equal true
-        FsPickler.IsSerializableType<BazBaz5>() |> should equal true
-        FsPickler.IsSerializableType<BazBaz6>() |> should equal true
-        FsPickler.IsSerializableType<BazBaz7>() |> should equal true
-        FsPickler.IsSerializableType<BazBaz8>() |> should equal true
-        FsPickler.IsSerializableType<BazBaz9>() |> should equal true
+        let registry = new CustomPicklerRegistry()
+        do registry.DeclareSerializable (fun t -> t.Name.StartsWith "BazBaz") 
+        let cache = PicklerCache.FromCustomPicklerRegistry registry
+
+        cache.IsSerializableType<BazBaz0>() |> should equal true
+        cache.IsSerializableType<BazBaz1>() |> should equal true
+        cache.IsSerializableType<BazBaz2>() |> should equal true
+        cache.IsSerializableType<BazBaz3>() |> should equal true
+        cache.IsSerializableType<BazBaz4>() |> should equal true
+        cache.IsSerializableType<BazBaz5>() |> should equal true
+        cache.IsSerializableType<BazBaz6>() |> should equal true
+        cache.IsSerializableType<BazBaz7>() |> should equal true
+        cache.IsSerializableType<BazBaz8>() |> should equal true
+        cache.IsSerializableType<BazBaz9>() |> should equal true
     
     //
     //  Clone tests
@@ -388,13 +357,24 @@ module ``Generic Tests`` =
         e'.Value |> should equal e.Value
         e'.InnerException.Message |> should equal e.InnerException.Message
         e'.StackTrace |> should equal e.StackTrace
-
+        
     [<Test; Category("Clone")>]
     let ``2. Clone: record`` () = 
         Check.QuickThrowOnFail<Record> (testCloneRefEq, maxRuns = 10)
         Check.QuickThrowOnFail<Record> (testCloneRefEq, maxRuns = 10)
         { GValue = obj() } |> testClonePayload (fun r -> r.GValue)
 
+    [<Test; Category("Clone")>]
+    let ``2. Clone: struct record`` () =
+        let c =
+            { SInt = 42
+              SString = "42"
+              STuple = 43, "42" }
+        let c' = clone c
+        c |> should equal c'
+        { SGValue = obj() } |> testClonePayload (fun s -> s.SGValue)
+        Check.QuickThrowOnFail<StructRecord>(testCloneEq, maxRuns = 10)
+        
     [<Test; Category("Clone")>]
     let ``2. Clone: union`` () = 
         // unions encode certain branches as singletons
@@ -405,6 +385,13 @@ module ``Generic Tests`` =
         Check.QuickThrowOnFail<Either<int,int>> (testCloneRefEq, maxRuns = 10)
         GValue(obj()) |> testClonePayload (function GValue v -> v)
 
+    
+    [<Test; Category("Clone")>]
+    let ``2. Clone: struct union`` () = 
+        Check.QuickThrowOnFail<StructDU> testCloneEq
+        Check.QuickThrowOnFail<GenericStructDU<int>> (testCloneEq, maxRuns = 10)
+        SGValue(obj()) |> testClonePayload (function SGValue v -> v)
+        
     [<Test; Category("Clone")>]
     let ``2. Clone: tuple`` () = 
         Check.QuickThrowOnFail<Tuple<int>>(testCloneRefEq, maxRuns = 10)
@@ -416,6 +403,20 @@ module ``Generic Tests`` =
         Check.QuickThrowOnFail<int * string * string * string * string * string * string>(testCloneRefEq, maxRuns = 10)
         Check.QuickThrowOnFail<int * string * string * string * string * string * string * string>(testCloneRefEq, maxRuns = 10)
         (obj(),obj()) |> testClonePayload fst
+
+    
+    [<Test; Category("Clone")>]
+    let ``2. Clone: struct tuple`` () = 
+        // a single struct tuple is just an int.
+        Check.QuickThrowOnFail<ValueTuple<int>>(testCloneEq, maxRuns = 10)
+        Check.QuickThrowOnFail<struct (int * string)>(testCloneEq, maxRuns = 10)
+        Check.QuickThrowOnFail<struct (int * string * string)>(testCloneEq, maxRuns = 10)
+        Check.QuickThrowOnFail<struct (int * string * string * string)>(testCloneEq, maxRuns = 10)
+        Check.QuickThrowOnFail<struct (int * string * string * string * string)>(testCloneEq, maxRuns = 10)
+        Check.QuickThrowOnFail<struct (int * string * string * string * string * string)>(testCloneEq, maxRuns = 10)
+        Check.QuickThrowOnFail<struct (int * string * string * string * string * string * string)>(testCloneEq, maxRuns = 10)
+        Check.QuickThrowOnFail<struct (int * string * string * string * string * string * string * string)>(testCloneEq, maxRuns = 10)
+        struct (obj(),obj()) |> testClonePayload (fun struct (a,_) -> a)
 
     [<Test; Category("Clone")>]
     let ``2. Clone: choice`` () = 

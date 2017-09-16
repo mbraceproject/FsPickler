@@ -82,9 +82,7 @@ type IPickleFormatWriter =
     abstract WriteTimeSpan : tag:string -> span:TimeSpan -> unit
     abstract WriteGuid : tag:string -> guid:Guid -> unit
 
-#if !NET35
     abstract WriteBigInteger : tag:string -> value:bigint -> unit
-#endif
 
     abstract WriteBytes : tag:string -> value:byte [] -> unit
 
@@ -172,9 +170,7 @@ and IPickleFormatReader =
     abstract ReadTimeSpan : tag:string -> TimeSpan
     abstract ReadGuid : tag:string -> Guid
 
-#if !NET35
     abstract ReadBigInteger : tag:string -> bigint
-#endif
 
     abstract ReadBytes : tag:string -> byte []
 
