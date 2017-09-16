@@ -116,7 +116,7 @@ type internal StructFieldPickler =
 
 type internal ClassFieldPickler =
 
-    static member Create<'T>(resolver : IPicklerResolver) =
+    static member Create<'T>(resolver : IPicklerResolver, registry:PicklerPluginRegistry) =
         assert(typeof<'T>.IsClass)
         let ty = typeof<'T>
         // ExceptionDispatchInfo serialization not supported in mono.
@@ -132,7 +132,7 @@ type internal ClassFieldPickler =
             || isLinqEnumerable ty
             || isException
             || isEDI
-            || PicklerPluginRegistry.IsDeclaredSerializable ty
+            || registry.IsDeclaredSerializable ty
             // compiler generated types in C# are not marked as serializable, but should in principle be treated as such.
             || containsAttr<System.Runtime.CompilerServices.CompilerGeneratedAttribute> ty
             // certain types in Microsoft's CRM SDK contain the CollectionDataContractAttribute but do not

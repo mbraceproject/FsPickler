@@ -15,9 +15,7 @@ open MBrace.FsPickler.ReflectionPicklers
 open MBrace.FsPickler.PicklerResolution
 
 [<AutoSerializable(false)>]
-type internal PicklerCache private () =
-
-    static let instance = lazy(new PicklerCache())
+type internal PicklerCache (registry:PicklerPluginRegistry) =
 
     /// declares pickler generation locked for cache
     [<VolatileField>]
@@ -50,7 +48,7 @@ type internal PicklerCache private () =
 
             // keep track of number of current pickler generation operations
             Interlocked.Increment &resolutionCount |> ignore
-            try generatePickler cache t
+            try generatePickler cache registry t
             finally Interlocked.Decrement &resolutionCount |> ignore
 
     /// Performs an operation while no picklers are being appended to the cache.
@@ -72,5 +70,3 @@ type internal PicklerCache private () =
 
         member r.Resolve (t : Type) = (resolve t).Value
         member r.Resolve<'T> () = (resolve typeof<'T>).Value :?> Pickler<'T>
-
-    static member Instance = instance.Value

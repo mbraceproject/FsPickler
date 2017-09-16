@@ -11,31 +11,41 @@ type private PicklerPlugin =
     /// Registered pickler factory instance
     | Factory of obj
 
-type internal PicklerPluginRegistry private () =
-    static let registry = new ConcurrentDictionary<Type, PicklerPlugin> ()
-    static let serializablePredicates = ref []
+// PicklerPluginRegistry is internal, so we need a public type to pass it through from PicklerContext to FsPicklerSerializer
+type IPicklerPluginRegistry = interface end
 
-    static member RegisterFactory<'T>(factory : IPicklerResolver -> Pickler<'T>) =
+type internal PicklerPluginRegistry () =
+    
+    static let defaultInstance = PicklerPluginRegistry()
+
+    let registry = new ConcurrentDictionary<Type, PicklerPlugin> ()
+    let serializablePredicates = ref []
+
+    interface IPicklerPluginRegistry
+
+    member self.RegisterFactory<'T>(factory : IPicklerResolver -> Pickler<'T>) =
         registry.TryAdd(typeof<'T>, Factory (factory :> obj))
 
-    static member DeclareSerializable (t : Type) =
+    member self.DeclareSerializable (t : Type) =
         registry.TryAdd(t, DeclareSerializable)
 
-    static member DeclareSerializable (predicate : Type -> bool) =
+    member self.DeclareSerializable (predicate : Type -> bool) =
         lock serializablePredicates 
             (fun () -> serializablePredicates := predicate :: !serializablePredicates)
 
-    static member ContainsFactory(t : Type) = 
+    member self.ContainsFactory(t : Type) = 
         match registry.TryFind t with
         | Some(Factory _) -> true
         | _ -> false
 
-    static member IsDeclaredSerializable(t : Type) =
+    member self.IsDeclaredSerializable(t : Type) =
         match registry.TryFind t with
         | Some DeclareSerializable -> true
         | _ -> !serializablePredicates |> List.exists (fun pred -> pred t)
 
-    static member GetPicklerFactory<'T> () : IPicklerResolver -> Pickler<'T> =
+    member self.GetPicklerFactory<'T> () : IPicklerResolver -> Pickler<'T> =
         match registry.[typeof<'T>] with
         | Factory o -> o :?> IPicklerResolver -> Pickler<'T>
         | _ -> invalidOp "internal error: not a pickler factory."
+
+    static member Default = defaultInstance
