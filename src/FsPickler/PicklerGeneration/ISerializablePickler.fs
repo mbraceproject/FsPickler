@@ -253,8 +253,8 @@ type internal ISerializablePickler =
 
         CompositePickler.Create(reader, writer, cloner, accepter, PicklerInfo.ISerializable)
 
-    static member CreateNonISerializableExceptionPickler<'Exn when 'Exn :> exn>(resolver : IPicklerResolver) =
-        let exnFieldPickler = ClassFieldPickler.Create<'Exn> resolver :?> CompositePickler<'Exn>
+    static member CreateNonISerializableExceptionPickler<'Exn when 'Exn :> exn and 'Exn : not struct> registry (resolver : IPicklerResolver) =
+        let exnFieldPickler = ClassFieldPickler.Create<'Exn> registry resolver :?> CompositePickler<'Exn>
 
         let writer (w : WriteState) (tag : string) (e : 'Exn) =
             checkSerializationSubtype w e

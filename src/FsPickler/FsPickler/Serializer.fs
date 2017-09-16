@@ -18,12 +18,12 @@ open MBrace.FsPickler.RootSerialization
 ///     An abstract class containg the basic serialization API.
 /// </summary>
 [<AbstractClass>]
-type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?typeConverter : ITypeNameConverter) =
+type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?typeConverter : ITypeNameConverter, [<O;D(null)>]?picklerResolver : IPicklerResolver) =
 
-    let resolver = PicklerCache.Instance :> IPicklerResolver
+    let resolver = defaultArg picklerResolver (PicklerCache.Instance :> IPicklerResolver)
     let reflectionCache = ReflectionCache.Create(?tyConv = typeConverter)
 
-    member internal __.Resolver = resolver
+    member __.Resolver = resolver
     member internal __.ReflectionCache = reflectionCache
 
     /// Declares that dynamic subtype resolution should be disabled during serialization.

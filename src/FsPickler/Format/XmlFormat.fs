@@ -24,6 +24,9 @@ module private XmlUtils =
     [<Literal>]
     let Formatv2000 = "2.0.0.0" // as defined in FsPickler 2.0.0.0 
 
+    [<Literal>]
+    let Formatv4000 = "4.0.0.0" // as defined in FsPickler 4.0.0.0 
+
     let inline escapeString (value : string) = SecurityElement.Escape value
     let inline unEscapeString (value : string) =
         let e = new SecurityElement("", value)
@@ -126,7 +129,7 @@ type XmlPickleWriter internal (textWriter : TextWriter, indent : bool, leaveOpen
         member __.BeginWriteRoot (tag : string) = 
             writer.WriteStartDocument()
             writer.WriteStartElement("FsPickler")
-            writer.WriteAttributeString("version", Formatv2000)
+            writer.WriteAttributeString("version", Formatv4000)
             writer.WriteAttributeString("type", tag)
 
         member __.EndWriteRoot () = 
@@ -234,9 +237,9 @@ type XmlPickleReader internal (textReader : TextReader, leaveOpen) =
             reader.ReadElementName "FsPickler"
 
             let version = reader.["version"]
-            if version <> Formatv2000 then
+            if version <> Formatv4000 then
                 let v = Version(version)
-                if version = Formatv0960 || version = Formatv1200 then
+                if version = Formatv0960 || version = Formatv1200 || version = Formatv2000 then
                     let msg = sprintf "XML format version %O no longer supported." version
                     raise <| new FormatException(msg)
                 else

@@ -19,6 +19,8 @@ open NUnit.Framework
 open FsUnit
 open FsCheck
 
+#nowarn "8989"
+
 [<TestFixture>]
 module ``Generic Tests`` =
 
@@ -166,82 +168,41 @@ module ``Generic Tests`` =
     let ``1. Should mark types carrying the SerializableAttribute serializable`` () =
         FsPickler.IsSerializableType<SerializableOnAccountOfAttribute> () |> should equal true
 
-    let mutable private isRunSerializableDeclarationTest = false
     [<Test; Category("Pickler tests")>]
     let ``1. Serializable type declaration simple test`` () =
-        // ensure test is only run once per AppDomain
-        if isRunSerializableDeclarationTest then () else
-        isRunSerializableDeclarationTest <- true
+        let registry = new CustomPicklerRegistry()
+        do registry.DeclareSerializable<DeclaredSerializableType>()
+        let cache = PicklerCache.FromCustomPicklerRegistry registry
 
-        FsPickler.DeclareSerializable<DeclaredSerializableType> ()
-        let p = FsPickler.GeneratePickler<DeclaredSerializableType> ()
+        let p = cache.GeneratePickler<DeclaredSerializableType>()
         ()
 
-    let mutable private isRunPicklerFactoryTest = false
     [<Test; Category("Pickler tests")>]
     let ``1. Pickler factory simple test`` () =
-        // ensure test is only run once per AppDomain
-        if isRunPicklerFactoryTest then () else
-        isRunPicklerFactoryTest <- true
+        let registry = new CustomPicklerRegistry()
+        let customPickler = Pickler.FromPrimitives<PicklerFactoryType>((fun _ -> failwith ""), (fun _ _ -> failwith ""))
+        do registry.RegisterPickler customPickler
+        let cache = PicklerCache.FromCustomPicklerRegistry registry
 
-        let factory _ = Pickler.FromPrimitives((fun _ -> failwith ""), (fun _ _ -> failwith ""))
+        let p = cache.GeneratePickler<PicklerFactoryType>()
+        obj.ReferenceEquals(p, customPickler) |> should equal true
 
-        FsPickler.RegisterPicklerFactory<PicklerFactoryType> factory
-
-        let p = FsPickler.GeneratePickler<PicklerFactoryType> ()
-        p.PicklerInfo |> should equal PicklerInfo.UserDefined
-
-    let mutable private isRunPicklerConcurrencyTest = false
-    let private gen<'T> () = FsPickler.GeneratePickler<'T>() |> ignore
-    let private reg<'T> () = FsPickler.DeclareSerializable<'T> ()
-    [<Test; Category("Pickler tests")>]
-    let ``1. Pickler registry concurrency test`` () =
-        // ensure test is only run once per AppDomain
-        if isRunPicklerConcurrencyTest then () else
-        isRunPicklerConcurrencyTest <- true
-
-        // test that registration behaves correctly in conjunction
-        // with concurrent pickler generation operations.
-
-        [| 
-            gen<Foo0> ; reg<Bar0> ; 
-            gen<Foo1> ; reg<Bar1> ; 
-            gen<Foo2> ; reg<Bar2> ; 
-            gen<Foo3> ; reg<Bar3> ; 
-            gen<Foo4> ; reg<Bar4> ;
-            gen<Foo5> ; reg<Bar5> ;
-            gen<Foo6> ; reg<Bar6> ;
-            gen<Foo7> ; reg<Bar7> ;
-            gen<Foo8> ; reg<Bar8> ;
-            gen<Foo9> ; reg<Bar9> ;
-        |] |> Array.Parallel.iter (fun f -> f ())
-
-        [| 
-            gen<Bar0> ; 
-            gen<Bar1> ; 
-            gen<Bar2> ; 
-            gen<Bar3> ; 
-            gen<Bar4> ;
-            gen<Bar5> ;
-            gen<Bar6> ;
-            gen<Bar7> ;
-            gen<Bar8> ;
-            gen<Bar9> ;
-        |] |> Array.Parallel.iter (fun f -> f ())
-
-    FsPickler.DeclareSerializable(fun (t:Type) -> t.Name.StartsWith "BazBaz")
     [<Test; Category("Pickler tests")>]
     let ``1. Declare Serializable Predicate`` () =
-        FsPickler.IsSerializableType<BazBaz0>() |> should equal true
-        FsPickler.IsSerializableType<BazBaz1>() |> should equal true
-        FsPickler.IsSerializableType<BazBaz2>() |> should equal true
-        FsPickler.IsSerializableType<BazBaz3>() |> should equal true
-        FsPickler.IsSerializableType<BazBaz4>() |> should equal true
-        FsPickler.IsSerializableType<BazBaz5>() |> should equal true
-        FsPickler.IsSerializableType<BazBaz6>() |> should equal true
-        FsPickler.IsSerializableType<BazBaz7>() |> should equal true
-        FsPickler.IsSerializableType<BazBaz8>() |> should equal true
-        FsPickler.IsSerializableType<BazBaz9>() |> should equal true
+        let registry = new CustomPicklerRegistry()
+        do registry.DeclareSerializable (fun t -> t.Name.StartsWith "BazBaz") 
+        let cache = PicklerCache.FromCustomPicklerRegistry registry
+
+        cache.IsSerializableType<BazBaz0>() |> should equal true
+        cache.IsSerializableType<BazBaz1>() |> should equal true
+        cache.IsSerializableType<BazBaz2>() |> should equal true
+        cache.IsSerializableType<BazBaz3>() |> should equal true
+        cache.IsSerializableType<BazBaz4>() |> should equal true
+        cache.IsSerializableType<BazBaz5>() |> should equal true
+        cache.IsSerializableType<BazBaz6>() |> should equal true
+        cache.IsSerializableType<BazBaz7>() |> should equal true
+        cache.IsSerializableType<BazBaz8>() |> should equal true
+        cache.IsSerializableType<BazBaz9>() |> should equal true
     
     //
     //  Clone tests

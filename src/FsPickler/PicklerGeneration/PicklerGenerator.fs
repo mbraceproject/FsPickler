@@ -25,7 +25,7 @@ type PicklerGenerator =
         with UnsupportedShape t -> raise <| NonSerializableTypeException(t)
         
     /// Constructs a pickler for a given shape
-    static member Create (resolver : IPicklerResolver) (shape : TypeShape) : Pickler =
+    static member Create (registry : ICustomPicklerRegistry) (resolver : IPicklerResolver) (shape : TypeShape) : Pickler =
         let isUnsupportedType (t:Type) =
             t.IsPointer 
             || t = typeof<System.Reflection.Pointer>
@@ -33,6 +33,8 @@ type PicklerGenerator =
             || t.IsCOMObject
             || t.IsImport
             || t.IsMarshalByRef
+
+        let (|PicklerFactory|_|) (shape : TypeShape) = registry.TryGetPicklerFactory shape.Type
 
         match shape with
         | _ when isUnsupportedType shape.Type -> raise <| NonSerializableTypeException shape.Type
@@ -63,11 +65,11 @@ type PicklerGenerator =
         | :? TypeShape<Assembly> -> ReflectionPicklers.CreateAssemblyPickler resolver :> _
         | :? TypeShape<MemberInfo> -> ReflectionPicklers.CreateMemberInfoPickler resolver :> _
         | :? TypeShape<System.DBNull> -> new DBNullPickler() :> _
-        | _ when PicklerPluginRegistry.ContainsFactory shape.Type ->
-            shape.Accept {
-                new ITypeShapeVisitor<Pickler> with
-                    member __.Visit<'T> () = PicklerPluginRegistry.GetPicklerFactory<'T>() resolver :> Pickler 
-            }
+        | PicklerFactory factory -> 
+            let pickler = factory resolver
+            if pickler.Type <> shape.Type then
+                raise <| PicklerGenerationException(shape.Type, "unexpected pickler type from custom pickler generator.")
+            pickler
 
         | Shape.Nullable s ->
             s.Accept {
@@ -252,13 +254,13 @@ type PicklerGenerator =
         | Shape.FSharpUnion _ as s ->
             s.Accept {
                 new ITypeShapeVisitor<Pickler> with
-                    member __.Visit<'U> () = FsUnionPickler.Create<'U>(resolver) :> _
+                    member __.Visit<'U> () = FsUnionPickler.Create<'U> registry resolver :> _
             }
 
         | Shape.FSharpRecord _ as s ->
             s.Accept {
                 new ITypeShapeVisitor<Pickler> with
-                    member __.Visit<'R> () = FsRecordPickler.Create<'R>(resolver) :> _
+                    member __.Visit<'R> () = FsRecordPickler.Create<'R> registry resolver :> _
             }
 
         | shape when shape.Type.IsAbstract ->
@@ -270,11 +272,11 @@ type PicklerGenerator =
         | Shape.Exception s ->
             s.Accept {
                 new IExceptionVisitor<Pickler> with
-                    member __.Visit<'exn when 'exn :> exn>() = 
-                        if s.IsFSharpException then FsExceptionPickler.Create<'exn>(resolver) :> _
+                    member __.Visit<'exn when 'exn :> exn and 'exn : not struct and 'exn : null>() = 
+                        if s.IsFSharpException then FsExceptionPickler.Create<'exn> registry resolver :> _
                         else
                             match tryGetISerializableCtor typeof<'exn> with
-                            | None -> ISerializablePickler.CreateNonISerializableExceptionPickler<'exn>(resolver) :> _
+                            | None -> ISerializablePickler.CreateNonISerializableExceptionPickler<'exn> registry resolver :> _
                             | Some _ -> ISerializablePickler.Create<'exn>() :> _
             }
 
@@ -287,16 +289,16 @@ type PicklerGenerator =
                         | None -> ISerializablePickler.CreateObjectReferencePickler<'T>() :> _
             }
 
-        | shape when shape.Type.IsValueType ->
-            shape.Accept {
-                new ITypeShapeVisitor<Pickler> with
-                    member __.Visit<'T>() = StructFieldPickler.Create<'T>(resolver) :> Pickler
+        | Shape.Struct s ->
+            s.Accept {
+                new IStructVisitor<Pickler> with
+                    member __.Visit<'T when 'T : struct>() = StructFieldPickler.Create<'T>(resolver) :> Pickler
             }
 
-        | _ ->
-            shape.Accept {
-                new ITypeShapeVisitor<Pickler> with
-                    member __.Visit<'T>() = ClassFieldPickler.Create<'T>(resolver) :> Pickler
+        | Shape.NotStruct s ->
+            s.Accept {
+                new INotStructVisitor<Pickler> with
+                    member __.Visit<'T when 'T : not struct and 'T : null>() = ClassFieldPickler.Create<'T> registry resolver :> Pickler
             }
 
     /// Constructs a blank, uninitialized pickler object

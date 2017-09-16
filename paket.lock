@@ -6,7 +6,7 @@ NUGET
     Newtonsoft.Json (10.0.3)
 GITHUB
   remote: eiriktsarpalis/TypeShape
-    src/TypeShape/TypeShape.fs (d0df02655564e1269389d1c37e0eb34740122e77)
+    src/TypeShape/TypeShape.fs (6d3ea1e79b41e7dd6cddd1b0fcde85db405ede54)
 GROUP Build
 REDIRECTS: ON
 RESTRICTION: >= net40

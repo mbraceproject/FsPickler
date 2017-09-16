@@ -130,35 +130,5 @@ namespace MBrace.CsPickler
         {
             FSP.EnsureSerializable<T>(graph);
         }
-
-        /// <summary>
-        /// Declares that supplied type is to be treated as serializable.
-        /// This is equivalent to dynamically attaching a SerializableAttribute to the type.
-        /// </summary>
-        /// <typeparam name="T">Type to be declared serializable.</typeparam>
-        public static void DeclareSerializable<T>()
-        {
-            FSP.DeclareSerializable<T>();
-        }
-
-        /// <summary>
-        /// Declares that supplied type is to be treated as serializable.
-        /// This is equivalent to dynamically attaching a SerializableAttribute to the type.
-        /// </summary>
-        /// <param name="type">Type to be declared serializable</param>
-        public static void DeclareSerializable(Type type)
-        {
-            FSP.DeclareSerializable(type);
-        }
-
-        /// <summary>
-        /// Declares that types satisfying the provided predicate should be treated
-        /// by FsPickler as carrying the Serializable attribute.
-        /// </summary>
-        /// <param name="predicate">Predicate that decides whether type should be serializable.</param>
-        public static void DeclareSerializable(Predicate<Type> predicate)
-        {
-            FSP.DeclareSerializable(predicate.ToFSharpFunc());
-        }
     }
 }

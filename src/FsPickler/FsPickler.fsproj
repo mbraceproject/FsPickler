@@ -101,7 +101,7 @@
     <Compile Include="Combinators\DotNetTypes.fs" />
     <Compile Include="Combinators\FSharpTypes.fs" />
     <Compile Include="Combinators\Collections.fs" />
-    <Compile Include="PicklerGeneration\PluginRegistry.fs" />
+    <Compile Include="PicklerGeneration\PicklerRegistry.fs" />
     <Compile Include="PicklerGeneration\PicklerEmit.fs" />
     <Compile Include="PicklerGeneration\FieldPicklers.fs" />
     <Compile Include="PicklerGeneration\ISerializablePickler.fs" />

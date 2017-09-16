@@ -1,3 +1,9 @@
+### 4.0.0
+* Use deterministic ordering in field serialization.
+* Add support for custom pickler caches.
+* Add support for struct records, unions and tuples.
+* Deprecate net35 support.
+
 ### 3.4.0
 * Add support for struct records and struct unions.
 
