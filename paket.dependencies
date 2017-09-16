@@ -1,15 +1,14 @@
-framework: >= net35
+framework: >= net40
 redirects: on
 source https://www.nuget.org/api/v2
 
 nuget FSharp.Core >= 3.1 lowest_matching: true
 nuget Newtonsoft.Json >= 6.0.5
-nuget TaskParallelLibrary ~> 1.0 framework:net35
 
-github eiriktsarpalis/TypeShape:2.17 src/TypeShape/TypeShape.fs
+github eiriktsarpalis/TypeShape:2.19 src/TypeShape/TypeShape.fs
 
 group Test
-  framework: >= net35
+  framework: >= net40
   redirects: on
   source https://www.nuget.org/api/v2
 
@@ -26,7 +25,7 @@ group Test
   nuget System.ValueTuple
   
 group Build
-  framework: >= net35
+  framework: >= net40
   redirects: on
   source https://www.nuget.org/api/v2
 

@@ -36,7 +36,7 @@ type internal JsonPickleWriter (jsonWriter : JsonWriter, omitHeader, indented, i
             if omitHeader then () else
 
             jsonWriter.WriteStartObject()
-            writePrimitive jsonWriter false "FsPickler" formatv2000
+            writePrimitive jsonWriter false "FsPickler" formatv4000
             writePrimitive jsonWriter false "type" tag
 
         member __.EndWriteRoot () = 
@@ -114,9 +114,7 @@ type internal JsonPickleWriter (jsonWriter : JsonWriter, omitHeader, indented, i
         member __.WriteChar (tag : string) value = writePrimitive jsonWriter (omitTag ()) tag value
         member __.WriteString (tag : string) value = writePrimitive jsonWriter (omitTag ()) tag value
 
-#if !NET35
         member __.WriteBigInteger (tag : string) value = writePrimitive jsonWriter (omitTag ()) tag (string value)
-#endif
 
         member __.WriteGuid (tag : string) value = writePrimitive jsonWriter (omitTag ()) tag value
         member __.WriteTimeSpan (tag : string) value = writePrimitive jsonWriter (omitTag ()) tag (string value)

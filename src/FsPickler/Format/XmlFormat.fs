@@ -24,6 +24,9 @@ module private XmlUtils =
     [<Literal>]
     let Formatv2000 = "2.0.0.0" // as defined in FsPickler 2.0.0.0 
 
+    [<Literal>]
+    let Formatv4000 = "4.0.0.0" // as defined in FsPickler 4.0.0.0 
+
     let inline escapeString (value : string) = SecurityElement.Escape value
     let inline unEscapeString (value : string) =
         let e = new SecurityElement("", value)
@@ -126,7 +129,7 @@ type XmlPickleWriter internal (textWriter : TextWriter, indent : bool, leaveOpen
         member __.BeginWriteRoot (tag : string) = 
             writer.WriteStartDocument()
             writer.WriteStartElement("FsPickler")
-            writer.WriteAttributeString("version", Formatv2000)
+            writer.WriteAttributeString("version", Formatv4000)
             writer.WriteAttributeString("type", tag)
 
         member __.EndWriteRoot () = 
@@ -175,9 +178,7 @@ type XmlPickleWriter internal (textWriter : TextWriter, indent : bool, leaveOpen
             else
                 writePrimitive writer tag <| escapeString value
 
-#if !NET35
         member __.WriteBigInteger (tag : string) value = writePrimitive writer tag (value.ToString())
-#endif
 
         member __.WriteGuid (tag : string) value = writePrimitive writer tag (value.ToString())
         member __.WriteDateTime (tag : string) value = 
@@ -202,7 +203,7 @@ type XmlPickleWriter internal (textWriter : TextWriter, indent : bool, leaveOpen
         member __.WritePrimitiveArray _ _ = raise <| new NotSupportedException()
 
         member __.Dispose () = 
-#if NET35 || NET40
+#if NET40
             if leaveOpen then writer.Flush()
             else writer.Close()
 #else
@@ -236,9 +237,9 @@ type XmlPickleReader internal (textReader : TextReader, leaveOpen) =
             reader.ReadElementName "FsPickler"
 
             let version = reader.["version"]
-            if version <> Formatv2000 then
+            if version <> Formatv4000 then
                 let v = Version(version)
-                if version = Formatv0960 || version = Formatv1200 then
+                if version = Formatv0960 || version = Formatv1200 || version = Formatv2000 then
                     let msg = sprintf "XML format version %O no longer supported." version
                     raise <| new FormatException(msg)
                 else
@@ -316,9 +317,7 @@ type XmlPickleReader internal (textReader : TextReader, leaveOpen) =
 
         member __.ReadChar tag = reader.ReadElementName tag ; reader.ReadElementContentAsString() |> unEscapeString |> char
 
-#if !NET35
         member __.ReadBigInteger tag = reader.ReadElementName tag ; reader.ReadElementContentAsString() |> System.Numerics.BigInteger.Parse
-#endif
 
         member __.ReadString tag = 
             reader.ReadElementName tag 
@@ -360,7 +359,7 @@ type XmlPickleReader internal (textReader : TextReader, leaveOpen) =
         member __.ReadPrimitiveArray _ _ = raise <| new NotImplementedException()
 
         member __.Dispose () = 
-#if NET35 || NET40
+#if NET40
             if not leaveOpen then reader.Close()
 #else
             reader.Dispose()
@@ -379,7 +378,7 @@ type XmlPickleFormatProvider(indent) =
         member __.DefaultEncoding = Encoding.UTF8
 
         member __.CreateWriter (stream, encoding, _, leaveOpen) =
-#if NET35 || NET40
+#if NET40
             let sw = new StreamWriter(stream, encoding)
 #else
             let sw = new StreamWriter(stream, encoding, 1024, leaveOpen)
@@ -387,7 +386,7 @@ type XmlPickleFormatProvider(indent) =
             new XmlPickleWriter(sw, __.Indent, leaveOpen) :> _
 
         member __.CreateReader (stream, encoding, _, leaveOpen) =
-#if NET35 || NET40
+#if NET40
             let sr = new StreamReader(stream, encoding)
 #else
             let sr = new StreamReader(stream, encoding, true, 1024, leaveOpen)

@@ -7,6 +7,8 @@
 #r "FsPickler.dll"
 #r "FsPickler.Json.dll"
 
+#nowarn "8989"
+
 let stream = Unchecked.defaultof<System.IO.Stream>
 let serializer = Unchecked.defaultof<MBrace.FsPickler.FsPicklerSerializer>
 let textWriter = Unchecked.defaultof<System.IO.TextWriter>
@@ -356,9 +358,8 @@ RecursiveClass(RecursiveClass()) |> Json.pickle p |> Json.unpickle p
 
 (**
 
-## Runtime pickler registration
+## Custom pickler registrations
 
-As of FsPickler 1.2.5 it is possible to register custom pickler definitions at runtime.
 Consider a type declaration that has not been made serializable:
 
 *)
@@ -369,49 +370,66 @@ type NonSerializable(value : int) =
 
 (**
 
-It is now possible to declare and register a pickler factory at a separate location
+Attempting to generate a pickler for the particular type
+
+*)
+
+FsPickler.GeneratePickler<NonSerializable>()
+
+(**
+
+would result in an error:
+
+    ```text
+    MBrace.FsPickler.NonSerializableTypeException: Type 'FSI_0012+NonSerializable' is not serializable.
+       at MBrace.FsPickler.Utils.Exn`1.get_Value() in C:\Users\eirik.tsarpalis\devel\mbrace\FsPickler\src\FsPickler\Utils\Utils.fs:line 59
+       at MBrace.FsPickler.PicklerCache.MBrace-FsPickler-IPicklerResolver-Resolve[T]() in C:\Users\eirik.tsarpalis\devel\mbrace\FsPickler\src\FsPickler\PicklerGeneration\PicklerCache.fs:line 75
+       at <StartupCode$FSI_0013>.$FSI_0013.main@()
+    ```
+
+This problem can be overcome by creating a custom pickler cache that accepts user-supplied pickler registrations.
+Suppose we have a custom pickler definition:
 
 *)
 
 let mkPickler (resolver : IPicklerResolver) =
-    let intP = resolver.Resolve<int> ()
+    let intPickler = resolver.Resolve<int> ()
 
     let writer (w : WriteState) (ns : NonSerializable) =
-        intP.Write w "value" ns.Value
+        intPickler.Write w "value" ns.Value
 
     let reader (r : ReadState) =
-        let v = intP.Read r "value" in new NonSerializable(v)
+        let v = intPickler.Read r "value" in NonSerializable(v)
 
-    Pickler.FromPrimitives(reader, writer) 
-
-FsPickler.RegisterPicklerFactory mkPickler
+    Pickler.FromPrimitives(reader, writer)
 
 (**
 
-When resolving a pickler of this type in the future, the user-supplied implementation will be used:
+We can then create a custom pickler cache like so:
 
 *)
 
-let pickler = FsPickler.GeneratePickler<NonSerializable> ()
+// 1. Create a pickler registry and make custom pickler registrations
+let registry = new CustomPicklerRegistry()
+do registry.RegisterFactory mkPickler
 
-pickler.PicklerInfo // PicklerInfo.UserDefined
+// 2. Construct a new pickler cache
+let cache = PicklerCache.FromCustomPicklerRegistry registry
+
+// 3. Pass the new cache to a serializer instance
+let jsonSer = FsPickler.CreateJsonSerializer(picklerResolver = cache)
+
+// 4. Serialize the custom type
+jsonSer.PickleToString (NonSerializable 42)
 
 (**
 
-Note that factory registrations need to be performed *before* FsPickler uses their types at all in the current AppDomain:
-
-```text
-System.InvalidOperationException: A pickler for type 'FSI_0004+NonSerializable' has already been generated.
-   at <StartupCode$FsPickler>.$FsPickler.RegisterPicklerFactory@54.Invoke(Unit unitVar0) in c:\Users\eirik\Development\nessos\FsPickler\src\FsPickler\FsPickler\FsPickler.fs:line 60
-   at <StartupCode$FsPickler>.$PicklerCache.f@1-2(PicklerCache c, FSharpFunc`2 f, Unit unitVar0) in c:\Users\eirik\Development\nessos\FsPickler\src\FsPickler\PicklerGeneration\PicklerCache.fs:line 73
-```
-
-If all that needs to be done is declare to FsPickler the intention of treating a type as serializable,
-we can avoid the hassle of defining a full-blown custom pickler as follows:
+In some cases, it might be sufficient to declare that FsPickler should treat
+the type as if it wasn't lacking a `[<Serializable>]` annotation:
 
 *)
 
-FsPickler.DeclareSerializable<NonSerializable> ()
+registry.DeclareSerializable<NonSerializable>()
 
 (**
 

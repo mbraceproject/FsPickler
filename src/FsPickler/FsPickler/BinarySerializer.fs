@@ -14,11 +14,12 @@ type BinarySerializer =
     /// </summary>
     /// <param name="forceLittleEndian">Force little-endian encoding in primitive arrays but is slower. Defaults to false.</param>
     /// <param name="typeConverter">Define a custom type name converter.</param>
-    new ([<O;D(null)>]?forceLittleEndian : bool, [<O;D(null)>] ?typeConverter : ITypeNameConverter) =
+    /// <param name="picklerResolver">Specify a custom pickler resolver/cache for serialization. Defaults to the singleton pickler cache.</param>
+    new ([<O;D(null)>]?forceLittleEndian : bool, [<O;D(null)>] ?typeConverter : ITypeNameConverter, [<O;D(null)>]?picklerResolver : IPicklerResolver) =
         let forceLittleEndian = defaultArg forceLittleEndian false
         let format = new BinaryPickleFormatProvider(forceLittleEndian)
         { 
-            inherit FsPicklerSerializer(format, ?typeConverter = typeConverter) 
+            inherit FsPicklerSerializer(format, ?typeConverter = typeConverter, ?picklerResolver = picklerResolver) 
             format = format    
         }
 

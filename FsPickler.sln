@@ -1,6 +1,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26730.15
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".paket", ".paket", "{2FC26D10-021B-4487-AE72-6CFC1346239A}"
 	ProjectSection(SolutionItems) = preProject
@@ -192,5 +194,8 @@ Global
 		{E97FD04B-2CC5-4EB3-9874-6FB8CF96E4CC} = {6A9C2D20-E8F1-42C1-A116-EACB1A4E93BD}
 		{D30FBE7C-26F4-4C5F-8E03-BF9F5185BC1D} = {6A9C2D20-E8F1-42C1-A116-EACB1A4E93BD}
 		{CDF2389D-8F60-44FA-AA48-6380DD0B32F9} = {6A9C2D20-E8F1-42C1-A116-EACB1A4E93BD}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1FCA8B32-FF44-47F1-9B3B-091CA78E9A86}
 	EndGlobalSection
 EndGlobal

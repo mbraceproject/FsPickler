@@ -19,8 +19,7 @@ open MBrace.FsPickler.PicklerEmit
 
 type internal StructFieldPickler =
 
-    static member Create<'T>(resolver : IPicklerResolver) =
-        assert(typeof<'T>.IsValueType)
+    static member Create<'T when 'T : struct>(resolver : IPicklerResolver) =
         let t = typeof<'T>
         let fields = gatherSerializedFields t
         let picklers = fields |> Array.map (fun f -> resolver.Resolve f.FieldType)
@@ -116,8 +115,7 @@ type internal StructFieldPickler =
 
 type internal ClassFieldPickler =
 
-    static member Create<'T>(resolver : IPicklerResolver) =
-        assert(typeof<'T>.IsClass)
+    static member Create<'T when 'T : not struct> (picklerRegistry : ICustomPicklerRegistry) (resolver : IPicklerResolver) =
         let ty = typeof<'T>
         // ExceptionDispatchInfo serialization not supported in mono.
         let isEDI = not runsOnMono && isExceptionDispatchInfo ty
@@ -132,7 +130,7 @@ type internal ClassFieldPickler =
             || isLinqEnumerable ty
             || isException
             || isEDI
-            || PicklerPluginRegistry.IsDeclaredSerializable ty
+            || picklerRegistry.IsDeclaredSerializable ty
             // compiler generated types in C# are not marked as serializable, but should in principle be treated as such.
             || containsAttr<System.Runtime.CompilerServices.CompilerGeneratedAttribute> ty
             // certain types in Microsoft's CRM SDK contain the CollectionDataContractAttribute but do not

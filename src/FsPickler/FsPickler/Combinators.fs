@@ -83,9 +83,7 @@ module Pickler =
     let dateTimeOffset = new DateTimeOffsetPickler() :> Pickler<DateTimeOffset>
     let timeSpan = new TimeSpanPickler() :> Pickler<TimeSpan>
     let bytes = ArrayPickler.CreateByteArrayPickler()
-#if !NET35
     let bigint = new BigIntPickler() :> Pickler<bigint>
-#endif
 
     /// the default System.Object pickler
     let obj = CompositePickler.ObjectPickler

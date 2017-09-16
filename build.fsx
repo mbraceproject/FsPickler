@@ -82,7 +82,6 @@ let build configuration () =
 
 Target "Build.Default" (build configuration)
 Target "Build.NoEmit" (build "NoEmit")
-Target "Build.Net35" (build "Release-NET35")
 Target "Build.Net40" (build "Release-NET40")
 
 // --------------------------------------------------------------------------------------
@@ -186,6 +185,7 @@ Target "Prepare" DoNothing
 Target "PrepareRelease" DoNothing
 Target "Build" DoNothing
 Target "Default" DoNothing
+Target "Bundle" DoNothing
 Target "Release" DoNothing
 
 "Clean"
@@ -199,10 +199,12 @@ Target "Release" DoNothing
 
 "Default"
   ==> "Build.Net40"
-  ==> "Build.Net35"
   ==> "PrepareRelease"
   ==> "GenerateDocs"
   ==> "BundleNuGet"
+  ==> "Bundle"
+
+"Bundle"
   ==> "ReleaseDocs"
   ==> "NuGetPush"
   ==> "ReleaseGithub"

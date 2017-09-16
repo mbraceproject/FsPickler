@@ -1,9 +1,10 @@
 ﻿module internal MBrace.FsPickler.Reflection
 
 open System
-open System.Text.RegularExpressions
+open System.Collections.Generic
 open System.Reflection
 open System.Runtime.Serialization
+open System.Text.RegularExpressions
 
 open Microsoft.FSharp.Reflection
 
@@ -120,14 +121,14 @@ let isExceptionDispatchInfo (t : Type) =
 /// walks up the type hierarchy, gathering all instance members
 let gatherMembers (t : Type) =
     // resolve conflicts, index by declaring type and field name
-    let gathered = ref Map.empty<string * string, MemberInfo>
+    let gathered = new Dictionary<string * string, MemberInfo>()
 
     let rec gather (t : Type) =
         let members = t.GetMembers(allFields)
         for m in members do
             let k = m.DeclaringType.AssemblyQualifiedName, m.ToString()
-            if not <| gathered.Value.ContainsKey k then
-                gathered := gathered.Value.Add(k, m)
+            if not <| gathered.ContainsKey k then
+                gathered.Add(k, m)
 
         match t.BaseType with
         | null -> ()
@@ -136,13 +137,12 @@ let gatherMembers (t : Type) =
 
     do gather t
 
-    gathered.Value 
-    |> Map.toSeq
-    |> Seq.toArray
+    gathered
     // sort by name since Type.GetMembers() is non deterministic an unordered. https://github.com/mbraceproject/FsPickler/issues/92
     // Since names are not unique in class hierarchies, we use the full key here being (assemblyQualifiedName * FieldName).
-    |> Array.sortBy (fun (k,_) -> k) 
-    |> Array.map snd
+    |> Seq.sortBy (fun kv -> fst kv.Key, kv.Value.Name)
+    |> Seq.map (fun kv -> kv.Value)
+    |> Seq.toArray
 
 let gatherSerializedFields (t : Type) =
     let isSerializedField (m : MemberInfo) =

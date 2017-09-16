@@ -12,30 +12,32 @@ open MBrace.FsPickler.Hashing
 type FsPickler private () =
         
     static let defaultSerializer = lazy(new BinarySerializer())
-    static let resolver = lazy(PicklerCache.Instance :> IPicklerResolver)
+    static let resolver () = PicklerCache.Instance :> IPicklerResolver
 
     /// <summary>
     ///     Create a new FsPickler serializer instance that uses the built-in binary format.
     /// </summary>
     /// <param name="forceLittleEndian">Force little-endian encoding in primitive arrays but is slower. Defaults to false.</param>
     /// <param name="tyConv">optional type name converter implementation.</param>
-    static member CreateBinarySerializer([<O;D(null)>] ?forceLittleEndian : bool, [<O;D(null)>] ?typeConverter : ITypeNameConverter) = 
-        new BinarySerializer(?forceLittleEndian = forceLittleEndian, ?typeConverter = typeConverter)
+    /// <param name="picklerResolver">Specify a custom pickler resolver/cache for serialization. Defaults to the singleton pickler cache.</param>
+    static member CreateBinarySerializer([<O;D(null)>] ?forceLittleEndian : bool, [<O;D(null)>] ?typeConverter : ITypeNameConverter, [<O;D(null)>] ?picklerResolver : IPicklerResolver) = 
+        new BinarySerializer(?forceLittleEndian = forceLittleEndian, ?typeConverter = typeConverter, ?picklerResolver = picklerResolver)
 
     /// <summary>
     ///     Create a new FsPickler serializer instance that uses the XML format.
     /// </summary>
     /// <param name="tyConv">optional type name converter implementation.</param>
-    static member CreateXmlSerializer([<O;D(null)>]?typeConverter : ITypeNameConverter, [<O;D(null)>]?indent : bool) = 
-        new XmlSerializer(?typeConverter = typeConverter, ?indent = indent)
+    /// <param name="picklerResolver">Specify a custom pickler resolver/cache for serialization. Defaults to the singleton pickler cache.</param>
+    static member CreateXmlSerializer([<O;D(null)>]?typeConverter : ITypeNameConverter, [<O;D(null)>]?indent : bool, [<O;D(null)>] ?picklerResolver : IPicklerResolver) = 
+        new XmlSerializer(?typeConverter = typeConverter, ?indent = indent, ?picklerResolver = picklerResolver)
 
     /// Decides if given type is serializable by FsPickler
     static member IsSerializableType<'T> () : bool = 
-        resolver.Value.IsSerializable<'T> ()
+        resolver().IsSerializable<'T> ()
 
     /// Decides if given type is serializable by FsPickler
     static member IsSerializableType (t : Type) : bool = 
-        resolver.Value.IsSerializable t
+        resolver().IsSerializable t
 
     /// <summary>
     ///     Decides if given value is serializable object graph without performing an actual serialization.
@@ -48,63 +50,11 @@ type FsPickler private () =
 
     /// Auto generates a pickler for given type variable
     static member GeneratePickler<'T> () : Pickler<'T> = 
-        resolver.Value.Resolve<'T> ()
+        resolver().Resolve<'T> ()
         
     /// Auto generates a pickler for given type
     static member GeneratePickler (t : Type) : Pickler = 
-        resolver.Value.Resolve t
-
-    /// <summary>
-    ///     Registers a pickler factory for use by the pickler generation mechanism.
-    ///     Factories can only be registered before any serializations take place.
-    /// </summary>
-    /// <param name="factory">Pickler factory instance.</param>
-    static member RegisterPicklerFactory<'T>(factory : IPicklerResolver -> Pickler<'T>) : unit =
-        let cache = PicklerCache.Instance
-        cache.WithLockedCache (fun () ->
-            if cache.IsPicklerGenerated typeof<'T> then
-                invalidOp <| sprintf "A pickler for type '%O' has already been generated." typeof<'T>
-
-            let success = PicklerPluginRegistry.RegisterFactory factory
-            if not success then
-                invalidOp <| sprintf "A pickler plugin for type '%O' has already been registered." typeof<'T>)
-
-    /// <summary>
-    ///     Registers a pickler instance for use by the pickler generation mechanism.
-    ///     Picklers can only be registered before any serializations take place.
-    /// </summary>
-    /// <param name="Pickler">Pickler instance.</param>
-    static member RegisterPickler<'T>(pickler : Pickler<'T>) : unit =
-        FsPickler.RegisterPicklerFactory(fun _ -> pickler)
-
-    /// <summary>
-    ///     Declares that supplied type should be treated as serializable.
-    ///     This is equivalent to dynamically attaching a SerializableAttribute to the type.
-    /// </summary>
-    static member DeclareSerializable<'T> () : unit =
-        FsPickler.DeclareSerializable typeof<'T>
-
-    /// <summary>
-    ///     Declares that supplied type should be treated as serializable.
-    ///     This is equivalent to dynamically attaching a SerializableAttribute to the type.
-    /// </summary>
-    static member DeclareSerializable (t : Type) : unit =
-        let cache = PicklerCache.Instance
-        cache.WithLockedCache(fun () -> 
-            if cache.IsPicklerGenerated t then
-                invalidOp <| sprintf "A pickler for type '%O' has already been generated." t
-
-            let success = PicklerPluginRegistry.DeclareSerializable t
-            if not success then
-                invalidOp <| sprintf "A pickler plugin for type '%O' has already been registered." t)
-
-    /// <summary>
-    ///     Declares that types satisfying the provided predicate should be treated by
-    ///     FsPickler as carrying the Serializable attribute.
-    /// </summary>
-    /// <param name="predicate">Serializable type predicate.</param>
-    static member DeclareSerializable (predicate : Type -> bool) : unit =
-        PicklerPluginRegistry.DeclareSerializable predicate
+        resolver().Resolve t
 
     //
     // Misc utils
@@ -119,8 +69,8 @@ type FsPickler private () =
     /// <param name="pickler">Pickler used for cloning. Defaults to auto-generated pickler.</param>
     /// <param name="streamingContext">Streaming context used for cloning. Defaults to null streaming context.</param>
     static member Clone<'T> (value : 'T, [<O;D(null)>]?pickler : Pickler<'T>, [<O;D(null)>]?streamingContext : StreamingContext) : 'T =
-        let pickler = match pickler with None -> resolver.Value.Resolve<'T> () | Some p -> p
-        let state = new CloneState(resolver.Value, ?streamingContext = streamingContext)
+        let pickler = match pickler with None -> resolver().Resolve<'T> () | Some p -> p
+        let state = new CloneState(resolver(), ?streamingContext = streamingContext)
         pickler.Clone state value
 
     /// <summary>
@@ -133,8 +83,8 @@ type FsPickler private () =
     /// <param name="streamingContext">Streaming context used for cloning. Defaults to null streaming context.</param>
     /// <returns>A sifted wrapper together with all objects that have been sifted.</returns>
     static member Sift<'T>(value : 'T, sifter : IObjectSifter, [<O;D(null)>]?pickler : Pickler<'T>, [<O;D(null)>]?streamingContext : StreamingContext) : Sifted<'T> * (int64 * obj) [] =
-        let pickler = match pickler with None -> resolver.Value.Resolve<'T> () | Some p -> p
-        let state = new CloneState(resolver.Value, ?streamingContext = streamingContext, sifter = sifter)
+        let pickler = match pickler with None -> resolver().Resolve<'T> () | Some p -> p
+        let state = new CloneState(resolver(), ?streamingContext = streamingContext, sifter = sifter)
         let sifted = pickler.Clone state value
         state.CreateSift(sifted)
 
@@ -160,8 +110,8 @@ type FsPickler private () =
     /// <param name="streamingContext">Streaming context used for cloning. Defaults to null streaming context.</param>
     /// <returns>An unsifted object graph.</returns>
     static member UnSift<'T>(sifted : Sifted<'T>, values:(int64 * obj) [], [<O;D(null)>]?pickler : Pickler<'T>, [<O;D(null)>]?streamingContext : StreamingContext) : 'T =
-        let pickler = match pickler with None -> resolver.Value.Resolve<'T> () | Some p -> p
-        let state = new CloneState(resolver.Value, ?streamingContext = streamingContext, unSiftData = (values, sifted.SiftedIndices))
+        let pickler = match pickler with None -> resolver().Resolve<'T> () | Some p -> p
+        let state = new CloneState(resolver(), ?streamingContext = streamingContext, unSiftData = (values, sifted.SiftedIndices))
         pickler.Clone state sifted.Value
 
     /// <summary>Compute size in bytes for given input.</summary>
@@ -188,7 +138,7 @@ type FsPickler private () =
     static member VisitObject(visitor : IObjectVisitor, graph : 'T, [<O;D(null)>]?pickler:Pickler<'T>, 
                                 [<O;D(null)>]?streamingContext:StreamingContext, [<O;D(null)>]?visitOrder:VisitOrder) =
 
-        let resolver = resolver.Value
+        let resolver = resolver()
         let pickler = match pickler with None -> resolver.Resolve<'T> () | Some p -> p
         let state = new VisitState(resolver, visitor, ?streamingContext = streamingContext, ?visitOrder = visitOrder)
         pickler.Accept state graph

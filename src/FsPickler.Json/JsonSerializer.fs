@@ -21,12 +21,13 @@ type JsonSerializer =
     /// <param name="indent">indent out Json pickles.</param>
     /// <param name="omitHeader">omit FsPickler header in Json pickles.</param>
     /// <param name="typeConverter">specify a custom type name converter.</param>
-    new ([<O;D(null)>] ?indent, [<O;D(null)>] ?omitHeader, [<O;D(null)>] ?typeConverter) =
+    /// <param name="picklerResolver">Specify a custom pickler resolver/cache for serialization. Defaults to the singleton pickler cache.</param>
+    new ([<O;D(null)>] ?indent, [<O;D(null)>] ?omitHeader, [<O;D(null)>] ?typeConverter, [<O;D(null)>] ?picklerResolver) =
         let indent = defaultArg indent false
         let omitHeader = defaultArg omitHeader false
         let json = new JsonPickleFormatProvider(indent, omitHeader)
         { 
-            inherit FsPicklerTextSerializer(json, ?typeConverter = typeConverter)
+            inherit FsPicklerTextSerializer(json, ?typeConverter = typeConverter, ?picklerResolver = picklerResolver)
             format = json    
         }
 
@@ -61,8 +62,8 @@ type JsonSerializer =
 /// <summary>
 ///     BSON pickler instance.
 /// </summary>
-type BsonSerializer([<O;D(null)>] ?typeConverter) =
-    inherit FsPicklerSerializer(new BsonPickleFormatProvider(), ?typeConverter = typeConverter)
+type BsonSerializer([<O;D(null)>] ?typeConverter, [<O;D(null)>] ?picklerResolver) =
+    inherit FsPicklerSerializer(new BsonPickleFormatProvider(), ?typeConverter = typeConverter, ?picklerResolver = picklerResolver)
 
 
 /// FsPickler static methods.
@@ -74,12 +75,13 @@ type FsPickler =
     /// <param name="indent">indent out Json pickles.</param>
     /// <param name="omitHeader">omit FsPickler header in Json pickles.</param>
     /// <param name="typeConverter">specify a custom type name converter.</param>
-    static member CreateJsonSerializer([<O;D(null)>] ?indent, [<O;D(null)>] ?omitHeader, [<O;D(null)>] ?typeConverter) = 
-        new JsonSerializer(?indent = indent, ?omitHeader = omitHeader, ?typeConverter = typeConverter)
+    /// <param name="picklerResolver">Specify a custom pickler resolver/cache for serialization. Defaults to the singleton pickler cache.</param>
+    static member CreateJsonSerializer([<O;D(null)>] ?indent, [<O;D(null)>] ?omitHeader, [<O;D(null)>] ?typeConverter, [<O;D(null)>] ?picklerResolver) = 
+        new JsonSerializer(?indent = indent, ?omitHeader = omitHeader, ?typeConverter = typeConverter, ?picklerResolver = picklerResolver)
 
     /// <summary>
     ///     Initializes a new FsPickler serializer instance that uses the BSON format.
     /// </summary>
     /// <param name="typeConverter">specify a custom type name converter.</param>
-    static member CreateBsonSerializer([<O;D(null)>] ?typeConverter) = 
-        new BsonSerializer(?typeConverter = typeConverter)
+    static member CreateBsonSerializer([<O;D(null)>] ?typeConverter, [<O;D(null)>] ?picklerResolver) = 
+        new BsonSerializer(?typeConverter = typeConverter, ?picklerResolver = picklerResolver)
