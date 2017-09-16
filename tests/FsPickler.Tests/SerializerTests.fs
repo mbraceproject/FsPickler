@@ -140,11 +140,8 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
     [<Test; Category("Primitives")>]
     member __.``1. Primitive: System.Guid`` () = Check.QuickThrowOnFail<Guid> testEquals
 
-#if NET35
-#else
     [<Test; Category("Primitives")>]
     member __.``1. Primitive: bigint`` () = Check.QuickThrowOnFail<bigint> testEquals
-#endif
 
     [<Test; Category("Bytes")>]
     member __.``1. Primitive: byte []`` () = testEquals (null : byte []) ; Check.QuickThrowOnFail<byte []> testEquals
@@ -778,8 +775,6 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
     [<Test ; Category("Custom types")>] 
     member __.``6. Custom: Generic ISerializable class`` () = testEquals <| GenericISerializableClass<int * string>(42, "fortyTwo", (42, "fortyTwo"))
 
-#if NET35
-#else
     [<Test ; Category("Custom types")>] 
     member __.``6. Custom: ISerializable class with IObjectReference template`` () = 
         let x = new ObjRef1(0)
@@ -809,7 +804,6 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
         let x = new DataContractObjRef(0)
         let x' = testRoundtrip x
         x'.Value |> should equal 42
-#endif
 
     [<Test ; Category("Custom types")>] 
     member __.``6. Custom: Data Contract class`` () =

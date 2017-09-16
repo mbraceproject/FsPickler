@@ -56,9 +56,7 @@ type PicklerGenerator =
         | Shape.TimeSpan -> new TimeSpanPickler() :> _
         | Shape.ByteArray -> ArrayPickler.CreateByteArrayPickler() :> _
         | Shape.Unit -> new UnitPickler() :> _
-#if !NET35
         | :? TypeShape<bigint> -> new BigIntPickler() :> _
-#endif
         | :? TypeShape<System.Object> -> CompositePickler.ObjectPickler :> _
         | :? TypeShape<AssemblyInfo> -> ReflectionPicklers.CreateAssemblyInfoPickler() :> _
         | :? TypeShape<AssemblyName> -> ReflectionPicklers.CreateAssemblyNamePickler resolver :> _

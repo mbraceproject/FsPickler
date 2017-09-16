@@ -96,11 +96,7 @@ module private ISerializableUtils =
         sI
 
     let inline cloneSerializationInfo<'T> (c : CloneState) (sI : SerializationInfo) =
-#if NET35
-        let sI' = new SerializationInfo(typeof<'T>, new FormatterConverter())
-#else
         let sI' = new SerializationInfo(sI.ObjectType, new FormatterConverter())
-#endif
         let enum = sI.GetEnumerator()
         while enum.MoveNext() do
             let se = enum.Current
@@ -189,9 +185,6 @@ type internal ISerializablePickler =
         CompositePickler.Create(reader, writer, cloner, accepter, PicklerInfo.ISerializable)
 
     static member CreateObjectReferencePickler<'T when 'T :> ISerializable> () : Pickler<'T> =
-#if NET35
-        raise <| new NonSerializableTypeException(typeof<'T>, "IObjectReference not supported in .net35 builds. Please implement a (SerializationInfo, StreamingContext) constructor.")
-#else
         let allMethods = typeof<'T>.GetMethods(allMembers)
         let onSerializing = allMethods |> getSerializationMethods<OnSerializingAttribute> |> wrapDelegate<Action<'T, StreamingContext>>
         let onSerialized = allMethods |> getSerializationMethods<OnSerializedAttribute> |> wrapDelegate<Action<'T, StreamingContext>>
@@ -259,7 +252,6 @@ type internal ISerializablePickler =
             acceptSerializationInfo v sI
 
         CompositePickler.Create(reader, writer, cloner, accepter, PicklerInfo.ISerializable)
-#endif
 
     static member CreateNonISerializableExceptionPickler<'Exn when 'Exn :> exn>(resolver : IPicklerResolver) =
         let exnFieldPickler = ClassFieldPickler.Create<'Exn> resolver :?> CompositePickler<'Exn>

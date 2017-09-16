@@ -168,8 +168,6 @@ type TimeSpanPickler () =
     override __.Read (reader : ReadState) (tag : string) =
         reader.Formatter.ReadTimeSpan tag
 
-#if !NET35
-
 [<AutoSerializable(false)>]
 type BigIntPickler () =
     inherit PrimitivePickler<bigint> ()
@@ -179,8 +177,6 @@ type BigIntPickler () =
 
     override __.Read (reader : ReadState) (tag : string) =
         reader.Formatter.ReadBigInteger tag
-
-#endif
 
 [<AutoSerializable(false)>]
 type DBNullPickler () =

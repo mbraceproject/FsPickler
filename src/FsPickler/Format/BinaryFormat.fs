@@ -106,7 +106,7 @@ module private BinaryFormatUtils =
 [<AutoSerializable(false)>]
 type BinaryPickleWriter internal (stream : Stream, encoding : Encoding, leaveOpen : bool, forceLittleEndian : bool) =
 
-#if NET35 || NET40
+#if NET40
     let bw = new BinaryWriter(stream, encoding)
 #else
     let bw = new BinaryWriter(stream, encoding, leaveOpen)
@@ -181,12 +181,10 @@ type BinaryPickleWriter internal (stream : Stream, encoding : Encoding, leaveOpe
         member __.WriteTimeSpan _ value = bw.Write value.Ticks
         member __.WriteGuid _ value = bw.Write (value.ToByteArray())
 
-#if !NET35
         member __.WriteBigInteger _ value = 
             let data = value.ToByteArray()
             bw.Write data.Length
             bw.Write data
-#endif
 
         member __.WriteBytes _ value = 
             if isNull value then bw.Write -1
@@ -201,7 +199,7 @@ type BinaryPickleWriter internal (stream : Stream, encoding : Encoding, leaveOpe
         member __.WritePrimitiveArray _ array = blockCopy(array, stream)
 
         member __.Dispose () = 
-#if NET35 || NET40
+#if NET40
             if leaveOpen then bw.Flush()
             else bw.Close()
 #else
@@ -214,7 +212,7 @@ type BinaryPickleWriter internal (stream : Stream, encoding : Encoding, leaveOpe
 [<AutoSerializable(false)>]
 type BinaryPickleReader internal (stream : Stream, encoding : Encoding, leaveOpen : bool) =
 
-#if NET35 || NET40
+#if NET40
     let br = new BinaryReader(stream, encoding)
 #else
     let br = new BinaryReader(stream, encoding, leaveOpen)
@@ -225,7 +223,7 @@ type BinaryPickleReader internal (stream : Stream, encoding : Encoding, leaveOpe
     interface IPickleFormatReader with
             
         member __.Dispose () = 
-#if NET35 || NET40
+#if NET40
             if not leaveOpen then br.Close()
 #else
             br.Dispose ()
@@ -321,12 +319,10 @@ type BinaryPickleReader internal (stream : Stream, encoding : Encoding, leaveOpe
         member __.ReadTimeSpan _ = let ticks = br.ReadInt64() in TimeSpan(ticks)
         member __.ReadGuid _ = let bytes = br.ReadBytes(16) in Guid(bytes)
 
-#if !NET35
         member __.ReadBigInteger _ =
             let length = br.ReadInt32()
             let data = br.ReadBytes(length)
             new System.Numerics.BigInteger(data)
-#endif
 
         member __.ReadBytes _ = 
             let length = br.ReadInt32() 
