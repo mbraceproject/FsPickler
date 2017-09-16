@@ -33,19 +33,33 @@ let resolvePickler (registry : ICustomPicklerRegistry) (resolver : IPicklerResol
         // step 2: create an uninitialized pickler instance and register to the local cache
         let p0 = PicklerGenerator.CreateUninitialized shape
         mkEarlyBinding p0
+        
+        // get base types and implemented interfaces
+        let baseAndInterfaceTypes = [
+            let rec getBaseTypes (t : Type) = seq {
+                if t.BaseType <> null then
+                    yield t.BaseType
+                    yield! getBaseTypes t.BaseType
+            }
+            yield! getBaseTypes t
+            yield! t.GetInterfaces()
+        ]
 
         // step 3: subtype pickler resolution
         let result =
-            if isNotNull t.BaseType then 
-                try 
-                    let baseP = resolver.Resolve t.BaseType
-                    if baseP.UseWithSubtypes then
-                        let pickler = PicklerGenerator.Cast shape baseP
-                        Some pickler
-                    else
-                        None
+            if not (Seq.isEmpty baseAndInterfaceTypes) then
+                let baseP = baseAndInterfaceTypes |> Seq.tryPick (fun baseType -> 
+                    try 
+                        let baseP = resolver.Resolve baseType
+                        if baseP.UseWithSubtypes then
+                            let pickler = PicklerGenerator.Cast shape baseP
+                            Some pickler
+                        else
+                            None
 
-                with :? NonSerializableTypeException -> None
+                    with :? NonSerializableTypeException -> None
+                )
+                baseP
             else
                 None
 
