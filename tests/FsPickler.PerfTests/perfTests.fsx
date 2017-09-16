@@ -9,7 +9,7 @@
 #r "FsPickler.dll"
 #r "FsPickler.PerfTests.dll"
 
-#load "../../packages/FSharp.Charting/FSharp.Charting.fsx"
+#load "../../packages/test/FSharp.Charting/lib/net45/FSharp.Charting.fsx"
 
 open System
 open System.Drawing

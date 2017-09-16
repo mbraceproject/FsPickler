@@ -407,6 +407,8 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
 
     [<Test; Category("Generic BCL Types")>]
     member __.``4. BCL: System.Collections.Generic.HashSet`` () =
+        if runsOnMono then () else // skip due to mono 5.2 bug
+
         let testSet (data : seq<'T>) =
             let data = data |> Seq.distinct |> Seq.toList
             let d = new HashSet<'T>(data)

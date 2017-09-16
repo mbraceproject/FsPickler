@@ -21,8 +21,8 @@ plot "F# list of Tuple<int, string> (1000 elements)" <| List.init 1000 (fun i ->
 plot "3D array of System.Double (100x100x100)" <| Array3D.init 100 100 100 (fun i j k -> i + 100 * j + 100000 * k)
 plot "Exception with stacktrace" <| mkExceptionWithStackTrace()
 plot "F# Quotation" <@ let rec f n = if n <= 1 then n else f (n-1) + f(n-2) in f 10 @>
-plot "Simple POCO" <| SimplePoco()
-plot "Dictionary of POCOs (1000 entries)" (Seq.init 1000 (fun i -> (i, SimplePoco())) |> dict)
+plot "Simple POCO" <| SimplePoco.Create()
+plot "Dictionary of POCOs (1000 entries)" (Seq.init 1000 (fun i -> (i, SimplePoco.Create())) |> dict)
 plot "Binary tree (balanced, depth = 10)" <| mkClassTree 10
 
 
@@ -35,6 +35,6 @@ report "F# list of Tuple<int, string> (1000 elements)" <| List.init 1000 (fun i 
 report "3D array of System.Double (100x100x100)" <| Array3D.init 100 100 100 (fun i j k -> i + 100 * j + 100000 * k)
 report "Exception with stacktrace" <| mkExceptionWithStackTrace()
 report "F# Quotation" <@ let rec f n = if n <= 1 then n else f (n-1) + f(n-2) in f 10 @>
-report "Simple POCO" <| SimplePoco()
-report "Dictionary of POCOs (1000 entries)" (Seq.init 1000 (fun i -> (i, SimplePoco())) |> dict)
+report "Simple POCO" <| SimplePoco.Create()
+report "Dictionary of POCOs (1000 entries)" (Seq.init 1000 (fun i -> (i, SimplePoco.Create())) |> dict)
 report "Binary tree (balanced, depth = 10)" <| mkClassTree 10
