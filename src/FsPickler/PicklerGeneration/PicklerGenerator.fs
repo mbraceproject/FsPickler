@@ -10,7 +10,6 @@ open System.Reflection
 open System.Runtime.Serialization
 
 open TypeShape
-open TypeShape_ISerializableExtensions
 
 open MBrace.FsPickler
 open MBrace.FsPickler.Reflection
@@ -82,25 +81,13 @@ type PicklerGenerator =
         | Shape.Array s ->
             s.Accept {
                 new IArrayVisitor<Pickler> with
-                    member __.Visit<'T> () = ArrayPickler.Create<'T>(resolver) :> _
-            }
-
-        | Shape.Array2D s ->
-            s.Accept {
-                new IArray2DVisitor<Pickler> with
-                    member __.Visit<'T> () = ArrayPickler.Create2D<'T>(resolver) :> _
-            }
-
-        | Shape.Array3D s ->
-            s.Accept {
-                new IArray3DVisitor<Pickler> with
-                    member __.Visit<'T> () = ArrayPickler.Create3D<'T>(resolver) :> _
-            }
-
-        | Shape.Array4D s ->
-            s.Accept {
-                new IArray4DVisitor<Pickler> with
-                    member __.Visit<'T> () = ArrayPickler.Create4D<'T>(resolver) :> _
+                    member __.Visit<'T> rank = 
+                        match rank with
+                        | 1 -> ArrayPickler.Create<'T>(resolver) :> _
+                        | 2 -> ArrayPickler.Create2D<'T>(resolver) :> _
+                        | 3 -> ArrayPickler.Create3D<'T>(resolver) :> _
+                        | 4 -> ArrayPickler.Create4D<'T>(resolver) :> _
+                        | _ -> raise <| NonSerializableTypeException(shape.Type, "Array ranks more than 4 are not supported.")
             }
 
         | Shape.Tuple1 s ->
@@ -243,7 +230,12 @@ type PicklerGenerator =
             // NB: DataContractAttribute for enum types handled by enum pickler
             s.Accept { 
                 new IEnumVisitor<Pickler> with
-                    member __.Visit<'E, 'U when 'E : enum<'U>>() = EnumPickler.Create<'E, 'U>(resolver) :> _
+                    member __.Visit<'E, 'U when 'E : enum<'U> 
+                                            and 'E : struct 
+                                            and 'E :> ValueType
+                                            and 'E : (new : unit -> 'E)> () = 
+
+                        EnumPickler.Create<'E, 'U>(resolver) :> _
             }
 
         | _ when containsAttr<DataContractAttribute> shape.Type ->
@@ -291,7 +283,7 @@ type PicklerGenerator =
         | Shape.ISerializable s ->
             s.Accept {
                 new ISerializableVisitor<Pickler> with
-                    member __.Visit<'T when 'T :> ISerializable> () =
+                    member __.Visit<'T when 'T :> ISerializable> (ss:ShapeISerializable<'T>): Pickler =
                         match tryGetISerializableCtor typeof<'T> with
                         | Some _ -> ISerializablePickler.Create<'T>() :> _
                         | None -> ISerializablePickler.CreateObjectReferencePickler<'T>() :> _

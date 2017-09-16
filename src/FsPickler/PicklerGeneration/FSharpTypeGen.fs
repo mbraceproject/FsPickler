@@ -27,11 +27,19 @@ type internal FsUnionPickler =
         if not (isReflectionSerializable ty || PicklerPluginRegistry.IsDeclaredSerializable ty) then
             raise <| new NonSerializableTypeException(ty)
 
-        // Only cache by reference if typedef introduces custom or reference equality semantics
-        let isCacheByRef = 
-            containsAttr<CustomEqualityAttribute> ty 
-            || containsAttr<ReferenceEqualityAttribute> ty
+        let isStructUnion = typeof<'Union>.IsValueType
 
+        // Only cache by reference if typedef introduces custom or reference equality semantics
+        let isCacheByRef =
+            if isStructUnion then false 
+            else
+                containsAttr<CustomEqualityAttribute> ty 
+                || containsAttr<ReferenceEqualityAttribute> ty
+
+        let ucis = FSharpType.GetUnionCases(ty, allMembers)
+        let tagSerializer = new UnionCaseSerializationHelper(ucis |> Array.map (fun u -> u.Name))
+
+#if EMIT_IL
         // resolve tag reader methodInfo
         let tagReaderMethod =
             match FSharpValue.PreComputeUnionTagMemberInfo(ty, allMembers) with
@@ -40,10 +48,6 @@ type internal FsUnionPickler =
             | :? MethodInfo as m -> m
             | _ -> invalidOp "unexpected error"
 
-        let ucis = FSharpType.GetUnionCases(ty, allMembers)
-        let tagSerializer = new UnionCaseSerializationHelper(ucis |> Array.map (fun u -> u.Name))
-
-#if EMIT_IL
         let caseInfo =
             ucis
             |> Array.sortBy (fun uci -> uci.Tag)
@@ -64,7 +68,7 @@ type internal FsUnionPickler =
                 let labels = Array.init caseInfo.Length (fun _ -> ilGen.DefineLabel())
 
                 // read union tag
-                union.Load ()
+                if isStructUnion then union.LoadAddress() else union.Load()
                 ilGen.EmitCall(OpCodes.Call, tagReaderMethod, null)
                 tag.Store ()
 
@@ -133,7 +137,7 @@ type internal FsUnionPickler =
                 let labels = Array.init caseInfo.Length (fun _ -> ilGen.DefineLabel())
 
                 // read union tag
-                source.Load ()
+                if isStructUnion then source.LoadAddress() else source.Load ()
                 ilGen.EmitCall(OpCodes.Call, tagReaderMethod, null)
                 tag.Store ()
 
@@ -165,7 +169,7 @@ type internal FsUnionPickler =
                 let labels = Array.init caseInfo.Length (fun _ -> ilGen.DefineLabel())
 
                 // read union tag
-                union.Load ()
+                if isStructUnion then union.LoadAddress() else union.Load ()
                 ilGen.EmitCall(OpCodes.Call, tagReaderMethod, null)
                 tag.Store ()
 
@@ -194,7 +198,7 @@ type internal FsUnionPickler =
         let cloner c t = clonerDele.Invoke(picklerss, c, t)
         let accepter v t = accepterDele.Invoke(picklerss, v, t)
 #else
-        let tagReader = Delegate.CreateDelegate<Func<'Union,int>> tagReaderMethod
+        let tagReader = FSharpValue.PreComputeUnionTagReader(ty, allMembers)
 
         let caseInfo =
             ucis
@@ -207,7 +211,7 @@ type internal FsUnionPickler =
                 ctor, reader, fields, tags, picklers)
 
         let writer (w : WriteState) (_ : string) (u : 'Union) =
-            let tag = tagReader.Invoke u
+            let tag = tagReader u
             tagSerializer.WriteTag(w.Formatter, tag)
             let _,reader,_,tags,picklers = caseInfo.[tag]
             let values = reader u
@@ -224,7 +228,7 @@ type internal FsUnionPickler =
             ctor values |> fastUnbox<'Union>
 
         let cloner (c : CloneState) (u : 'Union) =
-            let tag = tagReader.Invoke u
+            let tag = tagReader u
             let ctor,reader,_,_,picklers = caseInfo.[tag]
             let values = reader u
             let values' = Array.zeroCreate<obj> values.Length
@@ -234,7 +238,7 @@ type internal FsUnionPickler =
             ctor values' |> fastUnbox<'Union>
 
         let accepter (v : VisitState) (u : 'Union) =
-            let tag = tagReader.Invoke u
+            let tag = tagReader u
             let _,reader,_,_,picklers = caseInfo.[tag]
             let values = reader u
             for i = 0 to picklers.Length - 1 do
@@ -252,6 +256,7 @@ type internal FsRecordPickler =
         if not (isReflectionSerializable ty || PicklerPluginRegistry.IsDeclaredSerializable ty) then
             raise <| new NonSerializableTypeException(ty)
 
+        let isStructRecord = ty.IsValueType
         let fields = FSharpType.GetRecordFields(ty, allMembers)
         let ctor = FSharpValue.PreComputeRecordConstructorInfo(ty, allMembers)
 
@@ -260,10 +265,13 @@ type internal FsRecordPickler =
 
         // Only cache by reference if typedef introduces custom or reference equality semantics
         let isCacheByRef = 
-            containsAttr<CustomEqualityAttribute> ty ||
-            containsAttr<ReferenceEqualityAttribute> ty
+            if isStructRecord then false 
+            else
+                containsAttr<CustomEqualityAttribute> ty ||
+                containsAttr<ReferenceEqualityAttribute> ty
 
 #if EMIT_IL
+
         let writer =
             if fields.Length = 0 then fun _ _ _ -> ()
             else

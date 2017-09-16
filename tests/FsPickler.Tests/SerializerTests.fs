@@ -270,12 +270,21 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
         let bs = [|1uy .. 100uy|]
         let ys,zs = testRoundtrip(bs,bs)
         obj.ReferenceEquals(ys,zs) |> should equal refEq
-
+        
     [<Test; Category("Generic BCL Types")>]
     member __.``3. Array: int * string`` () = __.CheckArray<int * string> ()
 
     [<Test; Category("Generic BCL Types")>]
     member __.``3. Array: string * (int * decimal)`` () = __.CheckArray<int * string> ()
+
+    [<Test; Category("Generic BCL Types")>]
+    member __.``3. Array: struct(int * string)`` () = __.CheckArray<struct(int * string)> ()
+    
+    [<Test; Category("Generic BCL Types")>]
+    member __.``3. Array: struct(string * (int * decimal))`` () = __.CheckArray<struct(string * (int * decimal))> ()
+    
+    [<Test; Category("Generic BCL Types")>]
+    member __.``3. Array: struct(string * struct(int * decimal))`` () = __.CheckArray<struct(string * struct (int * decimal))> ()
 
 
     //
@@ -297,11 +306,43 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
         Check.QuickThrowOnFail<string * byte * TimeSpan * Guid * int * uint64 * decimal * int * int> testEquals
 
     [<Test; Category("Generic BCL Types")>]
+    member __.``4. BCL: struct tuple simple`` () =
+        Check.QuickThrowOnFail<ValueTuple<string>> testEquals
+        Check.QuickThrowOnFail<struct(string * byte)> testEquals
+        Check.QuickThrowOnFail<struct(string * byte * TimeSpan)> testEquals
+        Check.QuickThrowOnFail<struct(string * byte * TimeSpan * Guid)> testEquals
+        Check.QuickThrowOnFail<struct(string * byte * TimeSpan * Guid * int)> testEquals
+        Check.QuickThrowOnFail<struct(string * byte * TimeSpan * Guid * int * uint64)> testEquals
+        Check.QuickThrowOnFail<struct(string * byte * TimeSpan * Guid * int * uint64 * decimal)> testEquals
+        Check.QuickThrowOnFail<struct(string * byte * TimeSpan * Guid * int * uint64 * decimal * int)> testEquals
+        Check.QuickThrowOnFail<struct(string * byte * TimeSpan * Guid * int * uint64 * decimal * int * int)> testEquals
+
+    [<Test; Category("Generic BCL Types")>]
     member __.``4. BCL: tuple nested`` () =
         Check.QuickThrowOnFail<int * (string * decimal)> testEquals
         Check.QuickThrowOnFail<(int * (bool * string)) * (string * int16)> testEquals
         Check.QuickThrowOnFail<(int * (bool * (sbyte * string * uint32) * (string * string)))> testEquals
 
+        
+    [<Test; Category("Generic BCL Types")>]
+    member __.``4. BCL: struct tuple nested`` () =
+        Check.QuickThrowOnFail<struct(int * struct (string * decimal))> testEquals
+        Check.QuickThrowOnFail<struct ((int * struct (bool * string)) * struct (string * int16))> testEquals
+        Check.QuickThrowOnFail<struct (int * struct (bool * struct (sbyte * string * uint32) * struct (string * string)))> testEquals
+
+    
+    [<Test; Category("Generic BCL Types")>]
+    member __.``4. BCL: tuple/struct tuple mixed`` () =
+        Check.QuickThrowOnFail<int * struct(string * decimal)> testEquals
+        Check.QuickThrowOnFail<struct (int * (string * decimal))> testEquals
+        Check.QuickThrowOnFail<struct (int * (bool * string)) * (string * int16)> testEquals
+        Check.QuickThrowOnFail<struct (int * (bool * string)) * struct (string * int16)> testEquals
+        Check.QuickThrowOnFail<(int * struct (bool * string)) * (string * int16)> testEquals
+        Check.QuickThrowOnFail<(int * (bool * (sbyte * string * uint32) * struct (string * string)))> testEquals
+        Check.QuickThrowOnFail<struct (int * (bool * (sbyte * string * uint32) * (string * string)))> testEquals
+        Check.QuickThrowOnFail<(int * struct (bool * (sbyte * string * uint32) * (string * string)))> testEquals
+        Check.QuickThrowOnFail<(int * (bool * struct (sbyte * string * uint32) * (string * string)))> testEquals
+        Check.QuickThrowOnFail<(int * (bool * struct (sbyte * string * uint32) * struct (string * string)))> testEquals
 
     // exceptions
 
@@ -536,11 +577,17 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
     member __.``5. Object: large pair sequence`` () =
         let pairs = seq { for i in 1 .. 1000000 -> string i,i }
         __.TestSequenceRoundtrip pairs
-
+        
     [<Test; Category("FsPickler Generic tests")>]
     member __.``5. Object: record sequence`` () =
         let records = seq { for i in 1 .. 10000 -> { Int = i ; String = string i ; Tuple = (i, "const") } }
         __.TestSequenceRoundtrip records
+
+    [<Test; Category("FsPickler Generic tests")>]
+    member __.``5. Object: struct record sequence`` () =
+        let records = seq { for i in 1 .. 10000 -> { SInt = i ; SString = string i ; STuple = (i, "const") } }
+        __.TestSequenceRoundtrip records
+
 
     [<Test; Category("FsPickler Generic tests")>]
     member __.``5. Object: rec sequence`` () =
@@ -877,6 +924,10 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
     [<Test; Category("FSharp type tests")>]
     member __.``7. FSharp: simple union`` () =
         Check.QuickThrowOnFail<SimpleDU> testEquals
+        
+    [<Test; Category("FSharp type tests")>]
+    member __.``7. FSharp: struct union`` () =
+        Check.QuickThrowOnFail<StructDU> testEquals
 
     [<Test; Category("FSharp type tests")>]
     member __.``7. FSharp: recursive union`` () =
@@ -915,10 +966,14 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
 
         serializer.UnPickle(data, pickler = (getTreeForestPicklers Pickler.int |> fst))
         |> should equal (nTree 6)
-
+        
     [<Test; Category("FSharp type tests")>]
     member __.``7. FSharp: record`` () = 
         Check.QuickThrowOnFail<Record> testEquals
+        
+    [<Test; Category("FSharp type tests")>]
+    member __.``7. FSharp: struct record`` () = 
+        Check.QuickThrowOnFail<StructRecord> testEquals
 
     [<Test; Category("FSharp type tests")>]
     member __.``7. FSharp: cyclic record`` () = 

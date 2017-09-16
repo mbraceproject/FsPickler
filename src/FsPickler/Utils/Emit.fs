@@ -35,7 +35,7 @@ module internal Emit =
 
         member e.LoadAddress () =
             match env with
-            | Arg i -> ilGen.Emit (OpCodes.Ldarg_S, i)
+            | Arg i -> ilGen.Emit (OpCodes.Ldarga_S, i)
             | LocalVar v -> ilGen.Emit(OpCodes.Ldloca, v)
 
         member e.Store () =
