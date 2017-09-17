@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8"/>
-    <title>NonSerializableTypeException - FsPickler</title>
+    <title>ICustomPicklerRegistry - FsPickler</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <meta name="description" content=""/>
     <meta name="author" content="Eirik Tsarpalis"/>
@@ -35,58 +35,14 @@
 
 
 
-<h1>NonSerializableTypeException</h1>
+<h1>ICustomPicklerRegistry</h1>
 <p>
   <span>Namespace: MBrace.FsPickler</span><br />
 </p>
 <div class="xmldoc">
-<p>raised by pickler generator whenever an unsupported type is encountered in the type graph.</p>
+<p>Abstraction for specifying user-supplied custom picklers</p>
 
 </div>
-  <h3>Record Fields</h3>
-  <table class="table table-bordered member-list">
-    <thead>
-      <tr><td>Record Field</td><td>Description</td></tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td class="member-name">
-
-          <code onmouseout="hideTip(event, '266', 266)" onmouseover="showTip(event, '266', 266)">
-            containedNonSerializableField
-          </code>
-          <div class="tip" id="266">
-            <strong>Signature:</strong> Type option<br />
-                      </div>
-        </td>
-        <td class="xmldoc">
-            <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/Pickler/Types.fs#L306-306" class="github-link">
-              <img src="../content/img/github.png" class="normal" />
-              <img src="../content/img/github-blue.png" class="hover" />
-            </a>
-          
-        </td>
-      </tr>
-      <tr>
-        <td class="member-name">
-
-          <code onmouseout="hideTip(event, '267', 267)" onmouseover="showTip(event, '267', 267)">
-            Type
-          </code>
-          <div class="tip" id="267">
-            <strong>Signature:</strong> Type<br />
-                      </div>
-        </td>
-        <td class="xmldoc">
-            <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/Pickler/Types.fs#L305-305" class="github-link">
-              <img src="../content/img/github.png" class="normal" />
-              <img src="../content/img/github-blue.png" class="hover" />
-            </a>
-          
-        </td>
-      </tr>
-    </tbody>
-  </table>
   <h3>Instance members</h3>
   <table class="table table-bordered member-list">
     <thead>
@@ -96,22 +52,22 @@
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '268', 268)" onmouseover="showTip(event, '268', 268)">
-            NonSerializableType
+          <code onmouseout="hideTip(event, '173', 173)" onmouseover="showTip(event, '173', 173)">
+            GetRegistration(arg1)
           </code>
-          <div class="tip" id="268">
-            <strong>Signature:</strong> Type<br />
+          <div class="tip" id="173">
+            <strong>Signature:</strong> Type -&gt; CustomPicklerRegistration<br />
+              <strong>Modifiers:</strong> abstract<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/Pickler/Types.fs#L309-309" class="github-link">
+            <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/PicklerGeneration/PicklerRegistry.fs#L9-9" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          <p>The nested field that caused this type to be non-serializable</p>
+          <p>Look up pickler registration for particular type</p>
 
 
-              <p>CompiledName: <code>get_NonSerializableType</code></p>
         </td>
       </tr>
     </tbody>

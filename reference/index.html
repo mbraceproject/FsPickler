@@ -111,6 +111,30 @@ the static method 'TypeDef.CreatePickler : IPicklerResolver -&gt; Pickler<TypeDe
         </tr>
         <tr>
           <td class="type-name">
+            <a href="mbrace-fspickler-custompicklerregistration.html">CustomPicklerRegistration</a>
+          </td>
+          <td class="xmldoc"><p>Pickler registration for particular type</p>
+
+</td>
+        </tr>
+        <tr>
+          <td class="type-name">
+            <a href="mbrace-fspickler-custompicklerregistry.html">CustomPicklerRegistry</a>
+          </td>
+          <td class="xmldoc"><p>Type for appending user-supplied pickler registrations</p>
+
+</td>
+        </tr>
+        <tr>
+          <td class="type-name">
+            <a href="mbrace-fspickler-emptypicklerregistry.html">EmptyPicklerRegistry</a>
+          </td>
+          <td class="xmldoc"><p>A pickler registry with no items</p>
+
+</td>
+        </tr>
+        <tr>
+          <td class="type-name">
             <a href="mbrace-fspickler-fspickler.html">FsPickler</a>
           </td>
           <td class="xmldoc"><p>FsPickler static methods.</p>
@@ -138,6 +162,14 @@ the static method 'TypeDef.CreatePickler : IPicklerResolver -&gt; Pickler<TypeDe
             <a href="mbrace-fspickler-fspicklertextserializer.html">FsPicklerTextSerializer</a>
           </td>
           <td class="xmldoc"><p>An abstract class containing the text-based serialization API.</p>
+
+</td>
+        </tr>
+        <tr>
+          <td class="type-name">
+            <a href="mbrace-fspickler-icustompicklerregistry.html">ICustomPicklerRegistry</a>
+          </td>
+          <td class="xmldoc"><p>Abstraction for specifying user-supplied custom picklers</p>
 
 </td>
         </tr>
@@ -285,6 +317,18 @@ FSharp.Core version that is loaded in the current AppDomain</p>
             <a href="mbrace-fspickler-pickler-1.html">Pickler<'T></a>
           </td>
           <td class="xmldoc"><p>Defines serialization rules for given type parameter.</p>
+
+</td>
+        </tr>
+        <tr>
+          <td class="type-name">
+            <a href="mbrace-fspickler-picklercache.html">PicklerCache</a>
+          </td>
+          <td class="xmldoc"><p>Defines a cache of generated picklers for every type being used by a serializer.
+Picklers are being generated recursively and on-demand. Note that this is an extremely
+heavyweight object both in terms of size and cost of pickler generation. Most applications
+should just make use of the <code>PicklerCache.Instance</code> singleton. Otherwise extreme care must
+be exercised so that multiple instances of this cache are not created.</p>
 
 </td>
         </tr>

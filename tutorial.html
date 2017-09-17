@@ -490,9 +490,8 @@ The <code>IPicklerResolver</code> argument provides a handle to the pickler gene
 </code></pre></td>
 </tr>
 </table>
-<h2><a name="Runtime-pickler-registration" class="anchor" href="#Runtime-pickler-registration">Runtime pickler registration</a></h2>
-<p>As of FsPickler 1.2.5 it is possible to register custom pickler definitions at runtime.
-Consider a type declaration that has not been made serializable:</p>
+<h2><a name="Custom-pickler-registrations" class="anchor" href="#Custom-pickler-registrations">Custom pickler registrations</a></h2>
+<p>Consider a type declaration that has not been made serializable:</p>
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 <span class="l">2: </span>
 <span class="l">3: </span>
@@ -503,7 +502,57 @@ Consider a type declaration that has not been made serializable:</p>
 </code></pre></td>
 </tr>
 </table>
-<p>It is now possible to declare and register a pickler factory at a separate location</p>
+<p>Attempting to generate a pickler for the particular type</p>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="i">FsPickler</span><span class="o">.</span><span class="i">GeneratePickler</span><span class="o">&lt;</span><span class="i">NonSerializable</span><span class="o">&gt;</span>()
+</code></pre></td>
+</tr>
+</table>
+<p>would result in an error:</p>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+<span class="l">4: </span>
+<span class="l">5: </span>
+<span class="l">6: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">`</span><span class="k">`</span><span class="k">`</span><span class="i">text</span>
+<span class="i">MBrace</span><span class="o">.</span><span class="i">FsPickler</span><span class="o">.</span><span class="i">NonSerializableTypeException</span><span class="o">:</span> <span class="i">Type</span> <span class="o">&#39;</span><span class="i">FSI_0012</span><span class="o">+</span><span class="i">NonSerializable&#39;</span> <span class="i">is</span> <span class="i">not</span> <span class="i">serializable</span><span class="o">.</span>
+   <span class="i">at</span> <span class="i">MBrace</span><span class="o">.</span><span class="i">FsPickler</span><span class="o">.</span><span class="i">Utils</span><span class="o">.</span><span class="i">Exn</span><span class="k">`</span><span class="n">1.get_Value</span>() <span class="k">in</span> <span class="i">C</span><span class="o">:</span>
+   <span class="i">at</span> <span class="i">MBrace</span><span class="o">.</span><span class="i">FsPickler</span><span class="o">.</span><span class="i">PicklerCache</span><span class="o">.</span><span class="i">MBrace</span><span class="o">-</span><span class="i">FsPickler</span><span class="o">-</span><span class="i">IPicklerResolver</span><span class="o">-</span><span class="i">Resolve</span>[<span class="i">T</span>]() <span class="k">in</span> <span class="i">C</span><span class="o">:</span>
+   <span class="i">at</span> <span class="o">&lt;</span><span class="i">StartupCode</span><span class="o">$</span><span class="i">FSI_0013</span><span class="o">&gt;</span><span class="i">FSI_0013</span><span class="o">.</span><span class="i">main</span><span class="o">@</span>()
+<span class="k">`</span><span class="k">`</span><span class="k">`</span>
+</code></pre></td>
+</tr>
+</table>
+<p>This problem can be overcome by creating a custom pickler cache that accepts user-supplied pickler registrations.
+Suppose we have a custom pickler definition:</p>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
+<span class="l"> 2: </span>
+<span class="l"> 3: </span>
+<span class="l"> 4: </span>
+<span class="l"> 5: </span>
+<span class="l"> 6: </span>
+<span class="l"> 7: </span>
+<span class="l"> 8: </span>
+<span class="l"> 9: </span>
+<span class="l">10: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span class="i">mkPickler</span> (<span class="i">resolver</span> <span class="o">:</span> <span class="i">IPicklerResolver</span>) <span class="o">=</span>
+    <span class="k">let</span> <span class="i">intPickler</span> <span class="o">=</span> <span class="i">resolver</span><span class="o">.</span><span class="i">Resolve</span><span class="o">&lt;</span><span class="i">int</span><span class="o">&gt;</span> ()
+
+    <span class="k">let</span> <span class="i">writer</span> (<span class="i">w</span> <span class="o">:</span> <span class="i">WriteState</span>) (<span class="i">ns</span> <span class="o">:</span> <span class="i">NonSerializable</span>) <span class="o">=</span>
+        <span class="i">intPickler</span><span class="o">.</span><span class="i">Write</span> <span class="i">w</span> <span class="s">&quot;value&quot;</span> <span class="i">ns</span><span class="o">.</span><span class="i">Value</span>
+
+    <span class="k">let</span> <span class="i">reader</span> (<span class="i">r</span> <span class="o">:</span> <span class="i">ReadState</span>) <span class="o">=</span>
+        <span class="k">let</span> <span class="i">v</span> <span class="o">=</span> <span class="i">intPickler</span><span class="o">.</span><span class="i">Read</span> <span class="i">r</span> <span class="s">&quot;value&quot;</span> <span class="k">in</span> <span class="i">NonSerializable</span>(<span class="i">v</span>)
+
+    <span class="i">Pickler</span><span class="o">.</span><span class="i">FromPrimitives</span>(<span class="i">reader</span>, <span class="i">writer</span>)
+</code></pre></td>
+</tr>
+</table>
+<p>We can then create a custom pickler cache like so:</p>
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
 <span class="l"> 2: </span>
 <span class="l"> 3: </span>
@@ -517,46 +566,26 @@ Consider a type declaration that has not been made serializable:</p>
 <span class="l">11: </span>
 <span class="l">12: </span>
 </pre></td>
-<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span class="i">mkPickler</span> (<span class="i">resolver</span> <span class="o">:</span> <span class="i">IPicklerResolver</span>) <span class="o">=</span>
-    <span class="k">let</span> <span class="i">intP</span> <span class="o">=</span> <span class="i">resolver</span><span class="o">.</span><span class="i">Resolve</span><span class="o">&lt;</span><span class="i">int</span><span class="o">&gt;</span> ()
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="c">// 1. Create a pickler registry and make custom pickler registrations</span>
+<span class="k">let</span> <span class="i">registry</span> <span class="o">=</span> <span class="k">new</span> <span class="i">CustomPicklerRegistry</span>()
+<span class="k">do</span> <span class="i">registry</span><span class="o">.</span><span class="i">RegisterFactory</span> <span class="i">mkPickler</span>
 
-    <span class="k">let</span> <span class="i">writer</span> (<span class="i">w</span> <span class="o">:</span> <span class="i">WriteState</span>) (<span class="i">ns</span> <span class="o">:</span> <span class="i">NonSerializable</span>) <span class="o">=</span>
-        <span class="i">intP</span><span class="o">.</span><span class="i">Write</span> <span class="i">w</span> <span class="s">&quot;value&quot;</span> <span class="i">ns</span><span class="o">.</span><span class="i">Value</span>
+<span class="c">// 2. Construct a new pickler cache</span>
+<span class="k">let</span> <span class="i">cache</span> <span class="o">=</span> <span class="i">PicklerCache</span><span class="o">.</span><span class="i">FromCustomPicklerRegistry</span> <span class="i">registry</span>
 
-    <span class="k">let</span> <span class="i">reader</span> (<span class="i">r</span> <span class="o">:</span> <span class="i">ReadState</span>) <span class="o">=</span>
-        <span class="k">let</span> <span class="i">v</span> <span class="o">=</span> <span class="i">intP</span><span class="o">.</span><span class="i">Read</span> <span class="i">r</span> <span class="s">&quot;value&quot;</span> <span class="k">in</span> <span class="k">new</span> <span class="i">NonSerializable</span>(<span class="i">v</span>)
+<span class="c">// 3. Pass the new cache to a serializer instance</span>
+<span class="k">let</span> <span class="i">jsonSer</span> <span class="o">=</span> <span class="i">FsPickler</span><span class="o">.</span><span class="i">CreateJsonSerializer</span>(<span class="i">picklerResolver</span> <span class="o">=</span> <span class="i">cache</span>)
 
-    <span class="i">Pickler</span><span class="o">.</span><span class="i">FromPrimitives</span>(<span class="i">reader</span>, <span class="i">writer</span>) 
-
-<span class="i">FsPickler</span><span class="o">.</span><span class="i">RegisterPicklerFactory</span> <span class="i">mkPickler</span>
+<span class="c">// 4. Serialize the custom type</span>
+<span class="i">jsonSer</span><span class="o">.</span><span class="i">PickleToString</span> (<span class="i">NonSerializable</span> <span class="n">42</span>)
 </code></pre></td>
 </tr>
 </table>
-<p>When resolving a pickler of this type in the future, the user-supplied implementation will be used:</p>
-<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
-<span class="l">2: </span>
-<span class="l">3: </span>
-</pre></td>
-<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span class="i">pickler</span> <span class="o">=</span> <span class="i">FsPickler</span><span class="o">.</span><span class="i">GeneratePickler</span><span class="o">&lt;</span><span class="i">NonSerializable</span><span class="o">&gt;</span> ()
-
-<span class="i">pickler</span><span class="o">.</span><span class="i">PicklerInfo</span> <span class="c">// PicklerInfo.UserDefined</span>
-</code></pre></td>
-</tr>
-</table>
-<p>Note that factory registrations need to be performed <em>before</em> FsPickler uses their types at all in the current AppDomain:</p>
-<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
-<span class="l">2: </span>
-<span class="l">3: </span>
-</pre></td>
-<td class="snippet"><pre class="fssnip"><code lang="text">System.InvalidOperationException: A pickler for type 'FSI_0004+NonSerializable' has already been generated.
-   at &lt;StartupCode$FsPickler&gt;.$FsPickler.RegisterPicklerFactory@54.Invoke(Unit unitVar0) in c:\Users\eirik\Development\nessos\FsPickler\src\FsPickler\FsPickler\FsPickler.fs:line 60
-   at &lt;StartupCode$FsPickler&gt;.$PicklerCache.f@1-2(PicklerCache c, FSharpFunc`2 f, Unit unitVar0) in c:\Users\eirik\Development\nessos\FsPickler\src\FsPickler\PicklerGeneration\PicklerCache.fs:line 73
-</code></pre></td></tr></table>
-<p>If all that needs to be done is declare to FsPickler the intention of treating a type as serializable,
-we can avoid the hassle of defining a full-blown custom pickler as follows:</p>
+<p>In some cases, it might be sufficient to declare that FsPickler should treat
+the type as if it wasn't lacking a <code>[&lt;Serializable&gt;]</code> annotation:</p>
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 </pre></td>
-<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="i">FsPickler</span><span class="o">.</span><span class="i">DeclareSerializable</span><span class="o">&lt;</span><span class="i">NonSerializable</span><span class="o">&gt;</span> ()
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="i">registry</span><span class="o">.</span><span class="i">DeclareSerializable</span><span class="o">&lt;</span><span class="i">NonSerializable</span><span class="o">&gt;</span>()
 </code></pre></td>
 </tr>
 </table>

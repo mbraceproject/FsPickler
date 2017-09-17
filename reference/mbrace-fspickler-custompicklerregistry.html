@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8"/>
-    <title>PicklerInfo - FsPickler</title>
+    <title>CustomPicklerRegistry - FsPickler</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <meta name="description" content=""/>
     <meta name="author" content="Eirik Tsarpalis"/>
@@ -35,227 +35,250 @@
 
 
 
-<h1>PicklerInfo</h1>
+<h1>CustomPicklerRegistry</h1>
 <p>
   <span>Namespace: MBrace.FsPickler</span><br />
 </p>
 <div class="xmldoc">
-<p>Pickler generation metadata.</p>
+<p>Type for appending user-supplied pickler registrations</p>
 
 </div>
-  <h3>Record Fields</h3>
+  <h3>Constructors</h3>
   <table class="table table-bordered member-list">
     <thead>
-      <tr><td>Record Field</td><td>Description</td></tr>
+      <tr><td>Constructor</td><td>Description</td></tr>
     </thead>
     <tbody>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '304', 304)" onmouseover="showTip(event, '304', 304)">
-            Array
+          <code onmouseout="hideTip(event, '99', 99)" onmouseover="showTip(event, '99', 99)">
+            new()
           </code>
-          <div class="tip" id="304">
-            <strong>Signature:</strong> PicklerInfo<br />
-              <strong>Modifiers:</strong> static<br />
+          <div class="tip" id="99">
+            <strong>Signature:</strong> unit -&gt; CustomPicklerRegistry<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/Pickler/Types.fs#L34-34" class="github-link">
+            <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/PicklerGeneration/PicklerRegistry.fs#L42-42" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
           
+              <p>CompiledName: <code>.ctor</code></p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <h3>Instance members</h3>
+  <table class="table table-bordered member-list">
+    <thead>
+      <tr><td>Instance member</td><td>Description</td></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '100', 100)" onmouseover="showTip(event, '100', 100)">
+            DeclareSerializable()
+          </code>
+          <div class="tip" id="100">
+            <strong>Signature:</strong> unit -&gt; unit<br />
+                          <strong>Type parameters:</strong> 'T          </div>
+        </td>
+        <td class="xmldoc">
+            <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/PicklerGeneration/PicklerRegistry.fs#L96-96" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Registers the specifed type as if carrying the .IsSerializable flag</p>
+
+
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '305', 305)" onmouseover="showTip(event, '305', 305)">
-            Combinator
+          <code onmouseout="hideTip(event, '101', 101)" onmouseover="showTip(event, '101', 101)">
+            DeclareSerializable(typesToSerialize)
           </code>
-          <div class="tip" id="305">
-            <strong>Signature:</strong> PicklerInfo<br />
-              <strong>Modifiers:</strong> static<br />
+          <div class="tip" id="101">
+            <strong>Signature:</strong> (typesToSerialize:Type []) -&gt; unit<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/Pickler/Types.fs#L37-37" class="github-link">
+            <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/PicklerGeneration/PicklerRegistry.fs#L92-92" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          
+          <p>Appends a list of types that will be treated by the pickler generator as if carrying the .IsSerializable flag</p>
+
+
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '306', 306)" onmouseover="showTip(event, '306', 306)">
-            DataContract
+          <code onmouseout="hideTip(event, '102', 102)" onmouseover="showTip(event, '102', 102)">
+            DeclareSerializable(isSerializable)
           </code>
-          <div class="tip" id="306">
-            <strong>Signature:</strong> PicklerInfo<br />
-              <strong>Modifiers:</strong> static<br />
+          <div class="tip" id="102">
+            <strong>Signature:</strong> (isSerializable:(Type -&gt; bool)) -&gt; unit<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/Pickler/Types.fs#L32-32" class="github-link">
+            <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/PicklerGeneration/PicklerRegistry.fs#L88-88" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          
+          <p>Appends a predicate used to determine whether a specific type should be treated as if carrying the .IsSerializable flag</p>
+
+
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '307', 307)" onmouseover="showTip(event, '307', 307)">
-            Delegate
+          <code onmouseout="hideTip(event, '103', 103)" onmouseover="showTip(event, '103', 103)">
+            IsGenerationStarted
           </code>
-          <div class="tip" id="307">
-            <strong>Signature:</strong> PicklerInfo<br />
-              <strong>Modifiers:</strong> static<br />
+          <div class="tip" id="103">
+            <strong>Signature:</strong> bool<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/Pickler/Types.fs#L36-36" class="github-link">
+            <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/PicklerGeneration/PicklerRegistry.fs#L67-67" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          
+          <p>Gets whether isntance is alread being used for pickler generation.
+In that case, any attempt to register new types will result in an InvalidOperationException</p>
+
+
+              <p>CompiledName: <code>get_IsGenerationStarted</code></p>
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '308', 308)" onmouseover="showTip(event, '308', 308)">
-            FieldSerialization
+          <code onmouseout="hideTip(event, '104', 104)" onmouseover="showTip(event, '104', 104)">
+            PicklerFactories
           </code>
-          <div class="tip" id="308">
-            <strong>Signature:</strong> PicklerInfo<br />
-              <strong>Modifiers:</strong> static<br />
+          <div class="tip" id="104">
+            <strong>Signature:</strong> Type []<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/Pickler/Types.fs#L31-31" class="github-link">
+            <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/PicklerGeneration/PicklerRegistry.fs#L71-71" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          
+          <p>List of all individual pickler factory types</p>
+
+
+              <p>CompiledName: <code>get_PicklerFactories</code></p>
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '309', 309)" onmouseover="showTip(event, '309', 309)">
-            FSharpValue
+          <code onmouseout="hideTip(event, '105', 105)" onmouseover="showTip(event, '105', 105)">
+            RegisterFactory(factory)
           </code>
-          <div class="tip" id="309">
-            <strong>Signature:</strong> PicklerInfo<br />
-              <strong>Modifiers:</strong> static<br />
-                      </div>
+          <div class="tip" id="105">
+            <strong>Signature:</strong> (factory:(IPicklerResolver -&gt; Pickler&lt;&#39;T&gt;)) -&gt; unit<br />
+                          <strong>Type parameters:</strong> 'T          </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/Pickler/Types.fs#L35-35" class="github-link">
+            <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/PicklerGeneration/PicklerRegistry.fs#L84-84" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          
+          <p>Registers a user-specified pickler factory</p>
+
+
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '310', 310)" onmouseover="showTip(event, '310', 310)">
-            ISerializable
+          <code onmouseout="hideTip(event, '106', 106)" onmouseover="showTip(event, '106', 106)">
+            RegisterPickler(pickler)
           </code>
-          <div class="tip" id="310">
-            <strong>Signature:</strong> PicklerInfo<br />
-              <strong>Modifiers:</strong> static<br />
+          <div class="tip" id="106">
+            <strong>Signature:</strong> pickler:Pickler -&gt; unit<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/Pickler/Types.fs#L33-33" class="github-link">
+            <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/PicklerGeneration/PicklerRegistry.fs#L76-76" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          
+          <p>Registers a supplied custom pickler</p>
+
+
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '311', 311)" onmouseover="showTip(event, '311', 311)">
-            Object
+          <code onmouseout="hideTip(event, '107', 107)" onmouseover="showTip(event, '107', 107)">
+            RegisterPicklers(picklers)
           </code>
-          <div class="tip" id="311">
-            <strong>Signature:</strong> PicklerInfo<br />
-              <strong>Modifiers:</strong> static<br />
+          <div class="tip" id="107">
+            <strong>Signature:</strong> (picklers:Pickler []) -&gt; unit<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/Pickler/Types.fs#L29-29" class="github-link">
+            <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/PicklerGeneration/PicklerRegistry.fs#L80-80" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          
+          <p>Registers a collections of supplied custom pickelrs</p>
+
+
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '312', 312)" onmouseover="showTip(event, '312', 312)">
-            Primitive
+          <code onmouseout="hideTip(event, '108', 108)" onmouseover="showTip(event, '108', 108)">
+            SerializationPredicates
           </code>
-          <div class="tip" id="312">
-            <strong>Signature:</strong> PicklerInfo<br />
-              <strong>Modifiers:</strong> static<br />
+          <div class="tip" id="108">
+            <strong>Signature:</strong> (Type -&gt; bool) []<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/Pickler/Types.fs#L28-28" class="github-link">
+            <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/PicklerGeneration/PicklerRegistry.fs#L73-73" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          
+          <p>List of all user-specified custom serialization predicates</p>
+
+
+              <p>CompiledName: <code>get_SerializationPredicates</code></p>
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '313', 313)" onmouseover="showTip(event, '313', 313)">
-            ReflectionType
+          <code onmouseout="hideTip(event, '109', 109)" onmouseover="showTip(event, '109', 109)">
+            TypesDeclaredSerializable
           </code>
-          <div class="tip" id="313">
-            <strong>Signature:</strong> PicklerInfo<br />
-              <strong>Modifiers:</strong> static<br />
+          <div class="tip" id="109">
+            <strong>Signature:</strong> Type []<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/Pickler/Types.fs#L30-30" class="github-link">
+            <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/PicklerGeneration/PicklerRegistry.fs#L69-69" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          
-        </td>
-      </tr>
-      <tr>
-        <td class="member-name">
+          <p>List of all individual types declared serializable</p>
 
-          <code onmouseout="hideTip(event, '314', 314)" onmouseover="showTip(event, '314', 314)">
-            UserDefined
-          </code>
-          <div class="tip" id="314">
-            <strong>Signature:</strong> PicklerInfo<br />
-              <strong>Modifiers:</strong> static<br />
-                      </div>
-        </td>
-        <td class="xmldoc">
-            <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/Pickler/Types.fs#L38-38" class="github-link">
-              <img src="../content/img/github.png" class="normal" />
-              <img src="../content/img/github-blue.png" class="hover" />
-            </a>
-          
+
+              <p>CompiledName: <code>get_TypesDeclaredSerializable</code></p>
         </td>
       </tr>
     </tbody>
