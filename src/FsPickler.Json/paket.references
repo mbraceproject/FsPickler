@@ -1,2 +1,4 @@
 FSharp.Core copy_local:false
 Newtonsoft.Json
+group Build    
+  FSharp.Compiler.Tools

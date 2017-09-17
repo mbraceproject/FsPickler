@@ -14,6 +14,7 @@ NUGET
   remote: https://www.nuget.org/api/v2
     FAKE (4.63.2)
     FSharp.Compiler.Service (2.0.0.6)
+    FSharp.Compiler.Tools (4.1.23)
     FSharp.Core (4.2.1)
     FSharp.Formatting (2.14.4)
       FSharp.Compiler.Service (2.0.0.6)

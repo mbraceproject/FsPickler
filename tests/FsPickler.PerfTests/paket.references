@@ -7,3 +7,5 @@ group Test
   PerfUtil
   PerfUtil.NUnit
   protobuf-net
+group Build    
+  FSharp.Compiler.Tools

@@ -5,3 +5,5 @@ group Test
   FsUnit
   NUnit
   System.ValueTuple
+group Build    
+  FSharp.Compiler.Tools
