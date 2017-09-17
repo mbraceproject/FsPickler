@@ -203,6 +203,26 @@ module ``Generic Tests`` =
         cache.IsSerializableType<BazBaz7>() |> should equal true
         cache.IsSerializableType<BazBaz8>() |> should equal true
         cache.IsSerializableType<BazBaz9>() |> should equal true
+
+    [<Test; Category("Pickler tests")>]
+    let ``1. Interface pickler is used for implementation`` () =
+        let factory (resolver:IPicklerResolver) =
+            let intPickler = resolver.Resolve<int>()
+            let reader state =
+                let i = intPickler.Read state "i"
+                NonSerializableWithInterface(i) :> ITest
+            let writer state (value:ITest) =
+                intPickler.Write state "i" value.Int
+            Pickler.FromPrimitives(reader, writer, useWithSubtypes=true)
+
+        let registry = new CustomPicklerRegistry()
+        do registry.RegisterFactory factory
+        let cache = PicklerCache.FromCustomPicklerRegistry registry
+
+        let serializer = FsPickler.CreateBinarySerializer(picklerResolver = cache)
+        let pickle = serializer.Pickle (NonSerializableWithInterface(123456))
+        let v = serializer.UnPickle<NonSerializableWithInterface> pickle
+        Assert.AreEqual(123456, v.Int)
     
     //
     //  Clone tests

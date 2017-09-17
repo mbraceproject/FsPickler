@@ -14,7 +14,7 @@ type internal AbstractPickler =
         let cloner _ _ = invalidOp <| sprintf "internal error: attempting to consume abstract pickler '%O'." typeof<'T>
         let accepter _ _ = invalidOp <| sprintf "internal error: attempting to consume abstract pickler '%O'." typeof<'T>
 
-        CompositePickler.Create<'T>(reader, writer, cloner, accepter, PicklerInfo.FieldSerialization, true, false)
+        CompositePickler.Create<'T>(reader, writer, cloner, accepter, PicklerInfo.FieldSerialization, cacheByRef = true, useWithSubtypes = false)
 
 /// Enum types combinator
 

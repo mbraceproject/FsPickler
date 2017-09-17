@@ -14,7 +14,8 @@ let isSerializable (result : Exn<Pickler>) =
     | Error _ -> false
 
 /// reflection - based pickler resolution
-let resolvePickler (registry : ICustomPicklerRegistry) (resolver : IPicklerResolver) 
+let resolvePickler (registry : ICustomPicklerRegistry) 
+                    (resolver : IPicklerResolver) 
                     (mkEarlyBinding : Pickler -> unit) 
                     (isPicklerReferenced : Pickler -> bool) (t : Type) =
 
@@ -36,18 +37,17 @@ let resolvePickler (registry : ICustomPicklerRegistry) (resolver : IPicklerResol
 
         // step 3: subtype pickler resolution
         let result =
-            if isNotNull t.BaseType then 
-                try 
-                    let baseP = resolver.Resolve t.BaseType
-                    if baseP.UseWithSubtypes then
-                        let pickler = PicklerGenerator.Cast shape baseP
+            getSupertypes t
+            |> Seq.tryPick(fun st ->
+                try
+                    let sP = resolver.Resolve st
+                    if sP.UseWithSubtypes then
+                        let pickler = PicklerGenerator.Cast shape sP
                         Some pickler
                     else
                         None
 
-                with :? NonSerializableTypeException -> None
-            else
-                None
+                with :? NonSerializableTypeException -> None)
 
         // step 4: consult the pickler factory.
         let p =

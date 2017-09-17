@@ -528,6 +528,15 @@ module TestTypes =
     [<AutoSerializable(false)>]type BazBaz8 = class end
     [<AutoSerializable(false)>]type BazBaz9 = class end
 
+    type ITest =
+        abstract member Int : int
+
+    [<AutoSerializable(false)>]
+    type NonSerializableWithInterface(i) =
+        interface ITest with
+            member x.Int = i
+        member x.Int = i
+
     [<AutoSerializable(false); CollectionDataContract>]
     type ClassWithLoneCollectionDataContractAttribute<'T>(xs : 'T list) =
         member __.Values = xs

@@ -99,6 +99,17 @@ let isReflectionSerializable (t : Type) = t.IsSerializable || containsAttr<Seria
 let isISerializable (t : Type) = isAssignableFrom typeof<ISerializable> t
 let tryGetISerializableCtor (t : Type) = t.TryGetConstructor [| typeof<SerializationInfo> ; typeof<StreamingContext> |]
 
+
+/// Gets the immediate supertypes of a given type,
+/// either base type or interfaces implemented
+let getSupertypes(t : Type) = seq {
+    match t.BaseType with
+    | null -> ()
+    | bt -> yield bt
+
+    for i in t.GetInterfaces() -> i
+}
+
 /// returns all methods of type `StreamingContext -> unit` and given Attribute
 let getSerializationMethods<'Attr when 'Attr :> Attribute> (ms : MethodInfo []) =
     let isSerializationMethod(m : MethodInfo) =
