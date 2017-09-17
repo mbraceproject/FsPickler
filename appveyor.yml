@@ -1,5 +1,8 @@
 image: Visual Studio 2017
 configuration: Release
+install:
+ - .paket\paket.bootstrapper.exe
+ - .paket\paket.exe restore
 test:
   assemblies:
     - FsPickler.Tests.dll
