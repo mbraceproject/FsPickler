@@ -380,12 +380,12 @@ FsPickler.GeneratePickler<NonSerializable>()
 
 would result in an error:
 
-    ```text
-    MBrace.FsPickler.NonSerializableTypeException: Type 'FSI_0012+NonSerializable' is not serializable.
-       at MBrace.FsPickler.Utils.Exn`1.get_Value() in C:\Users\eirik.tsarpalis\devel\mbrace\FsPickler\src\FsPickler\Utils\Utils.fs:line 59
-       at MBrace.FsPickler.PicklerCache.MBrace-FsPickler-IPicklerResolver-Resolve[T]() in C:\Users\eirik.tsarpalis\devel\mbrace\FsPickler\src\FsPickler\PicklerGeneration\PicklerCache.fs:line 75
-       at <StartupCode$FSI_0013>.$FSI_0013.main@()
-    ```
+```text
+MBrace.FsPickler.NonSerializableTypeException: Type 'FSI_0012+NonSerializable' is not serializable.
+    at MBrace.FsPickler.Utils.Exn`1.get_Value() in C:\Users\eirik.tsarpalis\devel\mbrace\FsPickler\src\FsPickler\Utils\Utils.fs:line 59
+    at MBrace.FsPickler.PicklerCache.MBrace-FsPickler-IPicklerResolver-Resolve[T]() in C:\Users\eirik.tsarpalis\devel\mbrace\FsPickler\src\FsPickler\PicklerGeneration\PicklerCache.fs:line 75
+    at <StartupCode$FSI_0013>.$FSI_0013.main@()
+```
 
 This problem can be overcome by creating a custom pickler cache that accepts user-supplied pickler registrations.
 Suppose we have a custom pickler definition:
