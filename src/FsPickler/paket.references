@@ -1,2 +1,4 @@
 ﻿FSharp.Core copy_local:false
 File: TypeShape.fs TypeShape
+group Build    
+  FSharp.Compiler.Tools

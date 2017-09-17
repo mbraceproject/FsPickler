@@ -32,4 +32,5 @@ group Build
   nuget FAKE
   nuget FSharp.Core 4.2.1
   nuget FSharp.Formatting ~> 2.14.4
+  nuget FSharp.Compiler.Tools
   github fsharp/FAKE modules/Octokit/Octokit.fsx
