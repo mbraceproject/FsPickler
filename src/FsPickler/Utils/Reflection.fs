@@ -107,7 +107,8 @@ let getSupertypes(t : Type) = seq {
     | null -> ()
     | bt -> yield bt
 
-    for i in t.GetInterfaces() -> i
+    // ensure determinism in order of searched types
+    yield! t.GetInterfaces() |> Seq.sortBy(fun i -> i.Assembly.GetName().Name, i.FullName)
 }
 
 /// returns all methods of type `StreamingContext -> unit` and given Attribute
