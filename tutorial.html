@@ -514,18 +514,12 @@ The <code>IPicklerResolver</code> argument provides a handle to the pickler gene
 <span class="l">2: </span>
 <span class="l">3: </span>
 <span class="l">4: </span>
-<span class="l">5: </span>
-<span class="l">6: </span>
 </pre></td>
-<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">`</span><span class="k">`</span><span class="k">`</span><span class="i">text</span>
-<span class="i">MBrace</span><span class="o">.</span><span class="i">FsPickler</span><span class="o">.</span><span class="i">NonSerializableTypeException</span><span class="o">:</span> <span class="i">Type</span> <span class="o">&#39;</span><span class="i">FSI_0012</span><span class="o">+</span><span class="i">NonSerializable&#39;</span> <span class="i">is</span> <span class="i">not</span> <span class="i">serializable</span><span class="o">.</span>
-   <span class="i">at</span> <span class="i">MBrace</span><span class="o">.</span><span class="i">FsPickler</span><span class="o">.</span><span class="i">Utils</span><span class="o">.</span><span class="i">Exn</span><span class="k">`</span><span class="n">1.get_Value</span>() <span class="k">in</span> <span class="i">C</span><span class="o">:</span>
-   <span class="i">at</span> <span class="i">MBrace</span><span class="o">.</span><span class="i">FsPickler</span><span class="o">.</span><span class="i">PicklerCache</span><span class="o">.</span><span class="i">MBrace</span><span class="o">-</span><span class="i">FsPickler</span><span class="o">-</span><span class="i">IPicklerResolver</span><span class="o">-</span><span class="i">Resolve</span>[<span class="i">T</span>]() <span class="k">in</span> <span class="i">C</span><span class="o">:</span>
-   <span class="i">at</span> <span class="o">&lt;</span><span class="i">StartupCode</span><span class="o">$</span><span class="i">FSI_0013</span><span class="o">&gt;</span><span class="i">FSI_0013</span><span class="o">.</span><span class="i">main</span><span class="o">@</span>()
-<span class="k">`</span><span class="k">`</span><span class="k">`</span>
-</code></pre></td>
-</tr>
-</table>
+<td class="snippet"><pre class="fssnip"><code lang="text">MBrace.FsPickler.NonSerializableTypeException: Type 'FSI_0012+NonSerializable' is not serializable.
+    at MBrace.FsPickler.Utils.Exn`1.get_Value() in C:\Users\eirik.tsarpalis\devel\mbrace\FsPickler\src\FsPickler\Utils\Utils.fs:line 59
+    at MBrace.FsPickler.PicklerCache.MBrace-FsPickler-IPicklerResolver-Resolve[T]() in C:\Users\eirik.tsarpalis\devel\mbrace\FsPickler\src\FsPickler\PicklerGeneration\PicklerCache.fs:line 75
+    at &lt;StartupCode$FSI_0013&gt;.$FSI_0013.main@()
+</code></pre></td></tr></table>
 <p>This problem can be overcome by creating a custom pickler cache that accepts user-supplied pickler registrations.
 Suppose we have a custom pickler definition:</p>
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
