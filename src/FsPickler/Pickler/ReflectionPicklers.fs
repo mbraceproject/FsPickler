@@ -69,11 +69,8 @@ type ReflectionPicklers private () =
             (fun _ an -> an.Clone() |> fastUnbox<_>), ignore2,
                 PicklerInfo.ReflectionType, cacheByRef = true, useWithSubtypes = true)
 
-    static member CreateMemberInfoPickler(resolver : IPicklerResolver) : Pickler<MemberInfo> =
-        let typePickler = resolver.Resolve<Type>()
-        let typeArrayPickler = resolver.Resolve<Type[]>()
+    static member CreateMemberInfoPickler (arrayPickler : Pickler<Type> -> Pickler<Type[]>) (resolver : IPicklerResolver) : Pickler<MemberInfo> =
         let assemblyInfoPickler = resolver.Resolve<AssemblyInfo>()
-        let methodInfoPickler = resolver.Resolve<MethodInfo>()
 
         let rec memberInfoWriter (w : WriteState) (_ : string) (m : MemberInfo) =
             let formatter = w.Formatter
@@ -266,4 +263,13 @@ type ReflectionPicklers private () =
 
             r.ReflectionCache.LoadMemberInfo(cMemberInfo, not r.DisableAssemblyLoading)
 
-        CompositePickler.Create(memberInfoReader, memberInfoWriter, (fun _ mI -> mI), ignore2, PicklerInfo.ReflectionType, useWithSubtypes = true, cacheByRef = true)
+        and memberInfoPickler =
+            CompositePickler.Create(memberInfoReader, memberInfoWriter, 
+                                    (fun _ mI -> mI), ignore2, PicklerInfo.ReflectionType, 
+                                    useWithSubtypes = true, cacheByRef = true)
+
+        and typePickler : Pickler<Type> = memberInfoPickler.Cast<Type>()
+        and typeArrayPickler : Pickler<Type []> = arrayPickler typePickler
+        and methodInfoPickler : Pickler<MethodInfo> = memberInfoPickler.Cast<MethodInfo>()
+
+        memberInfoPickler

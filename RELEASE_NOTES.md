@@ -1,3 +1,6 @@
+### 4.0.1
+* Fix bug in which order of reflection pickler generation would cause runtime errors.
+
 ### 4.0.0
 * Use deterministic ordering in field serialization.
 * Add support for custom pickler caches.

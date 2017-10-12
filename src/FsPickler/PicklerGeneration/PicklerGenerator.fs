@@ -63,7 +63,7 @@ type PicklerGenerator =
         | :? TypeShape<AssemblyInfo> -> ReflectionPicklers.CreateAssemblyInfoPickler() :> _
         | :? TypeShape<AssemblyName> -> ReflectionPicklers.CreateAssemblyNamePickler resolver :> _
         | :? TypeShape<Assembly> -> ReflectionPicklers.CreateAssemblyPickler resolver :> _
-        | :? TypeShape<MemberInfo> -> ReflectionPicklers.CreateMemberInfoPickler resolver :> _
+        | :? TypeShape<MemberInfo> -> ReflectionPicklers.CreateMemberInfoPickler ArrayPickler.Create resolver :> _
         | :? TypeShape<System.DBNull> -> new DBNullPickler() :> _
         | PicklerFactory factory -> 
             let pickler = factory resolver
