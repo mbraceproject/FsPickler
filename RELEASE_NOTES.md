@@ -1,3 +1,6 @@
+### 4.5
+* Fix packaging issue.
+
 ### 4.4
 * Tolerance improvements in ISerializable picklers.
 

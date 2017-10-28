@@ -24,6 +24,8 @@ tags
     F#, fsharp, serializer, pickler, binary, json, xml
 dependencies
     FsPickler CURRENTVERSION
+excludeddependencies
+    FSharp.Compiler.Tools
 files
     ../../bin/FsPickler.Json.dll ==> lib/net45
     ../../bin/FsPickler.Json.pdb ==> lib/net45
