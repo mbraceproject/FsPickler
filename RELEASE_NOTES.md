@@ -1,3 +1,9 @@
+### 4.4
+* Tolerance improvements in ISerializable picklers.
+
+### 4.3
+* Bad release
+
 ### 4.0.1
 * Fix bug in which order of reflection pickler generation would cause runtime errors.
 

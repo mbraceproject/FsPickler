@@ -35,12 +35,16 @@ module private ISerializableUtils =
             let msg = sprintf "Subtype deserialization has been disabled. Type %O is ISerializable." typeof<'T>
             raise <| new FsPicklerException(msg)
 
+    let inline resolveEntryPickler (r : IPicklerResolver) (entry : SerializationEntry) =
+        let picklerType = match entry.Value with null -> entry.ObjectType | o -> o.GetType()
+        r.Resolve picklerType
+
     let inline writeSerializationEntry (w : WriteState) (entry : SerializationEntry) =
         let formatter = w.Formatter
+        let op = resolveEntryPickler w.PicklerResolver entry
         formatter.BeginWriteObject "entry" ObjectFlags.None
         formatter.WriteString "Name" entry.Name
-        w.TypePickler.Write w "Type" entry.ObjectType
-        let op = w.PicklerResolver.Resolve entry.ObjectType
+        w.TypePickler.Write w "Type" op.Type
         op.UntypedWrite w "Value" entry.Value
         formatter.EndWriteObject()
 
@@ -100,9 +104,9 @@ module private ISerializableUtils =
         let enum = sI.GetEnumerator()
         while enum.MoveNext() do
             let se = enum.Current
-            let ep = c.PicklerResolver.Resolve se.ObjectType
+            let ep = resolveEntryPickler c.PicklerResolver se
             let o = ep.UntypedClone c se.Value
-            sI'.AddValue(se.Name, o, se.ObjectType)
+            sI'.AddValue(se.Name, o)
 
         sI'
 
@@ -110,7 +114,7 @@ module private ISerializableUtils =
         let enum = sI.GetEnumerator()
         while enum.MoveNext() do
             let se = enum.Current
-            let ep = v.PicklerResolver.Resolve se.ObjectType
+            let ep = resolveEntryPickler v.PicklerResolver se
             ep.UntypedAccept v se.Value
 
 type internal ISerializablePickler =
