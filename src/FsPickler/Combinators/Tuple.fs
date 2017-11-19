@@ -312,15 +312,24 @@ type internal TuplePickler =
     static member Create(p1 : Pickler<'T1>, p2 : Pickler<'T2>, p3 : Pickler<'T3>, p4 : Pickler<'T4>,
                             p5 : Pickler<'T5>, p6 : Pickler<'T6>, p7 : Pickler<'T7>, pr : Pickler<'TRest>) =
 
-        let writer (w : WriteState) (_ : string) (tuple : Tuple<'T1,'T2,'T3,'T4,'T5,'T6,'T7,'TRest>) =
-            p1.Write w "Item1" tuple.Item1
-            p2.Write w "Item2" tuple.Item2
-            p3.Write w "Item3" tuple.Item3
-            p4.Write w "Item4" tuple.Item4
-            p5.Write w "Item5" tuple.Item5
-            p6.Write w "Item6" tuple.Item6
-            p7.Write w "Item7" tuple.Item7
-            pr.Write w "Rest" tuple.Rest
+        let writer (w : WriteState) (_ : string) (tuple : ('T1 *'T2*'T3*'T4*'T5*'T6*'T7*'TRest)) =
+            let (Item1,
+                 Item2,
+                 Item3,
+                 Item4,
+                 Item5,
+                 Item6,
+                 Item7,
+                 Rest)  = tuple
+
+            p1.Write w "Item1" Item1
+            p2.Write w "Item2" Item2
+            p3.Write w "Item3" Item3
+            p4.Write w "Item4" Item4
+            p5.Write w "Item5" Item5
+            p6.Write w "Item6" Item6
+            p7.Write w "Item7" Item7
+            pr.Write w "Rest"  Rest
 
         let reader (r : ReadState) (_ : string) =
             let t1 = p1.Read r "Item1"
@@ -333,26 +342,43 @@ type internal TuplePickler =
             let rest = pr.Read r "Rest"
             new Tuple<_,_,_,_,_,_,_,_>(t1,t2,t3,t4,t5,t6,t7,rest)
 
-        let cloner (c : CloneState) (tuple : Tuple<'T1,'T2,'T3,'T4,'T5,'T6,'T7,'TRest>) =
-            let t1' = p1.Clone c tuple.Item1
-            let t2' = p2.Clone c tuple.Item2
-            let t3' = p3.Clone c tuple.Item3
-            let t4' = p4.Clone c tuple.Item4
-            let t5' = p5.Clone c tuple.Item5
-            let t6' = p6.Clone c tuple.Item6
-            let t7' = p7.Clone c tuple.Item7
-            let rest' = pr.Clone c tuple.Rest
-            new Tuple<_,_,_,_,_,_,_,_>(t1',t2',t3',t4',t5',t6',t7',rest')
+        let cloner (c : CloneState) (tuple : ('T1*'T2*'T3*'T4*'T5*'T6*'T7*'TRest)) =
+            let (Item1,
+                 Item2,
+                 Item3,
+                 Item4,
+                 Item5,
+                 Item6,
+                 Item7,
+                 Rest)  = tuple
+            
+            let t1' = p1.Clone c   Item1
+            let t2' = p2.Clone c   Item2
+            let t3' = p3.Clone c   Item3
+            let t4' = p4.Clone c   Item4
+            let t5' = p5.Clone c   Item5
+            let t6' = p6.Clone c   Item6
+            let t7' = p7.Clone c   Item7
+            let rest' = pr.Clone c Rest
+            t1',t2',t3',t4',t5',t6',t7',rest'
 
-        let accepter (v : VisitState) (tuple : Tuple<'T1,'T2,'T3,'T4,'T5,'T6,'T7,'TRest>) =
-            p1.Accept v tuple.Item1
-            p2.Accept v tuple.Item2
-            p3.Accept v tuple.Item3
-            p4.Accept v tuple.Item4
-            p5.Accept v tuple.Item5
-            p6.Accept v tuple.Item6
-            p7.Accept v tuple.Item7
-            pr.Accept v tuple.Rest
+        let accepter (v : VisitState) (tuple : ('T1*'T2*'T3*'T4*'T5*'T6*'T7*'TRest)) =
+            let (Item1,
+                 Item2,
+                 Item3,
+                 Item4,
+                 Item5,
+                 Item6,
+                 Item7,
+                 Rest)  = tuple
+            p1.Accept v Item1
+            p2.Accept v Item2
+            p3.Accept v Item3
+            p4.Accept v Item4
+            p5.Accept v Item5
+            p6.Accept v Item6
+            p7.Accept v Item7
+            pr.Accept v Rest
 
 #if OPTIMIZE_FSHARP
         // do not apply subtype resolution for performance
