@@ -742,6 +742,8 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
     //  Custom types
     //
 
+    [<Test ; Category("Custom types")>]
+    member __.``6. Custom: Union with named data`` () = NamedDUData "" |> testEquals
 
     [<Test ; Category("Custom types")>] 
     member __.``6. Custom: simple class`` () = testEquals <| SimpleClass(42, "fortyTwo")
