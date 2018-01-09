@@ -34,3 +34,5 @@ docs/output/
 temp/
 /.vs/FsPickler/v15/sqlite3/storage.ide
 /.idea/.idea.FsPickler
+
+.vs/

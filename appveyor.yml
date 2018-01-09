@@ -1,8 +1,12 @@
-image: Visual Studio 2017
-configuration: Release
-install:
- - .paket\paket.bootstrapper.exe
- - .paket\paket.exe restore
-test:
-  assemblies:
-    - FsPickler.Tests.dll
+os: Visual Studio 2017
+
+init:
+  - git config --global core.autocrlf input
+
+build_script:
+  - cmd: build.cmd Bundle
+
+test: off
+artifacts:
+  - path: bin
+    name: bin

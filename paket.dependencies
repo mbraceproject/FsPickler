@@ -3,9 +3,9 @@ redirects: on
 source https://www.nuget.org/api/v2
 
 nuget FSharp.Core >= 3.1 lowest_matching: true
-nuget Newtonsoft.Json >= 6.0.5
+nuget Newtonsoft.Json >= 6.0.5 lowest_matching: true
 
-github eiriktsarpalis/TypeShape:2.19 src/TypeShape/TypeShape.fs
+github eiriktsarpalis/TypeShape:3.1.1 src/TypeShape/TypeShape.fs
 
 group Test
   framework: >= net40
@@ -29,8 +29,9 @@ group Build
   redirects: on
   source https://www.nuget.org/api/v2
 
-  nuget FAKE
+  nuget FAKE ~> 4.0
   nuget FSharp.Core 4.2.1
   nuget FSharp.Formatting ~> 2.14.4
-  nuget FSharp.Compiler.Tools
+  nuget FSharp.Compiler.Tools 4.1.23 # pin until F# compiler tuple bug is fixed
+                                     # https://github.com/Microsoft/visualfsharp/pull/3729
   github fsharp/FAKE modules/Octokit/Octokit.fsx
