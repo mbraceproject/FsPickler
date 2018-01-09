@@ -25,6 +25,8 @@ module TestTypes =
         | Zero
         | Succ of Peano
 
+    type NamedDUData = NamedDUData of AA: string
+
     type GenericDU<'T> = GValue of 'T
 
     [<Struct>]
