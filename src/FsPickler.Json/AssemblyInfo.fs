@@ -4,12 +4,12 @@ open System.Reflection
 
 [<assembly: AssemblyProductAttribute("FsPickler")>]
 [<assembly: AssemblyCopyrightAttribute("© Eirik Tsarpalis.")>]
-[<assembly: AssemblyVersionAttribute("4.5")>]
-[<assembly: AssemblyFileVersionAttribute("4.5")>]
+[<assembly: AssemblyVersionAttribute("4.6")>]
+[<assembly: AssemblyFileVersionAttribute("4.6")>]
 do ()
 
 module internal AssemblyVersionInformation =
     let [<Literal>] AssemblyProduct = "FsPickler"
     let [<Literal>] AssemblyCopyright = "© Eirik Tsarpalis."
-    let [<Literal>] AssemblyVersion = "4.5"
-    let [<Literal>] AssemblyFileVersion = "4.5"
+    let [<Literal>] AssemblyVersion = "4.6"
+    let [<Literal>] AssemblyFileVersion = "4.6"

@@ -3,13 +3,13 @@ using System.Reflection;
 
 [assembly: AssemblyProductAttribute("FsPickler")]
 [assembly: AssemblyCopyrightAttribute("© Eirik Tsarpalis.")]
-[assembly: AssemblyVersionAttribute("4.5")]
-[assembly: AssemblyFileVersionAttribute("4.5")]
+[assembly: AssemblyVersionAttribute("4.6")]
+[assembly: AssemblyFileVersionAttribute("4.6")]
 namespace System {
     internal static class AssemblyVersionInformation {
         internal const System.String AssemblyProduct = "FsPickler";
         internal const System.String AssemblyCopyright = "© Eirik Tsarpalis.";
-        internal const System.String AssemblyVersion = "4.5";
-        internal const System.String AssemblyFileVersion = "4.5";
+        internal const System.String AssemblyVersion = "4.6";
+        internal const System.String AssemblyFileVersion = "4.6";
     }
 }

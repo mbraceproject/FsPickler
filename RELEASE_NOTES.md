@@ -1,3 +1,6 @@
+### 4.6
+* Fix union serialization bug.
+
 ### 4.5
 * Fix packaging issue.
 
