@@ -1,21 +1,10 @@
-﻿#I "../../bin/"
-#r "FsPickler.dll"
-#r "FsPickler.Json.dll"
+﻿open System
+open FSharp.Reflection
 
-open MBrace.FsPickler
-open MBrace.FsPickler.Json
-open MBrace.FsPickler.Combinators
+let tty = Array.init 8 (fun _ -> typeof<int>) |> FSharpType.MakeTupleType
 
-let jsp = FsPickler.CreateJsonSerializer(indent = true, omitHeader = true)
-let bsp = FsPickler.CreateBsonSerializer()
+let tuple = Array.init 8 (fun _ -> box 42) |> fun v -> FSharpValue.MakeTuple(v,tty) :?> System.Tuple<int,int,int,int,int,int,int,Tuple<int>>
 
-type Record = { Name : string ; Age : int }
+let foo() = System.Tuple<_,_,_,_,_,_,_,_>(1,1,1,1,1,1,1,1,1)
 
-jsp.PickleToString { Name = "me" ; Age = 12 }
-
-type Union = A of int | B of string * int | C
-
-jsp.PickleToString [A 42 ; B("test", 0) ; C]
-
-let pickle = jsp.PickleToString <@ 1 + 1 @>
-jsp.UnPickleOfString<Quotations.Expr<int>> pickle
+let x = new System.Tuple<int,string>(42,1)

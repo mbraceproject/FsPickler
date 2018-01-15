@@ -1,0 +1,71 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Configurations>Debug;Release;Release-NoEmit</Configurations>
+    <AssemblyName>FsPickler</AssemblyName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>TRACE;DEBUG;PROTECT_STACK_OVERFLOWS;EMIT_IL;TUPLE_WORKAROUND</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-NoEmit|AnyCPU'">
+    <DefineConstants>TRACE;PROTECT_STACK_OVERFLOWS;TUPLE_WORKAROUND</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DefineConstants>TRACE;PROTECT_STACK_OVERFLOWS;EMIT_IL;TUPLE_WORKAROUND</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\..\paket-files\eiriktsarpalis\TypeShape\src\TypeShape\TypeShape.fs">
+      <Paket>True</Paket>
+      <Link>TypeShape/TypeShape.fs</Link>
+    </Compile>
+    <Compile Link="Utils\CSharpProxy.fs" Include="..\FsPickler\Utils\CsharpProxy.fs" />
+    <Compile Link="Utils\Utils.fs" Include="..\FsPickler\Utils\Utils.fs" />
+    <Compile Link="Utils\Emit.fs" Include="..\FsPickler\Utils\Emit.fs" />
+    <Compile Link="Utils\Reflection.fs" Include="..\FsPickler\Utils\Reflection.fs" />
+    <Compile Link="Utils\ShallowCopy.fs" Include="..\FsPickler\Utils\ShallowCopy.fs" />
+    <Compile Link="Utils\Hashing.fs" Include="..\FsPickler\Utils\Hashing.fs" />
+    <Compile Link="Pickler\Types.fs" Include="..\FsPickler\Pickler\Types.fs" />
+    <Compile Link="Pickler\PickleFormat.fs" Include="..\FsPickler\Pickler\PickleFormat.fs" />
+    <Compile Link="Pickler\ReflectionCache.fs" Include="..\FsPickler\Pickler\ReflectionCache.fs" />
+    <Compile Link="Pickler\Pickler.fsi" Include="..\FsPickler\Pickler\Pickler.fsi" />
+    <Compile Link="Pickler\Pickler.fs" Include="..\FsPickler\Pickler\Pickler.fs" />
+    <Compile Link="Pickler\PrimitivePicklers.fs" Include="..\FsPickler\Pickler\PrimitivePicklers.fs" />
+    <Compile Link="Pickler\CompositePickler.fs" Include="..\FsPickler\Pickler\CompositePickler.fs" />
+    <Compile Link="Pickler\UnionCaseHelper.fs" Include="..\FsPickler\Pickler\UnionCaseHelper.fs" />
+    <Compile Link="Pickler\ReflectionPicklers.fs" Include="..\FsPickler\Pickler\ReflectionPicklers.fs" />
+    <Compile Link="Combinators\Wrappers.fs" Include="..\FsPickler\Combinators\Wrappers.fs" />
+    <Compile Link="Combinators\Sequence.fs" Include="..\FsPickler\Combinators\Sequence.fs" />
+    <Compile Link="Combinators\Array.fs" Include="..\FsPickler\Combinators\Array.fs" />
+    <Compile Link="Combinators\Tuple.fs" Include="..\FsPickler\Combinators\Tuple.fs" />
+    <Compile Link="Combinators\FSharpList.fs" Include="..\FsPickler\Combinators\FSharpList.fs" />
+    <Compile Link="Combinators\DotNetTypes.fs" Include="..\FsPickler\Combinators\DotNetTypes.fs" />
+    <Compile Link="Combinators\FSharpTypes.fs" Include="..\FsPickler\Combinators\FSharpTypes.fs" />
+    <Compile Link="Combinators\Collections.fs" Include="..\FsPickler\Combinators\Collections.fs" />
+    <Compile Link="PicklerGeneration\PicklerRegistry.fs" Include="..\FsPickler\PicklerGeneration\PicklerRegistry.fs" />
+    <Compile Link="PicklerGeneration\PicklerEmit.fs" Include="..\FsPickler\PicklerGeneration\PicklerEmit.fs" />
+    <Compile Link="PicklerGeneration\FieldPicklers.fs" Include="..\FsPickler\PicklerGeneration\FieldPicklers.fs" />
+    <Compile Link="PicklerGeneration\ISerializablePickler.fs" Include="..\FsPickler\PicklerGeneration\ISerializablePickler.fs" />
+    <Compile Link="PicklerGeneration\DataContractPickler.fs" Include="..\FsPickler\PicklerGeneration\DataContractPickler.fs" />
+    <Compile Link="PicklerGeneration\FSharpTypeGen.fs" Include="..\FsPickler\PicklerGeneration\FSharpTypeGen.fs" />
+    <Compile Link="PicklerGeneration\CustomPickler.fs" Include="..\FsPickler\PicklerGeneration\CustomPickler.fs" />
+    <Compile Link="PicklerGeneration\PicklerGenerator.fs" Include="..\FsPickler\PicklerGeneration\PicklerGenerator.fs" />
+    <Compile Link="PicklerGeneration\PicklerResolution.fs" Include="..\FsPickler\PicklerGeneration\PicklerResolution.fs" />
+    <Compile Link="PicklerGeneration\PicklerCache.fs" Include="..\FsPickler\PicklerGeneration\PicklerCache.fs" />
+    <Compile Link="Format\BinaryFormat.fs" Include="..\FsPickler\Format\BinaryFormat.fs" />
+    <Compile Link="Format\XmlFormat.fs" Include="..\FsPickler\Format\XmlFormat.fs" />
+    <Compile Link="FsPickler\RootSerialization.fs" Include="..\FsPickler\FsPickler\RootSerialization.fs" />
+    <Compile Link="FsPickler\ObjectSizeCounter.fs" Include="..\FsPickler\FsPickler\ObjectSizeCounter.fs" />
+    <Compile Link="FsPickler\Serializer.fs" Include="..\FsPickler\FsPickler\Serializer.fs" />
+    <Compile Link="FsPickler\TextSerializer.fs" Include="..\FsPickler\FsPickler\TextSerializer.fs" />
+    <Compile Link="FsPickler\BinarySerializer.fs" Include="..\FsPickler\FsPickler\BinarySerializer.fs" />
+    <Compile Link="FsPickler\XmlSerializer.fs" Include="..\FsPickler\FsPickler\XmlSerializer.fs" />
+    <Compile Link="FsPickler\FsPickler.fs" Include="..\FsPickler\FsPickler\FsPickler.fs" />
+    <Compile Link="FsPickler\Combinators.fs" Include="..\FsPickler\FsPickler\Combinators.fs" />
+    <Compile Link="FsPickler\ExtensionMethods.fs" Include="..\FsPickler\FsPickler\ExtensionMethods.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="paket.references" />
+  </ItemGroup>
+  <Import Project="..\..\.paket\Paket.Restore.targets" />
+</Project>

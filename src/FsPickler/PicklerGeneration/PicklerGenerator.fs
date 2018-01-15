@@ -135,7 +135,7 @@ type PicklerGenerator =
         | Shape.Tuple8 s ->
             s.Accept {
                 new ITuple8Visitor<Pickler> with
-                    member __.Visit<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'TRest> () = TuplePickler.Create<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'TRest>(resolver) :> _
+                    member __.Visit<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'TRest> () = failwith "later" // TuplePickler.Create<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'TRest>(resolver) :> _
             }
 
         | Shape.Dictionary s ->

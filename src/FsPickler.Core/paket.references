@@ -1,3 +1,2 @@
 ﻿File: TypeShape.fs TypeShape
-group Legacy
-  FSharp.Core
+FSharp.Core
