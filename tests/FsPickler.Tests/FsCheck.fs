@@ -92,7 +92,7 @@ type FsPicklerGenerators private () =
 
     static member Seq<'T> () = Arb.generate<'T []> |> Gen.map Array.toSeq |> Arb.fromGen
 
-    /// value tuple generators
+    /// value tuple generators; NB this doesn't support aritives > 7 due to F# compiler regression
     static member ValueTuple<'T1> () = Arb.generate<'T1> |> Gen.map (ValueTuple<_>) |> Arb.fromGen
     static member ValueTuple<'T1, 'T2> () = Arb.generate<'T1 * 'T2> |> Gen.map (fun (x1,x2) -> struct(x1,x2)) |> Arb.fromGen
     static member ValueTuple<'T1, 'T2, 'T3> () = Arb.generate<'T1 * 'T2 * 'T3> |> Gen.map (fun (x1,x2,x3) -> struct(x1,x2,x3)) |> Arb.fromGen
@@ -100,8 +100,6 @@ type FsPicklerGenerators private () =
     static member ValueTuple<'T1, 'T2, 'T3, 'T4, 'T5> () = Arb.generate<'T1 * 'T2 * 'T3 * 'T4 * 'T5> |> Gen.map (fun (x1,x2,x3,x4,x5) -> struct(x1,x2,x3,x4,x5)) |> Arb.fromGen
     static member ValueTuple<'T1, 'T2, 'T3, 'T4, 'T5, 'T6> () = Arb.generate<'T1 * 'T2 * 'T3 * 'T4 * 'T5 * 'T6> |> Gen.map (fun (x1,x2,x3,x4,x5,x6) -> struct(x1,x2,x3,x4,x5,x6)) |> Arb.fromGen
     static member ValueTuple<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7> () = Arb.generate<'T1 * 'T2 * 'T3 * 'T4 * 'T5 * 'T6 * 'T7> |> Gen.map (fun (x1,x2,x3,x4,x5,x6,x7) -> struct(x1,x2,x3,x4,x5,x6,x7)) |> Arb.fromGen
-    //static member ValueTuple<'T1, 'T2, 'T3, 'T4, 'T5, 'T6, 'T7, 'T8 when 'T8 : (new : unit -> 'T8) and 'T8 : struct and 'T8 :> ValueType> () =
-    //    Arb.generate<'T1 * 'T2 * 'T3 * 'T4 * 'T5 * 'T6 * 'T7 * 'T8> |> Gen.map (ValueTuple<_,_,_,_,_,_,_,_>) |> Arb.fromGen
 
             
 type Check =

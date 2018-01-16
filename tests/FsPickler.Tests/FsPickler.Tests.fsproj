@@ -12,8 +12,6 @@
     <Compile Include="TestTypes.fs" />
     <Compile Include="GenericTests.fs" />
     <Compile Include="SerializerTests.fs" />
-    <Compile Include="InMemoryTests.fs" />
-    <Compile Include="AppDomainTests.fs" />
     <None Include="App.config" />
     <None Include="paket.references" />
   </ItemGroup>

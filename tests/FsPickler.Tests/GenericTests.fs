@@ -1,23 +1,17 @@
 ﻿namespace MBrace.FsPickler.Tests
 
 open System
-open System.IO
-open System.Collections
 open System.Collections.Generic
 open System.Reflection
-open System.Runtime.Serialization
-open System.Threading.Tasks
-
-open MBrace.FsPickler
-open MBrace.FsPickler.Hashing
-open MBrace.FsPickler.Combinators
-open MBrace.FsPickler.Json
-
-open MBrace.FsPickler.Tests.TestTypes
 
 open NUnit.Framework
 open FsUnit
 open FsCheck
+
+open MBrace.FsPickler
+open MBrace.FsPickler.Hashing
+open MBrace.FsPickler.Combinators
+open MBrace.FsPickler.Tests.TestTypes
 
 #nowarn "8989"
 
@@ -56,13 +50,13 @@ module ``Generic Tests`` =
     //
 
     [<Test; Category("Pickler tests")>]
-    let ``1. pickler generation order should not affect result`` () =
+    let ``pickler generation order should not affect result`` () =
         // see type definitions on an explanation of what this test checks
         FsPickler.IsSerializableType<Foo> () |> should equal false
         FsPickler.IsSerializableType<Bar> () |> should equal false
 
     [<Test; Category("Pickler tests")>]
-    let ``1. Correctly resolve recursive types`` () =
+    let ``Correctly resolve recursive types`` () =
         isRecursive<int> |> should equal false
         isRecursive<DateTime> |> should equal false
         isRecursive<DateTimeOffset> |> should equal false
@@ -89,7 +83,7 @@ module ``Generic Tests`` =
         isRecursive<GenericISerializableClass<int>> |> should equal true
 
     [<Test; Category("Pickler tests")>]
-    let ``1. Correctly resolve open hierarchies`` () =
+    let ``Correctly resolve open hierarchies`` () =
         isOpenHierarchy<int> |> should equal false
         isOpenHierarchy<DateTime> |> should equal false
         isOpenHierarchy<DateTimeOffset> |> should equal false
@@ -117,7 +111,7 @@ module ``Generic Tests`` =
         isOpenHierarchy<GenericISerializableClass<int>> |> should equal true
 
     [<Test; Category("Pickler tests")>]
-    let ``1. Correctly resolve finite types`` () =
+    let ``Correctly resolve finite types`` () =
         isFixedSize<int> |> should equal true
         isFixedSize<DateTime> |> should equal true
         isFixedSize<DateTimeOffset> |> should equal true
@@ -147,7 +141,7 @@ module ``Generic Tests`` =
         isFixedSize<SimpleISerializableClass> |> should equal false
 
     [<Test; Category("Pickler tests")>]
-    let ``1. detect polymorphic recursive types`` () =
+    let ``detect polymorphic recursive types`` () =
         FsPickler.IsSerializableType<PolyRec<int>> () |> should equal false
         FsPickler.IsSerializableType<PolyRec<int> ref> () |> should equal false
         FsPickler.IsSerializableType<APoly<int, string>> () |> should equal false
@@ -155,21 +149,21 @@ module ``Generic Tests`` =
         FsPickler.IsSerializableType<PseudoPolyRec<int>> () |> should equal true
 
     [<Test; Category("Pickler tests")>]
-    let ``1. Should mark subtypes of nonserializable types serializable`` () =
+    let ``Should mark subtypes of nonserializable types serializable`` () =
         FsPickler.IsSerializableType<NonSerializable> () |> should equal false
         FsPickler.IsSerializableType<SerializableInheritingNonSerializable> () |> should equal true
 
     [<Test; Category("Pickler tests")>]
-    let ``1. Should mark serializable instances of nonserializable interfaces serializable`` () =
+    let ``Should mark serializable instances of nonserializable interfaces serializable`` () =
         FsPickler.IsSerializableType<NonSerializableInterface> () |> should equal true
         FsPickler.IsSerializableType<SerializableImplementingNonSerializable> () |> should equal true
 
     [<Test; Category("Pickler tests")>]
-    let ``1. Should mark types carrying the SerializableAttribute serializable`` () =
+    let ``Should mark types carrying the SerializableAttribute serializable`` () =
         FsPickler.IsSerializableType<SerializableOnAccountOfAttribute> () |> should equal true
 
     [<Test; Category("Pickler tests")>]
-    let ``1. Serializable type declaration simple test`` () =
+    let ``Serializable type declaration simple test`` () =
         let registry = new CustomPicklerRegistry()
         do registry.DeclareSerializable<DeclaredSerializableType>()
         let cache = PicklerCache.FromCustomPicklerRegistry registry
@@ -178,7 +172,7 @@ module ``Generic Tests`` =
         ()
 
     [<Test; Category("Pickler tests")>]
-    let ``1. Pickler factory simple test`` () =
+    let ``Pickler factory simple test`` () =
         let registry = new CustomPicklerRegistry()
         let customPickler = Pickler.FromPrimitives<PicklerFactoryType>((fun _ -> failwith ""), (fun _ _ -> failwith ""))
         do registry.RegisterPickler customPickler
@@ -188,7 +182,7 @@ module ``Generic Tests`` =
         obj.ReferenceEquals(p, customPickler) |> should equal true
 
     [<Test; Category("Pickler tests")>]
-    let ``1. Declare Serializable Predicate`` () =
+    let ``Declare Serializable Predicate`` () =
         let registry = new CustomPicklerRegistry()
         do registry.DeclareSerializable (fun t -> t.Name.StartsWith "BazBaz") 
         let cache = PicklerCache.FromCustomPicklerRegistry registry
@@ -205,7 +199,7 @@ module ``Generic Tests`` =
         cache.IsSerializableType<BazBaz9>() |> should equal true
 
     [<Test; Category("Pickler tests")>]
-    let ``1. Interface pickler is used for implementation`` () =
+    let ``Interface pickler is used for implementation`` () =
         let factory (resolver:IPicklerResolver) =
             let intPickler = resolver.Resolve<int>()
             let reader state =
@@ -229,16 +223,16 @@ module ``Generic Tests`` =
     //
 
     [<Test; Category("Clone")>]
-    let ``2. Clone: bool`` () = testCloneEq false ; testCloneEq true
+    let ``Clone: bool`` () = testCloneEq false ; testCloneEq true
 
     [<Test; Category("Clone")>]
-    let ``2. Clone: byte`` () = Check.QuickThrowOnFail<byte> (testCloneEq, maxRuns = 10)
+    let ``Clone: byte`` () = Check.QuickThrowOnFail<byte> (testCloneEq, maxRuns = 10)
 
     [<Test; Category("Clone")>]
-    let ``2. Clone: int32`` () = Check.QuickThrowOnFail<int32> (testCloneEq, maxRuns = 10)
+    let ``Clone: int32`` () = Check.QuickThrowOnFail<int32> (testCloneEq, maxRuns = 10)
 
     [<Test; Category("Clone")>]
-    let ``2. Clone: string`` () = Check.QuickThrowOnFail<string> testCloneRefEq
+    let ``Clone: string`` () = Check.QuickThrowOnFail<string> testCloneRefEq
 
     let checkArray<'T> () =
         testCloneRefEq (null : 'T [])
@@ -248,23 +242,23 @@ module ``Generic Tests`` =
         Check.QuickThrowOnFail<'T [,,,]> (testCloneRefEq, maxRuns = 10)
 
     [<Test; Category("Clone")>]
-    let ``2. Clone: array int`` () = checkArray<int> ()
+    let ``Clone: array int`` () = checkArray<int> ()
 
     [<Test; Category("Clone")>]
-    let ``2. Clone: array string`` () = checkArray<string> ()
+    let ``Clone: array string`` () = checkArray<string> ()
 
     [<Test; Category("Clone")>]
-    let ``2. Clone: array byte`` () = checkArray<byte> ()
+    let ``Clone: array byte`` () = checkArray<byte> ()
 
     [<Test; Category("Clone")>]
-    let ``2. Clone: array enum`` () = 
+    let ``Clone: array enum`` () = 
         checkArray<Enum> () ; 
         // provisional: until mono bug is fixed
         // https://bugzilla.xamarin.com/show_bug.cgi?id=40568
         if not runsOnMono then checkArray<CharEnum> ()
 
     [<Test; Category("Clone")>]
-    let ``2. Clone: cached array`` () = 
+    let ``Clone: cached array`` () = 
         let xs = [|1uy .. 10uy|]
         testCloneRef [|for i in 1 .. 100 -> xs|]
         let xs = [|1 .. 10|]
@@ -274,29 +268,29 @@ module ``Generic Tests`` =
         [|obj()|] |> testClonePayload (fun xs -> xs.[0])
 
     [<Test; Category("Clone")>]
-    let ``2. Clone: optional`` () = 
+    let ``Clone: optional`` () = 
         Check.QuickThrowOnFail<int option> (testCloneRefEq, maxRuns = 10)
         Some (obj()) |> testClonePayload (fun o -> o.Value)
 
     [<Test; Category("Clone")>]
-    let ``2. Clone: ref`` () = 
+    let ``Clone: ref`` () = 
         Check.QuickThrowOnFail<int ref> (testCloneRefEq, maxRuns = 10)
         ref (obj()) |> testClonePayload (fun r -> r.Value)
 
     [<Test; Category("Clone")>]
-    let ``2. Clone: Nullable`` () = 
+    let ``Clone: Nullable`` () = 
         Check.QuickThrowOnFail<Nullable<int>> (testCloneEq, maxRuns = 10)
         let s = new GenericStruct<_>(obj())
         new Nullable<_>(s) |> testClonePayload (fun n -> n.Value.Value)
 
     [<Test; Category("Clone")>]
-    let ``2. Clone: list`` () = 
+    let ``Clone: list`` () = 
         // unions encode certain branches as singletons
         Check.QuickThrowOnFail<int list> (function [] as l -> testCloneEq l | _ as l -> testCloneRefEq l)
         [obj()] |> testClonePayload List.head
 
     [<Test; Category("Clone")>]
-    let ``2. Clone: struct`` () = 
+    let ``Clone: struct`` () = 
         let c = new StructType(42,"42")
         let c' = clone c
         c'.X |> should equal c.X
@@ -304,19 +298,19 @@ module ``Generic Tests`` =
         new GenericStruct<_>(obj()) |> testClonePayload (fun s -> s.Value)
 
     [<Test; Category("Clone")>]
-    let ``2. Clone: simple class`` () = 
+    let ``Clone: simple class`` () = 
         let c = new SimpleClass(42, "42")
         let c' = clone c
         c'.Value |> should equal c.Value
 
     [<Test; Category("Clone")>]
-    let ``2. Clone: generic class`` () = 
+    let ``Clone: generic class`` () = 
         let gc = new GenericClass<_>(obj())
         testCloneRef gc
         gc |> testClonePayload (fun c -> c.Value)
 
     [<Test; Category("Clone")>]
-    let ``2. Clone: simple datacontract`` () = 
+    let ``Clone: simple datacontract`` () = 
         let d = new DataContractClass<_>((1,2), "42")
         let d' = clone d
         d'.A |> should equal d.A
@@ -324,7 +318,7 @@ module ``Generic Tests`` =
         d'.A |> isNotSameTo d.A
 
     [<Test; Category("Clone")>]
-    let ``2. Clone: field datacontract`` () = 
+    let ``Clone: field datacontract`` () = 
         let d = new FieldDataContractClass<_>((1,2), "42")
         let d' = clone d
         d'.A |> should equal d.A
@@ -332,7 +326,7 @@ module ``Generic Tests`` =
         d'.B |> should equal d'.B
 
     [<Test; Category("Clone")>]
-    let ``2. Clone: field datacontract with parameterless ctor`` () = 
+    let ``Clone: field datacontract with parameterless ctor`` () = 
         let d = new DataContractWithParameterlessConstructor()
         d.A <- "test"
         let d' = clone d
@@ -340,19 +334,19 @@ module ``Generic Tests`` =
         d' |> isNotSameTo d
 
     [<Test; Category("Clone")>]
-    let ``2. Clone: class with lone CollectionDataContractAttribute`` () = 
+    let ``Clone: class with lone CollectionDataContractAttribute`` () = 
         let d = new ClassWithLoneCollectionDataContractAttribute<int>([1 .. 10])
         let d' = clone d
         d'.Values |> should equal d.Values
 
     [<Test; Category("Clone")>]
-    let ``2. Clone: delegate simple`` () = 
+    let ``Clone: delegate simple`` () = 
         let d = Func<int>(fun () -> 1 + 1)
         let d' = clone d
         d'.Invoke() |> should equal 2
 
     [<Test; Category("Clone")>]
-    let ``2. Clone: delegate multicast`` () =
+    let ``Clone: delegate multicast`` () =
         DeleCounter.Value <- 0
         let f n = new TestDelegate(fun () -> DeleCounter.Value <- DeleCounter.Value + n) :> Delegate
         let g = Delegate.Combine [| f 1 ; f 2 |]
@@ -363,7 +357,7 @@ module ``Generic Tests`` =
         DeleCounter.Value |> should equal 6
 
     [<Test; Category("Clone")>]
-    let ``2. Clone: ISerializable`` () = 
+    let ``Clone: ISerializable`` () = 
         let e = FSharpException(42, "fortytwo") :?> FSharpException |> addStackTrace
         let e' = clone e
         e'.Data0 |> should equal e.Data0
@@ -371,7 +365,7 @@ module ``Generic Tests`` =
         e'.StackTrace |> should equal e.StackTrace
 
     [<Test; Category("Clone")>]
-    let ``2. Clone: Exception without ISerializable`` () = 
+    let ``Clone: Exception without ISerializable`` () = 
         let e = new ExceptionWithoutISerializable<int>(42, "Message", new Exception()) |> addStackTrace
         let e' = clone e
         e'.Value |> should equal e.Value
@@ -379,13 +373,13 @@ module ``Generic Tests`` =
         e'.StackTrace |> should equal e.StackTrace
         
     [<Test; Category("Clone")>]
-    let ``2. Clone: record`` () = 
+    let ``Clone: record`` () = 
         Check.QuickThrowOnFail<Record> (testCloneRefEq, maxRuns = 10)
         Check.QuickThrowOnFail<Record> (testCloneRefEq, maxRuns = 10)
         { GValue = obj() } |> testClonePayload (fun r -> r.GValue)
 
     [<Test; Category("Clone")>]
-    let ``2. Clone: struct record`` () =
+    let ``Clone: struct record`` () =
         let c =
             { SInt = 42
               SString = "42"
@@ -396,7 +390,7 @@ module ``Generic Tests`` =
         Check.QuickThrowOnFail<StructRecord>(testCloneEq, maxRuns = 10)
         
     [<Test; Category("Clone")>]
-    let ``2. Clone: union`` () = 
+    let ``Clone: union`` () = 
         // unions encode certain branches as singletons
         Check.QuickThrowOnFail<SimpleDU> testCloneEq
         Check.QuickThrowOnFail<GenericDU<int>> (testCloneEq, maxRuns = 10)
@@ -407,13 +401,13 @@ module ``Generic Tests`` =
 
     
     [<Test; Category("Clone")>]
-    let ``2. Clone: struct union`` () = 
+    let ``Clone: struct union`` () = 
         Check.QuickThrowOnFail<StructDU> testCloneEq
         Check.QuickThrowOnFail<GenericStructDU<int>> (testCloneEq, maxRuns = 10)
         SGValue(obj()) |> testClonePayload (function SGValue v -> v)
         
     [<Test; Category("Clone")>]
-    let ``2. Clone: tuple`` () = 
+    let ``Clone: tuple`` () = 
         Check.QuickThrowOnFail<Tuple<int>>(testCloneRefEq, maxRuns = 10)
         Check.QuickThrowOnFail<int * string>(testCloneRefEq, maxRuns = 10)
         Check.QuickThrowOnFail<int * string * string>(testCloneRefEq, maxRuns = 10)
@@ -426,7 +420,7 @@ module ``Generic Tests`` =
 
     
     [<Test; Category("Clone")>]
-    let ``2. Clone: struct tuple`` () = 
+    let ``Clone: struct tuple`` () = 
         // a single struct tuple is just an int.
         Check.QuickThrowOnFail<ValueTuple<int>>(testCloneEq, maxRuns = 10)
         Check.QuickThrowOnFail<struct (int * string)>(testCloneEq, maxRuns = 10)
@@ -439,7 +433,7 @@ module ``Generic Tests`` =
         struct (obj(),obj()) |> testClonePayload (fun struct (a,_) -> a)
 
     [<Test; Category("Clone")>]
-    let ``2. Clone: choice`` () = 
+    let ``Clone: choice`` () = 
         Check.QuickThrowOnFail<Choice<int,int>>(testCloneRefEq, maxRuns = 10)
         Check.QuickThrowOnFail<Choice<int,int,int>>(testCloneRefEq, maxRuns = 10)
         Check.QuickThrowOnFail<Choice<int,int,int,int>>(testCloneRefEq, maxRuns = 10)
@@ -449,7 +443,7 @@ module ``Generic Tests`` =
         Choice1Of2 (obj()) |> testClonePayload(function Choice1Of2 v -> v | _ -> failwith "error")
 
     [<Test; Category("Clone")>]
-    let ``2. Clone: quotation`` () = 
+    let ``Clone: quotation`` () = 
         let quot =
             <@
                 do int2Peano 42 |> ignore
@@ -475,27 +469,27 @@ module ``Generic Tests`` =
         quot'.ToString() |> should equal (quot.ToString())
         
     [<Test; Category("Clone")>]
-    let ``2. Clone: caching`` () = 
+    let ``Clone: caching`` () = 
         let x = obj ()
         let y,z = clone ((x,x))
         Assert.AreSame(y,z)
 
     [<Test; Category("Clone")>]
-    let ``2. Clone: recursive objects`` () = 
+    let ``Clone: recursive objects`` () = 
         let x = Array.zeroCreate<obj> 10
         for i = 0 to 9 do x.[i] <- box x
         let y = clone x
         for z in y do Assert.AreSame(y,z :?> _)
 
     [<Test; Category("Clone"); Repeat(5)>]
-    let ``2. Clone: random graph`` () = 
+    let ``Clone: random graph`` () = 
         let g = createRandomGraph 0.7 20
         let g' = clone g
         g' |> isNotSameTo g
         areEqualGraphs g g' |> should equal true
 
     [<Test; Category("Pickler tests")>]
-    let ``2. Clone: cloneable only types`` () =
+    let ``Clone: cloneable only types`` () =
         FsPickler.IsSerializableType<CloneableOnlyType> () |> should equal false
         let cov = new CloneableOnlyType()
         FsPickler.Clone cov |> should equal cov
@@ -508,7 +502,7 @@ module ``Generic Tests`` =
         |> shouldFailwith<NonSerializableTypeException>
 
     [<Test; Category("Pickler tests")>]
-    let ``2. Clone: Hash id parsing`` () =
+    let ``Clone: Hash id parsing`` () =
         let seed = FsPickler.ComputeHash [|1 .. 10000|]
         Check.QuickThrowOnFail<int64 * Type * byte []>(
             fun (l : int64, t : Type, bytes : byte []) ->
@@ -521,7 +515,7 @@ module ``Generic Tests`` =
     //
 
     [<Test; Category("Sift")>]
-    let ``3. Object: simple sift`` () =
+    let ``Object: simple sift`` () =
         let graph : (int * int []) option * int [] option option list = (Some (1, [|1 .. 100|]), [None; None ; Some None; Some (Some [|12|])])
         let sifter = { new IObjectSifter with member __.Sift(p,_,_) = p.Kind = Kind.Array }
         let sifted, values = FsPickler.Sift(graph, sifter)
@@ -529,7 +523,7 @@ module ``Generic Tests`` =
         FsPickler.UnSift(sifted, values) |> should equal graph
 
     [<Test; Category("Sift")>]
-    let ``3. Object: sifting with reference equality`` () =
+    let ``Object: sifting with reference equality`` () =
         let array = [|1 .. 100|]
         let graph = [array; array]
         let sifted, sifts = FsPickler.Sift(graph, (function :? Array -> true | _ -> false))
@@ -538,7 +532,7 @@ module ``Generic Tests`` =
         graph' |> should equal graph
 
     [<Test; Category("Sift")>]
-    let ``3. Object: sifting boxed primitives`` () =
+    let ``Object: sifting boxed primitives`` () =
         let value = [|1|]
         let graph = [box value; box 2; box 3 ; box 4; box value]
         let sifted, sifts = FsPickler.Sift(graph, (function :? Array -> true | :? int -> true | _ -> false))
@@ -547,7 +541,7 @@ module ``Generic Tests`` =
         graph' |> should equal graph
 
     [<Test; Category("Sift")>]
-    let ``3. Object: sifting boxed values`` () =
+    let ``Object: sifting boxed values`` () =
         let value = [|1 .. 100|]
         let sifted, sifts = FsPickler.Sift(box value, (function :? Array -> true | _ -> false))
         sifts.Length |> should equal 1
@@ -555,7 +549,7 @@ module ``Generic Tests`` =
         value' |> should equal value
 
     [<Test; Category("Sift")>]
-    let ``3. Object: random sift`` () =
+    let ``Object: random sift`` () =
         let r = new System.Random()
         let randomSifter = { new IObjectSifter with member __.Sift(_,_,_) = r.Next(0,5) = 0 }
         Check.QuickThrowOnFail(fun (tree : ListTree<int>) ->
@@ -563,7 +557,7 @@ module ``Generic Tests`` =
             FsPickler.UnSift(sifted, values) |> should equal tree)
 
     [<Test; Category("Sift"); Repeat(5)>]
-    let ``3. Object: random graph sifting`` () =
+    let ``Object: random graph sifting`` () =
         let g = createRandomGraph 0.4 30
         let r = new System.Random()
         let randomSifter = { new IObjectSifter with member __.Sift(_,_,_) = r.Next(0,5) = 0 }
@@ -576,14 +570,14 @@ module ``Generic Tests`` =
     //
 
     [<Test; Category("Visitor")>]
-    let ``4. Visitor: simple node count`` () =
+    let ``Visitor: simple node count`` () =
         let count = ref 0
         let visitor = { new IObjectVisitor with member __.Visit(_,_) = incr count ; true }
         FsPickler.VisitObject(visitor, ((1,2), (3,4)))
         count.Value |> should equal 7
         
     [<Test; Category("Visitor")>]
-    let ``4. Visitor: cyclic object`` () =
+    let ``Visitor: cyclic object`` () =
         let count = ref 0
         let visitor = { new IObjectVisitor with member __.Visit(_,_) = incr count ; true }
         let rec r = { Rec = r }
@@ -591,7 +585,7 @@ module ``Generic Tests`` =
         count.Value |> should equal 1
 
     [<Test; Category("Visitor")>]
-    let ``4. Visitor: specialized int counter`` () =
+    let ``Visitor: specialized int counter`` () =
         let count = ref 0
         let visitor = 
             { 
@@ -604,7 +598,7 @@ module ``Generic Tests`` =
         count.Value |> should equal 5050
 
     [<Test; Category("Visitor")>]
-    let ``4. Visitor: cancellation`` () =
+    let ``Visitor: cancellation`` () =
         let count = ref 0
         let visitor = 
             { 
@@ -616,7 +610,7 @@ module ``Generic Tests`` =
         count.Value |> should equal 1000
 
     [<Test; Category("Visitor")>]
-    let ``4. Visitor: specialized cancellation`` () =
+    let ``Visitor: specialized cancellation`` () =
         let count = ref 0
         let visitor = 
             { 
@@ -629,7 +623,7 @@ module ``Generic Tests`` =
         count.Value |> should equal 100
 
     [<Test; Category("Visitor")>]
-    let ``4. Visitor: traverse order`` () =
+    let ``Visitor: traverse order`` () =
         let value = Node("1", Node("2", Leaf, Leaf), Node("3", Leaf, Leaf))
         let order = new ResizeArray<string> ()
         let visitor = 
@@ -651,14 +645,14 @@ module ``Generic Tests`` =
         order.ToArray() |> should equal [|"2";"3";"1"|]
 
     [<Test; Category("Visitor")>]
-    let ``4. Visitor: should properly visit nulls 1`` () =
+    let ``Visitor: should properly visit nulls 1`` () =
         let visited = ref 0
         let visitor = { new IObjectVisitor with member __.Visit(_,_) = incr visited ; true }
         FsPickler.VisitObject(visitor, Unchecked.defaultof<SimpleClass>)
         visited.Value |> should equal 1
         
     [<Test; Category("Visitor")>]
-    let ``4. Visitor: should properly visit nulls 2`` () =
+    let ``Visitor: should properly visit nulls 2`` () =
         let hasFoundNull = ref false
         let visitor =
             {
@@ -675,7 +669,7 @@ module ``Generic Tests`` =
         hasFoundNull.Value |> should equal true
 
     [<Test; Category("Visitor")>]
-    let ``4. Visitor: ensure serializable`` () =
+    let ``Visitor: ensure serializable`` () =
         let mkGraph (o:obj) = [box 1 ; box "" ; box <| Some (42, [box 1 ; o])]
         FsPickler.EnsureSerializable(mkGraph [1..100])
         FsPickler.EnsureSerializable(mkGraph (new System.ObjectDisposedException("")))

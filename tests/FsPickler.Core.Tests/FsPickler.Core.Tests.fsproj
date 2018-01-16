@@ -13,8 +13,6 @@
     <Compile Include="..\FsPickler.Tests\TestTypes.fs" />
     <Compile Include="..\FsPickler.Tests\GenericTests.fs" />
     <Compile Include="..\FsPickler.Tests\SerializerTests.fs" />
-    <Compile Include="..\FsPickler.Tests\InMemoryTests.fs" />
-    <Compile Include="..\FsPickler.Tests\AppDomainTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
   <ItemGroup>
