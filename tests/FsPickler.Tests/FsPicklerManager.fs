@@ -5,6 +5,8 @@ open System
 open MBrace.FsPickler
 open MBrace.FsPickler.Json
 
+#nowarn "44"
+
 [<RequireQualifiedAccess>]
 module PickleFormat =
     [<Literal>]
@@ -43,7 +45,9 @@ type FsPicklerManager(pickleFormat : string) =
 
     member __.Serializer = serializer
     member __.CreateSerializer() = mkSerializer()
+#if !NETCOREAPP2_0
     member __.GetRemoteSerializer() = new RemoteSerializationClient(pickleFormat)
+#endif
 
     interface ISerializer with
         member __.Name = pickleFormat
@@ -66,6 +70,7 @@ and RemoteSerializer (pickleFormat : string) =
         let serializer = fp.UnPickle<FsPicklerSerializer -> byte[]>(data)
         serializer mgr.Serializer
 
+#if !NETCOREAPP2_0
 and RemoteSerializationClient (pickleFormat : string) =
     let fp = FailoverSerializer.Create()
     let remote = AppDomainManager.Activate<RemoteSerializer>("remoteSerializationDomain", [| pickleFormat :> obj |])
@@ -77,3 +82,5 @@ and RemoteSerializationClient (pickleFormat : string) =
     member __.PickleF (pickleF : FsPicklerSerializer -> byte []) =
         let data = fp.Pickle pickleF
         remote.PickleF data
+
+#endif

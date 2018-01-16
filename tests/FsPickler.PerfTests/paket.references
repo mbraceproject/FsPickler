@@ -1,9 +1,0 @@
-Newtonsoft.Json
-group Test
-  FSharp.Core
-  FSharp.Charting
-  NUnit
-  Wire
-  PerfUtil
-  PerfUtil.NUnit
-  protobuf-net

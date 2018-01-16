@@ -21,11 +21,6 @@ open FsUnit
 open FsCheck
 
 [<AbstractClass>]
-[<TestFixture(PickleFormat.Binary)>]
-[<TestFixture(PickleFormat.Xml)>]
-[<TestFixture(PickleFormat.Json)>]
-[<TestFixture(PickleFormat.Json_Headerless)>]
-[<TestFixture(PickleFormat.Bson)>]
 type ``FsPickler Serializer Tests`` (format : string) as self =
 
     let _ = Arb.register<FsPicklerGenerators> ()
@@ -311,8 +306,8 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
         Check.QuickThrowOnFail<struct(string * byte * TimeSpan * Guid * int)> testEquals
         Check.QuickThrowOnFail<struct(string * byte * TimeSpan * Guid * int * uint64)> testEquals
         Check.QuickThrowOnFail<struct(string * byte * TimeSpan * Guid * int * uint64 * decimal)> testEquals
-        Check.QuickThrowOnFail<struct(string * byte * TimeSpan * Guid * int * uint64 * decimal * int)> testEquals
-        Check.QuickThrowOnFail<struct(string * byte * TimeSpan * Guid * int * uint64 * decimal * int * int)> testEquals
+        //Check.QuickThrowOnFail<struct(string * byte * TimeSpan * Guid * int * uint64 * decimal * int)> testEquals
+        //Check.QuickThrowOnFail<struct(string * byte * TimeSpan * Guid * int * uint64 * decimal * int * int)> testEquals
 
     [<Test; Category("Generic BCL Types")>]
     member __.``4. BCL: tuple nested`` () =

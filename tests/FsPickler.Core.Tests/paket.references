@@ -1,5 +1,4 @@
 group Test
-  Newtonsoft.Json
   FSharp.Core
   FsCheck
   FsUnit
@@ -7,3 +6,4 @@ group Test
   System.ValueTuple
   Microsoft.NET.Test.Sdk
   NUnit3TestAdapter
+  Newtonsoft.Json

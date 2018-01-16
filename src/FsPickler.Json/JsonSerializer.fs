@@ -4,6 +4,8 @@ open System
 
 open MBrace.FsPickler
 
+#nowarn "44"
+
 type internal OAttribute = System.Runtime.InteropServices.OptionalAttribute
 type internal DAttribute = System.Runtime.InteropServices.DefaultParameterValueAttribute
 
@@ -62,6 +64,7 @@ type JsonSerializer =
 /// <summary>
 ///     BSON pickler instance.
 /// </summary>
+[<Obsolete("BSON format has been deprecated by Newtonsoft")>]
 type BsonSerializer([<O;D(null)>] ?typeConverter, [<O;D(null)>] ?picklerResolver) =
     inherit FsPicklerSerializer(new BsonPickleFormatProvider(), ?typeConverter = typeConverter, ?picklerResolver = picklerResolver)
 
@@ -83,5 +86,6 @@ type FsPickler =
     ///     Initializes a new FsPickler serializer instance that uses the BSON format.
     /// </summary>
     /// <param name="typeConverter">specify a custom type name converter.</param>
+    [<Obsolete("BSON format has been deprecated by Newtonsoft")>]
     static member CreateBsonSerializer([<O;D(null)>] ?typeConverter, [<O;D(null)>] ?picklerResolver) = 
         new BsonSerializer(?typeConverter = typeConverter, ?picklerResolver = picklerResolver)

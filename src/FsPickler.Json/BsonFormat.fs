@@ -12,6 +12,7 @@ open MBrace.FsPickler
 /// <summary>
 ///     BSON format factory methods.
 /// </summary>
+[<Obsolete("BSON format has been deprecated by Newtonsoft")>]
 type BsonPickleFormatProvider() =
         
     interface IPickleFormatProvider with

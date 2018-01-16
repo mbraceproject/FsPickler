@@ -34,6 +34,7 @@ type BinaryFormatterSerializer () =
         member __.Pickle (x : 'T) = pickle (fun s -> bfs.Serialize(s, x))
         member __.UnPickle<'T> data = unpickle (fun s -> bfs.Deserialize s :?> 'T) data
 
+#if !NETCOREAPP2_0
 type NetDataContractSerializer () =
     let ndc = new System.Runtime.Serialization.NetDataContractSerializer()
 
@@ -41,6 +42,7 @@ type NetDataContractSerializer () =
         member __.Name = "NetDataContractSerializer"
         member __.Pickle (x : 'T) = pickle (fun s -> ndc.Serialize(s, x))
         member __.UnPickle data = unpickle (fun s -> ndc.Deserialize s :?> 'T) data
+#endif
 
 type JsonDotNetSerializer () =
     let jdn = Newtonsoft.Json.JsonSerializer.Create()
@@ -103,10 +105,15 @@ type FailoverSerializer (picklers : ISerializer list) =
 
     static member Create() =
         let bfp = new BinaryFormatterSerializer() :> ISerializer
-        let ndc = new NetDataContractSerializer() :> ISerializer
         let jdn = new JsonDotNetSerializer() :> ISerializer
-
-        if runsOnMono then
-            new FailoverSerializer([bfp ; jdn ]) :> ISerializer
-        else
-            new FailoverSerializer([bfp ; jdn ; ndc ]) :> ISerializer
+        let serializers = 
+#if !NETCOREAPP2_0
+            if runsOnMono then
+                [bfp ; jdn]
+            else
+                let ndc = new NetDataContractSerializer() :> ISerializer
+                [bfp ; jdn ; ndc]
+#else
+            [bfp ; jdn]
+#endif
+        FailoverSerializer(serializers) :> ISerializer

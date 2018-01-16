@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\FsPickler.Tests\Utils.fs" />
+    <Compile Include="..\FsPickler.Tests\FsCheck.fs" />
+    <Compile Include="..\FsPickler.Tests\ISerializer.fs" />
+    <Compile Include="..\FsPickler.Tests\FsPicklerManager.fs" />
+    <Compile Include="..\FsPickler.Tests\TestTypes.fs" />
+    <Compile Include="..\FsPickler.Tests\GenericTests.fs" />
+    <Compile Include="..\FsPickler.Tests\SerializerTests.fs" />
+    <Compile Include="..\FsPickler.Tests\InMemoryTests.fs" />
+    <Compile Include="..\FsPickler.Tests\AppDomainTests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+    <None Include="paket.references" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\FsPickler.Core\FsPickler.Core.fsproj" />
+    <ProjectReference Include="..\..\src\FsPickler.Json.Core\FsPickler.Json.Core.fsproj" />
+  </ItemGroup>
+  <Import Project="..\..\.paket\Paket.Restore.targets" />
+</Project>

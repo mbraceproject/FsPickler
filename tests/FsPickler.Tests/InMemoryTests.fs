@@ -7,6 +7,11 @@ open NUnit.Framework
 
 open MBrace.FsPickler
 
+[<TestFixture(PickleFormat.Binary)>]
+[<TestFixture(PickleFormat.Xml)>]
+[<TestFixture(PickleFormat.Json)>]
+[<TestFixture(PickleFormat.Json_Headerless)>]
+[<TestFixture(PickleFormat.Bson)>]
 type ``InMemory Tests`` (pickleFormat : string) =
     inherit ``FsPickler Serializer Tests`` (pickleFormat)
 

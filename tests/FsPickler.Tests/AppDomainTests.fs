@@ -7,19 +7,20 @@ open NUnit.Framework
 
 open MBrace.FsPickler
 
-#if REMOTE_TESTS
+#if !NETCOREAPP2_0
 
+[<TestFixture(PickleFormat.Binary)>]
 type ``AppDomain Tests`` (pickleFormat : string) as self =
     inherit ``FsPickler Serializer Tests`` (pickleFormat)
 
-    let remotePickler = self.PicklerManager.GetRemoteSerializer()
+    let remotePickler = lazy(self.PicklerManager.GetRemoteSerializer())
 
     override __.IsRemotedTest = true
     override __.Pickle (value : 'T) = 
-        try remotePickler.Pickle<'T> value
+        try remotePickler.Value.Pickle<'T> value
         with :? FailoverSerializerException -> self.PicklerManager.Serializer.Pickle value
 
     override __.PickleF (pickleF : FsPicklerSerializer -> byte []) = 
-        try remotePickler.PickleF pickleF
+        try remotePickler.Value.PickleF pickleF
         with :? FailoverSerializerException -> pickleF self.PicklerManager.Serializer
 #endif

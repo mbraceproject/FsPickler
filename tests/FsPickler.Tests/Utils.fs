@@ -67,6 +67,7 @@ module Utils =
     type MemoryStream with
         member m.Clone() = new MemoryStream(m.ToArray())
 
+#if !NETCOREAPP2_0
     type AppDomainManager private () =
         static let container = new System.Collections.Concurrent.ConcurrentDictionary<string, AppDomain>()
 
@@ -89,3 +90,4 @@ module Utils =
             let culture = System.Globalization.CultureInfo.CurrentCulture
             let handle = domain.CreateInstance(assemblyName, typeName, false, allFlags, null, ctorParams, culture, [||])
             handle.Unwrap() :?> 'T
+#endif
