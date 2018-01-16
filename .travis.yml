@@ -1,6 +1,15 @@
 language: csharp
 
-sudo: false  # use the new container-based Travis infrastructure 
+addons:
+  apt:
+    packages:
+       - msbuild
 
-script: 
-  - ./build.sh
+sudo: false # use the new container-based Travis infrastructure
+dist: trusty # Ubuntu 14.04
+mono: latest
+dotnet: 2.0.0
+
+script:
+  - dotnet --info
+  - ./build.sh Default
