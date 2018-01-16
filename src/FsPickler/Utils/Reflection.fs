@@ -244,13 +244,13 @@ let isRecursiveType openHierarchiesOnly (t : Type) =
             |> Seq.map (fun p -> p.PropertyType)
             |> Seq.distinct
             |> Seq.exists (aux (t :: traversed))
-#if OPTIMIZE_FSHARP
+
         // System.Tuple is not sealed, but inheriting is not an idiomatic pattern in F#
         elif FSharpType.IsTuple t then
             FSharpType.GetTupleElements t
             |> Seq.distinct
             |> Seq.exists (aux (t :: traversed))
-#endif
+
         // leaves with open hiearchies are treated as recursive by definition
         elif not t.IsSealed then true
         else
