@@ -19,6 +19,8 @@ open Fake.AssemblyInfoFile
 
 let project = "FsPickler"
 
+let summary = "A fast serialization framework and pickler combinator library for .NET"
+
 let gitOwner = "mbraceproject"
 let gitHome = "https://github.com/" + gitOwner
 let gitName = "FsPickler"
@@ -41,19 +43,32 @@ Target "BuildVersion" (fun _ ->
     Shell.Exec("appveyor", sprintf "UpdateBuild -Version \"%s\"" nugetVersion) |> ignore
 )
 
-// Generate assembly info files with the right version & up-to-date information
 Target "AssemblyInfo" (fun _ ->
-    let attrs =
-        [ 
-            Attribute.Product project
-            Attribute.Copyright "\169 Eirik Tsarpalis."
-            Attribute.Version release.AssemblyVersion
-            Attribute.FileVersion release.AssemblyVersion
-        ] 
+    let getAssemblyInfoAttributes projectName =
+        [ Attribute.Title projectName
+          Attribute.Product project
+          Attribute.Description summary
+          Attribute.Copyright "\169 Eirik Tsarpalis."
+          Attribute.Version release.AssemblyVersion
+          Attribute.FileVersion release.AssemblyVersion ]
 
-    CreateFSharpAssemblyInfo "src/FsPickler/AssemblyInfo.fs" attrs
-    CreateFSharpAssemblyInfo "src/FsPickler.Json/AssemblyInfo.fs" attrs
-    CreateCSharpAssemblyInfo "src/FsPickler.CSharp/Properties/AssemblyInfo.cs" attrs
+    let getProjectDetails projectPath =
+        let projectName = System.IO.Path.GetFileNameWithoutExtension(projectPath)
+        ( projectPath,
+          projectName,
+          System.IO.Path.GetDirectoryName(projectPath),
+          (getAssemblyInfoAttributes projectName)
+        )
+
+    !! "src/**/*.??proj"
+    |> Seq.map getProjectDetails
+    |> Seq.iter (fun (projFileName, projectName, folderName, attributes) ->
+        match projFileName with
+        | Fsproj -> CreateFSharpAssemblyInfo (folderName </> "AssemblyInfo.fs") attributes
+        | Csproj -> CreateCSharpAssemblyInfo ((folderName </> "Properties") </> "AssemblyInfo.cs") attributes
+        | Vbproj -> CreateVisualBasicAssemblyInfo ((folderName </> "My Project") </> "AssemblyInfo.vb") attributes
+        | Shproj -> ()
+        )
 )
 
 

@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>FsPickler.Json</AssemblyName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DocumentationFile>bin\Debug\netstandard2.0\FsPickler.Json.XML</DocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="AssemblyInfo.fs" />
+    <Compile Include="..\FsPickler.Json\Common.fs" />
+    <Compile Include="..\FsPickler.Json\JsonWriter.fs" />
+    <Compile Include="..\FsPickler.Json\JsonReader.fs" />
+    <Compile Include="..\FsPickler.Json\JsonFormat.fs" />
+    <Compile Include="..\FsPickler.Json\BsonFormat.fs" />
+    <Compile Include="..\FsPickler.Json\JsonSerializer.fs" />
+    <Compile Include="..\FsPickler.Json\Combinators.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="paket.references" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\FsPickler.Core\FsPickler.Core.fsproj" />
+  </ItemGroup>
+  <Import Project="..\..\.paket\Paket.Restore.targets" />
+</Project>

@@ -1,2 +1,3 @@
-FSharp.Core copy_local:false
-Newtonsoft.Json
+group Legacy
+  FSharp.Core
+  Newtonsoft.Json
