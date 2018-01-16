@@ -12,6 +12,7 @@ open Fake
 open Fake.Git
 open Fake.ReleaseNotesHelper
 open Fake.AssemblyInfoFile
+open Fake.Testing.NUnit3
 
 // --------------------------------------------------------------------------------------
 // Information about the project to be used at NuGet and in AssemblyInfo files
@@ -26,8 +27,10 @@ let gitHome = "https://github.com/" + gitOwner
 let gitName = "FsPickler"
 let gitRaw = environVarOrDefault "gitRaw" "https://raw.github.com/" + gitOwner
 
+let testProjects = "tests/**/*.??proj"
 
-let testAssemblies = ["bin/FsPickler.Tests.dll" ; "bin/NoEmit/FsPickler.Tests.dll"]
+// Folder to deposit deploy artifacts
+let artifactsDir = __SOURCE_DIRECTORY__ @@ "artifacts"
 
 //
 //// --------------------------------------------------------------------------------------
@@ -71,7 +74,6 @@ Target "AssemblyInfo" (fun _ ->
         )
 )
 
-
 // --------------------------------------------------------------------------------------
 // Clean build results & restore NuGet packages
 
@@ -85,6 +87,8 @@ Target "Clean" (fun _ ->
 //// --------------------------------------------------------------------------------------
 //// Build library & test project
 
+Target "DotNet.Restore" (fun _ -> DotNetCli.Restore id)
+
 let configuration = environVarOrDefault "Configuration" "Release"
 
 let build configuration () =
@@ -95,40 +99,54 @@ let build configuration () =
     |> MSBuild "" "Build" ["Configuration", configuration]
     |> Log "AppBuild-Output: "
 
-Target "Build.Default" (build configuration)
-Target "Build.NoEmit" (build "NoEmit")
-Target "Build.Net40" (build "Release-NET40")
+Target "Build.Release" (build "Release")
+Target "Build.Release-NoEmit" (build "Release-NoEmit")
 
 // --------------------------------------------------------------------------------------
 // Run the unit tests using test runner & kill test runner when complete
 
-Target "RunTests" (fun _ ->
-    testAssemblies
-    |> NUnit (fun p ->
-        { p with
-            Framework = "v4.0.30319"
-            DisableShadowCopy = true
-            TimeOut = TimeSpan.FromMinutes 60.
-            OutputFile = "TestResults.xml" })
+let runTest config (proj : string) =
+    if EnvironmentHelper.isWindows || proj.Contains "Core" then
+        DotNetCli.Test (fun c -> 
+            { c with 
+                Project = proj
+                Configuration = config })
+    else
+        // revert to classic CLI runner due to dotnet-xunit issue in mono environments
+        let projDir = Path.GetDirectoryName proj
+        let projName = Path.GetFileNameWithoutExtension proj
+        let assembly = projDir @@ "bin" @@ config @@ "net4*" @@ projName + ".dll"
+        !! assembly
+        |> NUnit3 (fun c ->
+            { c with
+                OutputDir = sprintf "TestResult.%s.xml" config
+                TimeOut = TimeSpan.FromMinutes 20. })
+
+Target "RunTests" DoNothing
+
+Target "RunTests.Release" (fun _ ->
+    for proj in !! testProjects do
+        runTest "Release" proj
 )
 
-FinalTarget "CloseTestRunner" (fun _ ->  
-    ProcessHelper.killProcess "nunit-agent.exe"
+Target "RunTests.Release-NoEmit" (fun _ ->
+    for proj in !! testProjects do
+        runTest "Release-NoEmit" proj
 )
+
 //
 //// --------------------------------------------------------------------------------------
 //// Build a NuGet package
 
 Target "BundleNuGet" (fun _ ->    
     Paket.Pack (fun p -> 
-        { p with 
-            ToolPath = ".paket/paket.exe" 
-            OutputPath = "bin/"
+        { p with
+            OutputPath = artifactsDir
             Version = release.NugetVersion
             ReleaseNotes = toLines release.Notes })
 )
 
-Target "NuGetPush" (fun _ -> Paket.Push (fun p -> { p with WorkingDir = "bin/" }))
+Target "NuGetPush" (fun _ -> Paket.Push (fun p -> { p with WorkingDir = artifactsDir }))
 
 
 // Doc generation
@@ -206,14 +224,16 @@ Target "Release" DoNothing
 "Clean"
   ==> "AssemblyInfo"
   ==> "Prepare"
-  ==> "Build.Default"
-  ==> "Build.NoEmit"
+  ==> "DotNet.Restore"
+  ==> "Build.Release"
+  ==> "Build.Release-NoEmit"
   ==> "Build"
+  ==> "RunTests.Release"
+  ==> "RunTests.Release-NoEmit"
   ==> "RunTests"
   ==> "Default"
 
 "Default"
-  ==> "Build.Net40"
   ==> "PrepareRelease"
   ==> "GenerateDocs"
   ==> "BundleNuGet"

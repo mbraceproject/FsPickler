@@ -202,13 +202,7 @@ type XmlPickleWriter internal (textWriter : TextWriter, indent : bool, leaveOpen
         member __.IsPrimitiveArraySerializationSupported = false
         member __.WritePrimitiveArray _ _ = raise <| new NotSupportedException()
 
-        member __.Dispose () = 
-#if NET40
-            if leaveOpen then writer.Flush()
-            else writer.Close()
-#else
-            writer.Dispose()
-#endif
+        member __.Dispose () = writer.Dispose()
 
 /// <summary>
 ///     Xml format deserializer.
@@ -358,12 +352,7 @@ type XmlPickleReader internal (textReader : TextReader, leaveOpen) =
         member __.IsPrimitiveArraySerializationSupported = false
         member __.ReadPrimitiveArray _ _ = raise <| new NotImplementedException()
 
-        member __.Dispose () = 
-#if NET40
-            if not leaveOpen then reader.Close()
-#else
-            reader.Dispose()
-#endif
+        member __.Dispose () = reader.Dispose()
 
 /// <summary>
 ///     Factory methods for the Xml serialization format.
@@ -378,11 +367,7 @@ type XmlPickleFormatProvider(indent) =
         member __.DefaultEncoding = Encoding.UTF8
 
         member __.CreateWriter (stream, encoding, _, leaveOpen) =
-#if NET40
-            let sw = new StreamWriter(stream, encoding)
-#else
             let sw = new StreamWriter(stream, encoding, 1024, leaveOpen)
-#endif
             new XmlPickleWriter(sw, __.Indent, leaveOpen) :> _
 
         member __.CreateReader (stream, encoding, _, leaveOpen) =

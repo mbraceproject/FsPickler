@@ -357,7 +357,6 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
         e'.InnerException.Message |> should equal e.InnerException.Message
         e'.StackTrace |> should equal e.StackTrace
 
-#if !NET40
     [<Test; Category("Generic BCL Types")>]
     member __.``4. BCL: System.Runtime.ExceptionServices.ExceptionDispatchInfo`` () =
         if runsOnMono then
@@ -373,7 +372,6 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
             let edi = serializer.UnPickle<System.Runtime.ExceptionServices.ExceptionDispatchInfo> bytes
             let e = try edi.Throw() ; failwith "impossible" with e -> e
             e.StackTrace.Split('\n').Length |> should be (greaterThan 20)
-#endif
 
     [<Test; Category("Generic BCL Types")>]
     member __.``4. BCL: misc exceptions`` () =

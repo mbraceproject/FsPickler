@@ -29,10 +29,17 @@ frameworkAssemblies
     System.Xml
 references
     FsPickler.dll
+dependencies
+  framework: net45
+    FSharp.Core >= LOCKEDVERSION-Legacy
+  framework: netstandard2.0
+	FSharp.Core >= LOCKEDVERSION
+excludeddependencies
+    SourceLink.Create.CommandLine
 files
-    ../../bin/FsPickler.dll ==> lib/net45
-    ../../bin/FsPickler.pdb ==> lib/net45
-    ../../bin/FsPickler.xml ==> lib/net45
-    ../../bin/net40/FsPickler.dll ==> lib/net40
-    ../../bin/net40/FsPickler.pdb ==> lib/net40
-    ../../bin/net40/FsPickler.xml ==> lib/net40
+    bin/Release/net45/FsPickler.dll ==> lib/net45
+    bin/Release/net45/FsPickler.pdb ==> lib/net45
+    bin/Release/net45/FsPickler.xml ==> lib/net45
+    ../FsPickler.Core/bin/Release/netstandard2.0/FsPickler.dll ==> lib/netstandard2.0
+    ../FsPickler.Core/bin/Release/netstandard2.0/FsPickler.pdb ==> lib/netstandard2.0
+    ../FsPickler.Core/bin/Release/netstandard2.0/FsPickler.xml ==> lib/netstandard2.0

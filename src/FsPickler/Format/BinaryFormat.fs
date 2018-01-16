@@ -109,11 +109,7 @@ module private BinaryFormatUtils =
 [<AutoSerializable(false)>]
 type BinaryPickleWriter internal (stream : Stream, encoding : Encoding, leaveOpen : bool, forceLittleEndian : bool) =
 
-#if NET40
-    let bw = new BinaryWriter(stream, encoding)
-#else
     let bw = new BinaryWriter(stream, encoding, leaveOpen)
-#endif
 
     interface IPickleFormatWriter with
         member __.Flush () = ()
@@ -201,13 +197,7 @@ type BinaryPickleWriter internal (stream : Stream, encoding : Encoding, leaveOpe
         member __.IsPrimitiveArraySerializationSupported = not forceLittleEndian
         member __.WritePrimitiveArray _ array = blockCopy(array, stream)
 
-        member __.Dispose () = 
-#if NET40
-            if leaveOpen then bw.Flush()
-            else bw.Close()
-#else
-            bw.Dispose()
-#endif
+        member __.Dispose () = bw.Dispose()
 
 /// <summary>
 ///     Binary format deserializer.
@@ -215,22 +205,13 @@ type BinaryPickleWriter internal (stream : Stream, encoding : Encoding, leaveOpe
 [<AutoSerializable(false)>]
 type BinaryPickleReader internal (stream : Stream, encoding : Encoding, leaveOpen : bool) =
 
-#if NET40
-    let br = new BinaryReader(stream, encoding)
-#else
     let br = new BinaryReader(stream, encoding, leaveOpen)
-#endif
 
     let mutable isForcedLittleEndianStream = false
 
     interface IPickleFormatReader with
             
-        member __.Dispose () = 
-#if NET40
-            if not leaveOpen then br.Close()
-#else
-            br.Dispose ()
-#endif
+        member __.Dispose () = br.Dispose ()
 
         member __.BeginReadRoot (tag : string) =
             if br.ReadUInt32 () <> initValue then

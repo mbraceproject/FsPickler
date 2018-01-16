@@ -18,6 +18,7 @@
     <Compile Include="JsonSerializer.fs" />
     <Compile Include="Combinators.fs" />
     <None Include="paket.references" />
+    <None Include="paket.template" />
     <None Include="Test.fsx" />
   </ItemGroup>
   <ItemGroup>
