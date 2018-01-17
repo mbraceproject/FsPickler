@@ -312,17 +312,19 @@ module internal PicklerEmit =
 
 
     /// push an uninitialized object of type 't' to the stack
-    let emitObjectInitializer (t : Type) (ilGen : ILGenerator) =
-        // reify type instance
-        ilGen.Emit(OpCodes.Ldtoken, t)
-        ilGen.EmitCall(OpCodes.Call, typeFromHandle, null)
-        // call the object initializer
-        ilGen.EmitCall(OpCodes.Call, objInitializer, null)
-        // unbox value
-        if t.IsValueType then
-            ilGen.Emit(OpCodes.Unbox_Any, t)
+    let emitObjectInitializer (target : EnvItem<'T>) (ilGen : ILGenerator) =
+        if typeof<'T>.IsValueType then
+            target.LoadAddress()
+            ilGen.Emit(OpCodes.Initobj, typeof<'T>)
         else
-            ilGen.Emit(OpCodes.Castclass, t)
+            // reify type instance
+            ilGen.Emit(OpCodes.Ldtoken, typeof<'T>)
+            ilGen.EmitCall(OpCodes.Call, typeFromHandle, null)
+            // call the object initializer
+            ilGen.EmitCall(OpCodes.Call, objInitializer, null)
+            // unbox value
+            ilGen.Emit(OpCodes.Castclass, typeof<'T>)
+            target.Store()
 
     /// calls a predefined collection of serialization methods on given value
     let emitSerializationMethodCalls (methods : MethodInfo []) (wOr : Choice<EnvItem<WriteState>, EnvItem<ReadState>, EnvItem<CloneState>, EnvItem<VisitState>>)

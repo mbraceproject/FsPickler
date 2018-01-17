@@ -36,11 +36,9 @@ type internal StructFieldPickler =
 
         let readerDele =
             DynamicMethod.compileFunc2<Pickler [], ReadState, 'T> "structDeserializer" (fun picklers reader ilGen ->
-                    
                 // initialize empty value type
                 let value = EnvItem<'T>(ilGen)
-                emitObjectInitializer typeof<'T> ilGen
-                value.Store ()
+                emitObjectInitializer value ilGen
 
                 emitDeserializeMembers fields tags reader picklers value ilGen
 
@@ -52,8 +50,7 @@ type internal StructFieldPickler =
             DynamicMethod.compileFunc3<Pickler [], CloneState, 'T, 'T> "structCloner" (fun picklers state value ilGen ->
                 // initialize empty value type
                 let value' = EnvItem<'T>(ilGen)
-                emitObjectInitializer typeof<'T> ilGen
-                value'.Store ()
+                emitObjectInitializer value' ilGen
             
                 emitCloneMembers fields state picklers value value' ilGen
 
@@ -84,7 +81,7 @@ type internal StructFieldPickler =
                 picklers.[i].UntypedWrite w tags.[i] o
 
         let reader (r : ReadState) (_ : string) =
-            let t = FormatterServices.GetUninitializedObject(typeof<'T>)
+            let t = box Unchecked.defaultof<'T>
             for i = 0 to fields.Length - 1 do
                 let f = fields.[i]
                 let o = picklers.[i].UntypedRead r tags.[i]
@@ -93,7 +90,7 @@ type internal StructFieldPickler =
             fastUnbox<'T> t
 
         let cloner (c : CloneState) (t : 'T) =
-            let t' = FormatterServices.GetUninitializedObject(typeof<'T>)
+            let t' = box Unchecked.defaultof<'T>
             for i = 0 to fields.Length - 1 do
                 let f = fields.[i]
                 let o = f.GetValue t
@@ -200,8 +197,7 @@ type internal ClassFieldPickler =
 
                 // get uninitialized object and store locally
                 let value = EnvItem<'T>(ilGen)
-                emitObjectInitializer typeof<'T> ilGen
-                value.Store ()
+                emitObjectInitializer value ilGen
 
                 emitSerializationMethodCalls onDeserializing (Choice2Of4 reader) value ilGen
 
@@ -223,8 +219,7 @@ type internal ClassFieldPickler =
             DynamicMethod.compileFunc3<Pickler [], CloneState, 'T, 'T> "classCloner" (fun picklers state value ilGen ->
                 // get uninitialized object and store locally
                 let value' = EnvItem<'T>(ilGen)
-                emitObjectInitializer typeof<'T> ilGen
-                value'.Store ()
+                emitObjectInitializer value' ilGen
 
                 emitSerializationMethodCalls onSerializing (Choice3Of4 state) value ilGen
                 emitSerializationMethodCalls onDeserializing (Choice3Of4 state) value' ilGen
