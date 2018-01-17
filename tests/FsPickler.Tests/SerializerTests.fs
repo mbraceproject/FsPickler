@@ -441,6 +441,7 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
         (testRoundtrip h).DynamicInvoke [| |] |> ignore
         DeleCounter.Value |> should equal 6
 
+#if !NETCOREAPP2_0
     [<Test; Category("Generic BCL Types")>]
     member __.``BCL: lazy int`` () =
         let v = lazy(if true then 42 else 0)
@@ -451,6 +452,7 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
         let f () = (12, "value")
         let v = lazy(f ())
         (testRoundtrip v).Value |> should equal (f ())
+#endif
 
     [<Test; Category("Generic BCL Types")>]
     member __.``BCL: nullable int`` () =

@@ -94,7 +94,11 @@ let isRoslynReplSubmissionType (t : Type) =
 let isLinqEnumerable(t : Type) =
     isAssignableFrom typeof<System.Collections.IEnumerable> t && t.FullName.StartsWith "System.Linq"
 
-let isReflectionSerializable (t : Type) = t.IsSerializable || containsAttr<SerializableAttribute> t
+let isFSharpCoreType (t : Type) = t.Assembly = typeof<int option>.Assembly
+let isReflectionSerializable (t : Type) = 
+    t.IsSerializable || 
+    containsAttr<SerializableAttribute> t || 
+    isFSharpCoreType t // https://github.com/Microsoft/visualfsharp/issues/4207
 
 let isISerializable (t : Type) = isAssignableFrom typeof<ISerializable> t
 let tryGetISerializableCtor (t : Type) = t.TryGetConstructor [| typeof<SerializationInfo> ; typeof<StreamingContext> |]
