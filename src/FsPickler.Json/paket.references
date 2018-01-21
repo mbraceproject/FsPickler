@@ -1,3 +1,4 @@
+SourceLink.Create.CommandLine
 group Legacy
   FSharp.Core
   Newtonsoft.Json
