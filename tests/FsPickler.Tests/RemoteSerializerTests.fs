@@ -53,7 +53,7 @@ and RemoteSerializeProxy<'Serializer when 'Serializer :> FsPicklerSerializer>() 
         getInstance() |> pickler
 #endif
 
-#if DEBUG && !NETSTANDARD2_0
+#if DEBUG && !NETCOREAPP2_0
 [<TestFixture>]
 type ``Remote Serialization Tests`` () =
     inherit SerializationTests(RemotingFixture(fun () -> FsPickler.CreateBinarySerializer()))

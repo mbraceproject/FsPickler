@@ -371,11 +371,7 @@ type XmlPickleFormatProvider(indent) =
             new XmlPickleWriter(sw, __.Indent, leaveOpen) :> _
 
         member __.CreateReader (stream, encoding, _, leaveOpen) =
-#if NET40
-            let sr = new StreamReader(stream, encoding)
-#else
             let sr = new StreamReader(stream, encoding, true, 1024, leaveOpen)
-#endif
             new XmlPickleReader(sr, leaveOpen) :> _
 
         member __.CreateWriter (textWriter, _, leaveOpen) = new XmlPickleWriter(textWriter, __.Indent, leaveOpen) :> _

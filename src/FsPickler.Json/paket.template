@@ -24,6 +24,12 @@ tags
     F#, fsharp, serializer, pickler, binary, json, xml
 dependencies
   FsPickler CURRENTVERSION
+  framework: net45
+    FSharp.Core >= LOCKEDVERSION-Legacy
+	Newtonsoft.Json >= LOCKEDVERSION-Legacy
+  framework: netstandard2.0
+	FSharp.Core >= LOCKEDVERSION
+	Newtonsoft.Json >= LOCKEDVERSION
 excludeddependencies
     SourceLink.Create.CommandLine
 files
