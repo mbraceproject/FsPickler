@@ -37,20 +37,12 @@ type JsonPickleFormatProvider internal (indent, omitHeader) as self =
         member __.DefaultEncoding = new UTF8Encoding(false) :> Encoding
 
         member __.CreateWriter (stream, encoding, isTopLevelSequence, leaveOpen) =
-#if NET40
-            let sw = new StreamWriter(stream, encoding)
-#else
             let sw = new StreamWriter(stream, encoding, 1024, leaveOpen)
-#endif
             let jw = new JsonTextWriter(sw)
             new JsonPickleWriter(jw, __.OmitHeader, __.Indent, isCustomSeq isTopLevelSequence, sequenceSeparator, leaveOpen) :> _
 
         member __.CreateReader (stream, encoding, isTopLevelSequence, leaveOpen) =
-#if NET40
-            let sr = new StreamReader(stream, encoding)
-#else
             let sr = new StreamReader(stream, encoding, true, 1024, leaveOpen)
-#endif
             let jr = new JsonTextReader(sr)
             new JsonPickleReader(jr, __.OmitHeader, __.UseCustomTopLevelSequenceSeparator, isCustomSeq isTopLevelSequence, leaveOpen) :> _
 

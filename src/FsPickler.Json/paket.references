@@ -1,4 +1,4 @@
-FSharp.Core copy_local:false
-Newtonsoft.Json
-group Build    
-  FSharp.Compiler.Tools
+SourceLink.Create.CommandLine
+group Legacy
+  FSharp.Core
+  Newtonsoft.Json

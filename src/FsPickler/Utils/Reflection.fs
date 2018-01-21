@@ -94,7 +94,31 @@ let isRoslynReplSubmissionType (t : Type) =
 let isLinqEnumerable(t : Type) =
     isAssignableFrom typeof<System.Collections.IEnumerable> t && t.FullName.StartsWith "System.Linq"
 
-let isReflectionSerializable (t : Type) = t.IsSerializable || containsAttr<SerializableAttribute> t
+
+// https://github.com/Microsoft/visualfsharp/issues/4207
+// introduce a fallback logic that activates in cases where
+// we detect that the bug described above appears
+let isSerializableFSharpCoreType : Type -> bool =
+    if typeof<unit>.IsSerializable then fun _ -> false
+    else
+        let nonSerializableFSharpCoreTypes =
+            [| typedefof<FSharp.Control.MailboxProcessor<_>> |]
+
+        let nf(t:Type) = 
+            if t.IsGenericType then t.GetGenericTypeDefinition() 
+            else t
+
+        fun t ->
+            if t.Assembly = typeof<unit>.Assembly then
+                nonSerializableFSharpCoreTypes |> Array.forall ((<>) (nf t))
+            else
+                false
+
+
+let isReflectionSerializable (t : Type) = 
+    t.IsSerializable || 
+    containsAttr<SerializableAttribute> t || 
+    isSerializableFSharpCoreType t
 
 let isISerializable (t : Type) = isAssignableFrom typeof<ISerializable> t
 let tryGetISerializableCtor (t : Type) = t.TryGetConstructor [| typeof<SerializationInfo> ; typeof<StreamingContext> |]
@@ -244,13 +268,13 @@ let isRecursiveType openHierarchiesOnly (t : Type) =
             |> Seq.map (fun p -> p.PropertyType)
             |> Seq.distinct
             |> Seq.exists (aux (t :: traversed))
-#if OPTIMIZE_FSHARP
+
         // System.Tuple is not sealed, but inheriting is not an idiomatic pattern in F#
         elif FSharpType.IsTuple t then
             FSharpType.GetTupleElements t
             |> Seq.distinct
             |> Seq.exists (aux (t :: traversed))
-#endif
+
         // leaves with open hiearchies are treated as recursive by definition
         elif not t.IsSealed then true
         else

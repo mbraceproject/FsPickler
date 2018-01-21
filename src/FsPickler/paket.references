@@ -1,4 +1,4 @@
-﻿FSharp.Core copy_local:false
-File: TypeShape.fs TypeShape
-group Build    
-  FSharp.Compiler.Tools
+﻿File: TypeShape.fs TypeShape
+SourceLink.Create.CommandLine
+group Legacy
+  FSharp.Core

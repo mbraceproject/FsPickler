@@ -110,11 +110,10 @@ type internal DataContractPickler =
 
                 // use parameterless constructor, if available
                 if isNull ctor then
-                    emitObjectInitializer typeof<'T> ilGen
+                    emitObjectInitializer value ilGen
                 else
                     ilGen.Emit(OpCodes.Newobj, ctor)
-
-                value.Store ()
+                    value.Store ()
 
                 emitSerializationMethodCalls onDeserializing (Choice2Of4 reader) value ilGen
 
@@ -139,11 +138,10 @@ type internal DataContractPickler =
 
                 // use parameterless constructor, if available
                 if isNull ctor then
-                    emitObjectInitializer typeof<'T> ilGen
+                    emitObjectInitializer value' ilGen
                 else
                     ilGen.Emit(OpCodes.Newobj, ctor)
-
-                value'.Store ()
+                    value'.Store ()
 
                 emitSerializationMethodCalls onSerializing (Choice3Of4 state) value ilGen
                 emitSerializationMethodCalls onDeserializing (Choice3Of4 state) value' ilGen

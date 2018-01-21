@@ -12,6 +12,7 @@ open Fake
 open Fake.Git
 open Fake.ReleaseNotesHelper
 open Fake.AssemblyInfoFile
+open Fake.Testing.NUnit3
 
 // --------------------------------------------------------------------------------------
 // Information about the project to be used at NuGet and in AssemblyInfo files
@@ -19,101 +20,138 @@ open Fake.AssemblyInfoFile
 
 let project = "FsPickler"
 
+let summary = "A fast serialization framework and pickler combinator library for .NET"
+
 let gitOwner = "mbraceproject"
 let gitHome = "https://github.com/" + gitOwner
 let gitName = "FsPickler"
 let gitRaw = environVarOrDefault "gitRaw" "https://raw.github.com/" + gitOwner
 
+let testProjects = "tests/**/*.??proj"
 
-let testAssemblies = ["bin/FsPickler.Tests.dll" ; "bin/NoEmit/FsPickler.Tests.dll"]
+// Folder to deposit deploy artifacts
+let artifactsDir = __SOURCE_DIRECTORY__ @@ "artifacts"
 
-//
-//// --------------------------------------------------------------------------------------
-//// The rest of the code is standard F# build script 
-//// --------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------
+// The rest of the code is standard F# build script 
+// --------------------------------------------------------------------------------------
 
 //// Read release notes & version info from RELEASE_NOTES.md
 Environment.CurrentDirectory <- __SOURCE_DIRECTORY__
 let release = parseReleaseNotes (IO.File.ReadAllLines "RELEASE_NOTES.md")
-let nugetVersion = release.NugetVersion
 
 Target "BuildVersion" (fun _ ->
-    Shell.Exec("appveyor", sprintf "UpdateBuild -Version \"%s\"" nugetVersion) |> ignore
+    Fake.AppVeyor.UpdateBuildVersion release.NugetVersion
 )
 
-// Generate assembly info files with the right version & up-to-date information
 Target "AssemblyInfo" (fun _ ->
-    let attrs =
-        [ 
-            Attribute.Product project
-            Attribute.Copyright "\169 Eirik Tsarpalis."
-            Attribute.Version release.AssemblyVersion
-            Attribute.FileVersion release.AssemblyVersion
-        ] 
+    let getAssemblyInfoAttributes projectName =
+        [ Attribute.Title projectName
+          Attribute.Product project
+          Attribute.Description summary
+          Attribute.Copyright "\169 Eirik Tsarpalis."
+          Attribute.Version release.AssemblyVersion
+          Attribute.FileVersion release.AssemblyVersion ]
 
-    CreateFSharpAssemblyInfo "src/FsPickler/AssemblyInfo.fs" attrs
-    CreateFSharpAssemblyInfo "src/FsPickler.Json/AssemblyInfo.fs" attrs
-    CreateCSharpAssemblyInfo "src/FsPickler.CSharp/Properties/AssemblyInfo.cs" attrs
+    let getProjectDetails projectPath =
+        let projectName = System.IO.Path.GetFileNameWithoutExtension projectPath
+        ( projectPath,
+          projectName,
+          System.IO.Path.GetDirectoryName projectPath,
+          getAssemblyInfoAttributes projectName
+        )
+
+    !! "src/**/*.??proj"
+    |> Seq.map getProjectDetails
+    |> Seq.iter (fun (projFileName, projectName, folderName, attributes) ->
+        match projFileName with
+        | Fsproj -> CreateFSharpAssemblyInfo (folderName </> "AssemblyInfo.fs") attributes
+        | Csproj -> CreateCSharpAssemblyInfo ((folderName </> "Properties") </> "AssemblyInfo.cs") attributes
+        | Vbproj -> CreateVisualBasicAssemblyInfo ((folderName </> "My Project") </> "AssemblyInfo.vb") attributes
+        | Shproj -> ()
+        )
 )
-
 
 // --------------------------------------------------------------------------------------
 // Clean build results & restore NuGet packages
 
 Target "Clean" (fun _ ->
-    CleanDirs <| !! "./**/bin/"
+    CleanDirs <| !! "./**/bin/Release*"
     CleanDir "./tools/output"
     CleanDir "./temp"
 )
 
-//
-//// --------------------------------------------------------------------------------------
-//// Build library & test project
 
-let configuration = environVarOrDefault "Configuration" "Release"
+// --------------------------------------------------------------------------------------
+// Build library & test project
+
+Target "DotNet.Restore" (fun _ -> DotNetCli.Restore id)
 
 let build configuration () =
     // Build the rest of the project
     { BaseDirectory = __SOURCE_DIRECTORY__
       Includes = [ project + ".sln" ]
       Excludes = [] } 
-    |> MSBuild "" "Build" ["Configuration", configuration]
-    |> Log "AppBuild-Output: "
+    |> MSBuild "" "Build" ["Configuration", configuration; "SourceLinkCreate", "true"]
+    |> Log ""
 
-Target "Build.Default" (build configuration)
-Target "Build.NoEmit" (build "NoEmit")
-Target "Build.Net40" (build "Release-NET40")
+Target "Build.Release" (build "Release")
+Target "Build.Release-NoEmit" (build "Release-NoEmit")
 
 // --------------------------------------------------------------------------------------
 // Run the unit tests using test runner & kill test runner when complete
 
-Target "RunTests" (fun _ ->
-    testAssemblies
-    |> NUnit (fun p ->
-        { p with
-            Framework = "v4.0.30319"
-            DisableShadowCopy = true
-            TimeOut = TimeSpan.FromMinutes 60.
-            OutputFile = "TestResults.xml" })
+let runTest config (proj : string) =
+    if EnvironmentHelper.isWindows || proj.Contains "Core" then
+        DotNetCli.Test (fun c -> 
+            { c with 
+                Project = proj
+                Configuration = config })
+    else
+        // revert to classic CLI runner due to dotnet-xunit issue in mono environments
+        let projDir = Path.GetDirectoryName proj
+        let projName = Path.GetFileNameWithoutExtension proj
+        let assembly = projDir @@ "bin" @@ config @@ "net4*" @@ projName + ".dll"
+        !! assembly
+        |> NUnit3 (fun c ->
+            { c with
+                OutputDir = sprintf "TestResult.%s.xml" config
+                TimeOut = TimeSpan.FromMinutes 20. })
+
+Target "RunTests" DoNothing
+
+Target "RunTests.Release" (fun _ ->
+    for proj in !! testProjects do
+        runTest "Release" proj
 )
 
-FinalTarget "CloseTestRunner" (fun _ ->  
-    ProcessHelper.killProcess "nunit-agent.exe"
+Target "RunTests.Release-NoEmit" (fun _ ->
+    for proj in !! testProjects do
+        runTest "Release-NoEmit" proj
 )
-//
-//// --------------------------------------------------------------------------------------
-//// Build a NuGet package
 
-Target "BundleNuGet" (fun _ ->    
+
+// --------------------------------------------------------------------------------------
+// Build a NuGet package
+
+Target "NuGet.Pack" (fun _ ->    
     Paket.Pack (fun p -> 
-        { p with 
-            ToolPath = ".paket/paket.exe" 
-            OutputPath = "bin/"
+        { p with
+            OutputPath = artifactsDir
             Version = release.NugetVersion
             ReleaseNotes = toLines release.Notes })
 )
 
-Target "NuGetPush" (fun _ -> Paket.Push (fun p -> { p with WorkingDir = "bin/" }))
+Target "SourceLink.Test" (fun _ ->
+    !! (sprintf "%s/*.nupkg" artifactsDir)
+    |> Seq.iter (fun nupkg ->
+        DotNetCli.RunCommand
+            (fun p -> { p with WorkingDir = __SOURCE_DIRECTORY__ @@ "tests" @@ "FsPickler.Core.Tests" } )
+            (sprintf "sourcelink test %s" nupkg)
+    )
+)
+
+Target "Nuget.Push" (fun _ -> Paket.Push (fun p -> { p with WorkingDir = artifactsDir }))
 
 
 // Doc generation
@@ -145,9 +183,9 @@ open Octokit
 Target "ReleaseGitHub" (fun _ ->
     let remote =
         Git.CommandHelper.getGitResult "" "remote -v"
-        |> Seq.filter (fun (s: string) -> s.EndsWith("(push)"))
-        |> Seq.tryFind (fun (s: string) -> s.Contains(gitOwner + "/" + gitName))
-        |> function None -> gitHome + "/" + gitName | Some (s: string) -> s.Split().[0]
+        |> Seq.filter (fun s -> s.EndsWith("(push)"))
+        |> Seq.tryFind (fun s -> s.Contains(gitOwner + "/" + gitName))
+        |> function None -> gitHome + "/" + gitName | Some s -> s.Split().[0]
 
     //StageAll ""
     Git.Commit.Commit "" (sprintf "Bump version to %s" release.NugetVersion)
@@ -181,6 +219,7 @@ Target "ReleaseGitHub" (fun _ ->
 // --------------------------------------------------------------------------------------
 // Run all targets by default. Invoke 'build <Target>' to override
 
+Target "Root" DoNothing
 Target "Prepare" DoNothing
 Target "PrepareRelease" DoNothing
 Target "Build" DoNothing
@@ -188,25 +227,31 @@ Target "Default" DoNothing
 Target "Bundle" DoNothing
 Target "Release" DoNothing
 
-"Clean"
+
+"Root"
+  =?> ("BuildVersion", buildServer = BuildServer.AppVeyor)
+  ==> "Clean"
   ==> "AssemblyInfo"
   ==> "Prepare"
-  ==> "Build.Default"
-  ==> "Build.NoEmit"
+  ==> "DotNet.Restore"
+  ==> "Build.Release"
+  ==> "Build.Release-NoEmit"
   ==> "Build"
+  ==> "RunTests.Release"
+  ==> "RunTests.Release-NoEmit"
   ==> "RunTests"
   ==> "Default"
 
 "Default"
-  ==> "Build.Net40"
   ==> "PrepareRelease"
   ==> "GenerateDocs"
-  ==> "BundleNuGet"
+  ==> "NuGet.Pack"
+  //==> "SourceLink.Test" // fails due to TypeShape.fs being a paket controlled link
   ==> "Bundle"
 
 "Bundle"
   ==> "ReleaseDocs"
-  ==> "NuGetPush"
+  ==> "Nuget.Push"
   ==> "ReleaseGithub"
   ==> "Release"
 

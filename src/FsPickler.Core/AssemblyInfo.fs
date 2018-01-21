@@ -2,7 +2,7 @@
 namespace System
 open System.Reflection
 
-[<assembly: AssemblyTitleAttribute("FsPickler.Json")>]
+[<assembly: AssemblyTitleAttribute("FsPickler.Core")>]
 [<assembly: AssemblyProductAttribute("FsPickler")>]
 [<assembly: AssemblyDescriptionAttribute("A fast serialization framework and pickler combinator library for .NET")>]
 [<assembly: AssemblyCopyrightAttribute("© Eirik Tsarpalis.")>]
@@ -11,7 +11,7 @@ open System.Reflection
 do ()
 
 module internal AssemblyVersionInformation =
-    let [<Literal>] AssemblyTitle = "FsPickler.Json"
+    let [<Literal>] AssemblyTitle = "FsPickler.Core"
     let [<Literal>] AssemblyProduct = "FsPickler"
     let [<Literal>] AssemblyDescription = "A fast serialization framework and pickler combinator library for .NET"
     let [<Literal>] AssemblyCopyright = "© Eirik Tsarpalis."

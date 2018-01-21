@@ -23,13 +23,19 @@ include-pdbs true
 tags
     F#, fsharp, serializer, pickler, binary, json, xml
 dependencies
-    FsPickler CURRENTVERSION
+  FsPickler CURRENTVERSION
+  framework: net45
+    FSharp.Core >= LOCKEDVERSION-Legacy
+	Newtonsoft.Json >= LOCKEDVERSION-Legacy
+  framework: netstandard2.0
+	FSharp.Core >= LOCKEDVERSION
+	Newtonsoft.Json >= LOCKEDVERSION
 excludeddependencies
-    FSharp.Compiler.Tools
+    SourceLink.Create.CommandLine
 files
-    ../../bin/FsPickler.Json.dll ==> lib/net45
-    ../../bin/FsPickler.Json.pdb ==> lib/net45
-    ../../bin/FsPickler.Json.xml ==> lib/net45
-    ../../bin/net40/FsPickler.Json.dll ==> lib/net40
-    ../../bin/net40/FsPickler.Json.pdb ==> lib/net40
-    ../../bin/net40/FsPickler.Json.xml ==> lib/net40
+    bin/Release/net45/FsPickler.Json.dll ==> lib/net45
+    bin/Release/net45/FsPickler.Json.pdb ==> lib/net45
+    bin/Release/net45/FsPickler.Json.xml ==> lib/net45
+    ../FsPickler.Json.Core/bin/Release/netstandard2.0/FsPickler.Json.dll ==> lib/netstandard2.0
+    ../FsPickler.Json.Core/bin/Release/netstandard2.0/FsPickler.Json.pdb ==> lib/netstandard2.0
+    ../FsPickler.Json.Core/bin/Release/netstandard2.0/FsPickler.Json.xml ==> lib/netstandard2.0

@@ -1,37 +1,36 @@
-framework: >= net40
-redirects: on
-source https://www.nuget.org/api/v2
+framework: auto-detect
+redirects: force
+source https://api.nuget.org/v3/index.json
 
-nuget FSharp.Core >= 3.1 lowest_matching: true
-nuget Newtonsoft.Json >= 6.0.5 lowest_matching: true
-
+nuget FSharp.Core >= 4.2.1 lowest_matching: true
+nuget Newtonsoft.Json >= 10.0.1 lowest_matching: true
 github eiriktsarpalis/TypeShape:3.1.1 src/TypeShape/TypeShape.fs
 
-group Test
-  framework: >= net40
-  redirects: on
-  source https://www.nuget.org/api/v2
+# Testing : NB intentionally in main group
+nuget System.ValueTuple
+nuget NUnit ~> 3.9.0
+nuget NUnit3TestAdapter ~> 3.9.0 version_in_path: true
+nuget Microsoft.NET.Test.Sdk ~> 15.0
+nuget FsCheck ~> 3.0 prerelease
+nuget FsUnit ~> 3.0
 
-  nuget FSharp.Core 4.2.1
-  nuget FsCheck >= 2.6
-  nuget FSharp.Charting >= 0.90.14
-  nuget FsUnit >= 1.4.1
-  nuget PerfUtil
-  nuget PerfUtil.NUnit
-  nuget protobuf-net
-  nuget Wire
-  nuget NUnit ~> 2.6
-  nuget NUnit.Runners ~> 2.6
-  nuget System.ValueTuple
+nuget SourceLink.Create.CommandLine copy_local: true
+clitool dotnet-sourcelink
+
+group Legacy
+  framework: net45
+  source https://api.nuget.org/v3/index.json
+  redirects: force
+
+  nuget FSharp.Core >= 3.1 lowest_matching:true
+  nuget Newtonsoft.Json >= 6.0.5 lowest_matching: true
   
 group Build
-  framework: >= net40
+  framework: net461
   redirects: on
-  source https://www.nuget.org/api/v2
+  source https://api.nuget.org/v3/index.json
 
   nuget FAKE ~> 4.0
-  nuget FSharp.Core 4.2.1
   nuget FSharp.Formatting ~> 2.14.4
-  nuget FSharp.Compiler.Tools 4.1.23 # pin until F# compiler tuple bug is fixed
-                                     # https://github.com/Microsoft/visualfsharp/pull/3729
+  nuget NUnit.ConsoleRunner ~> 3.0
   github fsharp/FAKE modules/Octokit/Octokit.fsx

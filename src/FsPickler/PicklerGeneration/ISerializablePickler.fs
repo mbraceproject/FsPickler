@@ -131,7 +131,12 @@ type internal ISerializablePickler =
         let onDeserialized = allMethods |> getSerializationMethods<OnDeserializedAttribute> |> wrapDelegate<Action<'T, StreamingContext>>
 
         let isDeserializationCallback = isAssignableFrom typeof<IDeserializationCallback> typeof<'T>
-        let isMarshaledObjRef = typeof<'T> = typeof<System.Runtime.Remoting.ObjRef>
+        let isMarshaledObjRef = 
+#if NETSTANDARD2_0
+            false
+#else
+            typeof<'T> = typeof<System.Runtime.Remoting.ObjRef>
+#endif
         let isObjectReference = isAssignableFrom typeof<IObjectReference> typeof<'T>
 
         let inline run (dele : Action<'T, StreamingContext> []) w x =

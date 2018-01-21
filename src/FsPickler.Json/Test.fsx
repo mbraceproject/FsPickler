@@ -1,4 +1,4 @@
-﻿#I "../../bin/"
+﻿#I "bin/Debug/net45"
 #r "FsPickler.dll"
 #r "FsPickler.Json.dll"
 

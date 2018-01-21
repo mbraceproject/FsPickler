@@ -1,7 +1,10 @@
 ﻿namespace MBrace.FsPickler.Combinators
 
+open System
 open MBrace.FsPickler
 open MBrace.FsPickler.Json
+
+#nowarn "44"
 
 /// Json pickling methods
 [<RequireQualifiedAccess>]
@@ -28,6 +31,7 @@ module Json =
 
 /// Bson pickling methods
 [<RequireQualifiedAccess>]
+[<Obsolete("BSON format has been deprecated by Newtonsoft")>]
 module Bson =
 
     let private bsonPickler = lazy(FsPickler.CreateBsonSerializer())
