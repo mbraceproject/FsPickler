@@ -62,7 +62,6 @@ If evaluating from F# interactive, make sure to <a href="https://github.com/mbra
 <span class="l">4: </span>
 <span class="l">5: </span>
 <span class="l">6: </span>
-<span class="l">7: </span>
 </pre></td>
 <td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="prep">#r</span> <span class="s">&quot;Newtonsoft.Json.dll&quot;</span>
 <span class="prep">#r</span> <span class="s">&quot;FsPickler.Json.dll&quot;</span>
@@ -70,7 +69,6 @@ If evaluating from F# interactive, make sure to <a href="https://github.com/mbra
 <span class="k">open</span> <span class="i">MBrace</span><span class="o">.</span><span class="i">FsPickler</span><span class="o">.</span><span class="i">Json</span>
 
 <span class="k">let</span> <span class="i">jsonSerializer</span> <span class="o">=</span> <span class="i">FsPickler</span><span class="o">.</span><span class="i">CreateJsonSerializer</span>(<span class="i">indent</span> <span class="o">=</span> <span class="k">false</span>)
-<span class="k">let</span> <span class="i">bsonSerializer</span> <span class="o">=</span> <span class="i">FsPickler</span><span class="o">.</span><span class="i">CreateBsonSerializer</span>()
 </code></pre></td>
 </tr>
 </table>
