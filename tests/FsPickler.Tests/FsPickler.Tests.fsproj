@@ -7,11 +7,11 @@
   <ItemGroup>
     <Compile Include="Utils.fs" />
     <Compile Include="FsCheck.fs" />
-    <Compile Include="ISerializer.fs" />
-    <Compile Include="FsPicklerManager.fs" />
     <Compile Include="TestTypes.fs" />
     <Compile Include="GenericTests.fs" />
     <Compile Include="SerializerTests.fs" />
+    <Compile Include="InMemorySerializerTests.fs" />
+    <Compile Include="RemoteSerializerTests.fs" />
     <None Include="App.config" />
     <None Include="paket.references" />
   </ItemGroup>

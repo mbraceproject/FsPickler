@@ -6,7 +6,6 @@ open System.Linq
 open System.Collections
 open System.Collections.Generic
 open System.Reflection
-open System.Runtime.Serialization
 open System.Threading.Tasks
 
 open MBrace.FsPickler
@@ -14,23 +13,32 @@ open MBrace.FsPickler.Json
 open MBrace.FsPickler.Combinators
 open MBrace.FsPickler.Hashing
 
-open MBrace.FsPickler.Tests.TestTypes
-
 open NUnit.Framework
 open FsUnit
 open FsCheck
 
+type ISerializerFixture =
+    /// Specifies whether the fixture uses remoting for running the tests
+    abstract IsRemotedFixture : bool
+    /// Local serializer instance
+    abstract Serializer : FsPicklerSerializer
+    /// Creates a fresh serializer instance
+    abstract NewSerializer : unit -> FsPicklerSerializer
+    /// Pickle a value, potentially in a remote AppDomain
+    abstract Pickle<'T> : value:'T -> byte[]
+    /// Unpickle a value
+    abstract UnPickle<'T> : pickle:byte[] -> 'T
+    /// Runs an arbitrary serialization operation given a serializer input,
+    /// potentially in a remote AppDomain
+    abstract PickleF : pickler:(FsPicklerSerializer -> byte[]) -> byte[]
+
 [<AbstractClass>]
-type ``FsPickler Serializer Tests`` (format : string) as self =
-
-    let _ = Arb.register<FsPicklerGenerators> ()
-
-    let manager = new FsPicklerManager(format)
-    let serializer = manager.Serializer
+type SerializationTests (fixture : ISerializerFixture) =
+    static let _ = Arb.register<FsPicklerGenerators> ()
 
     let testRoundtrip (x : 'T) = 
-        let bytes = self.Pickle x
-        serializer.UnPickle<'T>(bytes)
+        let bytes = fixture.Pickle x
+        fixture.UnPickle<'T>(bytes)
 
     let testEquals x = 
         let y = testRoundtrip x 
@@ -43,13 +51,6 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
         else
             y.GetType() |> should equal (x.GetType())
             y.ToString() |> should equal (x.ToString())
-
-    member __.PicklerManager = manager
-
-    abstract IsRemotedTest : bool
-
-    abstract Pickle : 'T -> byte []
-    abstract PickleF : (FsPicklerSerializer -> byte []) -> byte []
 
     //
     //  Primitive Serialization tests
@@ -130,10 +131,10 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
             s' |> should equal s)
 
     [<Test; Category("Primitives")>]
-    member __.``Primitive: System.TimeSpan`` () = Check.QuickThrowOnFail<TimeSpan> testEquals
+    member __.``Primitive: System-TimeSpan`` () = Check.QuickThrowOnFail<TimeSpan> testEquals
 
     [<Test; Category("Primitives")>]
-    member __.``Primitive: System.Guid`` () = Check.QuickThrowOnFail<Guid> testEquals
+    member __.``Primitive: System-Guid`` () = Check.QuickThrowOnFail<Guid> testEquals
 
     [<Test; Category("Primitives")>]
     member __.``Primitive: bigint`` () = Check.QuickThrowOnFail<bigint> testEquals
@@ -173,7 +174,7 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
     [<Test; Category("Reflection types")>]
     member __.``Reflection: Assembly`` () =
         AppDomain.CurrentDomain.GetAssemblies()
-        |> Array.filter (fun a -> if self.IsRemotedTest then a.GlobalAssemblyCache else true)
+        |> Array.filter (fun a -> if fixture.IsRemotedFixture then a.GlobalAssemblyCache else true)
         |> Array.iter testEquals
 
     [<Test; Category("Reflection types")>]
@@ -235,7 +236,7 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
     member __.``Array: decimal`` () = __.CheckArray<decimal> ()
 
     [<Test; Category("Generic BCL Types")>]
-    member __.``Array: System.Guid`` () = __.CheckArray<Guid> ()
+    member __.``Array: System-Guid`` () = __.CheckArray<Guid> ()
 
     [<Test; Category("Generic BCL Types")>]
     member __.``Array: enum`` () = 
@@ -245,11 +246,11 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
         if not runsOnMono then __.CheckArray<CharEnum> ()
 
     [<Test; Category("Generic BCL Types")>]
-    member __.``Array: System.DateTime`` () = 
+    member __.``Array: System-DateTime`` () = 
             __.CheckArray<DateTime> ()
 
     [<Test; Category("Generic BCL Types")>]
-    member __.``Array: System.TimeSpan`` () = __.CheckArray<TimeSpan> ()
+    member __.``Array: System-TimeSpan`` () = __.CheckArray<TimeSpan> ()
 
     [<Test; Category("Generic BCL Types")>]
     member __.``Array: byte []`` () = __.CheckArray<byte []> ()
@@ -342,15 +343,15 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
     member __.TestException(e : 'exn) = e |> addStackTrace |> testReflected
 
     [<Test; Category("Generic BCL Types")>]
-    member __.``BCL: System.Exception`` () = __.TestException <| new Exception("exception message")
+    member __.``BCL: System-Exception`` () = __.TestException <| new Exception("exception message")
 
     [<Test; Category("Generic BCL Types")>]
-    member __.``BCL: System.Exception with inner exception`` () =
+    member __.``BCL: SystemException with inner exception`` () =
         let inner = new Exception("inner") |> addStackTrace
         __.TestException <| new Exception("outer", inner)
 
     [<Test; Category("Generic BCL Types")>]
-    member __.``BCL: System.Exception without ISerializable`` () =
+    member __.``BCL: System-Exception without ISerializable`` () =
         let e = new ExceptionWithoutISerializable<int>(42, "Message", new Exception()) |> addStackTrace
         let e' = testRoundtrip e
         e'.Value |> should equal e.Value
@@ -358,18 +359,18 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
         e'.StackTrace |> should equal e.StackTrace
 
     [<Test; Category("Generic BCL Types")>]
-    member __.``BCL: System.Runtime.ExceptionServices.ExceptionDispatchInfo`` () =
+    member __.``BCL: System-Runtime-ExceptionServices-ExceptionDispatchInfo`` () =
         if runsOnMono then
             FsPickler.IsSerializableType<System.Runtime.ExceptionServices.ExceptionDispatchInfo> ()
             |> should equal false
         else
             let bytes = 
-                __.PickleF(fun fsp -> 
+                fixture.PickleF(fun fsp -> 
                     let e = new Exception("message") |> addStackTrace
                     let edi = System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture e
                     fsp.Pickle edi)
 
-            let edi = serializer.UnPickle<System.Runtime.ExceptionServices.ExceptionDispatchInfo> bytes
+            let edi = fixture.UnPickle<System.Runtime.ExceptionServices.ExceptionDispatchInfo> bytes
             let e = try edi.Throw() ; failwith "impossible" with e -> e
             e.StackTrace.Split('\n').Length |> should be (greaterThan 20)
 
@@ -386,7 +387,7 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
     // collections
 
     [<Test; Category("Generic BCL Types")>]
-    member __.``BCL: System.Collections.Generic.Dictionary`` () =
+    member __.``BCL: System-Collections-Generic-Dictionary`` () =
         let testDictionary (data : seq<'K * 'V>) =
             let data = data |> Seq.distinctBy fst |> Seq.toList
             let d = dict data
@@ -399,7 +400,7 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
 
 
     [<Test; Category("Generic BCL Types")>]
-    member __.``BCL: System.Collections.Generic.HashSet`` () =
+    member __.``BCL: System-Collections-Generic-HashSet`` () =
         if runsOnMono then () else // skip due to mono 5.2 bug
 
         let testSet (data : seq<'T>) =
@@ -414,7 +415,7 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
 
 
     [<Test; Category("Generic BCL Types")>]
-    member __.``BCL: System.Collections.Generic.Stack`` () =
+    member __.``BCL: System-Collections-Generic-Stack`` () =
         let testStack (data : 'T list) =
             let d = new Stack<'T>(data)
             let data' = testRoundtrip d |> Seq.toList |> List.rev
@@ -467,7 +468,7 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
         testEquals x ; testEquals y
 
     [<Test; Category("Generic BCL Types")>]
-    member __.``BCL: System.Linq enumerables`` () =
+    member __.``BCL: System-Linq enumerables`` () =
         let a = [|1..100|].Select(fun i -> i + 1)
         let b = a.Where(fun i -> i % 2 = 0)
         let c = b.GroupBy(fun s -> s + 1)
@@ -509,7 +510,7 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
     member __.``Object: should fail at non-serializable type`` () =
         let v = [None ; Some(box <| new System.IO.MemoryStream())]
         try
-            let _ = serializer.Pickle v
+            let _ = fixture.Pickle v
             failAssert "Should have failed serialization."
         with 
         | :? FsPicklerException & InnerExn (:? NonSerializableTypeException) -> ()
@@ -534,13 +535,13 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
 
     member self.TestSequenceRoundtrip (xs : seq<'T>) =
         let bytes =
-            self.PickleF(fun p ->
+            fixture.PickleF(fun p ->
                 use m = new MemoryStream()
                 let length = p.SerializeSequence(m, xs)
                 m.ToArray())
 
         use m = new MemoryStream(bytes)
-        let xs' = serializer.DeserializeSequence<'T>(m)
+        let xs' = fixture.Serializer.DeserializeSequence<'T>(m)
         use enum = xs'.GetEnumerator()
 
         for i,x in xs |> Seq.mapi (fun i x -> (i,x)) do
@@ -592,7 +593,7 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
     [<Test; Category("FsPickler Generic tests")>]
     member self.``Object: sequence pickler`` () =
         let data =
-            self.PickleF(fun p ->
+            fixture.PickleF(fun p ->
                 let seqPickler = Pickler.seq Pickler.int
 
                 let state = ref 0
@@ -609,7 +610,7 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
 
                 data)
 
-        serializer.UnPickle(data, pickler = Pickler.seq Pickler.int) 
+        fixture.Serializer.UnPickle(data, pickler = Pickler.seq Pickler.int) 
         |> Seq.length 
         |> should equal 100
 
@@ -618,9 +619,9 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
         let graph : (int * int []) option * int [] option option list = (Some (1, [|1 .. 100|]), [None; None ; Some None; Some (Some [|12|])])
         let sifter = { new IObjectSifter with member __.Sift(p,_,_) = p.Kind = Kind.Array }
         use m = new MemoryStream()
-        let sifted = serializer.SerializeSifted(m, graph, sifter)
+        let sifted = fixture.Serializer.SerializeSifted(m, graph, sifter)
         sifted.Length |> should equal 2
-        serializer.DeserializeSifted<(int * int []) option * int [] option option list>(m.Clone(), sifted) |> should equal graph
+        fixture.Serializer.DeserializeSifted<(int * int []) option * int [] option option list>(m.Clone(), sifted) |> should equal graph
 
     [<Test; Category("FsPickler Generic tests")>]
     member __.``Object: tuple sift serialization`` () =
@@ -632,15 +633,16 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
         let calls = ref 0
         use m = new MemoryStream()
         let sifter = { new IObjectSifter with member __.Sift(_,_,o) = if obj.ReferenceEquals(o,tuple) then incr calls ; true else false }
-        let values = serializer.SerializeSifted(m, xs, sifter)
+        let values = fixture.Serializer.SerializeSifted(m, xs, sifter)
         calls.Value |> should equal 1
         values.Length |> should equal 1
-        serializer.DeserializeSifted<(int * string)[]>(m.Clone(), values) |> should equal xs
+        fixture.Serializer.DeserializeSifted<(int * string)[]>(m.Clone(), values) |> should equal xs
 
     [<Test; Category("FsPickler Generic tests")>]
     member __.``Object: random sift serialization`` () =
         let r = new System.Random()
         let randomSifter = { new IObjectSifter with member __.Sift(_,_,_) = r.Next(0,5) = 0 }
+        let serializer = fixture.Serializer
         Check.QuickThrowOnFail(fun (tree : ListTree<int>) ->
             use m = new MemoryStream()
             let sifted = serializer.SerializeSifted(m, tree, randomSifter)
@@ -652,8 +654,8 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
         let r = new System.Random()
         let randomSifter = { new IObjectSifter with member __.Sift(_,_,_) = r.Next(0,5) = 0 }
         use m = new MemoryStream()
-        let sifted = serializer.SerializeSifted(m, g, randomSifter)
-        let g' = serializer.DeserializeSifted<Graph<int>>(m.Clone(), sifted)
+        let sifted = fixture.Serializer.SerializeSifted(m, g, randomSifter)
+        let g' = fixture.Serializer.DeserializeSifted<Graph<int>>(m.Clone(), sifted)
         areEqualGraphs g g' |> should equal true
 
 
@@ -662,7 +664,7 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
         let hashF = new FNV1aStreamFactory()
         let checkCollisions c N f = 
             let collisions =
-                getHashCollisions serializer hashF N f
+                getHashCollisions fixture.Serializer hashF N f
                 |> Array.sumBy (fun (cs,fq) -> cs * fq)
 
             collisions |> should be (lessThanOrEqualTo c)
@@ -682,7 +684,7 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
         let hashF = new MurMur3()
         let checkCollisions c N f = 
             let collisions =
-                getHashCollisions serializer hashF N f
+                getHashCollisions fixture.Serializer hashF N f
                 |> Array.sumBy (fun (cs,fq) -> cs * fq)
 
             collisions |> should be (lessThanOrEqualTo c)
@@ -701,28 +703,28 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
         let value = box [for i in 1 .. 1000 -> (string i, i)]
         let serializationSize = 
             use m = new MemoryStream()
-            serializer.Serialize<obj>(m, value, leaveOpen = true)
+            fixture.Serializer.Serialize<obj>(m, value, leaveOpen = true)
             m.Length
 
-        serializer.ComputeSize<obj>(value) |> should equal serializationSize
-        serializer.ComputeHash(value).Length |> should equal serializationSize
+        fixture.Serializer.ComputeSize<obj>(value) |> should equal serializationSize
+        fixture.Serializer.ComputeHash(value).Length |> should equal serializationSize
 
     [<Test; Category("FsPickler Generic tests")>]
     member __.``Object: leaveOpen=true`` () =
         let m = new MemoryStream()
-        serializer.Serialize(m, [1 .. 10], leaveOpen = true)
+        fixture.Serializer.Serialize(m, [1 .. 10], leaveOpen = true)
         m.WriteByte(1uy) // should not fail
 
     [<Test; Category("FsPickler Generic tests")>]
     member __.``Object: leaveOpen=false`` () =
         let m = new MemoryStream()
-        serializer.Serialize(m, [1 .. 10], leaveOpen = false)
+        fixture.Serializer.Serialize(m, [1 .. 10], leaveOpen = false)
         (fun () -> m.WriteByte(1uy)) |> shouldFailwith<ObjectDisposedException>
 
     [<Test; Category("FsPickler Generic tests")>]
     member __.``Object: accumulated size counter`` () =
         let computeSize n =
-            use counter = serializer.CreateObjectSizeCounter()
+            use counter = fixture.Serializer.CreateObjectSizeCounter()
             for i = 1 to n do
                 counter.Append [1 .. 100]
             counter.Count
@@ -867,13 +869,13 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
 
     [<Test ; Category("Custom types")>] 
     member __.``Custom: disable subtype resolution on serialization`` () =
-        let serializer = manager.CreateSerializer()
+        let serializer = fixture.NewSerializer()
         serializer.DisableSubtypeResolution <- true
         shouldFailwith<FsPicklerException> (fun () -> serializer.Pickle(fun i -> i + 1) |> ignore)
 
     [<Test ; Category("Custom types")>] 
     member __.``Custom: disable subtype resolution on deserialization`` () =
-        let serializer = manager.CreateSerializer()
+        let serializer = fixture.NewSerializer()
         let pickle = serializer.Pickle(fun i -> i + 1)
         serializer.DisableSubtypeResolution <- true
         shouldFailwith<FsPicklerException> (fun () -> serializer.UnPickle<int -> int>(pickle) |> ignore)
@@ -941,23 +943,23 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
     [<Test; Category("FSharp type tests")>]
     member self.``FSharp: combinator-based recursive union`` () =
         let data = 
-            self.PickleF(fun p ->
+            fixture.PickleF(fun p ->
                 let n = int2Peano 100
                 let pp = mkPeanoPickler()
                 p.Pickle(n, pickler = pp))
 
-        serializer.UnPickle(data, pickler = mkPeanoPickler()) |> should equal (int2Peano 100)
+        fixture.Serializer.UnPickle(data, pickler = mkPeanoPickler()) |> should equal (int2Peano 100)
 
     [<Test; Category("FSharp type tests")>]
     member self.``FSharp: combinator-based mutual recursive union`` () =
         let data =
-            self.PickleF(fun p ->
+            fixture.PickleF(fun p ->
                 let tp,_ = getTreeForestPicklers Pickler.int
                 let t = nTree 6
 
                 p.Pickle(t, pickler = tp))
 
-        serializer.UnPickle(data, pickler = (getTreeForestPicklers Pickler.int |> fst))
+        fixture.Serializer.UnPickle(data, pickler = (getTreeForestPicklers Pickler.int |> fst))
         |> should equal (nTree 6)
         
     [<Test; Category("FSharp type tests")>]
@@ -990,9 +992,9 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
         // F# exception serialization is broken
         // so need to make sure that serialization is initialized at serialization domain
         // rather than copied
-        let pickle = self.PickleF(fun p -> p.Pickle(mkExn()))
+        let pickle = fixture.PickleF(fun p -> p.Pickle(mkExn()))
             
-        let e0 = serializer.UnPickle<FSharpException>(pickle)
+        let e0 = fixture.Serializer.UnPickle<FSharpException>(pickle)
         let e = mkExn()
 
         e0.ToString() |> should equal (e.ToString())
@@ -1094,15 +1096,15 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
     //
 
     member t.TestTypeMismatch<'In, 'Out> (v : 'In) = 
-        let pickle = serializer.Pickle(v, Pickler.auto<'In>)
+        let pickle = fixture.Serializer.Pickle(v, Pickler.auto<'In>)
         try
-            let result = serializer.UnPickle<'Out>(pickle, Pickler.auto<'Out>)
+            let result = fixture.Serializer.UnPickle<'Out>(pickle, Pickler.auto<'Out>)
             failAssert "should have failed deserialization"
         with :? FsPicklerException & InnerExn (:? InvalidPickleTypeException) -> ()
 
     [<Test; Category("Stress tests")>]
     member t.``Stress test: deserialization type mismatch`` () =
-        match serializer with
+        match fixture.Serializer with
         | :? JsonSerializer as jsp when jsp.OmitHeader -> ()
         | _ ->
             t.TestTypeMismatch<int, string> 42
@@ -1113,13 +1115,13 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
     member t.TestDeserializeInvalidData<'T> (bytes : byte []) =
         try
             use m = new MemoryStream(bytes)
-            let t' = serializer.Deserialize<'T>(m)
+            let t' = fixture.Serializer.Deserialize<'T>(m)
             failwith "should have failed."
         with :? FsPicklerException -> ()
 
     [<Test; Category("Stress tests")>]
     member t.``Stress test: arbitrary data deserialization`` () =
-        match serializer with
+        match fixture.Serializer with
         | :? JsonSerializer as jsp when jsp.OmitHeader -> ()
         | _ ->
             Check.QuickThrowOnFail (fun bs -> t.TestDeserializeInvalidData<int> bs)
@@ -1155,35 +1157,3 @@ type ``FsPickler Serializer Tests`` (format : string) as self =
             raise <| new AssertionException(msg)
         else
             printfn "Failed Serializations: %d out of %d." failedResults results.Length
-
-
-[<TestFixture(PickleFormat.Binary)>]
-#if RELEASE
-[<TestFixture(PickleFormat.Xml)>]
-[<TestFixture(PickleFormat.Json)>]
-[<TestFixture(PickleFormat.Json_Headerless)>]
-[<TestFixture(PickleFormat.Bson)>]
-#endif
-type ``InMemory Tests`` (pickleFormat : string) =
-    inherit ``FsPickler Serializer Tests`` (pickleFormat)
-
-    override __.IsRemotedTest = false
-    override __.Pickle (value : 'T) = __.PicklerManager.Serializer.Pickle value
-    override __.PickleF (pickleF : FsPicklerSerializer -> byte []) = pickleF __.PicklerManager.Serializer
-
-#if RELEASE && !NETCOREAPP2_0
-[<TestFixture(PickleFormat.Binary)>]
-type ``AppDomain Tests`` (pickleFormat : string) as self =
-    inherit ``FsPickler Serializer Tests`` (pickleFormat)
-
-    let remotePickler = lazy(self.PicklerManager.GetRemoteSerializer())
-
-    override __.IsRemotedTest = true
-    override __.Pickle (value : 'T) = 
-        try remotePickler.Value.Pickle<'T> value
-        with :? FailoverSerializerException -> self.PicklerManager.Serializer.Pickle value
-
-    override __.PickleF (pickleF : FsPicklerSerializer -> byte []) = 
-        try remotePickler.Value.PickleF pickleF
-        with :? FailoverSerializerException -> pickleF self.PicklerManager.Serializer
-#endif

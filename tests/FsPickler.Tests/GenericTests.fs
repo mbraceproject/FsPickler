@@ -11,7 +11,6 @@ open FsCheck
 open MBrace.FsPickler
 open MBrace.FsPickler.Hashing
 open MBrace.FsPickler.Combinators
-open MBrace.FsPickler.Tests.TestTypes
 
 #nowarn "8989"
 
