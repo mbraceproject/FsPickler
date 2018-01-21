@@ -51,7 +51,9 @@ and RemoteSerializeProxy<'Serializer when 'Serializer :> FsPicklerSerializer>() 
     member __.PickleFunc (pickle : FailoverPickle<'Serializer -> byte[]>) : byte[] =
         let pickler = FailoverPickler.UnPickle pickle
         getInstance() |> pickler
+#endif
 
+#if DEBUG && !NETSTANDARD2_0
 [<TestFixture>]
 type ``Remote Serialization Tests`` () =
     inherit SerializationTests(RemotingFixture(fun () -> FsPickler.CreateBinarySerializer()))
