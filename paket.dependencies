@@ -4,9 +4,18 @@ source https://api.nuget.org/v3/index.json
 
 nuget FSharp.Core >= 4.2.1 lowest_matching: true
 nuget Newtonsoft.Json >= 10.0.1 lowest_matching: true
-nuget SourceLink.Create.CommandLine copy_local: true
-
 github eiriktsarpalis/TypeShape:3.1.1 src/TypeShape/TypeShape.fs
+
+# Testing : NB intentionally in main group
+nuget System.ValueTuple
+nuget NUnit ~> 3.9.0
+nuget NUnit3TestAdapter ~> 3.9.0 version_in_path: true
+nuget Microsoft.NET.Test.Sdk ~> 15.0
+nuget FsCheck ~> 3.0 prerelease
+nuget FsUnit ~> 3.0
+
+nuget SourceLink.Create.CommandLine copy_local: true
+clitool dotnet-sourcelink
 
 group Legacy
   framework: net45
@@ -15,20 +24,6 @@ group Legacy
 
   nuget FSharp.Core >= 3.1 lowest_matching:true
   nuget Newtonsoft.Json >= 6.0.5 lowest_matching: true
-
-group Test
-  framework: auto-detect
-  redirects: force
-  source https://api.nuget.org/v3/index.json
-
-  nuget FSharp.Core 4.2.1
-  nuget System.ValueTuple
-  nuget Newtonsoft.Json ~> 10.0
-  nuget NUnit ~> 3.9.0
-  nuget NUnit3TestAdapter ~> 3.9.0 version_in_path: true
-  nuget Microsoft.NET.Test.Sdk ~> 15.0
-  nuget FsCheck ~> 3.0 prerelease
-  nuget FsUnit >= 1.4.1
   
 group Build
   framework: net461

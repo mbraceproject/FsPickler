@@ -36,3 +36,4 @@ temp/
 /.idea/.idea.FsPickler
 
 .vs/
+artifacts/

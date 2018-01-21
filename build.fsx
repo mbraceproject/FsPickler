@@ -32,10 +32,10 @@ let testProjects = "tests/**/*.??proj"
 // Folder to deposit deploy artifacts
 let artifactsDir = __SOURCE_DIRECTORY__ @@ "artifacts"
 
-//
-//// --------------------------------------------------------------------------------------
-//// The rest of the code is standard F# build script 
-//// --------------------------------------------------------------------------------------
+
+// --------------------------------------------------------------------------------------
+// The rest of the code is standard F# build script 
+// --------------------------------------------------------------------------------------
 
 //// Read release notes & version info from RELEASE_NOTES.md
 Environment.CurrentDirectory <- __SOURCE_DIRECTORY__
@@ -56,11 +56,11 @@ Target "AssemblyInfo" (fun _ ->
           Attribute.FileVersion release.AssemblyVersion ]
 
     let getProjectDetails projectPath =
-        let projectName = System.IO.Path.GetFileNameWithoutExtension(projectPath)
+        let projectName = System.IO.Path.GetFileNameWithoutExtension projectPath
         ( projectPath,
           projectName,
-          System.IO.Path.GetDirectoryName(projectPath),
-          (getAssemblyInfoAttributes projectName)
+          System.IO.Path.GetDirectoryName projectPath,
+          getAssemblyInfoAttributes projectName
         )
 
     !! "src/**/*.??proj"
@@ -78,14 +78,14 @@ Target "AssemblyInfo" (fun _ ->
 // Clean build results & restore NuGet packages
 
 Target "Clean" (fun _ ->
-    CleanDirs <| !! "./**/bin/"
+    CleanDirs <| !! "./**/bin/Release*"
     CleanDir "./tools/output"
     CleanDir "./temp"
 )
 
-//
-//// --------------------------------------------------------------------------------------
-//// Build library & test project
+
+// --------------------------------------------------------------------------------------
+// Build library & test project
 
 Target "DotNet.Restore" (fun _ -> DotNetCli.Restore id)
 
@@ -96,8 +96,8 @@ let build configuration () =
     { BaseDirectory = __SOURCE_DIRECTORY__
       Includes = [ project + ".sln" ]
       Excludes = [] } 
-    |> MSBuild "" "Build" ["Configuration", configuration]
-    |> Log "AppBuild-Output: "
+    |> MSBuild "" "Build" ["Configuration", configuration; "SourceLinkCreate", "true"]
+    |> Log ""
 
 Target "Build.Release" (build "Release")
 Target "Build.Release-NoEmit" (build "Release-NoEmit")
@@ -134,11 +134,11 @@ Target "RunTests.Release-NoEmit" (fun _ ->
         runTest "Release-NoEmit" proj
 )
 
-//
-//// --------------------------------------------------------------------------------------
-//// Build a NuGet package
 
-Target "BundleNuGet" (fun _ ->    
+// --------------------------------------------------------------------------------------
+// Build a NuGet package
+
+Target "NuGet.Pack" (fun _ ->    
     Paket.Pack (fun p -> 
         { p with
             OutputPath = artifactsDir
@@ -146,7 +146,16 @@ Target "BundleNuGet" (fun _ ->
             ReleaseNotes = toLines release.Notes })
 )
 
-Target "NuGetPush" (fun _ -> Paket.Push (fun p -> { p with WorkingDir = artifactsDir }))
+Target "SourceLink.Test" (fun _ ->
+    !! (sprintf "%s/*.nupkg" artifactsDir)
+    |> Seq.iter (fun nupkg ->
+        DotNetCli.RunCommand
+            (fun p -> { p with WorkingDir = __SOURCE_DIRECTORY__ @@ "tests" @@ "FsPickler.Core.Tests" } )
+            (sprintf "sourcelink test %s" nupkg)
+    )
+)
+
+Target "Nuget.Push" (fun _ -> Paket.Push (fun p -> { p with WorkingDir = artifactsDir }))
 
 
 // Doc generation
@@ -178,9 +187,9 @@ open Octokit
 Target "ReleaseGitHub" (fun _ ->
     let remote =
         Git.CommandHelper.getGitResult "" "remote -v"
-        |> Seq.filter (fun (s: string) -> s.EndsWith("(push)"))
-        |> Seq.tryFind (fun (s: string) -> s.Contains(gitOwner + "/" + gitName))
-        |> function None -> gitHome + "/" + gitName | Some (s: string) -> s.Split().[0]
+        |> Seq.filter (fun s -> s.EndsWith("(push)"))
+        |> Seq.tryFind (fun s -> s.Contains(gitOwner + "/" + gitName))
+        |> function None -> gitHome + "/" + gitName | Some s -> s.Split().[0]
 
     //StageAll ""
     Git.Commit.Commit "" (sprintf "Bump version to %s" release.NugetVersion)
@@ -236,12 +245,13 @@ Target "Release" DoNothing
 "Default"
   ==> "PrepareRelease"
   ==> "GenerateDocs"
-  ==> "BundleNuGet"
+  ==> "NuGet.Pack"
+  ==> "SourceLink.Test"
   ==> "Bundle"
 
 "Bundle"
   ==> "ReleaseDocs"
-  ==> "NuGetPush"
+  ==> "Nuget.Push"
   ==> "ReleaseGithub"
   ==> "Release"
 

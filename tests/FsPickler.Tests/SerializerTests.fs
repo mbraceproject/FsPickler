@@ -240,7 +240,7 @@ type SerializationTests (fixture : ISerializerFixture) =
 
     [<Test; Category("Generic BCL Types")>]
     member __.``Array: enum`` () = 
-        __.CheckArray<Enum> () ; 
+        __.CheckArray<IntEnum> () ; 
         // provisional: until mono bug is fixed
         // https://bugzilla.xamarin.com/show_bug.cgi?id=40568
         if not runsOnMono then __.CheckArray<CharEnum> ()

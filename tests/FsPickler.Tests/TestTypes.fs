@@ -68,7 +68,7 @@ and nForest (d : int) (l : int) =
     else
         Cons(nTree d, nForest d (l-1))
 
-type Enum =
+type IntEnum =
     | EnumA = 0
     | EnumB = 1
     | EnumC = 2
