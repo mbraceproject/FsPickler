@@ -252,9 +252,7 @@ module ``Generic Tests`` =
     [<Test; Category("Clone")>]
     let ``Clone: array enum`` () = 
         checkArray<IntEnum> () ; 
-        // provisional: until mono bug is fixed
-        // https://bugzilla.xamarin.com/show_bug.cgi?id=40568
-        if not runsOnMono then checkArray<CharEnum> ()
+        checkArray<CharEnum> ()
 
     [<Test; Category("Clone")>]
     let ``Clone: cached array`` () = 
