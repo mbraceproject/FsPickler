@@ -1,7 +1,7 @@
 (*** hide ***)
 // This block of code is omitted in the generated HTML documentation. Use 
 // it to define helpers that you do not want to show in the documentation.
-#I "../../bin"
+#I "../../src/FsPickler.Json/bin/Release/net45/"
 
 #r "Newtonsoft.Json.dll"
 #r "FsPickler.dll"
@@ -47,7 +47,6 @@ If evaluating from F# interactive, make sure to [add an explicit reference to Js
 open MBrace.FsPickler.Json
 
 let jsonSerializer = FsPickler.CreateJsonSerializer(indent = false)
-let bsonSerializer = FsPickler.CreateBsonSerializer()
 
 (**
 
