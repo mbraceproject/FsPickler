@@ -1,3 +1,6 @@
+### 5.0
+* Add Support for NetStandard 2.0.
+
 ### 4.6
 * Fix union serialization bug.
 
