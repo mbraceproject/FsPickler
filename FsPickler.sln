@@ -1,12 +1,13 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27130.2020
+VisualStudioVersion = 15.0.27130.2026
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".paket", ".paket", "{2FC26D10-021B-4487-AE72-6CFC1346239A}"
 	ProjectSection(SolutionItems) = preProject
 		.paket\paket.bootstrapper.exe = .paket\paket.bootstrapper.exe
 		paket.dependencies = paket.dependencies
 		paket.lock = paket.lock
+		.paket\Paket.Restore.targets = .paket\Paket.Restore.targets
 		.paket\paket.targets = .paket\paket.targets
 	EndProjectSection
 EndProject
@@ -27,7 +28,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{109340B6
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{23BFC6E5-8581-44C7-B9C6-A42F06DCD6A6}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FsPickler.Tests", "tests\FsPickler.Tests\FsPickler.Tests.fsproj", "{EC89A90F-5EBF-40FB-B4F3-1A8F2D224A20}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "FsPickler.Tests", "tests\FsPickler.Tests\FsPickler.Tests.fsproj", "{EC89A90F-5EBF-40FB-B4F3-1A8F2D224A20}"
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "FsPickler.Json", "src\FsPickler.Json\FsPickler.Json.fsproj", "{1DCB4AD7-2C00-4BCD-B1A5-A469F31E2CD1}"
 EndProject
@@ -117,7 +118,7 @@ Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "FsPickler", "src\FsPickler\
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "FsPickler.Json.Core", "src\FsPickler.Json.Core\FsPickler.Json.Core.fsproj", "{9105DA7E-0EC6-4E33-B2F5-E53797DC2FF4}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FsPickler.Core.Tests", "tests\FsPickler.Core.Tests\FsPickler.Core.Tests.fsproj", "{FCFDDF45-DB1B-44A4-B045-16E3E245885E}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "FsPickler.Core.Tests", "tests\FsPickler.Core.Tests\FsPickler.Core.Tests.fsproj", "{FCFDDF45-DB1B-44A4-B045-16E3E245885E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
