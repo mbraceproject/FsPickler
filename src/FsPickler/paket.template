@@ -34,6 +34,7 @@ dependencies
     FSharp.Core >= LOCKEDVERSION-Legacy
   framework: netstandard2.0
 	FSharp.Core >= LOCKEDVERSION
+	System.Reflection.Emit.Lightweight >= LOCKEDVERSION
 excludeddependencies
     SourceLink.Create.CommandLine
 files
