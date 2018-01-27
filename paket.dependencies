@@ -2,7 +2,7 @@ framework: auto-detect
 redirects: force
 source https://api.nuget.org/v3/index.json
 
-nuget FSharp.Core >= 4.2.1 lowest_matching: true
+nuget FSharp.Core >= 4.3 lowest_matching: true
 nuget Newtonsoft.Json >= 10.0.1 lowest_matching: true
 github eiriktsarpalis/TypeShape:3.1.1 src/TypeShape/TypeShape.fs
 
