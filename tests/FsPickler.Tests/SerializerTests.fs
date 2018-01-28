@@ -104,7 +104,7 @@ type SerializationTests (fixture : ISerializerFixture) =
             let d =
                 // normalize for DST adjustment logic
                 if k = DateTimeKind.Local then DateTimeOffset(d).LocalDateTime
-                else d
+                else DateTime(d.Ticks, k)
 
             let d' = testRoundtrip d
             d' |> should equal d
