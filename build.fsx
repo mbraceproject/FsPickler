@@ -79,6 +79,7 @@ Target "Clean" (fun _ ->
     CleanDirs <| !! "./**/bin/Release*"
     CleanDir "./tools/output"
     CleanDir "./temp"
+    CleanDir "./artifacts"
 )
 
 
