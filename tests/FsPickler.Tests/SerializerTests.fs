@@ -101,7 +101,11 @@ type SerializationTests (fixture : ISerializerFixture) =
     [<Test; Category("Primitives")>]
     member __.``Primitive: DateTime`` () = 
         Check.QuickThrowOnFail<DateTime * DateTimeKind> (fun (d : DateTime, k : DateTimeKind) -> 
-            let d = new DateTime(d.Ticks, k)
+            let d =
+                // normalize for DST adjustment logic
+                if k = DateTimeKind.Local then DateTimeOffset(d).LocalDateTime
+                else d
+
             let d' = testRoundtrip d
             d' |> should equal d
             d'.Kind |> should equal d.Kind)
