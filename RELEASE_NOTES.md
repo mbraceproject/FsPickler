@@ -1,3 +1,6 @@
+### 5.1
+* Bump minimum required FSharp.Core to 4.3.2 for netstandard.
+
 ### 5.0
 * Add Support for NetStandard 2.0.
 
