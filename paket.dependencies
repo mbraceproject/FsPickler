@@ -16,6 +16,7 @@ nuget FsCheck ~> 3.0 prerelease
 nuget FsUnit ~> 3.0
 
 nuget SourceLink.Create.CommandLine copy_local: true
+nuget SourceLink.Embed.PaketFiles copy_local: true
 clitool dotnet-sourcelink
 
 group Legacy

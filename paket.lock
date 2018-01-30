@@ -186,6 +186,7 @@ NUGET
     runtime.ubuntu.16.04-x64.runtime.native.System.Security.Cryptography.OpenSsl (4.3.2) - restriction: || (&& (== net45) (>= netcoreapp1.0)) (&& (== net461) (>= netcoreapp1.0)) (== netcoreapp2.0) (&& (== netstandard2.0) (>= netcoreapp1.0))
     runtime.ubuntu.16.10-x64.runtime.native.System.Security.Cryptography.OpenSsl (4.3.2) - restriction: || (&& (== net45) (>= netcoreapp1.0)) (&& (== net461) (>= netcoreapp1.0)) (== netcoreapp2.0) (&& (== netstandard2.0) (>= netcoreapp1.0))
     SourceLink.Create.CommandLine (2.7.6) - copy_local: true
+    SourceLink.Embed.PaketFiles (2.7.6) - copy_local: true
     System.AppContext (4.3.0) - version_in_path: true, restriction: || (&& (== net45) (>= netcoreapp1.0)) (&& (== net461) (>= netcoreapp1.0)) (== netcoreapp2.0) (&& (== netstandard2.0) (>= netcoreapp1.0))
       System.Runtime (>= 4.3) - restriction: || (&& (== net45) (>= dnxcore50)) (&& (== net45) (>= netstandard1.3)) (&& (== net45) (>= netstandard1.6)) (&& (== net461) (>= dnxcore50)) (&& (== net461) (< net46)) (== netcoreapp2.0) (== netstandard2.0)
     System.Buffers (4.4) - restriction: || (&& (== net45) (>= netcoreapp1.0)) (&& (== net461) (>= netcoreapp1.0)) (== netcoreapp2.0) (&& (== netstandard2.0) (>= netcoreapp1.0))
@@ -668,7 +669,7 @@ NUGET
     Octokit (0.28)
 GITHUB
   remote: fsharp/FAKE
-    modules/Octokit/Octokit.fsx (5e627a2df11d266d47d1c2b7ea1ae093ebc4c50b)
+    modules/Octokit/Octokit.fsx (82d22da50df68d0af572d6cf4922387807cfa3f4)
       Octokit (>= 0.20)
 GROUP Legacy
 REDIRECTS: FORCE

@@ -1,4 +1,5 @@
 SourceLink.Create.CommandLine
+SourceLink.Embed.PaketFiles
 group Legacy
   FSharp.Core
   Newtonsoft.Json

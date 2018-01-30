@@ -247,7 +247,7 @@ Target "Release" DoNothing
   ==> "PrepareRelease"
   ==> "GenerateDocs"
   ==> "NuGet.Pack"
-  //==> "SourceLink.Test" // fails due to TypeShape.fs being a paket controlled link
+  ==> "SourceLink.Test"
   ==> "Bundle"
 
 "Bundle"
