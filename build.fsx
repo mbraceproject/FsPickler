@@ -165,7 +165,7 @@ Target "SourceLink.Test" (fun _ ->
     !! (sprintf "%s/*.nupkg" artifactsDir)
     |> Seq.iter (fun nupkg ->
         DotNetCli.RunCommand
-            (fun p -> { p with WorkingDir = __SOURCE_DIRECTORY__ @@ "tests" @@ "FsPickler.Core.Tests" } )
+            (fun p -> { p with WorkingDir = __SOURCE_DIRECTORY__ @@ "tests" @@ "FsPickler.Tests" } )
             (sprintf "sourcelink test %s" nupkg)
     )
 )
