@@ -1,4 +1,6 @@
 ﻿File: TypeShape.fs TypeShape
+FSharp.Core
+System.Reflection.Emit.Lightweight
 SourceLink.Create.CommandLine
 SourceLink.Embed.PaketFiles
 group Legacy

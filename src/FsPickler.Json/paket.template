@@ -36,6 +36,6 @@ files
     bin/Release/net45/FsPickler.Json.dll ==> lib/net45
     bin/Release/net45/FsPickler.Json.pdb ==> lib/net45
     bin/Release/net45/FsPickler.Json.xml ==> lib/net45
-    ../FsPickler.Json.Core/bin/Release/netstandard2.0/FsPickler.Json.dll ==> lib/netstandard2.0
-    ../FsPickler.Json.Core/bin/Release/netstandard2.0/FsPickler.Json.pdb ==> lib/netstandard2.0
-    ../FsPickler.Json.Core/bin/Release/netstandard2.0/FsPickler.Json.xml ==> lib/netstandard2.0
+    bin/Release/netstandard2.0/FsPickler.Json.dll ==> lib/netstandard2.0
+    bin/Release/netstandard2.0/FsPickler.Json.pdb ==> lib/netstandard2.0
+    bin/Release/netstandard2.0/FsPickler.Json.xml ==> lib/netstandard2.0

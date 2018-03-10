@@ -42,6 +42,6 @@ files
     bin/Release/net45/FsPickler.dll ==> lib/net45
     bin/Release/net45/FsPickler.pdb ==> lib/net45
     bin/Release/net45/FsPickler.xml ==> lib/net45
-    ../FsPickler.Core/bin/Release/netstandard2.0/FsPickler.dll ==> lib/netstandard2.0
-    ../FsPickler.Core/bin/Release/netstandard2.0/FsPickler.pdb ==> lib/netstandard2.0
-    ../FsPickler.Core/bin/Release/netstandard2.0/FsPickler.xml ==> lib/netstandard2.0
+    bin/Release/netstandard2.0/FsPickler.dll ==> lib/netstandard2.0
+    bin/Release/netstandard2.0/FsPickler.pdb ==> lib/netstandard2.0
+    bin/Release/netstandard2.0/FsPickler.xml ==> lib/netstandard2.0

@@ -1,9 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net45</TargetFramework>
+    <TargetFrameworks>netstandard2.0;net45</TargetFrameworks>
     <AssemblyName>FsPickler.Json</AssemblyName>
-    <ProjectGuid>{1dcb4ad7-2c00-4bcd-b1a5-a469f31e2cd1}</ProjectGuid>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DocumentationFile>bin\Debug\net45\FsPickler.Json.XML</DocumentationFile>
@@ -25,11 +24,7 @@
     <None Include="Test.fsx" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\FsPickler\FsPickler.fsproj">
-      <Name>FsPickler</Name>
-      <Project>{3ad987bf-f0fa-40bd-9dae-4af3a5fe9cc7}</Project>
-      <Private>True</Private>
-    </ProjectReference>
+    <ProjectReference Include="..\FsPickler\FsPickler.fsproj" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

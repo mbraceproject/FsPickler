@@ -102,33 +102,51 @@ Target "Build.Release-NoEmit" (build "Release-NoEmit")
 // --------------------------------------------------------------------------------------
 // Run the unit tests using test runner & kill test runner when complete
 
-let runTest config (proj : string) =
-    if EnvironmentHelper.isWindows || proj.Contains "Core" then
-        DotNetCli.Test (fun c -> 
-            { c with 
+let runTests config (proj : string) =
+    if EnvironmentHelper.isWindows then
+        DotNetCli.Test (fun c ->
+            { c with
                 Project = proj
                 Configuration = config })
     else
-        // revert to classic CLI runner due to dotnet-xunit issue in mono environments
+        // work around xunit/mono issue
         let projDir = Path.GetDirectoryName proj
         let projName = Path.GetFileNameWithoutExtension proj
-        let assembly = projDir @@ "bin" @@ config @@ "net4*" @@ projName + ".dll"
-        !! assembly
-        |> NUnit3 (fun c ->
-            { c with
-                OutputDir = sprintf "TestResult.%s.xml" config
-                TimeOut = TimeSpan.FromMinutes 20. })
+        let netcoreFrameworks, legacyFrameworks = 
+            !! (projDir @@ "bin" @@ config @@ "*/")
+            |> Seq.map Path.GetFileName
+            |> Seq.toArray
+            |> Array.partition 
+                (fun f -> 
+                    f.StartsWith "netcore" || 
+                    f.StartsWith "netstandard")
+            
+
+        for framework in netcoreFrameworks do
+            DotNetCli.Test (fun c ->
+                { c with
+                    Project = proj
+                    Framework = framework
+                    Configuration = config })
+
+        for framework in legacyFrameworks do
+            let assembly = projDir @@ "bin" @@ config @@ framework @@ projName + ".dll"
+            !! assembly
+            |> NUnit3 (fun c ->
+                { c with
+                    OutputDir = sprintf "TestResult.%s.xml" config
+                    TimeOut = TimeSpan.FromMinutes 20. })
 
 Target "RunTests" DoNothing
 
 Target "RunTests.Release" (fun _ ->
     for proj in !! testProjects do
-        runTest "Release" proj
+        runTests "Release" proj
 )
 
 Target "RunTests.Release-NoEmit" (fun _ ->
     for proj in !! testProjects do
-        runTest "Release-NoEmit" proj
+        runTests "Release-NoEmit" proj
 )
 
 

@@ -1,4 +1,4 @@
-framework: auto-detect
+framework: netstandard2.0, netcoreapp2.0, net461
 redirects: force
 source https://api.nuget.org/v3/index.json
 
@@ -26,6 +26,8 @@ group Legacy
 
   nuget FSharp.Core >= 3.1 lowest_matching:true
   nuget Newtonsoft.Json >= 6.0.5 lowest_matching: true
+  nuget SourceLink.Create.CommandLine copy_local: true
+  nuget SourceLink.Embed.PaketFiles copy_local: true
   
 group Build
   framework: net461

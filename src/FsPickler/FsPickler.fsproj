@@ -1,21 +1,21 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net45</TargetFramework>
+    <TargetFrameworks>netstandard2.0;net45</TargetFrameworks>
     <Configurations>Debug;Release;Release-NoEmit</Configurations>
     <AssemblyName>FsPickler</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DefineConstants>TRACE;DEBUG;PROTECT_STACK_OVERFLOWS;EMIT_IL;TUPLE_WORKAROUND</DefineConstants>
-    <DocumentationFile>bin\Debug\net45\FsPickler.XML</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <DefineConstants>TRACE;PROTECT_STACK_OVERFLOWS;EMIT_IL;TUPLE_WORKAROUND</DefineConstants>
-    <DocumentationFile>bin\Release\net45\FsPickler.XML</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-NoEmit|AnyCPU'">
     <DefineConstants>TRACE;PROTECT_STACK_OVERFLOWS;TUPLE_WORKAROUND</DefineConstants>
-    <DocumentationFile>bin\Release-NoEmit\net45\FsPickler.XML</DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\FsPickler.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\..\paket-files\eiriktsarpalis\TypeShape\src\TypeShape\TypeShape.fs">
@@ -68,10 +68,10 @@
     <Compile Include="FsPickler\Combinators.fs" />
     <Compile Include="FsPickler\ExtensionMethods.fs" />
     <None Include="paket.template" />
-    <None Include="Test.fsx" />
   </ItemGroup>
   <ItemGroup>
     <None Include="paket.references" />
+    <None Include="Test.fsx" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>
