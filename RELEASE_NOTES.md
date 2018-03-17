@@ -1,3 +1,6 @@
+### 5.2
+* Remove temporary workaround for the F# tuples compiler bug.
+
 ### 5.1
 * Bump minimum required FSharp.Core to 4.3.2 for netstandard.
 
