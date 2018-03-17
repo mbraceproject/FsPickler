@@ -5,7 +5,7 @@ source https://api.nuget.org/v3/index.json
 nuget FSharp.Core >= 4.3.2 lowest_matching: true
 nuget System.Reflection.Emit.Lightweight >= 4.3 lowest_matching: true
 nuget Newtonsoft.Json >= 10.0.1 lowest_matching: true
-github eiriktsarpalis/TypeShape:3.1.1 src/TypeShape/TypeShape.fs
+github eiriktsarpalis/TypeShape:4.0.0 src/TypeShape/TypeShape.fs
 
 # Testing : NB intentionally in main group
 nuget System.ValueTuple

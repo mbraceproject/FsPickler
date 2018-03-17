@@ -50,15 +50,15 @@ NUGET
     Microsoft.NET.Test.Sdk (15.6.1)
       Microsoft.CodeCoverage (>= 1.0.3) - restriction: || (== net461) (== netcoreapp2.0) (&& (== netstandard2.0) (>= net45)) (&& (== netstandard2.0) (>= netcoreapp1.0))
       Microsoft.TestPlatform.TestHost (>= 15.6.1) - restriction: || (&& (== net461) (>= netcoreapp1.0)) (== netcoreapp2.0) (&& (== netstandard2.0) (>= netcoreapp1.0))
-    Microsoft.NETCore.App (2.0.5) - restriction: || (&& (== net461) (>= netcoreapp2.0)) (== netcoreapp2.0) (&& (== netstandard2.0) (>= netcoreapp2.0))
-      Microsoft.NETCore.DotNetHostPolicy (>= 2.0.5) - restriction: || (&& (== net461) (>= netcoreapp2.0)) (== netcoreapp2.0) (&& (== netstandard2.0) (>= netcoreapp2.0))
+    Microsoft.NETCore.App (2.0.6) - restriction: || (&& (== net461) (>= netcoreapp2.0)) (== netcoreapp2.0) (&& (== netstandard2.0) (>= netcoreapp2.0))
+      Microsoft.NETCore.DotNetHostPolicy (>= 2.0.6) - restriction: || (&& (== net461) (>= netcoreapp2.0)) (== netcoreapp2.0) (&& (== netstandard2.0) (>= netcoreapp2.0))
       Microsoft.NETCore.Platforms (>= 2.0.1) - restriction: || (&& (== net461) (>= netcoreapp2.0)) (== netcoreapp2.0) (&& (== netstandard2.0) (>= netcoreapp2.0))
       NETStandard.Library (>= 2.0.1) - restriction: || (&& (== net461) (>= netcoreapp2.0)) (== netcoreapp2.0) (&& (== netstandard2.0) (>= netcoreapp2.0))
-    Microsoft.NETCore.DotNetAppHost (2.0.5) - restriction: || (&& (== net461) (>= netcoreapp2.0)) (== netcoreapp2.0) (&& (== netstandard2.0) (>= netcoreapp2.0))
-    Microsoft.NETCore.DotNetHostPolicy (2.0.5) - restriction: || (&& (== net461) (>= netcoreapp2.0)) (== netcoreapp2.0) (&& (== netstandard2.0) (>= netcoreapp2.0))
-      Microsoft.NETCore.DotNetHostResolver (>= 2.0.5)
-    Microsoft.NETCore.DotNetHostResolver (2.0.5) - restriction: || (&& (== net461) (>= netcoreapp2.0)) (== netcoreapp2.0) (&& (== netstandard2.0) (>= netcoreapp2.0))
-      Microsoft.NETCore.DotNetAppHost (>= 2.0.5)
+    Microsoft.NETCore.DotNetAppHost (2.0.6) - restriction: || (&& (== net461) (>= netcoreapp2.0)) (== netcoreapp2.0) (&& (== netstandard2.0) (>= netcoreapp2.0))
+    Microsoft.NETCore.DotNetHostPolicy (2.0.6) - restriction: || (&& (== net461) (>= netcoreapp2.0)) (== netcoreapp2.0) (&& (== netstandard2.0) (>= netcoreapp2.0))
+      Microsoft.NETCore.DotNetHostResolver (>= 2.0.6)
+    Microsoft.NETCore.DotNetHostResolver (2.0.6) - restriction: || (&& (== net461) (>= netcoreapp2.0)) (== netcoreapp2.0) (&& (== netstandard2.0) (>= netcoreapp2.0))
+      Microsoft.NETCore.DotNetAppHost (>= 2.0.6)
     Microsoft.NETCore.Platforms (2.0.1) - restriction: || (&& (== net461) (>= dnxcore50)) (&& (== net461) (< net20)) (== netcoreapp2.0) (== netstandard2.0)
     Microsoft.NETCore.Targets (2.0) - restriction: || (&& (== net461) (>= dnxcore50)) (&& (== net461) (< net20)) (== netcoreapp2.0) (== netstandard2.0)
     Microsoft.TestPlatform.ObjectModel (15.6.1) - restriction: || (&& (== net461) (>= netcoreapp1.0)) (== netcoreapp2.0) (&& (== netstandard2.0) (>= netcoreapp1.0))
@@ -650,7 +650,7 @@ NUGET
       System.Xml.XPath (>= 4.3)
 GITHUB
   remote: eiriktsarpalis/TypeShape
-    src/TypeShape/TypeShape.fs (bde1edc371b7b5bc9f9f9b3bbc9bd87da926bcb4)
+    src/TypeShape/TypeShape.fs (8ff234f56832e5d821e4d22e5ef5f6f342e10470)
 GROUP Build
 REDIRECTS: ON
 RESTRICTION: == net461
