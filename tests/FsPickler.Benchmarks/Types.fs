@@ -12,6 +12,30 @@ module Poco =
     type Roundtrip() =
         inherit RoundtripBenchmark<T>(value)
 
+module Dictionary =
+    open System.Collections.Generic
+    open Poco
+
+    type T = Dictionary<string, Poco.T>
+    
+    let mkDict size =
+        let d = new T()
+        for i = 1 to size do
+            let key = sprintf "key-%d" i
+            let value = { 
+                A = i ; 
+                B = sprintf "value-%d" i ; 
+                C = i % 2 = 0 ; 
+                D = [|byte i|] } 
+
+            d.Add(key, value)
+        d
+
+    let value = mkDict 1000
+
+    type Roundtrip() =
+        inherit RoundtripBenchmark<T>(value)
+
 module LargeObject =
     type Foo = { A : int ; B : string ; C : bool }
     type Bar = A of int * string | B of Foo | C

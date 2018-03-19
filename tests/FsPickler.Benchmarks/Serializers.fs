@@ -69,14 +69,11 @@ type WireSerializer () =
         override __.Deserialize(stream : Stream) = wire.Deserialize<'T>(stream)
 
 module Serializer =
-    
-    type ImmortalMemoryStream() =
-        inherit MemoryStream()
-        override __.Close() = ()
 
     let memoryStream = 
         new ThreadLocal<_>(fun () -> 
-            new ImmortalMemoryStream() :> MemoryStream)
+            { new MemoryStream() with
+                override __.Close() = () })
 
     let roundTrip (serializer : ISerializer) (value : 'T) =
         let m = memoryStream.Value
