@@ -5,6 +5,7 @@ open System.IO
 open System.Threading
 
 open BenchmarkDotNet.Attributes
+open BenchmarkDotNet.Attributes.Exporters
 
 type ISerializer =
     abstract Name : string
@@ -40,20 +41,6 @@ type JsonDotNetSerializer () =
             use reader = new StreamReader(stream)
             jdn.Deserialize(reader, typeof<'T>) :?> 'T
 
-type JsonDotNetBsonSerializer () =
-    let jdn = Newtonsoft.Json.JsonSerializer.Create()
-        
-    interface ISerializer with
-        override __.Name = "Json.Net (Bson)"
-        override __.Serialize(stream : Stream) (x : 'T) =
-            use writer = new Newtonsoft.Json.Bson.BsonWriter(stream)
-            jdn.Serialize(writer, x)
-            writer.Flush()
-
-        override __.Deserialize(stream : Stream) : 'T =
-            use reader = new Newtonsoft.Json.Bson.BsonReader(stream)
-            jdn.Deserialize(reader, typeof<'T>) :?> 'T
-
 type ProtoBufSerializer () =
     interface ISerializer with
         override __.Name = "ProtoBuf-Net"
@@ -85,12 +72,13 @@ module Serializer =
 
 
 [<AbstractClass>]
+[<MarkdownExporter; HtmlExporter; RPlotExporter>]
 type RoundtripBenchmark<'T>(value : 'T) =
+    inherit RoundtripBenchmark()
     let fsb = new FsPicklerBinarySerializer()
     let fsx = new FsPicklerXmlSerializer()
     let fsj = new FsPicklerJsonSerializer()
     let nsj = new JsonDotNetSerializer()
-    let nsb = new JsonDotNetBsonSerializer()
     let pbf = new ProtoBufSerializer()
     let wir = new WireSerializer()
 
@@ -102,9 +90,9 @@ type RoundtripBenchmark<'T>(value : 'T) =
     member __.FsPicklerJson() = Serializer.roundTrip fsj value
     [<Benchmark(Description = "Newtonsoft.Json")>]
     member __.NewtonsoftJson() = Serializer.roundTrip nsj value
-    [<Benchmark(Description = "Newtonsoft.Bson")>]
-    member __.NewtonsoftBson() = Serializer.roundTrip nsb value
     [<Benchmark(Description = "Protobuf-Net")>]
     member __.Protobuf() = Serializer.roundTrip pbf value
     [<Benchmark(Description = "Wire")>]
     member __.Wire() = Serializer.roundTrip wir value
+
+and [<AbstractClass>] RoundtripBenchmark() = class end

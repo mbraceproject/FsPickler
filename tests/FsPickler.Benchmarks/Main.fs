@@ -1,11 +1,19 @@
 ﻿module MBrace.FsPickler.Benchmarks.Main
 
+open System.Reflection
 open BenchmarkDotNet.Running
 
+let getAllBenchmarks () =
+    let assembly = Assembly.GetExecutingAssembly()
+    assembly.GetTypes()
+    |> Array.filter typeof<RoundtripBenchmark>.IsAssignableFrom
+    |> Array.filter (fun t -> not t.IsAbstract)
+
 [<EntryPoint>]
-let main _ =
-    //let _summary = BenchmarkRunner.Run<LargeObject.Roundtrip>()
-    //let _summary = BenchmarkRunner.Run<Poco.Roundtrip>()
-    //let _summary = BenchmarkRunner.Run<ISerializable.Roundtrip>()
-    let _summary = BenchmarkRunner.Run<Dictionary.Roundtrip>()
+let main args =
+
+    let allBenchmarks = getAllBenchmarks ()
+    let switcher = new BenchmarkSwitcher(allBenchmarks)
+    let summaries = switcher.Run args
+
     0
