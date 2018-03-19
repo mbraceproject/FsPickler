@@ -19,6 +19,16 @@ nuget SourceLink.Create.CommandLine copy_local: true
 nuget SourceLink.Embed.PaketFiles copy_local: true
 clitool dotnet-sourcelink
 
+group Benchmarks
+  framework: netcoreapp2.0, net461
+  source https://api.nuget.org/v3/index.json
+  redirects: force
+
+  nuget BenchmarkDotNet
+  nuget Wire
+  nuget protobuf-net
+  nuget Newtonsoft.Json
+
 group Legacy
   framework: net45
   source https://api.nuget.org/v3/index.json

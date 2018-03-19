@@ -112,6 +112,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "gc", "gc", "{CDF2389D-8F60-
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "FsPickler", "src\FsPickler\FsPickler.fsproj", "{3AD987BF-F0FA-40BD-9DAE-4AF3A5FE9CC7}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FsPickler.Benchmarks", "tests\FsPickler.Benchmarks\FsPickler.Benchmarks.fsproj", "{9F6807B6-268B-48E7-94C6-E2F77CF77A37}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -137,6 +139,12 @@ Global
 		{3AD987BF-F0FA-40BD-9DAE-4AF3A5FE9CC7}.Release|Any CPU.Build.0 = Release|Any CPU
 		{3AD987BF-F0FA-40BD-9DAE-4AF3A5FE9CC7}.Release-NoEmit|Any CPU.ActiveCfg = Release-NoEmit|Any CPU
 		{3AD987BF-F0FA-40BD-9DAE-4AF3A5FE9CC7}.Release-NoEmit|Any CPU.Build.0 = Release-NoEmit|Any CPU
+		{9F6807B6-268B-48E7-94C6-E2F77CF77A37}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9F6807B6-268B-48E7-94C6-E2F77CF77A37}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9F6807B6-268B-48E7-94C6-E2F77CF77A37}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9F6807B6-268B-48E7-94C6-E2F77CF77A37}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9F6807B6-268B-48E7-94C6-E2F77CF77A37}.Release-NoEmit|Any CPU.ActiveCfg = Release|Any CPU
+		{9F6807B6-268B-48E7-94C6-E2F77CF77A37}.Release-NoEmit|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -152,6 +160,7 @@ Global
 		{D30FBE7C-26F4-4C5F-8E03-BF9F5185BC1D} = {6A9C2D20-E8F1-42C1-A116-EACB1A4E93BD}
 		{CDF2389D-8F60-44FA-AA48-6380DD0B32F9} = {6A9C2D20-E8F1-42C1-A116-EACB1A4E93BD}
 		{3AD987BF-F0FA-40BD-9DAE-4AF3A5FE9CC7} = {23BFC6E5-8581-44C7-B9C6-A42F06DCD6A6}
+		{9F6807B6-268B-48E7-94C6-E2F77CF77A37} = {109340B6-EAF7-4DDC-9D6C-F51A3E6E747F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1FCA8B32-FF44-47F1-9B3B-091CA78E9A86}

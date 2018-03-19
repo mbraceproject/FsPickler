@@ -1,0 +1,7 @@
+﻿FSharp.Core
+FsCheck
+group Benchmarks
+  BenchmarkDotNet
+  Wire
+  protobuf-net
+  Newtonsoft.Json
