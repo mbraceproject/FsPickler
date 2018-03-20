@@ -10,7 +10,7 @@ The library is based on the functional programming concept of
 [pickler combinators](http://lambda-the-ultimate.org/node/2243) 
 which has been adapted to accommodate the object oriented nature of the .NET framework.
 
-Packages of the library are available on Nuget [[1](http://www.nuget.org/packages/FsPickler),[2](http://www.nuget.org/packages/FsPickler.Json).
+Packages of the library are available on Nuget [[1](http://www.nuget.org/packages/FsPickler),[2](http://www.nuget.org/packages/FsPickler.Json)].
 
 ### Documentation
 
