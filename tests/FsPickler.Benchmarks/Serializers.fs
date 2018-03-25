@@ -74,7 +74,6 @@ module Serializer =
 [<AbstractClass>]
 [<MarkdownExporter; HtmlExporter; RPlotExporter>]
 type RoundtripBenchmark<'T>(value : 'T) =
-    inherit RoundtripBenchmark()
     let fsb = new FsPicklerBinarySerializer()
     let fsx = new FsPicklerXmlSerializer()
     let fsj = new FsPicklerJsonSerializer()
@@ -94,5 +93,3 @@ type RoundtripBenchmark<'T>(value : 'T) =
     member __.Protobuf() = Serializer.roundTrip pbf value
     [<Benchmark(Description = "Wire")>]
     member __.Wire() = Serializer.roundTrip wir value
-
-and [<AbstractClass>] RoundtripBenchmark() = class end
