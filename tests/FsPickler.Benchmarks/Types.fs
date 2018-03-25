@@ -38,6 +38,22 @@ module BoxedArray =
     type BoxedArrayRoundtrip() =
         inherit RoundtripBenchmark<T>(value)
 
+module Array3D =
+    type T = float [,,]
+
+    let value : T = Array3D.init 20 20 20 (fun i j k -> 0.1 * float i + float j + 10. * float k)
+    
+    type Array3DRoundtrip() =
+        inherit RoundtripBenchmark<T>(value)
+
+module CyclicObject =
+    type T = obj[]
+
+    let value : T = let x = [| null |] in x.[0] <- box x ; x
+    
+    type CyclicObjectRoundtrip() =
+        inherit RoundtripBenchmark<T>(value)
+
 module LargeTuple =
     type T = string * int * int * int * bool * string * (float * int list) option * int * int * int * string
     let value : T = ("lorem ipsum dolor", 1, 2, 3, true, "", Some(3.14, [2]), 3, 2, 1, "lorem")
