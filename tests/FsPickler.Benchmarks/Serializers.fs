@@ -70,9 +70,8 @@ module Serializer =
         let _ = serializer.Deserialize<'T> m
         ()
 
-
 [<AbstractClass>]
-[<MarkdownExporter; HtmlExporter; RPlotExporter>]
+[<MarkdownExporter; CsvMeasurementsExporter; HtmlExporter; RPlotExporter>]
 type RoundtripBenchmark<'T>(value : 'T) =
     let fsb = new FsPicklerBinarySerializer()
     let fsx = new FsPicklerXmlSerializer()
