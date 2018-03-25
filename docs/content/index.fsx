@@ -77,8 +77,10 @@ A collection of tutorials, technical overviews and API references of the library
 
  * [Technical Overview](overview.html) A walkthrough of the library's implementation details.
 
- * [Performance](benchmarks.html) Benchmarks comparing FsPickler
+ * OUTDATED [Performance](benchmarks.html) Benchmarks comparing FsPickler
    to other established serialization libraries.
+
+ * [.NET Core Benchmarks](https://github.com/mbraceproject/FsPickler/wiki/.NET-Core-Benchmarks)
 
  * [API Reference](reference/index.html) contains automatically generated documentation for all types, modules
    and functions in the library.

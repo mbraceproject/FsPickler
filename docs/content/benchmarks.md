@@ -1,5 +1,7 @@
 # Performance
 
+THIS PAGE IS OUTDATED:- please see the updated benchmarks page [here](https://github.com/mbraceproject/FsPickler/wiki/.NET-Core-Benchmarks).
+
 How does FsPickler compare against other .Net serialization libraries in terms of performance? 
 In this section we present a few microbenchmarks: we compared FsPickler against 
 [BinaryFormatter](http://msdn.microsoft.com/en-us/library/system.runtime.serialization.formatters.binary.binaryformatter.aspx), 
