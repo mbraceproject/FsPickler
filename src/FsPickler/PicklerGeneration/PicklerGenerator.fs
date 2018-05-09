@@ -42,6 +42,7 @@ type PicklerGenerator =
             if pickler.Type <> shape.Type then
                 raise <| PicklerGenerationException(shape.Type, "unexpected pickler type from custom pickler generator.")
             pickler
+
         | _ when isUnsupportedType shape.Type -> raise <| NonSerializableTypeException shape.Type
         | Shape.Bool -> new BooleanPickler() :> _
         | Shape.Byte -> new BytePickler() :> _
