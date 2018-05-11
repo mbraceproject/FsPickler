@@ -64,7 +64,6 @@ type PicklerGenerator =
         | :? TypeShape<Assembly> -> ReflectionPicklers.CreateAssemblyPickler resolver :> _
         | :? TypeShape<MemberInfo> -> ReflectionPicklers.CreateMemberInfoPickler ArrayPickler.Create resolver :> _
         | :? TypeShape<System.DBNull> -> new DBNullPickler() :> _
-
         | PicklerFactory factory ->
             let pickler = factory resolver
             if pickler.Type <> shape.Type then
