@@ -163,7 +163,7 @@ type SerializationTests (fixture : ISerializerFixture) =
         let registry = new CustomPicklerRegistry ()
         registry.RegisterFactory makeDirectoryInfoPickler
         let cache = PicklerCache.FromCustomPicklerRegistry registry
-        let ser = FsPickler.CreateBinarySerializer (picklerResolver = cache)
+        let ser = FsPickler.CreateXmlSerializer (picklerResolver = cache)
         di
         |> ser.PickleToString
         |> ser.UnPickleOfString<DirectoryInfo>
