@@ -37,7 +37,6 @@ type PicklerGenerator =
         let (|PicklerFactory|_|) (shape : TypeShape) = registry.TryGetPicklerFactory shape.Type
 
         match shape with
-        | _ when isUnsupportedType shape.Type -> raise <| NonSerializableTypeException shape.Type
         | Shape.Bool -> new BooleanPickler() :> _
         | Shape.Byte -> new BytePickler() :> _
         | Shape.SByte -> new SBytePickler() :> _
@@ -65,11 +64,16 @@ type PicklerGenerator =
         | :? TypeShape<Assembly> -> ReflectionPicklers.CreateAssemblyPickler resolver :> _
         | :? TypeShape<MemberInfo> -> ReflectionPicklers.CreateMemberInfoPickler ArrayPickler.Create resolver :> _
         | :? TypeShape<System.DBNull> -> new DBNullPickler() :> _
-        | PicklerFactory factory -> 
+        | PicklerFactory factory ->
             let pickler = factory resolver
             if pickler.Type <> shape.Type then
                 raise <| PicklerGenerationException(shape.Type, "unexpected pickler type from custom pickler generator.")
             pickler
+
+        // The unsupported check is now after the pickler factory case due to the fact that the DirectoryInfo
+        // type has 'IsMarshalByRef' set if .NET framework is used. This allows someone to specify
+        // a custom pickler that will serialize a DirectoryInfo.
+        | _ when isUnsupportedType shape.Type -> raise <| NonSerializableTypeException shape.Type
 
         | Shape.Nullable s ->
             s.Accept {

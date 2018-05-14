@@ -146,6 +146,29 @@ type SerializationTests (fixture : ISerializerFixture) =
     [<Test; Category("Bytes")>]
     member __.``Primitive: byte []`` () = testEquals (null : byte []) ; Check.QuickThrowOnFail<byte []> testEquals
 
+    [<Test; Category("DirectoryInfo")>]
+    member __.``DirectoryInfo`` () =
+        let makeDirectoryInfoPickler (resolver : IPicklerResolver) =
+            let stringPickler = resolver.Resolve<string> ()
+
+            let writer (w : WriteState) (di : DirectoryInfo) =
+                stringPickler.Write w "Directory" di.FullName
+
+            let reader (r : ReadState) =
+                stringPickler.Read r "Directory" |> DirectoryInfo
+
+            Pickler.FromPrimitives (reader, writer)
+
+        let di = DirectoryInfo "testDirectory"
+        let registry = new CustomPicklerRegistry ()
+        registry.RegisterFactory makeDirectoryInfoPickler
+        let cache = PicklerCache.FromCustomPicklerRegistry registry
+        let ser = FsPickler.CreateXmlSerializer (picklerResolver = cache)
+        di
+        |> ser.PickleToString
+        |> ser.UnPickleOfString<DirectoryInfo>
+        |> should equal di
+
     //
     //  Reflection types
     //
