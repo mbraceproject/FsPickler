@@ -70,6 +70,9 @@ type PicklerGenerator =
                 raise <| PicklerGenerationException(shape.Type, "unexpected pickler type from custom pickler generator.")
             pickler
 
+        // The unsupported check is now after the pickler factory case due to the fact that the DirectoryInfo
+        // type has 'IsMarshalByRef' set if .NET framework is used. This allows someone to specify
+        // a custom pickler that will serialize a DirectoryInfo.
         | _ when isUnsupportedType shape.Type -> raise <| NonSerializableTypeException shape.Type
 
         | Shape.Nullable s ->
