@@ -7,7 +7,7 @@ FsPickler is a serialization library that facilitates the distribution of .NET o
 The implementation focuses on performance and completeness in supported types, including F# types.
 It supports multiple, pluggable serialization formats including Binary, Xml, JSON and BSON.
 The library is based on the functional programming concept of 
-[pickler combinators](http://lambda-the-ultimate.org/node/2243) 
+[pickler combinators](https://www.microsoft.com/en-us/research/publication/functional-pearl-pickler-combinators/) 
 which has been adapted to accommodate the object oriented nature of the .NET framework.
 
 Packages of the library are available on Nuget [[1](http://www.nuget.org/packages/FsPickler),[2](http://www.nuget.org/packages/FsPickler.Json)].
