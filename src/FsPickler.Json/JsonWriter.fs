@@ -161,7 +161,7 @@ type internal JsonPickleWriter (jsonWriter : JsonWriter, omitHeader, indented, i
             | _ -> jsonWriter.WriteValue value
 
         member __.IsPrimitiveArraySerializationSupported = false
-        member __.WritePrimitiveArray _ _ = raise <| NotSupportedException()
+        member __.WritePrimitiveArray _ _ _ = raise <| NotSupportedException()
 
         member __.Dispose () = 
             if leaveOpen then jsonWriter.Flush()

@@ -86,7 +86,7 @@ type internal ArrayPickler =
                 let length = formatter.ReadInt32 "length"
                 let array = Array.zeroCreate<'T> length
                 r.EarlyRegisterArray array
-                formatter.ReadPrimitiveArray "array" array
+                formatter.ReadPrimitiveArray "array" array sizeof<'T>
                 array
 
             elif ep.IsRecursiveType || formatter.PreferLengthPrefixInSequences then
@@ -137,7 +137,7 @@ type internal ArrayPickler =
             let lengths = writeMultiDimensionalArrayRanks formatter 2 array
                 
             if isPrimitiveSerialized formatter ep then
-                formatter.WritePrimitiveArray "array" array
+                formatter.WritePrimitiveArray "array" array sizeof<'T>
             else
                 formatter.BeginWriteObject "array" ObjectFlags.IsSequenceHeader
                 for i = 0 to lengths.[0] - 1 do
@@ -156,7 +156,7 @@ type internal ArrayPickler =
             r.EarlyRegisterArray array
 
             if isPrimitiveSerialized formatter ep then
-                formatter.ReadPrimitiveArray "array" array
+                formatter.ReadPrimitiveArray "array" array sizeof<'T>
             else
                 do beginReadSequence formatter "array"
 
@@ -199,7 +199,7 @@ type internal ArrayPickler =
             let lengths = writeMultiDimensionalArrayRanks formatter 3 array
                 
             if isPrimitiveSerialized formatter ep then
-                formatter.WritePrimitiveArray "array" array
+                formatter.WritePrimitiveArray "array" array sizeof<'T>
             else
                 formatter.BeginWriteObject "array" ObjectFlags.IsSequenceHeader
                 for i = 0 to lengths.[0] - 1 do
@@ -219,7 +219,7 @@ type internal ArrayPickler =
             r.EarlyRegisterArray array
 
             if isPrimitiveSerialized formatter ep then
-                formatter.ReadPrimitiveArray "array" array
+                formatter.ReadPrimitiveArray "array" array sizeof<'T>
             else
                 do beginReadSequence formatter "array"
 
@@ -266,7 +266,7 @@ type internal ArrayPickler =
             let lengths = writeMultiDimensionalArrayRanks formatter 4 array
                 
             if isPrimitiveSerialized formatter ep then
-                formatter.WritePrimitiveArray "array" array
+                formatter.WritePrimitiveArray "array" array sizeof<'T>
             else
                 formatter.BeginWriteObject "array" ObjectFlags.IsSequenceHeader
 
@@ -288,7 +288,7 @@ type internal ArrayPickler =
             r.EarlyRegisterArray array
 
             if isPrimitiveSerialized formatter ep then
-                formatter.ReadPrimitiveArray "array" array
+                formatter.ReadPrimitiveArray "array" array sizeof<'T>
             else
                 do beginReadSequence formatter "array"
 

@@ -95,7 +95,8 @@ type IPickleFormatWriter =
     /// </summary>
     /// <param name="tag">array identifier.</param>
     /// <param name="value">source array.</param>
-    abstract WritePrimitiveArray : tag:string -> value:Array -> unit
+    /// <param name="sizeof">result of calling sizeof<'T> on the element type of the source array.</param>
+    abstract WritePrimitiveArray : tag:string -> value:Array -> sizeof:int32 -> unit
 
 /// <summary>
 ///     Deserialization format abstraction.
@@ -182,7 +183,8 @@ and IPickleFormatReader =
     /// </summary>
     /// <param name="tag">array identifier.</param>
     /// <param name="target">target array.</param>
-    abstract ReadPrimitiveArray : tag:string -> target:Array -> unit
+    /// <param name="sizeof">result of calling sizeof<'T> on the element type of the target array.</param>
+    abstract ReadPrimitiveArray : tag:string -> target:Array -> sizeof:int32 -> unit
 
 /// Factory abstraction for binary pickle formats.
 type IPickleFormatProvider =

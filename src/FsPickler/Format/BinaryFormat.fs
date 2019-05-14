@@ -43,7 +43,7 @@ module private BinaryFormatUtils =
     [<Literal>]
     let flagMask  = 0x000000ffu
 
-    // this binary format uses Buffer.BlockCopy for performance
+    // this binary format uses Marshal.Copy for performance
     // and thus does little to handle endianness issues.
     // To avoid silent data corruption, record the serializer's
     // endianness setting at the beginning of the serialization stream.
@@ -58,46 +58,52 @@ module private BinaryFormatUtils =
         flagMask &&& header |> byte |> EnumOfValue<byte, ObjectFlags>
 
     [<Literal>]
-    let bufferSize = 256    
+    let bufferSize = 4096
     let buffer = new ThreadLocal<byte []>(fun () -> Array.zeroCreate<byte> bufferSize)
 
     /// block copy primitive array to stream
-    let blockCopy (source : Array, target : Stream) =
-
+    let blockCopy (source : Array, sizeof : int32, target : Stream) =
         let buf = buffer.Value
-        let mutable bytes = Buffer.ByteLength source
-        let mutable i = 0
+        let mutable bytes = source.LongLength * int64 sizeof
 
-        while bytes > bufferSize do
-            Buffer.BlockCopy(source, i, buf, 0, bufferSize)
-            target.Write(buf, 0, bufferSize)
-            i <- i + bufferSize
-            bytes <- bytes - bufferSize
+        let arrayHandle = System.Runtime.InteropServices.GCHandle.Alloc(source,  System.Runtime.InteropServices.GCHandleType.Pinned);
+        try
+            let mutable pin = arrayHandle.AddrOfPinnedObject();
 
-        if bytes > 0 then
-            Buffer.BlockCopy(source, i, buf, 0, bytes)
-            target.Write(buf, 0, bytes)
+            while bytes > int64 bufferSize do
+                System.Runtime.InteropServices.Marshal.Copy(pin, buf, 0, bufferSize)
+                target.Write(buf, 0, bufferSize)
+                pin <- IntPtr.Add(pin, bufferSize)
+                bytes <- bytes - int64 bufferSize
+
+            if bytes > 0L then
+                System.Runtime.InteropServices.Marshal.Copy(pin, buf, 0, int bytes)
+                target.Write(buf, 0, int bytes)
+        finally
+            arrayHandle.Free()
 
     /// copy stream contents to preallocated array
-    let blockRead (source : Stream, target : Array) =
+    let blockRead (source : Stream, sizeof : int32, target : Array) =
         let buf = buffer.Value
-        let inline fillBytes (n : int) =
-            let mutable read = 0
-            while read < n do
-                read <- read + source.Read(buf, read, n - read)
-        
-        let mutable bytes = Buffer.ByteLength target
-        let mutable i = 0
+        let mutable bytes = target.LongLength * int64 sizeof
 
-        while bytes > bufferSize do
-            do fillBytes bufferSize
-            Buffer.BlockCopy(buf, 0, target, i, bufferSize)
-            i <- i + bufferSize
-            bytes <- bytes - bufferSize
+        let arrayHandle = System.Runtime.InteropServices.GCHandle.Alloc(target,  System.Runtime.InteropServices.GCHandleType.Pinned);
+        try
+            let mutable pin = arrayHandle.AddrOfPinnedObject();
 
-        if bytes > 0 then
-            do fillBytes bytes
-            Buffer.BlockCopy(buf, 0, target, i, bytes)
+            while bytes > int64 bufferSize do
+                let read = source.Read(buf, 0, bufferSize)
+                System.Runtime.InteropServices.Marshal.Copy(buf, 0, pin, read)
+                pin <- IntPtr.Add(pin, read)
+                bytes <- bytes - int64 read
+
+            while bytes > 0L do
+                let read = source.Read(buf, 0, int bytes)
+                System.Runtime.InteropServices.Marshal.Copy(buf, 0, pin, read)
+                pin <- IntPtr.Add(pin, read)
+                bytes <- bytes - int64 read
+        finally
+            arrayHandle.Free()
   
 // force little endian : by default, the writer uses Buffer.BlockCopy when serializing arrays.
 // this is performant, but it does not respect endianness.
@@ -195,7 +201,7 @@ type BinaryPickleWriter internal (stream : Stream, encoding : Encoding, leaveOpe
         // in an element-by-element basis. This ensures that all serialization
         // is passed through BinaryWriter that always uses little endian.
         member __.IsPrimitiveArraySerializationSupported = not forceLittleEndian
-        member __.WritePrimitiveArray _ array = blockCopy(array, stream)
+        member __.WritePrimitiveArray _ array sizeof = blockCopy(array, sizeof, stream)
 
         member __.Dispose () = bw.Dispose()
 
@@ -316,7 +322,7 @@ type BinaryPickleReader internal (stream : Stream, encoding : Encoding, leaveOpe
             else br.ReadBytes(length)
 
         member __.IsPrimitiveArraySerializationSupported = not isForcedLittleEndianStream
-        member __.ReadPrimitiveArray _ array = blockRead(stream, array)
+        member __.ReadPrimitiveArray _ array sizeof = blockRead(stream, sizeof, array)
 
 /// <summary>
 ///     Factory methods for the binary serialization format.

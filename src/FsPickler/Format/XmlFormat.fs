@@ -200,7 +200,7 @@ type XmlPickleWriter internal (textWriter : TextWriter, indent : bool, leaveOpen
             writer.WriteEndElement()
 
         member __.IsPrimitiveArraySerializationSupported = false
-        member __.WritePrimitiveArray _ _ = raise <| new NotSupportedException()
+        member __.WritePrimitiveArray _ _ _ = raise <| new NotSupportedException()
 
         member __.Dispose () = writer.Dispose()
 
@@ -350,7 +350,7 @@ type XmlPickleReader internal (textReader : TextReader, leaveOpen) =
                 bytes
 
         member __.IsPrimitiveArraySerializationSupported = false
-        member __.ReadPrimitiveArray _ _ = raise <| new NotImplementedException()
+        member __.ReadPrimitiveArray _ _ _ = raise <| new NotImplementedException()
 
         member __.Dispose () = reader.Dispose()
 

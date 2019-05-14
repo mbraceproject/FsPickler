@@ -1181,3 +1181,65 @@ type SerializationTests (fixture : ISerializerFixture) =
             raise <| new AssertionException(msg)
         else
             printfn "Failed Serializations: %d out of %d." failedResults results.Length
+            
+    // Large array tests output so much data they won't fit into a .NET byte array, we have to serialize to a FileStream.
+    member private __.TestLargeArray<'T when 'T :> Array> (x : 'T) =
+        // These are huge arrays so we just check that the lengths, first, and last elements are correct.
+        let getTestElements (arr : 'T) =
+            match arr.Rank with
+            | 1 ->
+                ([arr.Length], arr.GetValue 0, arr.GetValue (arr.Length - 1))
+            | 2 ->
+                let lastI = (arr.GetLength 0) - 1
+                let lastJ = (arr.GetLength 1) - 1
+                ([arr.GetLength 0; arr.GetLength 1], arr.GetValue (0, 0),  arr.GetValue (lastI, lastJ))
+            | rank -> failwithf "Unexpected array rank %d" rank
+
+        let elementsX = getTestElements x
+        let path = System.IO.Path.GetTempFileName()
+        fixture.Serializer.Serialize(System.IO.File.OpenWrite path, x)
+        let y = fixture.Serializer.Deserialize<'T> (System.IO.File.OpenRead path)
+        System.IO.File.Delete path
+        let elementsY = getTestElements y
+        elementsX |> should equal elementsY
+
+    [<Test; Category("Stress tests")>]
+    member this.``Array: 1GB`` () =
+        Array.init<int64> 134217728 int64
+        |> this.TestLargeArray
+
+    [<Test; Category("Stress tests")>]
+    member this.``Array: 2,147,483,591 elements`` () =
+        // This is the maximum size a 1-dimensional byte array can be (https://docs.microsoft.com/en-us/dotnet/framework/configure-apps/file-schema/runtime/gcallowverylargeobjects-element#remarks)
+        Array.init<byte> 2147483591 byte
+        |> this.TestLargeArray
+
+    [<Test; Category("Stress tests")>]
+    member this.``Array: 2GB`` () =
+        // This is the maximum size an array can be without gcAllowLargeObjects.
+        Array.init<int64> 268435456 int64
+        |> this.TestLargeArray
+
+    [<Test; Category("Stress tests")>]
+    member this.``Array: 3GB`` () =
+        if IntPtr.Size = 4 then () else
+        // With gcAllowLargeObjects arrays can be larger than 2GB.
+        Array.init<int64> 402653184 int64
+        |> this.TestLargeArray
+
+    [<Test; Explicit; Category("Stress tests")>]
+    member this.``Array: 4,294,967,292 elements`` () =
+        if IntPtr.Size = 4 then () else
+        // With gcAllowLargeObjects arrays can be larger than 2GB.
+        // This is the maximum size a 64-bit byte array can be (https://docs.microsoft.com/en-us/dotnet/framework/configure-apps/file-schema/runtime/gcallowverylargeobjects-element#remarks)
+        // Of note the number of elements is (2^32)-4, so not quite 4GB. Also you can't make a byte array this big with 1-dimension because the length is limited to 2,147,483,591.
+        Array2D.init<byte> 1073741823 4 (fun i j -> byte (i * j))
+        |> this.TestLargeArray
+
+    [<Test; Explicit; Category("Stress tests")>]
+    member this.``Array: 6GB`` () =
+        if IntPtr.Size = 4 then () else
+        // With gcAllowLargeObjects arrays can be larger than 2GB.
+        // With 64-bits arrays can be larger than 4GB.
+        Array.init<int64> 805306368 int64
+        |> this.TestLargeArray
