@@ -9,7 +9,6 @@
     <Compile Include="Serializers.fs" />
     <Compile Include="Types.fs" />
     <Compile Include="Main.fs" />
-    <None Include="App.config" />
     <None Include="paket.references" />
   </ItemGroup>
   <ItemGroup>
