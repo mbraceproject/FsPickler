@@ -241,7 +241,7 @@ Target "Release" DoNothing
   ==> "PrepareRelease"
   ==> "GenerateDocs"
   ==> "NuGet.Pack"
-  ==> "SourceLink.Test"
+  //==> "SourceLink.Test"
   ==> "Bundle"
 
 "Bundle"
