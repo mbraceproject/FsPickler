@@ -1,44 +1,46 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27130.2026
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29009.5
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".paket", ".paket", "{2FC26D10-021B-4487-AE72-6CFC1346239A}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "FsPickler", "src\FsPickler\FsPickler.fsproj", "{145234E3-13C8-47C8-8171-9E389EE539EB}"
+EndProject
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "FsPickler.Json", "src\FsPickler.Json\FsPickler.Json.fsproj", "{F41AEDC2-A21C-49F1-8ACD-43BF41FD3EC8}"
+EndProject
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "FsPickler.Benchmarks", "tests\FsPickler.Benchmarks\FsPickler.Benchmarks.fsproj", "{76E8A5C2-67E4-4109-9124-280A457CD78E}"
+EndProject
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "FsPickler.Tests", "tests\FsPickler.Tests\FsPickler.Tests.fsproj", "{34D3D233-1D14-4528-B69F-870FC3561B5D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".paket", ".paket", "{5DA5DEB1-D7C8-4002-8C6B-AF856A8743D1}"
 	ProjectSection(SolutionItems) = preProject
-		paket.dependencies = paket.dependencies
-		paket.lock = paket.lock
+		.paket\.gitignore = .paket\.gitignore
+		.paket\paket.exe = .paket\paket.exe
 		.paket\Paket.Restore.targets = .paket\Paket.Restore.targets
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "project", "project", "{87846678-C0AD-48CD-8D7D-4224116EEB73}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{B8D125E3-0DE0-4E44-8AB4-22A79680CDF4}"
 	ProjectSection(SolutionItems) = preProject
+		.dockerignore = .dockerignore
+		.gitattributes = .gitattributes
 		.gitignore = .gitignore
+		.tfignore = .tfignore
 		.travis.yml = .travis.yml
 		appveyor.yml = appveyor.yml
 		build.cmd = build.cmd
 		build.fsx = build.fsx
 		build.sh = build.sh
+		docker-build.sh = docker-build.sh
+		Dockerfile = Dockerfile
+		FsPickler.sln = FsPickler.sln
 		License.md = License.md
+		paket.dependencies = paket.dependencies
+		paket.lock = paket.lock
 		README.md = README.md
 		RELEASE_NOTES.md = RELEASE_NOTES.md
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{109340B6-EAF7-4DDC-9D6C-F51A3E6E747F}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{71BF70C9-717C-4608-B072-09ADD00279F1}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{23BFC6E5-8581-44C7-B9C6-A42F06DCD6A6}"
-EndProject
-Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "FsPickler.Tests", "tests\FsPickler.Tests\FsPickler.Tests.fsproj", "{EC89A90F-5EBF-40FB-B4F3-1A8F2D224A20}"
-EndProject
-Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "FsPickler.Json", "src\FsPickler.Json\FsPickler.Json.fsproj", "{1DCB4AD7-2C00-4BCD-B1A5-A469F31E2CD1}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{D0FD949B-2995-4392-AD02-E9C69BA9DFE0}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{69847FBC-4407-48A7-9109-C07D3164F29A}"
-	ProjectSection(SolutionItems) = preProject
-		docs\tools\generate.fsx = docs\tools\generate.fsx
-		docs\tools\templates\template.cshtml = docs\tools\templates\template.cshtml
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "content", "content", "{E2C73A7A-643B-48D0-9DBB-581778FC8C6D}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "content", "content", "{2E6B95A2-11C1-4D8D-AAF6-1683AFC111D1}"
 	ProjectSection(SolutionItems) = preProject
 		docs\content\benchmarks.md = docs\content\benchmarks.md
 		docs\content\index.fsx = docs\content\index.fsx
@@ -46,51 +48,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "content", "content", "{E2C7
 		docs\content\tutorial.fsx = docs\content\tutorial.fsx
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "files", "files", "{BE768967-0DE8-4FB3-83EA-2841CB790B9E}"
-	ProjectSection(SolutionItems) = preProject
-		docs\files\img\fsharp.png = docs\files\img\fsharp.png
-		docs\files\img\mbrace.png = docs\files\img\mbrace.png
-	EndProjectSection
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "files", "files", "{98E468A3-08AF-4A97-8DE1-881CF63F3BD9}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "benchmarks", "benchmarks", "{6A9C2D20-E8F1-42C1-A116-EACB1A4E93BD}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "benchmarks", "benchmarks", "{8B301E9D-857C-4CB9-9367-E4C2878CCCE0}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "size", "size", "{E97FD04B-2CC5-4EB3-9874-6FB8CF96E4CC}"
-	ProjectSection(SolutionItems) = preProject
-		docs\files\benchmarks\size\3darray.png = docs\files\benchmarks\size\3darray.png
-		docs\files\benchmarks\time\datacontract.png = docs\files\benchmarks\time\datacontract.png
-		docs\files\benchmarks\size\dict.png = docs\files\benchmarks\size\dict.png
-		docs\files\benchmarks\size\exception.png = docs\files\benchmarks\size\exception.png
-		docs\files\benchmarks\size\intarray.png = docs\files\benchmarks\size\intarray.png
-		docs\files\benchmarks\size\integer.png = docs\files\benchmarks\size\integer.png
-		docs\files\benchmarks\size\intlist.png = docs\files\benchmarks\size\intlist.png
-		docs\files\benchmarks\size\pair.png = docs\files\benchmarks\size\pair.png
-		docs\files\benchmarks\size\pairarray.png = docs\files\benchmarks\size\pairarray.png
-		docs\files\benchmarks\size\pairlist.png = docs\files\benchmarks\size\pairlist.png
-		docs\files\benchmarks\size\poco.png = docs\files\benchmarks\size\poco.png
-		docs\files\benchmarks\size\quotation.png = docs\files\benchmarks\size\quotation.png
-		docs\files\benchmarks\size\tree.png = docs\files\benchmarks\size\tree.png
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "time", "time", "{D30FBE7C-26F4-4C5F-8E03-BF9F5185BC1D}"
-	ProjectSection(SolutionItems) = preProject
-		docs\files\benchmarks\time\3darray.png = docs\files\benchmarks\time\3darray.png
-		docs\files\benchmarks\time\dict.png = docs\files\benchmarks\time\dict.png
-		docs\files\benchmarks\time\exception.png = docs\files\benchmarks\time\exception.png
-		docs\files\benchmarks\time\fsmutual.png = docs\files\benchmarks\time\fsmutual.png
-		docs\files\benchmarks\time\fstree.png = docs\files\benchmarks\time\fstree.png
-		docs\files\benchmarks\time\graph.png = docs\files\benchmarks\time\graph.png
-		docs\files\benchmarks\time\intlist.png = docs\files\benchmarks\time\intlist.png
-		docs\files\benchmarks\time\iserializable.png = docs\files\benchmarks\time\iserializable.png
-		docs\files\benchmarks\time\pairlist.png = docs\files\benchmarks\time\pairlist.png
-		docs\files\benchmarks\time\poco.png = docs\files\benchmarks\time\poco.png
-		docs\files\benchmarks\time\quotation.png = docs\files\benchmarks\time\quotation.png
-		docs\files\benchmarks\time\tree.png = docs\files\benchmarks\time\tree.png
-		docs\files\benchmarks\time\tuple6.png = docs\files\benchmarks\time\tuple6.png
-		docs\files\benchmarks\time\tuplearray.png = docs\files\benchmarks\time\tuplearray.png
-		docs\files\benchmarks\time\typearray.png = docs\files\benchmarks\time\typearray.png
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "gc", "gc", "{CDF2389D-8F60-44FA-AA48-6380DD0B32F9}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "gc", "gc", "{C779518A-E81A-47F5-9D67-A098B1A1C7E8}"
 	ProjectSection(SolutionItems) = preProject
 		docs\files\benchmarks\gc\3darray.png = docs\files\benchmarks\gc\3darray.png
 		docs\files\benchmarks\gc\datacontract.png = docs\files\benchmarks\gc\datacontract.png
@@ -110,59 +72,105 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "gc", "gc", "{CDF2389D-8F60-
 		docs\files\benchmarks\gc\typearray.png = docs\files\benchmarks\gc\typearray.png
 	EndProjectSection
 EndProject
-Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "FsPickler", "src\FsPickler\FsPickler.fsproj", "{3AD987BF-F0FA-40BD-9DAE-4AF3A5FE9CC7}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "size", "size", "{2A12EC19-16E7-4FC9-AC2F-6257FAB162E3}"
+	ProjectSection(SolutionItems) = preProject
+		docs\files\benchmarks\size\3darray.png = docs\files\benchmarks\size\3darray.png
+		docs\files\benchmarks\size\dict.png = docs\files\benchmarks\size\dict.png
+		docs\files\benchmarks\size\exception.png = docs\files\benchmarks\size\exception.png
+		docs\files\benchmarks\size\intarray.png = docs\files\benchmarks\size\intarray.png
+		docs\files\benchmarks\size\integer.png = docs\files\benchmarks\size\integer.png
+		docs\files\benchmarks\size\intlist.png = docs\files\benchmarks\size\intlist.png
+		docs\files\benchmarks\size\pair.png = docs\files\benchmarks\size\pair.png
+		docs\files\benchmarks\size\pairarray.png = docs\files\benchmarks\size\pairarray.png
+		docs\files\benchmarks\size\pairlist.png = docs\files\benchmarks\size\pairlist.png
+		docs\files\benchmarks\size\poco.png = docs\files\benchmarks\size\poco.png
+		docs\files\benchmarks\size\quotation.png = docs\files\benchmarks\size\quotation.png
+		docs\files\benchmarks\size\tree.png = docs\files\benchmarks\size\tree.png
+	EndProjectSection
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FsPickler.Benchmarks", "tests\FsPickler.Benchmarks\FsPickler.Benchmarks.fsproj", "{9F6807B6-268B-48E7-94C6-E2F77CF77A37}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "time", "time", "{A44CBEDB-D12C-453F-BA07-E2946C1274CD}"
+	ProjectSection(SolutionItems) = preProject
+		docs\files\benchmarks\time\3darray.png = docs\files\benchmarks\time\3darray.png
+		docs\files\benchmarks\time\datacontract.png = docs\files\benchmarks\time\datacontract.png
+		docs\files\benchmarks\time\dict.png = docs\files\benchmarks\time\dict.png
+		docs\files\benchmarks\time\exception.png = docs\files\benchmarks\time\exception.png
+		docs\files\benchmarks\time\fsmutual.png = docs\files\benchmarks\time\fsmutual.png
+		docs\files\benchmarks\time\fstree.png = docs\files\benchmarks\time\fstree.png
+		docs\files\benchmarks\time\graph.png = docs\files\benchmarks\time\graph.png
+		docs\files\benchmarks\time\intlist.png = docs\files\benchmarks\time\intlist.png
+		docs\files\benchmarks\time\iserializable.png = docs\files\benchmarks\time\iserializable.png
+		docs\files\benchmarks\time\pairList.png = docs\files\benchmarks\time\pairList.png
+		docs\files\benchmarks\time\poco.png = docs\files\benchmarks\time\poco.png
+		docs\files\benchmarks\time\quotation.png = docs\files\benchmarks\time\quotation.png
+		docs\files\benchmarks\time\tree.png = docs\files\benchmarks\time\tree.png
+		docs\files\benchmarks\time\tuple6.png = docs\files\benchmarks\time\tuple6.png
+		docs\files\benchmarks\time\tupleArray.png = docs\files\benchmarks\time\tupleArray.png
+		docs\files\benchmarks\time\typearray.png = docs\files\benchmarks\time\typearray.png
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "img", "img", "{CD9636EB-62D7-4EBB-98B0-95B58D122E1D}"
+	ProjectSection(SolutionItems) = preProject
+		docs\files\img\fsharp.png = docs\files\img\fsharp.png
+		docs\files\img\mbrace.png = docs\files\img\mbrace.png
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{2AF5EC7F-93DE-45D4-B4DC-79D3513E9BA3}"
+	ProjectSection(SolutionItems) = preProject
+		docs\tools\generate.fsx = docs\tools\generate.fsx
+		docs\tools\packages.config = docs\tools\packages.config
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "templates", "templates", "{617720A8-FBB4-45CC-84D6-5713AFC1E076}"
+	ProjectSection(SolutionItems) = preProject
+		docs\tools\templates\template.cshtml = docs\tools\templates\template.cshtml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{177FDB27-FC8B-419C-B781-212CFC144448}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{42A413F1-B5B2-47DE-AC05-E87341CC2335}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
-		Release-NoEmit|Any CPU = Release-NoEmit|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{EC89A90F-5EBF-40FB-B4F3-1A8F2D224A20}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{EC89A90F-5EBF-40FB-B4F3-1A8F2D224A20}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{EC89A90F-5EBF-40FB-B4F3-1A8F2D224A20}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{EC89A90F-5EBF-40FB-B4F3-1A8F2D224A20}.Release|Any CPU.Build.0 = Release|Any CPU
-		{EC89A90F-5EBF-40FB-B4F3-1A8F2D224A20}.Release-NoEmit|Any CPU.ActiveCfg = Release-NoEmit|Any CPU
-		{EC89A90F-5EBF-40FB-B4F3-1A8F2D224A20}.Release-NoEmit|Any CPU.Build.0 = Release-NoEmit|Any CPU
-		{1DCB4AD7-2C00-4BCD-B1A5-A469F31E2CD1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{1DCB4AD7-2C00-4BCD-B1A5-A469F31E2CD1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{1DCB4AD7-2C00-4BCD-B1A5-A469F31E2CD1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{1DCB4AD7-2C00-4BCD-B1A5-A469F31E2CD1}.Release|Any CPU.Build.0 = Release|Any CPU
-		{1DCB4AD7-2C00-4BCD-B1A5-A469F31E2CD1}.Release-NoEmit|Any CPU.ActiveCfg = Release|Any CPU
-		{1DCB4AD7-2C00-4BCD-B1A5-A469F31E2CD1}.Release-NoEmit|Any CPU.Build.0 = Release|Any CPU
-		{3AD987BF-F0FA-40BD-9DAE-4AF3A5FE9CC7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3AD987BF-F0FA-40BD-9DAE-4AF3A5FE9CC7}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3AD987BF-F0FA-40BD-9DAE-4AF3A5FE9CC7}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3AD987BF-F0FA-40BD-9DAE-4AF3A5FE9CC7}.Release|Any CPU.Build.0 = Release|Any CPU
-		{3AD987BF-F0FA-40BD-9DAE-4AF3A5FE9CC7}.Release-NoEmit|Any CPU.ActiveCfg = Release-NoEmit|Any CPU
-		{3AD987BF-F0FA-40BD-9DAE-4AF3A5FE9CC7}.Release-NoEmit|Any CPU.Build.0 = Release-NoEmit|Any CPU
-		{9F6807B6-268B-48E7-94C6-E2F77CF77A37}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9F6807B6-268B-48E7-94C6-E2F77CF77A37}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9F6807B6-268B-48E7-94C6-E2F77CF77A37}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9F6807B6-268B-48E7-94C6-E2F77CF77A37}.Release|Any CPU.Build.0 = Release|Any CPU
-		{9F6807B6-268B-48E7-94C6-E2F77CF77A37}.Release-NoEmit|Any CPU.ActiveCfg = Release|Any CPU
-		{9F6807B6-268B-48E7-94C6-E2F77CF77A37}.Release-NoEmit|Any CPU.Build.0 = Release|Any CPU
+		{145234E3-13C8-47C8-8171-9E389EE539EB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{145234E3-13C8-47C8-8171-9E389EE539EB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{145234E3-13C8-47C8-8171-9E389EE539EB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{145234E3-13C8-47C8-8171-9E389EE539EB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F41AEDC2-A21C-49F1-8ACD-43BF41FD3EC8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F41AEDC2-A21C-49F1-8ACD-43BF41FD3EC8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F41AEDC2-A21C-49F1-8ACD-43BF41FD3EC8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F41AEDC2-A21C-49F1-8ACD-43BF41FD3EC8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{76E8A5C2-67E4-4109-9124-280A457CD78E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{76E8A5C2-67E4-4109-9124-280A457CD78E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{76E8A5C2-67E4-4109-9124-280A457CD78E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{76E8A5C2-67E4-4109-9124-280A457CD78E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{34D3D233-1D14-4528-B69F-870FC3561B5D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{34D3D233-1D14-4528-B69F-870FC3561B5D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{34D3D233-1D14-4528-B69F-870FC3561B5D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{34D3D233-1D14-4528-B69F-870FC3561B5D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{EC89A90F-5EBF-40FB-B4F3-1A8F2D224A20} = {109340B6-EAF7-4DDC-9D6C-F51A3E6E747F}
-		{1DCB4AD7-2C00-4BCD-B1A5-A469F31E2CD1} = {23BFC6E5-8581-44C7-B9C6-A42F06DCD6A6}
-		{69847FBC-4407-48A7-9109-C07D3164F29A} = {D0FD949B-2995-4392-AD02-E9C69BA9DFE0}
-		{E2C73A7A-643B-48D0-9DBB-581778FC8C6D} = {D0FD949B-2995-4392-AD02-E9C69BA9DFE0}
-		{BE768967-0DE8-4FB3-83EA-2841CB790B9E} = {D0FD949B-2995-4392-AD02-E9C69BA9DFE0}
-		{6A9C2D20-E8F1-42C1-A116-EACB1A4E93BD} = {BE768967-0DE8-4FB3-83EA-2841CB790B9E}
-		{E97FD04B-2CC5-4EB3-9874-6FB8CF96E4CC} = {6A9C2D20-E8F1-42C1-A116-EACB1A4E93BD}
-		{D30FBE7C-26F4-4C5F-8E03-BF9F5185BC1D} = {6A9C2D20-E8F1-42C1-A116-EACB1A4E93BD}
-		{CDF2389D-8F60-44FA-AA48-6380DD0B32F9} = {6A9C2D20-E8F1-42C1-A116-EACB1A4E93BD}
-		{3AD987BF-F0FA-40BD-9DAE-4AF3A5FE9CC7} = {23BFC6E5-8581-44C7-B9C6-A42F06DCD6A6}
-		{9F6807B6-268B-48E7-94C6-E2F77CF77A37} = {109340B6-EAF7-4DDC-9D6C-F51A3E6E747F}
+		{145234E3-13C8-47C8-8171-9E389EE539EB} = {177FDB27-FC8B-419C-B781-212CFC144448}
+		{F41AEDC2-A21C-49F1-8ACD-43BF41FD3EC8} = {177FDB27-FC8B-419C-B781-212CFC144448}
+		{76E8A5C2-67E4-4109-9124-280A457CD78E} = {42A413F1-B5B2-47DE-AC05-E87341CC2335}
+		{34D3D233-1D14-4528-B69F-870FC3561B5D} = {42A413F1-B5B2-47DE-AC05-E87341CC2335}
+		{2E6B95A2-11C1-4D8D-AAF6-1683AFC111D1} = {71BF70C9-717C-4608-B072-09ADD00279F1}
+		{98E468A3-08AF-4A97-8DE1-881CF63F3BD9} = {71BF70C9-717C-4608-B072-09ADD00279F1}
+		{8B301E9D-857C-4CB9-9367-E4C2878CCCE0} = {98E468A3-08AF-4A97-8DE1-881CF63F3BD9}
+		{C779518A-E81A-47F5-9D67-A098B1A1C7E8} = {8B301E9D-857C-4CB9-9367-E4C2878CCCE0}
+		{2A12EC19-16E7-4FC9-AC2F-6257FAB162E3} = {8B301E9D-857C-4CB9-9367-E4C2878CCCE0}
+		{A44CBEDB-D12C-453F-BA07-E2946C1274CD} = {8B301E9D-857C-4CB9-9367-E4C2878CCCE0}
+		{CD9636EB-62D7-4EBB-98B0-95B58D122E1D} = {98E468A3-08AF-4A97-8DE1-881CF63F3BD9}
+		{2AF5EC7F-93DE-45D4-B4DC-79D3513E9BA3} = {71BF70C9-717C-4608-B072-09ADD00279F1}
+		{617720A8-FBB4-45CC-84D6-5713AFC1E076} = {2AF5EC7F-93DE-45D4-B4DC-79D3513E9BA3}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {1FCA8B32-FF44-47F1-9B3B-091CA78E9A86}
+		SolutionGuid = {5433401A-5CCE-4ACB-BDBF-A3FF6A9810B7}
 	EndGlobalSection
 EndGlobal
