@@ -6,8 +6,8 @@ open System.Reflection
 [<assembly: AssemblyProductAttribute("FsPickler")>]
 [<assembly: AssemblyDescriptionAttribute("A fast serialization framework and pickler combinator library for .NET")>]
 [<assembly: AssemblyCopyrightAttribute("© Eirik Tsarpalis.")>]
-[<assembly: AssemblyVersionAttribute("5.2")>]
-[<assembly: AssemblyFileVersionAttribute("5.2")>]
+[<assembly: AssemblyVersionAttribute("5.2.1")>]
+[<assembly: AssemblyFileVersionAttribute("5.2.1")>]
 do ()
 
 module internal AssemblyVersionInformation =
@@ -15,5 +15,5 @@ module internal AssemblyVersionInformation =
     let [<Literal>] AssemblyProduct = "FsPickler"
     let [<Literal>] AssemblyDescription = "A fast serialization framework and pickler combinator library for .NET"
     let [<Literal>] AssemblyCopyright = "© Eirik Tsarpalis."
-    let [<Literal>] AssemblyVersion = "5.2"
-    let [<Literal>] AssemblyFileVersion = "5.2"
+    let [<Literal>] AssemblyVersion = "5.2.1"
+    let [<Literal>] AssemblyFileVersion = "5.2.1"
