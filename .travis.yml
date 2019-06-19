@@ -1,7 +1,5 @@
 os: linux
 language: bash
-git:
-    depth: false
 
 services:
   - docker
