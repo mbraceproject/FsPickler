@@ -115,7 +115,11 @@ let getMemberInfo (tyConv : ITypeNameConverter option)
             NamedType(tI'.Name, tI'.AssemblyInfo)
 
     | :? MethodInfo as m ->
-        if m.IsGenericMethod && not m.IsGenericMethodDefinition then
+        if m.DeclaringType = null then
+            let message = sprintf "global method '%O' in assembly '%s'" m m.Module.Assembly.FullName
+            raise <| NonSerializableTypeException(m.GetType(), message)
+
+        elif m.IsGenericMethod && not m.IsGenericMethodDefinition then
             let gm = m.GetGenericMethodDefinition()
             if runsOnMono && gm = m then 
                 // address an extremely rare mono reflection bug in which certain 

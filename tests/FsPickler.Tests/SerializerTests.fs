@@ -503,6 +503,13 @@ type SerializationTests (fixture : ISerializerFixture) =
         test b
         test c
 
+    [<Test; Category("Generic BCL Types")>]
+    member __.``BCL: Dynamic methods should not be serializable`` () =
+        let dynamicMethod = new System.Reflection.Emit.DynamicMethod("test", typeof<int>, [|typeof<int>|])
+        let exn = Assert.Throws<FsPicklerException>(fun () -> dynamicMethod |> testRoundtrip |> ignore)
+        let inner = Assert.Throws<NonSerializableTypeException>(fun () -> raise exn.InnerException)
+        inner.Type |> should equal typeof<System.Reflection.Emit.DynamicMethod>
+
     //
     // Object serialization
     //
