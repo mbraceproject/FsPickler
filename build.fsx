@@ -86,15 +86,13 @@ Target "Clean" (fun _ ->
 // --------------------------------------------------------------------------------------
 // Build library & test project
 
-Target "DotNet.Restore" (fun _ -> DotNetCli.Restore id)
-
 let build configuration () =
-    // Build the rest of the project
-    { BaseDirectory = __SOURCE_DIRECTORY__
-      Includes = [ project + ".sln" ]
-      Excludes = [] } 
-    |> MSBuild "" "Build" ["Configuration", configuration; "SourceLinkCreate", "true"]
-    |> Log ""
+    DotNetCli.Build(fun c ->
+        { c with
+            Project = project + ".sln"
+            Configuration = configuration
+            AdditionalArgs = [ "-p:SourceLinkCreate=true" ]
+        })
 
 Target "Build.Release" (build "Release")
 Target "Build.Release-NoEmit" (build "Release-NoEmit")
@@ -107,35 +105,14 @@ let runTests config (proj : string) =
         DotNetCli.Test (fun c ->
             { c with
                 Project = proj
-                Configuration = config })
-    else
-        // work around xunit/mono issue
-        let projDir = Path.GetDirectoryName proj
-        let projName = Path.GetFileNameWithoutExtension proj
-        let netcoreFrameworks, legacyFrameworks = 
-            !! (projDir @@ "bin" @@ config @@ "*/")
-            |> Seq.map Path.GetFileName
-            |> Seq.toArray
-            |> Array.partition 
-                (fun f -> 
-                    f.StartsWith "netcore" || 
-                    f.StartsWith "netstandard")
-            
-
-        for framework in netcoreFrameworks do
-            DotNetCli.Test (fun c ->
-                { c with
-                    Project = proj
-                    Framework = framework
-                    Configuration = config })
-
-        for framework in legacyFrameworks do
-            let assembly = projDir @@ "bin" @@ config @@ framework @@ projName + ".dll"
-            !! assembly
-            |> NUnit3 (fun c ->
-                { c with
-                    OutputDir = sprintf "TestResult.%s.xml" config
-                    TimeOut = TimeSpan.FromMinutes 20. })
+                Configuration = config
+                AdditionalArgs = 
+                    [
+                        yield "--no-build"
+                        yield "--"
+                        if EnvironmentHelper.isMono then yield "RunConfiguration.DisableAppDomain=true"
+                    ]
+            })
 
 Target "RunTests" DoNothing
 
@@ -195,7 +172,7 @@ Target "ReleaseDocs" (fun _ ->
 )
 
 // Github Releases
-
+#nowarn "85"
 #load "paket-files/build/fsharp/FAKE/modules/Octokit/Octokit.fsx"
 open Octokit
 
@@ -252,7 +229,6 @@ Target "Release" DoNothing
   ==> "Clean"
   ==> "AssemblyInfo"
   ==> "Prepare"
-  ==> "DotNet.Restore"
   ==> "Build.Release"
   ==> "Build.Release-NoEmit"
   ==> "Build"
