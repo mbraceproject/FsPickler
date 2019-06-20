@@ -23,7 +23,6 @@
       <Paket>True</Paket>
       <Link>TypeShape/TypeShape.fs</Link>
     </Compile>
-    <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Utils\CsharpProxy.fs" />
     <Compile Include="Utils\Utils.fs" />
     <Compile Include="Utils\Emit.fs" />

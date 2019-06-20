@@ -6,21 +6,16 @@
 #r "packages/build/FAKE/tools/FakeLib.dll"
 
 open System
-open System.IO
 
 open Fake 
 open Fake.Git
 open Fake.ReleaseNotesHelper
-open Fake.AssemblyInfoFile
-open Fake.Testing.NUnit3
 
 // --------------------------------------------------------------------------------------
 // Information about the project to be used at NuGet and in AssemblyInfo files
 // --------------------------------------------------------------------------------------
 
-let project = "FsPickler"
-
-let summary = "A fast serialization framework and pickler combinator library for .NET"
+let project = "FsPickler.sln"
 
 let gitOwner = "mbraceproject"
 let gitHome = "https://github.com/" + gitOwner
@@ -44,34 +39,6 @@ Target "BuildVersion" (fun _ ->
     Fake.AppVeyor.UpdateBuildVersion release.NugetVersion
 )
 
-Target "AssemblyInfo" (fun _ ->
-    let getAssemblyInfoAttributes projectName =
-        [ Attribute.Title projectName
-          Attribute.Product project
-          Attribute.Description summary
-          Attribute.Copyright "\169 Eirik Tsarpalis."
-          Attribute.Version release.AssemblyVersion
-          Attribute.FileVersion release.AssemblyVersion ]
-
-    let getProjectDetails projectPath =
-        let projectName = System.IO.Path.GetFileNameWithoutExtension projectPath
-        ( projectPath,
-          projectName,
-          System.IO.Path.GetDirectoryName projectPath,
-          getAssemblyInfoAttributes projectName
-        )
-
-    !! "src/**/*.??proj"
-    |> Seq.map getProjectDetails
-    |> Seq.iter (fun (projFileName, projectName, folderName, attributes) ->
-        match projFileName with
-        | Fsproj -> CreateFSharpAssemblyInfo (folderName </> "AssemblyInfo.fs") attributes
-        | Csproj -> CreateCSharpAssemblyInfo ((folderName </> "Properties") </> "AssemblyInfo.cs") attributes
-        | Vbproj -> CreateVisualBasicAssemblyInfo ((folderName </> "My Project") </> "AssemblyInfo.vb") attributes
-        | Shproj -> ()
-        )
-)
-
 // --------------------------------------------------------------------------------------
 // Clean build results & restore NuGet packages
 
@@ -89,9 +56,14 @@ Target "Clean" (fun _ ->
 let build configuration () =
     DotNetCli.Build(fun c ->
         { c with
-            Project = project + ".sln"
+            Project = project
             Configuration = configuration
-            AdditionalArgs = [ "-p:SourceLinkCreate=true" ]
+            AdditionalArgs = 
+                [ 
+                    "-p:Version=" + release.NugetVersion
+                    "-p:GenerateAssemblyInfo=true"
+                    "-p:SourceLinkCreate=true" 
+                ]
         })
 
 Target "Build.Release" (build "Release")
@@ -227,7 +199,6 @@ Target "Release" DoNothing
 "Root"
   =?> ("BuildVersion", buildServer = BuildServer.AppVeyor)
   ==> "Clean"
-  ==> "AssemblyInfo"
   ==> "Prepare"
   ==> "Build.Release"
   ==> "Build.Release-NoEmit"
@@ -239,8 +210,8 @@ Target "Release" DoNothing
 
 "Default"
   ==> "PrepareRelease"
-  ==> "GenerateDocs"
   ==> "NuGet.Pack"
+  ==> "GenerateDocs"
   //==> "SourceLink.Test"
   ==> "Bundle"
 

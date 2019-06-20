@@ -1,3 +1,6 @@
+### 5.2.2
+* Fix assembly versioning issue.
+
 ### 5.2.1
 * Improve nonserializable methodinfo error messages.
 
