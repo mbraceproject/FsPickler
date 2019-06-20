@@ -119,7 +119,7 @@ Target "SourceLink.Test" (fun _ ->
     )
 )
 
-Target "Nuget.Push" (fun _ -> Paket.Push (fun p -> { p with WorkingDir = artifactsDir }))
+Target "NuGet.Push" (fun _ -> Paket.Push (fun p -> { p with WorkingDir = artifactsDir }))
 
 
 // Doc generation
@@ -217,7 +217,7 @@ Target "Release" DoNothing
 
 "Bundle"
   ==> "ReleaseDocs"
-  ==> "Nuget.Push"
+  ==> "NuGet.Push"
   ==> "ReleaseGithub"
   ==> "Release"
 
