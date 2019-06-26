@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <title>CustomPicklerRegistry - FsPickler</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content=""/>
+    <meta name="author" content="Eirik Tsarpalis"/>
+
+    <script src="https://code.jquery.com/jquery-1.8.0.js"></script>
+    <script src="https://code.jquery.com/ui/1.8.23/jquery-ui.js"></script>
+    <script src="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/js/bootstrap.min.js"></script>
+    <link href="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/css/bootstrap-combined.min.css" rel="stylesheet"/>
+
+    <link type="text/css" rel="stylesheet" href="/FsPickler/content/style.css" />
+    <script type="text/javascript" src="/FsPickler/content/tips.js"></script>
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="https://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="container">
+      <div class="masthead">
+        <ul class="nav nav-pills pull-right">
+          <li><a href="http://mbrace.io/">mbrace</a></li>
+          <li><a href="http://github.com/mbraceproject/FsPickler">github page</a></li>
+        </ul>
+        <h3 class="muted"><a href="/FsPickler/index.html">FsPickler</a></h3>
+      </div>
+      <hr />
+      <div class="row">
+        <div class="span9" id="main">
+          
+
+
+
+<h1>CustomPicklerRegistry</h1>
+<p>
+
+    <span>Namespace: MBrace.FsPickler</span><br />
+            <span>
+            Attributes: <br />
+[&lt;Sealed&gt;]<br />
+[&lt;AutoSerializable(false)&gt;]<br />
+            
+        </span>
+</p>
+<div class="xmldoc">
+<p>Type for appending user-supplied pickler registrations</p>
+
+</div>
+  <h3>Constructors</h3>
+  <table class="table table-bordered member-list">
+    <thead>
+      <tr><td>Constructor</td><td>Description</td></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '99', 99)" onmouseover="showTip(event, '99', 99)">
+            new()
+          </code>
+          <div class="tip" id="99">
+            <strong>Signature:</strong> unit -&gt; CustomPicklerRegistry<br />
+                                  </div>
+        </td>
+        <td class="xmldoc">
+                      <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/PicklerGeneration/PicklerRegistry.fs#L42-42" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          
+              <p>CompiledName: <code>.ctor</code></p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <h3>Instance members</h3>
+  <table class="table table-bordered member-list">
+    <thead>
+      <tr><td>Instance member</td><td>Description</td></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '100', 100)" onmouseover="showTip(event, '100', 100)">
+            x.DeclareSerializable()
+          </code>
+          <div class="tip" id="100">
+            <strong>Signature:</strong> unit -&gt; unit<br />
+                          <strong>Type parameters:</strong> 'T                      </div>
+        </td>
+        <td class="xmldoc">
+                      <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/PicklerGeneration/PicklerRegistry.fs#L96-96" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Registers the specifed type as if carrying the .IsSerializable flag</p>
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '101', 101)" onmouseover="showTip(event, '101', 101)">
+            x.DeclareSerializable(typesToSerialize)
+          </code>
+          <div class="tip" id="101">
+            <strong>Signature:</strong> (typesToSerialize:Type []) -&gt; unit<br />
+                                  </div>
+        </td>
+        <td class="xmldoc">
+                      <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/PicklerGeneration/PicklerRegistry.fs#L92-92" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Appends a list of types that will be treated by the pickler generator as if carrying the .IsSerializable flag</p>
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '102', 102)" onmouseover="showTip(event, '102', 102)">
+            x.DeclareSerializable(isSerializable)
+          </code>
+          <div class="tip" id="102">
+            <strong>Signature:</strong> (isSerializable:(Type -&gt; bool)) -&gt; unit<br />
+                                  </div>
+        </td>
+        <td class="xmldoc">
+                      <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/PicklerGeneration/PicklerRegistry.fs#L88-88" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Appends a predicate used to determine whether a specific type should be treated as if carrying the .IsSerializable flag</p>
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '103', 103)" onmouseover="showTip(event, '103', 103)">
+            x.IsGenerationStarted
+          </code>
+          <div class="tip" id="103">
+            <strong>Signature:</strong> bool<br />
+                                  </div>
+        </td>
+        <td class="xmldoc">
+                      <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/PicklerGeneration/PicklerRegistry.fs#L67-67" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Gets whether isntance is alread being used for pickler generation.
+In that case, any attempt to register new types will result in an InvalidOperationException</p>
+
+
+              <p>CompiledName: <code>get_IsGenerationStarted</code></p>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '104', 104)" onmouseover="showTip(event, '104', 104)">
+            x.PicklerFactories
+          </code>
+          <div class="tip" id="104">
+            <strong>Signature:</strong> Type []<br />
+                                  </div>
+        </td>
+        <td class="xmldoc">
+                      <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/PicklerGeneration/PicklerRegistry.fs#L71-71" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>List of all individual pickler factory types</p>
+
+
+              <p>CompiledName: <code>get_PicklerFactories</code></p>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '105', 105)" onmouseover="showTip(event, '105', 105)">
+            x.RegisterFactory(factory)
+          </code>
+          <div class="tip" id="105">
+            <strong>Signature:</strong> (factory:(IPicklerResolver -&gt; Pickler&lt;&#39;T&gt;)) -&gt; unit<br />
+                          <strong>Type parameters:</strong> 'T                      </div>
+        </td>
+        <td class="xmldoc">
+                      <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/PicklerGeneration/PicklerRegistry.fs#L84-84" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Registers a user-specified pickler factory</p>
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '106', 106)" onmouseover="showTip(event, '106', 106)">
+            x.RegisterPickler(pickler)
+          </code>
+          <div class="tip" id="106">
+            <strong>Signature:</strong> pickler:Pickler -&gt; unit<br />
+                                  </div>
+        </td>
+        <td class="xmldoc">
+                      <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/PicklerGeneration/PicklerRegistry.fs#L76-76" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Registers a supplied custom pickler</p>
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '107', 107)" onmouseover="showTip(event, '107', 107)">
+            x.RegisterPicklers(picklers)
+          </code>
+          <div class="tip" id="107">
+            <strong>Signature:</strong> (picklers:Pickler []) -&gt; unit<br />
+                                  </div>
+        </td>
+        <td class="xmldoc">
+                      <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/PicklerGeneration/PicklerRegistry.fs#L80-80" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Registers a collections of supplied custom pickelrs</p>
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '108', 108)" onmouseover="showTip(event, '108', 108)">
+            x.SerializationPredicates
+          </code>
+          <div class="tip" id="108">
+            <strong>Signature:</strong> (Type -&gt; bool) []<br />
+                                  </div>
+        </td>
+        <td class="xmldoc">
+                      <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/PicklerGeneration/PicklerRegistry.fs#L73-73" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>List of all user-specified custom serialization predicates</p>
+
+
+              <p>CompiledName: <code>get_SerializationPredicates</code></p>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '109', 109)" onmouseover="showTip(event, '109', 109)">
+            x.TypesDeclaredSerializable
+          </code>
+          <div class="tip" id="109">
+            <strong>Signature:</strong> Type []<br />
+                                  </div>
+        </td>
+        <td class="xmldoc">
+                      <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/PicklerGeneration/PicklerRegistry.fs#L69-69" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>List of all individual types declared serializable</p>
+
+
+              <p>CompiledName: <code>get_TypesDeclaredSerializable</code></p>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+        </div>
+        <div class="span3">
+          <a target="_blank" href="http://mbrace.io/">
+      <img src="/FsPickler/img/mbrace.png" alt="F# Project" style="width:150px;margin:10px" /> 
+      </a>
+          <ul class="nav nav-list" id="menu" style="margin-top: 20px;">
+            <li class="nav-header">FsPickler</li>
+            <li><a href="/FsPickler/index.html">Home page</a></li>
+            <li class="divider"></li>
+            <li><a href="http://www.nuget.org/packages/FsPickler">Get Library via NuGet</a></li>
+            <li><a href="http://github.com/mbraceproject/FsPickler">Source Code on GitHub</a></li>
+            <li><a href="http://github.com/mbraceproject/FsPickler/blob/master/License.md">License</a></li>
+            <li><a href="http://github.com/mbraceproject/FsPickler/blob/master/RELEASE_NOTES.md">Release Notes</a></li>
+
+            <li class="nav-header">Documentation</li>
+            <li><a href="/FsPickler/tutorial.html">Tutorial</a></li>
+            <li><a href="/FsPickler/overview.html">Technical Overview</a></li>
+            <li><a href="https://github.com/mbraceproject/FsPickler/wiki/.NET-Core-Benchmarks">Performance</a></li>
+            <li><a href="/FsPickler/reference/index.html">API Reference</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <a href="http://github.com/mbraceproject/FsPickler"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_gray_6d6d6d.png" alt="Fork me on GitHub"/></a>
+  </body>
+  </html>

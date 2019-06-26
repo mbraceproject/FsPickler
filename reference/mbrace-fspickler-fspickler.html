@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <title>FsPickler - FsPickler</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content=""/>
+    <meta name="author" content="Eirik Tsarpalis"/>
+
+    <script src="https://code.jquery.com/jquery-1.8.0.js"></script>
+    <script src="https://code.jquery.com/ui/1.8.23/jquery-ui.js"></script>
+    <script src="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/js/bootstrap.min.js"></script>
+    <link href="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/css/bootstrap-combined.min.css" rel="stylesheet"/>
+
+    <link type="text/css" rel="stylesheet" href="/FsPickler/content/style.css" />
+    <script type="text/javascript" src="/FsPickler/content/tips.js"></script>
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="https://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="container">
+      <div class="masthead">
+        <ul class="nav nav-pills pull-right">
+          <li><a href="http://mbrace.io/">mbrace</a></li>
+          <li><a href="http://github.com/mbraceproject/FsPickler">github page</a></li>
+        </ul>
+        <h3 class="muted"><a href="/FsPickler/index.html">FsPickler</a></h3>
+      </div>
+      <hr />
+      <div class="row">
+        <div class="span9" id="main">
+          
+
+
+
+<h1>FsPickler</h1>
+<p>
+
+    <span>Namespace: MBrace.FsPickler</span><br />
+    </p>
+<div class="xmldoc">
+<p>FsPickler static methods.</p>
+
+</div>
+  <h3>Static members</h3>
+  <table class="table table-bordered member-list">
+    <thead>
+      <tr><td>Static member</td><td>Description</td></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '111', 111)" onmouseover="showTip(event, '111', 111)">
+            FsPickler.Clone(...)
+          </code>
+          <div class="tip" id="111">
+            <strong>Signature:</strong> (value:&#39;T * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option) -&gt; &#39;T<br />
+                          <strong>Type parameters:</strong> 'T                      </div>
+        </td>
+        <td class="xmldoc">
+                      <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L71-71" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Performs an in-memory, deep cloning of provided serializable object graph.
+Cloning is performed on a node-to-node basis and does not make use of intermediate
+serialization buffers.</p>
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '112', 112)" onmouseover="showTip(event, '112', 112)">
+            FsPickler.ComputeHash(...)
+          </code>
+          <div class="tip" id="112">
+            <strong>Signature:</strong> (value:&#39;T * hashFactory:IHashStreamFactory option) -&gt; HashResult<br />
+                          <strong>Type parameters:</strong> 'T                      </div>
+        </td>
+        <td class="xmldoc">
+                      <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L149-149" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Compute size and hashcode for given input.</p>
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '113', 113)" onmouseover="showTip(event, '113', 113)">
+            FsPickler.ComputeSize(value, pickler)
+          </code>
+          <div class="tip" id="113">
+            <strong>Signature:</strong> (value:&#39;T * pickler:Pickler&lt;&#39;T&gt; option) -&gt; int64<br />
+                          <strong>Type parameters:</strong> 'T                      </div>
+        </td>
+        <td class="xmldoc">
+                      <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L120-120" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Compute size in bytes for given input.</p>
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '114', 114)" onmouseover="showTip(event, '114', 114)">
+            FsPickler.CreateBinarySerializer(...)
+          </code>
+          <div class="tip" id="114">
+            <strong>Signature:</strong> (forceLittleEndian:bool option * typeConverter:ITypeNameConverter option * picklerResolver:IPicklerResolver option) -&gt; BinarySerializer<br />
+                                  </div>
+        </td>
+        <td class="xmldoc">
+                      <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L23-23" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Create a new FsPickler serializer instance that uses the built-in binary format.</p>
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '115', 115)" onmouseover="showTip(event, '115', 115)">
+            FsPickler.CreateObjectSizeCounter(...)
+          </code>
+          <div class="tip" id="115">
+            <strong>Signature:</strong> (encoding:Encoding option * resetInterval:int64 option) -&gt; ObjectSizeCounter<br />
+                                  </div>
+        </td>
+        <td class="xmldoc">
+                      <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L127-127" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Creates a state object used for computing accumulated sizes for multiple objects.</p>
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '116', 116)" onmouseover="showTip(event, '116', 116)">
+            FsPickler.CreateXmlSerializer(...)
+          </code>
+          <div class="tip" id="116">
+            <strong>Signature:</strong> (typeConverter:ITypeNameConverter option * indent:bool option * picklerResolver:IPicklerResolver option) -&gt; XmlSerializer<br />
+                                  </div>
+        </td>
+        <td class="xmldoc">
+                      <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L31-31" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Create a new FsPickler serializer instance that uses the XML format.</p>
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '117', 117)" onmouseover="showTip(event, '117', 117)">
+            FsPickler.EnsureSerializable(...)
+          </code>
+          <div class="tip" id="117">
+            <strong>Signature:</strong> (graph:&#39;T * failOnCloneableOnlyTypes:bool option) -&gt; unit<br />
+                          <strong>Type parameters:</strong> 'T                      </div>
+        </td>
+        <td class="xmldoc">
+                      <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L213-213" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Traverses the object graph, completing if serializable or raising a serialization exception if not.</p>
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '118', 118)" onmouseover="showTip(event, '118', 118)">
+            FsPickler.GatherObjectsInGraph(graph)
+          </code>
+          <div class="tip" id="118">
+            <strong>Signature:</strong> graph:obj -&gt; obj []<br />
+                                  </div>
+        </td>
+        <td class="xmldoc">
+                      <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L189-189" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Use FsPickler to traverse the object graph, gathering object instances as it goes.</p>
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '119', 119)" onmouseover="showTip(event, '119', 119)">
+            FsPickler.GatherTypesInObjectGraph(...)
+          </code>
+          <div class="tip" id="119">
+            <strong>Signature:</strong> graph:obj -&gt; Type []<br />
+                                  </div>
+        </td>
+        <td class="xmldoc">
+                      <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L156-156" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Uses FsPickler to traverse the object graph, gathering types of objects as it goes.</p>
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '120', 120)" onmouseover="showTip(event, '120', 120)">
+            FsPickler.GeneratePickler(t)
+          </code>
+          <div class="tip" id="120">
+            <strong>Signature:</strong> t:Type -&gt; Pickler<br />
+                                  </div>
+        </td>
+        <td class="xmldoc">
+                      <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L56-56" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Auto generates a pickler for given type</p>
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '121', 121)" onmouseover="showTip(event, '121', 121)">
+            FsPickler.GeneratePickler()
+          </code>
+          <div class="tip" id="121">
+            <strong>Signature:</strong> unit -&gt; Pickler&lt;&#39;T&gt;<br />
+                          <strong>Type parameters:</strong> 'T                      </div>
+        </td>
+        <td class="xmldoc">
+                      <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L52-52" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Auto generates a pickler for given type variable</p>
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '122', 122)" onmouseover="showTip(event, '122', 122)">
+            FsPickler.IsSerializableType(t)
+          </code>
+          <div class="tip" id="122">
+            <strong>Signature:</strong> t:Type -&gt; bool<br />
+                                  </div>
+        </td>
+        <td class="xmldoc">
+                      <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L39-39" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Decides if given type is serializable by FsPickler</p>
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '123', 123)" onmouseover="showTip(event, '123', 123)">
+            FsPickler.IsSerializableType()
+          </code>
+          <div class="tip" id="123">
+            <strong>Signature:</strong> unit -&gt; bool<br />
+                          <strong>Type parameters:</strong> 'T                      </div>
+        </td>
+        <td class="xmldoc">
+                      <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L35-35" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Decides if given type is serializable by FsPickler</p>
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '124', 124)" onmouseover="showTip(event, '124', 124)">
+            FsPickler.IsSerializableValue(...)
+          </code>
+          <div class="tip" id="124">
+            <strong>Signature:</strong> (graph:&#39;T * failOnCloneableOnlyTypes:bool option) -&gt; bool<br />
+                          <strong>Type parameters:</strong> 'T                      </div>
+        </td>
+        <td class="xmldoc">
+                      <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L47-47" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Decides if given value is serializable object graph without performing an actual serialization.</p>
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '125', 125)" onmouseover="showTip(event, '125', 125)">
+            FsPickler.Sift(...)
+          </code>
+          <div class="tip" id="125">
+            <strong>Signature:</strong> (value:&#39;T * sifter:(obj -&gt; bool) * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option) -&gt; Sifted&lt;&#39;T&gt; * (int64 * obj) []<br />
+                          <strong>Type parameters:</strong> 'T                      </div>
+        </td>
+        <td class="xmldoc">
+                      <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L100-100" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Creates a clone of the provided object graph, sifting objects from the graph as specified by the provided sifter implementation.
+Only reference types can be sifted from a graph.</p>
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '126', 126)" onmouseover="showTip(event, '126', 126)">
+            FsPickler.Sift(...)
+          </code>
+          <div class="tip" id="126">
+            <strong>Signature:</strong> (value:&#39;T * sifter:IObjectSifter * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option) -&gt; Sifted&lt;&#39;T&gt; * (int64 * obj) []<br />
+                          <strong>Type parameters:</strong> 'T                      </div>
+        </td>
+        <td class="xmldoc">
+                      <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L85-85" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Creates a clone of the provided object graph, sifting objects from the graph as specified by the provided sifter implementation.
+Only reference types can be sifted from a graph.</p>
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '127', 127)" onmouseover="showTip(event, '127', 127)">
+            FsPickler.UnSift(...)
+          </code>
+          <div class="tip" id="127">
+            <strong>Signature:</strong> (sifted:Sifted&lt;&#39;T&gt; * values:(int64 * obj) [] * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option) -&gt; &#39;T<br />
+                          <strong>Type parameters:</strong> 'T                      </div>
+        </td>
+        <td class="xmldoc">
+                      <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L112-112" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Unsifts a provided object graph with given values.</p>
+
+
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '128', 128)" onmouseover="showTip(event, '128', 128)">
+            FsPickler.VisitObject(...)
+          </code>
+          <div class="tip" id="128">
+            <strong>Signature:</strong> (visitor:IObjectVisitor * graph:&#39;T * pickler:Pickler&lt;&#39;T&gt; option * streamingContext:StreamingContext option * visitOrder:VisitOrder option) -&gt; unit<br />
+                          <strong>Type parameters:</strong> 'T                      </div>
+        </td>
+        <td class="xmldoc">
+                      <a href="http://github.com/mbraceproject/FsPickler/tree/master/src/FsPickler/FsPickler/FsPickler.fs#L138-138" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          <p>Visits all reference types that appear in the given object graph.</p>
+
+
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+        </div>
+        <div class="span3">
+          <a target="_blank" href="http://mbrace.io/">
+      <img src="/FsPickler/img/mbrace.png" alt="F# Project" style="width:150px;margin:10px" /> 
+      </a>
+          <ul class="nav nav-list" id="menu" style="margin-top: 20px;">
+            <li class="nav-header">FsPickler</li>
+            <li><a href="/FsPickler/index.html">Home page</a></li>
+            <li class="divider"></li>
+            <li><a href="http://www.nuget.org/packages/FsPickler">Get Library via NuGet</a></li>
+            <li><a href="http://github.com/mbraceproject/FsPickler">Source Code on GitHub</a></li>
+            <li><a href="http://github.com/mbraceproject/FsPickler/blob/master/License.md">License</a></li>
+            <li><a href="http://github.com/mbraceproject/FsPickler/blob/master/RELEASE_NOTES.md">Release Notes</a></li>
+
+            <li class="nav-header">Documentation</li>
+            <li><a href="/FsPickler/tutorial.html">Tutorial</a></li>
+            <li><a href="/FsPickler/overview.html">Technical Overview</a></li>
+            <li><a href="https://github.com/mbraceproject/FsPickler/wiki/.NET-Core-Benchmarks">Performance</a></li>
+            <li><a href="/FsPickler/reference/index.html">API Reference</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <a href="http://github.com/mbraceproject/FsPickler"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_gray_6d6d6d.png" alt="Fork me on GitHub"/></a>
+  </body>
+  </html>
