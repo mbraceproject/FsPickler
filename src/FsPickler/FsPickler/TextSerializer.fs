@@ -133,7 +133,7 @@ type FsPicklerTextSerializer (formatProvider : ITextPickleFormatProvider, [<O;D(
     /// <summary>
     ///     Pickles value to string, excluding objects mandated by the provided IObjectSifter instance.
     ///     Values excluded from serialization will be returned tagged by their ids. 
-    ////    Sifted objects will have to be provided on deserialization along with their accompanying id's.
+    ///     Sifted objects will have to be provided on deserialization along with their accompanying id's.
     /// </summary>
     /// <param name="value">Value to be serialized.</param>
     /// <param name="sifter">User supplied sifter implementation. Used to specify which nodes in the object graph are to be excluded from serialization.</param>

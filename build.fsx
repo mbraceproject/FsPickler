@@ -125,7 +125,15 @@ Target "NuGet.Push" (fun _ -> Paket.Push (fun p -> { p with WorkingDir = artifac
 // Doc generation
 
 Target "GenerateDocs" (fun _ ->
-    executeFSIWithArgs "docs/tools" "generate.fsx" ["--define:RELEASE"] [] |> ignore
+    let path = __SOURCE_DIRECTORY__ @@ "packages/build/FSharp.Compiler.Tools/tools/fsi.exe"
+    let workingDir = "docs/tools"
+    let args = "--define:RELEASE generate.fsx"
+    let command, args = 
+        if EnvironmentHelper.isMono then "mono", sprintf "'%s' %s" path args 
+        else path, args
+
+    if Shell.Exec(command, args, workingDir) <> 0 then
+        failwith "failed to generate docs"
 )
 
 Target "ReleaseDocs" (fun _ ->
@@ -211,8 +219,8 @@ Target "Release" DoNothing
 "Default"
   ==> "PrepareRelease"
   ==> "NuGet.Pack"
-  ==> "GenerateDocs"
   //==> "SourceLink.Test"
+  ==> "GenerateDocs"
   ==> "Bundle"
 
 "Bundle"

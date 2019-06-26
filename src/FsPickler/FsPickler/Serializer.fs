@@ -108,7 +108,7 @@ type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?
     /// <summary>
     ///     Serializes a value to stream, excluding objects mandated by the provided IObjectSifter instance.
     ///     Values excluded from serialization will be returned tagged by their ids. 
-    ////    Sifted objects will have to be provided on deserialization along with their accompanying id's.
+    ///     Sifted objects will have to be provided on deserialization along with their accompanying id's.
     /// </summary>
     /// <param name="stream">Target write stream.</param>
     /// <param name="value">Value to be serialized.</param>
@@ -169,7 +169,7 @@ type FsPicklerSerializer (formatProvider : IPickleFormatProvider, [<O;D(null)>]?
     /// <summary>
     ///     Pickles value to bytes, excluding objects mandated by the provided IObjectSifter instance.
     ///     Values excluded from serialization will be returned tagged by their ids. 
-    ////    Sifted objects will have to be provided on deserialization along with their accompanying id's.
+    ///    Sifted objects will have to be provided on deserialization along with their accompanying id's.
     /// </summary>
     /// <param name="value">Value to be serialized.</param>
     /// <param name="sifter">User supplied sifter implementation. Used to specify which nodes in the object graph are to be excluded from serialization.</param>

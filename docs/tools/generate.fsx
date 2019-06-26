@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------------------
 
 // Binaries that have XML documentation (in a corresponding generated XML file)
-let referenceBinaries = [ "FsPickler.dll" ; "FsPickler.Json.dll" ]
+let referenceProjects = [ "../../src/FsPickler" ; "../../src/FsPickler.Json" ]
 // Web site location for the generated documentation
 let website = "/FsPickler"
 
@@ -22,21 +22,20 @@ let info =
 // For typical project, no changes are needed below
 // --------------------------------------------------------------------------------------
 
-#I "../../packages/build/FSharp.Formatting/lib/net40"
-#I "../../packages/build/FSharp.Compiler.Service/lib/net40"
-#I "../../packages/build/FSharpVSPowerTools.Core/lib/net45"
+#I "../../packages/build/FSharp.Compiler.Service/lib/net45"
+#I "../../packages/build/FSharp.Formatting/lib/net461"
 #r "../../packages/build/FAKE/tools/FakeLib.dll"
 #r "RazorEngine.dll"
-#r "FSharpVSPowerTools.Core.dll"
-#r "FSharp.Literate.dll"
 #r "FSharp.Markdown.dll"
+#r "FSharp.Literate.dll"
 #r "FSharp.CodeFormat.dll"
 #r "FSharp.MetadataFormat.dll"
+#r "FSharp.Formatting.Common.dll"
+#r "FSharp.Formatting.Razor.dll"
+
 open Fake
 open System.IO
-open Fake.FileHelper
-open FSharp.Literate
-open FSharp.MetadataFormat
+open FSharp.Formatting.Razor
 
 // When called from 'build.fsx', use the public project URL as <root>
 // otherwise, use the current 'output' directory.
@@ -67,13 +66,17 @@ let copyFiles () =
     |> Log "Copying styles and scripts: "
   CopyRecursive files output true |> Log "Copying file: "
 
+
+let getReferenceAssembliesForProject (proj : string) =
+    let projName = Path.GetFileName proj
+    !! (proj @@ "bin/Release/net4*/" + projName + ".dll") |> Seq.head
+
 // Build API reference from XML comments
 let buildReference () =
   CleanDir (output @@ "reference")
-  let binaries =
-    referenceBinaries
-    |> List.map (fun lib-> bin @@ lib)
-  MetadataFormat.Generate
+  let binaries = referenceProjects |> List.map getReferenceAssembliesForProject
+  printfn "%A" binaries
+  RazorMetadataFormat.Generate
     ( binaries, output @@ "reference", layoutRoots, 
       parameters = ("root", root)::info,
       sourceRepo = githubLink @@ "tree/master",
@@ -85,7 +88,7 @@ let buildDocumentation () =
   let subdirs = Directory.EnumerateDirectories(content, "*", SearchOption.AllDirectories)
   for dir in Seq.append [content] subdirs do
     let sub = if dir.Length > content.Length then dir.Substring(content.Length + 1) else "."
-    Literate.ProcessDirectory
+    RazorLiterate.ProcessDirectory
       ( dir, docTemplate, output @@ sub, replacements = ("root", root)::info,
         layoutRoots = layoutRoots, generateAnchors = true )
 
