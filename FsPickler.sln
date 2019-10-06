@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27130.2026
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29009.5
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".paket", ".paket", "{2FC26D10-021B-4487-AE72-6CFC1346239A}"
 	ProjectSection(SolutionItems) = preProject
@@ -11,13 +11,16 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".paket", ".paket", "{2FC26D
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "project", "project", "{87846678-C0AD-48CD-8D7D-4224116EEB73}"
 	ProjectSection(SolutionItems) = preProject
+		.dockerignore = .dockerignore
 		.gitignore = .gitignore
 		.travis.yml = .travis.yml
 		appveyor.yml = appveyor.yml
 		build.cmd = build.cmd
 		build.fsx = build.fsx
 		build.sh = build.sh
+		Dockerfile = Dockerfile
 		License.md = License.md
+		Makefile = Makefile
 		README.md = README.md
 		RELEASE_NOTES.md = RELEASE_NOTES.md
 	EndProjectSection
@@ -112,7 +115,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "gc", "gc", "{CDF2389D-8F60-
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "FsPickler", "src\FsPickler\FsPickler.fsproj", "{3AD987BF-F0FA-40BD-9DAE-4AF3A5FE9CC7}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FsPickler.Benchmarks", "tests\FsPickler.Benchmarks\FsPickler.Benchmarks.fsproj", "{9F6807B6-268B-48E7-94C6-E2F77CF77A37}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "FsPickler.Benchmarks", "tests\FsPickler.Benchmarks\FsPickler.Benchmarks.fsproj", "{9F6807B6-268B-48E7-94C6-E2F77CF77A37}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

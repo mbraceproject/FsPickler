@@ -6,21 +6,16 @@
 #r "packages/build/FAKE/tools/FakeLib.dll"
 
 open System
-open System.IO
 
 open Fake 
 open Fake.Git
 open Fake.ReleaseNotesHelper
-open Fake.AssemblyInfoFile
-open Fake.Testing.NUnit3
 
 // --------------------------------------------------------------------------------------
 // Information about the project to be used at NuGet and in AssemblyInfo files
 // --------------------------------------------------------------------------------------
 
-let project = "FsPickler"
-
-let summary = "A fast serialization framework and pickler combinator library for .NET"
+let project = "FsPickler.sln"
 
 let gitOwner = "mbraceproject"
 let gitHome = "https://github.com/" + gitOwner
@@ -44,34 +39,6 @@ Target "BuildVersion" (fun _ ->
     Fake.AppVeyor.UpdateBuildVersion release.NugetVersion
 )
 
-Target "AssemblyInfo" (fun _ ->
-    let getAssemblyInfoAttributes projectName =
-        [ Attribute.Title projectName
-          Attribute.Product project
-          Attribute.Description summary
-          Attribute.Copyright "\169 Eirik Tsarpalis."
-          Attribute.Version release.AssemblyVersion
-          Attribute.FileVersion release.AssemblyVersion ]
-
-    let getProjectDetails projectPath =
-        let projectName = System.IO.Path.GetFileNameWithoutExtension projectPath
-        ( projectPath,
-          projectName,
-          System.IO.Path.GetDirectoryName projectPath,
-          getAssemblyInfoAttributes projectName
-        )
-
-    !! "src/**/*.??proj"
-    |> Seq.map getProjectDetails
-    |> Seq.iter (fun (projFileName, projectName, folderName, attributes) ->
-        match projFileName with
-        | Fsproj -> CreateFSharpAssemblyInfo (folderName </> "AssemblyInfo.fs") attributes
-        | Csproj -> CreateCSharpAssemblyInfo ((folderName </> "Properties") </> "AssemblyInfo.cs") attributes
-        | Vbproj -> CreateVisualBasicAssemblyInfo ((folderName </> "My Project") </> "AssemblyInfo.vb") attributes
-        | Shproj -> ()
-        )
-)
-
 // --------------------------------------------------------------------------------------
 // Clean build results & restore NuGet packages
 
@@ -86,15 +53,18 @@ Target "Clean" (fun _ ->
 // --------------------------------------------------------------------------------------
 // Build library & test project
 
-Target "DotNet.Restore" (fun _ -> DotNetCli.Restore id)
-
 let build configuration () =
-    // Build the rest of the project
-    { BaseDirectory = __SOURCE_DIRECTORY__
-      Includes = [ project + ".sln" ]
-      Excludes = [] } 
-    |> MSBuild "" "Build" ["Configuration", configuration; "SourceLinkCreate", "true"]
-    |> Log ""
+    DotNetCli.Build(fun c ->
+        { c with
+            Project = project
+            Configuration = configuration
+            AdditionalArgs = 
+                [ 
+                    "-p:Version=" + release.NugetVersion
+                    "-p:GenerateAssemblyInfo=true"
+                    "-p:SourceLinkCreate=true" 
+                ]
+        })
 
 Target "Build.Release" (build "Release")
 Target "Build.Release-NoEmit" (build "Release-NoEmit")
@@ -107,35 +77,14 @@ let runTests config (proj : string) =
         DotNetCli.Test (fun c ->
             { c with
                 Project = proj
-                Configuration = config })
-    else
-        // work around xunit/mono issue
-        let projDir = Path.GetDirectoryName proj
-        let projName = Path.GetFileNameWithoutExtension proj
-        let netcoreFrameworks, legacyFrameworks = 
-            !! (projDir @@ "bin" @@ config @@ "*/")
-            |> Seq.map Path.GetFileName
-            |> Seq.toArray
-            |> Array.partition 
-                (fun f -> 
-                    f.StartsWith "netcore" || 
-                    f.StartsWith "netstandard")
-            
-
-        for framework in netcoreFrameworks do
-            DotNetCli.Test (fun c ->
-                { c with
-                    Project = proj
-                    Framework = framework
-                    Configuration = config })
-
-        for framework in legacyFrameworks do
-            let assembly = projDir @@ "bin" @@ config @@ framework @@ projName + ".dll"
-            !! assembly
-            |> NUnit3 (fun c ->
-                { c with
-                    OutputDir = sprintf "TestResult.%s.xml" config
-                    TimeOut = TimeSpan.FromMinutes 20. })
+                Configuration = config
+                AdditionalArgs = 
+                    [
+                        yield "--no-build"
+                        yield "--"
+                        if EnvironmentHelper.isMono then yield "RunConfiguration.DisableAppDomain=true"
+                    ]
+            })
 
 Target "RunTests" DoNothing
 
@@ -170,13 +119,21 @@ Target "SourceLink.Test" (fun _ ->
     )
 )
 
-Target "Nuget.Push" (fun _ -> Paket.Push (fun p -> { p with WorkingDir = artifactsDir }))
+Target "NuGet.Push" (fun _ -> Paket.Push (fun p -> { p with WorkingDir = artifactsDir }))
 
 
 // Doc generation
 
 Target "GenerateDocs" (fun _ ->
-    executeFSIWithArgs "docs/tools" "generate.fsx" ["--define:RELEASE"] [] |> ignore
+    let path = __SOURCE_DIRECTORY__ @@ "packages/build/FSharp.Compiler.Tools/tools/fsi.exe"
+    let workingDir = "docs/tools"
+    let args = "--define:RELEASE generate.fsx"
+    let command, args = 
+        if EnvironmentHelper.isMono then "mono", sprintf "'%s' %s" path args 
+        else path, args
+
+    if Shell.Exec(command, args, workingDir) <> 0 then
+        failwith "failed to generate docs"
 )
 
 Target "ReleaseDocs" (fun _ ->
@@ -195,7 +152,7 @@ Target "ReleaseDocs" (fun _ ->
 )
 
 // Github Releases
-
+#nowarn "85"
 #load "paket-files/build/fsharp/FAKE/modules/Octokit/Octokit.fsx"
 open Octokit
 
@@ -250,9 +207,7 @@ Target "Release" DoNothing
 "Root"
   =?> ("BuildVersion", buildServer = BuildServer.AppVeyor)
   ==> "Clean"
-  ==> "AssemblyInfo"
   ==> "Prepare"
-  ==> "DotNet.Restore"
   ==> "Build.Release"
   ==> "Build.Release-NoEmit"
   ==> "Build"
@@ -263,14 +218,14 @@ Target "Release" DoNothing
 
 "Default"
   ==> "PrepareRelease"
-  ==> "GenerateDocs"
   ==> "NuGet.Pack"
-  ==> "SourceLink.Test"
+  //==> "SourceLink.Test"
+  ==> "GenerateDocs"
   ==> "Bundle"
 
 "Bundle"
   ==> "ReleaseDocs"
-  ==> "Nuget.Push"
+  ==> "NuGet.Push"
   ==> "ReleaseGithub"
   ==> "Release"
 

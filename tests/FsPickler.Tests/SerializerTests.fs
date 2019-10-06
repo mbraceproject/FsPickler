@@ -503,6 +503,13 @@ type SerializationTests (fixture : ISerializerFixture) =
         test b
         test c
 
+    [<Test; Category("Generic BCL Types")>]
+    member __.``BCL: Dynamic methods should not be serializable`` () =
+        let dynamicMethod = new System.Reflection.Emit.DynamicMethod("test", typeof<int>, [|typeof<int>|])
+        let exn = Assert.Throws<FsPicklerException>(fun () -> dynamicMethod |> testRoundtrip |> ignore)
+        let inner = Assert.Throws<NonSerializableTypeException>(fun () -> raise exn.InnerException)
+        inner.Type |> should equal typeof<System.Reflection.Emit.DynamicMethod>
+
     //
     // Object serialization
     //
@@ -1181,7 +1188,7 @@ type SerializationTests (fixture : ISerializerFixture) =
             raise <| new AssertionException(msg)
         else
             printfn "Failed Serializations: %d out of %d." failedResults results.Length
-            
+
     // Large array tests output so much data they won't fit into a .NET byte array, we have to serialize to a FileStream.
     member private __.TestLargeArray<'T when 'T :> Array> (x : 'T) =
         // These are huge arrays so we just check that the lengths, first, and last elements are correct.

@@ -1,6 +1,7 @@
-framework: netstandard2.0, netcoreapp2.0, net461
-redirects: force
 source https://api.nuget.org/v3/index.json
+framework: netstandard2.0, netcoreapp2.0, net461
+redirects: off
+storage: none
 
 nuget FSharp.Core >= 4.3.2 lowest_matching: true
 nuget System.Reflection.Emit.Lightweight >= 4.3 lowest_matching: true
@@ -22,17 +23,19 @@ clitool dotnet-sourcelink
 group Benchmarks
   framework: netcoreapp2.0, net461
   source https://api.nuget.org/v3/index.json
-  redirects: force
+  redirects: off
+  storage: none
 
-  nuget BenchmarkDotNet
-  nuget Wire
-  nuget protobuf-net
-  nuget Newtonsoft.Json
+  nuget BenchmarkDotNet ~> 0.10.13
+  nuget Wire ~> 0.8.2
+  nuget protobuf-net ~> 2.4
+  nuget Newtonsoft.Json ~> 12.0
 
 group Legacy
   framework: net45
   source https://api.nuget.org/v3/index.json
-  redirects: force
+  redirects: off
+  storage: none
 
   nuget FSharp.Core >= 3.1 lowest_matching:true
   nuget Newtonsoft.Json >= 6.0.5 lowest_matching: true
@@ -41,10 +44,11 @@ group Legacy
   
 group Build
   framework: net461
-  redirects: on
+  redirects: off
   source https://api.nuget.org/v3/index.json
 
   nuget FAKE ~> 4.0
-  nuget FSharp.Formatting ~> 2.14.4
-  nuget NUnit.ConsoleRunner ~> 3.0
+  nuget FSharp.Formatting ~> 3.1
+  nuget FSharp.Compiler.Tools ~> 10.2.3
+
   github fsharp/FAKE modules/Octokit/Octokit.fsx

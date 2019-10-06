@@ -13,10 +13,6 @@
     <Compile Include="SerializerTests.fs" />
     <Compile Include="InMemorySerializerTests.fs" />
     <Compile Include="RemoteSerializerTests.fs" />
-    <Compile Include="Main.fs" />
-    <None Include="App.config">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <None Include="paket.references" />
   </ItemGroup>
   <ItemGroup>

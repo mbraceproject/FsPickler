@@ -37,3 +37,5 @@ temp/
 
 .vs/
 artifacts/
+.fake/
+tools/

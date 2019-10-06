@@ -1,3 +1,9 @@
+### 5.2.2
+* Fix assembly versioning issue.
+
+### 5.2.1
+* Improve nonserializable methodinfo error messages.
+
 ### 5.2
 * Remove temporary workaround for the F# tuples compiler bug.
 

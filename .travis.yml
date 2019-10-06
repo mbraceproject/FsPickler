@@ -1,15 +1,8 @@
-language: csharp
+os: linux
+language: bash
 
-addons:
-  apt:
-    packages:
-       - msbuild
-
-sudo: false # use the new container-based Travis infrastructure
-dist: trusty # Ubuntu 14.04
-mono: latest
-dotnet: 2.1.4
+services:
+  - docker
 
 script:
-  - dotnet --info
-  - ./build.sh Default
+  - make TARGET=Bundle

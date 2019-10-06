@@ -1,0 +1,14 @@
+# tools
+.vs
+.fake
+/packages/
+/paket-files/
+
+# intermediate files
+**/obj/
+**/bin/
+
+# unused
+/examples
+/wiki
+/_wiki
