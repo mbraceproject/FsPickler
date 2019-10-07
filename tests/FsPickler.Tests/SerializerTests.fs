@@ -1210,24 +1210,24 @@ type SerializationTests (fixture : ISerializerFixture) =
         let elementsY = getTestElements y
         elementsX |> should equal elementsY
 
-    [<Test; Category("Stress tests")>]
+    [<Test; Explicit; Category("Stress tests")>]
     member this.``Array: 1GB`` () =
         Array.init<int64> 134217728 int64
         |> this.TestLargeArray
 
-    [<Test; Category("Stress tests")>]
+    [<Test; Explicit; Category("Stress tests")>]
     member this.``Array: 2,147,483,591 elements`` () =
         // This is the maximum size a 1-dimensional byte array can be (https://docs.microsoft.com/en-us/dotnet/framework/configure-apps/file-schema/runtime/gcallowverylargeobjects-element#remarks)
         Array.init<byte> 2147483591 byte
         |> this.TestLargeArray
 
-    [<Test; Category("Stress tests")>]
+    [<Test; Explicit; Category("Stress tests")>]
     member this.``Array: 2GB`` () =
         // This is the maximum size an array can be without gcAllowLargeObjects.
         Array.init<int64> 268435456 int64
         |> this.TestLargeArray
 
-    [<Test; Category("Stress tests")>]
+    [<Test; Explicit; Category("Stress tests")>]
     member this.``Array: 3GB`` () =
         if IntPtr.Size = 4 then () else
         // With gcAllowLargeObjects arrays can be larger than 2GB.
