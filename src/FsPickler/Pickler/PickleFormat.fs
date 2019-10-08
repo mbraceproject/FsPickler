@@ -12,7 +12,7 @@ type IPickleFormatWriter =
     inherit IDisposable
 
     abstract Flush : unit -> unit
-        
+
     /// <summary>
     ///     Writes the start of the pickle.
     /// </summary>
@@ -95,7 +95,7 @@ type IPickleFormatWriter =
     /// </summary>
     /// <param name="tag">array identifier.</param>
     /// <param name="value">source array.</param>
-    /// <param name="sizeof">result of calling sizeof<'T> on the element type of the source array.</param>
+    /// <param name="sizeof">result of calling sizeof on the element type of the source array.</param>
     abstract WritePrimitiveArray : tag:string -> value:Array -> sizeof:int32 -> unit
 
 /// <summary>
@@ -146,7 +146,7 @@ and IPickleFormatReader =
     abstract ReadNextSequenceElement : unit -> bool
 
     abstract ReadCachedObjectId : unit -> int64
-        
+
     abstract ReadBoolean : tag:string -> bool
     abstract ReadByte : tag:string -> byte
     abstract ReadSByte : tag:string -> sbyte
@@ -165,7 +165,7 @@ and IPickleFormatReader =
 
     abstract ReadChar : tag:string -> char
     abstract ReadString : tag:string -> string
-        
+
     abstract ReadDateTime : tag:string -> DateTime
     abstract ReadDateTimeOffset : tag:string -> DateTimeOffset
     abstract ReadTimeSpan : tag:string -> TimeSpan
@@ -183,7 +183,7 @@ and IPickleFormatReader =
     /// </summary>
     /// <param name="tag">array identifier.</param>
     /// <param name="target">target array.</param>
-    /// <param name="sizeof">result of calling sizeof<'T> on the element type of the target array.</param>
+    /// <param name="sizeof">result of calling sizeof on the element type of the target array.</param>
     abstract ReadPrimitiveArray : tag:string -> target:Array -> sizeof:int32 -> unit
 
 /// Factory abstraction for binary pickle formats.
