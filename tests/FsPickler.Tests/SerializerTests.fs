@@ -36,12 +36,12 @@ type ISerializerFixture =
 type SerializationTests (fixture : ISerializerFixture) =
     static let _ = Arb.register<FsPicklerGenerators> ()
 
-    let testRoundtrip (x : 'T) = 
+    let testRoundtrip (x : 'T) =
         let bytes = fixture.Pickle x
         fixture.UnPickle<'T>(bytes)
 
-    let testEquals x = 
-        let y = testRoundtrip x 
+    let testEquals x =
+        let y = testRoundtrip x
         y |> should equal x
 
     let testReflected x =
@@ -99,8 +99,8 @@ type SerializationTests (fixture : ISerializerFixture) =
     member __.``Primitive: string`` () = Check.QuickThrowOnFail<string> testEquals
 
     [<Test; Category("Primitives")>]
-    member __.``Primitive: DateTime`` () = 
-        Check.QuickThrowOnFail<DateTime * DateTimeKind> (fun (d : DateTime, k : DateTimeKind) -> 
+    member __.``Primitive: DateTime`` () =
+        Check.QuickThrowOnFail<DateTime * DateTimeKind> (fun (d : DateTime, k : DateTimeKind) ->
             let d =
                 // normalize for DST adjustment logic
                 if k = DateTimeKind.Local then DateTimeOffset(d).LocalDateTime
@@ -111,13 +111,13 @@ type SerializationTests (fixture : ISerializerFixture) =
             d'.Kind |> should equal d.Kind)
 
     [<Test; Category("Primitives")>]
-    member __.``Primitive: DateTimeOffset`` () = 
+    member __.``Primitive: DateTimeOffset`` () =
         Check.QuickThrowOnFail<DateTimeOffset> testEquals
 
         Check.QuickThrowOnFail<DateTime * TimeZoneInfo>(fun (d:DateTime,tz:TimeZoneInfo) ->
             let d = new DateTime(d.Ticks, DateTimeKind.Local)
             let dto1 = new DateTimeOffset(d)
-            let dto2 = 
+            let dto2 =
                 let utcTime = d.ToUniversalTime()
                 new DateTimeOffset(TimeZoneInfo.ConvertTimeFromUtc(utcTime, tz), tz.GetUtcOffset utcTime)
 
@@ -128,7 +128,7 @@ type SerializationTests (fixture : ISerializerFixture) =
 
     [<Test; Category("Primitives")>]
     member __.``Primitive: ISO 8601 string`` () =
-        Check.QuickThrowOnFail<DateTime * DateTimeKind> (fun (d : DateTime, k : DateTimeKind) -> 
+        Check.QuickThrowOnFail<DateTime * DateTimeKind> (fun (d : DateTime, k : DateTimeKind) ->
             let dt = new DateTime(d.Ticks, k)
             let s = Xml.XmlConvert.ToString(dt, Xml.XmlDateTimeSerializationMode.RoundtripKind)
             let s' = testRoundtrip s
@@ -174,7 +174,7 @@ type SerializationTests (fixture : ISerializerFixture) =
     //
 
     [<Test; Category("Reflection types")>]
-    member __.``Reflection: Type`` () = 
+    member __.``Reflection: Type`` () =
         // base types
         testEquals (null : Type) ; testEquals typeof<int> ; testEquals typeof<IEnumerable> ; testEquals <| Type.GetType("System.__Canon")
         // generic types
@@ -184,14 +184,14 @@ type SerializationTests (fixture : ISerializerFixture) =
         // generic type paramaters
         let tparams = typedefof<Map<_,_>>.GetGenericArguments() in testEquals tparams.[0] ; testEquals tparams.[1]
         // generic method parameters
-        let mparams = typeof<ClassWithGenericMethod>.GetMethod("Method").GetGenericArguments() 
+        let mparams = typeof<ClassWithGenericMethod>.GetMethod("Method").GetGenericArguments()
         testEquals mparams.[0] ; testEquals mparams.[1]
 
     [<Test; Category("Reflection types")>]
     member __.``Reflection: MemberInfo`` () =
-        [| 
-            typeof<obj> ; typeof<exn> ; typeof<int> ; typeof<string> ; typeof<bool> ; typeof<int option> ; 
-            typeof<Quotations.Expr> ; typeof<System.Collections.Generic.Dictionary<int,string>> ; 
+        [|
+            typeof<obj> ; typeof<exn> ; typeof<int> ; typeof<string> ; typeof<bool> ; typeof<int option> ;
+            typeof<Quotations.Expr> ; typeof<System.Collections.Generic.Dictionary<int,string>> ;
             typeof<int list> ; typedefof<_ list> ; typedefof<_ ref> ; typeof<OverLoaded> ;
             Pickler.auto<int * string>.GetType()
         |]
@@ -211,7 +211,7 @@ type SerializationTests (fixture : ISerializerFixture) =
         System.AppDomain.CurrentDomain.GetAssemblies()
         |> Array.map (fun a -> a.GetName())
         |> Array.iter testReflected
-            
+
     //
     // Arrays
     //
@@ -266,12 +266,12 @@ type SerializationTests (fixture : ISerializerFixture) =
     member __.``Array: System-Guid`` () = __.CheckArray<Guid> ()
 
     [<Test; Category("Generic BCL Types")>]
-    member __.``Array: enum`` () = 
-        __.CheckArray<IntEnum> () ; 
+    member __.``Array: enum`` () =
+        __.CheckArray<IntEnum> () ;
         __.CheckArray<CharEnum> ()
 
     [<Test; Category("Generic BCL Types")>]
-    member __.``Array: System-DateTime`` () = 
+    member __.``Array: System-DateTime`` () =
             __.CheckArray<DateTime> ()
 
     [<Test; Category("Generic BCL Types")>]
@@ -288,7 +288,7 @@ type SerializationTests (fixture : ISerializerFixture) =
         let bs = [|1uy .. 100uy|]
         let ys,zs = testRoundtrip(bs,bs)
         obj.ReferenceEquals(ys,zs) |> should equal refEq
-        
+
     [<Test; Category("Generic BCL Types")>]
     member __.``Array: int * string`` () = __.CheckArray<int * string> ()
 
@@ -297,10 +297,10 @@ type SerializationTests (fixture : ISerializerFixture) =
 
     [<Test; Category("Generic BCL Types")>]
     member __.``Array: struct(int * string)`` () = __.CheckArray<struct(int * string)> ()
-    
+
     [<Test; Category("Generic BCL Types")>]
     member __.``Array: struct(string * (int * decimal))`` () = __.CheckArray<struct(string * (int * decimal))> ()
-    
+
     [<Test; Category("Generic BCL Types")>]
     member __.``Array: struct(string * struct(int * decimal))`` () = __.CheckArray<struct(string * struct (int * decimal))> ()
 
@@ -341,14 +341,14 @@ type SerializationTests (fixture : ISerializerFixture) =
         Check.QuickThrowOnFail<(int * (bool * string)) * (string * int16)> testEquals
         Check.QuickThrowOnFail<(int * (bool * (sbyte * string * uint32) * (string * string)))> testEquals
 
-        
+
     [<Test; Category("Generic BCL Types")>]
     member __.``BCL: struct tuple nested`` () =
         Check.QuickThrowOnFail<struct(int * struct (string * decimal))> testEquals
         Check.QuickThrowOnFail<struct ((int * struct (bool * string)) * struct (string * int16))> testEquals
         Check.QuickThrowOnFail<struct (int * struct (bool * struct (sbyte * string * uint32) * struct (string * string)))> testEquals
 
-    
+
     [<Test; Category("Generic BCL Types")>]
     member __.``BCL: tuple/struct tuple mixed`` () =
         Check.QuickThrowOnFail<int * struct(string * decimal)> testEquals
@@ -389,8 +389,8 @@ type SerializationTests (fixture : ISerializerFixture) =
             FsPickler.IsSerializableType<System.Runtime.ExceptionServices.ExceptionDispatchInfo> ()
             |> should equal false
         else
-            let bytes = 
-                fixture.PickleF(fun fsp -> 
+            let bytes =
+                fixture.PickleF(fun fsp ->
                     let e = new Exception("message") |> addStackTrace
                     let edi = System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture e
                     fsp.Pickle edi)
@@ -454,7 +454,7 @@ type SerializationTests (fixture : ISerializerFixture) =
     [<Test; Category("Generic BCL Types")>]
     member __.``BCL: delegate simple`` () =
         let d = System.Func<int, int>(fun x -> x + 1)
-            
+
         (testRoundtrip d).Invoke 41 |> should equal 42
 
     [<Test; Category("Generic BCL Types")>]
@@ -543,12 +543,12 @@ type SerializationTests (fixture : ISerializerFixture) =
         try
             let _ = fixture.Pickle v
             failAssert "Should have failed serialization."
-        with 
+        with
         | :? FsPicklerException & InnerExn (:? NonSerializableTypeException) -> ()
 
     [<Test; Category("FsPickler Generic tests")>]
-    member __.``Object: cyclic array`` () = 
-        let cyclicArray : obj [] = 
+    member __.``Object: cyclic array`` () =
+        let cyclicArray : obj [] =
             let array = Array.zeroCreate<obj> 10
             for i = 0 to array.Length - 1 do
                 array.[i] <- Some (array, i) :> obj
@@ -576,7 +576,7 @@ type SerializationTests (fixture : ISerializerFixture) =
         use enum = xs'.GetEnumerator()
 
         for i,x in xs |> Seq.mapi (fun i x -> (i,x)) do
-            if enum.MoveNext() then 
+            if enum.MoveNext() then
                 if enum.Current = x then ()
                 else
                     failwithf "element %d: expected '%A' but was '%A'." i x enum.Current
@@ -603,7 +603,7 @@ type SerializationTests (fixture : ISerializerFixture) =
     member __.``Object: large pair sequence`` () =
         let pairs = seq { for i in 1 .. 1000000 -> string i,i }
         __.TestSequenceRoundtrip pairs
-        
+
     [<Test; Category("FsPickler Generic tests")>]
     member __.``Object: record sequence`` () =
         let records = seq { for i in 1 .. 10000 -> { Int = i ; String = string i ; Tuple = (i, "const") } }
@@ -641,8 +641,8 @@ type SerializationTests (fixture : ISerializerFixture) =
 
                 data)
 
-        fixture.Serializer.UnPickle(data, pickler = Pickler.seq Pickler.int) 
-        |> Seq.length 
+        fixture.Serializer.UnPickle(data, pickler = Pickler.seq Pickler.int)
+        |> Seq.length
         |> should equal 100
 
     [<Test; Category("FsPickler Generic tests")>]
@@ -693,7 +693,7 @@ type SerializationTests (fixture : ISerializerFixture) =
     [<Test; Category("FsPickler Generic tests")>]
     member __.``Object: FNV1a hash collision tests`` () =
         let hashF = new FNV1aStreamFactory()
-        let checkCollisions c N f = 
+        let checkCollisions c N f =
             let collisions =
                 getHashCollisions fixture.Serializer hashF N f
                 |> Array.sumBy (fun (cs,fq) -> cs * fq)
@@ -713,7 +713,7 @@ type SerializationTests (fixture : ISerializerFixture) =
     [<Test; Category("FsPickler Generic tests")>]
     member __.``Object: MurMur3 hash collision tests`` () =
         let hashF = new MurMur3()
-        let checkCollisions c N f = 
+        let checkCollisions c N f =
             let collisions =
                 getHashCollisions fixture.Serializer hashF N f
                 |> Array.sumBy (fun (cs,fq) -> cs * fq)
@@ -732,7 +732,7 @@ type SerializationTests (fixture : ISerializerFixture) =
     [<Test; Category("FsPickler Generic tests")>]
     member __.``Object: size computation`` () =
         let value = box [for i in 1 .. 1000 -> (string i, i)]
-        let serializationSize = 
+        let serializationSize =
             use m = new MemoryStream()
             fixture.Serializer.Serialize<obj>(m, value, leaveOpen = true)
             m.Length
@@ -759,7 +759,7 @@ type SerializationTests (fixture : ISerializerFixture) =
             for i = 1 to n do
                 counter.Append [1 .. 100]
             counter.Count
-        
+
         let sz100 = computeSize 100
         let sz = computeSize 1
 
@@ -773,30 +773,30 @@ type SerializationTests (fixture : ISerializerFixture) =
     [<Test ; Category("Custom types")>]
     member __.``Custom: Union with named data`` () = NamedDUData "" |> testEquals
 
-    [<Test ; Category("Custom types")>] 
+    [<Test ; Category("Custom types")>]
     member __.``Custom: simple class`` () = testEquals <| SimpleClass(42, "fortyTwo")
 
-    [<Test ; Category("Custom types")>] 
-    member __.``Custom: generic class`` () = 
+    [<Test ; Category("Custom types")>]
+    member __.``Custom: generic class`` () =
         let gc = new GenericClass<string * int>("fortyTwo", 42)
         let gc' = testRoundtrip gc
         gc'.Value |> should equal gc.Value
 
-    [<Test ; Category("Custom types")>] 
+    [<Test ; Category("Custom types")>]
     member __.``Custom: recursive class`` () = testEquals <| RecursiveClass(Some (RecursiveClass(None)))
 
-    [<Test ; Category("Custom types")>] 
+    [<Test ; Category("Custom types")>]
     member __.``Custom: Simple ISerializable class`` () = testEquals <| SimpleISerializableClass(42, "fortyTwo")
 
-    [<Test ; Category("Custom types")>] 
-    member __.``Custom: Simple ISerializable struct`` () = 
+    [<Test ; Category("Custom types")>]
+    member __.``Custom: Simple ISerializable struct`` () =
         let x = new SerializableStruct(10, SerializableStruct.DeserializedY + 20)
         let x' = testRoundtrip x
         x'.X |> should equal x.X
         x'.Y |> should equal SerializableStruct.DeserializedY
 
-    [<Test ; Category("Custom types")>] 
-    member __.``Custom: ISerializable object missing constructor`` () = 
+    [<Test ; Category("Custom types")>]
+    member __.``Custom: ISerializable object missing constructor`` () =
         fun () ->
             let x = new ISerializableMissingCtor(42)
             let x' = testRoundtrip x
@@ -804,61 +804,61 @@ type SerializationTests (fixture : ISerializerFixture) =
 
         |> shouldFailwith<FsPicklerException>
 
-    [<Test ; Category("Custom types")>] 
+    [<Test ; Category("Custom types")>]
     member __.``Custom: Generic ISerializable class`` () = testEquals <| GenericISerializableClass<int * string>(42, "fortyTwo", (42, "fortyTwo"))
 
-    [<Test ; Category("Custom types")>] 
-    member __.``Custom: ISerializable class with IObjectReference template`` () = 
+    [<Test ; Category("Custom types")>]
+    member __.``Custom: ISerializable class with IObjectReference template`` () =
         let x = new ObjRef1(0)
         let x' = testRoundtrip x
         x'.Value |> should equal 42
 
-    [<Test ; Category("Custom types")>] 
-    member __.``Custom: ISerializable class with IObjectReference object`` () = 
+    [<Test ; Category("Custom types")>]
+    member __.``Custom: ISerializable class with IObjectReference object`` () =
         let x = new ObjRef2(-1)
         let x' = testRoundtrip x
         x'.Value |> should equal -1
 
-    [<Test ; Category("Custom types")>] 
-    member __.``Custom: ISerializable class implementing IObjectReference`` () = 
+    [<Test ; Category("Custom types")>]
+    member __.``Custom: ISerializable class implementing IObjectReference`` () =
         let x = new ObjRef3(0)
         let x' = testRoundtrip x
         x'.Value |> should equal 42
 
-    [<Test ; Category("Custom types")>] 
-    member __.``Custom: POCO implementing IObjectReference`` () = 
+    [<Test ; Category("Custom types")>]
+    member __.``Custom: POCO implementing IObjectReference`` () =
         let x = new PocoObjRef(0)
         let x' = testRoundtrip x
         x'.Value |> should equal 42
 
-    [<Test ; Category("Custom types")>] 
-    member __.``Custom: Data Contract class implementing IObjectReference`` () = 
+    [<Test ; Category("Custom types")>]
+    member __.``Custom: Data Contract class implementing IObjectReference`` () =
         let x = new DataContractObjRef(0)
         let x' = testRoundtrip x
         x'.Value |> should equal 42
 
-    [<Test ; Category("Custom types")>] 
+    [<Test ; Category("Custom types")>]
     member __.``Custom: Data Contract class`` () =
         let value = new DataContractClass<int option>(Some 42, "value")
         let value' = testRoundtrip value
         value'.A |> should equal value.A
         value'.B |> should not' (equal value.B)
 
-    [<Test ; Category("Custom types")>] 
+    [<Test ; Category("Custom types")>]
     member __.``Custom: Data Contract class with exclusion`` () =
         let value = new FieldDataContractClass<_>(42, "test")
         let value' = testRoundtrip value
         value'.A |> should equal value.A
         value'.B |> should equal value.B
 
-    [<Test ; Category("Custom types")>] 
+    [<Test ; Category("Custom types")>]
     member __.``Custom: Data Contract class with parameterless constructor`` () =
         let value = new DataContractWithParameterlessConstructor()
         let value' = testRoundtrip value
         value'.A |> should equal value.A
         value'.Value |> should equal value.Value
 
-    [<Test ; Category("Custom types")>] 
+    [<Test ; Category("Custom types")>]
     member __.``Custom: Data Contract struct`` () =
         let value = new StructWithDataContract(42, "Me", Guid.NewGuid(), 500.0)
         let value' = testRoundtrip value
@@ -867,18 +867,18 @@ type SerializationTests (fixture : ISerializerFixture) =
         value'.Guid |> should equal value.Guid
         value'.Salary |> should equal Unchecked.defaultof<float>
 
-    [<Test ; Category("Custom types")>] 
+    [<Test ; Category("Custom types")>]
     member __.``Custom: struct`` () =
         let s = new StructType(42, "foobar") |> testRoundtrip
         s.X |> should equal 42
         s.Y |> should equal "foobar"
 
-    [<Test ; Category("Custom types")>] 
-    member __.``Custom: pickler factory class`` () = 
+    [<Test ; Category("Custom types")>]
+    member __.``Custom: pickler factory class`` () =
         let x = ClassWithPicklerFactory(0) |> testRoundtrip
         x.Value |> should equal 42
 
-    [<Test ; Category("Custom types")>] 
+    [<Test ; Category("Custom types")>]
     member __.``Custom: pickler factory with recursive bindings`` () =
         let x = new ClassWithCombinators(12, None)
         let y = new ClassWithCombinators(0, Some x)
@@ -887,7 +887,7 @@ type SerializationTests (fixture : ISerializerFixture) =
 
         z.Value |> snd |> Option.map (fun x -> x.Value) |> Option.get |> fst |> should equal 42
 
-    [<Test ; Category("Custom types")>] 
+    [<Test ; Category("Custom types")>]
     member __.``Custom: record with SerializationInfo combinator`` () =
         Check.QuickThrowOnFail(
             fun (r : RecordWithISerializableCombinators) ->
@@ -898,13 +898,13 @@ type SerializationTests (fixture : ISerializerFixture) =
                 r'.DoD |> should equal r.DoD)
 
 
-    [<Test ; Category("Custom types")>] 
+    [<Test ; Category("Custom types")>]
     member __.``Custom: disable subtype resolution on serialization`` () =
         let serializer = fixture.NewSerializer()
         serializer.DisableSubtypeResolution <- true
         shouldFailwith<FsPicklerException> (fun () -> serializer.Pickle(fun i -> i + 1) |> ignore)
 
-    [<Test ; Category("Custom types")>] 
+    [<Test ; Category("Custom types")>]
     member __.``Custom: disable subtype resolution on deserialization`` () =
         let serializer = fixture.NewSerializer()
         let pickle = serializer.Pickle(fun i -> i + 1)
@@ -946,11 +946,11 @@ type SerializationTests (fixture : ISerializerFixture) =
         Check.QuickThrowOnFail<(string * int) list> testEquals
         Check.QuickThrowOnFail<bool option list> testEquals
         Check.QuickThrowOnFail<byte [] list> testEquals
-            
+
     [<Test; Category("FSharp type tests")>]
     member __.``FSharp: simple union`` () =
         Check.QuickThrowOnFail<SimpleDU> testEquals
-        
+
     [<Test; Category("FSharp type tests")>]
     member __.``FSharp: struct union`` () =
         Check.QuickThrowOnFail<StructDU> testEquals
@@ -961,7 +961,7 @@ type SerializationTests (fixture : ISerializerFixture) =
         Check.QuickThrowOnFail<Peano> testEquals
 
     [<Test; Category("FSharp type tests")>]
-    member __.``FSharp: tree`` () = 
+    member __.``FSharp: tree`` () =
         testEquals (mkTree 5)
         Check.QuickThrowOnFail<BinTree<string * bool>> testEquals
 
@@ -973,7 +973,7 @@ type SerializationTests (fixture : ISerializerFixture) =
 
     [<Test; Category("FSharp type tests")>]
     member self.``FSharp: combinator-based recursive union`` () =
-        let data = 
+        let data =
             fixture.PickleF(fun p ->
                 let n = int2Peano 100
                 let pp = mkPeanoPickler()
@@ -992,17 +992,17 @@ type SerializationTests (fixture : ISerializerFixture) =
 
         fixture.Serializer.UnPickle(data, pickler = (getTreeForestPicklers Pickler.int |> fst))
         |> should equal (nTree 6)
-        
+
     [<Test; Category("FSharp type tests")>]
-    member __.``FSharp: record`` () = 
+    member __.``FSharp: record`` () =
         Check.QuickThrowOnFail<Record> testEquals
-        
+
     [<Test; Category("FSharp type tests")>]
-    member __.``FSharp: struct record`` () = 
+    member __.``FSharp: struct record`` () =
         Check.QuickThrowOnFail<StructRecord> testEquals
 
     [<Test; Category("FSharp type tests")>]
-    member __.``FSharp: cyclic record`` () = 
+    member __.``FSharp: cyclic record`` () =
         let rec f = { Rec = f }
         testReflected f
 
@@ -1024,7 +1024,7 @@ type SerializationTests (fixture : ISerializerFixture) =
         // so need to make sure that serialization is initialized at serialization domain
         // rather than copied
         let pickle = fixture.PickleF(fun p -> p.Pickle(mkExn()))
-            
+
         let e0 = fixture.Serializer.UnPickle<FSharpException>(pickle)
         let e = mkExn()
 
@@ -1060,9 +1060,9 @@ type SerializationTests (fixture : ISerializerFixture) =
         testEquals <| getMemberCall <@ fun (t : Task) -> Async.AwaitTask t @>
         testEquals <| getMemberCall <@ Stream.AsyncCopy @>
 
-        testReflected 
-            <@ 
-                async { 
+        testReflected
+            <@
+                async {
                     do! Unchecked.defaultof<Task>
                     let! x = Unchecked.defaultof<Task<int>>
                     return x + 1
@@ -1126,7 +1126,7 @@ type SerializationTests (fixture : ISerializerFixture) =
     //  Stress tests
     //
 
-    member t.TestTypeMismatch<'In, 'Out> (v : 'In) = 
+    member t.TestTypeMismatch<'In, 'Out> (v : 'In) =
         let pickle = fixture.Serializer.Pickle(v, Pickler.auto<'In>)
         try
             let result = fixture.Serializer.UnPickle<'Out>(pickle, Pickler.auto<'Out>)
@@ -1175,7 +1175,7 @@ type SerializationTests (fixture : ISerializerFixture) =
 
         let test (t : Type, x : obj) =
             try testRoundtrip x |> ignore ; None
-            with 
+            with
             | e ->
                 printfn "Serializing '%O' failed with error: %O" t e
                 Some e
@@ -1188,65 +1188,3 @@ type SerializationTests (fixture : ISerializerFixture) =
             raise <| new AssertionException(msg)
         else
             printfn "Failed Serializations: %d out of %d." failedResults results.Length
-
-    // Large array tests output so much data they won't fit into a .NET byte array, we have to serialize to a FileStream.
-    member private __.TestLargeArray<'T when 'T :> Array> (x : 'T) =
-        // These are huge arrays so we just check that the lengths, first, and last elements are correct.
-        let getTestElements (arr : 'T) =
-            match arr.Rank with
-            | 1 ->
-                ([arr.Length], arr.GetValue 0, arr.GetValue (arr.Length - 1))
-            | 2 ->
-                let lastI = (arr.GetLength 0) - 1
-                let lastJ = (arr.GetLength 1) - 1
-                ([arr.GetLength 0; arr.GetLength 1], arr.GetValue (0, 0),  arr.GetValue (lastI, lastJ))
-            | rank -> failwithf "Unexpected array rank %d" rank
-
-        let elementsX = getTestElements x
-        let path = System.IO.Path.GetTempFileName()
-        fixture.Serializer.Serialize(System.IO.File.OpenWrite path, x)
-        let y = fixture.Serializer.Deserialize<'T> (System.IO.File.OpenRead path)
-        System.IO.File.Delete path
-        let elementsY = getTestElements y
-        elementsX |> should equal elementsY
-
-    [<Test; Explicit; Category("Stress tests")>]
-    member this.``Array: 1GB`` () =
-        Array.init<int64> 134217728 int64
-        |> this.TestLargeArray
-
-    [<Test; Explicit; Category("Stress tests")>]
-    member this.``Array: 2,147,483,591 elements`` () =
-        // This is the maximum size a 1-dimensional byte array can be (https://docs.microsoft.com/en-us/dotnet/framework/configure-apps/file-schema/runtime/gcallowverylargeobjects-element#remarks)
-        Array.init<byte> 2147483591 byte
-        |> this.TestLargeArray
-
-    [<Test; Explicit; Category("Stress tests")>]
-    member this.``Array: 2GB`` () =
-        // This is the maximum size an array can be without gcAllowLargeObjects.
-        Array.init<int64> 268435456 int64
-        |> this.TestLargeArray
-
-    [<Test; Explicit; Category("Stress tests")>]
-    member this.``Array: 3GB`` () =
-        if IntPtr.Size = 4 then () else
-        // With gcAllowLargeObjects arrays can be larger than 2GB.
-        Array.init<int64> 402653184 int64
-        |> this.TestLargeArray
-
-    [<Test; Explicit; Category("Stress tests")>]
-    member this.``Array: 4,294,967,292 elements`` () =
-        if IntPtr.Size = 4 then () else
-        // With gcAllowLargeObjects arrays can be larger than 2GB.
-        // This is the maximum size a 64-bit byte array can be (https://docs.microsoft.com/en-us/dotnet/framework/configure-apps/file-schema/runtime/gcallowverylargeobjects-element#remarks)
-        // Of note the number of elements is (2^32)-4, so not quite 4GB. Also you can't make a byte array this big with 1-dimension because the length is limited to 2,147,483,591.
-        Array2D.init<byte> 1073741823 4 (fun i j -> byte (i * j))
-        |> this.TestLargeArray
-
-    [<Test; Explicit; Category("Stress tests")>]
-    member this.``Array: 6GB`` () =
-        if IntPtr.Size = 4 then () else
-        // With gcAllowLargeObjects arrays can be larger than 2GB.
-        // With 64-bits arrays can be larger than 4GB.
-        Array.init<int64> 805306368 int64
-        |> this.TestLargeArray
