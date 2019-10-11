@@ -466,19 +466,6 @@ type SerializationTests (fixture : ISerializerFixture) =
         (testRoundtrip h).DynamicInvoke [| |] |> ignore
         DeleCounter.Value |> should equal 6
 
-#if !NETCOREAPP2_0
-    [<Test; Category("Generic BCL Types")>]
-    member __.``BCL: lazy int`` () =
-        let v = lazy(if true then 42 else 0)
-        (testRoundtrip v).Value |> should equal 42
-
-    [<Test; Category("Generic BCL Types")>]
-    member __.``BCL: lazy tuple`` () =
-        let f () = (12, "value")
-        let v = lazy(f ())
-        (testRoundtrip v).Value |> should equal (f ())
-#endif
-
     [<Test; Category("Generic BCL Types")>]
     member __.``BCL: nullable int`` () =
         let x = Nullable<int>(42)

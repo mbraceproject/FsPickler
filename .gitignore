@@ -39,3 +39,5 @@ temp/
 artifacts/
 .fake/
 tools/
+
+.ionide/

@@ -70,21 +70,20 @@ Target "Build.Release" (build "Release")
 Target "Build.Release-NoEmit" (build "Release-NoEmit")
 
 // --------------------------------------------------------------------------------------
-// Run the unit tests using test runner & kill test runner when complete
+// Run the tests 
 
 let runTests config (proj : string) =
-    if EnvironmentHelper.isWindows then
-        DotNetCli.Test (fun c ->
-            { c with
-                Project = proj
-                Configuration = config
-                AdditionalArgs = 
-                    [
-                        yield "--no-build"
-                        yield "--"
-                        if EnvironmentHelper.isMono then yield "RunConfiguration.DisableAppDomain=true"
-                    ]
-            })
+    DotNetCli.Test (fun c ->
+        { c with
+            Project = proj
+            Configuration = config
+            AdditionalArgs = 
+                [
+                    yield "--no-build"
+                    yield "--"
+                    if EnvironmentHelper.isMono then yield "RunConfiguration.DisableAppDomain=true"
+                ]
+        })
 
 Target "RunTests" DoNothing
 

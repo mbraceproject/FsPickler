@@ -1,5 +1,5 @@
 source https://api.nuget.org/v3/index.json
-framework: netstandard2.0, netcoreapp2.0, net461
+framework: netstandard2.0, netcoreapp3.0, net461
 redirects: off
 storage: none
 
@@ -21,15 +21,15 @@ nuget SourceLink.Embed.PaketFiles copy_local: true
 clitool dotnet-sourcelink
 
 group Benchmarks
-  framework: netcoreapp2.0, net461
+  framework: netcoreapp3.0, net461
   source https://api.nuget.org/v3/index.json
   redirects: off
   storage: none
 
-  nuget BenchmarkDotNet ~> 0.10.13
-  nuget Wire ~> 0.8.2
-  nuget protobuf-net ~> 2.4
-  nuget Newtonsoft.Json ~> 12.0
+  nuget BenchmarkDotNet
+  nuget Wire
+  nuget protobuf-net
+  nuget Newtonsoft.Json
 
 group Legacy
   framework: net45
