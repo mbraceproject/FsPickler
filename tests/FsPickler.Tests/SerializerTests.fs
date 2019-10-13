@@ -271,8 +271,8 @@ type SerializationTests (fixture : ISerializerFixture) =
         __.CheckArray<CharEnum> ()
 
     [<Test; Category("Generic BCL Types")>]
-    member __.``Array: System-DateTime`` () = 
-            __.CheckArray<DateTime> ()
+    member __.``Array: System-DateTimeOffset`` () = 
+            __.CheckArray<DateTimeOffset> ()
 
     [<Test; Category("Generic BCL Types")>]
     member __.``Array: System-TimeSpan`` () = __.CheckArray<TimeSpan> ()
