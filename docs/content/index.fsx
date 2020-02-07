@@ -87,7 +87,7 @@ A collection of tutorials, technical overviews and API references of the library
 
 ## Who uses FsPickler?
 
-* [MBrace framework](http://m-brace.net/) - MBrace is a framework for distributed
+* [MBrace framework](http://mbrace.io/) - MBrace is a framework for distributed
   computation in the cloud. Its programming model uses continuations, so a library
   that supports serialization of closures was essential. FsPickler was designed out
   of this requirement.
