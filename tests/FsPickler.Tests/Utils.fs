@@ -65,7 +65,7 @@ type Stream with
 type MemoryStream with
     member m.Clone() = new MemoryStream(m.ToArray())
 
-#if !NETCOREAPP3_0
+#if !NETCOREAPP
 type AppDomain with
 
     static member Create(?name : string) =
@@ -107,7 +107,7 @@ module private FailoverPicklerImpl =
             member __.Pickle t = pickle (fun s -> serializer.Serialize(s,t))
             member __.UnPickle p = unpickle (fun s -> serializer.Deserialize(s) :?> 'T) p }
 
-#if !NETCOREAPP3_0
+#if !NETCOREAPP
     let mkNetDataContractPickler() =
         let serializer = new NetDataContractSerializer()
         { new IPickler with
@@ -154,7 +154,7 @@ type FailoverPickle<'T> = FailoverPickle of picklerId:string * data:byte[]
 /// Used as a baseline for serialization tests
 type FailoverPickler private () =
     static let picklers = 
-#if !NETCOREAPP3_0
+#if !NETCOREAPP
         if runsOnMono then
             [mkBinaryFormatterPickler() ; mkNewtonsoftPickler()]
         else

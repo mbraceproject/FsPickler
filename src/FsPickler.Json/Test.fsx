@@ -2,20 +2,36 @@
 #r "FsPickler.dll"
 #r "FsPickler.Json.dll"
 
-open MBrace.FsPickler
-open MBrace.FsPickler.Json
-open MBrace.FsPickler.Combinators
+open System
 
-let jsp = FsPickler.CreateJsonSerializer(indent = true, omitHeader = true)
-let bsp = FsPickler.CreateBsonSerializer()
 
-type Record = { Name : string ; Age : int }
+let d = DateTimeOffset(new DateTime(657404692696240000L)).ToLocalTime()
+let tz = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time")
+TimeZoneInfo.ConvertTime(d, tz)
 
-jsp.PickleToString { Name = "me" ; Age = 12 }
+let d' = DateTime.Parse(d.ToString())
 
-type Union = A of int | B of string * int | C
+TimeZoneInfo.Local.GetUtcOffset(d')
 
-jsp.PickleToString [A 42 ; B("test", 0) ; C]
+let ticks, offset = d.Ticks, TimeZoneInfo.Local.GetUtcOffset(d)
 
-let pickle = jsp.PickleToString <@ 1 + 1 @>
-jsp.UnPickleOfString<Quotations.Expr<int>> pickle
+//---------------------------------------
+
+let dto = DateTimeOffset(d.Ticks, offset).ToUniversalTime().UtcDateTime
+
+TimeZoneInfo.ConvertTime(dto, TimeZoneInfo.Local)
+
+TimeZoneInfo.Local.IsDaylightSavingTime(d)
+
+let tz = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time")
+tz.GetUtcOffset(dto)
+
+let utcd = dto.UtcDateTime.ToLocalTime()
+
+dto.LocalDateTime = d
+
+dto.UtcDateTime.Ticks
+
+dto.LocalDateTime
+
+DateTimeOffset(d).LocalDateTime = d

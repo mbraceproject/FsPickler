@@ -30,8 +30,6 @@ frameworkAssemblies
 references
     FsPickler.dll
 dependencies
-  framework: net45
-    FSharp.Core >= LOCKEDVERSION-Legacy
   framework: netstandard2.0
 	FSharp.Core >= LOCKEDVERSION
 	System.Reflection.Emit.Lightweight >= LOCKEDVERSION
@@ -39,9 +37,6 @@ excludeddependencies
     SourceLink.Create.CommandLine
 	SourceLink.Embed.PaketFiles
 files
-    bin/Release/net45/FsPickler.dll ==> lib/net45
-    bin/Release/net45/FsPickler.pdb ==> lib/net45
-    bin/Release/net45/FsPickler.XML ==> lib/net45
     bin/Release/netstandard2.0/FsPickler.dll ==> lib/netstandard2.0
     bin/Release/netstandard2.0/FsPickler.pdb ==> lib/netstandard2.0
     bin/Release/netstandard2.0/FsPickler.XML ==> lib/netstandard2.0

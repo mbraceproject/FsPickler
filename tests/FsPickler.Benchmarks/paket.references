@@ -1,6 +1,6 @@
-﻿FSharp.Core
-FsCheck
-group Benchmarks
+﻿group Testing
+  FSharp.Core
+  FsCheck
   BenchmarkDotNet
   Wire
   protobuf-net

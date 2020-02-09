@@ -1,10 +1,8 @@
-FSharp.Core
-System.ValueTuple
-Newtonsoft.Json
-FsCheck
-FsUnit
-NUnit
-Microsoft.NET.Test.Sdk
-NUnit3TestAdapter
-
-dotnet-sourcelink
+group Testing
+  FSharp.Core
+  Newtonsoft.Json
+  Microsoft.NET.Test.Sdk
+  NUnit3TestAdapter
+  FsCheck
+  FsUnit
+  NUnit

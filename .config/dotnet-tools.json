@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "isRoot": true,
+  "tools": {
+    "paket": {
+      "version": "5.242.0",
+      "commands": [
+        "paket"
+      ]
+    },
+    "sourcelink": {
+      "version": "3.1.1",
+      "commands": [
+        "sourcelink"
+      ]
+    }
+  }
+}
