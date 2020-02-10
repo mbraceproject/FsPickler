@@ -7,8 +7,7 @@ nuget FSharp.Core >= 4.3.2 lowest_matching: true
 nuget System.Reflection.Emit.Lightweight >= 4.3 lowest_matching: true
 nuget Newtonsoft.Json >= 10.0.1 lowest_matching: true
 
-nuget SourceLink.Create.CommandLine copy_local: true
-nuget SourceLink.Embed.PaketFiles copy_local: true
+nuget Microsoft.SourceLink.GitHub copy_local:true
 
 group Testing
   framework: netcoreapp3.1, net472
@@ -30,10 +29,16 @@ group Testing
   
 group Build
   source https://api.nuget.org/v3/index.json
-  framework: net472
+  generate_load_scripts: true
+  framework: netstandard2.0
+  storage: none
 
-  nuget FAKE ~> 4.0
-  nuget FSharp.Formatting ~> 3.1
-  nuget FSharp.Compiler.Tools ~> 10.2.3
+  nuget Fake.Core.UserInput	    ~> 5.19.0
+  nuget Fake.Core.ReleaseNotes  ~> 5.19.0
+  nuget Fake.Core.Target        ~> 5.19.0
+  nuget Fake.IO.FileSystem      ~> 5.19.0
+  nuget Fake.DotNet.Cli	        ~> 5.19.0
+  nuget Fake.Tools.Git          ~> 5.19.0
+  nuget Fake.Api.Github         ~> 5.19.0
 
-  github fsharp/FAKE modules/Octokit/Octokit.fsx
+  nuget FSharp.Formatting ~> 4.0 prerelease

@@ -1,0 +1,30 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+  </PropertyGroup>
+
+  <!-- NuGet Metadata -->
+  <PropertyGroup>
+    <Description>FsPickler is a serialization library that facilitates the distribution of .NET objects.
+The implementation focuses on performance and completeness in supported types, including F# types.
+It supports multiple, pluggable serialization formats including Binary, Xml, JSON and BSON.
+The library is based on the functional programming concept of pickler combinators which
+has been adapted to accommodate the object oriented nature of the .NET framework.</Description>
+    <Authors>Eirik Tsarpalis</Authors>
+    <Copyright>2019</Copyright>
+    <PackageTags>F#, fsharp, serializer, pickler, binary, json, xml</PackageTags>
+    <RepositoryUrl>https://github.com/mbraceproject/FsPickler</RepositoryUrl>
+    <PackageProjectUrl>http://mbraceproject.github.io/FsPickler/</PackageProjectUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryType>git</RepositoryType>
+    <!-- SourceLink Options -->
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+    <!--<IncludeSymbols>true</IncludeSymbols>-->
+    <!--<SymbolPackageFormat>snupkg</SymbolPackageFormat>-->
+  </PropertyGroup>
+
+</Project>

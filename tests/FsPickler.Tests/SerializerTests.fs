@@ -17,6 +17,8 @@ open NUnit.Framework
 open FsUnit
 open FsCheck
 
+#nowarn "8989" // PicklerCache size warnings
+
 type ISerializerFixture =
     /// Specifies whether the fixture uses remoting for running the tests
     abstract IsRemotedFixture : bool

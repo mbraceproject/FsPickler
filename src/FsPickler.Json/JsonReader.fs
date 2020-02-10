@@ -11,6 +11,8 @@ open Newtonsoft.Json
 
 open MBrace.FsPickler
 
+#nowarn "44" // BsonWriter
+
 /// <summary>
 ///     Json format deserializer
 /// </summary>

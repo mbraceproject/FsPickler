@@ -4,6 +4,7 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <Configurations>Debug;Release;Release-NoEmit</Configurations>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <DefineConstants>TRACE;DEBUG;PROTECT_STACK_OVERFLOWS;EMIT_IL</DefineConstants>
@@ -63,7 +64,6 @@
     <Compile Include="FsPickler\FsPickler.fs" />
     <Compile Include="FsPickler\Combinators.fs" />
     <Compile Include="FsPickler\ExtensionMethods.fs" />
-    <None Include="paket.template" />
   </ItemGroup>
   <ItemGroup>
     <None Include="paket.references" />
