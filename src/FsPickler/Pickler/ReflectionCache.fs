@@ -40,12 +40,30 @@ type CompositeMemberInfo =
 
 // Assembly Loader
 
+// AssemblyLoadContext is not available in netstandard2.0
+// Use reflection to access its APIs
+let loadContextAssemblyReader = lazy(
+    match Type.GetType "System.Runtime.Loader.AssemblyLoadContext" with
+    | null -> None
+    | ty ->
+        let asm = Assembly.GetExecutingAssembly()
+        let loadContextM = ty.GetMethod("GetLoadContext", BindingFlags.Static ||| BindingFlags.Public)
+        let currentLoadContext = loadContextM.Invoke(null, [|asm|])
+        let assembliesProperty = ty.GetProperty("Assemblies")
+        let getContextAssemblies () = assembliesProperty.GetValue(currentLoadContext) :?> seq<Assembly>
+        Some getContextAssemblies)
+
 let getAssembly enableAssemblyLoading (aI : AssemblyInfo) =
     let an = aI.ToAssemblyName()
 
     // first, query AppDomain for loaded assembly of given qualified name
+    let loadedAssemblies =
+        match loadContextAssemblyReader.Value with
+        | None -> System.AppDomain.CurrentDomain.GetAssemblies()
+        | Some reader -> reader () |> Seq.toArray
+
     let loadedAssembly =
-        System.AppDomain.CurrentDomain.GetAssemblies()
+        loadedAssemblies
         |> Array.tryFind (fun a -> a.FullName = an.FullName)
 
     match loadedAssembly with

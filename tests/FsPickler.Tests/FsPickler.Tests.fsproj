@@ -13,6 +13,7 @@
     <Compile Include="SerializerTests.fs" />
     <Compile Include="InMemorySerializerTests.fs" />
     <Compile Include="RemoteSerializerTests.fs" />
+    <Compile Include="AssemblyLoadContextTests.fs" />
     <None Include="paket.references" />
   </ItemGroup>
   <ItemGroup>
