@@ -6,12 +6,6 @@
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DocumentationFile>bin\Debug\net45\FsPickler.Json.XML</DocumentationFile>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DocumentationFile>bin\Release\net45\FsPickler.Json.XML</DocumentationFile>
-  </PropertyGroup>
   <ItemGroup>
     <Compile Include="Common.fs" />
     <Compile Include="JsonWriter.fs" />

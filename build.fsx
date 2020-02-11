@@ -189,9 +189,9 @@ Target.create "Release" ignore
   ==> "Build.Release"
   ==> "Build.Release-NoEmit"
   ==> "Build"
-  //==> "RunTests.Release"
-  //==> "RunTests.Release-NoEmit"
-  //==> "RunTests"
+  ==> "RunTests.Release"
+  ==> "RunTests.Release-NoEmit"
+  ==> "RunTests"
   ==> "Default"
 
 "Default"
