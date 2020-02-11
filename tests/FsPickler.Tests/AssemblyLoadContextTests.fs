@@ -18,9 +18,15 @@ type MirroredAssemblyLoadContext() =
     let currentLoadContext = AssemblyLoadContext.GetLoadContext(Assembly.GetExecutingAssembly())
 
     let tryResolveFileName (an : AssemblyName) =
+        let isMatchingAssembly (assembly : Assembly) =
+            let can = assembly.GetName()
+            can.Name = an.Name &&
+            can.Version >= an.Version &&
+            can.GetPublicKeyToken() = an.GetPublicKeyToken()
+
         currentLoadContext.Assemblies
-        |> Seq.tryFind (fun a -> a.FullName = an.FullName)
-        |> Option.filter (fun a -> not a.IsDynamic)
+        |> Seq.filter (fun a -> not a.IsDynamic && not (String.IsNullOrEmpty a.Location))
+        |> Seq.tryFind isMatchingAssembly
         |> Option.map (fun a -> a.Location)
             
     override this.Load an =
@@ -72,7 +78,7 @@ type private LoadContextMarshaller<'T when 'T : (new : unit -> 'T) and 'T :> IDi
         { new ILoadContextProxy<'T> with
             member __.Dispose() = (remoteHandle :?> IDisposable).Dispose()
             member __.Execute<'R> (command : 'T -> 'R) =
-                let boxedCommand (instance:obj) = let result = command (instance :?> 'T) in result :> obj
+                let boxedCommand instance = let result = command instance in result :> obj
                 let commandBytes = pickler.Pickle<'T -> obj> boxedCommand
                 let responseBytes = remoteMethod.Invoke(remoteHandle, [|commandBytes|]) :?> byte[]
                 match pickler.UnPickle<Choice<obj,exn>> responseBytes with
@@ -128,6 +134,13 @@ type ``AssemblyLoadContext Tests``() =
         Assert.AreEqual(42, remoteValue)
 
     [<Test>]
+    member __.``Simple AssemblyLoadProxy exception Scenario``() =
+        use alc = new MirroredAssemblyLoadContext()
+        use proxy = alc.CreateProxy<AssemblyLoadContextManager>()
+        let _ = Assert.Throws<FsPicklerException>(fun () -> proxy.Execute(fun m -> do raise <| FsPicklerException("failure")))
+        ()
+
+    [<Test>]
     member __.``Simple AssemblyLoadProxy static state Scenario``() =
         use alc = new MirroredAssemblyLoadContext()
         use proxy = alc.CreateProxy<AssemblyLoadContextManager>()
@@ -144,4 +157,11 @@ type ``AssemblyLoadContext Tests``() =
         Assert.AreEqual(0, value)
         let remoteValue = proxy.ExecuteAsync(fun _ -> async { return value }) |> Async.RunSynchronously
         Assert.AreEqual(42, remoteValue)
+
+    [<Test>]
+    member __.``Simple AssemblyLoadProxy async exception Scenario``() =
+        use alc = new MirroredAssemblyLoadContext()
+        use proxy = alc.CreateProxy<AssemblyLoadContextManager>()
+        Assert.ThrowsAsync<FsPicklerException>(fun () -> proxy.ExecuteAsync(fun _ -> async { do raise <| FsPicklerException("failure")}) |> Async.StartAsTask :> _)
+        |> ignore
 #endif
