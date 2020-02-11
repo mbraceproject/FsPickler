@@ -4,8 +4,8 @@ storage: none
 
 github eiriktsarpalis/TypeShape:4.0.0 src/TypeShape/TypeShape.fs
 nuget FSharp.Core >= 4.3.2 lowest_matching: true
-nuget System.Reflection.Emit.Lightweight >= 4.3 lowest_matching: true
-nuget Newtonsoft.Json >= 10.0.1 lowest_matching: true
+nuget System.Reflection.Emit.Lightweight >= 4.3 lowest_matching:true, framework:netstandard2.0
+nuget Newtonsoft.Json >= 10.0.1 lowest_matching:true
 
 nuget Microsoft.SourceLink.GitHub copy_local:true
 

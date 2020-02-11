@@ -169,7 +169,7 @@ NUGET
     System.Reflection.Emit (4.7) - restriction: || (&& (== net45) (< net20) (>= netstandard1.3)) (== netstandard2.0)
       System.Reflection.Emit.ILGeneration (>= 4.7) - restriction: || (&& (== net45) (< netstandard1.1)) (&& (== net45) (>= uap10.1)) (&& (== net45) (>= wpa81)) (== netstandard2.0)
     System.Reflection.Emit.ILGeneration (4.7) - restriction: || (&& (== net45) (< net20) (>= netstandard1.3)) (&& (== net45) (< net20) (>= netstandard2.0)) (&& (== net45) (< netstandard1.1) (>= netstandard1.3) (>= win8)) (&& (== net45) (>= netstandard1.3) (>= wpa81)) (&& (== net45) (>= uap10.1)) (== netstandard2.0)
-    System.Reflection.Emit.Lightweight (4.3)
+    System.Reflection.Emit.Lightweight (4.3) - restriction: == netstandard2.0
       System.Reflection (>= 4.3) - restriction: == netstandard2.0
       System.Reflection.Emit.ILGeneration (>= 4.3) - restriction: == netstandard2.0
       System.Reflection.Primitives (>= 4.3) - restriction: == netstandard2.0
