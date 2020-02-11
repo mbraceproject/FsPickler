@@ -17,6 +17,7 @@ has been adapted to accommodate the object oriented nature of the .NET framework
     <PackageTags>F#, fsharp, serializer, pickler, binary, json, xml</PackageTags>
     <RepositoryUrl>https://github.com/mbraceproject/FsPickler</RepositoryUrl>
     <PackageProjectUrl>http://mbraceproject.github.io/FsPickler/</PackageProjectUrl>
+    <PackageIconUrl>https://avatars0.githubusercontent.com/u/9674757</PackageIconUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryType>git</RepositoryType>
     <!-- SourceLink Options -->
