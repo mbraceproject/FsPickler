@@ -1,3 +1,6 @@
+### 5.3.0
+* Fix deserialization in AssemblyLoadContexts.
+
 ### 5.2.2
 * Fix assembly versioning issue.
 
