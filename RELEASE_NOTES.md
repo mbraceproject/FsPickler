@@ -1,3 +1,6 @@
+### 5.3.1
+* Fix packaging issue.
+
 ### 5.3.0
 * Fix deserialization in AssemblyLoadContexts.
 
