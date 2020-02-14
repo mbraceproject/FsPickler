@@ -1,14 +1,10 @@
 ﻿module internal MBrace.FsPickler.ReflectionPicklers
 
 open System
-open System.IO
 open System.Reflection
-open System.Collections.Concurrent
 
 open MBrace.FsPickler
-open MBrace.FsPickler.Reflection
 open MBrace.FsPickler.ReflectionCache
-open MBrace.FsPickler.PrimitivePicklers
 
 [<RequireQualifiedAccess>]
 module private MemberTag =

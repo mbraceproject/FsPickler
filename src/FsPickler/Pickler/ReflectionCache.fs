@@ -1,11 +1,9 @@
 ﻿module internal MBrace.FsPickler.ReflectionCache
 
 open System
-open System.Globalization
 open System.IO
 open System.Text
 open System.Reflection
-open System.Runtime.Serialization
 open System.Collections.Generic
 open System.Collections.Concurrent
 
@@ -46,12 +44,14 @@ let loadContextAssemblyReader = lazy(
     match Type.GetType "System.Runtime.Loader.AssemblyLoadContext" with
     | null -> None
     | ty ->
-        let asm = Assembly.GetExecutingAssembly()
-        let loadContextM = ty.GetMethod("GetLoadContext", BindingFlags.Static ||| BindingFlags.Public)
-        let currentLoadContext = loadContextM.Invoke(null, [|asm|])
-        let assembliesProperty = ty.GetProperty("Assemblies")
-        let getContextAssemblies () = assembliesProperty.GetValue(currentLoadContext) :?> seq<Assembly>
-        Some getContextAssemblies)
+        match ty.GetProperty "Assemblies" with
+        | null -> None // property not available in netcoreapp < 3.0
+        | assembliesProperty ->
+            let asm = Assembly.GetExecutingAssembly()
+            let loadContextM = ty.GetMethod("GetLoadContext", BindingFlags.Static ||| BindingFlags.Public)
+            let currentLoadContext = loadContextM.Invoke(null, [|asm|])
+            let getContextAssemblies () = assembliesProperty.GetValue(currentLoadContext) :?> seq<Assembly>
+            Some getContextAssemblies)
 
 let getAssembly enableAssemblyLoading (aI : AssemblyInfo) =
     let an = aI.ToAssemblyName()
