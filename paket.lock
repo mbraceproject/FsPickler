@@ -290,7 +290,7 @@ NUGET
       System.Xml.ReaderWriter (>= 4.3) - restriction: || (&& (== net45) (>= netstandard1.3)) (== netstandard2.0)
 GITHUB
   remote: eiriktsarpalis/TypeShape
-    src/TypeShape/TypeShape.fs (8ff234f56832e5d821e4d22e5ef5f6f342e10470)
+    src/TypeShape/TypeShape.fs (dc18403f1d1352b979c4804c7641ccd75373cf31)
 GROUP Build
 GENERATE-LOAD-SCRIPTS: ON
 STORAGE: NONE

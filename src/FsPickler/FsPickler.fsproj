@@ -27,6 +27,7 @@
     <Compile Include="Utils\Reflection.fs" />
     <Compile Include="Utils\ShallowCopy.fs" />
     <Compile Include="Utils\Hashing.fs" />
+    <Compile Include="Utils\TypeShapeExtensions.fs" />
     <Compile Include="Pickler\Types.fs" />
     <Compile Include="Pickler\PickleFormat.fs" />
     <Compile Include="Pickler\ReflectionCache.fs" />
