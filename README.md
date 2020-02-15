@@ -16,7 +16,6 @@ Packages of the library are available on Nuget [[1](http://www.nuget.org/package
 
 * [Tutorial](http://mbraceproject.github.io/FsPickler/tutorial.html) A short introduction to FsPickler.
 * [Technical Overview](http://mbraceproject.github.io/FsPickler/overview.html) A walkthrough of the library's implementation details.
-* OUTDATED [Performance](http://mbraceproject.github.io/FsPickler/benchmarks.html) Benchmarks comparing FsPickler to other established serialization libraries.
 * [New .NET Core Benchmarks](https://github.com/mbraceproject/FsPickler/wiki/.NET-Core-Benchmarks).
 * [API Reference](http://mbraceproject.github.io/FsPickler/reference/index.html) Auto-generated library documentation.
 
