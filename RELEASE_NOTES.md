@@ -1,3 +1,6 @@
+### 5.3.2
+* Use AssemblyLoadContext when loading assemblies.
+
 ### 5.3.1
 * Fix packaging issue.
 
