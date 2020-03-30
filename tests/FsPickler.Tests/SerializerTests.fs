@@ -1182,21 +1182,23 @@ type SerializationTests (fixture : ISerializerFixture) =
     [<Test; Category("Stress tests")>]
     member __.``Array: 1GB of int64`` () =
         let path = System.IO.Path.GetTempFileName()
+        try
 
-        let write () =
-            let x = Array.init<int64> 134217728 int64
-            use f = System.IO.File.OpenWrite path
-            fixture.Serializer.Serialize(f, x)
-            // These are huge arrays so we just check that the lengths, first, and last elements are correct.
-            (x.Length, x.GetValue 0, x.GetValue (x.Length - 1))
+            let write () =
+                let x = Array.init<int64> 134217728 int64
+                use f = System.IO.File.OpenWrite path
+                fixture.Serializer.Serialize(f, x)
+                // These are huge arrays so we just check that the lengths, first, and last elements are correct.
+                (x.Length, x.GetValue 0, x.GetValue (x.Length - 1))
 
-        let read () =
-            use f = System.IO.File.OpenRead path
-            let y = fixture.Serializer.Deserialize<int64[]> (f)
+            let read () =
+                use f = System.IO.File.OpenRead path
+                let y = fixture.Serializer.Deserialize<int64[]> (f)
+                (y.Length, y.GetValue 0, y.GetValue (y.Length - 1))
+
+            let x = write()
+            GC.Collect(2, GCCollectionMode.Forced, true, true)
+            let y = read()
+            y |> should equal x
+        finally
             System.IO.File.Delete path
-            (y.Length, y.GetValue 0, y.GetValue (y.Length - 1))
-
-        let x = write()
-        GC.Collect(2, GCCollectionMode.Forced, true, true)
-        let y = read()
-        y |> should equal x
