@@ -9,6 +9,8 @@ open Newtonsoft.Json.Bson
 
 open MBrace.FsPickler
 
+#nowarn "44" // BsonWriter
+
 /// <summary>
 ///     BSON format factory methods.
 /// </summary>

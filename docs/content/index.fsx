@@ -1,7 +1,7 @@
 (*** hide ***)
 // This block of code is omitted in the generated HTML documentation. Use 
 // it to define helpers that you do not want to show in the documentation.
-#I "../../src/FsPickler.Json/bin/Release/net45/"
+#I "../../src/FsPickler.Json/bin/Release/netstandard2.0/"
 
 (**
 
@@ -87,7 +87,7 @@ A collection of tutorials, technical overviews and API references of the library
 
 ## Who uses FsPickler?
 
-* [MBrace framework](http://m-brace.net/) - MBrace is a framework for distributed
+* [MBrace framework](http://mbrace.io/) - MBrace is a framework for distributed
   computation in the cloud. Its programming model uses continuations, so a library
   that supports serialization of closures was essential. FsPickler was designed out
   of this requirement.

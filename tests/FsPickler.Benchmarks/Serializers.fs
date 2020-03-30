@@ -5,7 +5,6 @@ open System.IO
 open System.Threading
 
 open BenchmarkDotNet.Attributes
-open BenchmarkDotNet.Attributes.Exporters
 
 type ISerializer =
     abstract Name : string

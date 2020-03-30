@@ -1,54 +1,44 @@
 source https://api.nuget.org/v3/index.json
-framework: netstandard2.0, netcoreapp2.0, net461
-redirects: off
+framework: netstandard2.0, net45
 storage: none
 
+github eiriktsarpalis/TypeShape:8.0.0 src/TypeShape/TypeShape.fs
 nuget FSharp.Core >= 4.3.2 lowest_matching: true
-nuget System.Reflection.Emit.Lightweight >= 4.3 lowest_matching: true
-nuget Newtonsoft.Json >= 10.0.1 lowest_matching: true
-github eiriktsarpalis/TypeShape:4.0.0 src/TypeShape/TypeShape.fs
+nuget System.Reflection.Emit.Lightweight >= 4.3 lowest_matching:true, framework:netstandard2.0
+nuget Newtonsoft.Json >= 10.0.1 lowest_matching:true
 
-# Testing : NB intentionally in main group
-nuget System.ValueTuple
-nuget NUnit ~> 3.9.0
-nuget NUnit3TestAdapter ~> 3.9.0 version_in_path: true
-nuget Microsoft.NET.Test.Sdk ~> 15.0
-nuget FsCheck ~> 3.0 prerelease
-nuget FsUnit ~> 3.0
+nuget Microsoft.SourceLink.GitHub copy_local:true
 
-nuget SourceLink.Create.CommandLine copy_local: true
-nuget SourceLink.Embed.PaketFiles copy_local: true
-clitool dotnet-sourcelink
-
-group Benchmarks
-  framework: netcoreapp2.0, net461
+group Testing
+  framework: netcoreapp3.1, net472
   source https://api.nuget.org/v3/index.json
-  redirects: off
   storage: none
 
-  nuget BenchmarkDotNet ~> 0.10.13
-  nuget Wire ~> 0.8.2
-  nuget protobuf-net ~> 2.4
-  nuget Newtonsoft.Json ~> 12.0
+  nuget FSharp.Core ~> 4.7
 
-group Legacy
-  framework: net45
-  source https://api.nuget.org/v3/index.json
-  redirects: off
-  storage: none
+  nuget NUnit ~> 3.9.0
+  nuget NUnit3TestAdapter ~> 3.9.0 version_in_path: true
+  nuget Microsoft.NET.Test.Sdk ~> 15.0
+  nuget FsCheck ~> 3.0 prerelease
+  nuget FsUnit ~> 3.0
 
-  nuget FSharp.Core >= 3.1 lowest_matching:true
-  nuget Newtonsoft.Json >= 6.0.5 lowest_matching: true
-  nuget SourceLink.Create.CommandLine copy_local: true
-  nuget SourceLink.Embed.PaketFiles copy_local: true
+  nuget BenchmarkDotNet
+  nuget Wire
+  nuget protobuf-net
+  nuget Newtonsoft.Json
   
 group Build
-  framework: net461
-  redirects: off
   source https://api.nuget.org/v3/index.json
+  generate_load_scripts: true
+  framework: netstandard2.0
+  storage: none
 
-  nuget FAKE ~> 4.0
-  nuget FSharp.Formatting ~> 3.1
-  nuget FSharp.Compiler.Tools ~> 10.2.3
+  nuget Fake.Core.UserInput	    ~> 5.19.0
+  nuget Fake.Core.ReleaseNotes  ~> 5.19.0
+  nuget Fake.Core.Target        ~> 5.19.0
+  nuget Fake.IO.FileSystem      ~> 5.19.0
+  nuget Fake.DotNet.Cli	        ~> 5.19.0
+  nuget Fake.Tools.Git          ~> 5.19.0
+  nuget Fake.Api.Github         ~> 5.19.0
 
-  github fsharp/FAKE modules/Octokit/Octokit.fsx
+  nuget FSharp.Formatting ~> 4.0 prerelease storage: packages

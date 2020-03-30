@@ -1,7 +1,7 @@
 ﻿(*** hide ***)
 // This block of code is omitted in the generated HTML documentation. Use 
 // it to define helpers that you do not want to show in the documentation.
-#I "../../src/FsPickler.Json/bin/Release/net45/"
+#I "../../src/FsPickler.Json/bin/Release/netstandard2.0/"
 
 #r "Newtonsoft.Json.dll"
 #r "FsPickler.dll"
@@ -90,7 +90,7 @@ supporting serialization of .NET objects. In particular many of them:
 ## FsPickler : Motivation
 
 The need for a new serialization library was realized while developing for 
-[MBrace](http://www.m-brace.net/). MBrace is a framework for distributed
+[MBrace](http://mbrace.io/). MBrace is a framework for distributed
 computation and big data that is essentially built on the idea of a distributed
 continuation monad. To be able to distribute continuations, you need to be able to
 serialize closures. The inherently intrinsic and arbitrary nature of closures means 

@@ -17,6 +17,8 @@ open NUnit.Framework
 open FsUnit
 open FsCheck
 
+#nowarn "8989" // PicklerCache size warnings
+
 type ISerializerFixture =
     /// Specifies whether the fixture uses remoting for running the tests
     abstract IsRemotedFixture : bool
@@ -275,6 +277,10 @@ type SerializationTests (fixture : ISerializerFixture) =
             __.CheckArray<DateTime> ()
 
     [<Test; Category("Generic BCL Types")>]
+    member __.``Array: System-DateTimeOffset`` () = 
+            __.CheckArray<DateTimeOffset> ()
+
+    [<Test; Category("Generic BCL Types")>]
     member __.``Array: System-TimeSpan`` () = __.CheckArray<TimeSpan> ()
 
     [<Test; Category("Generic BCL Types")>]
@@ -465,19 +471,6 @@ type SerializationTests (fixture : ISerializerFixture) =
         let h = Delegate.Combine [| g ; f 3 |]
         (testRoundtrip h).DynamicInvoke [| |] |> ignore
         DeleCounter.Value |> should equal 6
-
-#if !NETCOREAPP2_0
-    [<Test; Category("Generic BCL Types")>]
-    member __.``BCL: lazy int`` () =
-        let v = lazy(if true then 42 else 0)
-        (testRoundtrip v).Value |> should equal 42
-
-    [<Test; Category("Generic BCL Types")>]
-    member __.``BCL: lazy tuple`` () =
-        let f () = (12, "value")
-        let v = lazy(f ())
-        (testRoundtrip v).Value |> should equal (f ())
-#endif
 
     [<Test; Category("Generic BCL Types")>]
     member __.``BCL: nullable int`` () =

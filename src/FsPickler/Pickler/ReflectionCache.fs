@@ -1,11 +1,9 @@
 ﻿module internal MBrace.FsPickler.ReflectionCache
 
 open System
-open System.Globalization
 open System.IO
 open System.Text
 open System.Reflection
-open System.Runtime.Serialization
 open System.Collections.Generic
 open System.Collections.Concurrent
 
@@ -40,19 +38,42 @@ type CompositeMemberInfo =
 
 // Assembly Loader
 
+// AssemblyLoadContext is not available in netstandard2.0
+// Use reflection to access its APIs
+let currentLoadContext = lazy(
+    match Type.GetType "System.Runtime.Loader.AssemblyLoadContext" with
+    | null -> None
+    | ty ->
+        match ty.GetProperty "Assemblies" with
+        | null -> None // property not available in netcoreapp < 3.0
+        | assembliesProperty ->
+            let loadContextM = ty.GetMethod("GetLoadContext", BindingFlags.Public ||| BindingFlags.Static, null, [|typeof<Assembly>|], null)
+            let loadFromNameM = ty.GetMethod("LoadFromAssemblyName",  BindingFlags.Public ||| BindingFlags.Instance, null, [|typeof<AssemblyName>|], null)
+            let asm = Assembly.GetExecutingAssembly()
+            let currentLoadContext = loadContextM.Invoke(null, [|asm|])
+            let getContextAssemblies () = assembliesProperty.GetValue(currentLoadContext) :?> seq<Assembly> |> Seq.toArray
+            let loadFromAssemblyName (an : AssemblyName) = loadFromNameM.Invoke(currentLoadContext, [|an|]) :?> Assembly
+            Some {| LoadContext = currentLoadContext ; GetCurrentAssemblies = getContextAssemblies ; LoadFromAssemblyName = loadFromAssemblyName |})
+
 let getAssembly enableAssemblyLoading (aI : AssemblyInfo) =
     let an = aI.ToAssemblyName()
 
-    // first, query AppDomain for loaded assembly of given qualified name
+    let loadedAssemblies =
+        match currentLoadContext.Value with
+        | None -> System.AppDomain.CurrentDomain.GetAssemblies()
+        | Some ctx -> ctx.GetCurrentAssemblies()
+
     let loadedAssembly =
-        System.AppDomain.CurrentDomain.GetAssemblies()
+        loadedAssemblies
         |> Array.tryFind (fun a -> a.FullName = an.FullName)
 
     match loadedAssembly with
     | Some la -> la
     | None when enableAssemblyLoading -> 
         // resort to CLR loader mechanism if nothing found.
-        Assembly.Load an
+        match currentLoadContext.Value with
+        | None -> Assembly.Load an
+        | Some ctx -> ctx.LoadFromAssemblyName an
     | None ->
         let msg = sprintf "Could not load file or assembly '%O' or one of its dependencies. The system cannot find the file specified." an
         raise <| new FileNotFoundException(msg)

@@ -1,4 +1,4 @@
-﻿#I "bin/Debug/net45/"
+﻿#I "bin/Debug/netstandard2.0"
 #r "FsPickler.dll"
 
 open MBrace.FsPickler

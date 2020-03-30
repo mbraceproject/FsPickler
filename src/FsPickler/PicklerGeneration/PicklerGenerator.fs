@@ -15,6 +15,7 @@ open MBrace.FsPickler
 open MBrace.FsPickler.Reflection
 open MBrace.FsPickler.PrimitivePicklers
 open MBrace.FsPickler.ReflectionPicklers
+open MBrace.FsPickler.TypeShapeExtensions
 
 /// Implements a pickler factory type visitor
 
@@ -83,10 +84,10 @@ type PicklerGenerator =
             }
 
         | Shape.Array s ->
-            s.Accept {
-                new IArrayVisitor<Pickler> with
-                    member __.Visit<'T> rank = 
-                        match rank with
+            s.Element.Accept {
+                new ITypeVisitor<Pickler> with
+                    member __.Visit<'T> () = 
+                        match s.Rank with
                         | 1 -> ArrayPickler.Create<'T>(resolver) :> _
                         | 2 -> ArrayPickler.Create2D<'T>(resolver) :> _
                         | 3 -> ArrayPickler.Create3D<'T>(resolver) :> _
@@ -149,20 +150,20 @@ type PicklerGenerator =
             }
 
         | Shape.FSharpList s ->
-            s.Accept {
-                new IFSharpListVisitor<Pickler> with
+            s.Element.Accept {
+                new ITypeVisitor<Pickler> with
                     member __.Visit<'T> () = ListPickler.Create<'T>(resolver) :> _
             }
 
         | Shape.FSharpOption s ->
-            s.Accept {
-                new IFSharpOptionVisitor<Pickler> with
+            s.Element.Accept {
+                new ITypeVisitor<Pickler> with
                     member __.Visit<'T> () = OptionPickler.Create<'T>(resolver) :> _
             }
 
         | Shape.FSharpRef s ->
-            s.Accept {
-                new IFSharpRefVisitor<Pickler> with
+            s.Element.Accept {
+                new ITypeVisitor<Pickler> with
                     member __.Visit<'T> () = FSharpRefPickler.Create<'T>(resolver) :> _
             }
 
@@ -220,13 +221,13 @@ type PicklerGenerator =
 
         | _ when containsAttr<CloneableOnlyAttribute> shape.Type ->
             shape.Accept {
-                new ITypeShapeVisitor<Pickler> with
+                new ITypeVisitor<Pickler> with
                     member __.Visit<'T> () = CloneableOnlyPickler.Create<'T> () :> Pickler
             }
 
         | _ when containsAttr<CustomPicklerAttribute> shape.Type ->
             shape.Accept {
-                new ITypeShapeVisitor<Pickler> with
+                new ITypeVisitor<Pickler> with
                     member __.Visit<'T> () = CustomPickler.Create<'T> resolver :> Pickler
             }
 
@@ -244,7 +245,7 @@ type PicklerGenerator =
 
         | _ when containsAttr<DataContractAttribute> shape.Type ->
             shape.Accept {
-                new ITypeShapeVisitor<Pickler> with
+                new ITypeVisitor<Pickler> with
                     member __.Visit<'T> () = DataContractPickler.Create<'T> resolver :> Pickler
             }
 
@@ -257,19 +258,19 @@ type PicklerGenerator =
 
         | Shape.FSharpUnion _ as s ->
             s.Accept {
-                new ITypeShapeVisitor<Pickler> with
+                new ITypeVisitor<Pickler> with
                     member __.Visit<'U> () = FsUnionPickler.Create<'U> registry resolver :> _
             }
 
         | Shape.FSharpRecord _ as s ->
             s.Accept {
-                new ITypeShapeVisitor<Pickler> with
+                new ITypeVisitor<Pickler> with
                     member __.Visit<'R> () = FsRecordPickler.Create<'R> registry resolver :> _
             }
 
         | shape when shape.Type.IsAbstract ->
             shape.Accept {
-                new ITypeShapeVisitor<Pickler> with
+                new ITypeVisitor<Pickler> with
                     member __.Visit<'T>() = AbstractPickler.Create<'T> () :> Pickler
             }
 
@@ -308,13 +309,13 @@ type PicklerGenerator =
     /// Constructs a blank, uninitialized pickler object
     static member CreateUninitialized (shape : TypeShape) =
         shape.Accept {
-            new ITypeShapeVisitor<Pickler> with
+            new ITypeVisitor<Pickler> with
                 member __.Visit<'T> () = 
                     CompositePickler.CreateUninitialized<'T> () :> Pickler
         }
 
     static member Cast (shape : TypeShape) (pickler : Pickler) =
         shape.Accept {
-            new ITypeShapeVisitor<Pickler> with
+            new ITypeVisitor<Pickler> with
                 member __.Visit<'T> () = pickler.Cast<'T>() :> Pickler
         }

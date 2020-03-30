@@ -2,13 +2,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;net45</TargetFrameworks>
-    <AssemblyName>FsPickler.Json</AssemblyName>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DocumentationFile>bin\Debug\net45\FsPickler.Json.XML</DocumentationFile>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DocumentationFile>bin\Release\net45\FsPickler.Json.XML</DocumentationFile>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <IsPackable>true</IsPackable>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Common.fs" />
@@ -19,7 +15,6 @@
     <Compile Include="JsonSerializer.fs" />
     <Compile Include="Combinators.fs" />
     <None Include="paket.references" />
-    <None Include="paket.template" />
     <None Include="Test.fsx" />
   </ItemGroup>
   <ItemGroup>

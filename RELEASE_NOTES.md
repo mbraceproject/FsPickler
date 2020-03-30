@@ -1,3 +1,12 @@
+### 5.3.2
+* Use AssemblyLoadContext when loading assemblies.
+
+### 5.3.1
+* Fix packaging issue.
+
+### 5.3.0
+* Fix deserialization in AssemblyLoadContexts.
+
 ### 5.2.2
 * Fix assembly versioning issue.
 

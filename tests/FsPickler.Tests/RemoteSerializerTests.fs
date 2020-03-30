@@ -4,7 +4,7 @@ open System
 open NUnit.Framework
 open MBrace.FsPickler
 
-#if !NETCOREAPP2_0
+#if !NETCOREAPP
 /// Fixture that uses .NET remoting to run serialization and deserialization in distinct AppDomains
 type RemotingFixture<'Serializer when 'Serializer :> FsPicklerSerializer>(factory : unit -> 'Serializer) =
     let localInstance = factory()
@@ -53,7 +53,7 @@ and RemoteSerializeProxy<'Serializer when 'Serializer :> FsPicklerSerializer>() 
         getInstance() |> pickler
 #endif
 
-#if DEBUG && !NETCOREAPP2_0
+#if DEBUG && !NETCOREAPP
 [<TestFixture>]
 type ``Remote Serialization Tests`` () =
     inherit SerializationTests(RemotingFixture(fun () -> FsPickler.CreateBinarySerializer()))
