@@ -19,7 +19,7 @@ type internal ListPickler =
 
                 let arr = List.toArray list
                 formatter.WriteInt32 "length" arr.Length
-                formatter.WritePrimitiveArray "data" arr
+                formatter.WritePrimitiveArray "data" arr sizeof<'T>
 
                 formatter.EndWriteObject ()
 
@@ -64,7 +64,7 @@ type internal ListPickler =
                 // use primitive serialization support by format to bulk-deserialize array
                 let length = r.Formatter.ReadInt32 "length"
                 let array = Array.zeroCreate<'T> length
-                formatter.ReadPrimitiveArray "data" array
+                formatter.ReadPrimitiveArray "data" array sizeof<'T>
                 Array.toList array
 
             elif formatter.PreferLengthPrefixInSequences then

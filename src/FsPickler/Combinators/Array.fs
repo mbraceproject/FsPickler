@@ -53,7 +53,7 @@ type internal ArrayPickler =
 
                 formatter.BeginWriteObject tag ObjectFlags.None
                 formatter.WriteInt32 "length" array.Length
-                formatter.WritePrimitiveArray "array" array
+                formatter.WritePrimitiveArray "array" array sizeof<'T>
                 formatter.EndWriteObject ()
 
             elif ep.IsRecursiveType || formatter.PreferLengthPrefixInSequences then
