@@ -34,6 +34,10 @@ type ISerializerFixture =
     /// potentially in a remote AppDomain
     abstract PickleF : pickler:(FsPicklerSerializer -> byte[]) -> byte[]
 
+
+[<Struct>]
+type LargeStruct = { a : int64; b : int64; c : int32 }
+
 [<AbstractClass>]
 type SerializationTests (fixture : ISerializerFixture) =
     static let _ = Arb.register<FsPicklerGenerators> ()
@@ -1195,6 +1199,34 @@ type SerializationTests (fixture : ISerializerFixture) =
             let read () =
                 use f = System.IO.File.OpenRead path
                 let y = fixture.Serializer.Deserialize<int64[]> (f)
+                (y.Length, y.GetValue 0, y.GetValue (y.Length - 1))
+
+            let x = write()
+            GC.Collect(2, GCCollectionMode.Forced, true, true)
+            let y = read()
+            y |> should equal x
+        finally
+            System.IO.File.Delete path
+
+    // Large array tests output so much data they won't fit into a .NET byte array, we have to serialize to a FileStream.
+    [<Test; Explicit("Test takes many minutes to run"); Category("Stress tests")>]
+    member __.``Array: 5GB of LargeStruct`` () =
+        if IntPtr.Size = 4 then Assert.Pass("Skipping due to 32bit process")
+        else
+        let path = System.IO.Path.GetTempFileName()
+        try
+            let write () =
+                let x = Array.zeroCreate<LargeStruct> 268435456
+                x.[0] <- { a = 1L; b = 2L; c = 3 }
+                x.[268435455] <- { a = 100L; b = 200L; c = 300 }
+                use f = System.IO.File.OpenWrite path
+                fixture.Serializer.Serialize(f, x)
+                // These are huge arrays so we just check that the lengths, first, and last elements are correct.
+                (x.Length, x.GetValue 0, x.GetValue (x.Length - 1))
+
+            let read () =
+                use f = System.IO.File.OpenRead path
+                let y = fixture.Serializer.Deserialize<LargeStruct[]> (f)
                 (y.Length, y.GetValue 0, y.GetValue (y.Length - 1))
 
             let x = write()
