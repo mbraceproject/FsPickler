@@ -12,7 +12,7 @@ type IPickleFormatWriter =
     inherit IDisposable
 
     abstract Flush : unit -> unit
-
+        
     /// <summary>
     ///     Writes the start of the pickle.
     /// </summary>
@@ -146,7 +146,7 @@ and IPickleFormatReader =
     abstract ReadNextSequenceElement : unit -> bool
 
     abstract ReadCachedObjectId : unit -> int64
-
+        
     abstract ReadBoolean : tag:string -> bool
     abstract ReadByte : tag:string -> byte
     abstract ReadSByte : tag:string -> sbyte
@@ -165,7 +165,7 @@ and IPickleFormatReader =
 
     abstract ReadChar : tag:string -> char
     abstract ReadString : tag:string -> string
-
+        
     abstract ReadDateTime : tag:string -> DateTime
     abstract ReadDateTimeOffset : tag:string -> DateTimeOffset
     abstract ReadTimeSpan : tag:string -> TimeSpan
