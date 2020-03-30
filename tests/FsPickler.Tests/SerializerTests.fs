@@ -1180,12 +1180,13 @@ type SerializationTests (fixture : ISerializerFixture) =
 
      // Large array tests output so much data they won't fit into a .NET byte array, we have to serialize to a FileStream.
     [<Test; Category("Stress tests")>]
-    member __.``Array: 1GB of int64`` () =
+    member __.``Array: 2GB of int64`` () =
+        if IntPtr.Size = 4 then Assert.Pass("Skipping due to 32bit process")
+        else
         let path = System.IO.Path.GetTempFileName()
         try
-
             let write () =
-                let x = Array.init<int64> 134217728 int64
+                let x = Array.init<int64> 268435456 int64
                 use f = System.IO.File.OpenWrite path
                 fixture.Serializer.Serialize(f, x)
                 // These are huge arrays so we just check that the lengths, first, and last elements are correct.
