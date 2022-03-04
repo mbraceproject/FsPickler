@@ -31,11 +31,17 @@ type FsPickler private () =
     static member CreateXmlSerializer([<O;D(null)>]?typeConverter : ITypeNameConverter, [<O;D(null)>]?indent : bool, [<O;D(null)>] ?picklerResolver : IPicklerResolver) = 
         new XmlSerializer(?typeConverter = typeConverter, ?indent = indent, ?picklerResolver = picklerResolver)
 
-    /// Decides if given type is serializable by FsPickler
+    /// <summary>
+    ///     Decides if given type is serializable by FsPickler
+    /// </summary>
+    /// <param name="picklerResolver">Specify a custom pickler resolver/cache for serialization. Defaults to the singleton pickler cache.</param>
     static member IsSerializableType<'T> ([<O;D(null)>] ?picklerResolver : IPicklerResolver) : bool = 
         chooseResolver(picklerResolver).IsSerializable<'T> ()
 
-    /// Decides if given type is serializable by FsPickler
+    /// <summary>
+    ///     Decides if given type is serializable by FsPickler
+    /// </summary>
+    /// <param name="picklerResolver">Specify a custom pickler resolver/cache for serialization. Defaults to the singleton pickler cache.</param>
     static member IsSerializableType (t : Type, [<O;D(null)>] ?picklerResolver : IPicklerResolver) : bool = 
         chooseResolver(picklerResolver).IsSerializable t
 
@@ -48,11 +54,17 @@ type FsPickler private () =
         try FsPickler.EnsureSerializable(graph, ?failOnCloneableOnlyTypes = failOnCloneableOnlyTypes) ; true
         with :? FsPicklerException -> false
 
-    /// Auto generates a pickler for given type variable
+    /// <summary>
+    ///     Auto generates a pickler for given type variable
+    /// </summary>
+    /// <param name="picklerResolver">Specify a custom pickler resolver/cache for serialization. Defaults to the singleton pickler cache.</param>
     static member GeneratePickler<'T> ([<O;D(null)>] ?picklerResolver : IPicklerResolver) : Pickler<'T> = 
         chooseResolver(picklerResolver).Resolve<'T> ()
-        
-    /// Auto generates a pickler for given type
+
+    /// <summary>
+    ///     Auto generates a pickler for given type
+    /// </summary>
+    /// <param name="picklerResolver">Specify a custom pickler resolver/cache for serialization. Defaults to the singleton pickler cache.</param>
     static member GeneratePickler (t : Type, [<O;D(null)>] ?picklerResolver : IPicklerResolver) : Pickler = 
         chooseResolver(picklerResolver).Resolve t
 
@@ -68,6 +80,7 @@ type FsPickler private () =
     /// <param name="value">Value to be cloned.</param>
     /// <param name="pickler">Pickler used for cloning. Defaults to auto-generated pickler.</param>
     /// <param name="streamingContext">Streaming context used for cloning. Defaults to null streaming context.</param>
+    /// <param name="picklerResolver">Specify a custom pickler resolver/cache for serialization. Defaults to the singleton pickler cache.</param>
     static member Clone<'T> (value : 'T, [<O;D(null)>]?pickler : Pickler<'T>, [<O;D(null)>]?streamingContext : StreamingContext, [<O;D(null)>] ?picklerResolver : IPicklerResolver) : 'T =
         let pickler = match pickler with None -> chooseResolver(picklerResolver).Resolve<'T> () | Some p -> p
         let state = new CloneState(chooseResolver(picklerResolver), ?streamingContext = streamingContext)
@@ -81,6 +94,7 @@ type FsPickler private () =
     /// <param name="sifter">Sifting predicate implementation.</param>
     /// <param name="pickler">Pickler to be used for traversal. Defaults to auto-generated pickler.</param>
     /// <param name="streamingContext">Streaming context used for cloning. Defaults to null streaming context.</param>
+    /// <param name="picklerResolver">Specify a custom pickler resolver/cache for serialization. Defaults to the singleton pickler cache.</param>
     /// <returns>A sifted wrapper together with all objects that have been sifted.</returns>
     static member Sift<'T>(value : 'T, sifter : IObjectSifter, [<O;D(null)>]?pickler : Pickler<'T>, [<O;D(null)>]?streamingContext : StreamingContext, [<O;D(null)>] ?picklerResolver : IPicklerResolver) : Sifted<'T> * (int64 * obj) [] =
         let pickler = match pickler with None -> chooseResolver(picklerResolver).Resolve<'T> () | Some p -> p
@@ -97,9 +111,9 @@ type FsPickler private () =
     /// <param name="pickler">Pickler to be used for traversal. Defaults to auto-generated pickler.</param>
     /// <param name="streamingContext">Streaming context used for cloning. Defaults to null streaming context.</param>
     /// <returns>A sifted wrapper together with all objects that have been sifted.</returns>
-    static member Sift<'T>(value : 'T, sifter : obj -> bool, [<O;D(null)>]?pickler : Pickler<'T>, [<O;D(null)>]?streamingContext : StreamingContext) : Sifted<'T> * (int64 * obj) [] =
+    static member Sift<'T>(value : 'T, sifter : obj -> bool, [<O;D(null)>]?pickler : Pickler<'T>, [<O;D(null)>]?streamingContext : StreamingContext, [<O;D(null)>] ?picklerResolver : IPicklerResolver) : Sifted<'T> * (int64 * obj) [] =
         let sifter = { new IObjectSifter with member __.Sift(_,_,t) = sifter t }
-        FsPickler.Sift(value, sifter, ?pickler = pickler, ?streamingContext = streamingContext)
+        FsPickler.Sift(value, sifter, ?pickler = pickler, ?streamingContext = streamingContext, ?picklerResolver = picklerResolver)
 
     /// <summary>
     ///     Unsifts a provided object graph with given values.
@@ -108,6 +122,7 @@ type FsPickler private () =
     /// <param name="values">Values to be pushed in sift holes.</param>
     /// <param name="pickler">Pickler to be used for traversal. Defaults to auto-generated pickler.</param>
     /// <param name="streamingContext">Streaming context used for cloning. Defaults to null streaming context.</param>
+    /// <param name="picklerResolver">Specify a custom pickler resolver/cache for serialization. Defaults to the singleton pickler cache.</param>
     /// <returns>An unsifted object graph.</returns>
     static member UnSift<'T>(sifted : Sifted<'T>, values:(int64 * obj) [], [<O;D(null)>]?pickler : Pickler<'T>, [<O;D(null)>]?streamingContext : StreamingContext, [<O;D(null)>] ?picklerResolver : IPicklerResolver) : 'T =
         let pickler = match pickler with None -> chooseResolver(picklerResolver).Resolve<'T> () | Some p -> p
@@ -135,6 +150,7 @@ type FsPickler private () =
     /// <param name="pickler">Pickler to be used for traversal. Defaults to auto-generated pickler.</param>
     /// <param name="streamingContext">Streaming context used for cloning. Defaults to null streaming context.</param>
     /// <param name="visitOrder">Object graph traversal order. Defaults to pre-order traversal.</param>
+    /// <param name="picklerResolver">Specify a custom pickler resolver/cache for serialization. Defaults to the singleton pickler cache.</param>
     static member VisitObject(visitor : IObjectVisitor, graph : 'T, [<O;D(null)>]?pickler:Pickler<'T>, 
                                 [<O;D(null)>]?streamingContext:StreamingContext, [<O;D(null)>]?visitOrder:VisitOrder, [<O;D(null)>] ?picklerResolver : IPicklerResolver) =
 
@@ -153,7 +169,8 @@ type FsPickler private () =
     ///     Uses FsPickler to traverse the object graph, gathering types of objects as it goes.
     /// </summary>
     /// <param name="graph">input object graph.</param>
-    static member GatherTypesInObjectGraph(graph : obj) : Type [] =
+    /// <param name="picklerResolver">Specify a custom pickler resolver/cache for serialization. Defaults to the singleton pickler cache.</param>
+    static member GatherTypesInObjectGraph(graph : obj, [<O;D(null)>] ?picklerResolver : IPicklerResolver) : Type [] =
         let gathered = new HashSet<Type> ()
         let visitor =
             {
@@ -179,14 +196,15 @@ type FsPickler private () =
                         true // always continue traversal
             }
 
-        do FsPickler.VisitObject(visitor, graph)
+        do FsPickler.VisitObject(visitor, graph, ?picklerResolver = picklerResolver)
         gathered |> Seq.toArray
 
     /// <summary>
     ///     Use FsPickler to traverse the object graph, gathering object instances as it goes.
     /// </summary>
     /// <param name="graph">input object graph.</param>
-    static member GatherObjectsInGraph (graph : obj) : obj [] =
+    /// <param name="picklerResolver">Specify a custom pickler resolver/cache for serialization. Defaults to the singleton pickler cache.</param>
+    static member GatherObjectsInGraph (graph : obj, [<O;D(null)>] ?picklerResolver : IPicklerResolver) : obj [] =
         let gathered = new HashSet<obj> ()
         let visitor =
             {
@@ -201,7 +219,7 @@ type FsPickler private () =
                         true // continue traversal
             }
 
-        do FsPickler.VisitObject(visitor, graph)
+        do FsPickler.VisitObject(visitor, graph, ?picklerResolver = picklerResolver)
         gathered |> Seq.toArray
 
 
@@ -210,7 +228,8 @@ type FsPickler private () =
     /// </summary>
     /// <param name="graph">Graph to be checked.</param>
     /// <param name="failOnCloneableOnlyTypes">Fail on types that are declared cloneable only. Defaults to true.</param>
-    static member EnsureSerializable (graph : 'T, [<O;D(null)>] ?failOnCloneableOnlyTypes : bool) : unit =
+    /// <param name="picklerResolver">Specify a custom pickler resolver/cache for serialization. Defaults to the singleton pickler cache.</param>
+    static member EnsureSerializable (graph : 'T, [<O;D(null)>] ?failOnCloneableOnlyTypes : bool, [<O;D(null)>] ?picklerResolver : IPicklerResolver) : unit =
         let failOnCloneableOnlyTypes = defaultArg failOnCloneableOnlyTypes true
         let visitor = 
             { new IObjectVisitor with 
@@ -220,4 +239,4 @@ type FsPickler private () =
                     else
                         true }
 
-        FsPickler.VisitObject(visitor, graph, visitOrder = VisitOrder.PreOrder)
+        FsPickler.VisitObject(visitor, graph, visitOrder = VisitOrder.PreOrder, ?picklerResolver = picklerResolver)
