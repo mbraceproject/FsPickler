@@ -12,7 +12,7 @@ open MBrace.FsPickler.Hashing
 type FsPickler private () =
         
     static let defaultSerializer = lazy(new BinarySerializer())
-    static let resolver () = PicklerCache.Instance :> IPicklerResolver
+    static let chooseResolver (picklerResolver) = defaultArg picklerResolver (PicklerCache.Instance :> IPicklerResolver)
 
     /// <summary>
     ///     Create a new FsPickler serializer instance that uses the built-in binary format.
@@ -32,12 +32,12 @@ type FsPickler private () =
         new XmlSerializer(?typeConverter = typeConverter, ?indent = indent, ?picklerResolver = picklerResolver)
 
     /// Decides if given type is serializable by FsPickler
-    static member IsSerializableType<'T> () : bool = 
-        resolver().IsSerializable<'T> ()
+    static member IsSerializableType<'T> ([<O;D(null)>] ?picklerResolver : IPicklerResolver) : bool = 
+        chooseResolver(picklerResolver).IsSerializable<'T> ()
 
     /// Decides if given type is serializable by FsPickler
-    static member IsSerializableType (t : Type) : bool = 
-        resolver().IsSerializable t
+    static member IsSerializableType (t : Type, [<O;D(null)>] ?picklerResolver : IPicklerResolver) : bool = 
+        chooseResolver(picklerResolver).IsSerializable t
 
     /// <summary>
     ///     Decides if given value is serializable object graph without performing an actual serialization.
@@ -49,12 +49,12 @@ type FsPickler private () =
         with :? FsPicklerException -> false
 
     /// Auto generates a pickler for given type variable
-    static member GeneratePickler<'T> () : Pickler<'T> = 
-        resolver().Resolve<'T> ()
+    static member GeneratePickler<'T> ([<O;D(null)>] ?picklerResolver : IPicklerResolver) : Pickler<'T> = 
+        chooseResolver(picklerResolver).Resolve<'T> ()
         
     /// Auto generates a pickler for given type
-    static member GeneratePickler (t : Type) : Pickler = 
-        resolver().Resolve t
+    static member GeneratePickler (t : Type, [<O;D(null)>] ?picklerResolver : IPicklerResolver) : Pickler = 
+        chooseResolver(picklerResolver).Resolve t
 
     //
     // Misc utils
@@ -68,9 +68,9 @@ type FsPickler private () =
     /// <param name="value">Value to be cloned.</param>
     /// <param name="pickler">Pickler used for cloning. Defaults to auto-generated pickler.</param>
     /// <param name="streamingContext">Streaming context used for cloning. Defaults to null streaming context.</param>
-    static member Clone<'T> (value : 'T, [<O;D(null)>]?pickler : Pickler<'T>, [<O;D(null)>]?streamingContext : StreamingContext) : 'T =
-        let pickler = match pickler with None -> resolver().Resolve<'T> () | Some p -> p
-        let state = new CloneState(resolver(), ?streamingContext = streamingContext)
+    static member Clone<'T> (value : 'T, [<O;D(null)>]?pickler : Pickler<'T>, [<O;D(null)>]?streamingContext : StreamingContext, [<O;D(null)>] ?picklerResolver : IPicklerResolver) : 'T =
+        let pickler = match pickler with None -> chooseResolver(picklerResolver).Resolve<'T> () | Some p -> p
+        let state = new CloneState(chooseResolver(picklerResolver), ?streamingContext = streamingContext)
         pickler.Clone state value
 
     /// <summary>
@@ -82,9 +82,9 @@ type FsPickler private () =
     /// <param name="pickler">Pickler to be used for traversal. Defaults to auto-generated pickler.</param>
     /// <param name="streamingContext">Streaming context used for cloning. Defaults to null streaming context.</param>
     /// <returns>A sifted wrapper together with all objects that have been sifted.</returns>
-    static member Sift<'T>(value : 'T, sifter : IObjectSifter, [<O;D(null)>]?pickler : Pickler<'T>, [<O;D(null)>]?streamingContext : StreamingContext) : Sifted<'T> * (int64 * obj) [] =
-        let pickler = match pickler with None -> resolver().Resolve<'T> () | Some p -> p
-        let state = new CloneState(resolver(), ?streamingContext = streamingContext, sifter = sifter)
+    static member Sift<'T>(value : 'T, sifter : IObjectSifter, [<O;D(null)>]?pickler : Pickler<'T>, [<O;D(null)>]?streamingContext : StreamingContext, [<O;D(null)>] ?picklerResolver : IPicklerResolver) : Sifted<'T> * (int64 * obj) [] =
+        let pickler = match pickler with None -> chooseResolver(picklerResolver).Resolve<'T> () | Some p -> p
+        let state = new CloneState(chooseResolver(picklerResolver), ?streamingContext = streamingContext, sifter = sifter)
         let sifted = pickler.Clone state value
         state.CreateSift(sifted)
 
@@ -109,9 +109,9 @@ type FsPickler private () =
     /// <param name="pickler">Pickler to be used for traversal. Defaults to auto-generated pickler.</param>
     /// <param name="streamingContext">Streaming context used for cloning. Defaults to null streaming context.</param>
     /// <returns>An unsifted object graph.</returns>
-    static member UnSift<'T>(sifted : Sifted<'T>, values:(int64 * obj) [], [<O;D(null)>]?pickler : Pickler<'T>, [<O;D(null)>]?streamingContext : StreamingContext) : 'T =
-        let pickler = match pickler with None -> resolver().Resolve<'T> () | Some p -> p
-        let state = new CloneState(resolver(), ?streamingContext = streamingContext, unSiftData = (values, sifted.SiftedIndices))
+    static member UnSift<'T>(sifted : Sifted<'T>, values:(int64 * obj) [], [<O;D(null)>]?pickler : Pickler<'T>, [<O;D(null)>]?streamingContext : StreamingContext, [<O;D(null)>] ?picklerResolver : IPicklerResolver) : 'T =
+        let pickler = match pickler with None -> chooseResolver(picklerResolver).Resolve<'T> () | Some p -> p
+        let state = new CloneState(chooseResolver(picklerResolver), ?streamingContext = streamingContext, unSiftData = (values, sifted.SiftedIndices))
         pickler.Clone state sifted.Value
 
     /// <summary>Compute size in bytes for given input.</summary>
@@ -136,9 +136,9 @@ type FsPickler private () =
     /// <param name="streamingContext">Streaming context used for cloning. Defaults to null streaming context.</param>
     /// <param name="visitOrder">Object graph traversal order. Defaults to pre-order traversal.</param>
     static member VisitObject(visitor : IObjectVisitor, graph : 'T, [<O;D(null)>]?pickler:Pickler<'T>, 
-                                [<O;D(null)>]?streamingContext:StreamingContext, [<O;D(null)>]?visitOrder:VisitOrder) =
+                                [<O;D(null)>]?streamingContext:StreamingContext, [<O;D(null)>]?visitOrder:VisitOrder, [<O;D(null)>] ?picklerResolver : IPicklerResolver) =
 
-        let resolver = resolver()
+        let resolver = chooseResolver(picklerResolver)
         let pickler = match pickler with None -> resolver.Resolve<'T> () | Some p -> p
         let state = new VisitState(resolver, visitor, ?streamingContext = streamingContext, ?visitOrder = visitOrder)
         pickler.Accept state graph
